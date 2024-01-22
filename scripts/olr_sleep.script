@@ -1,0 +1,505 @@
+--[[-----------------------------------------------------------------------------------------------
+ File         : olr_sleep.script
+ Description  : Sleep menu based on this from build 1865
+ Copyright    : OLR Team
+ Author       : Stalker55, hi_flyer
+ Date         : 04.05.2014
+ Last edit    : 16.04.2015
+--]]-----------------------------------------------------------------------------------------------
+-----------------------------------
+class "OldMenu" (CUIScriptWnd)
+-----------------------------------
+function OldMenu:__init() super()
+	self:InitControls()
+	self:InitCallBacks()
+end
+
+function OldMenu:__finalize()
+
+end
+
+function OldMenu:InitControls()
+	self:Init(0, 0, 1024, 768)
+	
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_old_sleep_wnd.xml")
+	
+	local ctrl
+	
+	self.background = xml:InitStatic("background", self)
+		
+	ctrl = xml:Init3tButton("background:one_hour",	self.background)	
+	self:Register(ctrl, "one_hour")
+	
+	ctrl = xml:Init3tButton("background:four_hour",	self.background)	
+	self:Register(ctrl, "four_hour")
+	
+	ctrl = xml:Init3tButton("background:eight_hour",	self.background)	
+	self:Register(ctrl, "eight_hour")
+	
+	ctrl = xml:Init3tButton("background:morning",	self.background)	
+	self:Register(ctrl, "morning")
+	
+	ctrl = xml:Init3tButton("background:evening",	self.background)	
+	self:Register(ctrl, "evening")
+	
+	ctrl = xml:Init3tButton("background:exit",	self.background)	
+	self:Register(ctrl, "exit")
+	
+	ctrl = xml:Init3tButton("background:sleep",	self.background)	
+	self:Register(ctrl, "sleep")
+	
+	local time_h = level.get_time_hours() 
+	local time_m = level.get_time_minutes()
+	local msg = string.format(" %02d:%02d\n", time_h, time_m)
+	
+	current_time = CUIStatic()
+	current_time:Init(625, 591, 50, 50)
+	if not nick.is_pda_dead() then
+		current_time:SetText("Тек. Время:"..msg)
+	else
+		current_time:SetText("")
+	end
+	current_time:SetTextColor(255,238,155,23)
+	current_time:SetFont(GetFontGraffiti22Russian())
+	self:AttachChild(current_time)
+	
+	self.sleep_time = 0
+	self:HiddenSlotsButtons()
+end
+
+function OldMenu:HiddenSlotsButtons()
+    btn_p = CUIButton()
+    btn_p:SetAutoDelete(false)
+    btn_p:SetWindowName("btn_p")
+    btn_p:SetText("+")
+    btn_p:Init(688, 626, 30, 30)
+    btn_p:SetTextColor(255, 238, 155, 23)
+    btn_p:SetFont(GetFontGraffiti22Russian())
+    btn_p:SetTextAlign(CGameFont.alCenter)
+	self:AttachChild(btn_p)
+    self:AddCallback("btn_p", ui_events.BUTTON_CLICKED, self.ClickBtnPlus, self)
+
+	btn_m = CUIButton()
+    btn_m:SetAutoDelete(false)
+    btn_m:SetWindowName("btn_m")
+    btn_m:SetText("-")
+    btn_m:Init(619, 626, 30, 30)
+    btn_m:SetTextColor(255, 238, 155, 23)
+    btn_m:SetFont(GetFontGraffiti22Russian())
+    btn_m:SetTextAlign(CGameFont.alCenter)
+    self:AttachChild(btn_m)  
+    self:AddCallback("btn_m", ui_events.BUTTON_CLICKED, self.ClickBtnMinus, self)
+
+    btn_timer = CUIStatic()
+    btn_timer:SetText("00:00")
+    btn_timer:Init(659, 624, 20, 20)
+    btn_timer:SetTextColor(255,240,217,182)
+    btn_timer:SetFont(GetFontLetterica18Russian())
+    btn_timer:SetTextAlign(CGameFont.alCenter)
+    self:AttachChild(btn_timer)
+end
+
+function OldMenu:InitCallBacks()
+	self:AddCallback("one_hour",		ui_events.BUTTON_CLICKED,	self.SleepOneHour,		        self)
+	self:AddCallback("four_hour",		ui_events.BUTTON_CLICKED,	self.SleepFourHours,		    self)
+	self:AddCallback("eight_hour",		ui_events.BUTTON_CLICKED,	self.SleepEightHours,		    self)
+	self:AddCallback("morning",		    ui_events.BUTTON_CLICKED,	self.SleepTwelveHours,		    self)
+	self:AddCallback("evening",		    ui_events.BUTTON_CLICKED,	self.SleepSixHours,		        self)
+	self:AddCallback("exit",		    ui_events.BUTTON_CLICKED,	self.OnExitClick,		        self)
+	self:AddCallback("sleep",		    ui_events.BUTTON_CLICKED,	self.OnRestClick,		        self)
+end
+
+
+
+
+function OldMenu:SleepOneHour()
+
+if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+	olr.hide_inv()
+	--self:GetHolder():start_stop_menu(self, true)
+        return false
+end
+
+local ustalost = db.actor:get_actor_sleep()
+if ustalost>0.80 then
+	news_manager.send_tip(db.actor, "Я не хочу спать сейчас...")
+	return
+end   
+	olr_sleep.sleep_main(1)
+	--self:GetHolder():start_stop_menu(self, true)
+        db.actor:set_actor_sleep(1)
+	olr.hide_inv()
+end
+
+
+function OldMenu:SleepFourHours()
+
+if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+	olr.hide_inv()
+	self:GetHolder():start_stop_menu(self, true)
+        return false
+end
+
+local ustalost = db.actor:get_actor_sleep()
+if ustalost>0.80 then
+	news_manager.send_tip(db.actor, "Я не хочу спать сейчас...")
+	return
+end
+	olr_sleep.sleep_main(4)
+	
+	--self:GetHolder():start_stop_menu(self, true)
+        db.actor:set_actor_sleep(1)
+	olr.hide_inv()
+
+end
+
+
+function OldMenu:SleepEightHours()
+
+if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+	olr.hide_inv()
+	--self:GetHolder():start_stop_menu(self, true)
+        return false
+end
+
+	local ustalost = db.actor:get_actor_sleep()
+	if ustalost>0.80 then
+		news_manager.send_tip(db.actor, "Я не хочу спать сейчас...")
+		return
+	end
+
+	olr_sleep.sleep_main(8)
+	if self:GetHolder() then
+	--self:GetHolder():start_stop_menu(self, true)
+        db.actor:set_actor_sleep(1)
+	olr.hide_inv()
+end
+end
+
+
+function OldMenu:SleepTwelveHours()
+
+if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+	olr.hide_inv()
+	--self:GetHolder():start_stop_menu(self, true)
+        return false
+end
+
+local ustalost = db.actor:get_actor_sleep()
+if ustalost>0.80 then
+	news_manager.send_tip(db.actor, "Я не хочу спать сейчас...")
+	return
+end
+
+        if not xr_conditions.is_day() then
+
+	olr_sleep.sleep_main(8)
+        db.actor:set_actor_sleep(1)
+		olr.hide_inv()
+		--self:GetHolder():start_stop_menu(self, true)
+        end
+
+        if xr_conditions.is_day() then
+        news_manager.send_tip(db.actor, "Неподходящее время для сна.")
+		olr.hide_inv()
+		--self:GetHolder():start_stop_menu(self, true)
+        end
+
+end
+
+
+function OldMenu:SleepSixHours()
+
+if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+	olr.hide_inv()
+	--self:GetHolder():start_stop_menu(self, true)
+        return false
+end
+
+local ustalost = db.actor:get_actor_sleep()
+if ustalost>0.80 then
+	news_manager.send_tip(db.actor, "Я не хочу спать сейчас...")
+	return
+end
+
+        if xr_conditions.is_day() then
+
+	olr_sleep.sleep_main(6)
+        db.actor:set_actor_sleep(1)
+	olr.hide_inv()
+	--self:GetHolder():start_stop_menu(self, true)
+        end
+
+        if not xr_conditions.is_day() then
+        news_manager.send_tip(db.actor, "Неподходящее время для сна.")
+	olr.hide_inv()
+	--self:GetHolder():start_stop_menu(self, true)
+        end
+
+end
+
+
+
+function OldMenu:OnExitClick()
+	self:GetHolder():start_stop_menu(self, true)
+end
+---------------------------------------------------------------------------------------------------
+
+function OldMenu:ClickBtnPlus()
+    self.sleep_time = self.sleep_time + 0.5
+    if self.sleep_time > 9 then self.sleep_time = 9 end
+    self:SetTimerText()
+end
+
+function OldMenu:ClickBtnMinus()
+    self.sleep_time = self.sleep_time - 0.5
+    if self.sleep_time < 0 then self.sleep_time = 0 end
+    self:SetTimerText()
+end
+
+function OldMenu:SetTimerText()
+    local h = math.floor(self.sleep_time)
+    btn_timer:SetText((h < 10 and "0" or "")..h..(h == self.sleep_time and ":00" or ":30"))
+end
+
+function OldMenu:OnRestClick()
+
+    if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+	olr.hide_inv()
+	self:GetHolder():start_stop_menu(self, true)
+        return false
+    end
+
+local ustalost = db.actor:get_actor_sleep()
+if ustalost>0.80 then
+	news_manager.send_tip(db.actor, "Я не хочу спать сейчас...")
+	return
+end
+
+    if self.sleep_time ~= 0 then
+        olr_sleep.sleep_main(self.sleep_time)
+		olr.hide_inv()
+	    --self:GetHolder():start_stop_menu(self, true)
+    end
+end
+
+
+--------------------------------------------------------------------------------------------------
+
+
+
+local snd_vol = 1
+
+function sleep_main(scale)
+	olr.switch_torch(false)
+	level.hide_indicators()
+    	level.disable_input()
+    	level.add_pp_effector("peace_fade.ppe", 11973, false)
+    	basic_time_factor = level.get_time_factor()
+	snd_vol = level.get_snd_volume()
+	level.set_snd_volume(0)
+	olr_timers.st_timer("sleep_starter", 2, "olr_sleep.sleep_starter("..tostring(scale)..")")
+end
+
+function sleep_starter(scale)
+	level.hide_indicators()
+    	level.disable_input()
+    	local factor = scale*1325
+	local rnd = math.random(1,2)
+	game.start_tutorial("time_scaling")
+    	level.set_time_factor(factor)
+    	bind_stalker.actor_in_sleep = true
+	blow_sleep_timer_low(scale)
+end
+ 
+function sleep_dreamer()
+    	level.set_time_factor(basic_time_factor)
+    	game.start_tutorial("without_dream") 
+    	bind_stalker.actor_in_sleep = false
+end
+ 
+function sleep_stopper()
+	level.show_indicators()
+    	level.enable_input()
+    	level.add_pp_effector("peace_unfade.ppe", 11973, false)
+    	bind_stalker.actor_in_sleep = false
+    	spawen_izlom_rand()
+    	olr_sleep_robers.sleep_rob()
+    	olr_monsters_sim.sim_kill_stalkers()
+    	nick.clear_drinked_vodka()
+    	db.actor:set_actor_sleep(1)
+	level.set_snd_volume(snd_vol)
+	unic_arts()
+	yan_dead_call()
+	set_food_art_sleep()
+	db.actor:disable_info_portion("actor_has_prostuda")
+	olr_timers.st_timer("respawn_now", 19, "olr_blowout.respawn_now()")
+	olr.check_time()
+	olr_blowout.clear_dead_monsters()
+end
+------------------------------------------------------------------------------------------------------------------------ 
+
+function blow_sleep_timer_low(scale)
+	local tec = olr_blowout.get_blow_timer()
+	if tec < 420 then
+		return
+	end
+	local tmr = 50 + scale * 20
+	olr_blowout.min_blow_timer(tmr)
+end
+
+
+function yan_dead_call()
+	if level.name() == "lvl7_yantar" then
+		if not xr_conditions.is_day() then
+			if not has_alife_info("radar_de_done") then
+				news_manager.send_tip(db.actor, "Где ты?", nil, "unknown", 39000)
+				news_manager.send_tip(db.actor, "Давай скорее. До рассвета надо управиться!", 5, "unknown", 39000)
+				news_manager.send_tip(db.actor, "Эй! Ты где?!", 15, "unknown", 39000)
+				news_manager.send_tip(db.actor, "Выходи скорее! Я жду тебя!", 25, "unknown", 39000)
+				news_manager.send_tip(db.actor, "Идем скорее. Тебя все ждут! Здесь, в центре озера!", 35, "unknown", 39000)
+			end
+		end
+	end
+end
+
+function unic_arts()
+	local art = db.actor:object("af_art_kub")
+	if art ~= nil then
+		if has_alife_info("bolezn_zombied_info") then
+			if olr_timers.has_timer("bolezn_zombied_timer") then
+				olr_timers.del_timer("bolezn_zombied_timer")
+			end
+			if olr_timers.has_timer("bolezn_zombied_timer_m") then
+				olr_timers.del_timer("bolezn_zombied_timer_m")
+			end
+			if olr_timers.has_timer("bolezn_zombied_timer_d") then
+				olr_timers.del_timer("bolezn_zombied_timer_d")
+			end
+			get_hud():RemoveCustomStatic("actor_bolezn",true)
+			db.actor:disable_info_portion("bolezn_zombied_info")
+			olr.del(art)
+		end
+	end
+end
+------------------------------------------------------------------------------------------------------------------------   
+
+local no_izlom_levels = {
+        ["lvl1_escape"] = true,
+	["lvl2_garbage"] = true,
+	["lvl_mars"] = true,
+	["lvl_nightmare"] = true,
+	["lvl5_bar"] = true,
+	["lvl9_military"] = true,
+	["lvl14_stancia"] = true,
+	["lvl15_sarcofag"] = true,
+	["lvl16_generators"] = true
+}
+
+
+function spawen_izlom_rand()
+        if no_izlom_levels[level.name()] then
+		return
+	end
+        if db.actor:is_actor_outdoors() == false then return end
+    	local isl_var = math.random(1,2)
+     	if isl_var == 1 then
+    		alife():create("m_fracture_e", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+function set_food_art_sleep()
+
+local function TimeCondLost(obj)
+	local ini = system_ini()
+	local skis = ini:r_float(obj:section(), "cor_time") 
+	if skis < 0 then
+		return 0
+	end
+	return 100/skis/24/100/60 * 100 * 295
+end	
+
+local function TimeCondLostArts(obj)
+	return 100/120/24/100/60 * 100 * 295
+end
+
+
+	local ini = system_ini()
+	local foods = {}
+	local arts = {}
+	for i= 1, 65534 do
+		local obj = level.object_by_id(i)
+		if obj ~= nil then
+                                local section = obj:section()
+
+                                 if section == "conserva" or section == "bread" or section == "kolbasa" 
+
+				or section == "mutant_flesh_eye_coocked"
+				or section == "mutant_boar_leg_coocked"
+				or section == "mutant_dog_tail_coocked"
+				or section == "mutant_psevdodog_tail"
+				or section == "mutant_krovosos_jaw_coocked"
+				or section == "mutant_burer_hand_coocked"
+				or section == "mutant_zombie_hand_coocked" 
+
+				or section == "rat_food_coocked"
+				or section == "crow_food_coocked" 
+
+				or section == "rat_food"
+				or section == "crow_food" 
+
+				or section == "mutant_flesh_eye"
+				or section == "mutant_boar_leg"
+				or section == "mutant_dog_tail"
+				or section == "mutant_psevdodog_tail"
+				or section == "mutant_krovosos_jaw"
+				or section == "af_ameba_mica"
+				or section == "mutant_burer_hand"
+				or section == "mutant_zombie_hand" then
+
+					table.insert(foods, obj)
+				end
+				if obj:is_artefact() and db.actor:is_on_belt(obj) and obj:section() ~= "exo_acum_ob" then	
+					--log1("adda")
+					table.insert(arts, obj)
+				end
+                                if section == "detector_simple" or section == "detector_advances" or section == "detector_elite" then 
+					if db.actor:is_on_belt(obj) then
+						table.insert(arts, obj)
+					end
+				end
+                  end
+            end
+
+	for i, obj in ipairs(foods) do
+		local nowcond = obj:condition()
+		local new_cond = nowcond - TimeCondLost(obj)
+		--log1(" food - obj:name() --- cond old - "..nowcond.." set cond -  "..new_cond.." ")
+		obj:set_condition(new_cond)
+	end
+
+	for i, obj in ipairs(arts) do
+		local nowcond = obj:condition()
+		local new_cond = nowcond - TimeCondLostArts(obj)
+		--log1(" art - obj:name() --- cond old - "..nowcond.." set cond -  "..new_cond.." ")
+		obj:set_condition(new_cond)
+	end
+
+
+end
+
+
+
+
+
+

@@ -1,0 +1,140 @@
+-- переодевания НПС в более лучшую броню
+-- hi_flyer 28.06.18
+
+local tup = 0
+local tmerup = math.random(550,1560)
+
+
+function upd(obj)
+	if time_global() > tup then
+		tup = time_global() + tmerup
+
+		local npc = level.object_by_id(obj:id())
+		if not npc:alive() then return end
+		if npc:critically_wounded() or npc:wounded() then return end
+
+		local vis = npc:get_visual_name()
+
+		npc:iterate_inventory( function(_, item)
+		if item and item:is_outfit() then
+
+			if not olr_protected.is_no_offline_alife_obj(npc:name()) then
+
+			if npc:position():distance_to(db.actor:position()) < 50 then
+				--news_manager.send_tip(db.actor, " upgrade outfit СЛИШКОМ БЛИЗКО ", nil, "dolg", 9000)
+				return
+			end
+
+			if npc:character_community() == "stalker" then
+				if neutral_outf(item) > neutral_vis(npc) then
+					--news_manager.send_tip(db.actor, " upgrade outfit -  "..item:section().." NPC -  "..npc:name().." vis - "..vis.."  ", nil, "dolg", 9000)
+					olr.del(item)
+					local pk = get_netpk(npc,1)
+  					if pk:isOk() then
+    						local data = pk:get()
+    						data.visual_name = neutral_set(item)
+      						pk:set( data )
+					end
+					local se_obj = alife():object(npc:id())
+  					if se_obj then
+    						alife():set_switch_offline (se_obj.id, true)
+    						alife():set_switch_online (se_obj.id, false)
+    						alife():set_interactive (se_obj.id, false)
+  					end
+					olr_timers.st_timer("convert_online", 2, "olr_npc_eqp.convert_online_out("..npc:id()..")")					
+				end
+			end
+
+
+			if npc:character_community() == "bandit" then
+					--news_manager.send_tip(db.actor, "ПЕРЕОДЕВАНИЕ БАНДИТ есть армор - "..item:section().." НПС - "..npc:name().." vis - "..vis.." ", nil, "dolg", 9000)
+					olr.del(item)
+					local pk = get_netpk(npc,1)
+  					if pk:isOk() then
+    						local data = pk:get()
+    						data.visual_name = neutral_set(item)
+      						pk:set( data )
+					end
+					local se_obj = alife():object(npc:id())
+  					if se_obj then
+    						alife():set_switch_offline (se_obj.id, true)
+    						alife():set_switch_online (se_obj.id, false)
+    						alife():set_interactive (se_obj.id, false)
+  					end
+					olr_timers.st_timer("convert_online", 1, "olr_npc_eqp.convert_online_out("..npc:id()..")")
+			end
+
+
+			local sobj = alife():object(npc:id())
+			if sobj then
+				smart_terrain.unregister_npc(sobj)
+			end
+
+			end
+			end
+		end)
+	
+	end
+end
+
+function convert_online_out(id)
+	if id then
+		--log1("convert npc online - "..id.."")
+		alife():set_switch_offline (id, false)
+    		alife():set_switch_online (id, true)
+    		alife():set_interactive (id, true)
+	end
+end
+			
+function neutral_vis(npc)
+	local vis_num = 0
+	V = tostring(""..[[npc:get_visual_name())]].."")
+	if string.find(V,"green_stalker_") then -- новичок
+		vis_num = 1
+	elseif string.find(V,"stalker_neytral_") then -- опытный
+		vis_num = 2
+	elseif string.find(V,"stalker_neytral_nauchniy") then  -- научный (ветеран)
+		vis_num = 3
+	elseif string.find(V,"stalker_neytral_exoskeleton") then  -- мастер (экза)
+		vis_num = 4
+	else 
+		vis_num = -1
+	end
+	return vis_num
+end
+
+function neutral_outf(item)
+	local item_num = 0
+	V = item:section()
+	if V == "stalker_outfit" or V == "killer_outfit" then
+		item_num = 2
+	elseif V == "ecolog_outfit" then 
+		item_num = 3
+	elseif V == "scientific_outfit" then  
+		item_num = 4
+	elseif V == "exo_outfit" then
+		item_num = 5
+	else 
+		item_num = -1
+	end
+	return item_num
+end
+
+function neutral_set(item)
+	local item_vis = ""
+	V = item:section()
+	if V == "stalker_outfit" then
+		item_vis = [[actors\neytral\stalker_neytral_hood_10]] 
+	elseif V == "killer_outfit" then
+		item_vis = [[actors\killer\stalker_ki_antigas]]
+	elseif V == "ecolog_outfit" then 
+		item_vis = [[actors\ecolog\stalker_ecolog]]
+	elseif V == "scientific_outfit" then  
+		item_vis = [[actors\neytral\stalker_neytral_nauchniy]]
+	elseif V == "exo_outfit" then
+		item_vis = [[actors\neytral\stalker_neytral_exoskeleton]]
+	else 
+		item_vis = [[actors\neytral\stalker_neytral_hood_9]]
+	end
+	return item_vis
+end

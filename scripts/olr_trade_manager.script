@@ -1,0 +1,93 @@
+-- hi_flyer 29.03.16
+
+
+local start_snds={
+"characters_voice\\human_01\\newbie\\talk\\accept\\accept_3",
+"characters_voice\\human_01\\newbie\\talk\\accept\\accept_6",
+"characters_voice\\human_01\\newbie\\talk\\accept\\accept_5",
+"characters_voice\\human_01\\newbie\\talk\\accept\\accept_4"
+}
+
+
+
+function trading_start(id)
+
+	local obj = level.object_by_id(id)
+
+	if obj == nil then
+		return
+	end
+
+	if obj:best_enemy() then
+		return
+	end
+
+	if obj:name() == "lvl7_yantar_stalker_sakharov" then
+		local safeobj = alife():object("lvl7_yantar_arts_box_profa")   -- ящик профессора
+		if safeobj then
+			local bosx = level.object_by_id(safeobj.id)
+			local jan_profesor = alife():object("lvl7_yantar_stalker_sakharov")
+			local prof = level.object_by_id(jan_profesor.id)	
+			for i = 0, bosx:inv_box_count() - 1 do
+				local obj = bosx:object_from_inv_box(i)
+				bosx:transfer_item(obj, prof)
+			end			
+		end	
+	end
+
+	if obj:name() == "bar_barman" then
+		local safeobj = alife():object("lvl5_bar_box_barmena")   -- ящик бармена
+		if safeobj then
+			local bosx = level.object_by_id(safeobj.id)
+			local jan_profesor = alife():object("bar_barman")
+			local prof = level.object_by_id(jan_profesor.id)	
+			for i = 0, bosx:inv_box_count() - 1 do
+				local obj = bosx:object_from_inv_box(i)
+				local rnd = math.random(1,2)
+				if obj and obj:is_ammo() and rnd == 1 then
+					if obj:get_ammo_box_curr() < 20 then
+						log1("transfer del"..obj:name().."")
+						olr.del(obj)
+					end
+				end
+			end
+
+			for i = 0, bosx:inv_box_count() - 1 do
+				local obj = bosx:object_from_inv_box(i)
+				if obj then
+					log1("transfer "..obj:name().."")
+					bosx:transfer_item(obj, prof)
+				end
+			end
+					
+		end	
+	end
+
+	if olr_protected.is_no_offline_alife_obj(obj:name()) then
+		return
+	end
+	
+	if not obj_istrader(obj) then
+		local snd_obj = xr_sound.get_safe_sound_object(start_snds[math.random(table.getn(start_snds))])
+		snd_obj:play_at_pos(db.actor, db.actor:position())
+		
+	end
+
+	--obj:iterate_inventory(
+	--	function(obj, iobj) 
+	--		log1(" has obj - "..iobj:name().." ")
+	--	end
+	--, obj)
+	
+
+end
+
+function obj_istrader(obj)
+	if obj:character_community() == "trader" or obj:character_community() == "ecolog" then
+		return true
+	else
+		return false
+	end
+end
+
+

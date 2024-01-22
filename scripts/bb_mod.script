@@ -1,0 +1,111 @@
+local effect_for_wpn = 
+{
+["wpn_rg-6"] = true,
+["wpn_rg6_m1"] = true,
+["wpn_rg-6_small"] = true,
+["wpn_gm94"] = true,
+["wpn_gm94_slozhenniy"] = true,
+["wpn_rpg7"] = true,
+["wpn_igla"] = true
+}
+
+
+
+function npcondeath(victim, who)
+        local prob_var = math.random(1,4)
+		if prob_var == 1 then 
+		local cur_weapon = db.actor:active_item()
+		if cur_weapon ~= nil then
+			local cur_weapon_sec = cur_weapon:section()
+			if effect_for_wpn[cur_weapon_sec] ~= nil then
+			local pos = victim:position()
+			local x, y, z = pos.x, pos.y, pos.z
+			particles_object([[explosions\explosion_01d_00]]):play_at_pos(vector():set(x,y,z))
+
+                        local bobj2 = alife():create('gore_zombie_crash', victim:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+                        level.client_spawn_manager():add(bobj2.id, 0, 
+                        function(id,obj) 
+						
+                        if obj then
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("foot_left2")
+		                h.direction = vector():set(math.random(1),0.1,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("foot_right2")
+		                h.direction = vector():set(math.random(1),0.31,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("foot_left")
+		                h.direction = vector():set(math.random(1),0.41,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("foot_right")
+		                h.direction = vector():set(math.random(1),0.51,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("head")
+		                h.direction = vector():set(math.random(1),1.61,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("left_hand2")
+		                h.direction = vector():set(math.random(1),0.71,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+                                local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+                                h:bone("right_hand2")
+		                h.direction = vector():set(math.random(1),0.81,math.random(1))
+		                h.power = 1
+		                h.impulse = math.random(6,12)
+		                obj:hit(h)
+
+
+                        end						
+ 
+                        end)
+
+			local wait_time = 0
+  			wait_time = time_global() + 80
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() olr.del_by_name(victim:name()) end
+  			)
+
+			end
+		end
+			else
+		--log1("zombi ressurect")
+		nick.zombu_ressurect(victim,who)
+	end
+end

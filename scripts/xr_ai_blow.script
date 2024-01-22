@@ -1,0 +1,161 @@
+-- id's for evaluators and actions
+base_id_blow = 21111
+ev_is_death = base_id_blow + 1
+act_aiblow = base_id_blow + 1
+
+-- init module
+function init()
+	--log1("init module")
+	core.ac("load_scheme", xrs_load_scheme)
+	core.ac("logic_disable_schemes", disable_scheme)
+	core.ac("logic_enable_schemes", set_scheme)
+end
+
+-- load scheme
+function xrs_load_scheme()
+	load_scheme("xr_ai_blow",  "blow_death",  modules.stype_stalker)
+	--log1("load sh")
+end
+
+----------------------------------------------------------------------------------
+-- EVALUATOR
+----------------------------------------------------------------------------------
+class "evaluator_is_blowout" (property_evaluator)
+function evaluator_is_blowout:__init(st) super (nil, "evaluator_is_blowout")
+	self.st = st
+end
+
+-- evaluator
+function evaluator_is_blowout:evaluate()
+	local npc = self.object
+	if olr_blowout.state_blow == 2 or olr_blowout.state_blow == 3 then
+		if npc:is_obj_outdoors() == true and not olr_protected.is_no_offline_alife_obj(npc:name()) then
+			if not olr_blowout.no_blow_levels[level.name()] then
+				--log1(" xr_ai_blow true now "..npc:name().." ")
+				return true
+			end
+		end
+	end
+	return false
+end
+----------------------------------------------------------------------------------
+class "action_blow_death" (action_base)
+function action_blow_death:__init (npc,action_name,storage) super (nil,action_name)
+	self.a = storage
+end
+
+function action_blow_death:initialize()
+	action_base.initialize(self)
+	local npc=self.object
+	self.wait_tmr = 0
+	--log1("init action_blow_death "..npc:name().."")
+end
+
+function action_blow_death:execute()
+	action_base.execute(self)
+
+	local npc=self.object
+
+	--log1("execute "..npc:name().."")
+
+	if not self.control_override2 then
+	self.control_override2=true
+	if olr_blowout.state_blow == 2 then
+		if npc:animation_count()==0 then 
+			--npc:clear_animations()
+			--npc:set_desired_position()
+			--self.wait_tmr = self.wait_tmr + 1
+			--state_mgr.set_state(npc,"preblow",nil,nil,{look_object = nil},{animation = true})
+		end
+		local pt = npc:safe_cover(npc:position(),50,0)
+		if pt then
+		--if pt and self.wait_tmr > 10 then
+		    self.pos = pt:position()
+		    self.vid = pt:level_vertex_id()    	
+		    if npc:accessible(self.vid) == false then
+			    local vtemp = vector():set(0,0,0)
+			    self.vid, vtemp = npc:accessible_nearest(self.pos, vtemp)
+			    self.pos = vtemp
+		   end
+		   npc:clear_animations()
+		   npc:set_desired_position(self.pos)
+		   npc:set_desired_direction()
+		   npc:set_detail_path_type(move.line)
+		   npc:set_path_type(game_object.level_path)
+		   npc:set_body_state(move.standing)
+		   npc:set_mental_state(anim.panic)
+		   npc:set_dest_level_vertex_id(self.vid)
+		   npc:set_movement_type(move.run)
+		end
+	end
+	end
+
+	if olr_blowout.state_blow == 3 then
+	--if not self.control_override3 then
+	--self.control_override3=true
+		if npc:animation_count()==0 then 
+			--log1("pre pain NOW")
+			npc:clear_animations()
+			npc:set_desired_position()
+			state_mgr.set_state(npc,"psy_pain",nil,nil,{look_object = nil},{animation = true})
+		end
+	--end
+	end
+
+	--xr_sound.set_sound(npc, nil)
+	--stop_play_sound(npc)
+
+end
+
+function action_blow_death:finalize()
+	action_base.finalize (self)
+	local npc=self.object
+	xr_sound.set_sound(npc, nil)
+	stop_play_sound(npc)
+	self.control_override2=nil
+	self.control_override3=nil
+end 
+
+----------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------
+function add_to_binder(object, char_ini, scheme, section, st)
+	local npc = object
+	local planner = npc:motivation_action_manager()
+	local property_wounded = xr_evaluators_id.sidor_wounded_base
+	
+	planner:add_evaluator(ev_is_death, evaluator_is_blowout(st))
+	
+	local new_action = action_blow_death(st,"blow_death");
+	new_action:add_precondition(world_property(property_wounded, false))
+	new_action:add_precondition(world_property(stalker_ids.property_alive, true))
+	new_action:add_precondition(world_property(ev_is_death, true))
+	new_action:add_precondition(world_property(stalker_ids.property_danger,false))
+	new_action:add_precondition(world_property(stalker_ids.property_enemy, false))
+	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))
+	xr_motivator.addCommonPrecondition(new_action)
+	new_action:add_effect(world_property(ev_is_death, false))
+	planner:add_action(act_aiblow, new_action)
+
+	new_action = planner:action(xr_actions_id.alife)
+	new_action:add_precondition(world_property(ev_is_death, false))
+
+end
+
+----------------------------------------------------------------------------------
+-- Func: set_scheme.
+----------------------------------------------------------------------------------
+function set_scheme(ini, object, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(object, ini, "blow_death", "blow_death")
+	st.enabled = true
+end
+
+----------------------------------------------------------------------------------
+-- Func: disable_scheme.
+----------------------------------------------------------------------------------
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()]["blow_death"]
+	if st then
+		st.enabled = false
+	end
+end

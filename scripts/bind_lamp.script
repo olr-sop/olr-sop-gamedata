@@ -1,0 +1,99 @@
+-- биндер ламп
+-- denzor, hi_flyer 
+
+function lamp_init    (obj)
+	obj:bind_object(lamp_binder(obj))
+end
+
+class "lamp_binder" (object_binder)
+----------------------------------------------------------------------------------------------------------------------
+function lamp_binder:__init (obj) super(obj)
+	self.info = nil
+	self.enabled = true
+	self.on = true
+	self.time_apdeyta = 0
+	self.timerup = math.random(100,400)
+	self.lamp = self.object:get_hanging_lamp()
+	assert(self.lamp)
+end
+----------------------------------------------------------------------------------------------------------------------
+function lamp_binder:net_spawn(data)
+	if object_binder.net_spawn(self,data) == false then
+		return false
+	end
+	local obj = self.object
+	if obj:spawn_ini() and obj:spawn_ini():section_exist("logic") and obj:spawn_ini():line_exist("logic", "info_enable") then
+		self.info = obj:spawn_ini():r_string("logic", "info_enable")
+	end
+	return true
+end
+----------------------------------------------------------------------------------------------------------------------
+function lamp_binder:net_destroy()
+	object_binder.net_destroy(self)
+end
+----------------------------------------------------------------------------------------------------------------------
+function lamp_binder:reinit()
+	object_binder.reinit(self)
+end
+
+function lamp_binder:update(delta)
+	object_binder.update(self, delta)
+
+	--local pt = profile_timer()
+	--pt:start()
+
+	local hidePos = 80
+	local acPos = db.actor:position()
+	if self.info == nil then
+		if self.object:position():distance_to(acPos) > hidePos then
+			if self.on == true then
+				self.lamp:turn_off()
+				--log1("lamp binder OFF "..self.object:name().."")
+				self.on = false
+			end
+		elseif self.object:position():distance_to(acPos) < hidePos then
+			if self.on == false then
+				self.lamp:turn_on()
+				--log1("lamp binder ON "..self.object:name().."")
+				self.on = true
+			end
+		end
+	end
+
+	if time_global() > self.time_apdeyta then
+		self.time_apdeyta = time_global() + self.timerup
+		if olr_blowout.state_blow == 2 then
+			local brg_var = math.random(10,250) / 100
+			local ran_var = math.random(1,6)
+	       		self.lamp:set_brightness(brg_var)
+       			self.lamp:set_range(ran_var, 0)
+		end
+	end
+
+	if self.info == nil then return end
+	if db.actor:has_info(self.info) then	
+		if self.enabled == false then
+			self.lamp:turn_on()
+			self.enabled = true
+		end
+	else
+		if self.enabled then
+			self.lamp:turn_off()
+			self.enabled = false
+		end
+	end
+
+	--pt:stop()
+	--prints("работало (lamp binder) "..pt:time().." ms")
+
+end
+
+----------------------------------------------------------------------------------------------------------------------
+function lamp_binder:save(packet)
+	object_binder.save(self, packet)	
+end
+----------------------------------------------------------------------------------------------------------------------
+function lamp_binder:load(reader)
+	object_binder.load(self, reader)
+		
+end

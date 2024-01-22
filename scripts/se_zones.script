@@ -1,0 +1,278 @@
+local not_spawn_levels = {
+  l05_bar = true
+}
+
+function is_single_player_game  ()
+  if (_G.alife == nil) then
+    return  (true)
+  end
+  
+  if (alife() ~= nil) then
+    return  (true)
+  end
+  
+  if (_G.IsGameTypeSingle == nil) then
+    return  (true)
+  end
+
+  if (IsGameTypeSingle() == true) then
+    return  (true)
+  end
+
+  return    (false)
+end
+
+class "se_zone_anom" (cse_anomalous_zone)
+function se_zone_anom:__init (section) super (section)  
+--  mylog("init " .. tostring(self.id))
+--  self.sect=section
+end
+
+function se_zone_anom:on_register()
+  cse_anomalous_zone.on_register(self)
+--  local pos=self.position
+--  mylog("reg " .. tostring(self.id) .. " " .. pos.x .. ";" .. pos.y .. ";" .. pos.z)
+  
+  self.artefact_spawn_idle = 60*60*1000*utils.cfg_get_number(system_ini(), self:section_name(), "artefact_spawn_idle", self, false, 24)
+  self.artefact_spawn_rnd = utils.cfg_get_number(system_ini(), self:section_name(), "artefact_spawn_rnd", self, false, 100) 
+end
+
+function se_zone_anom:on_unregister()
+  cse_anomalous_zone.on_unregister(self)
+  --anomaly_holder.remove_anomaly(self.id)
+--  mylog("unreg " .. tostring(self.id))  
+end
+
+function se_zone_anom:move_offline()
+  cse_anomalous_zone.move_offline(self)
+--  mylog("offline " .. tostring(self.id))  
+end
+
+function se_zone_anom:move_offline(var)
+  cse_anomalous_zone.move_offline(self,var)
+--  mylog("offline1 " .. tostring(self.id))  
+end
+
+function se_zone_anom:on_spawn()
+  cse_anomalous_zone.on_spawn(self)
+--  mylog("spawn " .. tostring(self.id))
+end
+
+function se_zone_anom:update()
+  cse_anomalous_zone.update(self)
+
+  if self.last_spawn_time == nil then
+    self.last_spawn_time = game.get_game_time()
+  end
+
+  if game.get_game_time():diffSec(self.last_spawn_time) >= self.artefact_spawn_idle then
+    self.last_spawn_time = game.get_game_time()
+    if math.random(100) <= self.artefact_spawn_rnd then
+      self:spawn_artefacts()
+    end
+  end 
+end
+
+class "my_net_packet" (net_packet)
+function my_net_packet:__init() super ()
+end
+function my_net_packet:w_chunk_open16(num)
+  net_packet.w_chunk_open16(self,num)
+  mylog("w_chunk_open16 " .. num)
+end
+function my_net_packet:w_begin(num)
+  net_packet.w_begin(self,num)
+  mylog("w_begin " .. num)
+end
+function my_net_packet:w_u32(num)
+  mylog("w_u32 " .. num)
+end
+function my_net_packet:w_chunk_open8(num)
+  mylog("w_chunk_open8 " .. num)
+end
+function my_net_packet:w_u8(number)
+  mylog("w_u8 " .. num)
+end
+function my_net_packet:w_u24(number)
+  mylog("w_u24 " .. num)
+end
+function my_net_packet:w_tell()
+  mylog("w_tell ")
+end
+function my_net_packet:w_clientID(ClientID)
+  mylog("w_cliendID " .. ClientID)
+end
+function my_net_packet:w_sdir(vec)
+  mylog("w_sdir ")
+end
+function my_net_packet:w_u16(num)
+  mylog("w_u16 " .. num)
+end
+function my_net_packet:w_s16(num)
+  mylog("w_s16 " .. num)
+end
+function my_net_packet:w_matrix(matrix)
+  mylog("w_matrix ")
+end
+function my_net_packet:w_s64(num)
+  mylog("w_s64 " .. num)
+end
+function my_net_packet:w_bool(boo)
+  mylog("w_bool " .. boo)
+end
+function my_net_packet:w_dir(vec)
+  mylog("w_dir ")
+end
+function my_net_packet:w_s32(num)
+  mylog("w_s32 " .. num)
+end
+function my_net_packet:w_stringZ(string)
+  mylog("w_stringZ " .. string)
+end
+function my_net_packet:w_float_q16(num1, num2, num3)
+  mylog("w_float_q16 " .. num1 .. " " .. num2 .. " " .. num3)
+end
+function my_net_packet:w_angle8(num)
+  mylog("w_angle8 " .. num)
+end
+function my_net_packet:w_float(num)
+  mylog("w_float " .. num)
+end
+function my_net_packet:w_angle16(num)
+  mylog("w_angle16 " .. num)
+end
+function my_net_packet:w_float_q8(num1, num2, num3)
+  mylog("w_float_q8 " .. num1 .. " " .. num2 .. " " .. num3)
+end
+function my_net_packet:w_chunk_close8(num)
+  mylog("w_chunk_close8 " .. num)
+end
+function my_net_packet:w_vec3(vec)
+  mylog("w_vec3 ")
+end
+function my_net_packet:w_chunk_close16(num)
+  mylog("w_chuck_close16 " .. num)
+end
+function my_net_packet:w_u64(num)
+  mylog("w_u64 " .. num)
+end
+
+function se_zone_anom:STATE_Write(packet)
+--  local mypack=my_net_packet()
+--  mypack:w_begin(76)
+--  cse_anomalous_zone.STATE_Write(self, mypack)
+  cse_anomalous_zone.STATE_Write(self, packet)
+--  mylog("write " .. tostring(self.id))
+--  anomaly_holder.add_anomaly(self.id,nil)
+
+  if (is_single_player_game() == false) then
+    return
+  end
+  
+  if self.last_spawn_time == nil then
+    packet:w_u8(0)
+  else
+    packet:w_u8(1)
+    utils.w_CTime(packet, self.last_spawn_time)
+  end 
+end
+-- восстановление
+function se_zone_anom:STATE_Read( packet, size )
+--  local p1,p2
+  p1=packet:r_tell()
+  cse_anomalous_zone.STATE_Read( self, packet, size )
+  p2=packet:r_tell()
+  packet:r_seek(p1+41)
+  local rad=packet:r_float()
+  packet:r_seek(p2)
+--  mylog(p1 .. " " .. p2)
+  --if self.id~=65535 then
+  --  anomaly_holder.add_anomaly(self.id,self:clsid(),self:section_name(),rad)
+ -- end
+--  local pos=self.position
+--  mylog("read " .. tostring(self.id) .. " " .. pos.x .. ";" .. pos.y .. ";" .. pos.z)
+  
+  if editor() then
+    return
+  end
+  
+  if (is_single_player_game() == false) then
+    return
+  end
+  
+  local flag = packet:r_u8()
+  if flag == 1 then
+    self.last_spawn_time = utils.r_CTime(packet)
+  end
+end
+
+
+class "se_zone_visual" (cse_zone_visual)
+function se_zone_visual:__init (section) super (section)
+end
+function se_zone_visual:on_register()
+  cse_zone_visual.on_register(self)
+--  local pos=self.position
+--  mylog("reg " .. tostring(self.id) .. " " .. pos.x .. ";" .. pos.y .. ";" .. pos.z)
+  
+  self.artefact_spawn_idle = 60*60*1000*utils.cfg_get_number(system_ini(), self:section_name(), "artefact_spawn_idle", self, false, 24)
+  self.artefact_spawn_rnd = utils.cfg_get_number(system_ini(), self:section_name(), "artefact_spawn_rnd", self, false, 100) 
+end
+function se_zone_visual:update()
+  cse_zone_visual.update(self)
+
+  if self.last_spawn_time == nil then
+    self.last_spawn_time = game.get_game_time()
+  end
+
+  if game.get_game_time():diffSec(self.last_spawn_time) >= self.artefact_spawn_idle then
+    self.last_spawn_time = game.get_game_time()
+    if math.random(100) <= self.artefact_spawn_rnd then
+      self:spawn_artefacts()
+    end
+  end 
+end
+
+function se_zone_visual:STATE_Write(packet)
+  cse_zone_visual.STATE_Write(self, packet)
+
+  if (is_single_player_game() == false) then
+    return
+  end
+  
+  if self.last_spawn_time == nil then
+    packet:w_u8(0)
+  else
+    packet:w_u8(1)
+    utils.w_CTime(packet, self.last_spawn_time)
+  end 
+end
+-- восстановление
+function se_zone_visual:STATE_Read( packet, size )
+  cse_zone_visual.STATE_Read( self, packet, size )
+  local pos=self.position
+--  mylog("read " .. tostring(self.id) .. " " .. pos.x .. ";" .. pos.y .. ";" .. pos.z)
+    
+  if editor() then
+    return
+  end
+  
+  if (is_single_player_game() == false) then
+    return
+  end
+  
+  local flag = packet:r_u8()
+  if flag == 1 then
+    self.last_spawn_time = utils.r_CTime(packet)
+  end
+end
+
+
+
+--' –естрикторы
+class "se_restrictor" (cse_alife_space_restrictor)
+function se_restrictor:__init (section) super (section)
+end
+function se_restrictor:keep_saved_data_anyway()
+  return true
+end

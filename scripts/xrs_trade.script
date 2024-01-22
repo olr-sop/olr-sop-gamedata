@@ -1,0 +1,443 @@
+-- id's for evaluators and actions
+base_id_ntrade = 18860
+ev_is_trade = base_id_ntrade + 1
+act_trade = base_id_ntrade + 1
+
+local debg = false
+
+-- init module
+function init()
+	core.ac("load_scheme", xrs_load_scheme)
+	core.ac("logic_disable_schemes", disable_scheme)
+	core.ac("logic_enable_schemes", set_scheme)
+
+	--core.ac("actor_net_spawn",restore_data)
+	--core.ac("actor_save",save_data)			
+
+end
+
+traders = {
+	--{ base = id, client = id, data = {} }
+}
+
+function restore_data()
+	local data = nc.unpack_array_from_string(nc.load_variable("npc_trade_state",""))
+	if data.lvl and data.lvl==level.name() then
+		traders = data.tr
+		--log1("restore table, "..#traders.." pairs")
+	end
+end
+
+function save_data()
+	nc.save_variable("npc_trade_state",nc.pack_array_to_string({lvl=level.name(),tr = traders}))
+end
+
+local no_levels = {
+	["lvl_mars"] = true,
+	["lvl_nightmare"] = true,
+	["lvl14_stancia"] = true,
+	["lvl15_sarcofag"] = true,
+	["lvl16_generators"] = true
+}
+
+local places = {}
+function on_item_drop() 
+
+	--log1(" fff "..nc.load_variable("npc_trade_state","").."" )
+
+	--if nc.load_variable("npc_trade_state","") ~= "" then
+	--	log1("ret trade is now")
+	--	return
+	--end
+
+	if not has_alife_info("esc_kill_gunslinger") then
+		return
+	end
+
+        if no_levels[level.name()] then
+		return
+	end
+	
+	for a=1,65534 do
+		local obj = level.object_by_id(a)
+		if obj and obj:id()~=db.actor:id() and obj.clsid and obj:clsid() == clsid.script_stalker and obj:alive() then
+		if db.storage[obj:id()].active_scheme ~= "remark" then
+		if obj:character_community() ~= "neutral" 
+			or obj:character_community() ~= "zombied"
+			or obj:character_community() ~= "sin" then
+				table.insert(places, obj)	
+			end
+		end
+		end
+	end
+
+	if #places < 4 then
+		return
+	end
+
+	local rand_obj1 = places[math.random(#places)]
+	local rand_obj2 = places[math.random(#places)]
+
+	if rand_obj1 and rand_obj2 then
+		--log1(" id1 - "..rand_obj1:id().." ---  id2 - "..rand_obj2:id().." ---     ")
+		table.insert( traders, { base = rand_obj1:id(), client = rand_obj2:id(), data = { stage = 0 } } )
+	end
+end
+
+
+function on_sms_trade_otvet(npc)
+	
+	for a=1,65534 do
+		local obj = level.object_by_id(a)
+		if obj and obj:id()~=db.actor:id() and obj.clsid and obj:clsid() == clsid.script_stalker and obj:alive() then
+		if db.storage[obj:id()].active_scheme ~= "remark" then
+		if obj:character_community() ~= "neutral" 
+			or obj:character_community() ~= "sin"
+			or obj:character_community() ~= "zombied" then
+				table.insert(places, obj)	
+			end
+		end
+		end
+	end
+
+	if #places < 4 then
+		return
+	end
+
+	local rand_obj2 = places[math.random(#places)]
+
+	if npc and rand_obj2 then
+		local sobj = alife():object(rand_obj2:name())
+		--local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
+		--news_manager.send_tip(db.actor, ""..""..rand_obj2:character_name()..":".."\\n".."Давай поторгуем... ".."".."\n", 3, "default", 30000)
+		table.insert( traders, { base = npc:id(), client = rand_obj2:id(), data = { stage = 0 } } )
+	end
+end
+
+-- load scheme
+function xrs_load_scheme()
+	load_scheme("xrs_trade",  "trader",  modules.stype_stalker)
+end
+
+----------------------------------------------------------------------------------
+-- EVALUATOR
+----------------------------------------------------------------------------------
+class "evaluator_is_trade" (property_evaluator)
+function evaluator_is_trade:__init(st) super (nil, "evaluator_is_trade")
+	self.st = st
+end
+
+-- evaluator
+function evaluator_is_trade:evaluate()
+	local npc = self.object
+	
+	if self.st.table_key then
+		if not traders[self.st.table_key] then
+			self.st.table_key = nil
+			self.st.type = nil
+		else
+			if self.st.type == "base" then
+				if self.st.inert_end_trade then 
+					return true 
+				end
+				if traders[self.st.table_key].data.client_ready then
+					return true
+				end
+			end
+			if self.st.type == "client" and traders[self.st.table_key].data.base_ready then
+				return true
+			end
+		end
+		return false
+	end
+	
+	for k,v in pairs(traders) do
+		if v.base == npc:id() then
+			self.st.type = "base"
+			self.st.table_key = k
+			--traders[k].data.base_ready = true
+		elseif v.client == npc:id() then
+			self.st.type = "client"
+			self.st.table_key = k
+			traders[k].data.client_ready = true
+		end
+	end
+	return false
+end
+
+----------------------------------------------------------------------------------
+-- ACTION
+----------------------------------------------------------------------------------
+class "action_trade" (action_base)
+function action_trade:__init(st) super (nil, "action_trade")
+	self.st = st
+end
+
+-- initialize of action
+function action_trade:initialize()
+	action_base.initialize(self)	
+	local npc = self.object
+	
+	npc:set_detail_path_type(move.curve)
+	npc:set_path_type(game_object.level_path)
+	xr_sound.set_sound(npc, nil)
+	stop_play_sound(npc)
+	
+	if self.st.type == "base" then
+		self.target = level.object_by_id(traders[self.st.table_key].client)
+	else
+		self.target = level.object_by_id(traders[self.st.table_key].base)
+	end
+	self.state = 0
+	self.walkstatrnd = math.random(1,2)
+	self.handshake = false
+	if debg == true then news_manager.send_tip(db.actor, " START TRADE  - "..self.target:name().."  ") end
+end
+
+-- execute of action
+function action_trade:execute()
+	action_base.execute(self)	
+	
+	local meet_dist = 1.5 --trade begin distance
+	local safe_dist = 6 --strap weapon distance
+	
+	local npc = self.object
+	local state = self:get_state()
+	
+	if self.st.type == "base" then
+		if debg == true then olr.add_spot_on_map( npc:id(),"alife_combat_fight", " база "..npc:name().." "  ) end
+		--log1("1")
+		if not self.switch_phase_time then
+			npc:clear_animations()
+			utils.send_to_nearest_accessible_vertex(npc,npc:level_vertex_id())
+			self.switch_phase_time = time_global() + 1500
+			state_mgr.set_state(npc,"guard",nil,nil,{look_object = self.target},{animation = true})
+		end
+		if state==0 then
+			if time_global() > (self.switch_phase_time or 0) then
+				self:change_state()
+			end
+		elseif state==1 then
+			if self.state ~= state then
+				if npc:item_in_slot(1) or npc:item_in_slot(2) and npc:active_item() then
+					state_mgr.set_state(npc,"hello_wpn",nil,nil,{look_object = self.target},{animation = true})
+				else
+					state_mgr.set_state(npc,"hello",nil,nil,{look_object = self.target},{animation = true})
+				end
+				self.state = state
+				self.switch_phase_time = time_global() + 3000
+			end
+			if time_global() > (self.switch_phase_time or 0) then
+				self:change_state()
+			end
+		--log1("2")
+		elseif state==2 then
+			if self.state ~= state then
+				traders[self.st.table_key].data.base_ready = true
+				state_mgr.set_state(npc,"guard",nil,nil,{look_object = self.target},{animation = true})
+				self.state = state
+				self.switch_phase_time = time_global() + 3000
+				xr_sound.set_sound_play(npc, "new_hello")
+			end
+			if time_global() > (self.switch_phase_time or 0) then
+				self:change_state()
+			end
+		--log1("3")
+		elseif state==3 then
+			local dir = self.target and self.target:position():sub(npc:position()):normalize():mul(meet_dist)
+			npc:set_desired_direction(dir)
+			
+			if self.target and npc:position():distance_to(self.target:position()) < safe_dist then
+				self:change_state()
+			end
+		elseif state==4 then
+			if self.state ~= state then
+				state_mgr.set_state(npc,"wait",nil,nil,{look_object = self.target},{animation = true})				
+				self.state = state
+			end
+			
+			local dir = self.target:position():sub(npc:position()):normalize():mul(meet_dist)
+			npc:set_desired_direction(dir)
+			
+			if npc:position():distance_to(self.target:position()) < safe_dist - 1.5 then
+				self:change_state()
+			end
+		--log1("4")
+		elseif state==5 then
+			local dir = self.target:position():sub(npc:position()):normalize():mul(meet_dist)
+			npc:set_desired_direction(dir)
+			
+			if npc:position():distance_to(self.target:position()) <= meet_dist then
+				self:change_state()
+			end
+		elseif state == 6 then
+			if self.state ~= state then
+				if self.walkstatrnd == 1 then
+					state_mgr.set_state(npc,"choosing",nil,nil,{look_object = self.target},{animation = true})
+				else
+					if self.handshake == false then
+						state_mgr.set_state(npc,"norm_hello_0",nil,nil,{look_object = self.target},{animation = true})
+						self.handshake = true
+					end
+				end
+				xr_sound.set_sound_play(npc, "talk_hello")
+				self.state = state
+				self.switch_phase_time = time_global() + math.random(10000,20000)
+			end	
+			if time_global() > (self.switch_phase_time or 0) then
+				xr_sound.set_sound_play(self.object, "talk_bye")
+				--log1(" here done trade ")
+				this.celling_habar_svoi(self.object,self.target)
+				--level.map_remove_object_spot(npc:id(), "monster_part_location")
+				--level.map_remove_object_spot(npc:id(), "alife_combat_fight")
+				self:change_state()
+			end
+		elseif state == 7 then
+			traders[self.st.table_key].data.base_ready = nil
+		end
+		--log1("5")
+	else
+		if debg == true then olr.add_spot_on_map( npc:id(),"monster_part_location", " идущий покупаткль "..npc:name().." "   ) end
+		--log1("6")
+		if state == 2 then
+			if self.state ~= state then
+				npc:clear_animations()
+				utils.send_to_nearest_accessible_vertex(npc,npc:level_vertex_id())
+				state_mgr.set_state(npc,"threat",nil,nil,{look_object = nil},{animation = true})
+				self.state = state
+			end
+		elseif state == 3 or state == 4 then
+			if self.state ~= state then
+				if self.walkstatrnd == 1 then
+					state_mgr.set_state(npc,"patrol",nil,nil,{look_object = nil},{animation = true})
+				else
+					state_mgr.set_state(npc,"run",nil,nil,{look_object = nil},{animation = true})
+				end
+				self.state = state
+			end
+			
+			if not self.target then return end
+			local lv = self.target:level_vertex_id()
+			local dir = npc:position():sub(self.target:position()):normalize():mul(meet_dist)
+			level.vertex_in_direction(self.target:position(), dir, meet_dist)
+			local pos = self.target:position():add(dir)
+			
+			utils.send_to_nearest_accessible_vertex(npc,lv)
+			npc:set_desired_position(pos)
+			npc:set_desired_direction(dir:mul(-1))
+		--log1("7")
+			
+		elseif state == 5 then
+			if self.state ~= state then
+				state_mgr.set_state(npc,"run",nil,nil,{look_object = self.target},{animation = true})
+				self.state = state
+			end
+			
+			local lv = self.target:level_vertex_id()
+			local dir = npc:position():sub(self.target:position()):normalize():mul(meet_dist)
+			level.vertex_in_direction(self.target:position(), dir, meet_dist)
+			local pos = self.target:position():add(dir)
+			
+			utils.send_to_nearest_accessible_vertex(npc,lv)
+			npc:set_desired_position(pos)
+			npc:set_desired_direction(dir:mul(-1))
+		elseif state == 6 then
+			if self.state ~= state then
+				if self.walkstatrnd == 1 then
+					state_mgr.set_state(npc,"choosing",nil,nil,{look_object = self.target},{animation = true})
+				else
+					if self.handshake == false then
+						state_mgr.set_state(npc,"norm_hello_0",nil,nil,{look_object = self.target},{animation = true})
+						self.handshake = true
+					end
+				end
+				self.state = state
+			end	
+		end
+	end
+end
+
+function celling_habar_svoi(npc,target)
+	--if debg == true then log1(" TRY celling "..npc:name().." to "..target:name().."  ") end
+	local cl_barman = level.object_by_id(target:id())
+	if cl_barman then
+		npc:iterate_inventory( function(_, item)
+			if item then
+				if item:is_artefact() or item:is_ammo() then
+					if olr.olrdbg == true then log1(" DBG xrs_trade celling "..npc:name().." to "..target:name().." - "..item:name().." ") end
+					npc:transfer_item(item, cl_barman)
+					npc:give_money(item:cost())
+					--state_mgr.set_state(npc,"norm_hello_0",nil,nil,{look_object = target},{animation = true})
+					--state_mgr.set_state(target,"norm_hello_0",nil,nil,{look_object = npc},{animation = true})
+					-- TODO - давать деньги 
+				end
+			end
+		end )
+	end
+end
+
+function action_trade:get_state()
+	return traders[self.st.table_key].data.stage or 0
+end
+
+function action_trade:change_state()
+	traders[self.st.table_key].data.stage = (traders[self.st.table_key].data.stage or 0) + 1
+	--log1("stage "..traders[self.st.table_key].data.stage)
+end
+
+-- finalize
+function action_trade:finalize()
+	action_base.finalize (self)
+	
+	if traders[self.st.table_key] then traders[self.st.table_key] = nil end
+	self.st.table_key = nil
+	self.st.type = nil
+
+	nc.del_variable("npc_trade_state")
+
+	--log1(" TRADE DONE  ")
+	
+end
+
+
+----------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------
+function add_to_binder(object, char_ini, scheme, section, st)
+	local npc = object
+	local planner = npc:motivation_action_manager()
+	local property_wounded = xr_evaluators_id.sidor_wounded_base
+	
+	planner:add_evaluator(ev_is_trade, evaluator_is_trade(st))
+	
+	local new_action = action_trade(st);
+	new_action:add_precondition(world_property(property_wounded, false))
+	new_action:add_precondition(world_property(stalker_ids.property_alive, true))
+	new_action:add_precondition(world_property(stalker_ids.property_danger,false))
+	new_action:add_precondition(world_property(stalker_ids.property_enemy, false))
+	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))
+	xr_motivator.addCommonPrecondition(new_action)
+	new_action:add_effect(world_property(ev_is_trade, false))
+	planner:add_action(act_trade, new_action)
+
+	new_action = planner:action(xr_actions_id.alife)
+	new_action:add_precondition(world_property(ev_is_trade, false))
+end
+
+----------------------------------------------------------------------------------
+-- Func: set_scheme.
+----------------------------------------------------------------------------------
+function set_scheme(ini, object, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(object, ini, "trader", "trader")
+	st.enabled = true
+end
+
+----------------------------------------------------------------------------------
+-- Func: disable_scheme.
+----------------------------------------------------------------------------------
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()]["trader"]
+	if st then
+		st.enabled = false
+	end
+end

@@ -1,0 +1,625 @@
+--[[-----------------------------------------------------------------------------------------------
+ File         : artefact_merger.script
+ Description  : Artefact merger's menu and features
+ Copyright    : OLR Team
+ Author       : _Boolean_, proger_Dencheek, hi_flyer
+ Date         : 08.04.2014
+ Last edit    : 17.09.2016
+--]]-----------------------------------------------------------------------------------------------
+-----------------------------------
+-- Variables
+-----------------------------------
+
+local recipes_table = {
+
+	{"af_gold_fish", "af_fuzz_kolobok", "journalist_bar_bloknot_take", "af_gold_fish_black"},  
+
+	{"af_gravi", "af_vyvert", "artm_af_gold_fish", "af_gold_fish"},
+
+	{"af_medusa", "af_drops", "artm_af_soul", "af_soul"},
+
+	{"af_blood", "af_fireball", "artm_af_dummy_spring", "af_dummy_spring"},
+
+        {"af_ameba_slime", "af_mincer_meat", "artm_af_dummy_glassbeads", "af_dummy_glassbeads"},
+
+        {"af_electra_sparkler", "af_electra_flash", "artm_af_electra_moonlight", "af_electra_moonlight"},
+
+        {"af_cristall", "af_fuzz_kolobok", "lithium_profff", "af_dummy_battery"},
+         
+}
+
+local olr_artefacts = {
+	af_gold_fish_black = true,
+	af_base = true,
+	af_medusa = true,
+	af_cristall_flower = true,
+	af_night_star = true,
+	af_vyvert = true,
+	af_gravi = true,
+	af_gold_fish = true,
+	af_drops = true,
+	af_fireball = true,
+	af_cristall = true,
+	af_blood = true,
+	af_mincer_meat = true,
+	af_soul = true,
+	af_electra_sparkler = true,
+	af_electra_flash = true,
+	af_electra_moonlight = true,
+	af_ameba_slime = true,
+	af_ameba_slug = true,
+	af_ameba_mica = true,
+	af_dummy_spring = true,
+	af_dummy_dummy = true,
+	af_dummy_battery = true,
+	af_dummy_pellicle = true,
+	af_dummy_glassbeads = true,
+	af_rusty_thorn = true,
+	af_rusty_kristall = true,
+	["af_rusty_sea-urchin"] = true,
+	af_fuzz_kolobok = true,
+	af_compas = true
+}
+
+local disappear_time = 0
+local af_info_statics = {}
+local reg_ids = {}
+local af_slot = {}
+local ignore_af_section = {}
+local to_end_table = {}
+local static_icon = nil
+local last_key = -1
+local select_buttons = {}
+local used_section_button = {}
+local oButtons = {}
+local cells_cnt = {
+	x = 0,
+	y = 0
+}
+-----------------------------------
+class "CButtonData"
+-----------------------------------
+-- Construct
+function CButtonData:__init(wind, section, button)
+	self.section = section
+	self.wind = wind
+	self.button = button
+	table.insert(oButtons, self)
+end
+
+-- Destruct
+function CButtonData:__finalize()
+
+end
+
+function CButtonData:OnPress()
+	local ini = system_ini()
+	local line_to_pos = {
+		inv_name = {
+			11170, 400, 50, 50, nil, true
+		},
+		--description = {
+		--	63, 462, 333, 156
+		--},
+		cost = {
+			11309, 400, 50, 50, "RU"
+		},
+		inv_weight = {
+			11305, 436, 50, 50, "kg"
+		}
+	}
+	
+	--self.wind:Clear_af_info_statics()
+	
+	for key, val in pairs(line_to_pos) do
+		local oStatic = nil
+		local is_init_child = false
+		
+		if af_info_statics[key] ~= nil then
+			oStatic = af_info_statics[key]
+		else
+			oStatic = CUIStatic()
+			oStatic:Init(val[1], val[2], val[3], val[4])
+			oStatic:SetTextColor(255, 238, 155, 23)
+			is_init_child = true
+		end
+		
+		if val[5] == nil then
+			if val[6] == true then
+				oStatic:SetTextST(ini:r_string(self.section, key))
+			else
+				oStatic:SetText(ini:r_string(self.section, key))
+			end
+		elseif val[6] == true then
+			oStatic:SetTextST(
+				("%s %s"):format(
+					ini:r_string(self.section, key), val[5]
+				)
+			)
+		else
+			oStatic:SetText(
+				("%s %s"):format(
+					ini:r_string(self.section, key), val[5]
+				)
+			)
+		end
+		
+		if is_init_child == true then
+			self.wind:AttachChild(oStatic)
+			af_info_statics[key] = oStatic
+		end
+		
+		--self.wind.description:SetTextST(ini:r_string(self.section, "description"))
+		self.wind:ClearStaticIcon()
+	end
+end
+
+function CButtonData:OnDoublePress()
+	self.wind:AddTo2Af(self.section, self)
+end
+
+-----------------------------------
+class "CSlotData"
+-----------------------------------
+-- Construct
+function CSlotData:__init(wind, section, slot_id)
+	self.section = section
+	self.wind = wind
+	self.slot_id = slot_id
+end
+
+-- Destruct
+function CSlotData:__finalize()
+
+end
+
+function CSlotData:OnPress()
+	self.wind:DeleteAfInSlot(self.slot_id)
+end
+
+-----------------------------------
+class "MergerMenu" (CUIScriptWnd)
+-----------------------------------
+-- Construct
+function MergerMenu:__init() super()
+	self:InitControls()
+	self:InitCallBacks()
+end
+
+-- Destruct
+function MergerMenu:__finalize()
+end
+
+function MergerMenu:InitControls()
+	self:Init(0, 0, 1024, 768)
+	
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_artefact_merger_wnd.xml")
+	
+	self.background = xml:InitStatic("background", self)
+	
+	self.btn_exit = xml:Init3tButton("background:btn_exit",	self.background)	
+	self:Register(self.btn_exit, "btn_exit")
+	
+	self.description = xml:InitStatic("background:description",	self.background)
+	
+	self.btn_try = xml:Init3tButton("background:btn_try",	self.background)	
+	self:Register(self.btn_try, "btn_try")
+	self.btn_try:Enable(false)
+	
+	self:ShowArtefactsIcons()
+end
+
+function MergerMenu:ShowArtefactsIcons()
+local x_cnt, y_cnt = 0, 0
+	local calc = function(npc, obj)
+		if obj ~= nil then
+			local section = obj:section()
+			if (olr_artefacts[section] and
+				used_section_button[section] ~= true and
+				ignore_af_section[section] ~= true
+			) then
+				self:AddArtefactIcon(obj, section)
+			end
+		end
+	end
+	db.actor:iterate_inventory(calc, db.actor)
+end
+
+function MergerMenu:ClearArtefactsIcons()
+	if next(reg_ids) ~= nil then
+		for _,val in pairs(reg_ids) do
+			if self[val] ~= nil then
+				--self:DetachChild(self[val])
+				self[val]:InitTexture("")
+				self[val] = nil
+			end
+		end
+	end
+	reg_ids = {}
+end
+
+function MergerMenu:AddArtefactIcon(obj, section)
+	local reg_id = ""
+	if type(obj) == "number" then
+		reg_id = ("af_%d"):format(obj)
+	elseif type(obj) == "string" then
+		reg_id = ("af_%s"):format(obj)
+	else
+		reg_id = ("af_%d"):format(obj:id())
+	end
+
+	local x, y = GetInvPos(section)
+
+	self[reg_id] = CUIButton()
+	self:AttachChild(self[reg_id])
+	self[reg_id]:Init(52+50*cells_cnt.x, 106+70*cells_cnt.y, 45, 50)
+	self[reg_id]:InitTexture("ui\\ui_icon_equipment")
+	self[reg_id]:SetOriginalRect(x, y, 50, 50)
+	self[reg_id]:SetStretchTexture(true)
+	self:Register(self[reg_id], reg_id)
+	local button = CButtonData(self, section, self[reg_id])
+	self:AddCallback(
+		reg_id,
+		ui_events.BUTTON_CLICKED,
+		button.OnPress,
+		button
+	)
+	self:AddCallback(
+		reg_id,
+		ui_events.WINDOW_LBUTTON_DB_CLICK,
+		button.OnDoublePress,
+		button
+	)
+	table.insert(reg_ids, reg_id)
+	used_section_button[section] = true
+	cells_cnt.x = cells_cnt.x + 1
+	if cells_cnt.x >= 7 then
+		cells_cnt.x = 0
+		cells_cnt.y = cells_cnt.y + 1
+	end
+end
+
+function MergerMenu:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	local bind = dik_to_bind(dik)
+	
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			self:OnExitClick()
+		end
+	end
+end
+
+function MergerMenu:ReloadArtefactsIcons()
+	self:ClearArtefactsIcons()
+	self:ShowArtefactsIcons()
+end
+
+function MergerMenu:InitCallBacks()
+	self:AddCallback(
+		"btn_exit",
+		ui_events.BUTTON_CLICKED,
+		self.OnExitClick,
+		self
+	)
+	self:AddCallback(
+		"btn_try",
+		ui_events.BUTTON_CLICKED,
+		self.OnTryClick,
+		self
+	)
+end
+
+function MergerMenu:AddTo2Af(section, button)
+	for k,val in ipairs(recipes_table) do
+		if has_alife_info(val[3]) and (section == val[1] or section == val[2]) then
+			if af_slot[1] == nil then
+				local x, y = GetInvPos(section)
+				if self.af_slot_1 == nil then
+					self.af_slot_1 = CUIButton()
+					self.af_slot_1:Init(430, 350, 45, 50)
+					self.af_slot_1:InitTexture("ui\\ui_icon_equipment")
+					self.af_slot_1:SetOriginalRect(x, y, 50, 50)
+					self.af_slot_1:SetStretchTexture(true)
+					self:Register(self.af_slot_1, "af_slot_1")
+					self:AttachChild(self.af_slot_1)
+				else
+					self.af_slot_1:SetOriginalRect(x, y, 50, 50)
+					self.af_slot_1:Show(true)
+				end
+				button.button:Show(false)
+				select_buttons[1] = {section, button}
+				af_slot[1] = section
+				local slot = CSlotData(self, section, 1)
+				self:AddCallback(
+					"af_slot_1",
+					ui_events.BUTTON_CLICKED,
+					slot.OnPress,
+					slot
+				)
+				last_key = k
+			elseif af_slot[2] == nil then
+				if k == last_key and af_slot[1] ~= section then
+					local x, y = GetInvPos(section)
+					if self.af_slot_2 == nil then
+						self.af_slot_2 = CUIButton()
+						self.af_slot_2:Init(480, 350, 45, 50)
+						self.af_slot_2:InitTexture("ui\\ui_icon_equipment")
+						self.af_slot_2:SetOriginalRect(x, y, 50, 50)
+						self.af_slot_2:SetStretchTexture(true)
+						self:Register(self.af_slot_2, "af_slot_2")
+						self:AttachChild(self.af_slot_2)
+					else
+						self.af_slot_2:SetOriginalRect(x, y, 50, 50)
+						self.af_slot_2:Show(true)
+					end
+					button.button:Show(false)
+					select_buttons[2] = {section, button}
+					af_slot[2] = section
+					local slot = CSlotData(self, section, 2)
+					self:AddCallback(
+						"af_slot_2",
+						ui_events.BUTTON_CLICKED,
+						slot.OnPress,
+						slot
+					)
+					self.btn_try:Enable(true)
+					local obj_1 = db.actor:object(val[1])
+					local obj_2 = db.actor:object(val[2])
+					if obj_1 ~= nil and obj_2 ~= nil then
+						to_end_table = {
+							[1] = obj_1:id(), [2] = obj_2:id(), [3] = val[4]
+						}
+					end
+				end
+			end
+			break
+		end
+	end
+end
+
+function MergerMenu:DeleteAfInSlot(slot_id)
+	if next(oButtons) ~= nil then
+		for _,val in ipairs(oButtons) do
+			if val.section == af_slot[slot_id] then
+				val.button:Show(true)
+				break
+			end
+		end
+	end
+	self[("af_slot_%d"):format(slot_id)]:Show(false)
+	select_buttons[slot_id] = nil
+	af_slot[slot_id] = nil
+	if slot_id == 1 and af_slot[2] ~= nil then
+		select_buttons[1] = select_buttons[2]
+		af_slot[1] = af_slot[2]
+		select_buttons[2] = nil
+		af_slot[2] = nil
+		local x, y = GetInvPos(af_slot[1])
+		self.af_slot_1:SetOriginalRect(x, y, 50, 50)
+		self.af_slot_2:Show(false)
+		self.af_slot_1:Show(true)
+	end
+	self.btn_try:Enable(false)
+end
+
+function MergerMenu:OnTryClick()
+	if next(to_end_table) ~= nil then
+		local new_af_cell = nil
+
+                
+		local sobj = alife():create(
+			to_end_table[3],
+			db.actor:position(),
+			db.actor:level_vertex_id(),
+			db.actor:game_vertex_id(),
+			db.actor:id()
+		)
+                
+                 
+                xvars.cur_trans_art = to_end_table[3]
+                news_manager.send_tip(db.actor, "Процесс трансмутации запущен", nil, "af_merger", 9000)
+                --self:GetHolder():start_stop_menu(self, true)
+                local rand_time_varka = math.random(100,600)
+                olr_timers.st_timer("artefact_merger_timer",rand_time_varka, "artefact_merger.create_artefact()")
+
+
+		if to_end_table[1] then
+			local art = level.object_by_id(to_end_table[1])
+			if art then
+				olr.del(art)
+			end
+		end
+		if to_end_table[2] then
+			local art = level.object_by_id(to_end_table[2])
+			if art then
+				olr.del(art)
+			end
+		end
+		
+		self.af_slot_1:Show(false)
+		self.af_slot_2:Show(false)
+		
+		-- Result icon
+		disappear_time = time_global() + 1000
+		local x, y = GetInvPos(to_end_table[3])
+		if static_icon == nil then
+			static_icon = CUIStatic()
+			static_icon:Init(447, 152, 50, 50)
+			static_icon:InitTexture("ui\\ui_icon_equipment")
+			static_icon:SetOriginalRect(x, y, 50, 50)
+			self:AttachChild(static_icon)
+		else
+			static_icon:SetOriginalRect(x, y, 50, 50)
+		end
+		
+		local cnt_1 = -1
+		local cnt_2 = -1
+		local calc = function(npc, obj)
+			if obj ~= nil and select_buttons[1] ~= nil and select_buttons[2] ~= nil then
+				if obj:section() == select_buttons[1][1] then
+					cnt_1 = cnt_1 + 1
+				elseif obj:section() == select_buttons[2][1] then
+					cnt_2 = cnt_2 + 1
+				end
+			end
+		end
+		db.actor:iterate_inventory(calc, db.actor)
+		if cnt_1 > 0 then
+			select_buttons[1][2].button:Show(true)
+		else
+			new_af_cell = select_buttons[1][2]
+		end
+		if cnt_2 > 0 then
+			select_buttons[2][2].button:Show(true)
+		elseif new_af_cell == nil then
+			new_af_cell = select_buttons[2][2]
+		end
+		select_buttons = {}
+		
+		if new_af_cell ~= nil then
+			new_af_cell.button:SetOriginalRect(x, y, 50, 50)
+			new_af_cell.button:Show(false)  -- was true
+			new_af_cell.section = to_end_table[3]
+		else
+			self:AddArtefactIcon(sobj.id, to_end_table[3])  -- --//-----------------таймер---------------------------   
+		end
+		
+		level.add_call(check_time, remove)
+		to_end_table = {}
+		af_slot = {}
+		last_key = -1
+		--self:GetHolder():start_stop_menu(self, true) -- add
+		alife():release(sobj, true) -- add
+	end
+end
+
+function MergerMenu:ClearStaticIcon()
+	if static_icon ~= nil then
+		static_icon:SetOriginalRect(0, 0, 0, 0)
+	end
+end
+
+function MergerMenu:OnExitClick()
+	if self.owner ~= nil then
+		self:GetHolder():start_stop_menu(self.owner, true) -- new
+		self:GetHolder():start_stop_menu(self, true)
+		self.owner:Show(true)
+	else
+		self:GetHolder():start_stop_menu(self, true)
+	end
+	self:ClearStatics()
+	collectgarbage("collect")
+end
+
+function MergerMenu:ClearStatics()
+	self:Clear_af_info_statics()
+	--self:ClearArtefactsIcons()
+	if static_icon ~= nil then
+		self:DetachChild(static_icon)
+		static_icon = nil
+	end
+	if self.af_slot_1 ~= nil then
+		self:DetachChild(self.af_slot_1)
+		self.af_slot_1 = nil
+	end
+	if self.af_slot_2 ~= nil then
+		self:DetachChild(self.af_slot_2)
+		self.af_slot_2 = nil
+	end
+	cells_cnt = {
+		x = 0,
+		y = 0
+	}
+	af_slot = {}
+	ignore_af_section = {}
+	disappear_time = 0
+	to_end_table = {}
+	used_section_button = {}
+	oButtons = {}
+	self.af_slot_1 = nil
+	self.af_slot_2 = nil
+end
+
+function MergerMenu:Clear_af_info_statics()
+	if next(af_info_statics) ~= nil then
+		--for _,val in ipairs(af_info_statics) do
+			--if val ~= nil then
+				--self:DetachChild(val)
+			--end
+		--end
+		af_info_statics = {}
+	end
+end
+
+-----------------------------------------------------------
+-- Different functions
+-----------------------------------------------------------
+function on_game_load(obj)
+	if obj:section() == "atifact_merger" then
+                if xvars.cur_trans_art ~= "" then
+                	news_manager.send_tip(db.actor, "Процесc трансмутации ещё не завершён", nil, "af_merger", 9000)
+                	return
+                end
+		--olr.hide_inv()
+		level.start_stop_menu(MergerMenu(get_hud()), true)
+	end
+end
+
+function check_time()
+	return time_global() > disappear_time
+end
+
+function remove()
+	if static_icon ~= nil then
+		static_icon:Show(false)
+	end
+end
+
+-- Icons data
+function GetInvPos(section)
+	local ini = system_ini()
+	local x = ini:r_s32(section, "inv_grid_x")*50
+	local y = ini:r_s32(section, "inv_grid_y")*50
+	return x, y
+end
+---------------------------------------------------------------------------------------------
+
+function create_artefact()
+
+	local art_name = xvars.cur_trans_art
+	if not art_name then
+		news_manager.send_tip(db.actor, "Ошибка процесса трансмутации!", nil, "af_merger", 9000)
+		return
+	end
+
+	local sim = alife()
+	for id=1, 65534 do
+	local mer = sim:object(id)
+		if mer then
+			if mer:section_name() == "atifact_merger" then
+			local p_obj = alife():object(mer.parent_id)
+				if p_obj then
+					alife():create(art_name, p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
+					news_manager.send_tip(db.actor, "Процесс трансмутации завершён", nil, "af_merger", 9000)
+					--log1("atmerger spawn in parentID")
+					xvars.cur_trans_art = ""
+					if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then 
+						news_manager.send_tip(db.actor, "Ошибка процесса трансмутации! Под воздействием повышенной аномальной энергии произошла генерация неизвестного объекта!", nil, "af_merger", 9000)
+						alife():create("af_art_kub", p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
+					end
+				else 
+					--log1("atmerger spawn in merger pos")
+					news_manager.send_tip(db.actor, "Процесс трансмутации завершён", nil, "af_merger", 9000)
+					alife():create(art_name, mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
+					if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then 
+						news_manager.send_tip(db.actor, "Ошибка процесса трансмутации! Под воздействием повышенной аномальной энергии произошла генерация неизвестного объекта!", nil, "af_merger", 9000)
+						alife():create("af_kolco", mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
+					end
+					xvars.cur_trans_art = ""
+				end
+			end
+		end
+	end 
+end

@@ -1,0 +1,271 @@
+-- hi_flyer 31/03/17
+
+local studen_particle = particles_object("anomaly2\\studen_idle_bottom")
+local coster_particle = particles_object("explosions\\campfire_05")
+--local snd_obj = xr_sound.get_safe_sound_object([[ambient\fire2]])
+local actor_u_costra = false
+
+local food_sections = 
+{
+["rat_food"] = true,
+["crow_food"] = true,
+["mutant_flesh_eye"] = true,
+["mutant_boar_leg"] = true,
+["mutant_dog_tail"] = true,
+["mutant_psevdodog_tail"] = true,
+["mutant_krovosos_jaw"] = true,
+["mutant_burer_hand"] = true,
+["mutant_zombie_hand"] = true
+}
+
+function init(obj)
+	local new_binder = coster_binder(obj)
+	obj:bind_object(new_binder)
+end
+
+class "coster_binder" (object_binder)
+
+function coster_binder:__init(obj) super(obj)
+end 
+
+function coster_binder:reinit()
+	object_binder.reinit(self)
+	self.object:set_callback( callback.use_object, self.use_callback, self )
+end
+
+function coster_binder:net_spawn(data)
+	if not object_binder.net_spawn(self, data) then
+		return false
+	end
+	--snd_obj:play_no_feedback(self.object, sound_object.s2d, 0, vector(), 1.0)
+	return true
+end
+
+function coster_binder:update(delta)
+
+	if self.object:section() == "koster_razvodnoy" then
+		if level.rain_factor() > 0 then
+			if coster_particle:playing() then 
+				coster_particle:stop()
+			end
+		end
+
+		if not coster_particle:playing() and level.rain_factor() <= 0 then 
+			coster_particle:play_at_pos(self.object:position())
+		end
+
+		--if snd_obj:playing() then snd_obj:set_position(self.object:position()) end
+
+	if self.object:position():distance_to(db.actor:position()) < 4 then
+		actor_u_costra = true
+	else
+		actor_u_costra = false
+	end
+
+	if self.object:position():distance_to(db.actor:position()) > 200 then
+		coster_particle:stop()
+		this.hide_coster_light()
+		olr.del(self.object)
+		xvars.coster_id = 0
+		xvars.cooked_food_name = ""
+	end
+
+	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+
+	local active_item = db.actor:active_item()
+	if active_item then
+		if food_sections[active_item:section()] then 
+			self.object:set_tip_text("Готовить "..active_item:get_name().." (F)")
+		else
+			self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+		end
+	else
+		self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+	end
+	end
+
+end
+
+function coster_binder:net_destroy()
+	object_binder.net_destroy(self)
+	self.object:set_callback( callback.use_object, nil )
+end
+
+function coster_binder:net_save_relevant()
+	return true
+end
+
+function coster_binder:use_callback(obj,who)
+
+	if olr_timers.has_timer("coocking_timer_start") then
+		news_manager.send_tip(db.actor, "Приготовление уже идёт...", nil, "act", 3000)
+		return
+	end
+
+	if level.rain_factor() > 0 then
+		news_manager.send_tip(db.actor, "В дождь не получится приготовить...", nil, "act", 3000)
+		return
+	end
+
+	local active_item = db.actor:active_item()
+	if active_item then
+	if food_sections[active_item:section()] then 
+	local itm_in_slot = db.actor:item_in_slot(4)
+	if itm_in_slot ~= nil then
+
+	local stng = itm_in_slot:section()
+	local stngqz = tostring(stng)
+	local stngt = stngqz.."_coocked"
+	local stngq = game.translate_string(stngt)
+	xvars.cooked_food_name = stngq
+	--log1(" cooking now - "..stngq.."  section - "..stng.." ")
+	olr.del(itm_in_slot)
+
+
+	--news_manager.send_tip(db.actor, "Приготовление начато", nil, "default", 3000)
+	olr.hud_tip("", "Приготовление началось...", 4)
+	olr_timers.st_timer("coocking_timer_start", 7, "bind_coster.create_coster_food()")
+	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент, чтобы потушить нажмите TAB")
+	end
+	end
+	end
+	
+end
+
+
+--------------------------------------------------------------------------------------
+function onKeyPress(dik)
+	if dik == 15 then
+		local loked_obj = bind_stalker.loked_obj
+		if loked_obj == nil then return end
+		--log1("use k2  -- "..loked_obj:id().." = "..xvars.coster_id.." ")
+		if tonumber(loked_obj:id()) == tonumber(xvars.coster_id) and loked_obj:position():distance_to(db.actor:position()) < 2 then
+			--log1("del kos")
+			level.add_pp_effector("black.ppe", 20131, false)
+			lev_chng()
+			if coster_particle:playing() then 
+				coster_particle:stop()
+			end
+		end
+	end
+end
+
+function create_coster_food()
+        if xvars.coster_id ~= 0 then
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then    
+			if kill:section_name() == "koster_razvodnoy" then
+				news_manager.send_tip(db.actor, "Костёр: Еда приготовлена.", nil, "default", 3000)
+				local position = vector():set( 0, 0, 0 )
+    				position.x = kill.position.x + math.random( -30, 30 ) / 100
+    				position.z = kill.position.z + math.random( -30, 30 ) / 100
+    				position.y = kill.position.y + math.random(  30, 50 ) / 100 
+                		alife():create(""..xvars.cooked_food_name.."", position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+				xvars.cooked_food_name = ""
+			end
+		end
+	end
+	end
+end
+
+function u_costra()
+	if actor_u_costra == true then 
+		return true
+	end
+end
+
+function use_spichki(obj)
+		if obj and obj:section() == "korobok_spichek" then
+
+		if xvars.coster_id ~= 0 then
+			news_manager.send_tip(db.actor, "Я уже разжёг костёр недалеко...", nil, "act", 3000)
+			return
+		end 
+		if db.actor:is_actor_outdoors() == false and xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_0005"})  == false then
+			news_manager.send_tip(db.actor, "Здесь не стоит разводить огонь...", nil, "act", 3000)
+			return
+		end
+		if level.rain_factor() > 0 then
+			local rnd = math.random(1,2)
+			if rnd == 1 then
+				news_manager.send_tip(db.actor, "В дождь не получилось разжечь огонь...", nil, "act", 3000)
+				olr.del(obj)
+				return
+			end
+		end
+		if level.vertex_id(db.actor:position() ) == -1 then
+			news_manager.send_tip(db.actor, "Тут не получится развести огонь...", nil, "act", 3000)
+			return
+		end
+		for k,v in pairs(db.storage) do
+        	local stalker = level.object_by_id(k)
+            		if stalker and stalker:is_custom_monster() and stalker:alive() then
+				if stalker:position():distance_to(db.actor:position()) < 10 then
+					news_manager.send_tip(db.actor, "Враги рядом...", nil, "act", 3000)
+					return
+                                end
+			end
+		end
+		--if get_actor_obj().state.stand then
+		--	news_manager.send_tip(db.actor, "Нужно стать на месте для розжига...", nil, "act", 3000)
+		--	return
+		--end
+		local kobj = alife():create("koster_razvodnoy", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		if not game_graph():valid_vertex_id(kobj.m_game_vertex_id) then
+			news_manager.send_tip(db.actor, "В этом месте не получится развести огонь...", nil, "act", 3000)
+			--alife():create('korobok_spichek', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			olr.del(kobj)
+			return
+		end
+		if kobj then
+			local params = amk.get_destroyable_data(kobj)
+			params.mass = 100
+			params.fixed_bones = "bone01"
+			params.custom = "[collide]\nignore_static\nignore_ragdoll\n"
+			amk.set_destroyable_data(params,kobj)
+			xvars.coster_id = kobj.id
+        		level.add_pp_effector("black.ppe", 20131, false)
+			local song_start = xr_sound.get_safe_sound_object("ol3\\matches")
+	        	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+
+			local mozg_light = alife():object("koster_light_razzvold")
+			if mozg_light then
+				alife():teleport_object(mozg_light.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), db.actor:position():add(db.actor:direction():mul(1.05)))
+				alife():teleport_object(mozg_light.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), db.actor:position():add(db.actor:direction():mul(1.05)))
+			end
+
+		end
+		olr.del(obj)
+end
+
+end
+
+
+function hide_coster_light()
+	local mozg_light = alife():object("koster_light_razzvold")
+	if mozg_light then
+		alife():teleport_object(mozg_light.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), db.actor:position():add(db.actor:direction():mul(3000)))
+	end
+end
+
+
+function lev_chng()
+if db.actor then		
+if xvars.coster_id ~= 0 then
+local sim = alife()
+	for i=1, 65534 do
+		local kill = sim:object(i)
+		if kill then
+		if kill:section_name() == "koster_razvodnoy" then
+			alife():release(kill, true)
+			xvars.coster_id = 0
+			xvars.cooked_food_name = ""
+			this.hide_coster_light()
+		end
+end
+end
+end
+end
+end

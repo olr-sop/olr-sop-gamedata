@@ -1,0 +1,108 @@
+
+-- id's for evaluators and actions
+base_id_blowd = 21111
+ev_blow_now = base_id_blowd + 1
+ac_blow = base_id_blowd + 1
+
+-- init module
+function init()
+	core.ac("load_scheme", xrs_load_scheme)
+	core.ac("logic_disable_schemes", disable_scheme)
+	core.ac("logic_enable_schemes", set_scheme)
+end
+
+-- load scheme
+function xrs_load_scheme()
+	load_scheme("cool_death",  "ai_blowd",  modules.stype_stalker)
+end
+
+----------------------------------------------------------------------------------
+-- EVALUATOR
+----------------------------------------------------------------------------------
+class "evaluator_trading" (property_evaluator)
+function evaluator_trading:__init(st) super (nil, "evaluator_trading")
+	self.st = st
+end
+
+-- evaluator
+function evaluator_trading:evaluate()
+	local npc = self.object
+	if olr_blowout.state_blow == 2 or olr_blowout.state_blow == 3 then
+		if npc:is_obj_outdoors() == true and not olr_protected.is_no_offline_alife_obj(npc:name()) then
+			log1(" xr_ai_blow true now "..npc:name().." ")
+			return true
+		end
+	end
+	return false
+end
+
+----------------------------------------------------------------------------------    
+-- ACTION
+----------------------------------------------------------------------------------   
+class "action_go_trade" (action_base)
+function action_go_trade:__init(st) super (nil, "action_go_trade")
+	self.st = st
+end
+
+-- initialize of action
+function action_go_trade:initialize()
+	log1("init NOW")
+end
+
+-- execute of action
+function action_go_trade:execute()
+	action_base.execute(self)
+	local npc = self.object
+	log1("EXEC NOW")
+
+end
+
+-- finalize
+function action_go_trade:finalize()
+	action_base.finalize(self)
+	log1("FIN NOW")
+end
+
+
+----------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------
+function add_to_binder(object, char_ini, scheme, section, st)
+	local npc = object
+	local planner = npc:motivation_action_manager()
+	local property_wounded = xr_evaluators_id.sidor_wounded_base
+	
+	planner:add_evaluator(ev_blow_now, evaluator_trading(st))
+	
+	local new_action = action_go_trade(st)
+	new_action:add_precondition(world_property(property_wounded, false))
+	new_action:add_precondition(world_property(stalker_ids.property_alive, true))
+	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))
+	xr_motivator.addCommonPrecondition(new_action)
+	new_action:add_effect(world_property(ev_blow_now, false))
+	planner:add_action(ac_blow, new_action)
+
+	new_action = planner:action(xr_actions_id.alife)
+	new_action:add_precondition(world_property(ev_blow_now, false))
+	
+	new_action = planner:action(xr_evaluators_id.stohe_camper_base)
+	new_action:add_precondition(world_property(ev_blow_now, false))
+end
+
+----------------------------------------------------------------------------------
+-- Func: set_scheme.
+----------------------------------------------------------------------------------
+function set_scheme(ini, object, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(object, ini, "ai_blowd", "ai_blowd")
+	st.enabled = true
+end
+
+----------------------------------------------------------------------------------
+-- Func: disable_scheme.
+----------------------------------------------------------------------------------
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()]["ai_blowd"]
+	if st then
+		st.enabled = false
+	end
+end

@@ -1,0 +1,89 @@
+-- случайное наполнение инвентаря НПС артами и патронами -
+
+-------------------- Copyright 2008 Skunk & steelrat --------------------------
+
+
+
+-- рандомный спавн в инвентарь всех, кроме зомби и торговцев
+function art_and_ammo_random()
+
+-- наименование, возможное количество, вероятность появления для каждой единицы
+local arts = {	 [0] = {name = "af_medusa",                num = 3,	prb = 0.005},
+		 [1] = {name = "af_cristall_flower",       num = 2,	prb = 0.004},
+		 [2] = {name = "af_night_star", 	   num = 1,	prb = 0.003},
+		 [3] = {name = "af_vyvert", 		   num = 3,	prb = 0.005},
+		 [4] = {name = "af_gravi", 		   num = 2,	prb = 0.004},
+		 [5] = {name = "af_mincer_meat", 	   num = 2,	prb = 0.004},
+		 [6] = {name = "af_electra_sparkler",      num = 3,	prb = 0.005},
+		 [7] = {name = "af_electra_flash", 	   num = 2,	prb = 0.004},
+		 [8] = {name = "af_rusty_thorn", 	   num = 3,	prb = 0.005},
+		 [9] = {name = "af_rusty_kristall",         num = 2,	prb = 0.004},
+		 [10] = {name = "af_rusty_sea-urchin",      num = 1,	prb = 0.003},
+		 [11] = {name = "af_drops", 		   num = 3,	prb = 0.005},
+		 [12] = {name = "af_fireball", 		   num = 2,	prb = 0.004},
+		 [13] = {name = "af_cristall", 		   num = 1,	prb = 0.003},
+		 [14] = {name = "af_dummy_glassbeads",      num = 1,	prb = 0.002},
+		 [15] = {name = "af_dummy_pellicle",   	   num = 1,	prb = 0.002},
+		 [16] = {name = "af_dummy_battery", 	   num = 1,	prb = 0.002},
+		 [17] = {name = "af_dummy_dummy", 	   num = 1,	prb = 0.002},
+		 [18] = {name = "af_dummy_spring", 	   num = 1,	prb = 0.002},
+		 [19] = {name = "af_fuzz_kolobok", 	   num = 1,	prb = 0.002}
+		}
+
+local ammos = {	 [0] = {name = "ammo_9x18_fmj",	   	    num = 3,prb	= 0.01},
+		 [1] = {name = "ammo_9x18_pmm", 	    num = 2,prb	= 0.009},
+		 [2] = {name = "ammo_9x19_pbp", 	    num = 3,prb	= 0.01},
+		 [3] = {name = "ammo_9x19_fmj", 	    num = 2,prb	= 0.009},
+		 [6] = {name = "ammo_12x70_buck", 	    num = 3,prb	= 0.01},
+		 [7] = {name = "ammo_12x76_dart", 	    num = 2,prb	= 0.009},
+		 [8] = {name = "ammo_12x76_zhekan", 	    num = 3,prb	= 0.008},
+		 [9] = {name = "ammo_5.45x39_fmj", 	    num = 2,prb	= 0.01},
+		[10] = {name = "ammo_5.45x39_ap", 	    num = 3,prb	= 0.009},
+		[16] = {name = "ammo_7.62x54_7h1", 	    num = 3,prb	= 0.01},
+		[19] = {name = "ammo_vog-25p", 		    num = 3,prb	= 0.009}
+		}
+
+	for a=1,65535 do
+		local obj = alife():object(a)
+			if obj and IsStalker(obj) and obj:alive() and obj:name() ~= db.actor:name() then
+				local obj_sect = obj:section_name()
+				local obj_name = obj:name()
+
+					if (not string.find(obj_sect,"trader")) and (not string.find(obj_name,"trader")) and (not string.find(obj_sect,"zombi")) and (not string.find(obj_name,"zombi")) then
+						local sobj = alife():object(obj.id)
+							for b=0, table.getn(arts)-1 do
+								for d=1, arts[b].num do
+									if math.random() < arts[b].prb then 
+										create_item_in_inv(arts[b].name,sobj) 
+									end
+								end
+							end
+							for b=0, table.getn(ammos)-1 do
+								for d=1, ammos[b].num do
+									if math.random() < ammos[b].prb then 
+										create_ammo_in_inv(ammos[b].name,1,sobj) 
+									end
+								end
+							end
+					end
+			end
+	end
+end
+
+
+-- вспомогательные функции
+function create_item_in_inv(create_item,npc)
+	if npc then
+		return alife():create(create_item, npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id)
+	end
+end
+
+function create_ammo_in_inv(create_item,number,npc)
+	if npc then
+		if number > 0 then
+			local sys = system_ini()
+			box = sys:r_u32(create_item, "box_size")
+			return se_respawn.create_ammo(create_item, npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id, number*box)
+		end
+	end
+end

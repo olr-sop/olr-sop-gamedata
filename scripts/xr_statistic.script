@@ -1,0 +1,165 @@
+-----------------------------------------------------------------------
+--- xr_statistic.script
+--- Скрипт зарабатывания опыта
+--- поправки внесены KamikaZze, OGS Evolution Team 2010
+--- NPC теперь тоже зарабатывают опыт, опыт копится с разной скоростью
+--- и зависит от монстра
+-----------------------------------------------------------------------
+
+-- множитель опыта для регулировки скорости его накопления
+local multiplier_actor = 2
+local multiplier_npc = 6
+
+local killCountProps = {
+	neutral_novice = 1, neutral_experienced = 2, neutral_veteran = 3, neutral_master = 4,
+	monolith_novice = 1, monolith_experienced = 2, monolith_veteran = 3, monolith_master = 4,
+	military_novice = 1, military_experienced = 2, military_veteran = 3, military_master = 4,
+	killer_novice = 1, killer_experienced = 2, killer_veteran = 3, killer_master = 4,
+	ecolog_novice = 1, ecolog_experienced = 2, ecolog_veteran = 3, ecolog_master = 4,
+	dolg_novice = 1, dolg_experienced = 2, dolg_veteran = 3, dolg_master = 4,
+	freedom_novice = 1, freedom_experienced = 2, freedom_veteran = 3, freedom_master = 4,
+	bandit_novice = 1, bandit_experienced = 2, bandit_veteran = 3, bandit_master = 4,
+	zombied_novice = 1, zombied_experienced = 2, zombied_veteran = 3, zombied_master = 4,
+	stranger_novice = 1, stranger_experienced = 2, stranger_veteran = 3, stranger_master = 4,
+        sin_novice = 1, sin_experienced = 2, sin_veteran = 3, sin_master = 4,
+        sky_novice = 1, sky_experienced = 2, sky_veteran = 3, sky_master = 4,	
+        deads_novice = 1, deads_experienced = 2, deads_veteran = 3, deads_master = 4,	
+
+	tushkano_weak = 1,
+	flesh_weak = 1, flesh_normal = 2, flesh_strong = 3,
+	boar_weak = 1, boar_normal = 2, boar_strong = 3,
+	dog_weak = 1, dog_normal = 2, dog_strong = 3,
+	pseudodog_weak = 1, pseudodog_normal = 2, pseudodog_strong = 3,
+	psy_dog_weak = 1, psy_dog_normal = 2, psy_dog_strong = 3,
+	snork_weak = 2, snork_normal = 3, snork_strong = 4,
+	poltergeist_weak = 2,
+	pseudo_gigant_weak = 4,
+	controller_weak = 4,
+	bloodsucker_weak = 1, bloodsucker_normal = 2, bloodsucker_strong = 3,
+	zombie_weak = 1, zombie_normal = 2, zombie_strong = 3,
+	burer_weak = 1, burer_normal = 2, burer_strong = 3,
+	cat_weak = 1, cat_normal = 2, cat_strong = 3,
+	chimera_weak = 1, chimera_normal = 2, chimera_strong = 3,
+	fracture_weak = 1, fracture_normal = 2, fracture_strong = 3
+	 
+	
+}
+
+local sect_alias = {	
+	tushkano_normal = "tushkano_weak", tushkano_strong = "tushkano_weak",
+	poltergeist_normal = "poltergeist_weak", poltergeist_strong = "poltergeist_weak",
+	pseudo_gigant_normal = "pseudo_gigant_weak", pseudo_gigant_strong = "pseudo_gigant_weak",
+	controller_normal = "controller_weak", controller_strong = "controller_weak",
+	psy_dog_weak = "psy_dog", psy_dog_normal = "psy_dog", psy_dog_strong = "psy_dog", rad_psy_dog = "psy_dog",
+	zombie_weak = "zombie_weak", zombie_normal  = "zombie_normal", zombie_strong = "zombie_strong",
+	burer_weak = "burer_weak", burer_normal = "burer_normal", burer_strong = "burer_strong",
+	cat_weak = "cat_weak", cat_normal = "cat_normal", cat_strong = "cat_strong",
+	chimera_weak = "chimera_weak", chimera_normal = "chimera_normal", chimera_strong = "chimera_strong",
+	fracture_weak = "fracture_weak", fracture_normal = "fracture_normal", fracture_strong = "fracture_strong"
+}
+
+monster_classes = {
+			[clsid.tushkano_s    ] = "tushkano",
+			[clsid.flesh_s       ] = "flesh",
+			[clsid.boar_s        ] = "boar",
+			[clsid.burer_s       ] = "burer",
+			[clsid.cat_s         ] = "cat",
+			[clsid.chimera_s     ] = "chimera",
+			[clsid.fracture_s    ] = "fracture",
+			[clsid.dog_s         ] = "dog",
+			[clsid.pseudodog_s   ] = "pseudodog",
+			[clsid.psy_dog_s     ] = "psy_dog",
+			[clsid.psy_dog_phantom_s] = "NIL",
+			[clsid.snork_s       ] = "snork",
+			[clsid.poltergeist_s ] = "poltergeist",
+			[clsid.gigant_s      ] = "pseudo_gigant",
+			[clsid.controller_s  ] = "controller",
+			[clsid.bloodsucker_s ] = "bloodsucker",
+			[clsid.zombie_s      ] = "zombie"
+		}		
+		
+
+
+function addKillCount(killer, npc)
+	if not npc or not killer then return end
+	
+	if not (IsStalker(killer) or killer:id() == db.actor:id()) then
+		return
+	end
+	
+	local props, sect = getNpcType(npc)
+	if props == nil or sect == nil then
+		return
+	end
+
+	local sect_name
+	
+	if sect_alias[sect] ~= nil then
+		sect_name = sect_alias[sect]
+	else
+		sect_name = sect
+	end
+	
+	if sect_name then
+		if killCountProps[sect_name] == nil then
+			return
+		end
+		if killer:id() == db.actor:id() then
+			actor_stats.add_points(props, sect_name, 1, killCountProps[sect_name])
+			killer:set_character_rank(killer:character_rank() + (killCountProps[sect_name]*multiplier_actor))
+			--log1("set actor rank -- "..killer:character_rank().." ")
+		else	
+			killer:set_character_rank(killer:character_rank() + (killCountProps[sect_name]*multiplier_npc))
+			--log1("set npc rank "..killer:name().."  -- "..killer:character_rank().." ")
+		end
+	else return end
+end
+
+
+function getNpcType(npc)
+
+	if not npc then return nil,nil end
+
+	if IsStalker(npc) then
+		local community = "neutral"
+		if     npc:character_community() == "monolith" then	community = "monolith"
+		elseif npc:character_community() == "military" then 	community = "military"
+		elseif npc:character_community() == "killer" then 	community = "killer"
+		elseif npc:character_community() == "ecolog" then 	community = "ecolog"
+		elseif npc:character_community() == "dolg" then 	community = "dolg"
+		elseif npc:character_community() == "freedom" then 	community = "freedom"
+		elseif npc:character_community() == "bandit" then 	community = "bandit"
+		elseif npc:character_community() == "zombied" then 	community = "zombied"
+		elseif npc:character_community() == "sky" then 		community = "sky"
+		end
+		local rank = ranks.get_obj_rank_name(npc)
+		if rank then
+			return "stalkerkills", community.."_"..tostring(rank)
+		else	
+			return "stalkerkills", community.."_novice"
+		end
+	else
+		local _clsid = get_clsid(npc) or ""
+		local community = monster_classes[_clsid]
+		if community == nil then
+			return nil,nil
+			-- abort("Statistic ERROR: cannot find monstr class")
+		end
+
+		if community == "NIL" then
+			return nil,nil
+		end
+		
+		if community == "zombie" then
+			return "monsterkills", npc:section()
+		end		
+
+		if community == "psy_dog" then
+			if npc:section()=="psy_dog" then return "monsterkills", "psy_dog_weak" end
+			if npc:section()=="psy_dog_radar" then return "monsterkills", "rad_psy_dog" end
+		end 
+
+		local rank = ranks.get_obj_rank_name(npc)
+		return "monsterkills", community.."_"..rank
+	end	
+end

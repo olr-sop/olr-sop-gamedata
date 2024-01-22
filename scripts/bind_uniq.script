@@ -1,0 +1,127 @@
+--[[------------------------------------------------------------------------------------------------
+-- биндер уникальных инвентарных девайсов 
+-- hi_flyer, 19.09.17
+--------------------------------------------------------------------------------------------------]]
+function init(obj)
+	obj:bind_object(uniq_binder(obj))
+end
+class "uniq_binder"(object_binder)
+function uniq_binder:__init(obj, char_ini) super(obj)
+	self.last_update = 0
+end
+function uniq_binder:reload(section)
+	object_binder.reload(self, section)
+end
+function uniq_binder:reinit()
+	object_binder.reinit(self)
+end
+function uniq_binder:net_spawn(data)
+	if not object_binder.net_spawn(self,data) then
+		return false
+	end
+	-- тут выставляем вес для капсул
+	if self.object:section() == "capsule_rone" then
+		if xvars and xvars.inv_capsules[self.object:name()] then
+			local val_weight = xvars.inv_capsules[self.object:name()]
+			self.object:set_weight(val_weight)
+		end	
+	end
+	return true
+end
+function uniq_binder:net_destroy()
+	object_binder.net_destroy(self)
+end
+function uniq_binder:net_save_relevant()
+	return true
+end
+function uniq_binder:update(delta)
+	if db.actor and db.actor:alive() then
+
+		--// рад. костюм
+		if self.object:section() == "outfit_antirad" then
+			--log1("radcostum fake upd")
+			local outfslot = db.actor:item_in_slot(6)
+			if outfslot and outfslot:section() == self.object:section() then
+				local radoutfcond = self.object:condition()
+				if radoutfcond > 0.75 then
+						--if db.actor.radiation > 0.01 then
+							db.actor.radiation = - 0.0008
+						--end
+				end
+			end
+		end
+		--// смерть - лампа
+		if self.object:section() == "af_art_lampa" then
+			local iParent = self.object:parent()
+           		if iParent and not has_alife_info("swamp_izlom_start_dialog_talked") then
+	       			if get_clsid(iParent) == clsid.actor then
+					get_console():execute("cam_inert 0.80")
+					db.actor.health = - 0.0001
+					level.add_pp_effector("poltergeist_scan.ppe", 20131, false)
+					if db.actor:is_on_belt(self.object) then
+						db.actor.health = - 1
+					end
+				end
+			end
+		end
+		--// аккум экзы
+		if self.object:section() == "exo_acum_ob" then
+			local has_out = db.actor:object("exo_outfit")
+			if not has_out then
+				return
+			end
+			if has_out and not db.actor:is_in_slot(has_out) then
+				return
+			end
+			if get_actor_obj().state.run or get_actor_obj().state.walk then
+			--news_manager.send_tip(db.actor, "актор бежит или идет.", nil, "default", 9000)
+			if has_out and db.actor:is_in_slot(has_out) and db.actor:is_on_belt(self.object) then
+				--log1("accum cond  "..self.object:condition().."")
+				self.object:set_condition(self.object:condition() - 0.00000325)
+				if self.object:condition() < 0.05 then
+					olr.del(self.object)
+					news_manager.send_tip(db.actor, "Экзоскелет: Аккумулятор разряжен.", nil, "default", 9000)
+					alife():create('exo_acum_ob_dead', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id()) 
+				end
+			end
+			end
+		end
+		--// пси-визор
+		if time_global() - self.last_update > 1000 then
+		if self.object:section() == "psivizor_detector" then
+			if self.object:condition() < 0.01 then
+				olr.del(self.object)
+				news_manager.send_tip(db.actor, "Пси-визор: Аккумулятор разряжен.", nil, "default", 9000)
+			end
+			for k,v in pairs(db.storage) do
+				local npc = level.object_by_id(k)
+				if npc and npc:clsid() == clsid.controller_s then
+					if npc:alive() and db.actor:is_on_belt(self.object) and npc:position():distance_to(db.actor:position()) < 50 then  -- and level.map_has_object_spot(npc.id, "red_location") == 0
+						--news_manager.send_tip(db.actor, " psivizor find ADD SPOT - "..npc:name().." ", nil, "default", 9000)
+						olr.add_spot_on_map(npc:id(),"controller_spotmap","Пси-мутант")
+					else 
+						level.map_remove_object_spot(npc:id(),"controller_spotmap")
+					end
+					if not db.actor:is_on_belt(self.object) then
+						level.map_remove_object_spot(npc:id(),"controller_spotmap")
+					end
+				end
+			end						
+		end
+		self.last_update = time_global()
+		end
+
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+

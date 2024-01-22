@@ -1,0 +1,177 @@
+-- hi_flyer 25.03.16
+
+local ini = system_ini()
+
+function klick_item_inv(obj)
+
+if not obj then
+	return
+end
+
+
+local has_geiger = db.actor:object("detector_simple")
+if has_geiger then
+	local cnd = has_geiger:condition()
+	if cnd > 0.01 then
+	if xvars.foods[obj:name()] == true or xvars.weapons[obj:name()] == true then
+		--log1("has rad obj")
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\geiger_fast]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+		end
+		if not has_alife_info("radiation_inv_act_cliked") then
+			olr.info("radiation_inv_act_cliked")
+			news_manager.send_tip(db.actor, "Похоже, что эта штука - "..obj:get_name().." сильно облучена радиацией... Не стоит держать её долго при себе...", nil, "act", 59000)	
+		end
+	end
+	if ini:line_exist(obj:section(), "inventory_radiation") then
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\geiger_fast]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			--log1(" snd has inventory_radiation ")
+		end
+	end
+	end
+end
+
+
+if obj:section() == "glaz_fila" and not has_alife_info("glaz_fila_checked") then
+	db.actor:give_info_portion("glaz_fila_checked")
+end
+
+if obj:section() == "af_art_lampa" then
+	db.actor.psy_health = -0.34
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\dolina_psy_noise]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+end
+
+
+if obj:section() == "af_cristall_flower" and not has_alife_info("encyclopedy_zone_artifact_af-cristall-flower") then
+	af_unic()
+end
+if obj:section() == "af_night_star" and not has_alife_info("encyclopedy_zone_artifact_af-night-star") then
+	af_unic()
+end
+if obj:section() == "af_vyvert" and not has_alife_info("encyclopedy_zone_artifact_af-vyvert") then
+	af_grav()
+end
+if obj:section() == "af_gold_fish" and not has_alife_info("encyclopedy_zone_artifact_af-gold-fish") then
+	af_grav()
+end
+if obj:section() == "af_drops" and not has_alife_info("encyclopedy_zone_artifact_af-drops") then
+	af_unic()
+end
+if obj:section() == "af_fireball" and not has_alife_info("encyclopedy_zone_artifact_af-fireball") then
+	--af_heat()
+end
+if obj:section() == "af_mincer_meat" and not has_alife_info("encyclopedy_zone_artifact_af-mincer-meat") then
+	af_unic()
+end
+if obj:section() == "af_soul" and not has_alife_info("encyclopedy_zone_artifact_af-soul") then
+	af_unic()
+end
+if obj:section() == "af_electra_flash" and not has_alife_info("encyclopedy_zone_artifact_af-electra-flash") then
+	af_elec()
+end
+
+
+end
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function af_grav()
+	local snd_obj = xr_sound.get_safe_sound_object([[anomaly\anomaly_gravy_idle]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function af_elec()
+	local snd_obj = xr_sound.get_safe_sound_object([[anomaly\electra_hit1]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+function af_heat()
+	local snd_obj = xr_sound.get_safe_sound_object([[anomaly\polter_fire_idle]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function af_unic()
+	local snd_obj = xr_sound.get_safe_sound_object([[anomaly\monolith_idle]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function hide_params()
+  local x = 1000
+  local y = 1000
+  local wnd = ui.get_inventory_wnd()
+  if wnd then
+     local st = wnd:FindChild("af_params") 
+     if st then
+       local r = Frect()
+       st:GetWndRect(r)
+       if (x ~= nil) then r.x1 = tonumber(x) end
+       if (y ~= nil) then r.y1 = tonumber(y) end     
+       st:SetWndPos(r.x1, r.y1)
+     else
+
+     end
+  end
+end
+
+
+
+
+function hide_params_carbody()
+  local x = 1000
+  local y = 1000
+  local wnd = ui.get_car_body_wnd()
+  if wnd then
+     local st = wnd:FindChild("af_params") 
+     if st then
+       local r = Frect()
+       st:GetWndRect(r)
+       if (x ~= nil) then r.x1 = tonumber(x) end
+       if (y ~= nil) then r.y1 = tonumber(y) end     
+       st:SetWndPos(r.x1, r.y1)
+     else
+
+     end
+  end
+end
+
+
+
+function hide_params_trade()
+  local x = 1000
+  local y = 1000
+  local wnd = ui.get_trade_wnd()
+  if wnd then
+     local st = wnd:FindChild("af_params") 
+     if st then
+       local r = Frect()
+       st:GetWndRect(r)
+       if (x ~= nil) then r.x1 = tonumber(x) end
+       if (y ~= nil) then r.y1 = tonumber(y) end     
+       st:SetWndPos(r.x1, r.y1)
+     else
+
+     end
+  end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+

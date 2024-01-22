@@ -1,0 +1,219 @@
+----------------------------------------------------------------------------------------------------------------------
+--'	Имитируем лазание по лестницам
+--' ver: 1.0
+--'	автор: xStream
+--'	TODO: 
+-- edit: hi_flyer
+----------------------------------------------------------------------------------------------------------------------
+
+evid_ladder=18700
+actid_ladder=evid_ladder
+
+ladders = {}
+
+-- init module
+function init()
+	core.ac("load_scheme", xrs_load_scheme)
+	core.ac("logic_disable_schemes", disable_scheme)
+	core.ac("logic_enable_schemes", set_scheme)
+	core.ac("monster_first_update", rest_monster_ladder_first)
+	core.ac("restrictor_net_spawn", add_ladders)
+end
+
+-- load scheme
+function xrs_load_scheme()
+	load_scheme("xrs_ladder",  "ai_ladders",  modules.stype_stalker)
+end
+
+function rest_monster_ladder_first(binder)
+	for k,v in pairs(ladders) do
+		--log1(" add ladder fitst "..binder.object:name().." "..v:name().." ")
+		binder.object:add_restrictions("",v:name())
+	end
+end
+
+function add_ladders(binder)
+	local ini = binder.object:spawn_ini()
+	if ini and ini:section_exist("ladder") then
+		ladders[binder.object:id()]=binder.object
+	end
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- EVALUATORS
+----------------------------------------------------------------------------------------------------------------------
+
+class "evaluator_ladder" (property_evaluator)
+function evaluator_ladder:__init(name, storage) super (nil, name)
+	self.a = storage
+end
+function evaluator_ladder:evaluate()
+	if self.a.rest then return true end
+	local npc = self.object
+	local be = npc:best_enemy()
+	if be then
+		if not self.enemy_found then
+			--nc.mylog(npc:in_restrictions())
+			for k,v in pairs(ladders) do
+				npc:add_restrictions("",v:name())
+			end
+			--nc.mylog(npc:in_restrictions())
+			self.enemy_found = true
+		end
+	else
+		for k,v in pairs(ladders) do
+			if utils.npc_in_zone(npc,v) then 
+				self.a.rest=v
+				return true 
+			end
+		end
+		if self.enemy_found then
+			--nc.mylog(npc:in_restrictions())
+			for k,v in pairs(ladders) do
+				npc:remove_restrictions("",v:name())
+			end
+			--nc.mylog(npc:in_restrictions())
+			self.enemy_found = false
+		end
+	end
+	return false
+end
+----------------------------------------------------------------------------------------------------------------------
+-- ACTIONS
+----------------------------------------------------------------------------------------------------------------------
+
+class "action_ladder" (action_base)
+function action_ladder:__init (npc,action_name,storage) super (nil,action_name)
+	self.a = storage
+end
+function action_ladder:initialize()
+	action_base.initialize(self)
+	local npc=self.object
+	--level.map_add_object_spot(npc:id(), "green_location", 1)	
+	npc:clear_animations()	
+	--self.prpos = npc:position().y
+	--self.md = false
+	--self.stpos = npc:position().y
+	self.fin_time = nil
+	self.md = "up"
+	if self.a.rest:position().y<npc:position().y then 
+		self.md="down" 
+	end
+end
+
+function action_ladder:execute()
+	action_base.execute (self)
+	local npc=self.object
+	
+	if self.fin_time then
+		if self.fin_time < time_global() then
+			self.a.rest = nil
+		end
+		return
+	end
+
+	local dir = level.object_by_id(self.a.rest.id):direction()
+	--npc:set_sight(look.direction,npc:position():sub(npc:bone_position("pib01_head")))--dir)
+	
+	if utils.npc_in_zone(npc,self.a.rest) then
+		npc:set_item(object.idle,nil)
+		npc:set_body_state(move.standing)
+		npc:movement_enabled(true)
+
+		--if self.pmd~=self.md then
+		--	npc:clear_animations()
+		--end
+		if self.md=="up" then
+
+			--npc:clear_animations()
+	
+			npc:add_animation("cl_run_fwd_0")   -- dmg_norm_escape_0   cl_run_fwd_0
+			npc:set_movement_type(move.walk)
+			npc:set_mental_state(anim.free)
+			npc:set_desired_direction(dir)
+
+		elseif self.md=="down" then
+			--if npc:animation_count()==0 then
+				npc:add_animation("norm_jump_idle_")
+			--end
+			npc:set_movement_type(move.run)
+			npc:set_mental_state(anim.panic)
+			npc:set_desired_direction(dir:mul(-1))
+		end
+	else
+		npc:clear_animations()	
+		npc:set_item(object.idle,nil)
+		npc:movement_enabled(true)
+		npc:set_body_state(move.standing)
+		npc:set_mental_state(anim.free)
+		npc:set_movement_type(move.walk)
+		if self.md == "down" then
+			--npc:set_movement_type(move.stand)
+			npc:add_animation("norm_jump_end_1")
+			self.fin_time=time_global() + 200
+		else
+			npc:add_animation("cl_run_fwd_0")  -- idle_to_wounded_0   cl_run_fwd_0
+			self.fin_time=time_global() + 600
+			npc:set_movement_type(move.run)
+			--self.a.rest = nil
+			--return
+		end
+	end
+	
+end
+function action_ladder:finalize()
+	action_base.finalize (self)
+	local npc=self.object
+	--level.map_remove_object_spot(npc:id(), "green_location")	
+	npc:clear_animations()	
+	npc:set_movement_type(move.walk)
+	npc:set_mental_state(anim.free)
+	npc:set_desired_direction()
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------------------------------------------
+function add_to_binder(object, ini, scheme, section, storage)
+  		local operators	= {}
+	  	local properties  = {}
+
+	   	local manager = object:motivation_action_manager()
+
+		operators["ladder"]			= actid_ladder
+
+		properties["ladder"]			= evid_ladder
+
+		--local zombi=object:character_community()=="ecolog" or object:character_community()=="zombied" or object:character_community()=="trader" or
+		--	  object:character_community()=="arena_enemy" or object:name()=="mil_stalker0012" or object:name()=="yantar_ecolog_general"
+
+		manager:add_evaluator (properties["ladder"], evaluator_ladder("ladder", storage))
+		
+		local action = action_ladder (object,"ladder", storage)
+		action:add_precondition(world_property(stalker_ids.property_alive, true))
+		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+		action:add_precondition	(world_property(properties["ladder"], true))
+		action:add_effect (world_property(properties["ladder"], false))
+		manager:add_action (operators["ladder"], action)
+		
+		action = manager:action (xr_actions_id.alife)	
+		action:add_precondition	(world_property(properties["ladder"], false))
+		
+		action = manager:action (stalker_ids.action_combat_planner)	
+		action:add_precondition	(world_property(properties["ladder"], false))
+		
+		action = manager:action (stalker_ids.action_danger_planner)	
+		action:add_precondition	(world_property(properties["ladder"], false))
+
+end
+
+function set_scheme(ini, npc, scheme, section)
+  local st = xr_logic.assign_storage_and_bind(npc, ini, "ai_ladders", "ai_ladders")
+end
+
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()]["ai_ladders"]
+	if st then
+		st.enabled = false
+	end
+end

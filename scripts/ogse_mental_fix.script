@@ -1,0 +1,41 @@
+-- код из мода OGSE
+
+local panic_freezers = {}
+ 
+function check_mental(obj)  -- npc update
+	if not amk.check_game() then return end
+	--log1("npc upd")
+	if obj then
+		local storage = db.storage[obj:id()].state_mgr
+		if not storage then
+			return
+		end
+		local mental = state_lib.states[storage.target_state].mental
+		--if mental then
+		--	log1("npc mental state - "..mental.." ")
+		--end
+		if mental and mental == 2 then
+			if not panic_freezers[obj:id()] then
+				--news_manager.send_tip(db.actor, "WARNING! NPC "..obj:name().." is in panic - will check it for freezing.", nil, "trader", 25000)
+				log1("~~WARNING! NPC "..obj:name().." is in panic - will check it for freezing.")
+				panic_freezers[obj:id()] = time_global()
+			end	
+		end
+	end	
+end
+
+function check_freezers()  -- actor update
+	if not amk.check_game() then return end
+	--log1("act upd")
+	for k, v in pairs(panic_freezers) do
+		if v and (v+25000) < time_global() then
+			--news_manager.send_tip(db.actor, "!!ERROR! NPC "..k.." is in panic more than 15 seconds! Trying to recover!", nil, "trader", 25000)
+			log1("~~!!ERROR! NPC "..k.." is in panic more than 15 seconds! Trying to recover!")
+			local npc = level.object_by_id(k)
+			if npc then
+				npc:set_mental_state(anim.danger)
+			end
+			panic_freezers[k] = nil
+		end
+	end
+end

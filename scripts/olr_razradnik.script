@@ -1,0 +1,38 @@
+-- Юзаем разрядник
+-- hi_flyer 11.06.15
+
+local tab_anoms = {}
+local dist = 10
+
+function on_use() 
+	for i=1,65535 do
+		local anom = level.object_by_id(i)
+                if anom ~= nil and anom:is_anomaly() and 
+                        anom:section() ~= "zone_flame_small" and 
+                        anom:section() ~= "zone_no_gravity" and
+                        anom:section() ~= "zone_ameba" and
+                        anom:section() ~= "zone_ameba1" and
+                        anom:section() ~= "zone_ameba2" and
+                        anom:section() ~= "zone_burning_fuzz1" and
+                        anom:section() ~= "zone_burning_fuzz" and
+                        anom:section() ~= "zone_burning_fuzz_weak" and
+                        anom:section() ~= "zone_burning_fuzz_average" and
+                        anom:section() ~= "zone_burning_fuzz_strong" and
+                        anom:section() ~= "zone_burning_fuzz_bottom_weak" and
+                        anom:section() ~= "zone_burning_fuzz_bottom_average" and
+                        anom:section() ~= "zone_burning_fuzz_bottom_strong" and
+                        anom:position():distance_to(db.actor:position()) < dist then
+
+			table.insert(tab_anoms, anom)					
+		end
+	end
+
+	for _, o in ipairs(tab_anoms) do
+		if o then
+	             	level.add_pp_effector("blink.ppe", 20131, false) 
+                    	o:disable_anomaly()
+		     	bind_anomaly.set_anomaly_status(o,"off")
+			--log1("disable - "..o:name().."")
+		end
+	end
+end

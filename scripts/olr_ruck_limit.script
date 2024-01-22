@@ -1,0 +1,270 @@
+-- hi_flyer 09/04/16
+
+local drop_cur = 0
+cur_amount = 0
+max_item_amount = 15 
+local ini = system_ini()
+
+local tup10000 = 0
+local tmerup10000 = 1250
+
+tab_objs_on_slots = {}
+tab_objs_on_ruck = {}
+
+local cur_outfit = -1
+
+function take_item(obj)
+end
+
+function tmr_drop______old(obj)
+	if obj == nil then return end
+	local wait_time = 0
+  	wait_time = time_global() + 200
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() db.actor:drop_item(obj) end
+  	)
+	if has_alife_info("ui_car_body") then
+		local inv_window = level.main_input_receiver()
+		if inv_window and inv_window:IsShown() then
+			level.start_stop_menu(inv_window,true)
+		end
+	end
+end
+
+
+function tmr_drop(obj)
+	if obj == nil then return end
+	if xvars.pos_x == 0 then xvars.pos_x = db.actor:position().x end
+	if xvars.pos_y == 0 then xvars.pos_y = db.actor:position().y end
+	if xvars.pos_z == 0 then xvars.pos_z = db.actor:position().z end
+	xvars.item_drop_inv[obj:name()] = true 
+end
+
+function upd_drop()
+	if time_global() > tup10000 then
+	tup10000 = time_global() + tmerup10000
+	if db.actor == nil then return end
+	db.actor:iterate_inventory( function(_, obj)
+			if obj then
+				if xvars.item_drop_inv[obj:name()] == true then
+					local pos = vector():set(xvars.pos_x,xvars.pos_y,xvars.pos_z)
+					local dist = db.actor:position():distance_to_sqr(pos)
+					if (get_actor_obj().state.walk or get_actor_obj().state.run) and dist > 2 and cur_amount > max_item_amount then
+						xvars.item_drop_inv[obj:name()] = nil
+						xvars.pos_x = 0  
+						xvars.pos_y = 0
+						xvars.pos_z = 0
+						if tab_objs_on_slots[tostring(obj:id())] == nil then
+							news_manager.send_tip(db.actor, "Нет места для - "..obj:get_name()..".", nil, "act", 3000)
+							db.actor:drop_item(obj)
+						end
+						if has_alife_info("ui_car_body") then
+							local inv_window = level.main_input_receiver()
+							if inv_window and inv_window:IsShown() then
+								level.start_stop_menu(inv_window,true)
+							end
+						end
+					end
+				end
+			end
+		end ) 
+	end	
+end
+
+
+function on_netspawn()
+	local wait_time = 0
+  	wait_time = time_global() + 900
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr_ruck_limit.recheck_limit() end
+  	)
+end
+
+function recheck_limit()
+	local outfit = db.actor:get_current_outfit()
+	if outfit then
+		cur_outfit = outfit:id()
+		--log1("cur out id- "..cur_outfit.." ")
+		local val_add = ini:line_exist(outfit:section(), "item_amount_add") and ini:r_float(outfit:section(), "item_amount_add") or 0
+		max_item_amount = max_item_amount + val_add		
+	end
+	--log1("пересчитывем всё по норме")
+	local all_amount = 0
+	local slot_belt_amount = 0
+	db.actor:iterate_inventory(
+	function(actor, obj) 
+		if obj then
+			local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+			all_amount = all_amount + val		
+		end
+		if obj and db.actor:is_on_belt(obj) or db.actor:is_in_slot(obj) then
+			local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+			slot_belt_amount = slot_belt_amount + val
+			if tab_objs_on_slots[tostring(obj:id())] == nil then
+				tab_objs_on_slots[tostring(obj:id())] = true
+				--log1("добавляем с таблицу в СЛОТЕ ПОЯС нетспавн "..obj:name().."")
+			end		
+		end
+	end)
+	local ruck_amount = all_amount - slot_belt_amount
+	cur_amount = ruck_amount
+	--log1("полный объем - "..all_amount.." ")
+	--log1("объем в слотах - "..slot_belt_amount.." ")
+	--log1("объем в рюкзаке - "..ruck_amount.." ")
+end
+
+function drop_item_on_inv(obj)
+        if db.actor.health == 0 then return end
+        if device().precache_frame >1 then return end
+	if obj ~= nil then
+		if ini:line_exist(obj:section(), "item_amount") then
+			local val = ini:r_float(obj:section(), "item_amount") or 0
+			if tab_objs_on_slots[tostring(obj:id())] == true then
+				--log1("кидаем со слота - не уменьшаем объем drop")
+			else
+				cur_amount = cur_amount - val
+				if cur_amount < 0 then
+					--cur_amount = 0
+				end
+				--log1("кидаем со рюкзака УМЕНЬШАЕМ ОБЪЕМ drop")
+			end
+		end
+	end
+	if tab_objs_on_slots[tostring(obj:id())] ~= nil then
+		tab_objs_on_slots[tostring(obj:id())] = nil
+		--log1("удаляем с таблицы В СЛОТЕ drop")
+	end
+	--log1("drop end")
+	olr_ui_inv_acinfo.repaint()
+end
+
+--local butil = db.actor:object("hud_butil")
+
+function obj_to_ruck(obj)
+        if db.actor.health == 0 then return end
+        if device().precache_frame >1 then return end
+	if obj then
+		--log1("add  obj_to_ruck - "..obj:name().."")
+		if ini:line_exist(obj:section(), "item_amount") then
+			local val = ini:r_float(obj:section(), "item_amount") or 0
+			if tab_objs_on_slots[tostring(obj:id())] == true then
+				--log1("ложим со слота в рюкзак уменьшаем объем ") 
+                        	cur_amount = cur_amount + val
+                        	if cur_amount > max_item_amount  then
+                        		if not db.actor:is_talking() then
+						drop_cur = string.format("%1.0f", cur_amount)
+                        			if device().precache_frame >1 then return end
+						--local outfit = db.actor:get_current_outfit()
+						--if not outfit and obj:is_outfit() then
+						--	local wait_time = 0
+  						--	wait_time = time_global() + 100
+  						--	level.add_call(
+    						--	function() return time_global() > wait_time end,
+    						--	function() db.actor:move_to_slot(obj, true) end
+  						--	)
+						--	return
+						--end
+						olr_ruck_limit.tmr_drop(obj)
+						--olr.hud_tip("", "Нет места2 в рюкзаке для: "..obj:get_name()..", объем - "..drop_cur.." / "..tostring(max_item_amount).."", 6)
+					end
+				end
+			else
+				--log1("ложим с земли в рюкзак "..obj:name().."")
+				cur_amount = cur_amount + val
+				if cur_amount > max_item_amount  then
+                        		if not db.actor:is_talking() then
+						drop_cur = string.format("%1.0f", cur_amount)
+                        			if device().precache_frame >1 then return end
+						--local outfit = db.actor:get_current_outfit()
+						--if not outfit and obj:is_outfit() then
+						--	local wait_time = 0
+  						--	wait_time = time_global() + 100
+  						--	level.add_call(
+    						--	function() return time_global() > wait_time end,
+    						--	function() db.actor:move_to_slot(obj, true) end
+  						--	)
+						--	return
+						--end
+						olr_ruck_limit.tmr_drop(obj, true)
+						olr.hud_tip("", "Нет места в рюкзаке для: "..obj:get_name()..", объем - "..drop_cur.." / "..tostring(max_item_amount).."", 6)
+					end
+				end
+			end
+		end
+	end
+
+	if obj:id() == cur_outfit then
+		cur_outfit = -1
+		--log1(" сняли броню ")
+		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		max_item_amount = max_item_amount - val_add
+	end
+
+	if tab_objs_on_slots[tostring(obj:id())] ~= nil then
+		tab_objs_on_slots[tostring(obj:id())] = nil
+		--log1("удаляем с таблицы В СЛОТЕ to ruck")
+	end
+	olr_ui_inv_acinfo.repaint()
+end
+
+-- кладём в ящик
+function on_to_box(obj)
+	if obj:id() == cur_outfit then
+		cur_outfit = -1
+		--log1(" сняли броню ")
+		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		max_item_amount = max_item_amount - val_add
+	end
+end
+
+
+function take_item_on_belt(obj)
+        if db.actor.health == 0 then return end
+        if device().precache_frame >1 then return end
+	if tab_objs_on_slots[tostring(obj:id())] == nil then
+		tab_objs_on_slots[tostring(obj:id())] = true
+		--log1("добавляем с таблицу в СЛОТЕ ПОЯС "..obj:name().."")
+	end
+	if obj ~= nil then
+		if ini:line_exist(obj:section(), "item_amount") then
+			local val = ini:r_float(obj:section(), "item_amount") or 0
+                        cur_amount = cur_amount - val
+			if cur_amount < 0 then
+				--cur_amount = 0
+			end
+                        --news_manager.send_tip(db.actor, "текущий объём "..cur_amount.." сейчас.", nil, "default", 9000)
+		end
+	
+	end
+	olr_ui_inv_acinfo.repaint()
+end
+
+function take_item_on_slot(obj)
+        if db.actor.health == 0 then return end
+        if device().precache_frame >1 then return end
+	--log1("добавляем с таблицу в СЛОТЕ PARENT "..obj:parent():name().."")
+	if tab_objs_on_slots[tostring(obj:id())] == nil then
+		tab_objs_on_slots[tostring(obj:id())] = true
+		--log1("добавляем с таблицу в СЛОТЕ "..obj:name().."")
+	end
+	if obj ~= nil then
+		if ini:line_exist(obj:section(), "item_amount") then
+			local val = ini:r_float(obj:section(), "item_amount") or 0
+                        cur_amount = cur_amount - val
+			if cur_amount < 0 then
+				--cur_amount = 0
+			end
+                        --news_manager.send_tip(db.actor, "текущий объём "..cur_amount.." сейчас.", nil, "default", 9000)
+		end
+	
+	end
+	if obj:is_outfit() then
+		cur_outfit = obj:id()
+		--log1(" надели броню ")
+		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		max_item_amount = max_item_amount + val_add
+	end
+	olr_ui_inv_acinfo.repaint()
+end

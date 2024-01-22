@@ -1,0 +1,125 @@
+-- рейтинг сталкеров
+-- hi_flyer 17.07.17
+
+class "ui_best_stalkers" (CUIScriptWnd)
+
+function ui_best_stalkers:__init(owner) super()
+ 	self.owner = owner
+	self:InitControls()
+end
+
+
+function ui_best_stalkers:InitControls()
+ self:Init(335,5,675,266)
+
+    	-- фон
+    	self.back = CUIStatic()
+    	self.back:Init(0,0,675,266)
+    	self.back:InitTexture("ui\\ui_dg_inventory_tab")
+   	self.back:SetOriginalRect(0,0,675,768)
+	self:AttachChild(self.back)
+		
+	self.help_vopros = CUIStatic()
+	self.help_vopros:Init(5,5,200,10)
+        self.help_vopros:SetText("Рейтинг сталкеров")
+	self.help_vopros:SetFont(GetFontGraffiti22Russian())
+	self.help_vopros:SetTextAlign(CGameFont.alCenter)
+	self.help_vopros:SetTextColor(255,255,255,255)
+	self.back:AttachChild(self.help_vopros)
+	
+	local wth = 28
+	local st_id = 0
+
+	local addItm = 35
+	local maxItems = 0
+	local rnkFrst = {}
+	local sim = alife()
+
+	local montabl = 
+	{
+       		[clsid.script_stalker] = true,
+
+	}
+
+	for id=1, 65534 do
+		local sobj = sim:object(id)
+		if sobj then
+            		if montabl[sobj:clsid()]  then
+                		if sobj:alive() then
+					if not olr_protected.is_no_offline_alife_obj(sobj:name()) then
+						local rnk = sobj:rank()
+						table.insert(rnkFrst, {rnk,sobj.id})
+					end
+				end
+			end
+		end
+	end
+	
+	table.sort(rnkFrst, function(a,b) return a[1] > b[1] end) 
+
+	for k,v in pairs(rnkFrst) do
+		local sobj = sim:object(v[2])
+		if sobj then
+			if maxItems < addItm then
+				maxItems = maxItems + 1
+				local pk = get_netpk(sobj,1)
+				if pk:isOk() then
+					local data = pk:get()
+					local name = data.character_name
+					local fName = ""..name..""
+
+    					self.no = CUIStatic()
+   					self.no:SetAutoDelete(true)
+    					self.no:Init(72,wth,133,25)
+					self.no:InitTexture("ui\\ui_verst_list")
+					self.no:SetOriginalRect(46,296,133,25)
+					self.no:SetStretchTexture(true)
+					self.no:SetText(string.format(fName))
+					self.no:SetFont(GetFontGraffiti22Russian())
+					self.no:SetTextColor(255,255,255,255)
+    					self:Register(self.no,"no")
+					self.back:AttachChild(self.no)
+    					self:AddCallback("no",ui_events.BUTTON_DOWN,self.n,self)
+
+					st_id = st_id + 1
+					wth = wth + 12
+
+
+				end
+			end
+		end
+	end
+
+end
+
+function ui_best_stalkers:Hide()
+	self:GetHolder():start_stop_menu(self, true)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

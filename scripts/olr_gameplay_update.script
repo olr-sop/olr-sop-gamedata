@@ -1,0 +1,555 @@
+-- hi_flyer 09/04/18
+
+local see_count = 0
+local zombied_walk = false
+local boss_particle = particles_object("zones\\zone_dead_zone_blow")
+local boss_particle_actor = particles_object("zones\\zone_dead_zone_blow")
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+function update()
+	if db.actor then
+		if level.name() == "lvl7_yantar" then
+			update_yantar_preblow()
+			go_zombied_yantar()
+			yan_acid_terrain()
+			walk_to_brain()
+			yan_ohr_system()
+			lenin_zone()
+		end
+		if level.name() == "lvl8_swamp" then
+			swamp_rain()
+			sw_fog()
+			dark_stalker_phantom()
+		end
+		if level.name() == "lvl11_deadcity" then
+			ds_snipers()	
+		end
+		if level.name() == "lvl10_radar" then
+			check_rad_time()
+			check_psy_zone()
+		end
+		if level.name() == "lvl16_generators" then 
+			act_nowpn_zone()
+			boss_unl_health()
+			act_jaba_zone()
+			zone_no_map()
+			effector_laba()
+			--upd_weather()
+		end
+		if level.name() == "lvl13_prip" then
+			swamp_rain()
+			fire_roots()
+		end
+	end
+end
+
+
+local ldydtup = 0
+local ldydtmerup = math.random(2000,6000)
+function effector_laba()
+	if time_global() > ldydtup then
+	ldydtup = time_global() + ldydtmerup
+
+if ( xr_conditions.actor_in_zone(nil,nil,{"lvl16_generators_space_restrictor_0024"}))  then
+
+if has_alife_info("gen_last_boss_dead") then return end
+
+local rnd = math.random(1,6)
+
+if rnd == 1 then
+		level.add_pp_effector("shoot\\blur_s"..math.random(1,5)..".ppe", 2531, false)
+elseif rnd == 3 then
+		level.add_pp_effector("shoot\\grey_s"..math.random(1,5)..".ppe", 126531, false)
+elseif rnd == 6 then
+		level.add_pp_effector("shoot\\grey_s"..math.random(1,5)..".ppe", 126599, false)
+		level.add_pp_effector("shoot\\blur_s"..math.random(1,5)..".ppe", 25319, false)
+end
+end
+end
+end
+
+local dydtup = 0
+local dydtmerup = math.random(30000,60000)
+function dark_stalker_phantom()
+	if time_global() > dydtup then
+		if not has_alife_info("actor_set_dolg_info_olr") then return end
+		if has_alife_info("monolit_na_kordone") then return end
+
+		if db.actor:position():distance_to(vector():set( -42, 5, 273)) < 30 or  
+		db.actor:position():distance_to(vector():set( -52, 5, -233)) < 30 or  
+		db.actor:position():distance_to(vector():set( 42, 5, -206)) < 21 or  
+		db.actor:position():distance_to(vector():set( -202, -5, -140)) < 1 or  
+		db.actor:position():distance_to(vector():set( -147, -30, -373)) < 1 then  
+		return
+		end  
+
+		if device().precache_frame >1 then return end
+
+		dydtup = time_global() + dydtmerup
+		local phantom_spawn_radius			= 12.0
+		local phantom_spawn_height			= 1.5
+		local phantom_fov				= 45
+		local radius = phantom_spawn_radius * ( math.random()/2.0+0.5 )
+		local ang    = phantom_fov * math.random() - phantom_fov * 0.5
+		local dir    = vector_rotate_y( db.actor:direction(), ang )
+		phantom_manager_ds.spawn_phantom( db.actor:position():add( dir:mul(radius) ) )
+	end	
+end
+
+
+
+
+local ydtup = 0
+local ydtmerup = math.random(1000,4000)
+function yan_ohr_system()
+	if time_global() > ydtup then
+		ydtup = time_global() + ydtmerup
+		if has_alife_info("start_mission_yan_mon") then
+			return
+		end
+		for k,v in pairs(db.storage) do
+        		local stalker = level.object_by_id(k)
+            		if stalker and stalker:is_monster() and stalker:alive() then
+				if stalker:position():distance_to(vector():set(-179,14,181)) < 32 then 
+					local snd_obj = xr_sound.get_safe_sound_object([[weapons\gauss_shoot]])
+					local a=vector()
+					a.x=math.random(4,10)
+					a.y=math.random(4,10)
+					a.z=math.random(4,10)
+					snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
+        				local boss_particle = particles_object("damage_fx\\body_smoke_kisl") 
+					boss_particle:play_at_pos(vector():set(stalker:position().x, stalker:position().y+0.1, stalker:position().z))
+        				local boss_particle = particles_object("damage_fx\\burn_creatures00") 
+					boss_particle:play_at_pos(vector():set(stalker:position().x, stalker:position().y+0.2, stalker:position().z))
+					stalker:kill(stalker)
+					--news_manager.send_tip(db.actor, "БАН  yan", nil, "default", 39000)
+			    		break
+				end
+			end
+		end
+	end	
+end
+
+
+local dtup = 0
+local dtmerup = math.random(2000,5000)
+function ds_snipers()
+	if time_global() > dtup then
+		dtup = time_global() + dtmerup
+		for k,v in pairs(db.storage) do
+        		local stalker = level.object_by_id(k)
+            		if stalker and stalker:is_monster() and stalker:alive() then
+				if stalker:position():distance_to(vector():set(29,1,41)) < 35 then 
+					local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
+					local a=vector()
+					a.x=math.random(4,10)
+					a.y=math.random(4,10)
+					a.z=math.random(4,10)
+					snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
+					stalker:kill(stalker)
+					--news_manager.send_tip(db.actor, "БАН", nil, "default", 39000)
+			    		break
+				end
+			end
+		end
+	end	
+end
+
+
+
+
+local tup = 0
+local tmerup = 1000
+function fire_roots()
+	if time_global() > tup then
+		tup = time_global() + tmerup
+		if has_alife_info("monolit_na_kordone") then
+			--news_manager.send_tip(db.actor, "rad weapons hit", nil, "default", 39000)
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-5.68,19.15,-200.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-103.68,23.15,-153.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-147.68,16.15,-120.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-52.68,30.15,-32.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-65.68,0.15,-99.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-77.68,18.15,83.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-225.68,30.15,-255.36))
+			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-51.68,13.15,308.36))
+		end
+	end
+end
+------------------------------------------------------------------------------------------------------------------------------------------
+
+function lenin_zone()
+	if db.actor then
+      		if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_lenin"}))  then
+			db.actor.health = 1
+		end
+	end
+end
+
+function check_psy_zone()
+	if db.actor then
+      		if ( xr_conditions.actor_in_zone(nil,nil,{"psy_izl_0003_script"}))  then
+			if nick and nick.radar_okno_open() == false then
+				--log1("hit actor okno")
+				local h = hit()
+        			h.draftsman = db.actor
+        			h:bone("eyelid_1")
+        			h.type = hit.explosion
+        			h.power = 0.04
+        			h.impulse = 0.0
+        			db.actor:hit(h)
+        			h:bone("bip01_spine")
+        			h.type = hit.telepatic
+        			h.power = 0.018
+        			db.actor:hit(h)
+				level.add_pp_effector("snd_shock.ppe", 24031, false)
+			end
+		end
+	end
+end
+------------------------------------------------------------------------------------------------------------------------------------------
+
+function check_rad_time()
+	if not has_alife_info("go_rush_radar_posoni") and nick.radar_okno_open() and has_alife_info("talk_s_barmeno_radar_have") then
+		db.actor:give_info_portion("vor_glaz_radar_pre_go_have")
+		db.actor:give_info_portion("go_rush_radar_posoni")
+		olr.blow_add(300)
+		news_manager.send_tip(db.actor, "Всё, время! Выдвигаемся. Мессер, за нас особо не переживай, наша основная цель - чтобы ты проник внутрь комплекса...", nil, "dolg", 35000)
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- туман на болотах
+function sw_fog()
+	if not has_alife_info("actor_set_dolg_info_olr") then
+		level.set_weather("tuman", true)
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+local vaild_outfits = {
+["ecolog_outfit"] = true,
+["outfit_exo"] = true,
+["exo_outfit"] = true,
+["scientific_outfit"] = true,
+["protection_outfit"] = true,
+["outfit_antirad"] = true
+}
+
+function swamp_rain()
+	if bind_car.act_in_car_now() then
+		return
+	end
+	local currout = db.actor:item_in_slot(6)
+        if not currout or currout:condition() < 0.6 or not vaild_outfits[currout:section()] then
+	if db.actor:is_actor_outdoors() == true then
+		if level.rain_factor() > 0 then
+			if not has_alife_info("about_swamp_rain") then
+				db.actor:give_info_portion("about_swamp_rain")
+				news_manager.send_tip(db.actor, "Будь осторожен, в этой местности идут кислотные дожди. Чтобы находиться там в дождь, необходимо иметь защитный костюм, в хорошем состоянии. Или же можно попытаться спрятаться под какое либо укрытие.", 9, "trader", 35000)
+			end
+			db.actor.health = -0.00045
+			local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
+			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+			--log1("rain hit")
+		end
+	end
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+function update_yantar_preblow()
+	if has_alife_info("radar_de_done") then            --//-------- проверка что отключили мозг
+		return 
+	end
+	if has_alife_info("olr_blowout_phase_1") then      --//-------- проверка на пре-выброс
+		if db.actor:is_actor_outdoors() == true then       --//-------- ГГ не в укрытии
+			db.actor.psy_health = -0.001  
+			level.add_pp_effector ("dead_zone.ppe", 1971974, false)
+			--log1("yan pre super hit")
+				if not has_alife_info("yantar_pre_blow_psy") then
+					db.actor:give_info_portion("yantar_pre_blow_psy")
+				end
+		end
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+function go_zombied_yantar()
+	if has_alife_info("radar_de_done") then            --//-------- проверка что отключили мозг
+		return 
+	end
+	if bind_car.act_in_car_now() then
+		return
+	end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"central_complex_zombied_to"}))  then
+		if zombied_walk == false then
+			get_console():execute("cam_inert 0.9")
+			for i=1,65535 do
+				local lokobj = level.object_by_id(i)
+				if lokobj then
+					if lokobj:name() == "lvl7_yantar_physic_object_0665" then
+						local pos = lokobj:bone_position("link")
+						local vDir = pos:sub(db.actor:position())
+						db.actor:set_actor_direction(-vDir:getH())
+						olr_timers.st_timer("remove_cam_inert_timer", 2, "nick.remove_cam_inert_timer()")
+						zombied_walk = true
+					end
+				end
+			end
+		end
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+function walk_to_brain()
+
+if has_alife_info("radar_de_done") then            --//-------- проверка что отключили мозг
+	return 
+end
+
+if not db.actor:alive() then
+	return
+end
+
+if zombied_walk == true then
+	if ( xr_conditions.actor_in_zone(nil,nil,{"central_complex_zombied_to"}))  then
+		level.disable_input()
+		level.hide_indicators()
+		olr.hide_inv()
+		--log1("go to brain")
+		get_actor_obj():hold_action(9) 			   --//-------- идём вперёд
+		db.actor.psy_health = -0.01  
+		level.add_pp_effector ("dead_zone.ppe", 1971974, false)
+	end
+end
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+function upd_weather()
+	if db.actor:is_actor_outdoors() == true then
+			
+	end
+end
+
+function act_nowpn_zone()
+if has_alife_info("find_journalist_final_done_info") then       
+	return 
+end
+if ( xr_conditions.actor_in_zone(nil,nil,{"lvl16_generators_space_restrictor_0029"}))  then
+	bind_stalker.hide_weapon()
+	olr.hide_inv()
+	olr.show_minimap(false)
+	--level.set_weather("indoor")
+end
+end
+
+function act_jaba_zone()
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl16_generators_space_restrictor_0065"}))  then
+		bind_stalker.hide_weapon()
+		olr.hide_inv()
+		local obj = alife():object("generators_m_trader")
+		if obj then
+		local loh = level.object_by_id(obj.id)
+		if loh then
+			loh:disable_trade()
+		end
+		end
+		olr.show_minimap(false)
+		--level.set_weather("indoor")
+	end
+end
+
+function zone_no_map()
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl16_generators_space_restrictor_0045"}))  then
+		--level.set_weather("indoor")
+		olr.show_minimap(false)
+	end
+end
+
+local flycoprs = false
+function boss_unl_health()
+	local obj = alife():object("lvl16_generators_staler_undead_olr_0002")
+	if has_alife_info("start_boss_podval_battle") and obj then
+		--log1("boss health - "..obj:health().." ")
+		if obj:health() > 0 then
+			if db.actor.health <= 0 then
+				olr.del_by_name("lvl16_generators_staler_undead_olr_0002")
+			end
+			local bos = level.object_by_id(obj.id)
+			if bos then
+
+				local mozg_light = alife():object("lvl16_generators_lights_hanging_lamp_boss")
+				if mozg_light then
+				local lcobj = level.object_by_id(mozg_light.id)
+				if lcobj then
+					local lamp = lcobj:get_hanging_lamp()
+					if lamp then
+						--log1("set pos")
+						local brg_var = math.random(45,55) / 200
+	        				lamp:set_brightness(brg_var)
+						lamp:set_position(vector():set(bos:position().x, bos:position().y+0.5, bos:position().z))
+					end
+				end
+				end
+
+				local dist = bos:position():distance_to(db.actor:position())
+				if dist < 1.5 then
+					db.actor.health = -1
+					olr.del_by_name("lvl16_generators_staler_undead_olr_0002")
+        				level.add_pp_effector("black.ppe", 20131, false)
+					news_manager.send_tip(db.actor, "!!!!ГГ БЛИЗКО К БОССУ подошёл!!!!", 2, "unknown", 5000)
+				end
+				if not boss_particle:playing() then 
+					boss_particle:play_at_pos(vector():set(bos:position().x, bos:position().y+1.6, bos:position().z))
+					local snd_obj = xr_sound.get_safe_sound_object([[ambient\xforce2]])
+					snd_obj:play_no_feedback(bos, sound_object.s2d, 0, vector(), 0.25)
+         			end
+				local wpn = bos:best_weapon()
+				if wpn and wpn:section() ~= "wpn_rpg7" then
+					wpn:set_ammo_elapsed(5)
+				end
+				bos:set_fov(180)
+				bos:set_range(180)
+				bos:disable_talk()
+				if not bos:see(db.actor) and bos:position():distance_to(db.actor:position()) <= 3 then
+					nick.teleport_boss_fight()
+					level.add_pp_effector("black.ppe", 5014331, false)
+					--news_manager.send_tip(db.actor, "!!!!БОСС НЕ ВИДИТ ГГ НО ОН РЯДОМ !!!!", nil, "unknown", 5000)	
+				end
+				if bos:see(db.actor) then
+					if flycoprs == false then
+						flycoprs = true
+						--nick.flying_corpses()
+					end
+					see_count = see_count + 1
+					--news_manager.send_tip(db.actor, "!!!!БОСС ВИДИТ ГГ!!!!", 2, "unknown", 5000)
+					level.add_pp_effector("esc_fade.ppe", 1523, true)
+					level.set_pp_effector_factor(1523, see_count / 40)
+					db.actor.psy_health = -0.01
+					get_actor_obj():hold_action(9)
+					local snd_obj = xr_sound.get_safe_sound_object([[ol3\babka_noise]])
+					if not snd_obj:playing() then 
+						snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+					end
+					if not boss_particle_actor:playing() then 
+						boss_particle_actor:play_at_pos(vector():set(db.actor:position().x, db.actor:position().y+2.2, db.actor:position().z))
+						local snd_obj = xr_sound.get_safe_sound_object([[ol3\dolina_psy_noise]])
+						snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.25)
+         				end
+					if see_count >= 50 then
+						db.actor.health = -1
+						--news_manager.send_tip(db.actor, "!!!!БОСС сотрит - смерт!!!!", 2, "unknown", 5000)
+					end
+					if see_count == 20 then
+						if math.random(1,10) == 1 then
+							local aitem = db.actor:active_item()
+	            					if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end	
+						end	
+					end
+					if see_count == 10 then
+						if math.random(1,6) == 1 then
+   		  	   				olr.rnd_camera_direction() 
+						end
+					end
+				else
+					see_count = 0
+					level.remove_pp_effector(1523)
+				end
+			end
+		end
+		if obj:health() <= 0.1 or obj:health() <= 0 then
+			--news_manager.send_tip(db.actor, "!!!!БОСС Умер!!!!", 2, "unknown", 5000)
+			if not has_alife_info("gen_last_boss_dead") then
+				level.remove_pp_effector(1523)
+				local snd_obj = xr_sound.get_safe_sound_object([[ol3\gen_boss_scream_dead]])
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				olr.info("gen_last_boss_dead")
+				olr.del_by_name("restrictor_monologe_gen_0000")
+				olr.del_by_name("restrictor_monologe_gen_0001")
+				olr.del_by_name("restrictor_monologe_gen_0002")
+				olr.del_by_name("restrictor_monologe_gen_0003")
+				olr.del_by_name("restrictor_monologe_gen_0004")
+				olr.del_by_name("restrictor_monologe_gen_0005")
+				olr.del_by_name("restrictor_monologe_gen_0006")
+				olr.del_by_name("restrictor_monologe_gen_0007")
+				olr.del_by_name("restrictor_monologe_gen_0008")
+				olr.kill_mon_in_radius(db.actor:position(), 150)
+				local snd_obj1 = xr_sound.get_safe_sound_object([[ol3\gen_escape_lab_music]])
+				snd_obj1:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				local aitem = db.actor:active_item()
+	            		if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end
+				olr.kill_mon_in_radius(db.actor:position(), 150)
+			end
+		end
+	end
+
+end
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+function yan_acid_terrain()
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0062"}))  then
+		if bind_car.act_in_car_now() == true then
+			return
+		end
+		yan_hit_acid()
+	end
+end
+
+
+function yan_hit_acid()
+	if ( xr_conditions.actor_in_zone(nil,nil,{"psih_yan_0000"}))  then
+		return
+	end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"psih_yan_0001"}))  then
+		return
+	end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0065"}))  then
+		return
+	end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0053"}))  then
+		return
+	end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0078"}))  then
+		return
+	end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0088"}))  then
+		return
+	end
+	if get_actor_obj().state.jump then
+		return
+	end
+
+	local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
+	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+
+	--news_manager.send_tip(db.actor, "ACTOR IN ACID YANTAR", nil, "default", 10000)
+
+	local has_boots = db.actor:object("actor_boots")
+		if has_boots ~= nil then
+		local condb = has_boots:condition()
+		has_boots:set_condition(condb - 0.001)
+		if condb <= 0.05 then
+			olr.del(has_boots)
+			news_manager.send_tip(db.actor, "Ботинки полностью расплавились...")
+		end
+		return 
+	end
+	db.actor.health = -0.00085
+	if not has_alife_info("yan_acid_terrain_hitted") then
+		db.actor:give_info_portion("yan_acid_terrain_hitted")
+	end
+end
+
+
+

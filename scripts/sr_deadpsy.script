@@ -1,0 +1,124 @@
+--[[-----------------------------------------------------------------------------------------------
+ File         : sr_deadrad.script
+ Description  : Модуль глобального пси-поля
+ Copyright    : Oblivion Lost Remake 3.0
+ Author       : hi_flyer
+ Date         : 16.05.15
+ Last Edit    : 17.05.15
+--]]----------------------------------------------------------------------------------------------- 
+
+
+local state_nowhere = 0 -- схема только что включилась
+local state_inside = 1 -- актер внутри
+local state_outside = 2 -- актер снаружи
+
+
+class "action_deadpsy"
+
+function action_deadpsy:__init( obj, storage )
+	self.object = obj
+	self.st = storage
+end
+
+function action_deadpsy:reset_scheme()
+	
+	self.state = state_nowhere -- еще неясно, в зоне он, или нет
+	
+	self:switch_state(db.actor)
+end
+
+function action_deadpsy:update( delta )
+	local actor = db.actor
+
+	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
+		return
+	end	
+	
+	self:switch_state( actor )
+	
+	if self.state == state_inside then
+
+        iblocitm = db.actor:object("psy_blocerator")
+        if iblocitm then
+        	iblocitm:set_condition(iblocitm:condition() - 0.00005)
+		local cond = iblocitm:condition()
+		if cond == 0.50 then
+			news_manager.send_tip(db.actor, "Пси-блокатор: Осталось половина заряда батареи.", nil, "default", 49000)
+		elseif cond == 0.10 then
+			news_manager.send_tip(db.actor, "Пси-блокатор: Внимание! Критически низкий заряд батареи!", nil, "default", 49000)
+		end
+        	if cond <= 0.01 then
+			news_manager.send_tip(db.actor, "Пси-блокатор: Батарея разряжена.", nil, "default", 49000)
+        		olr.del(iblocitm)
+        	end
+        end
+
+        if not iblocitm then
+		level.add_pp_effector ("dead_zone.ppe", 971974, false)
+        	--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
+       		local song_start = xr_sound.get_safe_sound_object("ol3\\dolina_psy_noise")
+		song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+        	db.actor.psy_health = -0.01
+        end
+
+        if iblocitm then 
+		level.remove_pp_effector(971974)
+        	level.remove_cam_effector(19749)	
+	end	 
+end
+end
+
+
+function action_deadpsy:switch_state( actor )
+	local state = self.state
+	
+	if state == state_outside or state == state_nowhere then
+		if self.object:inside( actor:center() ) then
+			self:zone_enter()
+			return
+		end
+	end
+	
+	if state == state_inside or state == state_nowhere then
+		if not self.object:inside( actor:center() ) then
+			self:zone_leave()
+			return
+		end
+	end
+end
+
+function action_deadpsy:zone_enter()
+	self.state = state_inside
+end
+
+function action_deadpsy:zone_leave()
+	self.state = state_outside
+        level.remove_pp_effector(971974)
+        level.remove_cam_effector(19749)
+end
+
+
+---------------------------------------------------------------------------------------------------------------------
+function add_to_binder(npc, ini, scheme, section, storage)
+	printf("DEBUG: add_to_binder: scheme='%s', section='%s'", scheme, section)
+
+	local new_action = action_deadpsy(npc, storage)
+
+	-- Зарегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
+	xr_logic.subscribe_action_for_events(npc, storage, new_action)
+end
+
+function set_scheme(npc, ini, scheme, section, gulag_name)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+end
+
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+
+		
+	
+	

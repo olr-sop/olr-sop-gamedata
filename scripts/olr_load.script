@@ -1,0 +1,24 @@
+--Oblivion Lost Remake (2014)
+--(c) proger_Dencheek
+--Нумерция быстрых сохранений
+
+function on_button()
+
+local con = get_console()
+	local list = getFS():file_list_open_ex(
+		"$game_saves$",
+		bit_or(FS.FS_ListFiles,FS.FS_RootOnly),
+		"*.sav"
+	)
+list:Sort(FS.FS_sort_by_modif_down)
+local cnt = list:Size()
+	for i=0,cnt-1 do
+		local file =	list:GetAt(i)
+		local file_name = file:NameFull():sub(0, file:NameFull():len() - 4)
+		if file_name:find(("%s_quicksave_"):format(usero_name())) then
+			con:execute(("load %s"):format(file_name))
+			break
+		end
+	end
+end
+

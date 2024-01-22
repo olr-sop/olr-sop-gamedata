@@ -1,0 +1,152 @@
+-- hi_flyer 07/05/15
+
+function drop_item(obj)
+
+	if obj and obj:section() == "capsule_rone" then
+		if has_alife_info("ui_car_body") or has_alife_info("ui_trade") then return end
+		--olr.add_spot_on_map( obj:id(),"crlc_mdl", "Оsdfdsf..." )
+		local pos = db.actor:position()
+		pos.y = pos.y + 1
+		--level.object_by_id(obj:id()):set_position(pos)
+		alife():teleport_object(obj:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), pos)
+	end
+
+        if obj:section() == "zameritel_vibrosa" then
+		if device().precache_frame >1 then return end 
+		if db.actor:is_actor_outdoors() == false then
+			news_manager.send_tip(db.actor, "Прибор: Недостаточный сигнал. Установите прибор на открытой местности.", nil, "default", 39000)
+			return
+		end
+		if has_alife_info("olr_blowout_phase_0") then
+			news_manager.send_tip(db.actor, "Прибор: Аномальньная энергии для проведения замера отсутствует.", nil, "default", 39000)
+			return
+		end
+		if has_alife_info("olr_blowout_phase_1") then
+			news_manager.send_tip(db.actor, "Прибор: Недостаточно аномальной энергии для проведения замера.", nil, "default", 39000)
+			return
+		end
+                if not has_alife_info("zameritel_vibrosa_has_result") and has_alife_info("olr_blowout_phase_2") then
+			news_manager.send_tip(db.actor, "Прибор: Замер произведён.", 5, "default", 39000)
+			local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
+			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+	        	olr.info("zameritel_vibrosa_has_result")
+		end
+	end
+
+        if obj:section() == "give_yashik_kvest_1_item" then 
+                if has_alife_info("esc_olr_1_have_pre") then
+	        	olr.info("esc_olr_1_have")
+		end
+	end
+
+ 	if obj:section() == "af_magnet_drop_q1" then 
+		for i=1,65535 do
+			local anom = level.object_by_id(i)
+                          if anom ~= nil and anom:is_anomaly() and 
+                                  anom:clsid()==clsid.zone_mbald_s and
+                                  anom:position():distance_to(db.actor:position()) < 10 then
+                                  level.add_pp_effector("blink.ppe", 20131, false) 
+                                  olr.del(obj)
+				  alife():create("af_magnet_drop_q2", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+				  --alife():create("af_magnet_drop_q2", anom:position(), anom:level_vertex_id(), anom:game_vertex_id())
+				break
+			elseif i == 65535 then
+				return
+								
+			end
+		end
+	end
+
+        if obj:section() == "pribor_primanka_mg" then 
+                if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0025"}))  then
+	        	olr.info("mg_spawen_raz_boloto")
+			alife():create("karlito_yellow", db.actor:position():add(db.actor:direction():mul(-5)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			level.add_pp_effector("blink.ppe", 2560131, false)
+			nick.phantasms_zombies()
+			nick.mg_ph_spawn_boloto()
+			olr.del(obj) 
+		end
+	end
+
+ 	if obj:section() == "pribor_paras_spory" then 
+local parasits = {
+["zombie_plague"] = true,
+["zombie_plague_strong"] = true,
+["pseudodog_w_namordnike"] = true,
+["pseudodog_w_namordnike_ghost"] = true,
+["pseudodog_w_namordnike_ghost2"] = true,
+["pseudodog_w_namordnike_medpribor"] = true
+}
+		for i=1,65535 do
+			local anom = level.object_by_id(i)
+                        if anom ~= nil and anom:is_monster() and 
+                                --string.find(anom:section(),"zombie_plague") and
+                                parasits[anom:section()] and
+                                anom:position():distance_to(db.actor:position()) < 5 then
+				local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				news_manager.send_tip(db.actor, "Прибор: Обнаружены споры паразита. Начало замеров.", nil, "default", 39000)
+				olr_timers.st_timer("pribor_paras", math.random(3,6), "nick.pribor_paras_inf()")
+				break
+			elseif i == 65535 then
+				return
+								
+			end
+		end
+	end
+
+        if obj:section() == "pribor_paras_spory_mg" then 
+                if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0038"}))  then
+			local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			news_manager.send_tip(db.actor, "Прибор: Обнаружены споры паразита. Начало замеров.", nil, "default", 39000)
+			olr_timers.st_timer("pribor_paras2", math.random(3,6), "nick.pribor_paras_mg()")
+		end
+	end
+
+ 	if obj:section() == "af_dezintegrator_m1" then 
+		for i=1,65535 do
+			local anom = level.object_by_id(i)
+                          if anom ~= nil and anom:is_anomaly() and 
+                                string.find(anom:section(),"zone_zharka_") and
+                                anom:position():distance_to(db.actor:position()) < 5 then
+                                olr.del(obj)
+				alife():create("zone_buzz_weak", anom:position(), anom:level_vertex_id(), anom:game_vertex_id())
+				local snd_obj = xr_sound.get_safe_sound_object([[ol3\teleport]])
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				local snd_obj = xr_sound.get_safe_sound_object([[anomaly\buzz_hit]])
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				news_manager.send_tip(db.actor, "Кажется аномалия превратилась в студень...", nil, "act", 39000)
+				anom:disable_anomaly()
+				olr_timers.st_timer("dezint_qt", math.random(23,36), "nick.dezint_qt_spawn()")
+				break
+			elseif i == 65535 then
+				return
+								
+			end
+		end
+	end
+
+        if obj:section() == "af_dezintegrator_m2" then 
+        	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0122"}))  then
+			if has_alife_info("space_bar_zombied_dialog_info") then
+					level.add_pp_effector("blink.ppe", 2560131, false)
+					olr.del(obj) 
+					olr.del_by_name("lvl5_bar_staler_undead_olr_0005")
+					olr.del_by_name("lvl5_bar_space_restrictor_0122")
+					olr.del_by_name("lvl5_bar_physic_object_0126")
+					olr.del_by_name("lvl5_bar_physic_object_0127")
+					olr.del_by_name("lvl5_bar_physic_object_0122")
+					olr.del_by_name("lvl5_bar_physic_object_0123")
+					olr.del_by_name("lvl5_bar_physic_object_0120")
+					olr.del_by_name("lvl5_bar_physic_object_0125")
+					olr.disable_walk()
+					olr_timers.st_timer("dezint_qt_two", math.random(8,12), "nick.dezint_qt_spawn_two()")
+					local snd_obj = xr_sound.get_safe_sound_object([[ol3\teleport]])
+					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			end
+		end
+	end
+
+
+end

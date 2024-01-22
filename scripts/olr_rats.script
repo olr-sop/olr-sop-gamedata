@@ -1,0 +1,111 @@
+-- hi_flyer 04.11.20
+-- дин. спавн крыс в крысиных катакомбах
+
+local max_alive_count = 350
+
+function upd()
+	if not has_alife_info("rat_can_spawn") then
+		return
+	end
+	if not has_alife_info("dialog_ratcat_digger_jaba_done") then  -- сдали разведку жабе
+		return
+	end
+	if not has_alife_info("stader_kv_7_katakomby_done_info") then
+		return
+	end
+	if xvars and xvars.rats_count < max_alive_count then
+		local obj1 = alife():create("m_rat_e", db.actor:position():add(db.actor:direction():add(45)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		olr_rats.set_rat_home(obj1)
+		set_aggersive(obj1)
+		local obj2 = alife():create("m_rat_e2", db.actor:position():add(db.actor:direction():add(65)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		olr_rats.set_rat_home(obj2)
+		set_aggersive(obj2)
+		local obj3 = alife():create("m_rat_e3", db.actor:position():add(db.actor:direction():add(55)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		olr_rats.set_rat_home(obj3)
+		set_aggersive(obj3)
+		local obj4 = alife():create("m_rat_e4", db.actor:position():add(db.actor:direction():add(55)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		olr_rats.set_rat_home(obj4)
+		set_aggersive(obj4)
+		local obj5 = alife():create("m_rat_new", db.actor:position():add(db.actor:direction():add(45)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		olr_rats.set_rat_home(obj5)
+		set_aggersive(obj5)
+		xvars.rats_count = xvars.rats_count + 5
+		if math.random(1,2) == 1 then
+			local obj6 = alife():create("rat_volk", db.actor:position():add(db.actor:direction():add(55)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			olr_rats.set_rat_home(obj6)
+			set_aggersive(obj6)
+			xvars.rats_count = xvars.rats_count + 1
+		end
+		--log1("rats spawned - "..xvars.rats_count.."")
+	end
+	olr_rats.check_deads()
+	olr_rats.ratlab_inside()
+end
+
+function set_aggersive(obj)
+	if math.random(1,2) == 1 and db.actor and obj then
+		local rat = level.object_by_id(obj.id)
+		if rat then
+    		local h = hit()
+		h.power = 100
+		h.direction = vector():set (0, -1, 0)
+		h.impulse = 1
+		h.draftsman = db.actor
+		h.type = hit.strike
+		rat:hit (h)
+		end
+	end
+end
+
+function check_deads()
+	for k,v in pairs(db.storage) do
+		local rat = level.object_by_id(k)
+		if rat and rat:is_monster() and rat:position():distance_to(db.actor:position()) > 20 and not rat:alive() then
+			xvars.rats_count = xvars.rats_count - 1  
+    			--log1("  del dead rat  ---- ["..rat:name().."]  rats_count  ---- ["..xvars.rats_count.."]  ")
+			if xvars.rats_count < 0 then
+				xvars.rats_count = 0
+			end
+			olr.del(rat)
+		end
+	end
+end
+
+-- paths SDK 1-54
+function set_rat_home(obj)
+	local rnd_radius = tonumber(math.random(4,12))
+	local rnd_home = tonumber(math.random(1,54))
+	local params=amk.read_monster_params(obj)
+	params.custom = "[smart_terrains]\nnone=true\n[logic]\nactive = mob_home\n[mob_home]\npath_home = ratlevel_homepath_"..rnd_home.."\nhome_min_radius = 2\nhome_max_radius = "..rnd_radius.."\naggressive_home"
+	amk.write_monster_params(params,obj)
+end
+
+function ratlab_inside()
+      	if not ( xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_ratlab"}))  then
+		return
+	end
+	if math.random(1,2) == 1 then return end
+	level.add_pp_effector("poltergeist_scan.ppe", 20131, false)
+	db.actor.radiation = 0.025
+      	db.actor.psy_health = -0.15
+	local rnd = math.random(1,5)
+	if rnd == 1 then
+
+	elseif rnd == 2 then
+		olr.switch_torch(false)
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+

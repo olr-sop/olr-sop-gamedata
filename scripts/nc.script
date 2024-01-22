@@ -1,0 +1,1363 @@
+----------------------------------------------------------------------------------
+-- file: nc
+-- description: useful functions
+----------------------------------------------------------------------------------
+
+is_debug = false
+local bufferedmessages={}
+
+----------------------------------------------------------------------------------
+-- UTILITIES
+----------------------------------------------------------------------------------
+-- show of dbug message
+function mylog(msg)
+	if not is_debug then 
+		return
+	end
+	
+	local console = get_console()
+	
+	if console and msg then
+		console:execute("load ~~~ "..string.sub(msg,1,200))
+		console:execute("flush")
+	end
+	
+	if bufferedmessages and msg then
+		table.insert(bufferedmessages,{msg,console==nil})
+	end
+	
+	if db and db.actor and bufferedmessages then
+		for k,msg in pairs(bufferedmessages) do
+			if console and msg[2] then
+				console:execute("load ~~~ "..string.sub(msg[1],1,200))
+				console:execute("flush")
+			end
+			db.actor:give_game_news(msg[1], "ui\\ui_iconsTotal", Frect():set(0,658,83,47), 0, 15000)
+		end
+		bufferedmessages={}
+	end
+end
+
+-- spawn new object
+function spawn_obj(spawn_item, pos, gv,lv)
+	if gv==nil then gv=db.actor:game_vertex_id() end
+	if lv==nil then lv=db.actor:level_vertex_id() end
+	return alife():create(spawn_item, pos, lv, gv)
+end
+
+-- spawn new item in inventory npc
+function spawn_item_in_inv(spawn_item,npc)
+	if npc==nil then 
+		npc=db.actor 
+	end
+	return alife():create(spawn_item, 
+		npc:position(),
+		npc:level_vertex_id(),  
+		npc:game_vertex_id(),
+		npc:id())
+end
+
+-- remove object from alife
+function remove_item(remove_item)
+	if remove_item~=nil then
+		alife():release(alife():object(remove_item:id()), true)
+		return true
+	end
+	return false
+end
+
+-- spawn ammo in inventory npc
+function spawn_ammo_in_inv(spawn_item,number,npc)
+	if npc==nil then 
+		npc=db.actor 
+	end
+	if number > 0 then
+	return se_respawn.create_ammo(spawn_item, 
+		npc:position(),
+		npc:level_vertex_id(),  
+		npc:game_vertex_id(),
+		npc:id(),
+		number)
+	end
+end
+
+-- trim of string
+function trim (s)
+	return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
+
+-- parse of custom data
+function parse_custom_data(str)
+	local t={}
+	if str then
+		for section, section_data in string.gfind(str,"%s*%[([^%]]*)%]%s*([^%[%z]*)%s*") do
+			section = trim(section)
+			t[section]={}
+			for line in string.gfind(trim(section_data), "([^\n]*)\n*") do
+				if string.find(line,"=")~=nil then
+					for k, v in string.gfind(line, "([^=]-)%s*=%s*(.*)") do
+						k = trim(k)
+						if k~=nil and k~='' and v~=nil then 
+							if v == "<<true>>" then
+								t[section][k] = true
+							elseif v == "<<false>>" then
+								t[section][k] = false
+							else
+								t[section][k]=trim(v) 
+							end
+						end
+					end
+				else
+					for k, v in string.gfind(line, "(.*)") do
+						k = trim(k)
+						if k~=nil and k~='' then
+							t[section][k]="<<no_value>>" 
+						end
+					end
+				end
+			end
+		end
+	end
+	return t
+end
+
+-- generation of custom data
+function gen_custom_data(tbl)
+	local str=''
+	for key, value in pairs(tbl) do
+		str = str.."\n["..key.."]\n"
+		for k, v in pairs(value) do
+			k = tostring(k)
+			if v~="<<no_value>>" then
+				if type(v) == "boolean" then
+					if v then
+						v = "<<true>>"
+					else
+						v = "<<false>>"
+					end
+				else 
+					v = tostring(v)
+				end
+				str=str..k.." = "..v.."\n"
+			else
+				str=str..k.."\n"
+			end
+		end
+	end
+	return str
+end 
+
+-- divide of string
+function str_explode(div,str,clear)
+	local t={}
+	local cpt = string.find (str, div, 1, true)
+	if cpt then
+		repeat
+			if clear then
+				table.insert( t, trim(string.sub(str, 1, cpt-1)) )
+			else
+				table.insert( t, string.sub(str, 1, cpt-1) )
+			end
+			str = string.sub( str, cpt+string.len(div) )
+			cpt = string.find (str, div, 1, true)
+		until cpt==nil
+	end
+	if clear then
+		table.insert(t, trim(str))
+	else
+		table.insert(t, str)
+	end
+	return t
+end
+
+-- parse of ini section to array
+function parse_ini_section_to_array(ini,section)
+	local tmp={}
+	if ini:section_exist(section) then
+		local result, id, value = nil, nil, nil
+		for a=0,ini:line_count(section)-1 do
+			result, id, value = ini:r_line(section,a,"","")
+			if id~=nil and trim(id)~="" and trim(id)~=nil then
+				tmp[trim(id)]=trim(value)
+			end
+		end
+	end
+	return tmp
+end
+
+-- add spot on map
+function add_spot_on_map(obj_id,type,text)
+	if obj_id then
+		if text==nil then text=" " end
+		level.map_add_object_spot_ser(obj_id, type, text)
+	end
+end
+
+-- remove spot from map
+function remove_spot_from_map(obj_id,type)
+	if obj_id and level.map_has_object_spot(obj_id, type)~= 0 then
+		level.map_remove_object_spot(obj_id, type)
+	end
+end
+
+--записываем переменную
+function save_variable(variable_name, value)
+  if value==nil then
+    del_variable(variable_name)
+  else
+    xr_logic.pstor_store(db.actor, variable_name, value)
+  end
+end
+
+--загружаем переменную
+function load_variable(variable_name, value_if_not_found)
+  return xr_logic.pstor_retrieve(db.actor, variable_name, value_if_not_found)
+end
+
+--удал€ем переменную
+function del_variable(variable_name)
+  if db.storage[db.actor:id()].pstor[variable_name] then
+    db.storage[db.actor:id()].pstor[variable_name] = nil
+  end
+end
+
+----------------------------------------------------------------------------------
+-- NET PACKAGES
+----------------------------------------------------------------------------------
+
+function readvu8uN(packet,n)
+	local v={}
+	for i=1,n,1 do
+		table.insert(v,packet:r_u8())
+	end
+	return v
+end
+
+function writevu8uN(pk,v)
+	local len=table.getn(v)
+	for i=1,len,1 do
+		pk:w_u8(v[i])
+	end
+end
+
+function readvu32u8(packet)
+	local v={}
+	local len=packet:r_s32()
+	for i=1,len,1 do
+		table.insert(v,packet:r_u8())
+	end
+	return v
+end
+
+function readvu8u8(packet)
+	local v={}
+	local len=8
+	for i=1,len,1 do
+		table.insert(v,packet:r_u8())
+	end
+	return v
+end
+
+function readvu32u16(packet)
+	local v={}
+	local len=packet:r_s32()
+	for i=1,len,1 do
+		table.insert(v,packet:r_u16())
+	end
+	return v
+end
+
+function writevu32u8(pk,v)
+	local len=table.getn(v)
+	pk:w_s32(len)
+	for i=1,len,1 do
+		pk:w_u8(v[i])
+	end
+end
+
+function writevu8u8(pk,v)
+	local len=8
+	for i=1,len,1 do
+		pk:w_u8(v[i])
+	end
+end
+
+function writevu32u16(pk,v)
+	local len=table.getn(v)
+	pk:w_s32(len)
+	for i=1,len,1 do
+		pk:w_u16(v[i])
+	end
+end
+
+function read_stalker_params(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local tbl=nc.parse_stalker_packet({},stpk,uppk,size)
+	return tbl
+end
+
+function write_stalker_params(tbl,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	nc.fill_stalker_packet(tbl,stpk,uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+	local npc=level.object_by_id(sobj.id)
+end
+
+function read_monster_params(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local tbl=nc.parse_se_monster_packet({},stpk,uppk,size)
+	return tbl
+end
+
+function write_monster_params(tbl,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	nc.fill_se_monster_packet(tbl,stpk,uppk)
+	local size=stpk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_anomaly_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_shape_packet(t,stpk,uppk,size)
+
+	t.restrictor_type = stpk:r_u8()
+	t.max_power = stpk:r_float()
+	t.owner_id = stpk:r_s32()
+	t.enabled_time = stpk:r_s32()
+	t.disabled_time = stpk:r_s32()
+	t.start_time_shift = stpk:r_s32()
+	t.offline_interactive_radius = stpk:r_float()
+	t.artefact_spawn_count = stpk:r_u16()
+	t.artefact_position_offset = stpk:r_s32()
+	t.last_spawn_time_present = stpk:r_u8()
+
+	if stpk:r_elapsed() ~= 0 then
+
+	end
+	return t
+end
+
+function set_anomaly_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_shape_packet(t,stpk,uppk)
+
+	stpk:w_u8(t.restrictor_type)
+
+	stpk:w_float(t.max_power)
+	stpk:w_s32(t.owner_id)
+	stpk:w_s32(t.enabled_time)
+	stpk:w_s32(t.disabled_time)
+	stpk:w_s32(t.start_time_shift)
+
+	stpk:w_float(t.offline_interactive_radius)
+	stpk:w_u16(t.artefact_spawn_count)
+	stpk:w_s32(t.artefact_position_offset)
+
+	stpk:w_u8(t.last_spawn_time_present)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_lc_data(obj)
+	local packet = net_packet()
+	obj:STATE_Write(packet)
+	local t={}
+	t.game_vertex_id = packet:r_u16()
+	t.distance = packet:r_float()
+	t.direct_control = packet:r_s32()
+	t.level_vertex_id = packet:r_s32()
+	t.object_flags = packet:r_s32()
+	t.custom_data = packet:r_stringZ()
+	t.story_id = packet:r_s32()
+	t.spawn_story_id = packet:r_s32()
+	
+	t = nc.parse_shape_packet(t,packet)
+	
+	t.restrictor_type = packet:r_u8()
+	t.dest_game_vertex_id = packet:r_u16()
+	t.dest_level_vertex_id = packet:r_s32()
+	t.dest_position = packet:r_vec3()
+	t.dest_direction = packet:r_vec3()
+	t.dest_level_name = packet:r_stringZ()
+	t.dest_graph_point = packet:r_stringZ()
+	t.silent_mode = packet:r_u8()
+
+	if packet:r_elapsed() ~= 0 then
+		abort("left=%d", packet:r_elapsed())
+	end
+	return t
+end
+
+function set_lc_data(t,obj)
+	local packet = net_packet()
+	obj:STATE_Write(packet)
+	packet:w_begin(t.game_vertex_id)
+	packet:w_float(t.distance)
+	packet:w_s32(t.direct_control)
+	packet:w_s32(t.level_vertex_id)
+	packet:w_s32(t.object_flags)
+	packet:w_stringZ(t.custom_data)
+	packet:w_s32(t.story_id)
+	packet:w_s32(t.spawn_story_id)
+	
+	nc.fill_shape_packet(t,packet)
+
+	packet:w_u8(t.restrictor_type)
+	packet:w_u16(t.dest_game_vertex_id)
+	packet:w_s32(t.dest_level_vertex_id)
+	packet:w_vec3(t.dest_position)
+	packet:w_vec3(t.dest_direction)
+	packet:w_stringZ(t.dest_level_name)
+	packet:w_stringZ(t.dest_graph_point)
+	packet:w_u8(t.silent_mode)
+
+	packet:r_seek(0)
+	obj:STATE_Read(packet, packet:w_tell())
+end
+
+function get_breakable_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_visual_packet(t,stpk,uppk,size)
+	nc.parse_object_physic_packet(t,stpk,uppk,size)
+
+	return t
+end
+
+function set_breakable_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+	nc.fill_object_physic_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_weapon_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_visual_packet(t,stpk,uppk,size)
+	nc.parse_item_packet(t,stpk,uppk,size)
+	nc.parse_item_weapon_packet(t,stpk,uppk,size)
+	return t
+end
+
+function set_weapon_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+	nc.fill_item_packet(t,stpk,uppk)
+	nc.fill_item_weapon_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_spawner_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_shape_packet(t,stpk,uppk,size)
+
+	t.restrictor_type = stpk:r_u8()
+	t.spawned_obj_count = stpk:r_u8()
+
+	return t
+end
+
+function set_spawner_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_shape_packet(t,stpk,uppk)
+	stpk:w_u8(t.restrictor_type)
+	stpk:w_u8(t.spawned_obj_count)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_restrictor_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_shape_packet(t,stpk,uppk,size)
+
+	t.restrictor_type = stpk:r_u8()
+
+	return t
+end
+
+function set_restrictor_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_shape_packet(t,stpk,uppk)
+	stpk:w_u8(t.restrictor_type)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_trader_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_visual_packet(t,stpk,uppk,size)
+	nc.parse_trader_packet(t,stpk,uppk,size)
+	return t
+end
+
+function set_trader_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+	nc.fill_trader_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_invbox_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_visual_packet(t,stpk,uppk,size)
+	return t
+end
+
+function set_invbox_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_ammo_params(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_visual_packet(t,stpk,uppk,size)
+	nc.parse_item_packet(t,stpk,uppk,size)
+	nc.parse_item_ammo_packet(t,stpk,uppk,size)
+	return t
+end
+
+function set_ammo_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+	nc.fill_item_packet(t,stpk,uppk)
+	nc.fill_item_ammo_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_destroyable_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local t={}
+	nc.parse_object_packet(t,stpk,uppk,size)
+	nc.parse_visual_packet(t,stpk,uppk,size)
+	nc.parse_skeleton_packet(t,stpk,uppk,size)
+	nc.parse_object_physic_packet(t,stpk,uppk,size)
+
+	return t
+end
+
+function set_destroyable_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+	nc.fill_skeleton_packet(t,stpk,uppk)
+	nc.fill_object_physic_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function get_art_data(sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+	sobj:STATE_Write(stpk)
+	sobj:UPDATE_Write(uppk)
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	local ret={}
+	nc.parse_object_packet(ret,stpk,uppk)
+	nc.parse_visual_packet(ret,stpk,uppk)
+	nc.parse_item_packet(ret,stpk,uppk)
+	return ret
+end
+
+function set_art_data(t,sobj)
+	local stpk=net_packet()
+	local uppk=net_packet()
+
+	nc.fill_object_packet(t,stpk,uppk)
+	nc.fill_visual_packet(t,stpk,uppk)
+	nc.fill_item_packet(t,stpk,uppk)
+
+	local size=stpk:w_tell()
+	local size1=uppk:w_tell()
+
+	stpk:r_seek(0)
+	uppk:r_seek(0)
+	sobj:STATE_Read(stpk,size)
+	sobj:UPDATE_Read(uppk)
+end
+
+function parse_object_physic_packet(ret,stpk,updpk)
+	ret.physic_type=stpk:r_s32()
+	ret.mass=stpk:r_float()
+	ret.fixed_bones=stpk:r_stringZ()
+	return ret
+end
+
+function fill_object_physic_packet(ret,stpk,updpk)
+	stpk:w_s32(ret.physic_type)
+	stpk:w_float(ret.mass)
+	stpk:w_stringZ(ret.fixed_bones)
+end
+
+function parse_object_packet(ret,stpk,updpk)
+	ret.gvid=stpk:r_u16()
+	ret.obf32u1=stpk:r_float()
+	ret.obs32u2=stpk:r_s32()
+	ret.lvid=stpk:r_s32()
+	ret.oflags=stpk:r_s32()
+	ret.custom=stpk:r_stringZ()
+	ret.sid=stpk:r_s32()
+	ret.obs32u3=stpk:r_s32()
+	return ret
+end
+
+function fill_object_packet(ret,stpk,updpk)
+	stpk:w_u16(ret.gvid)
+	stpk:w_float(ret.obf32u1)
+	stpk:w_s32(ret.obs32u2)
+	stpk:w_s32(ret.lvid)
+	stpk:w_s32(ret.oflags)
+	stpk:w_stringZ(ret.custom)
+	stpk:w_s32(ret.sid)
+	stpk:w_s32(ret.obs32u3)
+end
+
+function parse_visual_packet(ret,stpk,updpk)
+	ret.visual=stpk:r_stringZ()
+	ret.vsu8u1=stpk:r_u8()
+	return ret
+end
+
+function fill_visual_packet(ret,stpk,updpk)
+	stpk:w_stringZ(ret.visual)
+	stpk:w_u8(ret.vsu8u1)
+end
+
+function parse_dynamic_object_visual(ret,stpk,updpk)
+	parse_object_packet(ret,stpk,updpk)
+	parse_visual_packet(ret,stpk,updpk)
+	return ret
+end
+
+function fill_dynamic_object_visual(ret,stpk,updpk)
+	fill_object_packet(ret,stpk,updpk)
+	fill_visual_packet(ret,stpk,updpk)
+end
+
+function parse_creature_packet(ret,stpk,updpk)
+	parse_dynamic_object_visual(ret,stpk,updpk)
+	ret.team=stpk:r_u8()
+	ret.squad=stpk:r_u8()
+	ret.group=stpk:r_u8()
+	ret.health=stpk:r_float()
+	ret.crvu32u16u1=readvu32u16(stpk)
+	ret.crvu32u16u2=readvu32u16(stpk)  
+	ret.killerid=stpk:r_u16()
+	ret.game_death_time=readvu8u8(stpk)
+
+	ret.updhealth=updpk:r_float()
+	ret.upds32u1=updpk:r_s32()
+	ret.updu8u2=updpk:r_u8()
+	ret.updpos=updpk:r_vec3() -- или поставить вектор? ладно потом   -- поставил всЄ таки )))))) Atempad
+	ret.updmodel=updpk:r_float()
+	ret.upddir=updpk:r_vec3()
+	ret.updteam=updpk:r_u8()
+	ret.updsquad=updpk:r_u8()
+	ret.updgroup=updpk:r_u8()  
+	return ret
+end
+
+function fill_creature_packet(ret,stpk,updpk)
+	fill_dynamic_object_visual(ret,stpk,updpk)
+	stpk:w_u8(ret.team)
+	stpk:w_u8(ret.squad)
+	stpk:w_u8(ret.group)
+	stpk:w_float(ret.health)
+	writevu32u16(stpk,ret.crvu32u16u1)
+	writevu32u16(stpk,ret.crvu32u16u2)  
+	stpk:w_u16(ret.killerid)
+	writevu8u8(stpk,ret.game_death_time)
+
+	updpk:w_float(ret.updhealth)
+	updpk:w_s32(ret.upds32u1)
+	updpk:w_u8(ret.updu8u2)
+	updpk:w_vec3(ret.updpos)
+	updpk:w_float(ret.updmodel)
+	updpk:w_vec3(ret.upddir)
+	updpk:w_u8(ret.updteam)
+	updpk:w_u8(ret.updsquad)
+	updpk:w_u8(ret.updgroup)
+end
+
+function parse_monster_packet(ret,stpk,updpk)
+	parse_creature_packet(ret,stpk,updpk)
+	ret.baseoutr=stpk:r_stringZ()
+	ret.baseinr=stpk:r_stringZ()
+	ret.smtrid=stpk:r_u16()
+	ret.smtrtaskactive=stpk:r_u8()
+
+	ret.updu16u1=updpk:r_u16()
+	ret.updu16u2=updpk:r_u16()
+	ret.upds32u3=updpk:r_s32()
+	ret.upds32u4=updpk:r_s32()
+	return ret
+end
+
+function fill_monster_packet(ret,stpk,updpk)
+	fill_creature_packet(ret,stpk,updpk)
+	stpk:w_stringZ(ret.baseoutr)
+	stpk:w_stringZ(ret.baseinr)
+	stpk:w_u16(ret.smtrid)
+	stpk:w_u8(ret.smtrtaskactive)
+
+	updpk:w_u16(ret.updu16u1)
+	updpk:w_u16(ret.updu16u2)
+	updpk:w_s32(ret.upds32u3)
+	updpk:w_s32(ret.upds32u4)
+end
+
+function parse_trader_packet(ret,stpk,updpk)
+	ret.money=stpk:r_s32()
+	ret.profile=stpk:r_stringZ()
+	ret.infammo=stpk:r_s32()
+	ret.class=stpk:r_stringZ()
+	ret.communityid=stpk:r_s32()
+	ret.rank=stpk:r_s32()
+	ret.reputation=stpk:r_s32()
+	ret.charname=stpk:r_stringZ()  
+	return ret
+end
+
+function fill_trader_packet(ret,stpk,updpk)
+	stpk:w_s32(ret.money)
+	stpk:w_stringZ(ret.profile)
+	stpk:w_s32(ret.infammo)
+	stpk:w_stringZ(ret.class)
+	stpk:w_s32(ret.communityid)
+	stpk:w_s32(ret.rank)
+	stpk:w_s32(ret.reputation)
+	stpk:w_stringZ(ret.charname)
+end
+
+function parse_human_packet(ret,stpk,updpk)
+	parse_trader_packet(ret,stpk,updpk)
+	parse_monster_packet(ret,stpk,updpk)
+	ret.huvu32u8u1=readvu32u8(stpk)
+	ret.huvu32u8u2=readvu32u8(stpk)  
+	return ret
+end
+
+function fill_human_packet(ret,stpk,updpk)
+	fill_trader_packet(ret,stpk,updpk)
+	fill_monster_packet(ret,stpk,updpk)
+	writevu32u8(stpk,ret.huvu32u8u1)
+	writevu32u8(stpk,ret.huvu32u8u2)
+end
+
+function parse_skeleton_packet(ret,stpk,updpk)
+	ret.skeleton=stpk:r_stringZ()
+	ret.skeleton_flags=stpk:r_u8()
+	ret.source_id=stpk:r_u16()
+
+	return ret
+end
+
+function fill_skeleton_packet(ret,stpk,updpk)
+	stpk:w_stringZ(ret.skeleton)
+	stpk:w_u8(ret.skeleton_flags)
+	stpk:w_u16(ret.source_id)
+end
+
+function parse_stalker_packet(ret,stpk,updpk,size)
+	parse_human_packet(ret,stpk,updpk)
+	parse_skeleton_packet(ret,stpk,updpk)
+	ret.hellodlg=updpk:r_stringZ()
+	ret.stunk1={}
+	for i=stpk:r_tell(),size-1,1 do
+		table.insert(ret.stunk1,stpk:r_u8())
+	end
+	return ret
+end
+
+function fill_stalker_packet(ret,stpk,updpk)
+	fill_human_packet(ret,stpk,updpk)
+	fill_skeleton_packet(ret,stpk,updpk)
+	updpk:w_stringZ(ret.hellodlg)
+	for i,v in pairs(ret.stunk1) do
+		stpk:w_u8(v)
+	end
+end
+
+function parse_se_monster_packet(ret,stpk,updpk,size)
+	parse_monster_packet(ret,stpk,updpk,size)
+	parse_skeleton_packet(ret,stpk,updpk,size)
+	ret.spec_obj_id=stpk:r_u16()
+	ret.job_online=stpk:r_u8()
+	if ret.job_online>3 then
+		ret.state=true
+		ret.job_online=ret.job_online-4
+	else
+		ret.state=false
+	end
+	if ret.job_online==3 then
+		ret.job_online_condlist=stpk:r_stringZ()
+	end
+	ret.was_in_smtr=stpk:r_u8()
+	ret.stunk1={}
+	for i=stpk:r_tell(),size-1,1 do
+		table.insert(ret.stunk1,stpk:r_u8())
+	end
+	return ret
+end
+
+function fill_se_monster_packet(ret,stpk,updpk)
+	fill_monster_packet(ret,stpk,updpk)
+	fill_skeleton_packet(ret,stpk,updpk)
+	stpk:w_u16(ret.spec_obj_id)
+	local st=0
+	if ret.state then
+		st=4
+	end
+	stpk:w_u8(ret.job_online+st)
+	if ret.job_online==3 then
+	stpk:w_stringZ(ret.job_online_condlist)
+	end
+	stpk:w_u8(ret.was_in_smtr)
+	for i,v in pairs(ret.stunk1) do
+	stpk:w_u8(v)
+	end  
+end
+
+function parse_shape_packet(t,stpk,uppk)
+	local shape_count = stpk:r_u8()
+	t.shapes={}
+	for i=1,shape_count do
+		local shape_type = stpk:r_u8()
+		t.shapes[i]={}
+		t.shapes[i].shtype=shape_type
+		if shape_type == 0 then
+			-- sphere
+			t.shapes[i].center = stpk:r_vec3()
+			t.shapes[i].radius = stpk:r_float()
+		else
+			-- box
+			t.shapes[i] = stpk:r_matrix()
+		end
+	end
+end
+
+function fill_shape_packet(t,stpk,updpk)
+	stpk:w_u8(table.getn(t.shapes))
+	for i=1,table.getn(t.shapes) do
+		stpk:w_u8(t.shapes[i].shtype)
+		if t.shapes[i].shtype == 0 then
+			stpk:w_vec3(t.shapes[i].center)
+			stpk:w_float(t.shapes[i].radius)
+		else
+			stpk:w_matrix(t.shapes[i])
+		end
+	end
+end
+
+function parse_item_packet(ret,stpk,updpk)
+	ret.condition=stpk:r_float()
+	ret.updnum_items=updpk:r_u8()
+	ret.updpos=updpk:r_vec3() -- или поставить вектор? ладно потом
+	ret.updcse_alife_item__unk1_q8v4=readvu8uN(updpk,4*4)
+	ret.updcse_alife_item__unk2_q8v3=readvu8uN(updpk,3*4)
+	ret.updcse_alife_item__unk3_q8v3=readvu8uN(updpk,3*4)
+	return ret
+end
+
+function fill_item_packet(ret,stpk,updpk)
+	stpk:w_float(ret.condition)
+	updpk:w_u8(ret.updnum_items)
+	updpk:w_vec3(ret.updpos)
+	writevu8uN(updpk,ret.updcse_alife_item__unk1_q8v4)
+	writevu8uN(updpk,ret.updcse_alife_item__unk2_q8v3)
+	writevu8uN(updpk,ret.updcse_alife_item__unk3_q8v3)
+	return ret
+end
+
+function parse_item_ammo_packet(ret,stpk,updpk)
+	ret.ammo_left=stpk:r_u16()
+	ret.updammo_left=updpk:r_u16()
+	return ret
+end
+
+function fill_item_ammo_packet(ret,stpk,updpk)
+	stpk:w_u16(ret.ammo_left)
+	updpk:w_u16(ret.updammo_left)
+	return ret
+end
+
+function parse_item_weapon_packet(ret,stpk,updpk)
+	ret.ammo_current = stpk:r_u16()
+	ret.ammo_elapsed = stpk:r_u16()
+	ret.weapon_state = stpk:r_u8()
+	ret.addon_flags = stpk:r_u8()
+	ret.ammo_type = stpk:r_u8()
+
+	ret.updcondition = updpk:r_u8()
+	ret.updweapon_flags = updpk:r_u8()
+	ret.updammo_elapsed = updpk:r_u16()
+	ret.updaddon_flags = updpk:r_u8()
+	ret.updammo_type = updpk:r_u8()
+	ret.updweapon_state = updpk:r_u8()
+	ret.updweapon_zoom = updpk:r_u8()
+	ret.updcurrent_fire_mode = updpk:r_u8()
+	return ret
+end
+
+function fill_item_weapon_packet(ret,stpk,updpk)
+	stpk:w_u16(ret.ammo_current)
+	stpk:w_u16(ret.ammo_elapsed)
+	stpk:w_u8(ret.weapon_state)
+	stpk:w_u8(ret.addon_flags)
+	stpk:w_u8(ret.ammo_type)
+
+	updpk:w_u8(ret.updcondition)
+	updpk:w_u8(ret.updweapon_flags)
+	updpk:w_u16(ret.updammo_elapsed)
+	updpk:w_u8(ret.updaddon_flags)
+	updpk:w_u8(ret.updammo_type)
+	updpk:w_u8(ret.updweapon_state)
+	updpk:w_u8(ret.updweapon_zoom)
+	updpk:w_u8(ret.updcurrent_fire_mode)
+	return ret
+end
+
+----------------------------------------------------------------
+-- tables
+----------------------------------------------------------------
+-- ¬нимание! —троки в структуре не должны содержать символов с кодами 0-31.
+function pack_array_to_string(array)
+  return string.char(1)..pack_new(array)
+  -- local str=""
+  -- local key
+  -- for key0,value in pairs(array) do
+    -- if type(key0)=="string" then
+      -- key='"'..key0..'"'
+    -- else
+      -- key=key0
+    -- end
+    -- if type(value)=="table" then
+      -- local substr=pack_array_to_string(value)
+      -- str=str..key.."=>{"..substr.."}|"
+    -- elseif type(value)=="customdata" or type(value)=="function" then
+      -- mylog("Custom data and function isn't supported")
+    -- elseif type(value)=="boolean" or type(value)=="number" then
+      -- str=str..key.."=>"..tostring(value).."|"
+    -- else
+      -- str=str..key..'=>"'..value..'"|'
+    -- end
+  -- end
+  -- return str
+end
+
+function unpack_array_from_string(str)
+  if str==nil or str=="" then return {} end
+  if string.sub(str,1,1)~=string.char(1) then
+    -- —тарый формат упаковки
+    return _parse(str)
+  else
+    -- новый формат упаковки тэгирован символом c кодом 1.
+    return parse_new(string.sub(str,2,-1))
+  end
+end
+
+function _assign(tbl,key,val)
+  local key0=string.match(key,'"(.*)"')
+  if key0 then
+    tbl[key0]=val
+  else
+    tbl[key+0]=val
+  end
+end
+
+local pack_type_num=1
+local pack_type_string=2
+local pack_type_bool=3
+local pack_type_table=4
+local pack_val_endtable=5
+
+--[[
+ Ќовый формат упаковки: 
+ table ::= subtable
+ subtable ::= keytype key valuetype ( value | subtable 0x5 )
+ keytype ::= ( 0x1 | 0x2 | 0x3 | 0x4 )
+ valuetype ::= ( 0x1 | 0x2 | 0x3 | 0x4 )
+]]
+function pack_new(tbl)
+  local ret=""
+  for k,v in pairs(tbl) do
+    if type(k)=="number" then
+      ret=ret..string.char(pack_type_num)..k
+    elseif type(k)=="string" then
+      ret=ret..string.char(pack_type_string)..k
+    else
+      abort("unsupported key type "..type(k))
+    end
+    if type(v)=="number" then
+      ret=ret..string.char(pack_type_num)..v
+    elseif type(v)=="string" then
+      ret=ret..string.char(pack_type_string)..v
+    elseif type(v)=="boolean" then
+	  if v then v="1" else v="0" end
+      ret=ret..string.char(pack_type_bool)..v
+    elseif type(v)=="table" then
+      ret=ret..string.char(pack_type_table)..pack_new(v)..string.char(pack_val_endtable)
+    end
+  end
+  return ret
+end
+
+function parse_new(str,idx)
+  local ret={}
+  idx=idx or 1
+  while true do
+    local key,value
+    if idx>string.len(str) then
+      return ret,idx
+    end
+    vtype,idx=get_byte(str,idx)
+    if vtype==pack_type_num then
+      key,idx=get_num(str,idx)
+    elseif vtype==pack_type_string then
+      key,idx=get_string(str,idx)
+    elseif vtype==pack_val_endtable then
+      return ret,idx
+    else
+      abort("unsupported key type "..tostring(vtype))
+    end
+    vtype,idx=get_byte(str,idx)
+    if vtype==pack_type_num then
+      value,idx=get_num(str,idx)
+    elseif vtype==pack_type_string then
+      value,idx=get_string(str,idx)
+    elseif vtype==pack_type_bool then
+      value,idx=get_bool(str,idx)
+    elseif vtype==pack_type_table then
+      value,idx=parse_new(str,idx)
+    else
+      abort("unsupported key type "..tostring(vtype))
+    end
+    ret[key]=value
+  end
+end
+
+function get_byte(str,idx)
+  return string.byte(string.sub(str,idx,idx)),idx+1
+end
+
+function get_string(str,idx)
+  local idx1=string.len(str)+1
+  for i=idx,string.len(str),1 do
+    if string.byte(string.sub(str,i,i))<32 then
+      idx1=i
+      break
+    end
+  end
+  return string.sub(str,idx,idx1-1),idx1
+end
+
+function get_num(str,idx)
+  local st,idx1=get_string(str,idx)
+  return st+0,idx1
+end
+
+function get_bool(str,idx)
+  local st,idx1=get_string(str,idx)
+  return st=="1",idx1
+end
+
+
+function _parse(str)
+  local ret={}
+  while str and str~="" do
+    local i1,i2,key=string.find(str,'(.-)=>')
+    str=string.sub(str,i2+1)
+    i1,i2,val=string.find(str,'"(.-)"|')
+    if val and i1==1 then
+      -- строка
+      _assign(ret,key,val)
+    else
+      i1,i2,val=string.find(str,'(%b{})|')
+      if val and i1==1 then
+        -- таблица
+        _assign(ret,key,_parse(string.sub(val,2,-2)))
+      else
+        i1,i2,val=string.find(str,'(.-)|')
+        -- число или булево значение
+        if val=="true" then
+          _assign(ret,key,true)
+        elseif val=="false" then
+          _assign(ret,key,false)
+        else
+          _assign(ret,key,val+0)
+        end
+      end
+    end
+    str=string.sub(str,i2+1)
+  end
+  return ret
+end
+
+function table_copy(t)
+  local u = { }
+  for k, v in pairs(t) do u[k] = v end
+  return setmetatable(u, getmetatable(t))
+end
+
+-- attention! replaces values in src of incorrect type. if value exists in src and has correct type do nothing
+function table_init_defs(src,defs,check_small_types)
+	for k,v in pairs(defs) do
+		if type(v)=="table" then
+			if src[k] == nil or type(src[k])~="table" then
+				src[k] = {}
+			end
+			src[k] = table_init_defs(src[k],v,check_small_types)
+		else
+			if src[k] == nil then
+				src[k] = v
+			elseif check_small_types then
+				local t = type(v)
+				if t == "number" then
+					src[k] = tonumber(src[k])
+				elseif t == "boolean" then
+					src[k] = not (not src[k])
+				else
+					src[k] = tostring(src[k])
+				end
+			end
+		end
+	end
+	return src
+end
+
+-------------------------------------
+-- ini readers
+function r_bool( spawn_ini, section, line, default )
+	if spawn_ini:line_exist( section, line ) then
+		return spawn_ini:r_bool( section, line )
+	else
+		return default
+	end
+end
+
+function r_str( spawn_ini, section, line, default )
+	if spawn_ini:line_exist( section, line ) then
+		return spawn_ini:r_string( section, line )
+	else
+		return default
+	end
+end
+
+function r_num( spawn_ini, section, line, default )
+	if spawn_ini:line_exist( section, line ) then
+		return spawn_ini:r_float( section, line )
+	else
+		return default
+	end
+end
+
+function r_2nums( spawn_ini, section, line, def1, def2 )
+	if spawn_ini:line_exist( section, line ) then
+		-- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
+		local t = utils.parse_names( spawn_ini:r_string( section, line ) )
+		local n = table.getn( t )
+
+		if n == 0 then
+			return def1, def2
+		elseif n == 1 then
+			return t[1], def2
+		else
+			return t[1], t[2]
+		end
+	else
+		return def1, def2
+	end
+end

@@ -1,0 +1,82 @@
+-- hi_flyer 07/05/15
+
+function use(obj)
+
+if obj:section() == "diplomat_code_viska" then
+	if not has_alife_info("znayu_kod_ot_keysa") then
+		news_manager.send_tip(db.actor, "Я не знаю код...")
+		amk.spawn_item_in_inv("diplomat_code_viska")
+		return 
+	end
+	olr.give_item("foto_radar_itm")
+	olr.give_item("foto_radar_totem")
+	news_manager.send_tip(db.actor, "Получены предметы...")                    
+end
+
+
+if obj:section() == "custom_treasure_rukzak" then
+	local obj = alife():create("box_rukzak_treasure", db.actor:position():add(db.actor:direction():mul(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	clear_useful_for_ai(obj)                    
+end
+
+if obj:section() == "med_injector_capsule" then
+	if db.actor:object("med_injector_empty") == nil then
+		news_manager.send_tip(db.actor, "Нет пустого прибора...")
+		amk.spawn_item_in_inv(obj:section())
+		return 
+	end
+	olr.del(db.actor:object("med_injector_empty"))
+	amk.spawn_item_in_inv("med_injector")
+	olr.snd([[ol3\weapons\detector\detector_use]])
+end
+
+
+--Юзаем бутылку болота 
+if obj:section() == "empty_butilka_arg_zam" then 
+	if not ( xr_conditions.actor_in_zone(nil,nil,{"lvl3_agroprom_space_restrictor_0019"}))  then
+		news_manager.send_tip(db.actor, "Нечего набирать.")
+		amk.spawn_item_in_inv("empty_butilka_arg_zam")
+		return
+	end
+	olr.give_item("arg_jaba_voda_boloto")
+	news_manager.send_tip(db.actor, "Замеры сделаны.")
+end
+
+
+--Юзаем бутылку для холодца 
+
+if obj:section() == "empty_butilka" then 
+	for i=1,65535 do
+	local anom = level.object_by_id(i)
+		if anom then 
+			if anom:section() == "zone_buzz" or anom:section() == "zone_buzz_weak" or anom:section() == "zone_buzz_strong" or anom:section() == "zone_buzz_average" then
+				if anom:position():distance_to(db.actor:position()) < anom:get_shape_radius() + 1 then 
+					olr.give_item("af_banka_s_holodcom")
+					local rnd = math.random(1,5)
+					if rnd == 1 then
+						anom:disable_anomaly()
+					end
+					break
+				end	
+			end
+		elseif i == 65535 then
+			news_manager.send_tip(db.actor, "Нечего набирать.")
+			amk.spawn_item_in_inv("empty_butilka")	
+		end								
+	end
+end
+
+
+
+end
+
+
+
+
+
+
+
+
+
+
+

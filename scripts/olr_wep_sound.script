@@ -1,0 +1,14 @@
+-- звук при поднятии оружия аля 14хх (hi_flyer)
+
+local ini = system_ini()
+function on_take(obj)
+        if device().precache_frame >1 then return end
+		if obj:is_weapon() then 
+			if ini:line_exist(obj:section(), "snd_draw") then
+				local snd = ini:r_string(obj:section(), "snd_draw")
+        			local stng = game.translate_string(snd)
+				snd = xr_sound.get_safe_sound_object(stng)
+				snd:play_no_feedback(obj,sound_object.s2d,0,vector(),1.0)
+			end
+		end
+end

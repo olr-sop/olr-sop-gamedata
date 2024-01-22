@@ -1,0 +1,36 @@
+#include "common.h"
+#define MBLUR_SAMPLES 	half(15)
+
+uniform sampler2D 	s_distort;
+uniform sampler2D 	s_base0;
+uniform sampler2D 	s_base1;
+
+struct 	v2p
+{
+ 	float2 	tc: 		TEXCOORD0;	// base & distort
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+half4 	main	( v2p I )	: COLOR
+{
+	float2  UV      = float2( 0.375f + I.tc.x * 0.25f, 0.333f + I.tc.y * 0.333f );
+	half4	image 	= tex2D		(s_base, UV );
+	half3 	image_rgb = tex2D		(s_base0,	I.tc);
+	image.rgb *= image_rgb.rgb ;
+	float dist = distance( float2( 0.5f, 0.5f ), float2( I.tc.x * 0.25f + 0.375f, I.tc.y * 0.25f + 0.375f)  );
+//	if(dist > 0.125f)
+	image.a =   (0.125f - dist) * 40;
+			for (int i = 1; i < 10; ++i)
+			{
+	image.rgb 	+= tex2D		(s_base, UV + float2( 0.0f, 0.0005f * dist ) * i ).rgb;
+	image.rgb 	+= tex2D		(s_base, UV + float2( 0.0f, 0.0005f * dist) * i ).rgb;
+	image.rgb 	+= tex2D		(s_base, UV).rgb;
+	image.rgb 	+= tex2D		(s_base, UV - float2( 0.0005f * dist, 0.0f ) * i ).rgb;
+	image.rgb 	+= tex2D		(s_base, UV - float2( 0.0005f * dist, 0.0f ) * i ).rgb;
+			}
+	image.rgb   *= 0.1/5;
+	// out
+	return  image;					// +mov
+}
+

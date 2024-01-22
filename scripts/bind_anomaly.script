@@ -1,0 +1,267 @@
+-- hi_flyer 23.01.17
+
+local actor_u_costra = false
+local actor_in_dead_zone = false
+local CAMP_POS = 4
+local dead_zone_eff = 0
+
+function Init(obj)
+	local oNewBinder = CAnomBinder(obj)
+	obj:bind_object(oNewBinder)	
+end
+
+class "CAnomBinder" (object_binder)
+
+function CAnomBinder:__init(obj) super(obj)
+end
+
+function CAnomBinder:reload(section)
+	object_binder.reload(self, section)
+end
+
+function CAnomBinder:reinit()
+	object_binder.reinit(self)
+end
+
+function CAnomBinder:net_save_relevant()
+	return true
+end
+
+function CAnomBinder:save(packet)
+	object_binder.save(self, packet)	
+end
+
+function CAnomBinder:load(reader)
+	object_binder.load(self, reader)
+	
+end
+
+function CAnomBinder:net_spawn(data)
+	if not object_binder.net_spawn(self, data) then
+		return false
+	end
+
+	local anom_id = alife():object(self.object:id())
+ 	local status = get_anomaly_status(anom_id)
+ 	if status=="off" then
+		--log1("status off ONLINE - "..self.object:name().."")
+    		self.object:disable_anomaly()
+	else
+    		self.object:enable_anomaly()
+  	end
+	
+	--local anm = level.object_by_id(self.object)
+	--table.insert(db.anom_on_by_id, anm)
+	--log1("bindanom insert")
+
+
+	db.anoms_online[self.object:id()] = self.object
+	--olr.add_spot_on_map( self.object:id(),"alife_combat_fight",self.object:name() )
+	--log1("anom netspawn "..self.object:name().." ")
+
+
+	return true
+end
+	
+function CAnomBinder:net_destroy()
+	object_binder.net_destroy(self)
+	db.anoms_online[self.object:id()] = nil
+	--anomaly_evader.DestroyAnom(self.object)
+end
+
+function CAnomBinder:update(delta)
+	object_binder.update(self, delta)
+
+	if self.object:section() == "zone_flame_small" and self.object:position():distance_to(db.actor:position()) < CAMP_POS then
+		actor_u_costra = true
+	else
+		actor_u_costra = false
+	end
+
+	if self.object:section() == "zone_dead_zone" then 
+		if self.object:position():distance_to(db.actor:position()) < self.object:get_shape_radius() then
+			db.actor.psy_health = -0.005
+			db.actor.radiation = 0.005
+			actor_in_dead_zone = true
+			dead_zone_eff = dead_zone_eff + 0.1
+			level.add_pp_effector("esc_fade.ppe", 15233, true)
+			level.set_pp_effector_factor(15233, dead_zone_eff / 10)
+			this.on_pda_info()
+			olr.show_minimap(false)
+			if not olr_timers.has_timer("zone_dead_zone_now") then
+				local rnd = math.random(26,42)
+				olr.info("deadzone_eff_now")
+				olr_timers.st_timer("zone_dead_zone_now", rnd, "nick.zone_dead_zone_now_off()")
+			end
+		elseif self.object:position():distance_to(db.actor:position()) > self.object:get_shape_radius() then
+			actor_in_dead_zone = false
+			level.remove_pp_effector(15233)
+			dead_zone_eff = 0
+			if not nick.is_pda_dead() then
+				olr.show_minimap(true)
+			end
+		end
+	end
+end
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+function u_costra()
+	if actor_u_costra == true then 
+		return true
+	end
+end
+
+function in_dead_zone()
+	if actor_in_dead_zone == true then 
+		return true
+	end
+end
+
+local pda_txtr = CUIStatic()
+local fsp = true
+local fsmm = true
+function on_pda_info()
+	if in_dead_zone() and db.actor:has_info("ui_pda") then
+	--if db.actor:has_info("dead_zone_off_electronics") and db.actor:has_info("ui_pda") then
+		if fsp then
+			pda_txtr:SetAutoDelete(true)
+			level.main_input_receiver():AttachChild(pda_txtr)
+			pda_txtr:InitTexture("ui\\ui_pda_error")
+			pda_txtr:SetWndRect(0,0,891,643)                       ---- (3,20,891,643)
+			pda_txtr:SetOriginalRect(0,0,1024,768) 
+                        level.disable_input()                     
+			fsp = false
+		end
+		pda_txtr:Show(true)
+                level.disable_input()
+	else
+		pda_txtr:Show(false)
+                level.enable_input()
+	end
+
+end
+
+
+-----------------------------------------------------------------------------------------------------------------
+-- by AMK team
+
+local gvid_to_lname = {}
+
+function get_all_nearest_anomalies_by_point_in_radius(position, rads)
+	if not db.anoms_online then return {} end
+	
+	local loc = gvid_to_lname[db.actor:game_vertex_id()]
+	local mindist = rads
+	
+	local anom_out = {}
+
+	for k,v in pairs(db.anoms_online) do
+		if v and loc == v.location then -- если аномалия на текущей локации
+			local dist = v:position():distance_to(position)
+			local dist = dist - v:get_shape_radius()
+			if dist < mindist then
+				local anomid = k
+				local anom_desc = v
+				anom_out[anomid] = { 
+					pos = anom_desc.pos, 
+					clsid = anom_desc.clsid, 
+					dist = dist, -- минимальное безопасное расстояние до аномалии 
+					radius = anom_desc.radius, 
+					sect = anom_desc.section 
+				}
+			end
+		end
+	end
+	
+	if anom_out ~= {} then
+		return anom_out
+	else
+		return {}
+	end
+end
+
+
+function set_anomaly_status(sobj, status)
+	if sobj then
+		local anom_id= alife():object(sobj:id())
+		local tbl = amk.get_anomaly_data(anom_id)
+		tbl.custom=modify_anomaly_custom_data(tbl.custom,status)
+		amk.set_anomaly_data( tbl, anom_id )
+	end
+end
+
+function modify_anomaly_custom_data(cd,status)
+	cd = amk.parse_custom_data(cd)
+	if not cd then cd={} end
+	if not cd.dyn_anom then cd.dyn_anom={} end
+	cd.dyn_anom.status = status
+	return amk.gen_custom_data(cd)
+end
+
+function get_anomaly_status(sobj)
+	local tbl = amk.get_anomaly_data(sobj)
+	local cd = tbl.custom
+	cd = amk.parse_custom_data(cd)
+	if not cd.dyn_anom then return "" end
+	if not cd.dyn_anom.status then return "" end
+	return cd.dyn_anom.status
+end
+
+function set_anomaly_status_offline(sobj, status)
+
+	local cur_lev = level.name()
+	local gvid = sobj.m_game_vertex_id
+	        if game_graph():valid_vertex_id(gvid) then
+		if alife():level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
+	return
+	end
+	end
+
+	local anom_id = alife():object(sobj.id)
+	local tbl = amk.get_anomaly_data(anom_id)
+	tbl.custom=modify_anomaly_custom_data(tbl.custom,status)
+	amk.set_anomaly_data(tbl,anom_id)
+end
+
+function get_anomaly_status_offline(sobj)
+
+	local cur_lev = level.name()
+	local gvid = sobj.m_game_vertex_id
+	        if game_graph():valid_vertex_id(gvid) then
+		if alife():level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
+	return
+	end
+	end
+
+	local anom_id= alife():object(sobj.id)
+	local tbl = amk.get_anomaly_data(anom_id)
+	local cd = tbl.custom
+	cd = amk.parse_custom_data(cd)
+	if not cd.dyn_anom then return "" end
+	if not cd.dyn_anom.status then return "" end
+	return cd.dyn_anom.status
+end
+
+function get_anomaly_list(npc,radius)
+	return get_anomaly_list_for_pos(npc:position(),radius)
+end
+
+function get_anomaly_list_for_pos(posn,radius)
+  local ret={}
+  if db.anoms_online then
+    for id,o in pairs(db.anoms_online) do
+			local obj=level.object_by_id(id)
+			if obj then
+				local dist=posn:distance_to(obj:position())-obj:get_shape_radius()
+				if dist<radius then
+					table.insert(ret,{id=id,name=obj:name(),pos=obj:position(),radius=obj:get_shape_radius()})
+				end
+			end
+    end
+  end
+  return ret
+end
+

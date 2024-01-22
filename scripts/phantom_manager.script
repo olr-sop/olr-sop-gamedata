@@ -1,0 +1,67 @@
+class "PhantomManager"
+function PhantomManager:__init()
+	self.phantom_count		= 0;
+end
+g_PhantomManager			= PhantomManager();
+
+function PhantomManager:add_phantom		()
+	self.phantom_count		= self.phantom_count + 1;
+end
+function PhantomManager:remove_phantom	()
+	self.phantom_count		= self.phantom_count - 1;
+end
+function PhantomManager:spawn_phantom	(pos)
+	level.spawn_phantom		(pos);
+end
+
+class "Phantom"		(object_binder)
+function Phantom:__init(obj) super(obj)
+	g_PhantomManager:add_phantom();
+end
+
+local no_levels = {
+	["lvl_mars"] = true,
+	["lvl_nightmare"] = true,
+	["lvl16_generators"] = true
+}
+
+function Phantom:net_destroy()
+	g_PhantomManager:remove_phantom();
+	if db.actor and self.object:position():distance_to(db.actor:position()) < 1.5 then
+		--// защита от контра и фантомов
+		local psystab = db.actor:object("psystab_helmet")
+		if psystab and psystab:condition() > 0.1 then
+			local condloss = 0.06
+			psystab:set_condition(psystab:condition() - condloss)
+			if psystab:condition() < 0.1 then
+				news_manager.send_tip(db.actor, "Пси-стабилизатор вышел из стоя.")
+				olr.del(psystab)
+			end
+			return
+		end
+		if db.actor:is_actor_outdoors() == false then
+			db.actor.power = -0.22
+			db.actor.radiation = 0.1
+			return
+		end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
+        	if no_levels[level.name()] then
+			return
+		end
+	        db.actor.health = -1
+	end
+end
+
+
+function bind(obj)
+	obj:bind_object	(Phantom(obj))
+end
+
+function spawn_phantom		(pos)
+	g_PhantomManager:spawn_phantom(pos);
+end
+function phantom_count		()
+	return g_PhantomManager.phantom_count;
+end

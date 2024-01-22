@@ -1,0 +1,175 @@
+-- тайнички сталкеров
+-- hi_flyer 14/05/17
+
+
+local items_prob = 
+{			
+"wpn_ak74",		
+"wpn_beretta",		
+"wpn_fort",
+"wpn_bm16",
+"wpn_lr300",
+"wpn_colt1911",
+"wpn_ak74u",
+"wpn_mp5",
+"wpn_pm",
+"wpn_sig220",
+"wpn_sig550",
+"wpn_toz34",
+"wpn_usp",
+"novice_outfit",
+"stalker_outfit",
+"killer_outfit",
+"battery_change",
+"item_razradnik",
+"water",
+"vodka",
+"antirad",
+"medkit",
+"medkit_army",
+"kanistra_benz",
+"korobok_spichek",
+"wpn_binoc",
+"wpn_knife_bowie",
+"wpn_knife_old_rotten",
+"wpn_knife",
+"energy_drink",
+"bandage",
+"detector_simple",
+"af_medusa",
+"af_cristall_flower",
+"af_night_star",
+"af_vyvert",
+"af_blood",
+"wpn_fort",
+"wpn_pb",
+"grenade_rgd5",
+"grenade_f1",
+"wpn_walther"}
+
+local items_prob_yoba = 
+{			
+"wpn_fn2000",		
+"wpn_protecta",		
+"wpn_rpk74",
+"wpn_vintorez",
+"wpn_vsk94",
+"wpn_rpg7",
+"wpn_striker"
+}
+
+
+local places = {}
+
+function create_treasure()
+
+  	if level.name() == "lvl16_generators" then return end
+ 	if level.name() == "lvl15_sarcofag" then return end
+	--if not has_alife_info("bar_first") then return end
+
+	--log1("try treasure")
+
+	local bol_var = math.random(1,3)
+	local bez_var = math.random(1,5)
+	local yaz_var = math.random(1,10)
+	local yob_var = math.random(1,100)
+
+	local sim = alife()
+	for id=1, 65534 do
+		local obj = sim:object(id)
+		if obj then
+			if obj.m_game_vertex_id then
+				if game_graph():valid_vertex_id(obj.m_game_vertex_id) then     
+					if obj:section_name() == "treasure_place_obj" then   --  treasure_place_obj  box_rukzak_treasure
+						table.insert(places, obj)
+					end
+				end
+			end
+		end
+	end
+ 
+	local rand_obj = places[math.random(#places)]
+		
+		if rand_obj then
+		if rand_obj.m_game_vertex_id then
+		if game_graph():valid_vertex_id(rand_obj.m_game_vertex_id) then
+       
+		local metka = alife():create("treasure_place_metka", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
+		olr.add_spot_on_map( metka.id,"treasure", "ѕриблизительное место где находитс€ схрон" )
+		alife():create(items_prob[math.random(table.getn(items_prob))], rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
+		if bol_var == 1 then
+			local apos = rand_obj.position
+			local alvex = rand_obj.m_level_vertex_id
+			local agvex = rand_obj.m_game_vertex_id
+			local aa = alife():create(items_prob[math.random(table.getn(items_prob))], apos, alvex, agvex)
+			aa.m_level_vertex_id = alvex
+			aa.m_game_vertex_id = agvex
+			aa.position = apos
+			local wait_time = 0
+  			wait_time = time_global() + 1500
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() aa.m_game_vertex_id = agvex aa.m_level_vertex_id = alvex aa.position = apos end
+  			)
+			clear_useful_for_ai(aa)
+		end
+		if bez_var == 1 then
+			local bpos = rand_obj.position
+			local blvex = rand_obj.m_level_vertex_id
+			local bgvex = rand_obj.m_game_vertex_id
+			local bb = alife():create(items_prob[math.random(table.getn(items_prob))], bpos, blvex, bgvex)  
+			bb.m_level_vertex_id = blvex
+			bb.m_game_vertex_id = bgvex
+			bb.position = bpos
+			--if bb.level_name ~= level.name() then
+			--	bb:set_position(bpos)
+			--end
+			clear_useful_for_ai(bb)
+			wait_time = time_global() + 1500
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() bb.m_level_vertex_id = blvex bb.m_game_vertex_id = bgvex bb.position = bpos end
+  			)
+		end
+		if yaz_var == 1 then
+			local cpos = rand_obj.position
+			local clvex = rand_obj.m_level_vertex_id
+			local cgvex = rand_obj.m_game_vertex_id
+			local cc = alife():create(items_prob[math.random(table.getn(items_prob))], cpos, clvex, cgvex) 
+			cc.m_level_vertex_id = clvex
+			cc.m_game_vertex_id = cgvex
+			cc.position = cpos 
+			--if cc.level_name ~= level.name() then
+			--	cc:set_position(cpos)
+			--end
+			clear_useful_for_ai(cc)
+			wait_time = time_global() + 1500
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() cc.m_level_vertex_id = clvex cc.m_game_vertex_id = cgvex cc.position = cpos end
+  			)
+		end
+		if yob_var == 1 then
+			local dpos = rand_obj.position
+			local dlvex = rand_obj.m_level_vertex_id
+			local dgvex = rand_obj.m_game_vertex_id
+			local dd = alife():create(items_prob_yoba[math.random(table.getn(items_prob_yoba))], dpos, dlvex, dgvex) 
+			dd.m_level_vertex_id = dlvex
+			dd.m_game_vertex_id = dgvex 
+			dd.position = dpos
+			--if dd.level_name ~= level.name() then
+			--	dd:set_position(dpos)
+			--end
+			clear_useful_for_ai(dd)
+			wait_time = time_global() + 1500
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() dd.m_level_vertex_id = dlvex dd.m_game_vertex_id = dgvex dd.position = dpos end
+  			)
+		end
+		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x,rand_obj.position.y,rand_obj.position.z))
+		news_manager.send_tip(db.actor, "ѕолучена информаци€ о схроне. "..pos..".", nil, "treasure", 9000)
+		end
+		end
+		end
+end

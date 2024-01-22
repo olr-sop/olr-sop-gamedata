@@ -1,0 +1,655 @@
+
+
+
+
+local neutral_smarts = 
+{
+
+"lvl1_escape_smart_terrain_0025", 
+"lvl1_escape_smart_terrain_0026",
+"lvl1_escape_smart_terrain_0029",
+"esc2_st_fox_place",
+"lvl1_escape_smart_terrain_0030",  
+"lvl1_escape_smart_terrain_0031", 
+"esc_farm_lager", 
+   
+
+"lvl2_garbage_smart_terrain_0024", 
+"lvl2_garbage_smart_terrain_0025",
+"lvl2_garbage_smart_terrain_0027",
+"lvl2_garbage_smart_terrain_0028",
+"lvl2_garbage_smart_terrain_0029",
+
+"lvl3_agroprom_smart_terrain_0019",
+"lvl3_agroprom_smart_terrain_0020",
+
+"lvl4_darkdolina_smart_terrain_0007", 
+"lvl4_darkdolina_smart_terrain_0008", 
+"lvl4_darkdolina_smart_terrain_0009", 
+
+
+"bar_visitors", 
+"lvl5_bar_smart_terrain_0044", 
+"lvl5_bar_smart_terrain_0043", 
+"lvl5_bar_smart_terrain_0042",
+"lvl5_bar_smart_terrain_united_freedom_stalkers_0001", 
+"lvl5_bar_smart_terrain_united_dolg_stalkers_0000",
+"lvl5_bar_smart_terrain_united_dolg_stalkers",
+
+"ros_smart_stalker_bandits1",
+
+"lvl7_yantar_smart_terrain_0015"
+
+
+}
+
+--------------------------------------------------------------
+
+
+local bandits_smarts = 
+{
+
+"lvl1_escape_smart_terrain_0023", 
+   
+
+"lvl2_garbage_smart_terrain_0018", 
+"lvl2_garbage_smart_terrain_0019",
+"lvl2_garbage_smart_terrain_0020",
+"lvl2_garbage_smart_terrain_0021",
+"lvl2_garbage_smart_terrain_0022",
+"lvl2_garbage_smart_terrain_0023",
+"gar_smart_bandit_2",
+
+
+"lvl4_darkdolina_smart_terrain_0010",
+"lvl4_darkdolina_smart_terrain_0011",
+"lvl4_darkdolina_smart_terrain_0012",
+"lvl4_darkdolina_smart_terrain_0013",
+
+"lvl5_bar_smart_terrain_0045",
+"lvl5_bar_smart_terrain_0046",
+"lvl5_bar_smart_terrain_0047",
+
+"lvl7_yantar_smart_terrain_0016",
+"lvl7_yantar_smart_terrain_0017",
+"lvl7_yantar_smart_terrain_0018",
+
+"lvl9_military_smart_terrain_0016"
+
+
+}
+
+
+
+--------------------------------------------------------------
+
+
+local ecologs_smarts = 
+{
+
+"lvl1_escape_smart_terrain_0032", 
+"lvl1_escape_smart_terrain_0033",
+"lvl1_escape_smart_terrain_0034",
+"lvl1_escape_smart_terrain_0035",
+   
+
+"lvl2_garbage_smart_terrain_0030", 
+"lvl2_garbage_smart_terrain_0031",
+"lvl2_garbage_smart_terrain_0032",
+"lvl2_garbage_smart_terrain_0033",
+
+
+"lvl3_agroprom_smart_terrain_0021",
+"lvl3_agroprom_smart_terrain_0022",
+"lvl3_agroprom_smart_terrain_0023",
+"lvl3_agroprom_smart_terrain_0024",
+
+
+"lvl4_darkdolina_smart_terrain_0014",
+"lvl4_darkdolina_smart_terrain_0015",
+
+
+"lvl5_bar_smart_terrain_0048",
+"lvl5_bar_smart_terrain_0049",
+
+
+"lvl9_military_smart_terrain_0017",
+
+
+"lvl10_radar_smart_terrain_0008",
+"lvl10_radar_smart_terrain_0009",
+
+"lvl7_yantar_smart_terrain_0014",
+"lvl7_yantar_smart_terrain_0013",
+"lvl7_yantar_smart_terrain_0012",
+
+"lvl11_deadcity_smart_terrain_0035"
+
+
+}
+
+
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+
+
+function ecologs_neutral_task_select()
+
+if db.actor then
+
+local montabl = 
+{
+       [clsid.script_stalker] = true
+}
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                if not kill.online then
+                if kill:alive() then
+		if kill:community() == "ecolog" then
+                local strn_id = kill:smart_terrain_id()
+		if strn_id ~= 65535 then
+
+		local rnd = math.random(1,2) 
+		if rnd == 1 then
+
+		local params=amk.read_stalker_params(kill)
+	        params.custom = ""
+		amk.write_stalker_params(params,kill)
+		smart_terrain.unregister_npc(kill)
+   		kill:brain():can_choose_alife_tasks(true)
+		kill:brain():update()
+		olr.clear_restrictors(kill)
+
+		local params=amk.read_stalker_params(kill)
+		local rand_kill = ecologs_smarts[math.random(#ecologs_smarts)]
+		local rand_ki = game.translate_string(rand_kill)
+		local b = "\n[smart_terrains]\n"..rand_ki.." = true\n"
+		local stng_full = game.translate_string(b)
+		params.custom=stng_full
+		amk.write_stalker_params(params,kill)
+
+		--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+		--news_manager.send_tip(db.actor, "!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ecologs_smarts!!!!!!!!!!!!!!", nil, "freedom", 9000)
+		--log1("!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ecologs_smarts!!!!!!!!!!!!!!")
+
+		end
+
+
+end
+end
+end
+end
+end
+end
+end
+end
+--end
+
+end
+
+
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+
+
+function bandits_neutral_task_select()
+
+if db.actor then
+
+local montabl = 
+{
+       [clsid.script_stalker] = true
+}
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                if not kill.online then
+                if kill:alive() then
+		if kill:community() == "bandit" then
+                local strn_id = kill:smart_terrain_id()
+		if strn_id ~= 65535 then
+
+		local rnd = math.random(1,2) 
+		if rnd == 1 then
+
+
+		local params=amk.read_stalker_params(kill)
+	        params.custom = ""
+		amk.write_stalker_params(params,kill)
+		smart_terrain.unregister_npc(kill)
+   		kill:brain():can_choose_alife_tasks(true)
+		kill:brain():update()
+		olr.clear_restrictors(kill)
+
+		local params=amk.read_stalker_params(kill)
+		local rand_kill = bandits_smarts[math.random(#bandits_smarts)]
+		local rand_ki = game.translate_string(rand_kill)
+		local b = "\n[smart_terrains]\n"..rand_ki.." = true\n"
+		local stng_full = game.translate_string(b)
+		params.custom=stng_full
+		amk.write_stalker_params(params,kill)
+
+
+		local params=amk.read_stalker_params(kill)
+	        	local a = params.custom
+		--log1("name custom data for "..kill:name().." --- "..a.."")
+
+
+--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+--news_manager.send_tip(db.actor, "!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ÍÅÉÒĞÀËÎÂ!!!!!!!!!!!!!!", nil, "freedom", 9000)
+--log1("!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ÁÀÍÄÈÒÎÂ!!!!!!!!!!!!!!")
+
+		end
+end
+end
+end
+end
+end
+end
+end
+end
+--end
+
+end
+
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+
+
+function stalkers_neutral_task_select()
+
+if db.actor then
+
+local montabl = 
+{
+       [clsid.script_stalker] = true
+}
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                if not kill.online then
+                if kill:alive() then
+		if kill:community() == "stalker" then
+                local strn_id = kill:smart_terrain_id()
+		if strn_id ~= 65535 then
+
+		local rnd = math.random(1,2) 
+		if rnd == 1 then
+
+
+		local params=amk.read_stalker_params(kill)
+	        params.custom = ""
+		amk.write_stalker_params(params,kill)
+		smart_terrain.unregister_npc(kill)
+   		kill:brain():can_choose_alife_tasks(true)
+		kill:brain():update()
+		olr.clear_restrictors(kill)
+
+		local params=amk.read_stalker_params(kill)
+		local rand_kill = neutral_smarts[math.random(#neutral_smarts)]
+		local rand_ki = game.translate_string(rand_kill)
+		local b = "\n[smart_terrains]\n"..rand_ki.." = true\n"
+		local stng_full = game.translate_string(b)
+		params.custom=stng_full
+		amk.write_stalker_params(params,kill)
+
+
+		local params=amk.read_stalker_params(kill)
+	        	local a = params.custom
+		--log1("name custom data for "..kill:name().." --- "..a.."")
+
+
+--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+--news_manager.send_tip(db.actor, "!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ÍÅÉÒĞÀËÎÂ!!!!!!!!!!!!!!", nil, "freedom", 9000)
+--log1("!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ÍÅÉÒĞÀËÎÂ!!!!!!!!!!!!!!")
+
+		end
+end
+end
+end
+end
+end
+end
+end
+end
+--end
+
+end
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+
+
+function dogs_task_select()
+
+	if db.actor then
+
+	if bind_stalker.actor_in_sleep == true then return end
+
+local dog_smarts = 
+{
+
+"lvl1_escape_smart_terrain", 
+"lvl1_escape_smart_terrain_0010", 
+"lvl1_escape_smart_terrain_0013", 
+"lvl1_escape_smart_terrain_0015", 
+"lvl1_escape_smart_terrain_0017",
+
+
+"lvl2_garbage_smart_terrain_0000", 
+"lvl2_garbage_smart_terrain_0002", 
+"lvl2_garbage_smart_terrain_0003", 
+"lvl2_garbage_smart_terrain_0012",
+"lvl2_garbage_smart_terrain_0013", 
+"lvl2_garbage_smart_terrain_0014",
+
+
+ 
+"lvl3_agroprom_smart_terrain", 
+"lvl3_agroprom_smart_terrain_0000",
+"lvl3_agroprom_smart_terrain_0003",
+
+
+"lvl4_darkdolina_smart_terrain",
+"lvl4_darkdolina_smart_terrain_0000",
+
+
+"lvl5_bar_smart_terrain",
+"lvl5_bar_smart_terrain_0002",
+"lvl5_bar_smart_terrain_0007",
+"lvl5_bar_smart_terrain_0009",
+"lvl5_bar_smart_terrain_0010",
+"lvl5_bar_smart_terrain_0011",
+"lvl5_bar_smart_terrain_0012",
+"lvl5_bar_smart_terrain_0013",
+"lvl5_bar_smart_terrain_0014",
+"lvl5_bar_smart_terrain_0015",
+"lvl5_bar_smart_terrain_0016"
+
+
+}
+
+
+local montabl = 
+{
+       [clsid.dog_s] = true
+}
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                if not kill.online then
+                if kill:alive() and kill.level_name ~= "lvl5_bar" then
+                local strn_id = kill:smart_terrain_id()
+		if strn_id ~= 65535 then
+
+		local rnd = math.random(1,2) 
+		if rnd == 1 then
+
+		
+
+		smart_terrain.unregister_npc(kill)
+   		kill:brain():can_choose_alife_tasks(true)
+		olr.clear_restrictors(kill)
+
+        		local pk = xs_netpk.monster(kill)
+        		if pk:isOk() then
+         		local data = pk:get()
+          		local cd   = data.custom_data:getTable()
+          		    cd.smart_terrains = {
+     				 [ "dog_smarts[math.random(#dog_smarts)]" ] = "true"
+    			    } 
+          		 data.custom_data:set( cd )
+         		 pk:set( data )
+
+--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+--news_manager.send_tip(db.actor, "!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÎÁÀÊ!!!!!!!!!!!!!!", nil, "freedom", 9000)
+--log1("!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÎÁÀÊ!!!!!!!!!!!!!!")
+
+		end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+
+
+
+
+
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+
+
+
+
+
+
+function zombies_task_select()
+
+	if db.actor then
+
+	if bind_stalker.actor_in_sleep == true then return end
+
+local zombies_smarts = 
+{
+
+"lvl1_escape_smart_terrain_0003", 
+"lvl1_escape_smart_terrain_0004", 
+"lvl1_escape_smart_terrain_0005", 
+"lvl1_escape_smart_terrain_0006", 
+"lvl1_escape_smart_terrain_0009",
+"lvl1_escape_smart_terrain_0014", 
+"lvl1_escape_smart_terrain_0016", 
+
+
+"lvl2_garbage_smart_terrain_0005", 
+"lvl2_garbage_smart_terrain_0006",
+
+
+"lvl3_agroprom_smart_terrain_0005", 
+"lvl3_agroprom_smart_terrain_0006",
+"lvl3_agroprom_smart_terrain_0009", 
+"lvl3_agroprom_smart_terrain_0010",
+"lvl3_agroprom_smart_terrain_0011",
+"lvl3_agroprom_smart_terrain_0012",
+"lvl3_agroprom_smart_terrain_0013",
+
+
+
+"lvl4_darkdolina_smart_terrain_0003",
+"lvl4_darkdolina_smart_terrain_0006",
+
+
+"lvl5_bar_smart_terrain_0028",
+"lvl5_bar_smart_terrain_0029",
+"lvl5_bar_smart_terrain_0030",
+"lvl5_bar_smart_terrain_0031",
+"lvl5_bar_smart_terrain_0032",
+"lvl5_bar_smart_terrain_0033",
+"lvl5_bar_smart_terrain_0034",
+"lvl5_bar_smart_terrain_0035",
+"lvl5_bar_smart_terrain_0036"
+
+
+}
+
+
+local montabl = 
+{
+       [clsid.zombie_s] = true,
+       [clsid.zombie] = true
+}
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                if not kill.online then
+                if kill:alive() then
+                local strn_id = kill:smart_terrain_id()
+		if strn_id ~= 65535 then
+
+		local rnd = math.random(1,2) 
+		if rnd == 1 then
+
+		smart_terrain.unregister_npc(kill)
+   		kill:brain():can_choose_alife_tasks(true)
+		olr.clear_restrictors(kill)
+
+--local params=amk.read_monster_params(kill)
+--params.custom = 
+--"[smart_terrains]\nzombies_smarts[math.random(#zombies_smarts)]=true\n"
+--amk.write_monster_params(params,kill)
+
+
+        		local pk = xs_netpk.monster(kill)
+        		if pk:isOk() then
+         		local data = pk:get()
+          		local cd   = data.custom_data:getTable()
+          		    cd.smart_terrains = {
+     				 [ "zombies_smarts[math.random(#zombies_smarts)]" ] = "true"
+    			    } 
+          		 data.custom_data:set( cd )
+         		 pk:set( data )
+
+--olr.add_spot_on_map( kill.id,"alife_presentation_smart_on",kill:name() )
+--news_manager.send_tip(db.actor, "!!!!!!!!!!!!!ÌÈÃĞÀÖÈß zombies!!!!!!!!!!!!!!", nil, "dolg", 9000)
+--log1("!!!!!!!!!!!!!ÌÈÃĞÀÖÈß zombies!!!!!!!!!!!!!!")
+
+		end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+
+
+
+------------------------------------------------------------------------------------------
+function dolgs_task_select()
+
+	if db.actor then
+
+	if bind_stalker.actor_in_sleep == true then return end
+
+
+
+local dolgs_smarts = 
+{
+
+"lvl1_escape_smart_terrain_0037", 
+
+"lvl2_garbage_smart_terrain_0034",
+
+"lvl3_agroprom_smart_terrain_0025",
+
+"lvl4_darkdolina_smart_terrain_0016",
+
+"bar_dolg_bunker", 
+ 
+"lvl5_bar_smart_terrain_united_dolg_stalkers_0000",
+ 
+"lvl5_bar_smart_terrain_united_dolg_stalkers"
+
+
+}
+
+
+
+
+
+
+local montabl = 
+{
+       [clsid.script_stalker] = true
+}
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                if not kill.online then
+                if kill:alive() then
+		if kill:community() == "dolg" then
+                local strn_id = kill:smart_terrain_id()
+		if strn_id ~= 65535 then
+
+		local rnd = math.random(1,2) 
+		if rnd == 1 then
+
+
+		local params=amk.read_stalker_params(kill)
+	        params.custom = ""
+		amk.write_stalker_params(params,kill)
+		smart_terrain.unregister_npc(kill)
+   		kill:brain():can_choose_alife_tasks(true)
+		kill:brain():update()
+		olr.clear_restrictors(kill)
+
+		local params=amk.read_stalker_params(kill)
+		local rand_kill = dolgs_smarts[math.random(#dolgs_smarts)]
+		local rand_ki = game.translate_string(rand_kill)
+		local b = "\n[smart_terrains]\n"..rand_ki.." = true\n"
+		local stng_full = game.translate_string(b)
+		params.custom=stng_full
+		amk.write_stalker_params(params,kill)
+
+
+
+
+
+--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+--news_manager.send_tip(db.actor, "!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ DOLG!!!!!!!!!!!!!!", nil, "freedom", 9000)
+--log1("!!!!!!!!!!!!!ÌÈÃĞÀÖÈß ÑÒÀËÊÅĞÎÂ ÍÅÉÒĞÀËÎÂ!!!!!!!!!!!!!!")
+
+		end
+end
+end
+end
+end
+end
+end
+end
+
+end
+end
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------

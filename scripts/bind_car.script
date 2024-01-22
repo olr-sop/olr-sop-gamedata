@@ -1,0 +1,822 @@
+--hi_flyer, OLR mod
+--фичи из диздоков, билдов, итд
+
+local opt_sound = false --звук при открытии дверей.
+
+update_doors = nil
+local snd_open = sound_object([[car\car_door_open]])
+local snd_close = sound_object([[car\car_door_close]])
+local hud = get_hud()
+local st_call = false
+local i_in_car = false
+local obj_for_reload = nil
+
+actor_in_car = {} -- хранит одно значение, в ключе которого айдишник используемого актором авто
+
+
+-----------------------------------------------------------------------------------
+-- car binder
+-----------------------------------------------------------------------------------
+
+function bind(obj)
+	local new_binder = car_binder(obj)
+	if obj:spawn_ini() and obj:spawn_ini():section_exist("logic") and obj:spawn_ini():line_exist("logic", "no_bind") and obj:spawn_ini():r_bool("logic", "no_bind") == true then
+		bind_physic_object.init(obj)
+		return
+	end
+	obj:bind_object(new_binder)
+end
+
+------------------------------------------------------------------------------------
+class "car_binder" (object_binder)
+
+function car_binder:__init(obj) super(obj)
+	self.engine_on = false
+	self.death_flag = false
+	self.object = obj
+	self.usable = false
+	self.ini = obj:get_visual_ini()
+	self.box_id = 0
+	--для дверей
+	if self.ini ~= nil then
+		local is_opening_doors = (self.ini:line_exist("car_definition", "opening_doors") and self.ini:r_bool("car_definition", "opening_doors") == true)
+		local is_has_box = self.ini:line_exist("car_definition", "bone_for_invbox")
+		if is_opening_doors then
+			self.has_doors = true
+			self.doors_sound = true
+			self.left_door_bone = self.ini:r_string("car_definition", "left_door_bone")   -- кость двери левая
+			self.right_door_bone = self.ini:r_string("car_definition", "right_door_bone") -- кость двери правая
+
+			self.left_door_out_bone = self.ini:r_string("car_definition", "left_door_out_bone")   -- кость двери левая выход
+			self.right_door_out_bone = self.ini:r_string("car_definition", "right_door_out_bone") -- кость двери правая выход
+
+			self.seat_bone_left = self.ini:r_string("car_definition", "seat_bone_left") -- кость двери правая захода
+
+			self.seat_bone_right = self.ini:r_string("car_definition", "seat_bone_right") -- кость двери правая захода
+
+
+			self.seat_dist = self.ini:r_float("car_definition", "seat_dist")
+			self.doors_dist = self.ini:r_float("car_definition", "doors_dist")
+		end
+		if is_has_box then
+			self.bone_for_invbox = self.ini:r_string("car_definition", "bone_for_invbox")
+		else
+			self.bone_for_invbox = "nil"
+		end
+	end
+end
+
+function car_binder:reinit()
+	object_binder.reinit(self)
+	db.storage[self.object:id()] = { }
+	self.st = db.storage[self.object:id()]
+end
+
+function car_binder:update(delta)
+	object_binder.update(self, delta)
+		
+	--------------------------------------------------------
+	-- багажник start
+	if self.bone_for_invbox ~= nil and self.bone_for_invbox ~= "nil" then
+		if self.box_id ~= nil and self.box_id ~= 0 then
+			if self.upd_box_pos_t == nil then
+				self.upd_box_pos_t = 0
+			end
+			if self.upd_box_pos_t < time_global() then
+				self.upd_box_pos_t = time_global() + 200
+				local pos = self.object:bone_position(self.bone_for_invbox)
+				if self.last_car_pos == nil then
+					self.last_car_pos = pos
+				end
+				
+				if not actor_in_car[self.object:id()] then
+					local is_sobj_teleport = (
+						alife():object(self.box_id) ~= nil and
+						level.object_by_id(self.box_id) == nil
+					)
+					if (is_sobj_teleport) then
+						alife():teleport_object(
+							self.box_id,
+							self.object:game_vertex_id(),
+							self.object:level_vertex_id(),
+							pos
+						)
+					end
+					if pos:distance_to(self.last_car_pos) > 0.01 or is_sobj_teleport then
+						if (level.object_by_id(self.box_id) ~= nil) then
+							level.object_by_id(self.box_id):set_position(pos)
+						end
+						level.add_call(
+							function()
+								return (level.object_by_id(self.box_id) ~= nil)
+							end,
+						
+							function()
+								this.on_car_box_init(0, level.object_by_id(self.box_id))
+							end
+						)
+					end
+				end
+				
+				if (level.object_by_id(self.box_id) ~= nil) then
+					self.last_car_pos = level.object_by_id(self.box_id):position()
+				else
+					self.last_car_pos = alife():object(self.box_id).position
+				end
+			end
+			elseif device().precache_frame <= 1 then
+				if self.object:name() == "lvl5_bar_m_car_0004" or self.object:name() == "lvl7_yantar_m_car_0000" or self.object:name() == "lvl9_militar_kam_quest_kordon" then
+					local sobj = alife():create("bagaznik_avto",self.object:bone_position(self.bone_for_invbox),self.object:level_vertex_id(),self.object:game_vertex_id())
+					self.box_id = sobj.id
+					local wait_time = 0
+  					wait_time = time_global() + 200
+  					level.add_call(
+    					function() return time_global() > wait_time end,
+    					function() olr.to_offline(sobj:name()) end
+  					)
+				end
+				local carname = self.object:section()
+				if carname == "veh_nis" or carname == "veh_mos" or carname == "m_car" then
+					local sobj = alife():create("bagaznik_avto",self.object:bone_position(self.bone_for_invbox),self.object:level_vertex_id(),self.object:game_vertex_id())
+					self.box_id = sobj.id
+					--log1("create midl bagaznik "..carname.."  for  "..self.object:name().." with id bag "..sobj.id.."")
+				elseif carname == "veh_lad" or carname == "veh_zaz" then
+					local sobj = alife():create("bagaznik_mal",self.object:bone_position(self.bone_for_invbox),self.object:level_vertex_id(),self.object:game_vertex_id())
+					self.box_id = sobj.id
+					--log1("create maliy bagaznik "..carname.."  for  "..self.object:name().." with id bag "..sobj.id.."")
+				elseif carname == "veh_kam" or carname == "veh_btr" or carname == "veh_raf" then
+					local sobj = alife():create("bagaznik_big",self.object:bone_position(self.bone_for_invbox),self.object:level_vertex_id(),self.object:game_vertex_id())
+					self.box_id = sobj.id
+					--log1("create big bagaznik "..carname.."  for  "..self.object:name().." with id bag "..sobj.id.."")
+				else
+					local sobj = alife():create("bagaznik_avto",self.object:bone_position(self.bone_for_invbox),self.object:level_vertex_id(),self.object:game_vertex_id())
+					self.box_id = sobj.id
+					--log1("create ELSE bagaznik "..carname.."  for  "..self.object:name().." with id bag "..sobj.id.."")
+				end
+		end
+	end
+	-- багажник end
+	----------------------------------------------------------------------
+	-- удаление ящика при взрыве авто	
+
+	local health = self.object:get_car() and self.object:get_car():GetfHealth()
+	if health <=0 then
+		self.object:get_car():StopEngine()
+		if self.death_flag == false then
+			self.death_flag = true
+			if self.object:name() == "lvl9_militar_kam_quest_kordon" then
+				olr.info("mil_kamaz_fail_dead")
+			end
+			local wait_time = 0
+  			wait_time = time_global() + 500
+  			level.add_call(
+    				function() return time_global() > wait_time end,
+    				function() remove_box(self.box_id) end
+  			)
+		end
+	end
+	
+	----------------------------------------------------------------------
+	-- двери start	
+
+	local distance = self.object:position():distance_to_sqr(db.actor:position())
+	--чёто нигде не работает, придётся делать здесь
+	if not self.loaded then
+	
+		xr_logic.initialize_obj(self.object, self.st, self.bLoaded, db.actor, modules.stype_item)
+
+		self.object:get_physics_shell():apply_force(0.0001,0.0001,0.0001)
+		
+		--при спауне надо захлопнуть двери(теперь двери сохраняются)
+		if self.has_doors then
+			self.left_door = self.object:get_physics_shell():get_joint_by_bone_name(self.left_door_bone)
+			self.right_door = self.object:get_physics_shell():get_joint_by_bone_name(self.right_door_bone)
+			
+			if self.left_door_open then
+				self:open_left_door(true, false)
+			else
+				self:open_left_door(false, false)
+			end
+			
+			if self.right_door_open then
+				self:open_right_door(true, false)
+			else
+				self:open_right_door(false, false)
+			end
+			
+			self.object:set_nonscript_usable(false)
+			self.usable = false
+		end
+
+		if self.engine_on == true then
+			self.object:get_car():StartEngine()
+		else
+			self.object:get_car():StopEngine()
+		end
+
+		self.loaded = true
+	end
+	
+	local target_obj = level.get_target_obj()
+	if self.has_doors and target_obj and target_obj:id() == self.object:id() then
+		if not self.left_door then return end
+		if not self.right_door then return end
+
+		local a = vector()
+		local b = vector()
+		self.left_door:get_anchor(a)
+		self.right_door:get_anchor(b)
+
+		--log1(" left bone "..self.left_door_bone.." ")		
+
+		--открытие/закрытие дверей снаружи
+		if update_doors and distance < self.doors_dist and not actor_in_car[self.object:id()] then
+		
+			self:open_doors_outside(a,b)
+
+			if a:distance_to_sqr(db.actor:position()) < b:distance_to_sqr(db.actor:position()) then
+				-- niva 0,13
+					--if self.object:section() == "veh_zaz" then
+					--	log1("zaz l")
+					--end
+				--log1("use l")
+				if self.left_door_open and self:check_look_bone(self.seat_bone_left) then
+					if self.left_door_open then
+						db.actor:attach_vehicle(self.object)
+						--get_actor_obj():press_action(10)
+						--get_actor_obj():release_action(10)
+						update_doors = nil
+					end
+				end
+			else
+				--log1("use r")
+				local bon = level.get_target_element()
+				--if self.left_right_open and self:check_look_bone(self.seat_bone_right) or bon == 0 or bon == 13 or bon == 18 then  -- niva green
+				--if self.left_right_open and self:check_look_bone(self.seat_bone_right) or bon == 15 or bon == 8 then  -- kamaz, mosv, raf
+				--if self.left_right_open and self:check_look_bone(self.seat_bone_right) or bon == 1 then  -- niva white
+				--if self.left_right_open and self:check_look_bone(self.seat_bone_right) or bon == 15 or bon == 0 then  -- lada
+
+				if self.left_right_open and self:check_look_bone(self.seat_bone_right) or self:check_look_bone_right_add() then
+					--db.actor:set_actor_position(vector_rotate_y(self.object:direction(), 160):add(self.object:bone_position(self.left_door_bone)):mul(1))
+					db.actor:attach_vehicle(self.object)
+					update_doors = nil
+					--log1("attach actor right")
+				end
+				--if self.object:section() == "veh_zaz" then
+				--	log1("zaz r")
+				--end
+			end
+		end
+		
+		--log1(right_door)
+		----------------------------------------
+		local c = vector():set(device().cam_pos:mad(device().cam_dir, 3))
+		if actor_in_car[self.object:id()] then
+
+			if update_doors then
+				--log1("try door 2")
+				if c:distance_to_sqr(a) < c:distance_to_sqr(b) then
+					if self.left_door_open then
+						if self:check_look_bone(self.left_door_bone) then   -- кость двери левая
+							self:open_left_door(false, true)
+							update_doors = nil
+						end
+						if self:check_look_bone(self.left_door_out_bone) then		-- кость выхода слева
+							--log1("deatt left")
+							db.actor:detach_vehicle()
+							db.actor:set_actor_position(vector_rotate_y(self.object:direction(), 160):add(self.object:bone_position(self.left_door_bone)):mul(1))
+							update_doors = nil
+						end
+
+					else
+						if self:check_look_bone(self.left_door_bone) then
+							self:open_left_door(true, true)
+							update_doors = nil
+							--log1("inside open left "..level.get_target_element().."")
+						end
+					end
+				else
+					if self.right_door_open then
+						if self:check_look_bone(self.right_door_bone) then  -- кость двери правая
+							self:open_right_door(false, true)
+							update_doors = nil
+						end
+						if self:check_look_bone(self.right_door_out_bone) then		-- кость выхода правая
+							--log1("deatt rihty")
+							db.actor:detach_vehicle()
+							db.actor:set_actor_position(vector_rotate_y(self.object:direction(), -160):add(self.object:bone_position(self.right_door_bone)):mul(1))
+							update_doors = nil
+						end
+					else
+						if self:check_look_bone(self.right_door_bone) then
+							self:open_right_door(true, true)
+							--log1("inside open rithr "..level.get_target_element().."")
+							update_doors = nil
+						end
+					end
+				end
+			end
+		else
+			if not self.usable_in_car then
+				get_console():execute("unbind_console kf")
+				self.usable_in_car = true
+			end
+		end
+		if distance < self.doors_dist then
+			if (a:distance_to_sqr(db.actor:position()) < self.seat_dist and self.left_door_open) or (b:distance_to_sqr(db.actor:position()) < self.seat_dist and self.right_door_open) then
+				if not self.usable then
+					self.object:set_nonscript_usable(true)
+					self.usable = true
+				end
+			else
+				if self.usable then
+					self.object:set_nonscript_usable(false)
+					self.usable = false
+				end
+			end
+		end
+		--установка tip text
+		if (a:distance_to_sqr(db.actor:position()) < self.doors_dist and not self.left_door_open) or (b:distance_to_sqr(db.actor:position()) < self.doors_dist and not self.right_door_open) then
+			self.object:set_tip_text("Открыть дверь(f) Сменить аккумулятор (b) Заправить (n) Толкнуть (Tab)")
+		else
+			self.object:set_tip_text_default()
+		end
+		update_doors = false
+	end
+
+	
+	if self.st.active_section ~= nil or (self.object:spawn_ini() ~= nil and self.object:spawn_ini():section_exist("drop_box") == true) then
+		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
+	end
+
+        ----------------------------------------------------hi_flyer-08.03.16-----------------
+        local FuelCurr = self.object:get_car():GetfFuel()
+        if FuelCurr <= 0 then
+        	self.object:get_car():SetfFuel(0.001)
+        end
+
+	if this.actor_in_car[self.object:id()] then
+
+        	if db.actor.health <=0 then
+        		if self.has_doors then
+        			self:open_left_door(true, true)
+        			db.actor:detach_vehicle()
+        		end
+        	end
+
+		if bind_anomaly.in_dead_zone() then
+			self.object:get_car():StopEngine()
+		end
+
+		if self.object:get_car():IsActiveEngine() then
+			if st_call == false then
+				--log1("engine start callback")
+				start_call(self.object)
+				st_call = true
+			end
+		end
+
+		if not self.object:get_car():IsActiveEngine() then
+			st_call = false
+		end
+
+		if self.object:get_car():IsActiveEngine() then
+			self.engine_on = true
+		else
+			self.engine_on = false
+		end
+
+		local acum = xvars.olr[self.object:id()]
+		local background = hud:GetCustomStatic("hud_acum_background")
+		if background then
+			background:wnd():SetText(math.floor(acum).." % BAT")
+		else
+			hud:AddCustomStatic("hud_acum_background")
+		end
+
+		local fuel = self.object:get_car():GetfFuel()
+		local background = hud:GetCustomStatic("hud_fuel_background")
+		if background then
+			background:wnd():SetText(math.floor(fuel).." // ")
+		else
+			hud:AddCustomStatic("hud_fuel_background")
+		end
+
+		local bak = self.object:get_car():GetfFuelTank()
+		local background = hud:GetCustomStatic("hud_bak_background")
+		if background then
+			background:wnd():SetText(math.floor(bak).." Л ")
+		else
+			hud:AddCustomStatic("hud_bak_background")
+		end
+
+
+		local speed = self.object:get_car():CurrentVel():magnitude() or 0
+		local background = hud:GetCustomStatic("hud_speedometer_background")
+		if background then
+			background:wnd():SetText(math.floor(speed*3.6).." КМ/Ч")
+		else
+			hud:AddCustomStatic("hud_speedometer_background")
+		end
+	end
+
+	--------------------------------------------------------------------------------------
+
+	if xvars.olr[self.object:id()] then
+		if xvars.olr[self.object:id()] < 1 then
+			self.object:get_car():StopEngine()
+		end
+	end
+
+	--------------------------------------------------------------------------------------
+	
+end
+
+
+function car_binder:check_look_bone_right_add()
+	local bon = level.get_target_element()
+
+	local carname = self.object:section()
+	if carname == "veh_nis" then
+		if bon == 1 then
+			return true
+		end
+	elseif carname == "veh_kam" or carname == "veh_raf" or carname == "veh_mos" then
+		if bon == 15 or bon == 8 then
+			return true
+		end
+	elseif carname == "m_car" then
+		if bon == 0 or bon == 13 or bon == 18 then
+			return true
+		end
+	else
+		return false	
+	end
+
+	return false
+end
+
+
+function car_binder:check_look_bone(bone)
+	local target_obj = level.get_target_obj()
+	local bon = level.get_target_element()
+	local vis = target_obj:get_interface():Visual()
+	local kin = vis:dcast_PKinematics()     
+   	if kin then
+        	local bn = kin:LL_BoneName(bon)
+        	if bn ~= "" then
+			--news_manager.send_tip(db.actor, "chek bone TRY - ["..target_obj:name().."] bone - ["..bon.."]  -- ["..bn.."] ", nil, "freedom", 9000)
+			if bn == bone then
+				--news_manager.send_tip(db.actor, "chek bone DONE - ["..target_obj:name().."] bone - ["..bon.."]  -- ["..bn.."] ", nil, "dolg", 9000)	
+				return true
+			end
+		end
+	end
+	return false
+end
+
+
+function car_binder:open_doors_outside(a,b)
+	if a:distance_to_sqr(db.actor:position()) < b:distance_to_sqr(db.actor:position()) then
+		--log1("use left")
+		if self.left_door_open and self:check_look_bone(self.left_door_bone) then
+			self:open_left_door(false, true)
+			--log1("OUTside use left close")
+			update_doors = nil
+		else
+			self:open_left_door(true, true)
+			--log1("OUTside use left open")
+			update_doors = nil
+		end
+	else
+		--log1("use right")
+		if self.right_door_open and self:check_look_bone(self.right_door_bone) then
+			self:open_right_door(false, true)
+			--log1("OUTside use right close")
+			update_doors = nil
+		else
+			self:open_right_door(true, true)
+			--log1("OUTside use right open")
+			update_doors = nil
+		end
+	end	
+end
+
+
+function car_binder:open_left_door(open, snd)
+	if not self.left_door then return end
+	if open then
+		self.left_door:set_max_force_and_velocity(200, -3, 0)
+		if opt_sound then snd_open:play_at_pos(self.object, self.object:position()) end
+		self.left_door_open = true
+	else
+		self.left_door:set_max_force_and_velocity(200, 3, 0)
+		if opt_sound then snd_close:play_at_pos(self.object, self.object:position()) end
+		self.left_door_open = false
+	end
+end
+
+function car_binder:open_right_door(open, snd)
+	if not self.right_door then return end
+	if open and self.right_door then
+		self.right_door:set_max_force_and_velocity(200, 3, 0)
+		if opt_sound and snd then snd_open:play_at_pos(self.object, self.object:position()) end
+		self.right_door_open = true
+	else
+		self.right_door:set_max_force_and_velocity(200, -3, 0)
+		if opt_sound and snd then snd_close:play_at_pos(self.object, self.object:position()) end
+		self.right_door_open = false
+	end
+end
+
+function car_binder:net_spawn(sobject)
+	if not object_binder.net_spawn(self, sobject) then
+		return false
+	end
+	if alife():object(self.object:id()) == nil then
+		return false
+	end
+
+	action(self.object, move(move.off, 0), cond(cond.time_end, 10))
+
+	return true     
+end
+
+function car_binder:net_destroy()
+	local st = db.storage[self.object:id()]
+	db.storage[self.object:id()] = nil
+	
+	object_binder.net_destroy(self)
+	if st.active_scheme then
+		xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy")
+	end	
+end
+
+function car_binder:net_save_relevant()
+	return true
+end
+
+function car_binder:save(packet)
+	object_binder.save(self, packet)
+	xr_logic.save_obj(self.object, packet)
+	packet:w_bool(self.left_door_open)
+	packet:w_bool(self.right_door_open)
+	packet:w_u16(self.box_id)
+	packet:w_bool(self.engine_on)
+end
+
+function car_binder:load(reader)
+	object_binder.load(self, reader)
+	xr_logic.load_obj(self.object, reader)
+	self.left_door_open = reader:r_bool()
+	self.right_door_open = reader:r_bool()
+	self.box_id = reader:r_u16()
+	self.engine_on = reader:r_bool()
+	self.bLoaded = true
+end
+
+function remove_box(id)
+	if id then
+		local box = level.object_by_id(id)
+		if box then
+			for i = 0, box:inv_box_count() - 1 do
+				local obj = box:object_from_inv_box(i)
+				box:drop_item(obj)
+			end
+		end
+		olr_timers.st_timer("del_car_inv", 1, "bind_car.del_box("..tostring(id)..")")
+	end
+end
+
+function del_box(id)
+	local obj = level.object_by_id(id)
+	if obj and obj:inv_box_count() == 0 then
+		olr.to_offline(obj:name())
+	end
+end
+
+
+function onKeyPress(dik) 
+	if dik == DIK_keys.DIK_T then
+		if bind_car.act_in_car_now() == true then
+			local snd_obj = xr_sound.get_safe_sound_object([[car\klakson_short]])
+			snd_obj:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d)
+		end
+	end
+	if dik == DIK_keys.DIK_N then
+		local obj_for_reload = bind_stalker.loked_obj
+		if obj_for_reload and obj_for_reload:is_car() then
+			if bind_car.act_in_car_now() == true then
+				return 
+			end
+			local zp_art = db.actor:object("kanistra_benz")
+        		if not zp_art then
+				news_manager.send_tip(db.actor, "Нечем заправлять..")
+				return
+			end
+			if obj_for_reload:position():distance_to(db.actor:position()) > 3 then 
+				return 
+			end
+			obj_for_reload:get_car():SetfFuel(obj_for_reload:get_car():GetfFuel() + 15)
+			nik_dialog.out_item_much("kanistra_benz",1)
+			local FuelTank = obj_for_reload:get_car():GetfFuelTank()
+        		local FuelCurr = obj_for_reload:get_car():GetfFuel()
+			local snd_obj = xr_sound.get_safe_sound_object([[ol3\generator_start_1]])
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
+        		if FuelCurr > FuelTank then
+        			obj_for_reload:get_car():SetfFuel(FuelTank)
+			end
+		end
+	end
+	if dik == DIK_keys.DIK_B then 
+		local obj_for_reload = bind_stalker.loked_obj
+		if obj_for_reload and obj_for_reload:is_car() then
+			if bind_car.act_in_car_now() == true then
+				return 
+			end
+			local ac_art = db.actor:object("car_accum")
+        		if not ac_art then
+				news_manager.send_tip(db.actor, "Нет аккумулятора..")
+				return
+			end
+			if obj_for_reload:position():distance_to(db.actor:position()) > 3 then 
+				return 
+			end
+			if bind_car.act_in_car_now() == true then
+				return 
+			end
+			if xvars.olr[obj_for_reload:id()] == nil then
+				news_manager.send_tip(db.actor, "Нужно узнать текущий заряд аккумалятора..")
+				return
+			end
+			xvars.olr[obj_for_reload:id()] = 100
+			nik_dialog.out_item_much("car_accum",1)
+			local snd_obj = xr_sound.get_safe_sound_object([[ol3\re\BATTERY]])
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
+		end
+	end
+	if dik == DIK_keys.DIK_TAB then
+		local car = bind_stalker.loked_obj
+		if car and car:is_car() and db.actor.power > 0.1 then
+			if car:position():distance_to(db.actor:position()) > 3 then 
+				return 
+			end
+			if bind_car.act_in_car_now() == true then
+				return 
+			end
+			local impulse = device().cam_dir:mul(car:mass()*100)
+			local ps = car:get_physics_shell()
+			if ps then
+				ps:apply_force(impulse.x, impulse.y, impulse.z)
+				car:set_const_force(vector():set(0,1,0), car:mass()*11,  100)
+			end
+			db.actor.power = -0.1
+		end
+	end
+end
+
+function start_call(obj)
+	if device().precache_frame > 1 then 
+		return 
+	end
+	if amk.check_game() == false then
+		return
+	end
+	local rndacc = math.random(1,2)
+	xvars.olr[obj:id()] = xvars.olr[obj:id()] - rndacc
+	--log1("acum st")
+	if xvars.olr[obj:id()] < 0 then
+		xvars.olr[obj:id()] = 0
+		--log1("on start "..xvars.olr[obj:id()].."")
+	end
+	if xvars.olr[obj:id()] == 0 then
+		olr.hud_tip("", "Аккумулятор разряжен", 2)
+	end
+	if obj:get_car():GetfFuel() <= 0.02 then
+		olr.hud_tip("", "Нет топлива", 2)
+	end
+	if obj:get_car():GetfHealth() <= 0.45 then
+		local rnd = math.random(1,3)
+		if rnd == 1 then
+			obj:get_car():StopEngine()
+		end
+	end
+end
+
+--Первый спавн багажника
+function on_car_box_spawn(id, obj)
+	if obj == nil then
+		return nil
+	end
+	this.on_car_box_init(id, obj)
+end
+
+--Переход багажника в онлайн
+function on_car_box_init(id, obj)
+	if obj == nil then
+		return nil
+	end
+	obj:set_tip_text("Обыскать багажник")
+end
+
+function reinit(obj)
+	obj:set_callback(callback.on_attach_vehicle, this.on_input, obj)
+	obj:set_callback(callback.on_detach_vehicle, this.on_output, obj)
+	--obj:set_callback(callback.use_object, this.usecar, obj)
+end
+
+function net_destroy(obj)
+	obj:set_callback(callback.on_attach_vehicle, nil)
+	obj:set_callback(callback.on_detach_vehicle, nil)
+	--obj:set_callback(callback.use_object, nil)
+end
+
+--function usecar(obj, who)
+--	log1("use")
+--end
+
+--function hit_callback(obj, amount, local_direction, who, bone_index)
+--	log1("dd")
+--	prints("_bp: car_binder:hit_callback: obj='%s'", obj:name())
+--end
+
+
+-- Коллбек на вход в авто
+function on_input(actor, obj)
+	i_in_car = true
+	if not xvars.olr[obj:id()] then
+		xvars.olr[obj:id()] = math.random(32,89)
+		local stfuel = math.random(6,14)
+		obj:get_car():SetfFuel(stfuel)
+		--log1("on first enter "..xvars.olr[obj:id()].."")
+	end
+	this.actor_in_car[obj:id()] = true
+	if not has_alife_info("car_olr_info") then
+		db.actor:give_info_portion("car_olr_info")
+		level.start_stop_menu(bind_car.car_intro(),true)
+	end
+	olr.switch_torch(false)
+end
+
+-- Коллбек на выход из авто
+function on_output(actor, obj)
+	i_in_car = false
+	this.actor_in_car[obj:id()] = false
+	hud:RemoveCustomStatic("hud_acum_background")
+	hud:RemoveCustomStatic("hud_fuel_background")
+        hud:RemoveCustomStatic("hud_bak_background")
+	hud:RemoveCustomStatic("hud_speedometer_background")
+end
+
+-- Ќажатие на кнопку открытиЯ двери
+function on_press_open_door()
+	----update_doors = true
+end
+
+
+function act_in_car_now()
+	if i_in_car == true then
+		return true
+	end
+end
+
+-------------------------------------------------------------
+
+
+class "car_intro" (CUIScriptWnd)
+function car_intro:__init() super()
+	self:InitControls()
+	self:InitCallBacks()
+end
+
+function car_intro:__finalize()
+end
+
+function car_intro:InitControls()
+	local xml = CScriptXmlInit()
+	self:Init(0,0,1024,768)
+	xml:ParseFile("car_intro.xml")
+	self.background = xml:InitStatic("background", self)
+	self:Register(xml:Init3tButton("background:button_exit", self.background), "button_exit")
+	self.frame1 = xml:InitFrame("background:frame1", self.background)
+	self.Static6 = xml:InitStatic("background:Static6", self.background)
+	self.Static7 = xml:InitStatic("background:frame1:Static7", self.frame1)
+	self.Static8 = xml:InitStatic("background:frame1:Static8", self.frame1)
+	self.Static9 = xml:InitStatic("background:frame1:Static9", self.frame1)
+
+end
+
+function car_intro:InitCallBacks()
+	self:AddCallback("button_exit", ui_events.BUTTON_CLICKED, self.button_exit_button_clicked, self)
+end
+
+function car_intro:button_exit_button_clicked()
+	self:GetHolder():start_stop_menu(self, true)
+end
+
+function car_intro:Hide()
+	self:GetHolder():start_stop_menu(self, true)
+end
+
+
+

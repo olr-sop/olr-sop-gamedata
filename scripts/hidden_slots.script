@@ -1,0 +1,171 @@
+---------------------[[Скриптовая эмуляция невидимых слотов]]--------------------------------
+-- Автор: Charsi
+-- Дата: 15/11/2010 - 30/03/2011
+-- Спасибо: Malandrinus, Erlik
+-- Last update: hi_flyer, OLR mod
+---------------------------------------------------------------------------------------------
+local rec_wnd      = nil
+local initial      = false
+
+class "BkgrWnd" (CUIScriptWnd)
+function BkgrWnd:__init(owner) super()
+    self.sleep_time = 0
+    self.owner = owner
+    self:Init(0,0,1024,768)
+    self.ClickBtn = {}
+    self:InitControls()
+end
+
+function BkgrWnd:__finalize() end
+function BkgrWnd:InitControls()
+    self.bkgr_static=CUIStatic()
+    self.bkgr_static:Init("ui\\ui_disk_io",10,0,1024,100)
+    self.bkgr_static:SetStretchTexture(true)
+    self.bkgr_static:SetOriginalRect(0,0,1024,100)
+	if self and self.owner then
+		self.owner:AttachChild(self.bkgr_static)
+	end
+    self.stat = CUIStatic()
+    self.stat:Init(0, 0, 1024, 768)
+	if self and self.owner then
+		self.owner:AttachChild(self.stat)
+	end
+	local ctrl
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_olr_mod.xml")
+	-- кнопка сброса
+	ctrl = xml:Init3tButton("btn_drop_item",self.stat)
+	self:Register(ctrl,"btn_drop_item")
+	self:AddCallback("btn_drop_item",ui_events.BUTTON_CLICKED,self.DropItem,self)
+	-- кнопка сна
+	ctrl = xml:Init3tButton("btn_sleep",self.stat)
+	if device().width/device().height==5/4 then ctrl:SetTextX(-2)
+	elseif device().width/device().height==16/10 or device().width/device().height==16/9 then ctrl:SetTextX(15) end
+	self:Register(ctrl,"btn_sleep")
+	self:AddCallback("btn_sleep",ui_events.BUTTON_CLICKED,self.ClickBtnSleep,self)
+    initial = true
+end
+
+---------------------------------------------------------------------------------------
+--Коллбек на выделение предмета в инвентаре
+function on_select_item(obj)
+	select_item_obj = obj
+end
+------------------------------------------------------------------------------------------
+function BkgrWnd:DropItem()
+	if select_item_obj ~= nil and get_clsid(select_item_obj:parent()) == clsid.actor then
+		local ini = system_ini()
+		if ini:line_exist(select_item_obj:section(), "quest_item") and ini:r_bool(select_item_obj:section(), "quest_item") == true then
+			return nil
+		end
+		local outfslot = select_item_obj:is_outfit()
+			if outfslot and db.actor:is_in_slot(select_item_obj) then
+			return
+		end
+		db.actor:drop_item(select_item_obj)
+                db.actor:invalidate_inventory()
+		select_item_obj = nil
+	end
+end
+
+-----------------------------------------------------------------------------------------
+
+function BkgrWnd:ClickBtnSleep()
+    local open_menu = true
+    for k,v in pairs(db.storage) do
+        local stalker = level.object_by_id(k)
+            if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() and stalker:relation(db.actor)==game_object.enemy then
+				if stalker:position():distance_to(db.actor:position()) < 45 then
+			    	open_menu = false break
+				end
+			end
+		end
+    if open_menu then
+        level.start_stop_menu(olr_sleep.OldMenu(), true)
+    else
+	inventory_close()
+	local hud = get_hud()
+	hud:AddCustomStatic("cant_sleep_near_enemies", true)
+	hud:GetCustomStatic("cant_sleep_near_enemies").m_endTime = time_global()/1000 + 5
+		
+    end
+end
+	
+function BkgrWnd:ShowWnd()
+    if initial and rec_wnd.stat~= nil then rec_wnd.stat:Show(true) end
+end 
+
+function BkgrWnd:HideWnd()
+    if initial and rec_wnd.stat~= nil then rec_wnd.stat:Show(false) end
+end 
+
+function BkgrWnd:DetachWnd()
+	if self and self.owner then
+		self.owner:DetachChild(self.stat) initial = false
+	end
+end
+
+local inv_window
+function on_info(info_id)
+	if info_id=="ui_inventory" then
+	    inv_window = level.main_input_receiver()
+        if not initial then	
+            rec_wnd = BkgrWnd(level.main_input_receiver())
+		end  
+    	if not rec_wnd.stat:IsShown() then
+			rec_wnd:ShowWnd()
+		end 
+	elseif info_id=="ui_inventory_hide" then
+		if rec_wnd then
+       	    rec_wnd:DetachWnd()
+		end
+ 	end
+end
+
+function inventory_close()
+    if inv_window and inv_window:IsShown() then
+        level.start_stop_menu(inv_window,true)
+    end
+end
+
+
+class "sleep_dialog" (CUIScriptWnd)
+function sleep_dialog:__init(time) super()
+    self:Init(0,0,1024,768)
+	self.sleep_time = time
+	self.ClickBtnYes = function() olr_sleep.sleep_main(self.sleep_time) self:on_exit() inventory_close() end
+	self.ClickBtnNo = function() self:on_exit() end
+	local ctrl
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_olr_mod.xml")
+	-- фон
+	self.back = xml:InitStatic("sleep_dialog_main",self)
+	-- иконка
+    	xml:InitStatic("dialogs_yellow_icon",self.back)
+	-- текст
+    	xml:InitStatic("sleep_dialog_text",self.back)
+	-- кнопка Да
+	ctrl = xml:Init3tButton("btn_ok",self.back)	
+	self:Register(ctrl,"btn_ok")
+	self:AddCallback("btn_ok",ui_events.BUTTON_CLICKED,self.ClickBtnYes,self)
+	-- кнопка Нет
+	ctrl = xml:Init3tButton("btn_no",self.back)	
+	self:Register(ctrl,"btn_no")
+	self:AddCallback("btn_no",ui_events.BUTTON_CLICKED,self.ClickBtnNo,self)
+end
+
+function sleep_dialog:on_exit() level.start_stop_menu(self,true) end
+function sleep_dialog:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then 
+	    if dik == DIK_keys.DIK_ESCAPE then self:on_exit() 
+		elseif dik == DIK_keys.DIK_RETURN then 
+			olr_sleep.sleep_main(self.sleep_time) self:on_exit() 
+			inventory_close()
+		end 
+	end
+	return true
+end
+
+
+

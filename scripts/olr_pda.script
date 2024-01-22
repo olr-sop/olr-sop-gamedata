@@ -1,0 +1,453 @@
+--Oblivion Lost Remake (2014-2015)
+--(c) proger_Dencheek
+--Общение через КПК
+-- edit hi_flyer 28.10.18
+
+local TEXTURE_UI = "ui\\ui_pda_talking"
+
+local ignore_ini = ini_file("pda_dialogs\\ignore_npc.ltx") --НПЦ, которые не участвуют в диалогах
+
+local ui_obj = nil --Объект текущего интерфейса
+local is_wide_16 = (
+	device().width/device().height > (1024/768+0.01)
+)	--Формат экрана определен
+
+--Вызывать как "olr_pda.reinit(self.object)"
+function reinit(obj)
+	obj:set_callback(callback.on_pda_contact_item_click, on_press, obj)
+end
+
+--Вызывать как "olr_pda.net_destroy(self.object)"
+function net_destroy(obj)
+	obj:set_callback(callback.on_pda_contact_item_click, nil)
+end
+
+--Коллбек на нажатие по элементу в списке контактов
+function on_press(actor, id)
+	local obj = level.object_by_id(id)
+
+	if not obj then
+		return nil
+	end
+	
+	if obj == nil then
+		return
+	end
+
+	--log1("pda talk 0 - "..obj:name().." ")
+
+	-- бывает что можно говорить и с мёртвыми
+	if obj:is_stalker() and not obj:alive() then
+		news_manager.send_tip(db.actor, "Контакт мёртв")
+		return nil
+	end
+	
+	if (obj:relation(db.actor) == game_object.enemy) then
+		if math.random(1,4) == 1 then
+			news_manager.send_tip(db.actor, "Чё ты хочешь? Вали лучше отсюда...")
+		end
+		return nil
+	end
+
+	if obj:name() == "lvl4u_darklab_stalker_0023" or obj:name() == "lvl4u_darklab_stalker_0026" then
+		news_manager.send_tip(db.actor, "...", nil, "zombied", 5000)
+		return nil
+	end
+
+	if db.actor:has_info("olr_blowout_phase_2") then
+		news_manager.send_tip(db.actor, "Ошибка соединения. Нет связи. Дождитесь окончания выброса.")
+		return nil
+	end
+
+	if obj:name() == "bar_barman" and has_alife_info("olr_traders_night") then
+		news_manager.send_tip(db.actor, "Отвали, я сплю...", nil, "barman", 5000)
+		return nil
+	end
+
+	if level.name() == "lvl16_generators" then
+		news_manager.send_tip(db.actor, "Ошибка соединения. Сильные помехи неизвестного происхождения.")
+		return nil
+	end
+	
+	for i=0, ignore_ini:line_count("main") - 1 do
+		local _, val = ignore_ini:r_line("main", i, "", "")
+		if obj:profile_name() == val then
+			news_manager.send_tip(db.actor, "Ошибка соединения связи.")
+			return nil
+		end
+	end
+
+	--log1("pda talk end 0- "..obj:name().." ")
+	
+	local pda = level.main_input_receiver()
+	if pda ~= nil then
+		level.start_stop_menu(pda, false)
+	end
+
+	--log1("pda talk end 1- "..obj:name().." --- "..id.." ")
+	
+	ui_obj = pda_talk(id, get_hud())
+
+	--log1("pda talk end 11- "..obj:name().." "..id.." ")
+
+	if ui_obj ~= nil then
+		--log1("pda talk end 12- "..obj:name().."  "..id.." ")
+		Show(ui_obj)
+		--log1("pda talk end 13- "..obj:name().."  "..id.." ")
+		ui_obj:InitDialogs()
+		--log1("pda talk end 14- "..obj:name().."  "..id.." ")
+	end
+
+	--log1("pda talk end 2- "..obj:name().." ")
+end
+
+-----------------------------------------
+--Класс элемента списка(фразы)
+class "phrase_list_item" (CUIListItemEx)
+
+function phrase_list_item:__init(item_name, id) super()
+	self.id = id
+	self.item_name = item_name
+	self.text_item = CUIStatic()
+	self:AttachChild(self.text_item)
+	self.text_item:SetFont(GetFontLetterica18Russian())
+	self.text_item:SetTextColor(255,216,186,140)              --------------------------- self.text_item:SetTextColor(255,216,186,140)
+	
+	self.text_item:SetText(game.translate_string(item_name))
+	
+end
+
+function phrase_list_item:__finalize()
+end
+
+-----------------------------------------
+--Интерфейс
+class "pda_talk" (CUIScriptWnd)
+
+function pda_talk:__init(npc_id, owner) super()
+	self.owner = owner
+	self.npc_id = npc_id
+	self.object = level.object_by_id(npc_id)
+	self.current_dialog = nil
+	self.xml = nil
+	self.NeedToUpdateQuestions = false;
+	if self.object ~= nil then
+		self:InitControls()
+		self:InitCallBacks()
+	else
+		self:Exit()
+	end
+end
+
+function pda_talk:__finalize()
+end
+
+function pda_talk:OnKeyboard(dik, keyboard_action)  --virtual function
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	local bind = dik_to_bind(dik)
+	local console = get_console()
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if is_binded(key_bindings.kQUIT, dik) or is_binded(key_bindings.kMAP, dik) or is_binded(key_bindings.kCONTACTS, dik) or is_binded(key_bindings.kACTIVE_JOBS, dik) then
+			self:Exit()
+		end
+		
+	end
+	return true
+end
+
+function pda_talk:InitControls()
+	self:Init(0,0,1024,768)
+	
+	self.xml = CScriptXmlInit()
+	
+	if is_wide_16 then
+		self.xml:ParseFile("pda_talk_16.xml")
+	else
+		self.xml:ParseFile("pda_talk.xml")
+	end
+	
+	self.frame_back = self.xml:InitStatic("frame:frame_back", self)
+	self.frame = self.xml:InitStatic("frame", self)
+	
+	self.frame:InitTexture(TEXTURE_UI)
+	self.frame:SetOriginalRect(0, 0, 1024, 768)   ------------------------------------ self.frame:SetOriginalRect(123, 108, 782, 536)
+	
+	self.xml:InitFrame("frame:phrase_list_frame", self.frame)
+	
+	self.phrase_list = self.xml:InitList("frame:phrase_list", self.frame)
+	self.phrase_list:ShowSelectedItem(true)
+	self:Register(self.phrase_list, "phrase_list")
+	
+	local texture = 1
+	local text = 0
+	
+	local tbl = {
+		icon = {self.object:character_icon(), texture},
+		rank = {self.object:character_rank(), text},
+		community = {self.object:character_community(), text, true},
+		relation = {self:GetObjectRelation(), text, true},
+		time = {self:GetTime(), text},
+		--story = {},
+		npc_name = {self.object:character_name(), text, true, true},
+		bio = {self.object:character_bio(), text, true}
+	}
+	
+	for key,val in pairs(tbl) do
+		local _val = ""
+		if val[4] == true then
+			_val = key
+		else
+			_val = ("frame:%s"):format(key)
+		end
+		self[key] = self.xml:InitStatic(_val, self.frame)
+		if val[2] == texture then
+			self[key]:InitTexture(val[1])
+		elseif val[2] == text then
+			if val[3] == true then
+				self[key]:SetText(game.translate_string(tostring(val[1])))
+			else
+				self[key]:SetText(tostring(val[1]))
+			end
+		end
+	end
+	
+	self.story = self.xml:InitScrollView("frame:story", self.frame)
+
+	self:Register(self.xml:Init3tButton("frame:exit_btn", self.frame), "exit_btn")
+
+end
+
+function pda_talk:InitCallBacks()
+	self:AddCallback(
+		"exit_btn",
+		ui_events.BUTTON_CLICKED,
+		self.exit_btn_button_clicked,
+		self
+	)
+	self:AddCallback(
+		"phrase_list",
+		ui_events.LIST_ITEM_CLICKED,
+		self.phrase_clicked,
+		self
+	)
+end
+
+function pda_talk:InitDialogs()	
+	self.object:update_available_dialogs(db.actor);
+	self:NeedUpdateQuestions();
+	self:Update();
+end
+
+function pda_talk:Update()
+	if self.time ~= nil then
+		self.time:SetText(tostring(self:GetTime()))
+	end
+	if self.object == nil or (
+		self.object ~= nil and not self.object:alive() and 
+		not xr_wounded.is_heavy_wounded_by_id(self.object:id())
+	) then
+		news_manager.send_tip(db.actor, "Соединение потеряно")
+		self:Exit()
+	end
+	
+	if (self.NeedToUpdateQuestions) then
+		self:UpdateQuestions();
+	end
+	CUIScriptWnd.Update(self);
+end
+
+function pda_talk:NeedUpdateQuestions()
+	self.NeedToUpdateQuestions = true;
+end
+
+function foreach_dialogs(dialog)
+	if (ui_obj==nil) then return end
+	ui_obj:AddQuestion(dialog:DialogCaption(), dialog:GetDialogID());
+end
+function foreach_phrases(phrase)
+	if (ui_obj==nil) then return end
+	ui_obj:AddQuestion(phrase:GetText(),phrase:GetID());
+end
+
+function pda_talk:UpdateQuestions()
+self.phrase_list:RemoveAll()
+	if (not self.current_dialog) then
+		db.actor:update_available_dialogs(self.object);
+		db.actor:available_dialogs_foreach(foreach_dialogs);
+	elseif (self.current_dialog:IsWeSpeaking(db.actor)) then
+		if (self.current_dialog:GetPhraseListSize()~=0 and self.current_dialog:allIsDummy()) then
+			local phrase = self.current_dialog:GetRandomPhrase();
+			self:SayPhrase(phrase:GetID());	
+		end
+		if (self.current_dialog and not self.current_dialog:allIsDummy()) then
+			self.current_dialog:ForeachPhraseList(foreach_phrases);
+		else
+			self:UpdateQuestions();
+		end
+	end
+	self.NeedToUpdateQuestions = false;
+end
+
+function pda_talk:TopicMode()
+	return (nil == self.current_dialog);
+end
+
+function pda_talk:ToTopicMode() 
+	self.current_dialog = nil;
+end
+
+function pda_talk:SayPhrase(phrase_id)
+
+	self:AddAnswer(self.current_dialog:GetPhraseText(phrase_id), db.actor:character_name(), true);
+	db.actor:say_phrase(self.current_dialog, phrase_id);
+	
+	--добавить ответ собеседника в список, если он что-то сказал
+	--if (self.current_dialog:GetLastPhraseID() ~=  phrase_id) then
+	--	self:AddAnswer(self.current_dialog:GetLastPhraseText(), self.object:character_name(), false)
+	--end
+	
+	--если диалог завершился, перейти в режим выбора темы
+	if (self.current_dialog:IsFinished()) then
+		self:ToTopicMode();
+	end
+end
+
+function pda_talk:GetObjectRelation()
+	local rel = self.object:relation(db.actor)
+	if rel == game_object.neutral then
+		return "neutral"
+	elseif rel == game_object.friend then
+		return "friend"
+	elseif rel == game_object.enemy then
+		return "enemy"
+	else
+		return ""
+	end
+end
+
+function pda_talk:GetTime()
+	local objCT = game.get_game_time()
+	local tbl = {
+		Y = 0, M = 0, D = 0, h = 0, m = 0, s = 0, n = 0
+	}
+	tbl.Y, tbl.M, tbl.D, tbl.h, tbl.m, tbl.s, tbl.n = objCT:get(
+		tbl.Y, tbl.M, tbl.D, tbl.h, tbl.m, tbl.s, tbl.n
+	)
+	return ("%d:%d %d/%d/%d"):format(tbl.h, tbl.m, tbl.D, tbl.M, tbl.Y)
+end
+
+--Добавление элемента в список phrase_list
+function pda_talk:AddQuestion(item_name, id)
+	local _itm = phrase_list_item(item_name, id)
+	self.phrase_list:AddItem(_itm)
+end
+
+--Добавление элемента в список story
+function pda_talk:AddAnswer(str, who, is_actor)
+	self:AddItemTo_story(who,fcolor():set(255, 128, 0, 255));
+	self:AddItemTo_story(
+		(" %s"):format(game.translate_string(str)),
+		fcolor():set(255, 216, 186, 140)
+	);
+	self:AddItemTo_story("", fcolor():set(0, 0, 0, 0));
+	self.story:ScrollToEnd();
+	
+	if is_actor == true then
+		local _s = CUIStatic();
+		_s:InitTexture(db.actor:character_icon());
+		db.actor:add_answer_news(who, game.translate_string(str), db.actor:character_icon(), _s:GetOriginalRect());
+	else
+		db.actor:add_answer_news(who, game.translate_string(str), self.object:character_icon(), self.icon:GetOriginalRect());
+	end
+end
+
+--Добавление строки в список story
+function pda_talk:AddItemTo_story(item_name, clr)
+	local _st = self.xml:InitStatic("frame:templ_item", self.story)
+	local _st2 = self.xml:InitStatic("frame:story_item", _st)
+	_st2:SetFont(GetFontLetterica18Russian())
+	_st2:SetTextColor(clr.a,clr.b,clr.g,clr.r)
+	_st2:SetText(item_name)
+	_st2:AdjustHeightToText()
+	
+	local min_height=13
+	local bottom_footer=10
+	local new_h = math.max(min_height, _st2:GetHeight());
+	new_h = new_h + bottom_footer;
+	_st:SetHeight(new_h);
+
+end
+
+function pda_talk:phrase_clicked()
+	if (self.NeedToUpdateQuestions) then return end --quick dblclick:(
+	
+	if self.phrase_list:GetSize() == 0 then
+		return nil
+	end
+	local index = self.phrase_list:GetSelectedItem()
+	if index == -1 or index == nil then
+		return nil
+	end
+	
+	local phrase_id = "";
+	local ClickedQuestionID = self.phrase_list:GetItem(index).id
+
+	--игрок выбрал тему разговора
+	if (self:TopicMode()) then
+		self.current_dialog = db.actor:get_dialog_by_id( ClickedQuestionID);
+		db.actor:init_dialog(self.object, self.current_dialog);
+		phrase_id = "0";
+	else
+		phrase_id = ClickedQuestionID;
+	end
+
+	self:SayPhrase(phrase_id);
+	self:NeedUpdateQuestions();
+end
+
+function pda_talk:exit_btn_button_clicked()
+	self:Exit()
+end
+
+function pda_talk:Exit()
+	level.start_stop_menu(self, false)
+	ui_obj = nil
+	collectgarbage("collect")
+end
+
+function Show(obj)
+	level.start_stop_menu(obj, true)
+	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
+end
+
+--Условия для диалогов
+function is_pda_dialog()
+return (ui_obj ~= nil)
+end
+
+function is_not_pda_dialog()
+return (ui_obj == nil)
+end
+
+--События для диалогов
+-- Вставить в dialogs.break_dialog
+function break_dialog()
+	if (ui_obj ~= nil) then
+		ui_obj:Exit();
+	end
+end
+
+
+--События для движка(не вызывать!)
+function _g_need_update_questions()
+	if ui_obj ~= nil then
+		ui_obj:NeedUpdateQuestions();
+	end
+end
+function _g_add_answer(str, who)
+	if ui_obj ~= nil then
+		ui_obj:AddAnswer(str, who, false);
+	end
+end
+

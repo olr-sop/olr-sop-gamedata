@@ -1,0 +1,1549 @@
+--[[
+-- Различные служебные функции.
+-- hi_flyer, OLR 3.0
+--]]
+
+olrdbg = false
+is_crush = false
+
+modver = "3.0"
+
+bad_items = {
+	["jurn_psi_defence"] = true,
+	["jurn_psi_vision"] = true,
+	["jurn_rad_outfit"] = true,
+	["jurn_visual_device"] = true,
+	["fil_saf_papka"] = true,
+	["esc_zavod_plot_doki"] = true,
+	["yan_oborud_quest"] = true,
+	["doki_dla_ch"] = true,
+	["jabin_holodilnik"] = true,
+	["psy_shapka_mg"] = true,
+	["pribor_primanka_mg"] = true,
+	["horok_ammo_zink"] = true,
+	["horok_rukzak_arts"] = true,
+	["rat_black_box"] = true,
+	["dolina_barman_house_doki"] = true,
+	["dolina_barman_house_doki_additional"] = true,
+	["pribor_paras_spory"] = true,
+	["pribor_paras_spory_mg"] = true,
+	["doc_4way_link"] = true,
+	["yan_massive_gruz"] = true,
+	["zombied_pda_dezintegr"] = true,
+	["grafic_ciklichnosti_vetrov_doki"] = true,
+	["dedast_docs_brain"] = true,
+	["med_dolga_flash"] = true,
+	["vetri_bezumia_doki"] = true,
+	["greh_leader_key"] = true,
+	["goplit_pda_dolina"] = true,
+	["pda_ecol_dolina"] = true,
+	["blue_pda_lvltwelv"] = true,
+	["blue_pda_nine"] = true,
+	["ros_korpus_pass"] = true,
+	["mosk_part_one"] = true,
+	["mosk_part_two"] = true,
+	["grav_molot"] = true,
+	["foto_radar_itm"] = true,
+	["foto_radar_totem"] = true,
+	["pers_card_eco"] = true,
+	["radlab_key_door"] = true,
+	["proto_psy_shap"] = true,
+	["zameritel_vibrosa"] = true,
+	["bar_under_prison_doc"] = true,
+	["killers_deadscient_doc"] = true,
+	["chaes_deadscient_doc"] = true,
+	["ros_seif_zap_1"] = true,
+	["ros_seif_zap_2"] = true,
+	["zap_killera_jurn_zap"] = true,
+	["pda_hmir_rostok"] = true,
+	["zap_killera_bar"] = true,
+	["zap_killera_bar_posr"] = true,
+	["device_pda_majors"] = true,
+	["ratlab_doki_jaba"] = true,
+	["radbun_docs_posthuman"] = true,
+	["radbun_karta_pc"] = true,
+	["doka_sterok_zametka"] = true,
+	["psy_shapka_proto_rostok"] = true,
+	["pribor_antivibros"] = true,
+	["diplomat_code_viska"] = true,
+	["atifact_merger"] = true,
+	["fake_pribor_jaba_zameryany"] = true,
+	["fake_pribor_jaba"] = true,
+	["sleep_bag"] = true,
+	["device_pda_uchenyh_deadcity"] = true,
+	["olr_zablikov_doki"] = true,
+	["amulet_karlikov"] = true,
+	["glaz_fila"] = true,
+	["device_pda_jan_one"] = true,
+	["device_pda_jan_two"] = true,
+	["device_pda_jan_tri"] = true,
+        ["device_pda_lab_two"] = true,
+	["device_pda_lab_one"] = true,
+	["bar_golg_docs"] = true,
+	["radar_uchenyy_fleska"] = true,
+	["garb_miliraty_docs"] = true,
+	["give_yashik_kvest_1_item"] = true,
+	["olr_yan_obrazez_2"] = true,
+	["olr_yan_obrazez_1"] = true,
+        ["jornal_1"] = true,
+	["jornal_2"] = true,
+	["jornal_3"] = true,
+	["jornal_4"] = true,
+	["jornal_5"] = true,
+	["jornal_6"] = true,
+	["jornal_7"] = true,
+	["olr_doc_lab_1"] = true,
+        ["olr_strelok_fleshka"] = true,
+	["agro_case_01"] = true,
+	["agro_case_02"] = true,
+        ["doki_agro_dyatel"] = true,
+        ["yan_oborud_quest"] = true,
+        ["anti_beshenstv_tabl"] = true,
+        ["psy_blocerator"] = true,
+        ["empty_butilka_arg_zam"] = true,
+        ["esc_dead_bochonok"] = true,
+        ["af_jabiy_glaz_garbage"] = true,
+	["dnevnik_strelka"] = true
+}
+
+local tup10000 = 0
+local tmerup10000 = math.random(10000,20000)
+local tup25000 = 0
+local tmerup25000 = math.random(25000,40000)
+local tup200 = 0
+local tmerup200 = math.random(150,200)
+
+--/// Actor callbacks start-----------------------------------------------------------
+
+function on_actor_hit(obj, amount, local_direction, who, bone_index)
+	if db.actor:alive() and amount > 0.25 then
+		--log1(" amount -  "..amount.." ")
+		if who and who:clsid()==clsid.bloodsucker_s then
+			local bol_var = math.random(1,4)
+			if bol_var == 1 then
+				local aitem = db.actor:active_item()
+	            		if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end	
+			end
+		end
+		if bone_index < 5 or bone_index >= 5 and bone_index < 9 then
+			local legs_rnd = math.random(1,6)
+			if legs_rnd == 1 and not olr_timers.has_timer("enable_walk_hit") then
+				level.add_pp_effector("fire_hit_bullet.ppe", 1476, false)
+				--level.add_cam_effector("camera_effects\\punch_effector.anm", 3467, false, "")
+				olr.disable_walk()
+				olr_timers.st_timer("enable_walk_hit", legs_rnd, "olr.enable_walk()")
+				olr.hud_tip("Чёрт...", "сильное ранение ноги...", 3)
+			end
+		end
+		if bone_index >= 18 and bone_index < 31 or bone_index >= 31 and bone_index < 40 then
+			local hands_rnd = math.random(1,6)
+			if hands_rnd == 1 then
+				local aitem = db.actor:active_item()
+	            		if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end
+				level.add_pp_effector("fire_hit.ppe", 9476, false)
+				level.add_cam_effector("camera_effects\\shell_shock.anm", 3167, false, "")
+				olr.hud_tip("Чёрт...", "сильное ранение руки...", 3)		
+			end
+		end	
+	end
+end
+
+function actor_net_spawn()
+
+        olr_blowout.on_game_load()
+        olr_net_spawn.on_netspawn()
+	olr_bolezn.net_spawn()
+
+	get_console():execute("r__supersample 1")
+	get_console():execute("r2_allow_r1_lights 0")
+	get_console():execute("cam_inert 0.35")
+	get_console():execute("r2_tf_mipbias -1.5")
+        get_console():execute("r1_tf_mipbias -1")
+	get_console():execute("r2_sun_lumscale 0.5")
+        get_console():execute("r2_sun_lumscale_amb 0.3")
+        get_console():execute("r2_sun_lumscale_hemi 1")
+        get_console():execute("r2_sun_near_border 1")
+        get_console():execute("r2_sun_near 27")
+        get_console():execute("r2_mblur 0")
+        get_console():execute("r__actor_shadow 1")
+        --get_console():execute("cl_cod_pickup_mode off")
+	--get_console():execute("ph_frequency 100")
+
+	level.map_add_object_spot_ser(db.actor, "olr_actor_spot", "")
+
+	if has_alife_info("cit_fail_first_task") then
+		db.actor:get_inventory_owner():SetName("Стрелок") 
+	end
+
+  	if db.actor and has_alife_info("start_olr_mod") and db.storage[db.actor:id()].pstor == nil then
+		olr.warning_sms()
+  	end
+
+  	if db.storage[db.actor:id()].pstor == nil then
+		log1("!create new actor pstor!")
+    		db.storage[db.actor:id()].pstor = {}
+  	end
+
+	local wait_time = 0
+  	wait_time = time_global() + 200
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr.addtorch() end
+  	)
+	get_console():execute("snd_restart")
+
+	olr.check_binder()
+
+end
+
+function check_binder()
+	local wait_time = 0
+  	wait_time = time_global() + 1500
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr.check_zavis() end
+  	)
+end
+
+function warning_sms()
+	olr.kill_actor()
+	news_manager.send_tip(db.actor, "ВНИМАНИЕ, СЕЙВ ПОВРЕЖДЕН! (pstor АКТОРА БЫЛ ПУСТОЙ) ПЕРЕИГРАЙТЕ С ПРЕДИДУЩЕГО СОХРАНЕНИЯ! - ["..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
+	log1("!!!!ВНИМАНИЕ, pstor АКТОРА ПУСТОЙ, СЕЙВ ПОВРЕЖДЕН! ПЕРЕИГРАЙТЕ С ПРЕДИДУЩЕГО СОХРАНЕНИЯ! - ["..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
+end
+
+function check_zavis()
+	if olr_timers.cnt_st == 0 then
+		log1("!!!ВНИМАНИЕ try netspawn check_zavis")
+		olr.warning_sms()
+	end
+end
+
+function addtorch()
+        db.actor:iterate_inventory(
+	function(actor, obj) 
+		if obj and obj:section()=="device_torch" and not db.actor:is_on_belt(obj) then
+			db.actor:drop_item(obj)
+			local wait_time = 0
+  			wait_time = time_global() + 200
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() db.actor:transfer_item(obj,db.actor) end
+  			)
+		end
+	end)
+end
+
+function fix_minigun()
+	local exo = db.actor:item_in_slot(6) and db.actor:item_in_slot(6):section() == "exo_outfit"
+	if not exo then
+		local obj = db.actor:object("wpn_m134")
+		if obj and db.actor:is_in_slot(obj) then
+			db.actor:move_to_ruck(obj)
+		end
+	end
+end
+
+function change_level()
+	olr_del_corpses.on_del()
+	bind_coster.lev_chng()
+	olr_anoms_spawn.on_spawn()
+        nick.spawn_random_stuff_onlok()
+        olr_monsters_sim.sim_location_traveling()
+	--olr_ai_follower_agree.naparnik_teleport()
+	xvars.bar_base_shot = 0 
+	xvars.dolg_base_shot = 0
+        xvars.esc_jaba_close_shots = 0
+	if has_alife_info("spawn_jourlalist") and not has_alife_info("gen_first") then
+		local rnd = math.random(19,60)
+		olr_timers.st_timer("surge_day", rnd, "nick.surge_day_now()")
+	end
+	if has_alife_info("final_swapm_naprav_talk_done") and not has_alife_info("gen_first") then
+		olr_timers.st_timer("surge_day", 29, "nick.surge_day_now()")
+		olr_timers.st_timer("surge_day", 59, "nick.surge_day_now()")
+		olr_timers.st_timer("surge_day", 99, "nick.surge_day_now()")
+	end
+end
+
+
+function on_key(dik)
+        if device().precache_frame >1 then return end
+	if db.actor then
+	if dik == 5 then 
+	--if key == DIK_keys.DIK_5 then
+        	local item_in_hands = db.actor:item_in_slot(11)
+        	if item_in_hands ~= nil then
+			--if db.actor:active_item() and db.actor:active_slot()==11 then
+			--	db.actor:move_to_slot(item_in_hands, true)
+			--	return
+			--end 
+        		db.actor:move_to_ruck(item_in_hands)
+        		db.actor:move_to_slot(item_in_hands, true)
+			if device().precache_frame >1 then return end
+        		db.actor:activate_slot(11)
+		end
+	end
+	if dik == 15 then -- TAB (заряд ПДА)
+		if has_alife_info("ui_pda") then
+			local inv_window = level.main_input_receiver()
+			if inv_window and inv_window:IsShown() then
+				level.start_stop_menu(inv_window,true)
+			end 
+	   		local pdaitm = db.actor:object("device_pda") 
+   			local namecond = pdaitm:condition() * 100
+    			local nameconddel = "Заряд ПДА: "..string.format("%1.0f", namecond).."%"
+    			news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
+		end
+	end 
+	end 
+end
+
+function on_use_npc(obj)
+	if not obj:alive() and obj:name() == "lvl3_agroprom_stalker_0043" and not has_alife_info("agr_olr_iy_oduv") then
+		olr.info("agr_olr_iy_oduv")
+	end
+	if not obj:alive() and obj:section() == "swamp_quest_scienific" and not has_alife_info("swamp_quest_scienific_fail") then
+		olr.info("swamp_quest_scienific_fail")
+	end
+	if not obj:alive() and obj:name() == "lvl7_yantar_stalker" and not has_alife_info("nashel_dead_ohranika") and has_alife_info("ohr_nachal_dead_st_pogo") then
+		olr.info("nashel_dead_ohranika")
+	end
+	if not obj:alive() then
+		xvars.npc_actor_use[obj:name()] = true
+	end
+end
+
+function npc_hit(obj, amount, local_direction, who, bone_index)
+	if who:id() == db.actor:id() then
+		if not has_alife_info("start_greh_prisoning_rush_killemall") then
+			if obj:character_community() == "sin" then
+				level.add_pp_effector("snd_shock.ppe", 203342431, false)
+				local snd_obj = xr_sound.get_safe_sound_object([[ol3\tun_noise_2]])
+				if not snd_obj:playing() then 
+					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				end
+				level.add_pp_effector("black.ppe", 20131, false)
+				olr.kill_actor()
+			end
+		end
+		if obj:alive() and level.name() == "lvl11_deadcity" and obj:character_community() == "freedom" then
+			level.add_pp_effector("snd_shock.ppe", 203342431, false)
+			local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			level.add_pp_effector("black.ppe", 20131, false)
+			olr.kill_actor()
+			news_manager.send_tip(db.actor, "Общая сеть: Очередной псих... бывай дружище...", 3, "freedom", 19000)
+		end
+		if obj:alive() and obj:name() == "lvl16_generators_staler_undead_olr" then   -- напарник ген
+			level.add_pp_effector("snd_shock.ppe", 203342431, false)
+			level.add_pp_effector("black.ppe", 20131, false)
+			olr.kill_actor()
+		end
+		if obj:alive() and obj:name() == "lvl8_swamp_stalker_0000" then  -- доктор
+			level.add_pp_effector("snd_shock.ppe", 203342431, false)
+			local snd_obj = xr_sound.get_safe_sound_object([[weapons\vintorez_shoot]])
+			snd_obj:play_at_pos(db.actor, db.actor:position())
+			olr.kill_actor()
+		end
+	end
+end
+
+
+function on_use(obj)
+	olr_capsule.use(obj)
+	olr_items_use.use(obj)
+	bind_coster.use_spichki(obj)
+	artefact_merger.on_game_load(obj)
+end
+
+function to_slot(obj)
+	olr_gz.take_item_on_slot(obj)
+ 	if obj and obj:is_outfit() then
+		olr_hud_ruk.on_slot(obj)
+	end
+	if obj and obj:section()=="wpn_m134" then
+		local wait_time = 0
+  		wait_time = time_global() + 100
+  		level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() olr.fix_minigun() end
+  		)
+	end
+	if obj and xvars.goodcondweaps and xvars.goodcondweaps[obj:name()] == true then
+		local wpn_ak = engine_object(obj:id())
+		if wpn_ak then
+			wpn_ak.condition_shot_dec = 0.0001
+			--log1("hq set")
+		end
+	end
+	if db.actor and obj:section()=="battery_change_headlamp" then
+		db.actor:iterate_inventory( function(_, item)
+		if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
+			item:get_torch():enable(false)
+		end
+	end )
+	end
+	
+end
+
+function to_belt(obj)
+	if db.actor and obj:section()=="device_torch" then
+		local tCount = 0
+		db.actor:iterate_inventory( function(_, item)
+		if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
+			tCount = tCount + 1
+			if tCount > 1 then
+				db.actor:move_to_ruck(obj)
+				--news_manager.send_tip(db.actor, "уже есть фонарь на поясе", nil, "default", 3000)
+			end
+			--news_manager.send_tip(db.actor, "фонарей на поясе: "..tCount.."", nil, "default", 3000)
+		end
+	end )
+	tCount = 0
+	end
+	if db.actor and obj:section()=="device_torch" then
+		local wait_time = 0
+  		wait_time = time_global() + 100
+  		level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() olr.addtorch() end
+  		)
+	end
+	if db.actor and obj:section()=="af_art460" then
+		local tCount = 0
+		db.actor:iterate_inventory( function(_, item)
+		if item and item:section() == "af_art_3_step_anom_svetim" and db.actor:is_on_belt(item) then
+			level.add_pp_effector ("blink.ppe", 141, false)
+			local rnd = math.random(1,2)
+			if rnd == 1 then
+				db.actor.satiety = 1
+				db.actor.health = 1
+				db.actor.alcohol = 0
+				db.actor.radiation = -1
+			else
+				db.actor.health = -1
+			end
+			local snd_obj = xr_sound.get_safe_sound_object([[ol3\low_pulse]])	
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			--alife():create("dead_body_skelet", db.actor:position():add(db.actor:direction():mul(0.3)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			local wait_time = 0
+  			wait_time = time_global() + 50
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() olr.del(obj) end
+  			)		
+		end
+	end )
+	end
+end
+
+function start_game_vars()
+
+	--//------------------Переменные задаваемые при первом старте игры-------------------
+	xvars.mil_kamp_killer_dead_cnt = 0
+	xvars.npc_jobs_foractor_status = {} 	--// Таблица заданий НПС для актора
+	xvars.npc_jobs_foractor_target = {} 	--// Таблица заданий НПС для актора
+	xvars.npcs_tasks_rndway = {} 	--// Таблица рандомных путей НПС
+	xvars.rand_shit_timer_cnt = 0   --// колво рандомного хлама по таймеру
+	xvars.npc_del_afterblow = {}	--// Таблица НПС трупов что удаляем после выброса
+	xvars.del_hlam_cnt = 0		 --// колво хлама что удалил выброс
+	xvars.actor_pda_trade  = {}      --// кого позвали по ПДА торговать
+	xvars.blowout_timer = 1005
+	xvars.cash_need_summa_has = {}	--// Таблица НПС идущих с баблом из зоны
+	xvars.pos_x = 0  --// Позиция актора для дропа переполненого инв
+	xvars.pos_y = 0
+	xvars.pos_z = 0
+	xvars.item_drop_inv  = {}      --// для дропа переполненого инв
+	xvars.npcs_tasks_revenge_targets = {} --// Таблица целей мести (киллер, цель)
+	xvars.goodcondweaps  = {}      --// Реестр оружия с уменьшенным износом
+	xvars.quicksave_cnt = 0 	--// Колво текущих квиксейвов
+	xvars.meat_money = 0		--// Деньги за образцы мутантов
+	xvars.npc_kileed_by_actor = {}      --// Реестр для НПС которых потушил ГГ
+	xvars.npc_seeing_news = {}      --// Реестр новостей для НПС
+	xvars.dead_in_offline = {}      --// Сталкеры и мутанты умершие в симуляции
+	xvars.rats_count = 0		--// Колво заспавненных крыс в КП
+	xvars.npc_actor_use = {}	--// Таблица НПС которых юзал актор
+	xvars.npc_ofl_trade_yan = {}	--// Таблица НПС идущих на торговлю в офлайне на Янтарь
+	xvars.npc_ofl_trade = {}	--// Таблица НПС идущих на торговлю в оффлайне в Бар
+	xvars.capsules = {}		--// Таблица капсул Р1
+	xvars.inv_capsules = {} 	--// Инвентарные капсулы Р1
+	xvars.npcs_tasks = {} 		--// Задания для НПС
+	xvars.npcs_who_find_docs_id = {} --// Таблица с id сталкеров кто нашел документы в симуляции
+	xvars.naparnik_name = "" 	--// Имя напарника на свалку
+	xvars.mosk_hits = 0 		--// Сколько раз пальнули по мозгу на lvl12
+	xvars.shoot_count = 0 		--// Сколько настрелял патронов ГГ
+	xvars.killed_npcs = 0 		--// Сколько сталкеров убил ГГ
+	xvars.gentri_door_open = math.random(1,3) 	--// Случайная дверь на Генераторах
+	xvars.sim_deaths = {} 		--// Умершие мобы в симуляции
+	xvars.weapons = {} 		--// Таблица оружия 
+	xvars.foods = {} 		--// Таблица еды
+        xvars.cur_rest_wpn = ""    	--// Текущее ремонтируемое оружие
+        xvars.blow_count = 0		--// Пережито выбросов
+        xvars.kill_count = 0    	--// Убил нейтралов
+        xvars.ac_weapon_count = 0    	--// Собрал оружия
+        xvars.chang_lev = "lvl1_escape"    --// Каллбек на смену уровня
+        xvars.ac_hunger = 0    		--// Усталость
+        xvars.timers_count = 1    	--// Количество таймеров
+        xvars.sh_vingrav_count = 0    	--// Выстрелов с гравивинтореза
+        xvars.cur_trans_art = ""    	--// Текущий арт в варке
+        xvars.olr = {}    		--// Таблица переменных
+	xvars.arts = {}    		--// Таблица переменных артов
+        xvars.saves_count = 0    	--// Количество сейвов
+	xvars.bar_base_shot = 0 	--// Сколько раз стрелял в баре самом
+	xvars.dolg_base_shot = 0 	--// Сколько раз стрелял у базы Долга
+        xvars.esc_jaba_close_shots = 0    --// Сколько раз стрелял у бункера Жабы на Кордоне
+        xvars.yan_lab_tele = 0    	--// Телепортация в подземке янтаря
+	xvars.coster_id = 0 		--// Айди костра
+	xvars.cooked_food_name = "" 	--// Что сейчас готовится
+	xvars.temperatura_actor = 36.6 --// Температура ГГ
+	xvars.drinked_vodkas = 0 	--// Сколько выпил водки
+	xvars.autosave_count = 1 	--// Колво автосейвов
+	xvars.npcs_talk_targets = "" 	--// Симуляционые разговоры
+	xvars.rnd_anoms_count = 1 	--// Сколько рандомных аномалий заспавнено
+	xvars.count_rad_weak = 0 	--// Сколько накопили радиации в организме (лучевая болезнь)
+	xvars.quests_started = 0 	--// Квестов взято
+
+	xvars.quests_all_ids = 0 	--// Айдишники для квестов с досок
+	xvars.quest_one_target = ""
+	xvars.quest_one_cost = 0
+	xvars.quest_one_text = ""
+	xvars.quest_one_text_name = ""
+	xvars.quest_two_target = ""
+
+	xvars.quest_one_target_bar = ""
+	xvars.quest_one_cost_bar = 0
+	xvars.quest_one_text_bar = ""
+	xvars.quest_one_text_name_bar = ""
+	xvars.quest_two_target_bar = ""
+
+	xvars.quest_one_target_yan = ""
+	xvars.quest_one_cost_yan = 0
+	xvars.quest_one_text_yan = ""
+	xvars.quest_one_text_name_yan = ""
+	xvars.quest_two_target_yan = ""
+
+
+	xvars.yan_phase_zam_quest = 0 --// Замеры в доте Янтаря
+	xvars.yan_phase_zam_quest_flag = false --// Замеры в доте Янтаря (можно-нельзя)
+	xvars.yan_use_drink_yan = true --// Чайник у учёных активный или нет
+	xvars.id_psyblock_garbage = -1 --// id псиблокератора на свалке
+	xvars.timers_started = 1
+	xvars.timers_done = 1
+	xvars.doc_message_text_m_str = ""
+	xvars.doc_message_text_m_from = ""
+
+	olr_fog.create()
+
+	olr.spawn_on_obj("wpn_binoc", "lvl1_escape_physic_object_0040")
+
+
+        --get_console():execute("ph_frequency 1")
+	
+
+
+	----
+	--get_console():execute("snd_volume_music 0")
+	--get_console():execute("snd_volume_eff 0")
+	--olr_timers.st_timer("snd_set", 5, "nick.set_snd_vol("..tostring(0.1)..")")
+	--olr_timers.st_timer("snd_set", 6, "nick.set_snd_vol("..tostring(0.2)..")")
+	--olr_timers.st_timer("snd_set", 7, "nick.set_snd_vol("..tostring(0.3)..")")
+	--olr_timers.st_timer("snd_set", 8, "nick.set_snd_vol("..tostring(0.4)..")")
+	--olr_timers.st_timer("snd_set", 9, "nick.set_snd_vol("..tostring(0.5)..")")
+	--olr_timers.st_timer("snd_set", 10, "nick.set_snd_vol("..tostring(0.6)..")")
+	--olr_timers.st_timer("snd_set", 11, "nick.set_snd_vol("..tostring(0.7)..")")
+	--olr_timers.st_timer("snd_set", 12, "nick.set_snd_vol("..tostring(0.8)..")")
+	--olr_timers.st_timer("snd_set", 13, "nick.set_snd_vol("..tostring(0.99)..")")
+
+	olr_timers.st_timer("snd_setm", 35, "nick.set_snd_vol_mus("..tostring(0.1)..")")
+	olr_timers.st_timer("snd_setm", 40, "nick.set_snd_vol_mus("..tostring(0.2)..")")
+	olr_timers.st_timer("snd_setm", 55, "nick.set_snd_vol_mus("..tostring(0.3)..")")
+	olr_timers.st_timer("snd_setm", 60, "nick.set_snd_vol_mus("..tostring(0.4)..")")
+	olr_timers.st_timer("snd_setm", 55, "nick.set_snd_vol_mus("..tostring(0.5)..")")
+	olr_timers.st_timer("snd_setm", 60, "nick.set_snd_vol_mus("..tostring(0.6)..")")
+	olr_timers.st_timer("snd_setm", 75, "nick.set_snd_vol_mus("..tostring(0.7)..")")
+	olr_timers.st_timer("snd_setm", 80, "nick.set_snd_vol_mus("..tostring(0.8)..")")
+	----
+
+	olr.to_offline("esc_jaba_radio")  	-- радио жабы
+	olr.to_offline("lvl1_escape_physic_object_0570")  	-- ящик 1й жабы
+	olr.to_offline("lvl2_garbage_af_jabiy_glaz_garbage")  	-- жабий глаз на свалке
+	olr.to_offline("lvl6_rostok_box_rukzak_0000")  		-- пда хмыря росток
+	olr.to_offline("lvl6_rostok_physic_object_0286")
+	olr.to_offline("lvl5_bar_box_rukzak")
+	olr.to_offline("lvl2_garbage_physic_object_0114")  	-- смерть лампа свалка
+	olr.to_offline("lvl1_escape_af_dummy_dummy_q1")  	-- мочалка в поезде кордон
+
+	olr.to_offline("garb_zarka_fly_glaz")  	
+
+	olr.to_offline("lvl13_prip_space_restrictor_0007")  
+
+	olr.to_offline("lvl1_escape_physic_object_0583")
+	olr.to_offline("lvl10_radar_physic_object_0206")	
+
+
+
+	olr.set_npc_noname("lvl16_generators_stalker_0078")
+	olr.set_npc_noname("lvl16_generators_stalker_0079")
+	olr.set_npc_noname("lvl16_generators_stalker_0090")
+	olr.set_npc_noname("lvl16_generators_stalker_0081")
+	olr.set_npc_noname("lvl16_generators_stalker_0082")
+	olr.set_npc_noname("lvl16_generators_stalker_0083")
+	olr.set_npc_noname("lvl16_generators_stalker_0080")
+	olr.set_npc_noname("lvl16_generators_staler_undead_olr_0000")
+	olr.set_npc_noname("lvl2_garbage_staler_undead_olr_0011")
+
+
+	nick.set_jaba_mil_offline()
+	nick.set_prip_mons()
+	nick.agr_yas_offl()
+	nick.set_rand_grehs()
+	nick.yan_zaval_ofl()
+	nick.agr_ecols_offl()
+	nick.move_offline_blokpost()
+	nick.set_sanya_borov()
+	nick.rnd_vis_zobm_chaes()
+	nick.yan_biogroup_off()
+
+	olr.to_offline("lvl10_radar_shron_weapons")  -- схрон оружия на радаре
+
+	olr_doska_escape.gen_rnd_item_find()
+	olr_timers.st_timer("gen_kill_stalker", 100, "olr_doska_escape.gen_kill_stalker()")
+
+	olr.to_offline("lvl14_stancia_jornal_7")  -- доки 7
+
+	olr_timers.st_timer("set_walkers_rndways", 90, "olr_ai_tasks.set_walkers_rndways()")
+	
+
+	--//------------------Функции выполняемые при первом старте игры-------------------
+
+end
+
+--///Actor callbacks end-----------------------------------------------------------------------
+function upd200()
+	if time_global() > tup200 then
+		tup200 = time_global() + tmerup200
+		olr_gameplay_update.update()
+		pda_notepad.upd()
+	end
+end
+
+function upd10000()
+	if time_global() > tup10000 then
+		tup10000 = time_global() + tmerup10000
+		--log1(" t 10")
+		local srnd = math.random(1,2)
+		if srnd == 1 then
+			olr_rnd_sounds.play_rnd_snd()
+		end
+		if db.actor:alive() and db.actor:get_actor_thirst() < 0.15 and srnd == 2 then
+			olr.hud_tip("", "Жажда мучает...", 5)
+		end
+		if nick.is_pda_dead() then
+			olr.show_minimap(false)
+		end
+		ogse_mental_fix.check_freezers()
+		local outfit = db.actor:get_current_outfit()
+		if outfit then
+			local outcond = outfit:condition()
+			if outcond > 0.10 and (outfit:section() == "ecolog_outfit" or outfit:section() == "outfit_antirad" or outfit:section() == "scientific_outfit") then
+			if get_actor_obj().state.run then
+				outfit:set_condition(outfit:condition() - 0.00039)
+				--log1("actor scafandr cond - ["..outfit:condition().."]")
+			end
+			if get_actor_obj().state.walk then
+				outfit:set_condition(outfit:condition() - 0.00029)
+				--log1("actor scafandr cond - ["..outfit:condition().."]")
+			end
+			end
+		end
+		if db.actor and xvars.count_rad_weak and db.actor:alive() then
+			db.actor.radiation = xvars.count_rad_weak
+			--news_manager.send_tip(db.actor, "rad hit лучевая болезнь "..db.actor.radiation.."", nil, "default", 39000)
+		end
+		olr.check_binder()
+		db.actor:iterate_inventory( function(_, obj)
+			if obj then
+				--news_manager.send_tip(db.actor, "obj obj objrad food hit", nil, "default", 39000)
+				--if obj:is_food_item() or obj:is_weapon() then
+					if xvars.foods[obj:name()] == true then
+			  			db.actor.radiation = 0.0105
+			  			--news_manager.send_tip(db.actor, "rad food hit", nil, "default", 39000)
+					end
+					if xvars.weapons[obj:name()] == true then
+			  			db.actor.radiation = 0.01915
+			  			--news_manager.send_tip(db.actor, "rad weapons hit", nil, "default", 39000)
+					end
+				--end
+			end
+		end ) 	
+	end	
+end
+
+function upd25000()
+if time_global() > tup25000 then
+	tup25000 = time_global() + tmerup25000
+	if db.actor then
+		nick.dead_naparnik_sms()
+    		if (news_main and news_main.check_news) and has_alife_info("start_olr_mod") then
+			olr.check_time()
+			amk.oau_reason="cn news_maincheck_news st"
+			news_main.check_news()
+			amk.oau_reason="cn news_maincheck_news end"
+    		end
+		amk.oau_reason="cn news_maincheck_news between"
+		if db.actor:alive() and db.actor:get_actor_sleep() < 0.15 then
+			local rnd = math.random(1,2)
+			if rnd == 1 then
+				level.add_pp_effector("total_recall.ppe", 231, false)
+				olr.hud_tip("", "Нужно поспать...", 5)
+			end
+		end
+		if level.name() == "lvl_rat" then
+			olr_rats.upd()
+		end
+		olr.check_memory()
+		local rndgta = math.random(1,11)
+		if rndgta == 1 then
+			olr.gta_actor_car()
+		elseif rndgta == 5 then
+			xrs_trade.on_item_drop()
+		end
+	end
+end
+end
+
+function check_time()
+	if xr_conditions.is_day() then
+     		db.actor:give_info_portion("olr_traders_day")
+       	elseif not xr_conditions.is_day() then
+        	db.actor:give_info_portion("olr_traders_night")
+	end
+end
+
+function on_night()
+	get_console():execute("r2_tonemap 0")
+end
+
+function on_day()
+	get_console():execute("r2_tonemap 1")
+	local rnd = math.random(1,2)
+	if rnd == 1 then
+		olr_ai_tasks.set_walkers_rndways()
+	end
+end
+
+--///----------------------------------------------------------------------- Служебные функции -----------------------------------------------------------------------
+
+function partice_on_obj(obj_name,particle)
+	local obj = level.object_by_name(obj_name)
+	if not obj then return end
+	local ps = particles_object(particle)
+	ps:play_at_pos(obj:position())
+end
+
+
+// Отсрочить выброс на время time
+function blow_add(time)
+	local tec = olr_blowout.get_blow_timer()
+	if tec > 1200 then
+		return
+	end
+	if tec > 60 then
+		olr_blowout.add_blow_timer(time)
+	end
+end
+
+function on_ui()
+	olr.enable_walk()
+    	level.show_indicators()
+    	level.enable_input()
+    	db.actor:restore_weapon()
+end
+
+function off_ui()
+    	db.actor:hide_weapon()
+    	level.disable_input()
+    	level.hide_indicators()
+    	olr.disable_walk()
+end
+
+function check_memory()
+        if device().precache_frame >1 then return end
+	local MEMORY_WARNING_AFTER = 50000 
+	local memuse = collectgarbage("count")
+	prints("##LUA MEMORY USAGE: [%d KB]", memuse)
+	if memuse > MEMORY_WARNING_AFTER then
+		collectgarbage("collect")
+		memuse = collectgarbage("count")
+		if memuse > MEMORY_WARNING_AFTER then
+			--prints("!![%s] MEMORY LEAK FOUND! MEMORY USAGE: [%d KB]", script_name():upper(), memuse)
+			if olr.olrdbg == true then
+				news_manager.send_tip(db.actor, "!!! DBG УТЕЧКА ПАМЯТИ - "..memuse.." MB ", nil, "sos", 59000)
+			end
+		end
+	end
+end
+
+-- скрыть или показать миникарту
+function show_minimap(bool)
+	if bool == nil then
+		bool = true
+	end
+	local wnd = get_main_window()
+	local st = wnd:GetStatic("minimap")
+	if st then	
+		st:Show(bool)
+	end
+end
+
+-- убить ГГ
+function kill_actor()
+	db.actor:kill(db.actor)
+end
+
+-- сделать нонеймом НПС по имени
+function set_npc_noname(npc)
+	local sobj = alife():object(npc) 
+	if sobj then 
+	local pk = get_netpk(sobj,1)
+  		if pk:isOk() then
+    			local data = pk:get()
+          		data.character_name = ""
+      			pk:set( data )
+		end	
+	end
+end
+
+-- дать инфопоршень актору
+function info(inf)
+	db.actor:give_info_portion(inf)
+end
+
+function to_trade()
+	db.actor:switch_to_trade() 
+end
+
+-- Дать актору предмет
+function give_item(obj)
+	local item = alife():create(obj, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	if item then
+		local name = utils.cfg_get_string(system_ini(), item:section_name(), "inv_name", item, false, "", "")
+		sname = game.translate_string(name)
+		if not db.actor:is_talking() then
+			news_manager.send_tip(db.actor, "Получен предмет: "..sname.."", nil, "item", 3000)
+		else
+			local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_thing")
+   			local news_text = "%c[255,245,118,54]"..game.translate_string("general_in_item").."\\n".."%c[255,245,118,54]"..game.translate_string(name)
+			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
+		end
+		level.client_spawn_manager():add(item.id, 0, function(id,obj) 
+		if obj and obj:is_food_item() then
+			log1("set norm food olr")
+			xvars.foods[obj:name()] = false
+		end
+		end)
+	end
+end
+
+--// add spot on map
+function add_spot_on_map(obj_id,type,text)
+	if obj_id then
+		if text==nil then text=" " end
+		level.map_add_object_spot_ser(obj_id, type, text)
+	end
+end
+
+--// Убить сталкера в оффлайне
+function kill_offline_stalker(kill)
+	if kill == nil then return end
+	local pk = xs_netpk.monster(kill)
+	if not pk:isOk() then
+		pk = xs_netpk.stalker(kill)
+	end	
+	local data = pk:get()
+	data.health = 0
+	data.updhealth = 0
+	pk:set(data)
+	smart_terrain.on_death(kill.id)
+	xvars.dead_in_offline[kill:name()] = true
+end
+
+--// Стреляем из оружия ГГ
+function emu_shoot()
+	local active_item = db.actor:active_item()
+	if active_item and active_item:is_weapon() then
+		local wpn_ak = engine_object(active_item:id())
+		if wpn_ak then
+			wpn_ak:start_fire()
+		end
+	end
+end
+
+function polter_throw_wpn(obj)
+	if obj and obj:is_weapon_magazined() then
+		local impulse = device().cam_dir:mul(obj:mass()*131)
+		local ps = obj:get_physics_shell()
+		if ps then
+			ps:apply_force(impulse.x, impulse.y, impulse.z)
+			obj:set_const_force(vector():set(device().cam_dir), obj:mass()*40,  200)
+			--log1("forse")
+		end	
+	end
+end
+
+--// olr.create_on_pos("wpn_gauss","lvl5_bar", vector():set(110,0,50))
+function create_on_pos(item,level_name, pos)
+	local level_vertex_id, game_vertex_id = utils.get_top_graph_ids(level_name)
+	
+	local sobj = alife():create(item, pos, level_vertex_id, game_vertex_id)
+
+	--olr.add_spot_on_map( sobj.id,"jaba_spotmap",sobj:name() )
+	return sobj	
+end
+
+function switch_torch(bool)
+	db.actor:iterate_inventory( function(_, item)
+	if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
+		item:get_torch():enable(bool)
+		--news_manager.send_tip(db.actor, " фонарь на поясе", nil, "default", 3000)
+	end
+	end)
+end
+
+function snd(sound)
+	local snd_obj = xr_sound.get_safe_sound_object(sound)
+	if snd_obj then
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+--// Закрыть ПДА
+function hide_pda()
+	if has_alife_info("ui_pda") then 
+		local inv_window = level.main_input_receiver()
+		if inv_window and inv_window:IsShown() then
+			level.start_stop_menu(inv_window,true)
+		end
+	end
+end
+
+--// Закрыть инвентарь
+function hide_inv()
+	if has_alife_info("ui_inventory") then 
+		local inv_window = level.main_input_receiver()
+		if inv_window and inv_window:IsShown() then
+			level.start_stop_menu(inv_window,true)
+		end
+	end
+end
+
+--//---- Создать объект на позиции объекта (!объект родитель должн быть на аи-сетке!) 
+--//---- olr.spawn_on_obj("wpn_pm", "escape_trader_0000") - создаём ПМ на позиции Жабы
+function spawn_on_obj(obj, objpos)
+if not obj then return end
+if not objpos then return end
+local sobjpos = alife():object(objpos)
+	if sobjpos then
+		--log1("spawn_on_obj")
+		local base_dir = vector():set(sobjpos.position.x, sobjpos.position.y, sobjpos.position.z)
+		local sobj = alife():create(obj, base_dir, sobjpos.m_level_vertex_id, sobjpos.m_game_vertex_id)
+		clear_useful_for_ai(sobj)
+		--olr.add_spot_on_map( sobj.id,"jaba_spotmap",sobj:name() )
+		return sobj
+	end
+end
+
+
+--// удалить объект по имени
+function del_by_name(name_to_del)
+	local se_obj = alife():object(name_to_del)
+	if se_obj then
+		if olr.olrdbg == true then
+			log1("del by name: "..se_obj:name().." -on level- "..se_obj.level_name.."")
+		end
+		if xvars and xvars.del_hlam_cnt then
+			xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
+		end
+		alife():release(se_obj, true)
+	end	
+end
+
+--// объект в онлайн (по имени)
+function to_online(obj)
+	if obj then
+	local sobj = alife():object(obj)
+	if sobj then
+		local id = sobj.id
+		alife():set_switch_offline (id, false)
+    		alife():set_switch_online (id, true)
+    		alife():set_interactive (id, true)
+  	end
+	end
+end
+
+--// объект в офлайн (по имени)
+function to_offline(obj)
+	if obj then
+	local sobj = alife():object(obj)
+	if sobj then
+		local id = sobj.id
+		alife():set_switch_offline (id, true)
+    		alife():set_switch_online (id, false)
+    		alife():set_interactive (id, false)
+  	end
+	end
+end
+
+--// удалить объект
+function del(obj)
+	if obj then
+		local sobj = alife():object(obj:id())
+		if sobj then
+			--if olr.olrdbg == true then
+    			--	log1(" ! olr del object - ["..obj:name().."]")
+			--end
+			xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
+    			alife():release(sobj, true)
+    			return true
+  		end
+	end
+  	return false
+end
+
+
+function cough()
+	local rnd = math.random(1,4)
+	if rnd == 1 then
+		olr.snd([[ol3\cough]])
+	elseif rnd == 2 then
+		olr.snd([[ol3\koan\cough1]])
+	elseif rnd == 3 then
+		olr.snd([[ol3\koan\cough2]])
+	elseif rnd == 4 then
+		olr.snd([[ol3\koan\cough3]])
+	end	
+end
+
+
+function sopli()
+	local rnd = math.random(1,2)
+	if rnd == 1 then
+		olr.snd([[ol3\koan\sneeze1]])
+	elseif rnd == 2 then
+		olr.snd([[ol3\koan\sneeze2]])
+	end	
+end
+
+
+--// вывести custom static сообщение на худ
+function hud_tip(sender, text, timeout)
+	if text == nil then
+		return
+	end
+	if sender == nil then
+		sender = "Сообщение"
+	end
+	if timeout == nil then
+		timeout = 5
+	end
+	local text_all = ""..sender.." "..text..""
+	local hud = get_hud()
+	local custom_static = hud:GetCustomStatic("custom_sms_text")
+	hud:AddCustomStatic("custom_sms_text", true)
+	hud:GetCustomStatic("custom_sms_text"):wnd():SetTextST(tostring(text_all))
+	hud:GetCustomStatic("custom_sms_text").m_endTime = time_global()/1000 + timeout
+end
+
+
+--// добавить мапспот
+function add_spot(obj, spot, text)
+	if obj == nil then
+		return
+	end
+	if spot == nil then
+		spot = "blue_location"
+	end
+    	if text == nil then 
+		text = obj:name()
+	end
+    	level.map_add_object_spot_ser(obj, spot, text)
+end
+
+function beep()
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\beep]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+--// отчистить от рестрикторов
+function clear_restrictors(obj)
+local pk = get_netpk(obj,1)
+	if pk:isOk() then
+		local data = pk:get()
+		if data then
+			if table.getn(data.dynamic_in_restrictions) > 0 then
+				data.dynamic_in_restrictions = {}
+				pk:set( data )
+				--log1("clear restrictor - "..obj:name().."")
+			end
+		end
+	end 
+end
+
+--// Включить ходьбу ГГ
+function enable_walk()
+	get_actor_obj():unblock_action(key_bindings.kFWD)
+	get_actor_obj():unblock_action(key_bindings.kBACK)
+	get_actor_obj():unblock_action(key_bindings.kL_STRAFE)
+	get_actor_obj():unblock_action(key_bindings.kR_STRAFE)
+	get_actor_obj():unblock_action(key_bindings.kR_LOOKOUT)
+	get_actor_obj():unblock_action(key_bindings.kWPN_FIRE)
+end
+
+
+--// Выключить ходьбу ГГ
+function disable_walk()
+	get_actor_obj():block_action(key_bindings.kFWD)
+	get_actor_obj():block_action(key_bindings.kBACK)
+	get_actor_obj():block_action(key_bindings.kL_STRAFE)
+	get_actor_obj():block_action(key_bindings.kR_STRAFE)
+	get_actor_obj():block_action(key_bindings.kR_LOOKOUT)
+	get_actor_obj():block_action(key_bindings.kWPN_FIRE)
+end
+
+
+--// Выключить возможность сохраняться\загружаться
+function disable_save_load()
+	--get_actor_obj():block_action(key_bindings.kWPN_FIRE)
+	--get_actor_obj():block_action(key_bindings.kWPN_FIRE)
+end
+
+--// Включить возможность сохраняться\загружаться
+function enable_save_load()
+	--get_actor_obj():unblock_action(key_bindings.kR_LOOKOUT)
+	--get_actor_obj():unblock_action(key_bindings.kWPN_FIRE)
+end
+
+--// физический импульс по ГГ вверх 
+function ph_actor()
+	if db.actor and db.actor:alive() then
+           get_actor_obj():press_action(4)
+	   for id=1, 6 do    
+           	local h = hit()
+	   	h.draftsman = obj
+	   	h.type = hit.explosion
+           	h:bone("bip01_spine")
+           	h.direction = vector():set(math.random(1,4),math.random(10,250),math.random(1,4))
+	   	h.power = 0.00001
+	   	h.impulse = 90000000000
+	   	db.actor:hit(h)
+	   end
+           get_actor_obj():release_action(4) 
+	end
+end
+
+--// Дамп текущих таймеров в лог
+function dump_timers()
+	for a = 1, 9000 do
+		tmp = load_xvars("xt"..a,nil)
+		if tmp then
+			local time = game.time()
+			local timvar = load_xvars("xd"..a, nil)
+			log1("-----------------------------------")
+			local value_time = timvar - time
+			local hours = math.floor(value_time/3600000)
+			local minutes = math.floor(value_time/60000 - hours*60)
+			log1("таймер - ["..tmp.."] // часов - ["..hours.."] // минут - ["..minutes.."] // мсекунд - ["..value_time.."]")
+			log1("-----------------------------------")
+		end
+	end
+			log1("timers count - "..xvars.timers_count.."")
+			log1("timers ended - "..xvars.timers_done.."")
+end
+
+--//
+function can_save()
+	return not (db.actor:is_talking() or has_alife_info("ui_car_body") or has_alife_info("ui_inventory") or has_alife_info("ui_pda"))
+end
+
+function autosavename()
+	return "autosave"
+end
+
+--// Убить монстров в радиусе
+function kill_mon_in_radius(pos, radius)
+	for id=1, 65534 do
+		local npc = level.object_by_id(id)
+		if npc and npc:is_monster() and npc:alive() then
+			if npc:section()=="brain_lab_nofeet" then
+				return
+			end
+			if npc:name() == "lvl16_generators_karlik" then
+				return
+			end
+			if npc:section() == "koster_razvodnoy" then
+				alife():release(npc, true)
+			end
+			if npc:position():distance_to(pos) <= radius then
+				if olr.olrdbg == true then
+					log1("kill monster in radius - "..npc:name().."")
+				end
+				npc:kill(npc)
+			end
+		end
+	end
+end
+
+
+--// Объект внутри рестриктора по имени
+function obj_in_zone(ob,zo)
+	local zsobj = alife():object(zo)
+	if zsobj == nil then return false end
+	local zzone = level.object_by_id(zsobj.id)
+	if zzone == nil then return false end
+	local osobj = alife():object(ob)
+	if osobj == nil then return false end
+	local oobj = level.object_by_id(osobj.id)
+	if oobj == nil then return false end
+	return zzone:inside(oobj:position())
+end 
+
+
+--// Рандомная камера 
+function rnd_camera_direction()
+	local cam = actor_camera(0)
+	if cam then
+      		cam.yaw = math.random(0.1,0.9) 
+      		cam.pitch = math.random(0.1,0.9)
+    	end 
+end 
+
+
+function horror_snd()
+	local sound_obj_right = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror1]])
+	local sound_obj_left = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror1]])
+	if not sound_obj_left:playing() then 
+		local i=math.random(1,4)
+		if i==1 then 
+			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror1]])
+		elseif i==2 then
+			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror2]])
+		elseif i==3 then
+			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror3]])
+		elseif i==4 then
+			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror4]])
+		end
+		sound_obj_left:play_at_pos (db.actor, vector():set(1, 0, 1), 0, sound_object.s2d) 
+	end
+	if not sound_obj_right:playing() then 
+		local j=math.random(1,4)
+		if j==1 then 
+			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror1]])
+		elseif j==2 then
+			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror2]])
+		elseif j==3 then
+			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror3]])
+		elseif j==4 then
+			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror4]])
+		end
+		sound_obj_right:play_at_pos (db.actor, vector():set(-1, 0, 1), 0, sound_object.s2d) 
+	end
+end
+
+
+
+function is_monsters_around(radius)
+	if radius == nil then
+		radius = 50
+	end
+    	for k,v in pairs(db.storage) do
+        	local stalker = level.object_by_id(k)
+            	if stalker and stalker:is_monster() and stalker:alive() then
+				if stalker:position():distance_to(db.actor:position()) < radius then
+			    		return true
+				end
+		end
+	end
+end
+
+
+function npc_healing_sms(namenpc)
+	local name = tostring(namenpc)
+	if name then
+		local text_phrase = {"Ох, подлечиться бы надо...", 
+		"Черт, задело... аптечку надо принять.", 
+		"Ах, мля... аптечку...", 
+		"Черт... аптечку...", 
+		"Ах, кровь хлещет... аптечку надо."}
+		local news_text = "%c[255,245,118,54]"..namenpc.."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
+		db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(250,0,50,50),1*1000, 15000)
+	end
+end
+
+
+function actor_in_lab()
+if ( xr_conditions.actor_in_zone(nil,nil,{"lvl4_darkdolina_space_restrictor_0012"}))  
+or ( xr_conditions.actor_in_zone(nil,nil,{"lvl6_rostok_space_restrictor_0034"}))
+or ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0053"}))
+or ( xr_conditions.actor_in_zone(nil,nil,{"lightbun_space_restrictor_0008"})) 
+or ( xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_0005"})) 
+then 
+return true
+end
+end
+
+----------------------------------------------
+function spawen_phantoms()
+	local cttt
+	local phantom_max 				= 28
+	local phantom_spawn_probability			= 0.8
+	local phantom_spawn_radius			= 100.0
+	local phantom_spawn_height			= 2.5
+	local phantom_fov					= 45
+        for cttt = 1, 5 do
+	  if math.random() < phantom_spawn_probability then
+			if phantom_manager:phantom_count() < phantom_max then
+				local radius = phantom_spawn_radius * ( math.random()/2.0+0.5 )
+				local ang    = phantom_fov * math.random() - phantom_fov * 0.5
+				local dir    = vector_rotate_y( db.actor:direction(), ang )
+				phantom_manager.spawn_phantom( db.actor:position():add( dir:mul(radius) ) )
+			end
+	  end
+    end
+end
+
+--// Спавн ворон
+function spawn_crows(num,dist)
+	if num == nil then
+		num = 10
+	end
+	if dist == nil then
+		num = 40
+	end
+ 	for i = 1, num do
+  		alife():create("m_crow", db.actor:position():add(db.actor:direction():mul(dist)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+ 	end
+end
+
+--// Удалить всё халявное оружие
+function del_noparent_weapons()
+local montabl = 
+{
+	[clsid.wpn_vintorez_s] = true,
+	[clsid.wpn_ak74_s] = true,
+	[clsid.wpn_ak74] = true,
+	[clsid.wpn_binocular] = true,
+	[clsid.wpn_binocular_s] = true,
+	[clsid.wpn_lr300_s] = true,
+	[clsid.wpn_hpsa_s] = true,
+	[clsid.wpn_pm_s] = true,
+	[clsid.wpn_shotgun_s] = true,
+	[clsid.wpn_bm16_s] = true,
+	[clsid.wpn_bm16] = true,
+	[clsid.wpn_svd_s] = true,
+	[clsid.wpn_rpg7_s] = true,
+	[clsid.wpn_groza_s] = true,
+	[clsid.wpn_knife_s] = true,
+	--[clsid.wpn_grenade_launcher] = true,
+	--[clsid.wpn_grenade_f1] = true,
+	[clsid.wpn_grenade_rpg7] = true,
+	--[clsid.wpn_grenade_rgd5] = true,
+	[clsid.wpn_grenade_fake] = true,
+	[clsid.wpn_fort] = true,
+	[clsid.wpn_fn2000] = true,
+	[clsid.wpn_groza] = true,
+    [clsid.wpn_hpsa] = true,
+    [clsid.wpn_knife] = true,
+    [clsid.wpn_lr300] = true,
+    --[clsid.wpn_mounted] = true,
+    [clsid.wpn_pm] = true,
+    [clsid.obj_bolt] = true,
+    [clsid.wpn_rg6] = true,
+    [clsid.wpn_rg6_s] = true,
+    [clsid.wpn_rpg7] = true,
+    [clsid.wpn_shotgun] = true,
+    --[clsid.wpn_stat_mgun] = true,
+    [clsid.wpn_svd] = true,
+    [clsid.wpn_svd_s] = true,
+    [clsid.wpn_svu] = true,
+    [clsid.wpn_svu_s] = true,
+    [clsid.wpn_usp45] = true,
+    [clsid.wpn_usp45_s] = true,
+    [clsid.wpn_val] = true,
+    [clsid.wpn_val_s] = true,
+    [clsid.wpn_vintorez] = true,
+    [clsid.wpn_walther] = true,
+    [clsid.wpn_walther_s] = true,
+    [clsid.wpn_wmagaz] = true,
+    [clsid.wpn_wmaggl] = true
+}
+
+local sim = alife()
+	for i=1, 65534 do
+		local kill = sim:object(i)
+		if kill then
+                if montabl[kill:clsid()]  then
+		if kill.parent_id == 65535  then
+		if olr.olrdbg == true then
+			log1("clear free weapon  "..kill:name().." --- "..kill.level_name.."")
+		end
+		if xvars.weapons[kill:name()] ~= nil then
+			xvars.weapons[kill:name()] = nil
+		end
+		xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
+   		alife():release(kill, true)
+end
+end       
+end
+end
+end
+
+
+
+function gta_actor_car()
+	--log1("!!!TRy GTA CAR")
+	local gta_car = nil
+	local montabl = 
+	{
+       		[clsid.car_s] = true
+	}
+
+	local tabcars = {}
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill and montabl[kill:clsid()] then
+			if xvars.olr[kill.id] then
+				table.insert(tabcars, kill)
+				--log1("sasa")
+			end	
+		end
+	end
+
+	if table.getn(tabcars) == 0 then
+		--log1("gta cars - has no cars in table")
+		return
+	end
+	
+	local gta_car = tabcars[math.random(#tabcars)]
+	
+	if gta_car.level_name ~= level.name() then
+
+	local stealer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 150, 0)
+	
+	if stealer then 
+
+	if has_alife_info("bar_car_protect_has") and gta_car.position:distance_to_xz(vector():set( -88, -93, -287)) < 50 and gta_car.level_name == "lvl5_bar" then
+		log1("CAR IS UNDER BAR BROTECT")
+		return
+	end
+
+	--log1("stealer is - "..stealer:name().."")
+
+	local rontabl = 
+	{
+       		[clsid.respawn] = true
+	}
+
+	local tab = {}
+	local sim = alife()
+	for id=1, 65534 do
+		local obj = sim:object(id)
+		if obj then
+			if rontabl[obj:clsid()] then
+				table.insert(tab, obj)
+			end					
+		end
+	end
+	local rand_obj = tab[math.random(#tab)]
+	if rand_obj and rand_obj.id then
+
+		local seer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 70, 0)
+		if seer then
+			seer_name = news_main.get_npc_name(seer)
+			if seer_name then
+				local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(gta_car.m_game_vertex_id):level_id()), vector():set(gta_car.position.x,gta_car.position.y,gta_car.position.z))
+
+				local text_phrase = {"Мужики, кто машину новую купил?", 
+				"Машина интересная стоит... ничья что-ли?", 
+				"Опа... тачка стоит чья-то...", 
+				"Кто машину оставил без присмотра?", 
+				"Хм... машина. Вроде ничья стоит..."}
+				local txt = text_phrase[math.random(#text_phrase)]
+				local full_text = ""..seer_name..": "..txt.." "..pos.." "
+
+				news_manager.send_tip(db.actor, ""..full_text.." ", 20, "default", 29000)
+				--olr_timers.st_timer("gta_theft_sms", 300, "nick.gta_theft_sms("..tostring(full_text)..")")	
+
+			end
+		end
+
+
+		alife():teleport_object(gta_car.id, rand_obj.m_game_vertex_id, rand_obj.m_level_vertex_id, rand_obj.position)
+		--olr.add_spot_on_map( gta_car.id,"controller_spotmap",gta_car:name() )
+		--log1(" steal actor car NOW from "..gta_car.level_name.."  ")
+	end
+
+
+	end
+
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------ХЛАМ---------------------------------------------------------------------
+function val_suicide_stalker_found(stalker, player)
+	db.actor:set_task_state(task.completed, "val_suicide_find_lost_stalker", 0)
+end
+
+function actor_punch_olr (first_speaker, second_speaker)
+	db.storage[db.actor:id()].punch = {}
+	local st = db.storage[db.actor:id()].punch
+	st.dest_walk = patrol("mil_actor_path"):point(0)
+	st.dest_look = utils.vector_copy_by_val ( patrol("mil_actor_path"):point(1)):sub(st.dest_walk)
+	st.info = {}-- "val_prisoner_plr_captured", "val_prisoner_door_unlocked",  "val_prisoner_door_unlocked_demo" }
+	--db.storage[second_speaker:id()].punch.enabled = true
+	xr_punch.put_actor_to_sleep_instantly ()
+	dialogs.break_dialog (first_speaker, second_speaker, 0)
+end
+
+function kill()
+	local obj = level.object("m_stalker_e")
+	obj:kill(obj)
+end
+ 
+function killactor (actor, npc)
+    xr_gulag.setGulagEnemy ("mil_dolg", actor)
+end
+
+function transfer_deneg (npc, actor)
+    dialogs.relocate_money(stalker, 8000, "in")
+end
+ 
+function otday_vodku (npc, actor)
+    dialogs.relocate_item_section(npc, "wpn_toz34", "out")
+end
+
+function have_a_vodka (stalker, player)
+    return stalker:object ("wpn_toz34") ~= nil
+end
+
+function give_nagrada(first_speaker, second_speaker) 
+ dialogs.relocate_money(second_speaker, 200, "in") 
+ dialogs.relocate_item_section(second_speaker, "ammo_9x18_fmj", "in") 
+ dialogs.relocate_item_section(second_speaker, "ammo_5.45x39_fmj","in") 
+end
+
+
+
+
+  

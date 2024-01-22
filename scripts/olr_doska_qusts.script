@@ -1,0 +1,52 @@
+-- hi_flyer 21.03.16
+
+function on_use()
+	local level_name = level.name()
+
+	if level_name == "lvl1_escape" or level_name == "lvl9_military" then
+        	on_use_escape()
+        end
+
+	if level_name == "lvl5_bar" then
+                on_use_bar()
+        end
+
+	if level_name == "lvl7_yantar" then
+                on_use_yantar()
+        end
+
+end
+
+function on_use_escape()
+	if not has_alife_info("kv_4_done") then
+		news_manager.send_tip(db.actor, "Заданий нет.")
+		return
+	end
+	if not has_alife_info("first_doska_use_start") then
+		db.actor:give_info_portion("first_doska_use_start")
+       		bind_stalker.hide_weapon()
+        	level.disable_input()
+        	level.add_cam_effector2("camera_effects\\escape_jaba_doska_idle.anm", 30, false, "")
+		return	
+	end
+	if has_alife_info("first_doska_use_start") then
+		level.start_stop_menu(olr_doska_escape.ui_quests_table(),true)
+	end
+end
+
+-- тут смысла нет пускать камеру, сразу меню
+function on_use_bar()
+	level.start_stop_menu(olr_doska_bar.ui_quests_table(),true)
+end
+
+function on_use_yantar()
+	level.start_stop_menu(olr_doska_yan.ui_quests_table(),true)
+end
+
+
+
+
+
+
+
+

@@ -1,0 +1,254 @@
+--[[-----------------------------------------------------------------------------------------------
+ Description  : Follower for PDA communication (Зовём по ПДА на помощь)
+ Copyright    : OLR mod
+ Author       : _Boolean_, proger_Dencheek, hi_flyer
+ Date         : 11.05.2014
+ Last edit    : 24.05.2014
+ -- теперь если рядом враги, то можно по ПДА позвать сталкера на помощь
+--]]-----------------------------------------------------------------------------------------------
+
+local state_waiting = 0
+local anim_time = 10000
+
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------------------------------------------
+local property_base = 79945
+local Property = property_base + 1
+local Property_run = property_base + 2
+local act_base = 79950
+local Operator = act_base + 1
+
+function add_to_binder(npc, ini, scheme, section, storage)
+	local operators = {}
+	local properties = {}
+	xr_logic.pstor_store(npc, "active_npc_ids_follower", true)
+	
+	local manager = npc:motivation_action_manager ()
+	
+	properties["follower_evaluator"] = xr_evaluators_id.sidor_attendant_eva + 0
+	properties["attendant_follow"] = xr_evaluators_id.sidor_attendant_eva + 1
+
+    operators["follower_action"] = xr_actions_id.sidor_attendant_act + 0
+    operators["attendant_follow"] = xr_actions_id.sidor_attendant_act + 1
+    
+    manager:add_evaluator(properties["follower_evaluator"], this.follower_evaluator ("follower_evaluator", storage))
+
+    local action = this.follower_action ("follower_action", storage)
+    action:add_precondition(world_property(stalker_ids.property_alive, true))
+    action:add_precondition(world_property(stalker_ids.property_enemy, false))
+    action:add_precondition(world_property(stalker_ids.property_danger,	false))
+    action:add_precondition(world_property(properties["follower_evaluator"], true))
+    action:add_precondition(world_property(properties["follower_action"], true))
+    action:add_effect(world_property(properties["follower_action"], false))
+    manager:add_action (operators["follower_action"], action)
+    xr_logic.subscribe_action_for_events (npc, storage, action)
+    
+    --xr_logic.subscribe_action_for_events (npc, storage, action)
+    
+    action = manager:action(xr_actions_id.alife)
+    action:add_precondition(world_property (properties["follower_action"], false))
+    
+end
+----------------------------------------------------------------------------------------------------------------------
+-- ENABLE SCHEME
+----------------------------------------------------------------------------------------------------------------------
+function enable_scheme(npc, ini, scheme, section)
+	--if not xvars.nap_id then
+	--xvars.nap_id = npc:id()
+	--log1("вербуем "..npc:name().." id - "..xvars.nap_id.."")
+	--end
+	xr_logic.pstor_store(npc, "active_npc_section_follower", db.storage[npc:id()].active_section)
+	reset_npc_logic(npc)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.enabled = true
+end
+
+function reset_npc_logic(obj)
+	if obj then
+		local npc_id = obj:id()
+		db.storage[npc_id].overrides = nil
+		xr_logic.reset_generic_schemes_on_scheme_switch(obj, "nil", "nil")
+		db.storage[npc_id].active_section = nil
+		db.storage[npc_id].active_scheme = nil
+	end
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- DISABLE SCHEME
+----------------------------------------------------------------------------------------------------------------------
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()][scheme]
+	if st then
+		st.enabled = false
+	end
+	db.storage[npc:id()].pstor["active_npc_ids_follower"] = nil
+	
+	local gulag = xr_gulag.get_npc_gulag(npc)
+
+	if gulag ~= nil then
+		xr_gulag.resetJob(npc)
+   	 else
+		xr_logic.switch_to_section(
+			npc,
+			{ini = npc:spawn_ini()},
+			xr_logic.pstor_retrieve(npc, "active_npc_section_follower", "")
+		)
+		db.storage[npc:id()].pstor["active_npc_section_follower"] = nil
+    end
+end
+----------------------------------------------------------------------------------------------------------------------
+-- EVALUATORs
+----------------------------------------------------------------------------------------------------------------------
+class "follower_evaluator" (property_evaluator)
+function follower_evaluator:__init(name, storage) super (nil, "follower_evaluator")
+	self.a = storage
+end
+
+function follower_evaluator:evaluate()
+	return true
+end
+----------------------------------------------------------------------------------------------------------------------
+-- ACTIONs
+----------------------------------------------------------------------------------------------------------------------
+class "follower_action" (action_base)
+function follower_action:__init(npc_name, action_name, storage) super(nil, "follower_action")
+	self.a = storage
+	self.timer = nil
+	self.state = nil
+end
+
+function follower_action:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+
+	npc:set_desired_position()
+	npc:set_desired_direction()
+
+	state_mgr.set_state(npc,"wait_na", nil, nil, {look_object = db.actor}, {animation = true})
+	self.state = state_waiting
+end
+
+function follower_action:execute()
+	action_base.execute(self)
+	local npc = self.object
+
+	--news_manager.send_tip(db.actor, "execute")
+	
+	if db.actor == nil or not db.actor:alive() then
+		self:free()
+		return nil
+	end
+	
+	local gv = npc:game_vertex_id()
+	if level.name() ~= alife():level_name(game_graph():vertex(gv):level_id()) then
+		self:free()
+		return nil
+	end
+	
+	local vdist = npc:position():distance_to(db.actor:position())
+	
+	if vdist <= 5 then   
+		self:free()
+		return nil
+	else
+		npc:set_dest_level_vertex_id(db.actor:level_vertex_id())
+		npc:set_desired_position(db.actor:position())
+		local dir = vector()
+		local pos = db.actor:position()
+		local cen = db.actor:center()
+		dir = cen:sub(pos)
+		dir:normalize()
+		npc:set_desired_direction(dir)
+		npc:set_detail_path_type(move.line)
+		npc:set_path_type(game_object.level_path)
+		if vdist > 17 then
+			state_mgr.set_state(npc, "sprint")
+		elseif vdist < 10 then
+			state_mgr.set_state(npc, "patrol")
+		elseif vdist >= 10 then
+			state_mgr.set_state(npc, "run")
+		end
+	end
+       
+end
+
+--function follower_action:death_callback(npc)
+--	news_manager.send_tip(db.actor, "ПОМОГАТЕЛЬ УМЕР КОГО ПОЗВАЛИ")
+--end
+
+function follower_action:free()
+	disable_scheme(self.object, "follower_agree")
+end
+
+function follower_action:finalize()
+	action_base.finalize(self)
+end
+
+function npc_load(p, obj)
+	if xr_logic.pstor_retrieve(obj, "active_npc_ids_follower", false) == true then
+		local gulag = xr_gulag.get_npc_gulag(obj)
+		if gulag ~= nil then
+			gulag:load_obj(p, obj:id())
+		end
+		olr_ai_trade_agree.enable_scheme(
+			obj, nil, "follower_agree"
+		)
+	end
+end
+
+function npc_save(p, obj)
+	if xr_logic.pstor_retrieve(obj, "active_npc_ids_follower", false) == true then
+		local gulag = xr_gulag.get_npc_gulag(obj)
+		if gulag ~= nil then
+			gulag:save_obj(p, obj:id())
+		end
+	end
+end
+
+
+
+function enemy_around()
+    	for k,v in pairs(db.storage) do
+        local stalker = level.object_by_id(k)
+            	if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() and stalker:relation(db.actor)==game_object.enemy then
+				if stalker:position():distance_to(db.actor:position()) < 25 then
+			    		return true
+				end
+		end
+	end
+    	for k,v in pairs(db.storage) do
+        local stalker = level.object_by_id(k)
+            	if stalker and (get_clsid(stalker)==clsid.bloodsucker_s or get_clsid(stalker)==clsid.burer_s or get_clsid(stalker)==clsid.chimera_s or get_clsid(stalker)==clsid.controller_s) and stalker:alive() then
+				if stalker:position():distance_to(db.actor:position()) < 20 then
+			    		return true
+				end
+		end
+	end
+	if db.actor.health < 0.25 then
+		return true
+	end
+	return false
+end
+
+-------------------------------------------------- телепорт напарника --------------------------------------------------
+--[[
+function naparnik_teleport()
+if xvars.nap_id ~= -1 then
+local sim = alife()
+	for id=1, 65534 do
+	local nap = sim:object(id)
+	if nap then
+	if nap.id == xvars.nap_id then
+	alife():teleport_object(nap.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), db.actor:position():add(db.actor:direction():mul(4)))
+	--olr_ai_follower_agree.enable_scheme(npc, nil, "follower_agree")
+	--local npc = level.object_by_id(nap)
+	--local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	--st.enabled = true
+	log1("naparnik teleport")
+end
+end
+end
+end
+end
+]]

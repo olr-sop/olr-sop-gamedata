@@ -1,0 +1,102 @@
+
+
+
+local radio_otvet = {
+
+[1] = [[script_replics\radio\message\radio_voice_1]],
+[2] = [[script_replics\radio\message\radio_voice_2]],
+[3] = [[script_replics\radio\message\radio_voice_3]]
+
+}
+
+
+function radio_snd_check(obj)
+	local rnd = math.random(1,5)
+	if rnd ~= 1 then return end
+	if not obj:alive() then return end
+	if xr_wounded.is_wounded(obj) then return end
+
+	if obj:character_community()=="military" or obj:character_community()=="voenstals" or obj:character_community()=="dolg" or obj:character_community()=="freedom" then
+
+		local be = obj:best_enemy()
+		if not be then
+			local rndidl = math.random(1,2)
+			if rndidl == 1 then
+				this.military_idle_peregovor(obj)
+			else
+				this.radio_noise(obj)
+			end
+		end
+
+	end
+
+end
+
+
+function radio_turn_on(npc)
+	local snd_obj = xr_sound.get_safe_sound_object([[script_replics\radio\message\radio_turn_on_1]])
+	snd_obj:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 2.0)
+end
+
+function radio_turn_off(npc)
+	local snd_obj = xr_sound.get_safe_sound_object([[script_replics\radio\message\radio_turn_off_1]])
+	snd_obj:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 2.0)
+end
+
+function radio_otv(npc)
+	local snd_name = radio_otvet[math.random(1,3)]
+	if snd_name then
+		local snd_obj = xr_sound.get_safe_sound_object(snd_name)
+		if snd_obj and not snd_obj:playing() then
+			snd_obj:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 1.0)
+		end
+	end
+end
+
+function radio_noise(npc)
+	local snd_obj = xr_sound.get_safe_sound_object([[script_replics\radio\message\radio_noise_1]])
+	snd_obj:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 2.0)
+end
+
+
+function military_idle_peregovor(obj)
+
+	this.radio_turn_on(obj)
+
+	local wait_time = 0
+  	wait_time = time_global() + 1200
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() this.radio_otv(obj) end
+  	)
+
+	local wait_time = 0
+  	wait_time = time_global() + 11200
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() this.radio_turn_off(obj) end
+  	)
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,84 @@
+--' Смерть вояки
+function aes_segeant_kill (stalker, player)
+    local h = hit ()
+    h.power = 100 --9998
+    h.direction = vector():set (0, -1, 0)
+    h.impulse = 0 --1
+    h.draftsman = stalker
+    h.type = hit.strike
+    player:hit (h)
+end
+
+
+--' Мы отказываемся вступить в осознание
+function osoznanie_decline(npc, actor)
+    	db.actor:disable_info_portion("oso_init_dialog")
+	npc:stop_talk()
+    	actor:stop_talk()
+	xr_effects.enable_ui(db.actor, nil)	  
+	local point = patrol("mon_jump_aes2_walk")
+	local look = patrol("mon_jump_aes2_look")
+	
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	
+end
+
+--' Мы соглашаемся вступить в осознание, конец игры.
+function osoznanie_agree(npc, actor)
+	db.actor:disable_info_portion("oso_init_dialog")
+	if npc then
+	npc:stop_talk()
+	end
+	if actor then
+        actor:stop_talk()
+	end
+	xr_effects.enable_ui(db.actor, nil)	  
+	game.start_tutorial("mov_join_osoznanie")	
+end
+
+
+-- OLR first son
+function intro_game_olr(npc, actor)
+	xr_effects.enable_ui(db.actor, nil)	  	
+end
+
+-- OLR dream pripyat
+function dream_pripy(npc, actor)  
+	game.start_tutorial("son3")
+end
+
+-- OLR dream 1
+function dream_1(npc, actor)
+	--xr_effects.enable_ui(db.actor, nil)	  
+	game.start_tutorial("olr_dream1")
+	
+end
+
+-- OLR dream yantar
+function dream_2(npc, actor)	  
+	game.start_tutorial("yantar_dream")
+end
+
+-- OLR final
+function olr_fin(npc, actor)
+	--db.actor:disable_info_portion("oso_init_dialog")
+	--npc:stop_talk()
+        --actor:stop_talk()
+	--xr_effects.enable_ui(db.actor, nil)	  
+	game.start_tutorial("x18_dream")
+	
+end
+
+-- OLR final hidden
+function hidden_fin(npc, actor)	  
+	game.start_tutorial("hidd_fin")	
+end
+
+-- OLR dream swamp
+function swamp_fin(npc, actor)	  
+	game.start_tutorial("olr2_dream1")
+end
+
+

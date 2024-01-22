@@ -1,0 +1,442 @@
+--[[-----------------------------------------------------------------------------------------------
+ Description  : «аписна€ книжка
+ Copyright    : DMX MOD
+ Authors      : Charsi (блокнот, основные функции), macron (курсор, фикс переноса последнего символа первой строчки), hi_flyer (перевЄл на движковое хранилище).
+ Date         : 04.05.2011
+ Last edit    : 14.08.2016 
+--]]-----------------------------------------------------------------------------------------------
+
+
+local debug = false
+local MAX_STRING_LEN = 96 --64
+local MAX_STRINGS_COUNT = 15
+local MAX_RECORDS_CNT = 20
+local onn = false
+
+function upd()
+
+end
+
+---------------------------------------------------------------
+
+OrganizerMenu = nil
+local PdaWindow, OwnerWindow
+local initial = false
+
+class "PdaMainWnd" (CUIScriptWnd)
+function PdaMainWnd:__finalize() end
+function PdaMainWnd:__init(owner) super()
+	self.owner = owner
+	self:Init(0,0,1024,768)
+	self.back = CUIStatic()
+	self.back:Init(0,0,1024,768)
+	self.owner:AttachChild(self.back)
+	self.ClickBtnNotepad = function() OrganizerMenu = pda_notepad.OrganizerWnd(self.owner) level.start_stop_menu(OrganizerMenu, true) end
+	local xml = CScriptXmlInit()
+	xml:ParseFile("pda_notepad.xml")
+	self.btn_options = xml:Init3tButton("btn_pda_options", self.back)
+
+	self.btn_options:Init(616,35,50,25)
+
+	self:Register(self.btn_options, "btn_pda_options")
+	self:AddCallback("btn_pda_options", ui_events.BUTTON_CLICKED, self.ClickBtnNotepad, self)
+	-- separator
+	self.btn_separator = xml:InitStatic("btn_pda_separator", self.back)
+
+	self.btn_separator:Init(775,45,13,13)
+
+	initial = true
+end
+
+function PdaMainWnd:ShowWnd()
+	if initial and OwnerWindow.back then OwnerWindow.back:Show(true) end
+end
+
+function PdaMainWnd:DetachWnd()
+	self.owner:DetachChild(self.back) initial = false
+end
+
+function OrganizerMenuI() 
+	pda_notepad.OrganizerWnd(self.owner) 
+	level.start_stop_menu(OrganizerMenu, true) 
+end
+
+----------------------------------------------------------
+
+
+function StartNotepad22()
+
+	local pda = level.main_input_receiver()
+	if pda ~= nil then
+		level.start_stop_menu(pda, false)
+	end
+
+	PdaWindow = get_hud()
+	OrganizerMenu = pda_notepad.OrganizerWnd(PdaWindow) 
+	level.start_stop_menu(OrganizerMenu, true)
+
+	local wait_time = 0
+  	wait_time = time_global() + 500
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() db.actor:disable_info_portion("pda_script_bloknot_start_info") end
+  	)
+
+end
+
+-- вызов из движка
+function StartNotepad()
+
+end
+
+function StopNotepad()
+	if OwnerWindow then OwnerWindow:DetachWnd() end
+
+	local pdan = level.main_input_receiver()
+	if pdan ~= nil then
+		level.start_stop_menu(pdan, false)
+	end
+	onn = false
+
+end
+
+class "OrganizerWnd" (CUIScriptWnd)
+function OrganizerWnd:__init(owner) super()
+	self.owner = owner
+	self:Init(0,0,1024,768)
+	self.rus_lat = true
+	self.num_rec = 1
+	self.ClickBtn = {}
+	self.records = {}
+	for i = 1, MAX_RECORDS_CNT do
+                  self.records[i] = load_xvars("r"..i, "")
+	end
+	self.back = CUIStatic()
+	self.back:Init("ui\\ui_pda_notepad2",0,0,1024,768)   --    ui\\ui_pda_notepad
+	self:AttachChild(self.back)
+	local lat = [[qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>?!@#$%^&*()-_+=\| 0123456789]]
+	local rus = [[йцукенгшщзхъфывапролджэ€чсмитьбю.…÷” ≈Ќ√Ўў«’Џ‘џ¬јѕ–ќЋƒ∆Ёя„—ћ»“№Ѕё,!"є;%:?*()-_+=\/ 0123456789]]
+	self.translit = {}
+	for i = 1, string.len(rus) do
+		self.translit[string.sub(lat, i, i)] = string.sub(rus, i, i)
+	end
+	self.strings = {}
+	self.text = {}
+	self.pos = 1 --0 --при 1 виден курсор, при 0 не виден
+	self.ClickBtn[1] = function() self:RusLat() end
+	local xml = CScriptXmlInit()
+        xml:ParseFile("pda_notepad.xml")
+	--------------------
+	-- NAVIGATION BAR --
+	--------------------
+
+	-- "-1"
+	self.btn_minus1 = xml:InitButton("pda_bar_minus1", self.back)
+	self.btn_minus1:SetText("<")
+	self:Register(self.btn_minus1, "btn_minus1")
+	self:AddCallback("btn_minus1", ui_events.BUTTON_DOWN, self.ClickBtnMinus1, self)
+
+	-- "+1"
+	self.btn_plus1 = xml:InitButton("pda_bar_plus1", self.back)
+	self.btn_plus1:SetText(">")
+	self:Register(self.btn_plus1, "btn_plus1")
+	self:AddCallback("btn_plus1", ui_events.BUTTON_DOWN, self.ClickBtnPlus1, self)
+
+	-- раскладка
+	self.btn_ruslat = xml:InitButton("pda_bar_ruslat", self.back)
+	self.btn_ruslat:SetText(self:Layout())
+	self:Register(self.btn_ruslat, "btn_ruslat")
+	self:AddCallback("btn_ruslat", ui_events.BUTTON_DOWN, self.RusLat, self)
+	-- текуща€ запись
+	self.record_number = xml:InitButton("pda_bar_record_number", self.back)
+	self.record_number:SetText(self.num_rec)
+	self.record_number:Enable(false)
+
+	------------------
+	-- MAIN BUTTONS --
+	------------------
+	-- начало ввода текста
+	self.btn_start_edit = CUIButton()
+	self.btn_start_edit:Init("ui\\ui_pda_notepad",36,115,169,27)
+	self.btn_start_edit:SetText("Ќачать ввод")
+	self.btn_start_edit:SetTextAlign(CGameFont.alCenter)
+	self.btn_start_edit:SetTextY(1)
+	self.btn_start_edit:SetOriginalRect(5,775,169,27)
+
+	self.back:AttachChild(self.btn_start_edit)
+	self.edit_box = CUIEditBox()
+	self.edit_box:Init(-10,111,500,50)
+	self.edit_box:SetTextColor(GetARGB(0,0,0,0))
+	self.back:AttachChild(self.edit_box)
+	-- сохранение текста
+	self.btn_save = CUIButton()
+	self.btn_save:Init("ui\\ui_pda_notepad",36,175,169,27)
+	self.btn_save:SetText("—охранить")
+	self.btn_save:SetTextAlign(CGameFont.alCenter)
+	self.btn_save:SetTextY(1)
+	self.btn_save:SetOriginalRect(5,775,169,27)
+	self:Register(self.btn_save, "btn_save")
+	self.back:AttachChild(self.btn_save)
+	self:AddCallback("btn_save", ui_events.BUTTON_DOWN, self.ClickBtnSave, self)
+	-- очистить поле
+	self.btn_clear = CUIButton()
+	self.btn_clear:Init("ui\\ui_pda_notepad",36,235,169,27)
+	self.btn_clear:SetText("—тереть")
+	self.btn_clear:SetTextAlign(CGameFont.alCenter)
+	self.btn_clear:SetTextY(1)
+	self.btn_clear:SetOriginalRect(5,775,169,27)
+	self:Register(self.btn_clear, "btn_clear")
+	self.back:AttachChild(self.btn_clear)
+	self:AddCallback("btn_clear", ui_events.BUTTON_DOWN, self.ClickBtnClear, self)
+	-- закрыть блокнот
+	self.btn_hide = CUIButton()
+	self.btn_hide:Init("ui\\ui_pda_notepad",36,315,169,27)
+	self.btn_hide:SetText("¬ыход")
+	self.btn_hide:SetTextAlign(CGameFont.alCenter)
+	self.btn_hide:SetTextY(1)
+	self.btn_hide:SetOriginalRect(5,775,169,27)
+	self:Register(self.btn_hide, "btn_hide")
+	self.back:AttachChild(self.btn_hide)
+	self:AddCallback("btn_hide", ui_events.BUTTON_DOWN, self.OrganizerQuit, self)
+	-- закрыть весь  ѕ 
+	self.btn_close = CUIButton()
+	self.btn_close:Init(20,0,65,20)
+	self:Register(self.btn_close, "btn_close")
+	self.back:AttachChild(self.btn_close)
+	self:AddCallback("btn_close", ui_events.BUTTON_DOWN, self.PdaQuit, self)
+	self:SetTextPage(self.records[1])
+	
+	self.changed = true
+end
+
+function OrganizerWnd:ClickBtnMinus1()
+	if self.changed then self:ClickBtnSave() end
+	if self.num_rec > 1 then self.num_rec = self.num_rec - 1 end
+	self.record_number:SetText(self.num_rec)
+	self.pos = 1 --0 --при 1 виден курсор, при 0 не виден
+	self:SetTextPage(self.records[self.num_rec] or "")
+	self.pos = #self.text self:ShowTextPage() -- выравниваем, имитиру€ нажатие кнопки End (фикс переноса последнего символа первой строки в ранее сохраненной странице)
+end
+
+function OrganizerWnd:ClickBtnPlus1()
+	if self.changed then self:ClickBtnSave() end
+	if self.num_rec < MAX_RECORDS_CNT then self.num_rec = self.num_rec + 1 end
+	self.record_number:SetText(self.num_rec)
+	self.pos = 1 --0 --при 1 виден курсор, при 0 не виден
+	self:SetTextPage(self.records[self.num_rec] or "")
+	self.pos = #self.text self:ShowTextPage() -- выравниваем, имитиру€ нажатие кнопки End (фикс переноса последнего символа первой строки в ранее сохраненной странице)
+end
+
+function OrganizerWnd:ClickBtnSave()
+	local text = self:GetTextPage()
+	self.records[self.num_rec] = text
+	save_xvars("r"..self.num_rec, text)
+	self.changed = false
+end
+
+function OrganizerWnd:ClickBtnClear()
+	self:SetTextPage("")
+end
+
+function OrganizerWnd:OrganizerQuit()
+	onn = false
+	level.start_stop_menu(self, true)
+	collectgarbage("collect")
+end
+
+function OrganizerWnd:PdaQuit()
+	level.start_stop_menu(self.owner, true)
+	self:OrganizerQuit()
+end
+
+-----------------------
+-- Utility functions --
+-----------------------
+
+function OrganizerWnd:GetTextPage()
+	local s = [[]]
+	local c = 0
+	for k, v in pairs(self.text) do
+		s = s..v:GetCharacter()
+		c = c + 1
+		if v:GetEndString() or c == MAX_STRING_LEN then
+			s = s..[[\n]]
+			c = 0
+		end
+	end
+	return s
+end
+
+function OrganizerWnd:SetTextPage(text)
+	local k = 0
+	clear_table(self.text)
+	for i = 0, string.len(text) do
+		local s = Symbol(string.sub(text, i + k, i + k))
+		if (string.sub(text, i + k, i + k + 1) == [[\n]]) then s:SetCharacter("") s:SetEndString(true) k = k + 1
+		elseif (string.sub(text, i + k + 1, i + k + 2) == [[\n]]) then s:SetEndString(true) k = k + 2 end
+		table.insert(self.text, s)
+	end
+	self:ShowTextPage()
+	self.pos = #self.text self:ShowTextPage() -- выравниваем первую страницу, имитиру€ нажатие кнопки End (фикс переноса последнего символа первой строки в ранее сохраненной странице)
+end
+
+function OrganizerWnd:ShowTextPage()
+	for k, v in pairs(self.strings) do
+		self.back:DetachChild(v)
+	end
+	while next(self.strings) do
+		table.remove(self.strings)
+	end
+	local s = ""
+	local c = 0
+	for k, v in pairs(self.text) do
+		s = s..v:GetCharacter()
+		c = c + 1
+		if k == self.pos then s = s.."_" c = c + 1 end
+		if v:GetEndString() or c >= MAX_STRING_LEN then
+			self:AddInStatic(s)
+			s = "" c = 0
+		end
+	end
+	if s ~= "" then self:AddInStatic(s) end
+end
+
+function OrganizerWnd:AddInStatic(text)
+	self.text_area = CUIStatic()
+	self.text_area:Init(230,125+30*table.getn(self.strings),10,10)
+	self.text_area:SetText(text)
+	self.text_area:SetFont(GetFontGraffiti22Russian())
+	self.text_area:SetTextColor(255,240,217,182)
+	table.insert(self.strings, self.text_area)
+	self.back:AttachChild(self.text_area)
+end
+
+function OrganizerWnd:AddCharacter(text)
+	if #self.text >= MAX_STRINGS_COUNT*MAX_STRING_LEN then return end
+	
+	text = text and (self.rus_lat and self.translit[text] or text) or ""
+	self.pos = self.pos + 1
+
+	table.insert(self.text, self.pos, Symbol(text))
+	self:ShowTextPage()
+	self.changed = true
+end
+
+function OrganizerWnd:NewLine()
+	local eol = 1
+	for i,v in ipairs (self.text) do
+		if v:GetEndString() then
+			eol = eol + 1
+		end
+	end
+	if eol >= MAX_STRINGS_COUNT then return end
+	
+	if (self.pos == 0) or self.text[self.pos]:GetEndString() then self:AddCharacter() end
+	self.text[self.pos]:SetEndString(true)
+	self:ShowTextPage()
+	self.changed = true
+end
+
+function OrganizerWnd:Backspace()
+	if self.pos > 0 then
+		if self.pos > 1 then
+			local es = self.text[self.pos] and self.text[self.pos]:GetEndString() or false
+			table.remove(self.text, self.pos)
+			self.pos = self.pos - 1
+			if self.text[self.pos] then self.text[self.pos]:SetEndString(es) end
+		elseif self.text[self.pos]:GetCharacter() ~= "" then
+			self.text[self.pos]:SetCharacter("")
+			self.text[self.pos]:SetEndString(false)
+		end
+		self:ShowTextPage()
+		self.changed = true
+	end
+end
+
+function OrganizerWnd:Delete()
+	if self.text[self.pos + 1] then
+		table.remove(self.text, self.pos + 1)
+		self:ShowTextPage()
+		self.changed = true
+	end
+end
+
+function OrganizerWnd:RusLat()
+	self.rus_lat = not self.rus_lat
+	self.btn_ruslat:SetText(self:Layout())
+end
+
+function OrganizerWnd:Layout()
+	return self.rus_lat and "RU" or "EN"
+end
+
+class "Symbol"
+function Symbol:__init(character)
+	self.character = character or ""
+	self.end_string = false
+end
+
+function Symbol:SetCharacter(character)
+	self.character = character
+end
+
+function Symbol:GetCharacter()
+	return self.character
+end
+
+function Symbol:SetEndString(f)
+	self.end_string = f
+end
+
+function Symbol:GetEndString()
+	return self.end_string
+end
+
+--------------
+-- Keyboard --
+--------------
+
+function OrganizerWnd:OnKeyboard(dik, keyboard_action)
+	if dik ~= DIK_keys.DIK_RETURN and dik ~= DIK_keys.DIK_NUMPADENTER then
+		CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+	end
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+
+		local pdan = level.main_input_receiver()
+		if pdan ~= nil then
+			level.start_stop_menu(pdan, false)
+		end		
+
+		elseif dik == DIK_keys.DIK_BACK then self:Backspace()
+		elseif dik == DIK_keys.DIK_DELETE then self:Delete()
+		elseif dik == DIK_keys.DIK_RETURN or dik == DIK_keys.DIK_NUMPADENTER then self:NewLine()
+		elseif dik == DIK_keys.DIK_NUMPAD0 then self:AddCharacter(0)
+		elseif dik == DIK_keys.DIK_NUMPAD1 then self:AddCharacter(1)
+		elseif dik == DIK_keys.DIK_NUMPAD2 then self:AddCharacter(2)
+		elseif dik == DIK_keys.DIK_NUMPAD3 then self:AddCharacter(3)
+		elseif dik == DIK_keys.DIK_NUMPAD4 then self:AddCharacter(4)
+		elseif dik == DIK_keys.DIK_NUMPAD5 then self:AddCharacter(5)
+		elseif dik == DIK_keys.DIK_NUMPAD6 then self:AddCharacter(6)
+		elseif dik == DIK_keys.DIK_NUMPAD7 then self:AddCharacter(7)
+		elseif dik == DIK_keys.DIK_NUMPAD8 then self:AddCharacter(8)
+		elseif dik == DIK_keys.DIK_NUMPAD9 then self:AddCharacter(9)
+		elseif dik == DIK_keys.DIK_DIVIDE then self:AddCharacter("/")
+		elseif dik == DIK_keys.DIK_MULTIPLY then self:AddCharacter("*")
+		elseif dik == DIK_keys.DIK_ADD then self:AddCharacter("+")
+		elseif dik == DIK_keys.DIK_NUMPADCOMMA then self:AddCharacter(".")
+		elseif dik == DIK_keys.DIK_F2 then self:ClickBtnClear()
+		elseif dik == DIK_keys.DIK_LCONTROL then self.ClickBtn[1]()
+		else
+			local text = string.sub(self.edit_box:GetText(), -1)
+			if text and text ~= "" then
+				self:AddCharacter(text)
+				self.edit_box:SetText("")
+			end
+		end
+	end
+	return true
+end
+
+
+

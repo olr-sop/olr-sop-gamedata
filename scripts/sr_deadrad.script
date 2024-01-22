@@ -1,0 +1,160 @@
+-- hi_flyer 19.08.15
+-- радиационные зоны
+
+
+local state_nowhere = 0 -- схема только что включилась
+local state_inside = 1 -- актер внутри
+local state_outside = 2 -- актер снаружи
+
+local def_wound_hit = 0.3
+local def_rad_hit = 0.3
+
+local eff_power = 0
+
+
+local vaild_outfits = {
+["ecolog_outfit"] = true,
+["outfit_exo"] = true,
+["exo_outfit"] = true,
+["scientific_outfit"] = true,
+["protection_outfit"] = true,
+["outfit_antirad"] = true
+}
+
+
+class "action_deadrad"
+
+function action_deadrad:__init( obj, storage )
+	self.object = obj
+	self.st = storage
+        self.hit_timer = 0
+end
+
+function action_deadrad:reset_scheme()
+	
+	self.state = state_nowhere -- еще не€сно, в зоне он, или нет
+	
+	self:switch_state(db.actor)
+end
+
+function action_deadrad:update( delta )
+	local actor = db.actor
+
+	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
+		return
+	end	
+	
+	self:switch_state( actor )
+	
+	if self.state == state_inside then
+
+
+	if has_alife_info("anti_glob_rad") then
+		return
+	end
+
+      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl3_agroprom_space_restrictor_0018"}))  then
+		return
+	end	
+
+	local currout = db.actor:item_in_slot(6)
+
+        if not currout or currout:condition() < 0.65 or not vaild_outfits[currout:section()] then
+		eff_power = eff_power + 1
+		level.add_pp_effector ("radiation.ppe", 71974, false)
+		level.set_pp_effector_factor(71974, eff_power / math.random(1,10))               
+                local song_start = xr_sound.get_safe_sound_object("detectors\\geiger")
+	        song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+                db.actor.radiation = 0.01
+                db.actor.health = -0.0005
+		xvars.count_rad_weak = xvars.count_rad_weak + 0.00001
+		--news_manager.send_tip(db.actor, "накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
+
+
+        	if not has_alife_info("infor_glob_rad") then
+			db.actor:give_info_portion("infor_glob_rad")
+        	end
+
+ 			local level_name = level.name()
+			if level_name == "lvl3_agroprom" and has_alife_info("medpribor_kvest_start") then
+        			if not has_alife_info("medyasik_done") then
+        				if not has_alife_info("kostumu_pesda_agr_jaba") then
+						db.actor:give_info_portion("kostumu_pesda_agr_jaba")
+        				end
+        			end
+
+
+       			 	if time_global() > self.hit_timer then
+					self.hit_timer = time_global() + 1500  
+                        		self:hit_actor2()  
+    	
+        			end
+
+        			if currout and vaild_outfits[currout:section()] then
+					eff_power = 0 
+					level.remove_pp_effector(71974)
+				end	 
+			end
+	end
+end
+end
+
+function action_deadrad:hit_actor2()
+	db.actor.radiation = 0.01
+end
+
+
+
+function action_deadrad:switch_state( actor )
+	local state = self.state
+	
+	if state == state_outside or state == state_nowhere then
+		if self.object:inside( actor:center() ) then
+			self:zone_enter()
+			return
+		end
+	end
+	
+	if state == state_inside or state == state_nowhere then
+		if not self.object:inside( actor:center() ) then
+			self:zone_leave()
+			return
+		end
+	end
+end
+
+function action_deadrad:zone_enter()
+	self.state = state_inside
+end
+
+function action_deadrad:zone_leave()
+	self.state = state_outside
+        level.remove_pp_effector(71974)
+end
+
+
+---------------------------------------------------------------------------------------------------------------------
+function add_to_binder(npc, ini, scheme, section, storage)
+	printf("DEBUG: add_to_binder: scheme='%s', section='%s'", scheme, section)
+
+	local new_action = action_deadrad(npc, storage)
+
+	-- «арегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
+	xr_logic.subscribe_action_for_events(npc, storage, new_action)
+end
+
+function set_scheme(npc, ini, scheme, section, gulag_name)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+end
+
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+
+
+		
+	
+	

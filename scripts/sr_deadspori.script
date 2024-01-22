@@ -1,0 +1,162 @@
+--[[
+ File         : sr_deadspori.script
+ Description  : Споры в светлом луче
+ Copyright    : Oblivion Lost Remake 3.0
+ Author       : hi_flyer
+ Date         : 27.02.15
+ Last Edit    : 19.12.15
+
+[logic]
+active = sr_deadspori
+ 
+[sr_deadspori]
+]]
+
+local state_nowhere = 0 -- схема только что включилась
+local state_inside = 1 -- актер внутри
+local state_outside = 2 -- актер снаружи
+
+
+local vaild_outfits = {
+["ecolog_outfit"] = true,
+["scientific_outfit"] = true,
+["protection_outfit"] = true,
+["outfit_antirad"] = true
+}
+
+
+class "action_deadspori"
+
+function action_deadspori:__init( obj, storage )
+	self.object = obj
+	self.st = storage
+        self.hit_timer = 0
+end
+
+function action_deadspori:reset_scheme()
+	
+	self.state = state_nowhere -- еще неясно, в зоне он, или нет
+	
+	self:switch_state(db.actor)
+end
+
+local warn = false
+
+function action_deadspori:update( delta )
+	local actor = db.actor
+
+	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
+		return
+	end	
+	
+	self:switch_state( actor )
+	
+	if self.state == state_inside then
+
+	
+	local currout = db.actor:item_in_slot(6)
+
+        if not currout or currout:condition() < 0.75 or not vaild_outfits[currout:section()] then
+
+			local has_art = db.actor:object("af_studen_m1")
+                        if has_art and db.actor:is_on_belt(has_art) then
+				--news_manager.send_tip(db.actor, " НЕ ЗАБОЛЕЛИ Заражение паразитом - af_studen_m1 на поясе")
+				return	
+			end
+
+
+		level.add_pp_effector ("dead_zone.ppe", 714433974, false)               
+                --local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
+	        --song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+                db.actor.health = -0.00015
+
+		--local actor = db.actor:position()
+		--local zh = hit()
+		--zh.draftsman = db.actor
+		--zh.type = hit.wound
+		--zh.direction = self.object:position():sub(actor)
+		--zh:bone("pelvis")
+		--zh.power = 0.001
+		--zh.impulse = 0.00001
+		--db.actor:hit(zh)
+
+        	bind_monster.zarazjenie_parazitom()
+
+		local par_var = math.random(1,19)
+		if par_var == 1 then
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\cough]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+		end
+	end
+
+ 	if not currout or (currout and currout:condition()) < 0.75 then
+		if warn == false then
+			warn = true
+			news_manager.send_tip(db.actor, "Костюм: нарушение герметизации!", nil, "medkit", 25000)
+		end	
+	end
+
+        if currout and vaild_outfits[currout:section()] then 
+		level.remove_pp_effector(714433974)
+	end
+	 
+end
+end
+end
+
+
+
+function action_deadspori:switch_state( actor )
+	local state = self.state
+	
+	if state == state_outside or state == state_nowhere then
+		if self.object:inside( actor:center() ) then
+			self:zone_enter()
+			return
+		end
+	end
+	
+	if state == state_inside or state == state_nowhere then
+		if not self.object:inside( actor:center() ) then
+			self:zone_leave()
+			return
+		end
+	end
+end
+
+function action_deadspori:zone_enter()
+	self.state = state_inside
+end
+
+function action_deadspori:zone_leave()
+	self.state = state_outside
+        level.remove_pp_effector(714433974)
+end
+
+
+---------------------------------------------------------------------------------------------------------------------
+function add_to_binder(npc, ini, scheme, section, storage)
+	printf("DEBUG: add_to_binder: scheme='%s', section='%s'", scheme, section)
+
+	local new_action = action_deadspori(npc, storage)
+
+	-- Зарегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
+	xr_logic.subscribe_action_for_events(npc, storage, new_action)
+end
+
+function set_scheme(npc, ini, scheme, section, gulag_name)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+end
+
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+
+
+		
+	
+	

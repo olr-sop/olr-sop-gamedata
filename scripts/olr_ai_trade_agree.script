@@ -1,0 +1,209 @@
+--[[-----------------------------------------------------------------------------------------------
+ File         : ai_trade_agree.script
+ Description  : Trade module for PDA communication
+ Copyright    : OLR Team
+ Author       : _Boolean_, proger_Dencheek, hi_flyer
+ Date         : 11.05.2014
+ Last edit    : 24.05.2014
+--]]-----------------------------------------------------------------------------------------------
+
+local state_waiting = 0
+local anim_time = 10000
+
+----------------------------------------------------------------------------------------------------------------------
+-- ENABLE SCHEME
+----------------------------------------------------------------------------------------------------------------------
+function enable_scheme(npc, ini, scheme, section)
+	--log1(npc:name())
+	xr_logic.pstor_store(npc,"active_npc_section_trade",db.storage[npc:id()].active_section)
+	reset_npc_logic(npc)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.enabled = true
+end
+function reset_npc_logic(obj)
+	if obj then
+		local npc_id = obj:id()
+		db.storage[npc_id].overrides = nil
+		xr_logic.reset_generic_schemes_on_scheme_switch(obj, "nil", "nil")
+		db.storage[npc_id].active_section = nil
+		db.storage[npc_id].active_scheme = nil
+	end
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- DISABLE SCHEME
+----------------------------------------------------------------------------------------------------------------------
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()][scheme]
+	if st then
+		st.enabled = false
+	end
+	db.storage[npc:id()].pstor["active_npc_ids"] = nil
+	
+	local gulag = xr_gulag.get_npc_gulag (npc)
+
+	if gulag ~= nil then
+		xr_gulag.resetJob(npc)
+    else
+		xr_logic.switch_to_section(
+			npc,
+			{ini = npc:spawn_ini()},
+			xr_logic.pstor_retrieve(npc, "active_npc_section_trade", "")
+		)
+		db.storage[npc:id()].pstor["active_npc_section_trade"] = nil
+    end
+end
+----------------------------------------------------------------------------------------------------------------------
+-- EVALUATORs
+----------------------------------------------------------------------------------------------------------------------
+class "trade_evaluator" (property_evaluator)
+function trade_evaluator:__init(name, storage) super (nil, "trade_evaluator")
+	self.a = storage
+end
+
+function trade_evaluator:evaluate()
+	return true
+end
+----------------------------------------------------------------------------------------------------------------------
+-- ACTIONs
+----------------------------------------------------------------------------------------------------------------------
+class "shake_hand" (action_base)
+function shake_hand:__init(npc_name, action_name, storage) super(nil, "shake_hand")
+	self.a = storage
+	self.timer = nil
+	self.state = nil
+end
+
+function shake_hand:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+
+	npc:set_desired_position()
+	npc:set_desired_direction()
+
+	npc:clear_animations()
+	utils.send_to_nearest_accessible_vertex(npc,npc:level_vertex_id())
+
+	if npc:item_in_slot(1) or npc:item_in_slot(2) and npc:active_item() then
+		state_mgr.set_state(npc,"hello_wpn",nil,nil,{look_object = db.actor},{animation = true})
+	else
+		state_mgr.set_state(npc,"hello",nil,nil,{look_object = db.actor},{animation = true})
+	end
+
+	olr.add_spot_on_map( npc:id(),"alife_combat_fight", " Давай поторгуем - "..npc:character_name().." "  )
+	npc:enable_trade()
+	if not olr_timers.has_timer("remove_timer_spot_wanan_trade") then
+		local rnd = math.random(31,52)
+		olr_timers.st_timer("remove_timer_spot_wanan_trade", rnd, "olr_ai_trade_agree.remove_spot_timer("..tostring(npc:id())..")")
+	end
+	
+	self.state = state_waiting
+end
+
+function shake_hand:execute()
+	action_base.execute(self)
+	local npc = self.object
+	
+	--if not db.actor:alive() then
+		--olr_ai_trade_agree.disable_scheme(npc, "trade_agree")
+	--end
+	
+	if npc:position():distance_to(db.actor:position()) < 6 then			
+		if npc:item_in_slot(1) or npc:item_in_slot(2) and npc:active_item() then
+			state_mgr.set_state(npc,"hello_wpn",nil,nil,{look_object = db.actor},{animation = true})
+		else
+			state_mgr.set_state(npc,"hello",nil,nil,{look_object = db.actor},{animation = true})
+		end
+		level.map_remove_object_spot(npc:id(), "alife_combat_fight")
+	end
+	
+	
+	if self.state == state_waiting and self.timer == nil then
+		self.timer = time_global() + anim_time
+		--log1(" timer wait - "..self.timer.." ")
+	end
+	if self.timer ~= nil and self.timer <= time_global() then
+		--log1(" timer AWAY - "..self.timer.." ")
+		--olr_ai_trade_agree.disable_scheme(npc, "trade_agree")
+		--olr_ai_trade_agree.reset_npc_logic(npc)
+		--log1("disabl")
+		level.map_remove_object_spot(npc:id(), "alife_combat_fight")
+	end
+end
+
+function shake_hand:finalize()
+	action_base.finalize(self)
+end
+
+function npc_load(p, obj)
+	if xr_logic.pstor_retrieve(obj, "active_npc_ids", false) == true then
+		local gulag = xr_gulag.get_npc_gulag(obj)
+		if gulag ~= nil then
+			gulag:load_obj(p, obj:id())
+		end
+		olr_ai_trade_agree.enable_scheme(obj, nil, "trade_agree")
+	end
+end
+
+function npc_save(p, obj)
+	if xr_logic.pstor_retrieve(obj, "active_npc_ids", false) == true then
+		local gulag = xr_gulag.get_npc_gulag(obj)
+		if gulag ~= nil then
+			gulag:save_obj(p, obj:id())
+		end
+	end
+end
+
+
+function remove_spot_timer(id)
+	local sobj = alife():object(id)
+  	if sobj then
+		level.map_remove_object_spot(sobj.id, "alife_combat_fight")
+	end
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------------------------------------------
+local property_base = 79945
+local Property = property_base + 1
+local Property_run = property_base + 2
+local act_base = 79950
+local Operator = act_base + 1
+
+function add_to_binder(npc, ini, scheme, section, storage)
+	local operators = {}
+	local properties = {}
+	xr_logic.pstor_store(npc, "active_npc_ids", true)
+	
+	local manager = npc:motivation_action_manager ()
+	
+	properties["trade_evaluator"] = xr_evaluators_id.sidor_attendant_eva + 0
+	properties["attendant_follow"] = xr_evaluators_id.sidor_attendant_eva + 1
+
+    operators["shake_hand"] = xr_actions_id.sidor_attendant_act + 0
+    operators["attendant_follow"] = xr_actions_id.sidor_attendant_act + 1
+    
+    manager:add_evaluator(
+		properties["trade_evaluator"],
+		this.trade_evaluator ("trade_evaluator", storage)
+	)
+	
+	local action = this.shake_hand ("shake_hand", storage)
+    action:add_precondition(world_property(stalker_ids.property_alive, true))
+    action:add_precondition(
+		world_property(stalker_ids.property_enemy, false)
+	)
+    action:add_precondition(world_property(stalker_ids.property_danger,	false))
+    action:add_precondition(world_property(properties["trade_evaluator"], true))
+    action:add_precondition(world_property(properties["shake_hand"], true))
+    action:add_effect(world_property(properties["shake_hand"], false))
+    manager:add_action (operators["shake_hand"], action)
+   	xr_logic.subscribe_action_for_events (npc, storage, action)
+    
+    --xr_logic.subscribe_action_for_events (npc, storage, action)
+    
+    action = manager:action(xr_actions_id.alife)
+    action:add_precondition(world_property (properties["shake_hand"], false))
+    
+end

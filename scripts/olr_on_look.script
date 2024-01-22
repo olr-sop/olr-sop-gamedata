@@ -1,0 +1,168 @@
+-- hi_flyer 19/07/17
+
+local jaba_angry_count = 0 
+
+function look_item(obj)
+
+
+--if obj and obj:is_car() then
+--local usable = xr_logic.cfg_get_condlist(ini, section, "usable", db.actor) then
+--news_manager.send_tip(db.actor, "range IS - "..obj:name().."", nil, "trader", 9000)
+--end
+--end
+
+
+if obj:section() == "af_electra_moonlight" or obj:section() == "af_fuzz_kolobok" or obj:section() == "af_fireball" then
+	local iParent = obj:parent()
+	if not iParent then
+		local shelbone = obj:get_physics_shell():get_element_by_bone_id(0)
+		shelbone:apply_force(math.random(140,750),math.random(140,750),math.random(100,900))
+	end
+end
+
+
+if obj:name() == "escape_trader_0000" or obj:name() == "lvl9_military_m_trader" then
+	if not db.actor:is_talking() then
+		if has_alife_info("ui_inventory") then return end
+		if has_alife_info("ui_pda") then return end
+		if not has_alife_info("esc_olr_1_done") then return end
+		jaba_angry_count = jaba_angry_count + 1
+		--log1(jaba_angry_count)
+		if jaba_angry_count >= 2300 and jaba_angry_count <= 2300 then
+			obj:clear_animations()
+			obj:play_cycle("alko", true)
+			news_manager.send_tip(db.actor, "Ты что, пьян? Какого хрена ты уставился?", nil, "trader", 9000)
+			local snd_obj = xr_sound.get_safe_sound_object([[ol3\jaba_drunk]])
+			if not snd_obj:playing() then 
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			end
+		end
+	end
+else
+	jaba_angry_count = 0
+end
+
+
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function look_change(obj)
+if obj then
+
+if get_clsid(obj) == clsid.zombie or get_clsid(obj) == clsid.zombie_s then
+	if obj:alive() == false and not has_alife_info("zombie_first_checkup") then
+		db.actor:give_info_portion("zombie_first_checkup")
+		olr.hud_tip("", "Он жив? Похож на зомби...", 10)
+	end
+	if obj:alive() == false then
+		if math.random(1,10) == 1 then
+			local shelbone = obj:get_physics_shell():get_element_by_bone_id(0)
+			shelbone:apply_force(math.random(14,75),math.random(14,75),math.random(10,90))
+			local snd_obj = xr_sound.get_safe_sound_object([[ol3\zombies_mute\zombie_mute5]])
+			if not snd_obj:playing() then 
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			end
+		end
+	end
+end
+
+
+if get_clsid(obj) == clsid.controller or get_clsid(obj) == clsid.controller_s then
+	if obj:alive() == false then
+		if math.random(1,100) == 1 then
+			olr.rnd_camera_direction()
+		end
+	end
+end
+
+if obj:section() == "karlik" then
+	if obj:alive() == false and not has_alife_info("karlik_first_checkup") then
+		db.actor:give_info_portion("karlik_first_checkup")
+		olr.hud_tip("", "Что за... это ребёнок? Что он тут делает?", 10)
+	end
+end
+
+if obj:section() == "m_pseudohuman_e" then
+	if obj:alive() == false and not has_alife_info("pseudohuman_first_checkup") then
+		db.actor:give_info_portion("pseudohuman_first_checkup")
+		olr.hud_tip("Хм...:", "Что за... что это за тварь?", 20)
+	end
+end
+
+
+if level.name() == "lvl9_military" then
+	nick.look_military(obj)
+end
+
+if level.name() == "lvl_rat" then
+	nick.look_rat(obj)
+end
+
+if level.name() == "lvl2_garbage" then
+	nick.look_garbage(obj)
+end
+
+if level.name() == "lvl7_yantar" then
+	nick.look_yantar(obj)
+end
+
+if level.name() == "lvl5_bar" then
+	this.look_bar(obj)
+end
+
+if level.name() == "lvl3_agroprom" then
+	if obj:name() == "lvl3_agroprom_physic_object_0381" then
+		olr.hud_tip("Хм...:", "Какая-то книга", 2)
+		--olr.beep()		
+	end
+end
+
+
+end
+end
+
+
+
+---------------------------------------------------------------------
+
+function look_bar(obj)
+	if obj:name() == "lvl5_bar_inventory_box" then
+		
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

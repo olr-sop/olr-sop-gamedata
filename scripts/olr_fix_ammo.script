@@ -1,0 +1,26 @@
+-- фикс нулевых пачек патронов
+-- hi_flyer 22.10.15 
+
+local vog_ammo = 
+{
+["ammo_vog-25"] = true,
+["ammo_vog-25p"] = true,
+["ammo_m209"] = true,
+["ammo_vgm93"] = true,
+["ammo_igla"] = true,
+["ammo_og-7b"] = true
+}
+
+function on_take(obj)
+if device().precache_frame >1 then return end
+if obj and obj:is_ammo() then
+	if obj:get_ammo_box_curr() <= 0 then
+        	local boxsize = obj:get_ammo_box_size()
+                if not vog_ammo[obj:section()] then 
+			obj:set_ammo_box_curr(boxsize / math.random(2,6))
+                else
+                	obj:set_ammo_box_curr(boxsize)
+        	end
+   	end
+end
+end

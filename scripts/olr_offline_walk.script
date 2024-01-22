@@ -1,0 +1,211 @@
+-- hi_flyer 21.01.16
+
+local walk_on = true
+local spots = false
+
+loadedsim = false
+tabst = {}
+ofl_walkers_cnt = #tabst
+
+local time_apdeyta = 0
+local timerup = 2056
+
+local montabl = 
+{
+       [clsid.zombie_s] = true,
+       [clsid.zombie] = true,
+       [clsid.dog_s] = true,
+       [clsid.boar_s] = true,
+       [clsid.boar] = true,
+       [clsid.burer_s] = true,
+       [clsid.controller_s] = true,
+       [clsid.bloodsucker_s] = true,
+       [clsid.controller] = true,
+       [clsid.controller_s] = true,
+       [clsid.pseudodog_s] = true,
+       [clsid.script_stalker] = true
+}
+
+
+function update(delta)
+if db.actor then
+
+if loadedsim == false and walk_on == true then
+if not has_alife_info("esc_kill_gunslinger") then
+	return
+end
+--news_manager.send_tip(db.actor, "brain update UPD ON ME", nil, "freedom", 59000)
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                	if montabl[kill:clsid()]  then
+                		if kill 
+				and kill ~= nil
+				and not kill.online 
+				and kill.m_game_vertex_id
+				and game_graph():valid_vertex_id(kill.m_game_vertex_id)
+				and kill.health
+				and kill:alive() then
+					local strn_id = kill:smart_terrain_id()
+					if strn_id ~= 65535 then
+						if alife():object(kill.id).level_name ~= level.name() then
+							--olr.add_spot_on_map( kill.id,"green_location", kill:name() )
+							table.insert(tabst, kill)
+                					loadedsim = true
+						end
+					end
+				end
+			end
+		end
+end
+                --log1("offline walkers - ["..#tabst.."]")
+		ofl_walkers_cnt = #tabst
+end
+
+
+if loadedsim == true then
+if db.actor then
+
+	if time_global() > time_apdeyta then
+	time_apdeyta = time_global() + timerup
+
+	if device():frame_elapsed() > 15 then 
+		--news_manager.send_tip(db.actor, "offline WALK low FPS - "..device():frame_elapsed().."", nil, "default", 30000)
+		return 
+	end
+
+	for _, val in ipairs(tabst) do
+		--amk.oau_reason="offline_walk chp1 "..tostring(val and val:name())
+
+
+		if val 
+			and val ~= nil
+			and not val.online 
+			and val.m_game_vertex_id
+			and game_graph():valid_vertex_id(val.m_game_vertex_id)
+			and val.health
+			and val:alive() then
+			amk.oau_reason="offline_walk chp2 "..tostring(val and val:name())
+
+
+			if val and 
+			val.id and 
+			val.level_name == level.name() then
+				local strn_id = val:smart_terrain_id()
+				if strn_id then
+					local smart = alife():object(strn_id)
+					--if smart and smart.level_name == level.name() and val.position:distance_to(smart.position) > 20 then
+					--	--log1("try set on smart ["..val:name().."] - smart id is ["..strn_id.."] ")
+					--	alife():teleport_object(val.id, smart.m_game_vertex_id, smart.m_level_vertex_id, smart.position)
+					--	--olr.add_spot_on_map( val.id,"red_location", val:name() )
+					--end
+					if smart and val.level_name == "lvl1_escape" and val.position:distance_to_xz(vector():set( -133, 1, 238)) < 30 then
+						--news_manager.send_tip(db.actor, "try set on smart from escape derevnya ["..val:name().."] - smart id is ["..strn_id.."]")
+						--log1("try set on smart from escape derevnya ["..val:name().."] - smart id is ["..strn_id.."] ")
+						alife():teleport_object(val.id, smart.m_game_vertex_id, smart.m_level_vertex_id, smart.position)
+						--olr.add_spot_on_map( val.id,"red_location", val:name() )
+					end
+				end
+				--log1("not update - this level ")
+				--olr.add_spot_on_map( val.id,"green_location", val:name() )
+				return
+			end
+
+			local callwalk, err_msg = pcall(procees, val, tmr_cnt)
+			if not callwalk then
+				log1("ERROR: olr_offline_walk pcall FAIL - reason: "..tostring(err_msg))
+				news_manager.send_tip(db.actor, "ERROR: olr_offline_walk pcall FAIL")
+			end
+
+			--local scallwalk, serr_msg = pcall(fast_to_smart, val, tmr_cnt)
+			--if not scallwalk then
+			--	log1("ERROR: fast_to_smart olr_offline_walk pcall FAIL - reason: "..tostring(serr_msg))
+			--	news_manager.send_tip(db.actor, "ERROR: fast_to_smart olr_offline_walk pcall FAIL")
+			--end
+
+		end
+	end
+end
+end
+end
+
+
+
+end
+end
+
+--[[
+function fast_to_smart(victim)
+	if amk_offline_alife.IsInHideout(victim) == true then
+		olr.add_spot_on_map( victim.id,"red_location", victim:name() )
+		news_manager.send_tip(db.actor, " fast_to_smart in hideot - "..victim:name().." on "..victim.level_name.." ")
+
+		local strn_id = victim:smart_terrain_id()
+			if strn_id then
+			local smart = alife():object(strn_id)
+					if smart and smart.level_name == smart.level_name and val.position:distance_to(smart.position) > 20 then
+
+	end
+end
+]]
+
+function procees(val)
+
+	if val then
+	amk.oau_reason="offline_walk chp3 "..tostring(val and val:name())
+		if val.id then
+		amk.oau_reason="offline_walk chp4 "..tostring(val and val:name())
+			if alife():object(val.id) then
+			amk.oau_reason="offline_walk chp5 "..tostring(val and val:name())
+				if val.brain then
+				amk.oau_reason="offline_walk chp6 "..tostring(val and val:name())
+					if val:brain() then
+					amk.oau_reason="offline_walk chp7 "..tostring(val and val:name())
+
+
+	--local pt = profile_timer()
+	--pt:start()
+
+	if spots == true then
+	if IsMonster(val) then
+		olr.add_spot_on_map( val.id,"red_location", ""..tostring(val:name()).."  " )
+	else
+		olr.add_spot_on_map( val.id,"green_location", ""..tostring(val:name()).." -- "..tostring(xvars.npcs_tasks_rndway[val:name()]).." " )
+	end
+	end
+
+	--news_manager.send_tip(db.actor, "brain update", nil, "freedom", 9000)
+
+	local wait_time = 0
+	local rnd_tmr = math.random(10,1950)
+  	wait_time = time_global() + rnd_tmr
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() 
+		val:brain():update(true)
+		--olr.add_spot_on_map( val.id,"red_location", val:name() )
+		--news_manager.send_tip(db.actor, "ON ME brain update", nil, "freedom", 9000) 
+	end
+  	)
+
+	--pt:stop()
+	--log1("-----start-----")
+	--prints("работало "..pt:time().." ms")
+	--log1("-----end-----")
+			
+	--news_manager.send_tip(db.actor, "brain update  - "..tmr_cnt.." ", nil, "freedom", 9000)
+	
+	end
+	end
+	end
+	end
+
+	end
+		
+end
+
+
+
+
+

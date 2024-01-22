@@ -1,0 +1,298 @@
+function init()
+	core.ac("actor_update",update)
+end
+
+local att 				
+local ptatt	
+
+local repaintnow = false			
+
+function get_reputation(num)
+	if num >= -10000 and num <= -1000 then
+		return game.translate_string("Ужасная")
+	elseif num > -1000 and num <= -150 then
+		return game.translate_string("Очень плохая")
+	elseif num > -150 and num <= -50 then
+		return game.translate_string("Плохая")
+	elseif num > -50 and num <= 50 then
+		return game.translate_string("Нейтральная")
+	elseif num > 50 and num <= 150 then
+		return game.translate_string("Хорошая")
+	elseif num > 150 and num <= 1000 then
+		return game.translate_string("Очень хорошая")
+	else
+		return game.translate_string("Отличная")
+	end
+end
+
+function get_rank(num)
+	if num >= 0 and num <= 300 then
+		return game.translate_string("Новичок")
+	elseif num > 300 and num <= 600 then
+		return game.translate_string("Опытный")
+	elseif num > 600 and num <= 900 then
+		return game.translate_string("Ветеран")
+	elseif num > 900 then
+		return game.translate_string("Мастер")
+	end
+end
+
+function get_vater(num)
+	if num >= 0 and num <= 0.1 then
+		return game.translate_string("Очень сильная")
+	elseif num > 0.1 and num <= 0.3 then
+		return game.translate_string("Сильная")
+	elseif num > 0.3 and num <= 0.4 then
+		return game.translate_string("Средняя")
+	elseif num > 0.4 then
+		return game.translate_string("Нет")
+	end
+end
+
+function get_sleep(num)
+	if num >= 0 and num <= 0.1 then
+		return game.translate_string("Очень сильная")
+	elseif num > 0.1 and num <= 0.3 then
+		return game.translate_string("Сильная")
+	elseif num > 0.3 and num <= 0.4 then
+		return game.translate_string("Средняя")
+	elseif num > 0.4 then
+		return game.translate_string("Нет")
+	end
+end
+
+vol_obem = 0
+
+function repaint()
+	repaintnow = true
+	local wait_time = 0
+  	wait_time = time_global() + 5
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() repaintnow = false end
+  	)
+end
+
+-- db.actor:has_info("ui_inventory")
+function update(delta)
+		if ui.get_inventory_wnd():IsShown() and repaintnow == false then
+			vol_obem = olr_ruck_limit.cur_amount
+			vol_obem_max = olr_ruck_limit.max_item_amount
+			if ui.get_inventory_wnd() and not att then
+				ptatt = ui.get_inventory_wnd()
+				att = olr_ui_inv_acinfo.ui_trade()
+				ptatt:AttachChild(att)
+				att:SetAutoDelete(true)
+				att:Show(true)
+				this.fix_actor_model()
+				--ui.reinit_shown_ui()
+			end	
+		else
+			if att and ptatt then
+				att:Show(false)
+				ptatt:DetachChild(att)
+				att = nil
+				ptatt = nil
+			end
+		end
+end
+
+class "ui_trade" (CUIScriptWnd)
+
+function ui_trade:__init(owner) super()
+	self.owner = owner
+        self.comm = game.translate_string(db.actor:character_community())
+        self.rank = get_rank(db.actor:character_rank())                                                                                
+        self.repa = get_reputation(db.actor:character_reputation())                     
+        self.vater = get_vater(db.actor:get_actor_thirst())
+        self.sleep = get_sleep(db.actor:get_actor_sleep())
+        self.blows = xvars.blow_count
+        self.inv_vol = vol_obem 
+	self.inv_vol_max = vol_obem_max
+	self:InitControls()
+end
+
+function ui_trade:__finalize() end
+
+function ui_trade:InitControls()
+	self:Init(0,0,1024,768)
+
+    	self.back = CUIStatic()
+    	self.back:Init(0,0,0,0)
+    	self.back:InitTexture("ui\\ui_verst_list2")
+    	self.back:SetOriginalRect(0,0,0,0)
+	self:AttachChild(self.back)
+		
+
+
+	self.backgroundo = CUIStatic()
+	self.backgroundo:Init(720,545,200,10)
+	if not has_alife_info("cit_fail_first_task") then
+         	self.backgroundo:SetText("Мессер")
+	else
+	        self.backgroundo:SetText("Стрелок")	
+	end
+	self.backgroundo:SetFont(GetFontGraffiti22Russian()) 
+	self.backgroundo:SetTextAlign(CGameFont.alCenter)
+	self.backgroundo:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.backgroundo)
+
+
+	--self.backgroundo = CUIButton()
+   	--self.backgroundo:SetAutoDelete(false)
+	--self.backgroundo:Init(720,545,200,10)
+	--if not has_alife_info("cit_fail_first_task") then
+       -- 	self.backgroundo:SetText("Мессер")
+	--else
+	--        self.backgroundo:SetText("Стрелок")	
+	--end
+	--self.backgroundo:SetFont(GetFontGraffiti22Russian()) 
+	--self.backgroundo:SetTextAlign(CGameFont.alCenter)
+	--self.backgroundo:SetTextColor(255,238,153,26)
+	--self.back:AttachChild(self.backgroundo)
+        --self:AddCallback("self.backgroundo", ui_events.BUTTON_CLICKED, self.ActorInformation, self)
+
+
+	
+    	-- 
+    	self.yess = CUIStatic()
+    	self.yess:Init(755,580,133,25)
+	self.yess:SetTextST(string.format("Ранг: %s", ""..db.actor:character_rank().." : "..self.rank..""))
+	self.yess:SetFont(GetFontGraffiti22Russian())
+	self.yess:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.yess)
+
+	
+	-- 
+    	self.no = CUIStatic()
+    	self.no:Init(755,600,133,25)
+        self.no:SetTextST(string.format("Группировка: %s", self.comm))
+	self.no:SetFont(GetFontGraffiti22Russian())
+	self.no:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.no)
+
+
+	-- 
+    	self.rep = CUIStatic()
+    	self.rep:Init(755,620,133,25)
+        --self.rep:SetTextST(string.format("Репутация: %s", self.repa))
+	self.rep:SetTextST(string.format("Репутация: %s", ""..db.actor:character_reputation().." : "..self.repa..""))
+	self.rep:SetFont(GetFontGraffiti22Russian())
+	self.rep:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.rep)
+
+
+
+	-- 
+    	self.vt = CUIStatic()
+    	self.vt:Init(755,640,133,25)
+        self.vt:SetTextST(string.format("Жажда: %s", self.vater))
+	self.vt:SetFont(GetFontGraffiti22Russian())
+	self.vt:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.vt)
+
+
+	-- 
+    	self.so = CUIStatic()
+    	self.so:Init(755,660,133,25)
+        self.so:SetTextST(string.format("Сонливость: %s",  self.sleep))
+	self.so:SetFont(GetFontGraffiti22Russian())
+	self.so:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.so)
+
+
+	-- 
+   	self.bw = CUIStatic()
+    	self.bw:Init(755,680,133,25)
+        self.bw:SetTextST(string.format("Пережито выбросов: %s",  self.blows))
+	self.bw:SetFont(GetFontGraffiti22Russian())
+	self.bw:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.bw)
+
+	-- 
+    	self.vo = CUIStatic()
+    	self.vo:Init(755,700,133,25)
+	if self.inv_vol < 0 then
+		self.inv_vol=0
+	end
+	local vol_cur = string.format("%1.1f", self.inv_vol)
+	local vol_cur_max = string.format("%1.0f", self.inv_vol_max)
+	--log1("cur bo - "..vol_cur.."")
+        self.vo:SetTextST(string.format("Объём рюкзака: %s / "..vol_cur_max.."",  vol_cur))
+	self.vo:SetFont(GetFontGraffiti22Russian())
+	self.vo:SetTextColor(255,238,153,26)
+	self.back:AttachChild(self.vo)
+
+
+
+end
+
+
+function ui_trade:ActorInformation()
+    log1("actor  info")
+end
+
+
+
+function fix_actor_model()
+	local outfit = db.actor:get_current_outfit()
+	if not outfit then
+		db.actor:set_visual_name("actors\\hero\\stalker_novice")
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

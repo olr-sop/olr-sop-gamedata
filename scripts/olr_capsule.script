@@ -1,0 +1,411 @@
+-- hi_flyer 19.04.17
+-- капсула R1
+
+
+local reg_ids = {}
+local cap_reg_ids = {}
+local oButtons = {}
+local oButtonsCap = {}
+local curent_open_id = -1
+local curent_inv_box_id = -1
+
+
+
+function use(obj)
+	if obj and obj:section() == "capsule_rone" then
+		bind_stalker.hide_weapon()
+		snd_open_capsule()
+		local gv = db.actor:game_vertex_id()
+		local lv = db.actor:level_vertex_id()
+		local pos = db.actor:position()
+		local dir = db.actor:direction()
+		pos = pos:add(dir:mul(0.5))
+		pos.y = pos.y - 2 
+		if not xvars.capsules[obj:name()] then
+			local capsule = alife():create("box_capsule", pos, lv, gv)
+			xvars.capsules[obj:name()] = capsule.id
+			if capsule and capsule.id then
+				olr.hide_inv()
+				level.start_stop_menu(this.ui_capsule(),true)
+				curent_open_id = capsule.id
+				curent_inv_box_id = obj:id()
+			end
+		elseif xvars.capsules[obj:name()] then
+			local sobj = xvars.capsules[obj:name()]
+			local objid = alife():object(sobj)
+			alife():teleport_object(objid.id, gv, lv, pos)
+			if objid then
+				olr.hide_inv()
+				level.start_stop_menu(this.ui_capsule(),true)
+				curent_open_id = objid.id
+				curent_inv_box_id = obj:id()
+			end
+		end
+	end
+end
+
+class "ui_capsule" (CUIScriptWnd)
+function ui_capsule:__init(owner) super()
+ 	self.owner = owner
+	self:InitControls()
+end
+
+function ui_capsule:InitControls()
+ 	self:Init(335,5,675,266)
+
+    	-- фон
+    	self.back = CUIStatic()
+    	self.back:Init(0,0,675,266)
+    	self.back:InitTexture("ui\\ui_dg_inventory_arc")
+   	self.back:SetOriginalRect(0,0,675,768)
+	self:AttachChild(self.back)
+		
+	self.inventory = CUIStatic()
+	self.inventory:Init(5,5,200,10)
+        self.inventory:SetText("Рюкзак")
+	self.inventory:SetFont(GetFontGraffiti22Russian())
+	self.inventory:SetTextAlign(CGameFont.alCenter)
+	self.inventory:SetTextColor(255,255,255,255)
+	self.back:AttachChild(self.inventory)
+	
+
+	self.capsule = CUIStatic()
+	self.capsule:Init(5,5,500,150)
+        self.capsule:SetText("Капсула")
+	self.capsule:SetFont(GetFontGraffiti22Russian())
+	self.capsule:SetTextAlign(CGameFont.alCenter)
+	self.capsule:SetTextColor(255,255,255,255)
+	self.back:AttachChild(self.capsule)
+		
+	self:try_add_inv_arts()
+	self:try_add_cap_arts()
+end
+
+function ui_capsule:try_add_inv_arts()
+	local wait_time = 0
+  	wait_time = time_global() + 1000
+  	level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() self:add_inv_arts() end
+  	)
+end
+
+function ui_capsule:try_add_cap_arts()
+	local wait_time = 0
+  	wait_time = time_global() + 1000
+  	level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() self:add_cap_arts() end
+  	)
+end
+
+
+function ui_capsule:add_cap_arts()
+	local wth = 28
+	local st_id = 0
+	local addItm = 35
+	local box = level.object_by_id(curent_open_id)
+	if box then
+		for i = 0, box:inv_box_count() - 1 do
+			local obj = box:object_from_inv_box(i)
+			--log1("box - "..box:name().." has item - "..obj:name().."")
+
+			local fName = ""..obj:get_name()..""
+
+			local reg_id = ""
+			if type(obj) == "number" then
+				reg_id = ("af_%d"):format(obj)
+			elseif type(obj) == "string" then
+				reg_id = ("af_%s"):format(obj)
+			else
+				reg_id = ("af_%d"):format(obj:id())
+			end
+
+			self[reg_id] = CUIButton()
+   			self[reg_id]:SetAutoDelete(true)
+    			self[reg_id]:Init(175,wth,133,25)
+			self[reg_id]:InitTexture("ui\\ui_verst_list")
+			self[reg_id]:SetOriginalRect(46,296,133,25)
+			self[reg_id]:SetStretchTexture(true)
+			self[reg_id]:SetText(string.format(fName))
+			self[reg_id]:SetFont(GetFontGraffiti22Russian())
+			self[reg_id]:SetTextColor(255,255,255,255)
+    			self:Register(self[reg_id], reg_id)
+			self:AttachChild(self[reg_id])
+
+			local button = CButtonDataCap(self, obj, self[reg_id])
+			self:AddCallback(reg_id,ui_events.BUTTON_CLICKED,button.OnPressCap,button)
+			self:AddCallback(reg_id,ui_events.WINDOW_LBUTTON_DB_CLICK,button.OnDoublePressCap,button)
+
+			table.insert(cap_reg_ids, reg_id)
+
+			st_id = st_id + 1
+			wth = wth + 25
+
+
+		end
+	end
+end
+
+
+function ui_capsule:add_inv_arts()
+	local wth = 28
+	local st_id = 0
+
+	local addItm = 35
+
+	-- перебор и заполнение инвентори
+	local calc = function(npc, obj)
+		if obj ~= nil and obj:is_artefact() and db.actor:is_in_ruck(obj) then
+
+                       if obj:section() == "af_studen" or obj:section() == "af_ameba_slime" or obj:section() == "af_ameba_slug" or obj:section() == "af_electra_sparkler" or obj:section() == "af_electra_flash" then
+
+			log1(""..obj:name().."")
+
+			--local cond = obj:condition() * 100 
+			--local condname = ""..string.format("%1.0f", cond).."%"
+			local fName = ""..obj:get_name()..""
+
+			local reg_id = ""
+			if type(obj) == "number" then
+				reg_id = ("af_%d"):format(obj)
+			elseif type(obj) == "string" then
+				reg_id = ("af_%s"):format(obj)
+			else
+				reg_id = ("af_%d"):format(obj:id())
+			end
+
+			self[reg_id] = CUIButton()
+   			self[reg_id]:SetAutoDelete(true)
+    			self[reg_id]:Init(32,wth,133,25)
+			self[reg_id]:InitTexture("ui\\ui_verst_list")
+			self[reg_id]:SetOriginalRect(46,296,133,25)
+			self[reg_id]:SetStretchTexture(true)
+			self[reg_id]:SetText(string.format(fName))
+			self[reg_id]:SetFont(GetFontGraffiti22Russian())
+			self[reg_id]:SetTextColor(255,255,255,255)
+    			self:Register(self[reg_id], reg_id)
+			self:AttachChild(self[reg_id])
+
+			local button = CButtonData(self, obj, self[reg_id])
+			self:AddCallback(reg_id,ui_events.BUTTON_CLICKED,button.OnPress,button)
+			self:AddCallback(reg_id,ui_events.WINDOW_LBUTTON_DB_CLICK,button.OnDoublePress,button)
+
+			table.insert(reg_ids, reg_id)
+
+			st_id = st_id + 1
+			wth = wth + 25
+
+			end
+
+
+		end
+	end
+	db.actor:iterate_inventory(calc, db.actor)   
+end
+
+function ui_capsule:Hide()
+	self:GetHolder():start_stop_menu(self, true)
+	log1("close capsule")
+end
+
+function ui_capsule:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	local bind = dik_to_bind(dik)
+	
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			hide_curent_capsule()
+		end
+	end
+end
+
+function ui_capsule:hide_btn(section, button)
+	button.button:Show(false)
+end
+
+
+-- в инвентарь
+-----------------------------------
+class "CButtonDataCap"
+-----------------------------------
+-- Construct
+function CButtonDataCap:__init(wind, obj, button)
+	self.obj = obj
+	self.wind = wind
+	self.button = button
+	table.insert(oButtons, self)
+end
+
+-- Destruct
+function CButtonDataCap:__finalize()
+end
+
+function CButtonDataCap:hide_art(section, button)
+	button:Show(false)
+end
+
+function CButtonDataCap:OnPressCap()
+	--log1(" OnPresssss  "..self.obj:name().."")
+	local section = self.obj:section()
+	local x, y = GetInvPos(section)
+	self.back = CUIStatic()
+	self.wind:AttachChild(self.back)
+	self.back:Init(145,395,50,50)
+	self.back:InitTexture("ui\\ui_icon_equipment")
+	self.back:SetOriginalRect(x, y, 50, 50)
+	self.back:SetStretchTexture(true)
+	local wait_time = 0
+  	wait_time = time_global() + 1000
+  	level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() self:hide_art(self.obj, self.back) end
+  	)	
+end
+
+function CButtonDataCap:OnDoublePressCap()
+	if self.obj then
+		local box = level.object_by_id(curent_open_id)  -- мировой ящик
+		if box then
+			box:transfer_item(self.obj, db.actor)
+			self.wind:hide_btn(self.obj, self)
+			--self.wind:try_add_inv_arts()  -- вроде пашет
+			local box_inv = level.object_by_id(curent_inv_box_id) -- инв. ящик
+			if box_inv then
+				local val_weight = box_inv:weight() - self.obj:weight()
+				box_inv:set_weight(val_weight)
+				xvars.inv_capsules[box_inv:name()] = val_weight
+				on_move_art()
+			end
+		end
+	end
+end
+
+
+-- в капсулу 
+-----------------------------------
+class "CButtonData"
+-----------------------------------
+-- Construct
+function CButtonData:__init(wind, obj, button)
+	self.obj = obj
+	self.wind = wind
+	self.button = button
+	table.insert(oButtonsCap, self)
+end
+
+-- Destruct
+function CButtonData:__finalize()
+end
+
+function CButtonData:hide_art(section, button)
+	button:Show(false)
+end
+
+function CButtonData:OnPress()
+	--log1(" OnPresssss  "..self.obj:name().."")
+	local section = self.obj:section()
+	local x, y = GetInvPos(section)
+	self.back = CUIStatic()
+	self.wind:AttachChild(self.back)
+	self.back:Init(145,395,50,50)
+	self.back:InitTexture("ui\\ui_icon_equipment")
+	self.back:SetOriginalRect(x, y, 50, 50)
+	self.back:SetStretchTexture(true)
+	local wait_time = 0
+  	wait_time = time_global() + 1000
+  	level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() self:hide_art(self.obj, self.back) end
+  	)	
+end
+
+function CButtonData:OnDoublePress()
+	if self.obj then
+		local box = level.object_by_id(curent_open_id)  -- мировой ящик
+		if box then
+			local art_cnt = box:inv_box_count()
+			if art_cnt >= 3 then
+				news_manager.send_tip(db.actor, "Нет места в контейнере", nil, "artefact", 5000)
+				return
+			end
+			db.actor:transfer_item(self.obj, box)
+			self.wind:hide_btn(self.obj, self)
+			local box_inv = level.object_by_id(curent_inv_box_id) -- инв. ящик
+			if box_inv then
+				local val_weight = box_inv:weight() + self.obj:weight()
+				box_inv:set_weight(val_weight)
+				xvars.inv_capsules[box_inv:name()] = val_weight
+				on_move_art()
+			end
+		end
+	end
+end
+
+-------------------------------
+
+function hide_curent_capsule()
+	if curent_open_id ~= -1 then
+		alife():teleport_object(curent_open_id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), db.actor:position():add(db.actor:direction():mul(2500)))
+		curent_open_id = -1
+		curent_inv_box_id = -1
+		bind_stalker.restore_weapon()
+	end
+end
+
+
+function snd_open_capsule()
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\chandge_outfit1]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+end
+
+
+function on_move_art()
+	local snd_obj = xr_sound.get_safe_sound_object([[sounds\detectors\geiger_6]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+	local inv_window = level.main_input_receiver()
+	if inv_window and inv_window:IsShown() then
+		level.start_stop_menu(inv_window,true)
+	end
+	hide_curent_capsule()
+end
+
+function GetInvPos(section)
+	local ini = system_ini()
+	local x = ini:r_s32(section, "inv_grid_x")*50
+	local y = ini:r_s32(section, "inv_grid_y")*50
+	return x, y
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

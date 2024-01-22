@@ -1,0 +1,363 @@
+-- Фейковые концовки у монолита
+-- hi_flyer 04/05/18
+
+function select_fake_ending()
+
+	--' Если много сохранялся (Дай мне бессмертие)
+	if xvars.saves_count >= 3000 then
+		select_bessmertie()	
+		return
+	end
+
+	--' Много денег и собирал много оружия (Дай мне власть над миром)
+	if db.actor:money() >= 20000 and xvars.ac_weapon_count > 450 then
+		gimme_power()	
+		return
+	end
+
+	--' плохая репутация (хочу чтобы человечество исчезло)
+	if has_alife_info("just_kill_the_man") then
+		select_hate_worldwide()	
+		return
+	end
+
+	--' жажда гуманизма
+	if not has_alife_info("just_kill_the_man") then
+		select_humanism()	
+		return
+	end
+
+	--' «Хочу, чтобы Зона исчезла, а все кто погиб в ней ожил» - «Жажда возврата утраченного»
+	if db.actor:character_reputation() >= 400 then
+		zona_end_ressurect()	
+		return
+	end
+
+	local rnd = math.random(1,2)
+	if rnd == 1 then
+		select_hype()
+	else
+		happines_for_all()
+	end
+end
+
+local snds = false
+-------------------------------------------------------------------------------------
+
+-- «Хочу стать бессмертным» - «Жажда бессмертия»
+function select_bessmertie()
+	teleport_actor_to_fake()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	olr.to_offline("lvl15_sarcofag_physic_object_0038")
+	olr_timers.st_timer("monol_particle_shar", 3, "olr_monolith.monol_particle_shar()")
+	olr_timers.st_timer("monol_particle_shar", 6, "olr_monolith.actor_particle_shar()")
+	olr_timers.st_timer("monol_particle_shar", 8, "olr_monolith.monol_kill_actor()")
+	news_manager.send_tip(db.actor, "Дай мне... бессмертие...", 4, "default", 5000)
+	xr_effects.disable_ui(db.actor, nil)		
+	db.actor:give_info_portion("spawn_fake_actor_monolith")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.select_bessmertie_two")	
+end
+
+function select_bessmertie_two()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	olr.to_online("lvl15_sarcofag_physic_object_0038")
+	level.add_cam_effector2("camera_effects\\mon_fake_dok_one.anm", 320, false, "olr_monolith.select_bessmertie_tri")
+end
+
+function select_bessmertie_tri()
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\ekg]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	news_manager.send_tip(db.actor, "Здравствуй Стрелок! Можешь меня поздравить, я придумал новый способ консервации живых тканей, теперь ты можешь жить практически вечно...", 7, "dok", 25000)
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_dok_two.anm", 340, false, "xr_effects.game_credits")
+end
+
+-------------------------------------------------------------------------------------
+--«Хочу, чтобы проклятое человечество исчезло» - «Человеконенавистничество»
+function select_hate_worldwide()
+	teleport_actor_to_fake()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	news_manager.send_tip(db.actor, "Хочу, чтобы проклятое человечество исчезло...", 4, "default", 5000)
+	xr_effects.disable_ui(db.actor, nil)		
+	olr.info("spawn_fake_actor_monolith")
+	olr.info("spawn_fake_dead_stalkers_monolith")
+	olr_timers.st_timer("monol_particle_shar", 8, "olr_monolith.monol_kill_actor()")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.select_hate_worldwide_one")	
+end
+
+function select_hate_worldwide_one()
+	spawn_monsters_restrs()
+	olr_timers.st_timer("spawn_monsters_restrs", 5, "olr_monolith.spawn_monsters_restrs()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\select_hate_worldwide.anm", 30, false, "olr_monolith.select_hate_worldwide_two")
+end
+
+function select_hate_worldwide_two()
+	olr_timers.st_timer("spawn_monsters_restrs", 2, "olr_monolith.credits()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "")
+end
+--------------------------------------------------------------------------------------
+--«Хочу стать повелителем  всей Земли» - «Жажда власти»
+function gimme_power()
+	teleport_actor_to_fake()
+	olr_timers.st_timer("blowout_additional_timer", 5, "olr_blowout.blowout_additional_timer2()")
+	olr_timers.st_timer("blowout_additional_timer2", 6, "olr_blowout.blowout_additional_timer3()")
+	olr_timers.st_timer("blowout_additional_timer3", 10, "olr_blowout.blowout_additional_timer4()")
+	olr_timers.st_timer("blowout_additional_timer4", 12, "olr_blowout.blowout_additional_timer5()")
+	olr_timers.st_timer("blowout_additional_timer5", 16, "olr_blowout.blowout_additional_timer6()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	news_manager.send_tip(db.actor, "Дай мне... власть над миром...", 4, "default", 5000)
+	xr_effects.disable_ui(db.actor, nil)		
+	olr.info("spawn_fake_actor_monolith")
+	olr.info("spawn_fake_dead_stalkers_monolith")
+	olr_timers.st_timer("monol_particle_shar", 8, "olr_monolith.monol_kill_actor()")
+	olr_timers.st_timer("monol_particle_shar", 3, "olr_monolith.monol_particle_shar()")
+	olr_timers.st_timer("monol_particle_shar", 6, "olr_monolith.actor_particle_shar()")
+	olr_timers.st_timer("monol_particle_shar", 8, "olr_monolith.monol_kill_actor()")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.gimme_power_one")
+end
+
+function gimme_power_one()
+	spawn_zombies_restrs()
+	olr_timers.st_timer("spawn_monsters_restrs", 5, "olr_monolith.spawn_zombies_restrs()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\select_hate_worldwide.anm", 30, false, "olr_monolith.gimme_power_two")
+end
+
+function gimme_power_two()
+	olr_timers.st_timer("spawn_monsters_restrs", 2, "olr_monolith.credits()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "")
+end
+--------------------------------------------------------------------------------------
+--«Жажда гуманизма»
+function select_humanism()
+	snds = true
+	teleport_actor_to_fake()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	olr.to_offline("lvl15_sarcofag_physic_object_0038")
+	olr_timers.st_timer("monol_particle_shar", 25, "olr_monolith.monol_kill_actor()")
+	xr_effects.disable_ui(db.actor, nil)		
+	db.actor:give_info_portion("spawn_fake_actor_monolith")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.select_humanism_two")
+end
+
+function select_humanism_two()
+	spawn_monsters_restrs()
+	olr_timers.st_timer("spawn_monsters_restrs", 5, "olr_monolith.spawn_zombies_restrs()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\select_hate_worldwide.anm", 30, false, "olr_monolith.select_humanism_tri")
+end
+
+function select_humanism_tri()
+	olr_timers.st_timer("spawn_monsters_restrs", 2, "olr_monolith.credits()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "")
+end
+--------------------------------------------------------------------------------------
+--«Хочу, чтобы Зона исчезла, а все кто погиб в ней ожил»
+function zona_end_ressurect()
+	teleport_actor_to_fake()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	olr.to_offline("lvl15_sarcofag_physic_object_0038")
+	news_manager.send_tip(db.actor, "Хочу, чтобы Зона исчезла, а все кто погиб в ней ожил...", 4, "default", 5000)
+	xr_effects.disable_ui(db.actor, nil)		
+	olr.info("spawn_fake_actor_monolith")
+	olr.info("spawn_fake_dead_stalkers_monolith")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.zona_end_ressurect_two")
+end
+
+function zona_end_ressurect_two()
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\re\zomb_eho2]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	spawn_npc_zombies()
+	news_manager.send_tip(db.actor, "Нет... Нет! Стойте!", 4, "default", 5000)
+	level.add_cam_effector2("camera_effects\\select_hate_worldwide.anm", 30, false, "olr_monolith.zona_end_ressurect_tri")
+end
+
+function zona_end_ressurect_tri()
+	olr_timers.st_timer("spawn_monsters_restrs", 2, "olr_monolith.credits()")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "")
+end
+--------------------------------------------------------------------------------------
+-- «Жажда славы»
+function select_hype()
+	teleport_actor_to_fake()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	news_manager.send_tip(db.actor, "Дай мне... славу...", 4, "default", 5000)
+	xr_effects.disable_ui(db.actor, nil)		
+	db.actor:give_info_portion("spawn_fake_actor_monolith")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.select_hype_two")	
+end
+
+function select_hype_two()
+	olr.to_online("lvl15_sarcofag_physic_object_0042")
+	olr.to_online("lvl15_sarcofag_physic_object_0040")
+	olr.to_online("lvl15_sarcofag_physic_object_0039")
+	olr.to_online("lvl15_sarcofag_physic_object_0041")
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_dok_one.anm", 320, false, "olr_monolith.select_hype_tri")
+end
+
+function select_hype_tri()
+	news_manager.send_tip(db.actor, "Ты избранный... ты триждырожденный...", 3, "zombied", 15000)
+	level.set_weather("tuman", true)
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\mon_fake_greh.anm", 320, false, "xr_effects.game_credits")
+end
+--------------------------------------------------------------------------------------
+--«Счастье всем и пусть никто не уйдет обиженным»
+function happines_for_all()
+	teleport_actor_to_fake()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	news_manager.send_tip(db.actor, "Счастье всем и пусть никто не уйдет обиженным...", 4, "default", 5000)
+	xr_effects.disable_ui(db.actor, nil)		
+	db.actor:give_info_portion("spawn_fake_actor_monolith")
+	level.add_cam_effector2("camera_effects\\mon_fake_universal.anm", 30, false, "olr_monolith.happines_for_all_two")
+end
+
+function happines_for_all_two()
+	level.set_weather("1844", true)
+	news_manager.send_tip(db.actor, "Что за...", 4, "dolg", 5000)
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\happines_for_all_two.anm", 320, false, "olr_monolith.happines_for_all_two_tu")
+end
+
+function happines_for_all_two_tu()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\happines_for_all_two_dva.anm", 320, false, "olr_monolith.happines_for_all_tri")
+end
+
+function happines_for_all_tri()
+	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\happines_for_all_tri.anm", 320, false, "xr_effects.game_credits")
+end
+
+--------------------------------------------------------------------------------------
+function spawn_npc_zombies()
+	for i=1, 12 do
+		olr.spawn_on_obj("rad_zombied_respawn_1", "lvl15_sarcofag_space_restrictor_0001")
+		olr.spawn_on_obj("rad_zombied_respawn_2", "lvl15_sarcofag_space_restrictor_0002")
+		olr.spawn_on_obj("rad_zombied_respawn_3", "lvl15_sarcofag_space_restrictor_0003")
+		olr.spawn_on_obj("zombie_immortal", "lvl15_sarcofag_space_restrictor_0004")
+		olr.spawn_on_obj("yan_zombied_respawn_1", "lvl15_sarcofag_space_restrictor_0005")
+		olr.spawn_on_obj("zombie_immortal", "lvl15_sarcofag_space_restrictor_0006")
+		olr.spawn_on_obj("rad_zombied_respawn_1", "lvl15_sarcofag_space_restrictor_0007")
+		olr.spawn_on_obj("rad_zombied_respawn_2", "lvl15_sarcofag_space_restrictor_0008")
+		olr.spawn_on_obj("rad_zombied_respawn_3", "lvl15_sarcofag_space_restrictor_0009")
+		olr.spawn_on_obj("yan_zombied_respawn_1", "lvl15_sarcofag_space_restrictor_00010")
+		olr.spawn_on_obj("yan_zombied_respawn_2", "lvl15_sarcofag_space_restrictor_00011")
+		olr.spawn_on_obj("yan_zombied_respawn_3", "lvl15_sarcofag_space_restrictor_00012")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_00013")
+	end
+end
+
+function spawn_zombies_restrs()
+	for i=1, 12 do
+		olr.spawn_on_obj("zombie_normal", "lvl15_sarcofag_space_restrictor_0001")
+		olr.spawn_on_obj("zombie_strong", "lvl15_sarcofag_space_restrictor_0002")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_0003")
+		olr.spawn_on_obj("zombie_immortal", "lvl15_sarcofag_space_restrictor_0004")
+		olr.spawn_on_obj("zombie_immortal", "lvl15_sarcofag_space_restrictor_0005")
+		olr.spawn_on_obj("zombie_immortal", "lvl15_sarcofag_space_restrictor_0006")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_0007")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_0008")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_0009")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_00010")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_00011")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_00012")
+		olr.spawn_on_obj("zombie_blue", "lvl15_sarcofag_space_restrictor_00013")
+	end
+end
+
+function credits()
+	xr_effects.game_credits()
+end
+
+function spawn_monsters_restrs()
+	for i=1, 12 do
+		olr.spawn_on_obj("m_dog_e", "lvl15_sarcofag_space_restrictor_0001")
+		olr.spawn_on_obj("m_flesh_e", "lvl15_sarcofag_space_restrictor_0002")
+		olr.spawn_on_obj("m_fracture_e", "lvl15_sarcofag_space_restrictor_0003")
+		olr.spawn_on_obj("m_gigant_e", "lvl15_sarcofag_space_restrictor_0004")
+		olr.spawn_on_obj("karlik", "lvl15_sarcofag_space_restrictor_0005")
+		olr.spawn_on_obj("karlito", "lvl15_sarcofag_space_restrictor_0006")
+		olr.spawn_on_obj("korpus", "lvl15_sarcofag_space_restrictor_0007")
+		olr.spawn_on_obj("m_poltergeist_e", "lvl15_sarcofag_space_restrictor_0008")
+		olr.spawn_on_obj("m_pseudodog_e", "lvl15_sarcofag_space_restrictor_0009")
+		olr.spawn_on_obj("rat_volk", "lvl15_sarcofag_space_restrictor_00010")
+		olr.spawn_on_obj("swamp_karlik", "lvl15_sarcofag_space_restrictor_00011")
+		olr.spawn_on_obj("observer", "lvl15_sarcofag_space_restrictor_00012")
+		olr.spawn_on_obj("m_zombie_e", "lvl15_sarcofag_space_restrictor_00013")
+	end
+end
+
+function teleport_actor_to_fake()
+	local point = patrol("monofave_walk")
+	local look = patrol("monofave_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 20131, false)
+end
+
+function monol_kill_actor()
+	if snds == true then
+		local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+	for i=1, 65534 do
+	local car = level.object_by_id(i)
+	if car then
+	if car ~= nil and 
+	car:name() == "lvl15_sarcofag_stalker_0004" then
+	local h = hit ()
+	h.power = 9999999
+	h.direction = vector():set (0, 1, 0)
+	h.impulse = 2
+	h.draftsman = car
+	h.type = hit.strike
+	car:hit (h)
+	end
+	end
+	end
+end
+
+function monol_particle_shar()
+	local objp = alife():object("lvl15_sarcofag_stalker_0004")
+	local bosp = level.object_by_id(objp.id)
+	if bosp then
+	local boss_particle = particles_object("anomaly2\\unknown_star") 
+	boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+4.4, bosp:position().z))
+	end
+end
+
+function actor_particle_shar()
+	local objp = alife():object("lvl15_sarcofag_physic_object_0037")
+	local bosp = level.object_by_id(objp.id)
+	if bosp then
+	local boss_particle = particles_object("anomaly2\\unknown_star") 
+	boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+0.6, bosp:position().z))
+	end
+end

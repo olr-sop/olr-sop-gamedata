@@ -1,0 +1,101 @@
+
+class "verstak_start" (CUIScriptWnd)
+function verstak_start:__init() super()
+        self:InitWindow()
+end
+
+function verstak_start:InitWindow() 
+	self:Init(0,0,1024,768)
+
+	self.noise = CUIStatic()
+	self.noise:InitTexture("ui\\ui_pult")
+	self.noise:SetOriginalRect(0,0,1024,768)
+	self.noise:Init(3,20,891,643)
+	self:AttachChild(self.noise)
+
+	-- текст 
+	self.textpan = CUIStatic()
+        self.textpan:Init(45,20,10,10)
+        self.textpan:SetText("Выбор сектора для перенастройки антены")
+	self.textpan:SetFont(GetFontMedium())
+	self.textpan:SetTextColor(128,128,255,130)
+	self.noise:AttachChild(self.textpan)
+
+	-- Бар
+        self.start = CUIButton()
+        self.start:SetAutoDelete(true)
+        self.start:InitTexture("ui_verstak_btn")
+        self.start:Init(60,50,21,21)
+        self.start:SetText("Бар Сталкер")
+        self:Register(self.start,"start")
+        self.noise:AttachChild(self.start)
+        self:AddCallback("start",ui_events.BUTTON_DOWN,self.Select_Bar,self)
+
+	-- Янтарь
+        self.start2 = CUIButton()
+        self.start2:SetAutoDelete(true)
+        self.start2:InitTexture("ui_verstak_btn")
+        self.start2:Init(60,80,21,21)
+        self.start2:SetText("Озеро Янтарь")
+        self:Register(self.start2,"start2")
+        self.noise:AttachChild(self.start2)
+        self:AddCallback("start2",ui_events.BUTTON_DOWN,self.Select_Yantar,self)
+
+	-- МГ
+        self.start3 = CUIButton()
+        self.start3:SetAutoDelete(true)
+        self.start3:InitTexture("ui_verstak_btn")
+        self.start3:Init(60,110,21,21)
+        self.start3:SetText("Светлый Луч")
+        self:Register(self.start3,"start3")
+        self.noise:AttachChild(self.start3)
+        self:AddCallback("start3",ui_events.BUTTON_DOWN,self.Select_Luch,self)
+
+	-- кнопка выхода
+    	self.btn_exit = CUI3tButton()
+    	self.btn_exit:Init(60,150,21,21)
+    	self.btn_exit:InitTexture("ui_cb_button")
+        self.btn_exit:SetText("Выйти")
+	self.btn_exit:SetTextAlign(2)                 --центрировать текст
+	self.btn_exit:SetTextY        (6)             --позиция отображения текста по Y
+    	self:Register(self.btn_exit,"btn_exit")
+    	self.noise:AttachChild(self.btn_exit)
+    	self:AddCallback("btn_exit",ui_events.BUTTON_DOWN,self.ExitBtn,self)
+
+end
+
+-----------------------------------------------------------------------------------------------------------------
+
+function verstak_start:Select_Luch() 
+        olr.info("radbun_antena_mg")
+	news_manager.send_tip(db.actor, "Выбраны координаты сектора Светлый луч. Введите код перенаправления антены в активационный модуль.")  
+        level.start_stop_menu(self, true)      
+end
+
+function verstak_start:Select_Yantar() 
+        olr.info("radbun_antena_yan")
+	news_manager.send_tip(db.actor, "Выбраны координаты сектора Озеро Янтарь. Введите код перенаправления антены в активационный модуль.") 
+        level.start_stop_menu(self, true)       
+end
+
+function verstak_start:Select_Bar() 
+        olr.info("radbun_antena_bar")
+	news_manager.send_tip(db.actor, "Выбраны координаты сектора Бар-Сталкер. Введите код перенаправления антены в активационный модуль.")
+        level.start_stop_menu(self, true)        
+end
+
+function verstak_start:ExitBtn() 
+        level.start_stop_menu(self, true) 
+end
+
+
+
+
+
+
+
+
+
+
+
+

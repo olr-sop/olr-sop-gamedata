@@ -1,0 +1,81 @@
+
+local monster_info = ""
+local smart_info = ""
+local bestenname = "none"
+
+function upd()
+
+		if olr.olrdbg == true and db.actor then
+
+			local wachd = ""
+			local newwachd = amk.oau_reason
+			if newwachd ~= "" then
+				wachd =amk.oau_reason
+			end
+
+			local blowtmr = olr_blowout.get_blow_timer()
+			local ruck_vol = olr_ruck_limit.cur_amount
+			local loked_obj = bind_stalker.loked_obj
+			local last_info = bind_stalker.inf_last or "none"
+			local last_look = bind_stalker.loked_obj_name or ""
+			local blow_state = olr_blowout.state_blow
+			--if loked_obj and loked_obj:get_visual_name() then
+				vis_info = "" --" visual "..loked_obj:get_visual_name().."" 
+			--end
+			local bestenname = ""
+
+
+			--local best_enemy = loked_obj and loked_obj:is_stalker()
+			--if best_enemy then
+			--	bestenname = db.storage[loked_obj:id()].active_scheme
+			--end
+
+
+			local wnd
+
+			if not blowtmr then
+				blowtmr = 0
+			end
+
+			while true do
+				wnd=get_hud():GetCustomStatic("hud_coord") and get_hud():GetCustomStatic("hud_coord"):wnd()
+				if wnd then break end
+				get_hud():AddCustomStatic("hud_coord")
+			end
+
+			local dir=device().cam_dir
+
+			local a=vector()
+
+			a.x=math.atan2(-dir.y,dir.z)
+			a.y=math.atan2(-dir.x,dir.z)  
+			a.z=math.atan2(-dir.y,dir.x)
+
+			-- вылеты при удалении объектов
+			--if loked_obj and loked_obj:is_stalker() or loked_obj:is_monster() then
+			--	local st = db.storage[loked_obj:id()]
+			--	if st then
+			--		local scheme_name = (st and st.active_scheme) or "nil"
+			--		monster_info = "ac scheme - "..scheme_name.." " or "none inf"
+			--	end
+			--else
+				monster_info = ""
+			--end
+
+			local actor = db.actor
+			local pos=device().cam_pos
+			local act_pos=actor:position()
+			local lvid=actor:level_vertex_id()
+			local gvid=actor:game_vertex_id()
+			local vdist=level.vertex_position(lvid):distance_to(actor:position())
+			local gdist=level.vertex_position(game_graph():vertex(actor:game_vertex_id()):level_vertex_id()):distance_to(actor:position())
+			local msg
+			
+			msg=string.format("actor: x %.2f y %.2f z %.2f lvid %d gvid %d lv_dist %.1f gv_dist %.1f\\ncam pos: x %.2f y %.2f z %.2f\\ncam angles: %.2f %.2f %.2f\\nblowout timer: "..blowtmr.."\\nlast info: "..last_info.."\\nlook obj name: "..last_look.."\\nnpc_info: "..monster_info.."\\nvisual: "..vis_info.."\\nactive sheme: "..bestenname.."\\noau_reason: "..wachd.."\\nruck limit: "..ruck_vol.."\\nblow_state: "..blow_state.."",													 
+			act_pos.x,act_pos.y,act_pos.z,lvid,gvid,vdist,gdist,pos.x,pos.y,pos.z,a.x,a.y,a.z)
+
+			wnd:SetTextST(msg)
+
+		end
+	
+end

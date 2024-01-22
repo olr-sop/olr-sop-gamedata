@@ -1,0 +1,125 @@
+
+
+function sim_kill_stalkers()
+
+if not olr_timers.has_timer("zombies_task_select_timer") then
+	olr_timers.st_timer("zombies_task_select_timer", 65, "nick.zombies_task_select_timer()")
+end
+
+if not olr_timers.has_timer("dogs_task_select_timer") then
+	olr_timers.st_timer("dogs_task_select_timer", 270, "nick.dogs_task_select_timer()")
+end
+
+if not olr_timers.has_timer("stalkers_neutral_task_select_timer") then
+	olr_timers.st_timer("stalkers_neutral_task_select_timer", 480, "nick.stalkers_neutral_task_select_timer()")
+end
+
+if not olr_timers.has_timer("rand_shit_timer_start") and has_alife_info("medpribor_kvest_start") then
+	olr_timers.st_timer("rand_shit_timer_start", 690, "nick.disable_rand_stuff()")
+end
+
+if not olr_timers.has_timer("ecologs_neutral_task_select") and has_alife_info("medpribor_kvest_start") then
+	olr_timers.st_timer("ecologs_neutral_task_select", 850, "nick.ecologs_neutral_task_select()")
+end
+
+if not olr_timers.has_timer("stalkers_bandits_task_select_timer") and has_alife_info("medpribor_kvest_start") then
+	olr_timers.st_timer("stalkers_bandits_task_select_timer", 1140, "nick.stalkers_bandits_task_select_timer()")
+end
+
+if not olr_timers.has_timer("stalkers_dolg_task_select_timer") and has_alife_info("medpribor_kvest_start") then
+	olr_timers.st_timer("stalkers_dolg_task_select_timer", 1454, "olr_offline_task.dolgs_task_select()")
+end
+
+end
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- TODO переделать
+function sim_location_traveling()
+
+	--local pt = profile_timer()
+	--pt:start()
+
+if db.actor then
+
+local montabl = 
+{
+       [clsid.respawn] = true,
+       [clsid.smart_terrain] = true
+}
+
+
+local sectionsa = { 
+
+	{"lvl5_bar_stalker_0008", "start_olr_mod"}, -- искатель бар
+	{"lvl4_darkdolina_stalker_0017", "start_olr_mod"}, -- искатель долина
+	{"lvl7_yantar_stalker_0013", "otdal_kulon_open_door"}, -- психованый мужик охранник €нтарь
+	{"lvl8_swamp_stalker_0005", "start_olr_mod"}, -- искатель болото
+	--{"lvl8_swamp_stalker_0022", "fil_boloto_dialog_done"}, -- фил болото
+	{"mmmlvl6_rostok_stalker_0027", "start_olr_mod"}, -- весельчак
+	{"mmmlvl6_rostok_stalker_0028", "start_olr_mod"}, -- косой
+	{"mmmlvl6_rostok_stalker_0029", "start_olr_mod"}, -- толст€к
+	{"mmmlvl6_rostok_stalker_0030", "start_olr_mod"}, -- отшельник
+	{"mmmlvl6_rostok_stalker_0031", "start_olr_mod"}, -- болтун
+	{"mmmlvl6_rostok_stalker_0032", "start_olr_mod"}, -- длинный
+	{"lvl2_garbage_stalker_0040", "start_zagon_bandosa_dead"}, -- спрут
+	{"mars_horek_name_stalker", "olr_5_done"}, -- хорЄк после квеста на него
+	{"mars_digger_stalker", "esc_novic_go_nii_start_find_st_outfit"}, -- диггер после того как идЄм с шустр€ком 
+	{"mars_shustriy_stalker", "esc_digger_go_nii_start_find_st_outfit"}, -- шустр€к после того как идЄм с диггером 
+	{"bar_bar_visitor_hunter", "bar_rosomaha_about_darkstaker_skazal"}, -- росомаха бар
+	{"mars_rat_stalker_sokol", "rat_sokol_can_walk"}, -- сокол после рат
+	{"lvl1_escape_stalker_0008", "esc_lechenie_sos_gravart_info"}, -- рыхлый кордон после лечени€
+	{"bar_bar_lisiy", "raboy_zdoh_nahui"}, -- лысый как здохнет р€бой
+	{"mars_golmar_walking", "ametist_golmar_combez_don_done"}, -- голмар как получим костюм
+	{"lvl9_military_staler_undead_olr", "morak_talk_two_done_talked"}, -- мор€к
+	--{"lvl1_escape_stalker_0054", "dolg_road_nin_donk_now_spaven_go_done"}, -- черт
+	--{"lvl1_escape_stalker_0055", "dolg_road_nin_donk_now_spaven_go_done"}, -- сивый
+	{"lvl5_bar_stalker_0039", "den_dialog_bar_done"}  -- ден бар
+}
+
+
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if montabl[kill:clsid()]  then
+                 
+		for _, val in ipairs(sectionsa) do
+		if val then
+		local sec = alife():object(val[1])
+		if sec and sec:alive() and has_alife_info(val[2]) then	
+
+		local gvid = sec.m_game_vertex_id
+	        if game_graph():valid_vertex_id(gvid) then
+		if alife():level_name(game_graph():vertex(gvid):level_id()) ~= level.name() then
+
+		local bol_var = math.random(1,200)
+                if bol_var == 1 then
+			--log1(""..sec:name().." - "..kill:name().." - "..alife():level_name(game_graph():vertex(sec.m_game_vertex_id):level_id()).."")
+			alife():teleport_object(sec.id, kill.m_game_vertex_id, kill.m_level_vertex_id, kill.position)
+			--log1("telep stlkrs")
+			--log1(sobj:name())
+			olr.clear_restrictors(sec)
+			--olr.add_spot_on_map( sec.id,"jaba_spotmap", sec:name() )
+		end
+end
+end
+end
+end
+end
+end
+end
+end
+
+end
+
+       	--pt:stop()
+	--prints("работало (sim_location_traveling) "..pt:time().." ms")
+
+end
+
+
+
+

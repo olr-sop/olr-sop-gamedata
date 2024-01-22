@@ -1,0 +1,177 @@
+-- hi_flyer 05.01.21
+
+function start()
+	local wait_time = 0
+  	wait_time = time_global() + 500
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr_freeplay.st_2() end
+  	)
+	for i=1,20 do
+	local wait_time = 0
+  	wait_time = time_global() + i*1000
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr_freeplay.st_2() end
+  	)
+	end
+	level.add_pp_effector("black.ppe", 20131, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\horror_shit_escape]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+	olr_timers.st_timer("del_corps", 3, "olr_freeplay.del_corps()")
+	olr_timers.st_timer("del_habar_actor", 4, "olr_freeplay.del_habar_actor()")
+	olr_timers.st_timer("kill_em_all_stalkers", 5, "olr_freeplay.kill_em_all_stalkers()")
+	olr_timers.st_timer("kill_em_all_arts", 6, "olr_freeplay.kill_em_all_arts()")
+	olr_timers.st_timer("del_anoms_rnd", 7, "olr_freeplay.del_anoms_rnd()")
+	olr_timers.st_timer("dell_em_all_stalkers", 8, "olr_freeplay.dell_em_all_stalkers()")
+	olr_timers.st_timer("dell_em_all_tehica", 9, "olr_freeplay.dell_em_all_tehica()")
+	olr_timers.st_timer("telep_na_kordon", 12, "olr_freeplay.telep_na_kordon()")
+	olr.disable_walk()
+	level.disable_input()
+	level.hide_indicators()	
+	bind_stalker.hide_weapon()
+	olr.hide_inv()
+end
+
+function st_2()
+	log1(" st_2 ")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\horror_shit_escape]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+end
+
+function del_corps()
+	log1(" del_corps ")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+                if IsMosnter(kill) then
+		if kill and not kill:alive() then
+			alife():release(kill, true)            
+		end
+		end
+	end
+end
+
+function del_habar_actor()
+	log1(" del_habar_actor ")
+	olr.del_by_name("radar_helicopter_0000")
+	olr.blow_add(900)
+	db.actor.heath = 1
+	db.actor.satiety = 1
+	db.actor:set_actor_sleep(1)
+	db.actor:set_actor_thirst(1)
+	level.add_pp_effector("black.ppe", 20131, false)
+	nick.now_iremember_delhlam()
+	db.actor:give_money(-db.actor:money())
+	alife():create("stalker_outfit", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+end
+
+function kill_em_all_stalkers()
+	log1(" kill_em_all_stalkers ")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if IsStalker(kill)  then
+                if kill:alive() then
+			olr.kill_offline_stalker(kill)            
+		end
+		end
+		end
+	end
+end
+
+function del_anoms_rnd()
+	log1(" del_anoms_rnd ")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if IsAnomaly(kill)  then
+			if math.random(1,2) ==1 then
+				alife():release(kill, true)
+			end            
+		end
+		end
+	end
+end
+
+function kill_em_all_arts()
+	log1(" kill_em_all_arts")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if isArtefact(kill)  then
+			alife():release(kill, true)            
+		end
+		end
+	end
+end
+
+function dell_em_all_stalkers()
+	log1(" dell_em_all_stalkers")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if IsStalker(kill) and not kill:alive() then
+			--alife():release(kill, true)
+			olr.to_offline(kill:name())            
+		end
+		end
+	end
+end
+
+function dell_em_all_tehica()
+
+local montabl = 
+{
+       [clsid.helicopter] = true,
+       [clsid.car] = true,
+       [clsid.car_s] = true
+}
+
+log1(" dell_em_all_tehica")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+		if montabl[kill:clsid()]  then
+			if kill.level_name == "lvl_mars" then
+				return
+			end
+			alife():release(kill, true)
+			olr.to_offline(kill:name())
+			--log1("fsdfs")            
+		end
+		end
+	end
+
+end
+
+function telep_na_kordon()
+	log1(" telep_na_kordon ")
+	local point = patrol("gen_telep_to_kordon")
+	local look = patrol("gen_telep_to_kordon")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 20131, false)
+	olr.enable_walk()
+    	level.show_indicators()
+    	level.enable_input()
+    	db.actor:restore_weapon()
+			
+end

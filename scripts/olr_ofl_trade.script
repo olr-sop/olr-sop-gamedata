@@ -1,0 +1,186 @@
+-- торговля нпс в баре и янтаре в оффлайне
+-- hi_flyer 12.11.18
+
+local jan_profesor = alife():object("lvl7_yantar_arts_box_profa")  -- ящик профессора 
+
+local second_tab = {
+	 
+		 [1] = {name = "wpn_lr300",                ammo = "ammo_5.56x45_ap"},
+		 [2] = {name = "wpn_l85",       	ammo = "ammo_5.56x45_ap"},
+		 [3] = {name = "wpn_sig550", 	   	ammo = "ammo_5.56x45_ap"},
+		 [4] = {name = "wpn_mp5", 		   ammo = "ammo_5.56x45_ap"},
+		 [5] = {name = "wpn_p90", 		   ammo = "ammo_5.56x45_ap"},
+
+		 [6] = {name = "wpn_ak74", 	   ammo = "ammo_5.45x39_ap"},
+		 [7] = {name = "wpn_ak74u", 	   ammo = "ammo_5.45x39_ap"},
+		 [8] = {name = "wpn_akm74", 	   ammo = "ammo_5.45x39_ap"},
+		 [9] = {name = "wpn_aks74", 	   ammo = "ammo_5.45x39_ap"},
+
+		 [10] = {name = "wpn_groza", 	   ammo = "ammo_9x39_ap"},
+
+		 [11] = {name = "wpn_wincheaster1300", 	   ammo = "ammo_12x76_dart"},
+		 [12] = {name = "wpn_protecta", 	   ammo = "ammo_12x76_dart"},
+		 [13] = {name = "wpn_striker", 	   	ammo = "ammo_12x76_dart"},
+		 [14] = {name = "wpn_spas12", 	   	ammo = "ammo_12x76_dart"},
+		 [15] = {name = "wpn_toz34", 	   	ammo = "ammo_12x76_dart"},
+
+		 [16] = {name = "wpn_abakan", 	   	ammo = "ammo_7.62x54_7h14"},
+		 [17] = {name = "wpn_svd", 	   	ammo = "ammo_7.62x54_7h14"},
+		 [18] = {name = "wpn_svu", 	   	ammo = "ammo_7.62x54_7h14"},
+		 [19] = {name = "wpn_val", 	   	ammo = "ammo_9x39_ap"},
+		 [20] = {name = "wpn_vintorez", 	   	ammo = "ammo_9x39_ap"},
+		 [21] = {name = "wpn_vsk94", 	   	ammo = "ammo_9x39_ap"},
+
+		 [22] = {name = "wpn_rpk74", 	   	ammo = "ammo_5.45x39_ap"},
+		 [23] = {name = "wpn_fn2000", 	   	ammo = "ammo_5.56x45_ap"},
+		 [24] = {name = "wpn_g36", 	   	ammo = "ammo_5.56x45_ap"},
+		 [25] = {name = "wpn_groza_old", 	   	ammo = "ammo_9x39_ap"}
+
+		}
+
+-- покупка хабара за 5к
+function on_point_bar(obj)
+	if has_alife_info("prp_first") then
+		return
+	end
+	xvars.npc_ofl_trade[obj:name()] = nil
+	local rndpos = math.random(#second_tab) or 1
+	
+	--news_manager.send_tip(db.actor, "сталкер купил в баре ствол "..second_tab[rndpos].name.."", nil, "artefact", 45000) 
+	alife():create(tostring(second_tab[rndpos].name), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+	alife():create("medkit", obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+	se_respawn.create_ammo(tostring(second_tab[rndpos].ammo), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id, 10)
+
+	if obj then
+		local pk = get_netpk(obj)
+        	if pk:isOk() then
+         		local data = pk:get()
+			boflsname = data.character_name
+         		pk:set(data)
+		end
+	end
+	local rnd = math.random(1,5)
+	if rnd == 1 then
+		news_manager.send_tip(db.actor, ""..boflsname..": Купил в Баре ствол хороший. Всем рекомендую!", 2, "default", 25000)
+	end
+	this.buy_new_armor(obj)
+end
+
+-- продажа артов у профа
+function on_point_yan(obj)
+	if has_alife_info("otpravlaet_spat_gg_done") then
+		return
+	end
+	if obj then
+		local old_m = 0
+		local new_mon = 0
+		local art_cnt = 0
+
+		local sim = alife()
+		for id=1, 65534 do
+			local art = sim:object(id)
+			if art then
+				if isArtefact(art) then
+					if art.parent_id == obj.id then
+						art_cnt = art_cnt + 1
+						if art then
+							--log1("сталкер продаёт на янтаре арт "..art:name().."  телепорт  ")
+							--news_manager.send_tip(db.actor, "сталкер продаёт на янтаре арт "..art:name().."  телепорт  ", nil, "artefact", 45000)
+							if jan_profesor then
+								alife():create(art:section_name(), jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+							end
+							olr.del_by_name(art:name())
+						end
+					end
+				end
+			end
+		end
+		local pk = get_netpk(obj)
+        	if pk:isOk() then
+         		local data = pk:get()
+			old_m = data.money
+			new_mon = 1000 * art_cnt
+			data.money = old_m + new_mon
+			oflsname = data.character_name
+         		pk:set(data)
+		end
+		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." продал арты шт - "..art_cnt.." у профа было руб "..old_m.." рублей и продал на "..new_mon.." рублей", nil, "artefact", 45000)
+		news_manager.send_tip(db.actor, "Мобильная база на озере Янтарь получила от сталкера "..oflsname.." партию артефактов. Имеются образцы для продажи. Интересующимся обращаться к Профессору.", nil, "saharov", 25000)		
+	end
+	this.buy_new_armor(obj)
+end
+
+
+function buy_new_armor(obj)
+	local num = obj:rank()
+	if num > 0 and num < 300 then
+		
+	elseif num > 300 and num <= 600 then
+		-- опытный
+		this.set_opitn_vis(obj)
+	elseif num > 600 and num <= 900 then
+		-- ветеран		
+		this.set_opitn_vis(obj)
+	elseif num > 900 then
+		--мастер
+		this.set_master_vis(obj)
+	end
+end
+
+
+local visuals_opitn = {
+		[[actors\novice\novic_gas_old]],
+		[[actors\novice\green_stalker_antigas]],
+		[[actors\novice\green_stalker_antigas_1]]
+}
+
+
+local visuals_neytral = {
+		[[actors\neytral\stalker_ecoskeleton]],
+		[[actors\neytral\stalker_neytral_exoskeleton]],
+		[[actors\neytral\stalker_neytral_nauchniy]],
+		[[actors\neytral\stalker_neytral_rukzak_6]],
+		[[actors\neytral\stalker_neytral_rukzak_10]],
+		[[actors\neytral\stalker_neytral_upir]]
+}
+
+function set_opitn_vis(obj)
+	--news_manager.send_tip(db.actor, " купили броню опытный !!!! ", nil, "saharov", 25000)
+	local pk = get_netpk(obj,1)
+  	if pk:isOk() then
+    		local data = pk:get()
+    		data.visual_name = visuals_opitn[math.random(#visuals_opitn)]
+      		pk:set(data)
+	end	
+end
+
+function set_master_vis(obj)
+	--news_manager.send_tip(db.actor, " купили броню мастер !!!! ", nil, "saharov", 25000)
+	local pk = get_netpk(obj,1)
+  	if pk:isOk() then
+    		local data = pk:get()
+    		data.visual_name = visuals_neytral[math.random(#visuals_neytral)]
+      		pk:set(data)
+	end	
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

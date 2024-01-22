@@ -1,0 +1,108 @@
+-- hi_flyer 27/12/18
+-- коррекция мутантов на онлайн уровне
+
+local hash = {}
+local res = {}
+
+local prot = {}
+local lev_inv_objs = {}
+local dead_stalkers = {}
+local alive_monsters = {}
+local cur_lev = level.name()
+local count = 0
+local count_cur = 0
+local sim = alife()
+local maxonlev = 20
+local montabl = 
+{
+
+       [clsid.zombie_s] = true,
+       [clsid.zombie] = true,
+       [clsid.dog_s] = true,
+       [clsid.dog_red] = true,
+       [clsid.dog_black] = true,
+       [clsid.flesh_s] = true,
+       [clsid.boar_s] = true,
+       [clsid.boar] = true,
+       [clsid.cat] = true,
+       [clsid.cat_s] = true,
+       [clsid.flesh] = true
+}
+
+function on_del()
+	for i=1, 65534 do
+		local kill = sim:object(i)
+		if kill and kill.id and kill.m_game_vertex_id and not olr_protected.is_no_offline_alife_obj(kill:name()) then
+			-- мутанты
+                	if montabl[kill:clsid()]  then
+				if kill:alive() and kill.level_name == cur_lev and kill.online then
+					local strn_id = kill:smart_terrain_id()
+					if strn_id ~= 65535 then
+						table.insert(alive_monsters, kill.id)
+						count_cur = count_cur + 1
+					end	
+				end
+				if not kill:alive() then
+					local gvid = kill.m_game_vertex_id
+	        			if game_graph():valid_vertex_id(gvid) then
+						if sim:level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
+							if kill.offline_dead and kill.offline_dead == 1 then
+								--log1("has offline dead mob - ["..kill:name().."]")
+								--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+							else
+								sim:release(kill)
+								count = count + 1
+							end		 
+
+						end       
+					end
+				end
+			end
+		end
+	end
+
+	--log1("del monster corpses - "..count.."")
+	this.correction_pops()
+end
+
+
+
+function correction_pops()
+	if cur_lev == "lvl5_bar" then
+		return
+	end
+	for _, val in ipairs(alive_monsters) do
+		if count_cur > maxonlev then
+			local rnd = math.random(1,2)
+			if rnd == 1 then
+				local se_obj = sim:object(val)
+  				if se_obj then
+    						sim:set_switch_offline (se_obj.id, true)
+    						sim:set_switch_online (se_obj.id, false)
+    						sim:set_interactive (se_obj.id, false)
+						olr_timers.st_timer("convert_online", math.random(100,500), "olr_npc_eqp.convert_online_out("..val..")")
+  				end
+			end
+		end
+	end
+	--log1("alive monsters population on level - "..count_cur.."")
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

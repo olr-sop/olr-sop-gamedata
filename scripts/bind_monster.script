@@ -1,0 +1,895 @@
+
+local controller_timer2 = 0
+local insect_particle = particles_object("ghoul\\fly_lihgters")
+local mozg_particle = particles_object("monsters\\pseudo_phantom_death_00")
+local mozg_light = alife():object("mozg_for_light_object")
+local mozg_light_flag = false
+actor_close_mozg = false
+local take_flag = 0
+
+local parasits = {
+["zombie_plague"] = true,
+["zombie_plague_strong"] = true,
+["pseudodog_w_namordnike"] = true,
+["pseudodog_w_namordnike_ghost"] = true,
+["pseudodog_w_namordnike_ghost2"] = true,
+["pseudodog_w_namordnike_medpribor"] = true
+}
+
+function bind(obj)
+	printf("_bp: monster.bind: name='%s', id='%d'", obj:name(), obj:id())
+
+	local new_binder = generic_object_binder(obj)
+	obj:bind_object(new_binder)
+end
+
+------------------------------------------------------------------------------------
+class "generic_object_binder" (object_binder)
+
+function generic_object_binder:__init(obj) super(obj)
+	self.loaded = false
+	self.load_flag_ph = false
+end 
+
+function generic_object_binder:reload(section)
+	object_binder.reload(self, section)
+end
+
+function generic_object_binder:reinit()
+	object_binder.reinit(self)
+
+	-- У торговца нет поддержки перемещения
+	if self.object:clsid() ~= clsid.script_trader then
+		self.object:set_patrol_extrapolate_callback(generic_object_binder.extrapolate_callback, self)
+	end
+
+	db.storage[self.object:id()] = { }
+
+	self.st = db.storage[self.object:id()]
+
+	self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
+	self.object:set_callback(callback.hit,					self.hit_callback,		self)
+	self.object:set_callback(callback.death,				self.death_callback,	self)
+  	self.object:set_callback( callback.use_object, self.use_callback, self )
+end
+
+
+function generic_object_binder:net_destroy()
+	self.object:set_callback(callback.death,				nil)
+	self.object:set_callback(callback.patrol_path_in_point, nil)
+	self.object:set_callback(callback.hit,					nil)
+  	self.object:set_callback( callback.use_object, nil )
+
+	local st = db.storage[self.object:id()]
+	if st and st.active_scheme then
+		xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy")
+	end
+	
+	db.del_obj(self.object)
+	db.storage[self.object:id()] = nil
+
+	object_binder.net_destroy(self)
+end 
+
+
+function generic_object_binder:use_callback( obj, who )
+
+	if not self.object:alive() then
+	if self.object:section() ~= "m_rat_e" or self.object:section() ~= "m_rat_e2" or self.object:section() ~= "m_rat_e3" or self.object:section() ~= "m_rat_e4" or self.object:section() ~= "m_rat_new" then
+	if system_ini():line_exist(self.object:section(), "known_info") then
+	local known_inf = system_ini():r_string(self.object:section(), "known_info") or ""
+	local known_inf_desc = game.translate_string(known_inf)
+	if not has_alife_info(known_inf_desc) then
+		--olr.hud_tip("", "У меня нет информации о этом мутанте...", 2)
+		--return
+	else
+		--log1("HAS konwn ifo - "..known_inf_desc.." ")
+	end
+	self.object:iterate_inventory( function(_, item)
+		if item then
+			--log1("hass item")
+			--if has_alife_info(known_inf_desc) then
+				--log1("hasss part !!!!")
+				local sec_item = tostring(item:section())
+				alife():create(sec_item, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+				olr.del(item)
+				olr.snd([[ol3\koan\KnifeStow1-m]])
+				--log1("hasss part - ")
+				--self.object:drop_item(item)  -- тут вылет dBodyStateValide(b)	
+				--self.object:transfer_item(item, db.actor)
+				--log1("has part - "..item:name().."")
+				olr.hud_tip("", "Получено: "..item:get_name().."", 2)
+				take_flag = 1
+				local wait_time = 0
+  				wait_time = time_global() + 1000
+  				level.add_call(
+    				function() return time_global() > wait_time end,
+    				function() self.object:set_tip_text("Нет нужных частей") end
+  				)
+			--else
+				--log1(" non has part ")
+			--end
+		else
+			local wait_time = 0
+  			wait_time = time_global() + 1000
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() self.object:set_tip_text("Нет нужных частей") end
+  			)
+		end
+	end )
+		if take_flag == 0 and has_alife_info(known_inf_desc) then
+			local wait_time = 0
+  			wait_time = time_global() + 3000
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() self.object:set_tip_text("Нет нужных частей") end
+  			)
+			olr.hud_tip("", "Нет подходящих образцов...", 2)
+			return
+		end
+	end
+	end
+	end
+
+	if not self.object:alive()  then
+		if self.object:section() == "m_rat_e" or self.object:section() == "m_rat_e2" or self.object:section() == "m_rat_e3" or self.object:section() == "m_rat_e4" or self.object:section() == "m_rat_new" then
+			local bol_var = math.random(1,3)
+			if bol_var == 1 then
+        			local objj = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+        			level.client_spawn_manager():add(objj.id, 0, function(id,obj) obj:set_condition((math.random(30,55)/100)) end)
+				olr.hud_tip("", "Сгодится...", 2)
+				olr.del(self.object)
+			elseif bol_var == 2 then
+				olr.hud_tip("", "Слишком повреждено...", 2)
+				olr.del(self.object)
+			elseif bol_var == 3 then
+				olr.hud_tip("", "Не пойдёт...", 2)
+				olr.del(self.object)
+			end
+		end
+	end
+	
+end
+
+---------------------------------------------------------------------------------------------------------------------
+
+function generic_object_binder:update(delta)
+	object_binder.update(self, delta)
+
+	--local pt = profile_timer()
+	--pt:start()
+
+	local cls 	= self.object:clsid()
+  	local spos   	= self.object:position()
+	local sec 	= self.object:section()
+  	local act   	= db.actor
+	local dist_to_actor = act:position():distance_to(spos)
+
+
+        -- фикс физики
+	if self.load_flag_ph == false then
+		self.load_flag_ph = true
+		core.tc("monster_first_update", self)
+        	if not self.object:alive() then
+			if xvars and xvars.dead_in_offline[self.object:name()] == true then
+				local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
+				if shelbone then
+					shelbone:apply_force(0,0.1,0)
+					--log1("FIX PH MONSTER dead in offline - "..self.object:name().." ")
+					--xvars.dead_in_offline[self.object:name()] == nil
+				end
+			end
+        	end
+        end
+
+
+	if self.object:alive()  then
+
+		core.tc("monster_update", self, delta)
+
+		if self.object:is_talk_enabled() then
+			self.object:set_tip_text("character_use")
+		else
+			self.object:set_tip_text("")
+		end
+
+		--  not olr_protected.is_no_offline_alife_obj(self.object:name()) and
+		local blowout = olr_blowout.state_blow == 2 or olr_blowout.state_blow == 3
+		if not olr_blowout.no_blow_levels[level.name()] then
+		if blowout and (not self.control_override) then
+			if not self.object:action() then
+				-- Захватываем зверушку
+				xr_logic.mob_capture(self.object,true)
+				self.control_override=true
+			end
+		elseif self.control_override and blowout then
+			if not self.object:action() then
+				self.object:set_custom_panic_threshold(1)
+				local snds={sound.take_damage,sound.panic,sound.idle}
+				local snd=snds[math.random(1,table.getn(snds))]
+				action(self.object, anim(anim.lie_idle, 0), sound(snd), cond(cond.sound_end))
+			end
+		elseif self.control_override and not blowout then
+			-- отпускаем зверушку
+			self.control_override=nil
+			xr_logic.mob_release(self.object)
+			self.object:set_default_panic_threshold()
+			--log1("otpuskaem mon")
+		elseif self.st.active_section ~= nil then
+			xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
+		end
+		end
+	
+
+
+---------------------------------------------------------__hi_flyer__start__-------------------------------------------------------------
+
+
+		-- жаба
+		if cls == clsid.script_trader then
+			trade_manager.update(self.object)
+        		if has_alife_info("olr_traders_night") then
+        			self.object:disable_trade()
+        		else
+        			self.object:enable_trade()
+        		end
+		end
+
+		-- паника от костров или когда ГГ в авто, чтобы не кусались
+                if bind_anomaly.u_costra() == true or bind_coster.u_costra() == true or bind_car.act_in_car_now() == true then
+                        	local npc = self.object:get_enemy()
+                        	if npc and npc:id() == act:id() then
+                        		if self.object:see(npc) then
+                        			self.object:set_custom_panic_threshold(1)
+						--news_manager.send_tip(db.actor, "актор у костра аномалии в авто - паника", nil, "freedom", 9000)
+                        		else
+                        			self.object:set_default_panic_threshold()		
+                			end
+                		end
+                end
+
+
+		-- паника от мёртвой головы
+		if cls ~= clsid.controller_s then 
+                        local has_art = act:object("af_dummy_glassbeads")
+                        	if has_art and act:is_on_belt(has_art) then
+				local art_cond = has_art:condition()
+                        	local npc = self.object:get_enemy()
+                        		if npc and npc:id() == act:id() then
+                        			if self.object:see(npc) then
+                        				has_art:set_condition(art_cond - 0.0005)
+                        				if art_cond <= 0.05 then
+								if has_art then
+									act:drop_item(has_art)
+                        						olr.del(has_art)
+									self.object:set_default_panic_threshold()
+								end
+                        					self.object:set_default_panic_threshold()
+		        				end
+                        					self.object:set_custom_panic_threshold(1)
+                        					local bol_var = math.random(1,3000)
+                        					if bol_var == 1 then
+                        						alife():create("m_controller_e", act:position():add(act:direction():add(140)), act:level_vertex_id(), act:game_vertex_id())
+                        					end
+                        			else
+                        				self.object:set_default_panic_threshold()		
+                				end
+                			end
+                		end
+                end
+
+
+		-- фантазмы
+		if sec == "observer" or sec == "phantasm" then
+			if dist_to_actor < 25 then
+				act.psy_health = -0.001
+			end
+			if self.object:see(act) then		
+				if dist_to_actor < 15 then
+					act.psy_health = -0.09
+					level.add_pp_effector("dead_zone.ppe", 10101, true)
+					level.set_pp_effector_factor(220001, dist_to_actor / 5)
+				else
+					level.remove_pp_effector(10101)
+				end
+			end
+		end
+
+
+		-- мозг колба
+		if sec == "brain_lab_nofeet" then
+			--log1("mosk health - "..self.object.health.."")
+			if has_alife_info("bun_mosk_start_quest_go_done") then
+				if dist_to_actor < 15 then
+					actor_close_mozg = true
+					if db.actor:alive() and not has_alife_info("start_mosk_figh_go") then
+						db.actor.psy_health = 1
+						db.actor.power = 1
+						db.actor.health = 0.001
+						db.actor.radiation = -0.001
+					end
+					if has_alife_info("start_mosk_figh_go") and self.object:see(act) then
+						db.actor.psy_health = -0.007
+						level.add_pp_effector("dead_zone.ppe", 1501, true)
+						level.set_pp_effector_factor(220701, 0.0005)
+					end
+					--log1("msok close")
+				else
+					actor_close_mozg = false
+					--log1("msok faraway")
+				end
+				if self.object and mozg_light then
+					if mozg_light_flag == false then
+						alife():teleport_object(mozg_light.id, self.object:game_vertex_id(), self.object:level_vertex_id(), self.object:position())
+						mozg_light_flag = true
+						alife():teleport_object(mozg_light.id, self.object:game_vertex_id(), self.object:level_vertex_id(), self.object:position())
+						--log1("lght tlp")
+					end
+					local lcobj = level.object_by_id(mozg_light.id)
+					if lcobj then
+						local lamp = lcobj:get_hanging_lamp()
+						if lamp then
+							--log1("set pos")
+							local brg_var = math.random(45,55) / 200
+	        					lamp:set_brightness(brg_var)
+							lamp:set_position(vector():set(self.object:position().x, self.object:position().y+0.2, self.object:position().z))
+						end
+					end
+				end 
+				if not mozg_particle:playing() then 
+					mozg_particle:play_at_pos(vector():set(self.object:position().x, self.object:position().y+0.2, self.object:position().z))
+					local snd_obj = xr_sound.get_safe_sound_object([[ambient\xforce2]])
+					snd_obj:play_no_feedback(self.object, sound_object.s2d, 0, vector(), 0.25)
+         			end
+				if level.name() == "lvl13_prip" then
+					self.object:set_fov(1)
+				else
+					self.object:set_fov(90)
+				end	
+			end
+		end
+
+
+		-- пси от полтера
+		if cls == clsid.poltergeist_s and self.object:see(act) then		
+			if dist_to_actor < 8 then
+				act.psy_health = -0.005
+			end
+			if dist_to_actor < 6 then
+				local aitem = db.actor:active_item()
+                    		if aitem and math.random()<0.5 and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then
+					local wobj = level.object_by_id(aitem:id())
+          				db.actor:drop_item(aitem)
+					local wait_time = 0
+  					wait_time = time_global() + 400
+  					level.add_call(
+    					function() return time_global() > wait_time end,
+    					function() olr.polter_throw_wpn(wobj) end
+  					) 
+      				end
+			end
+		end
+         
+
+		-- кровосос 
+		if cls == clsid.bloodsucker or cls == clsid.bloodsucker_s and sec ~= "bloodsucker_proto" then
+			local target = self.object:get_enemy()
+			if target and self.object:see(target) then
+				local dist = self.object:position():distance_to(target:position())
+				if dist <= 4 then
+					if not self.get_hit then
+                                                self.object:set_invisible(true)
+						self.get_hit = time_global() + math.random(3000,6500)                                         
+					elseif self.get_hit <= time_global() then
+						self.object:set_invisible(false)
+					end
+				end
+                     	end
+		end
+
+		if sec == "bloodsucker_proto" then
+			if dist_to_actor < 5 and self.object:see(act) then
+				local rndb = math.random(1,6)
+				if rndb == 1 then
+					db.actor.power = -0.00185
+					local actorpos = db.actor:position()
+					local zh = hit()
+					zh.draftsman = db.actor
+					zh.type = hit.wound
+					zh.direction = self.object:position():sub(actorpos)
+					zh:bone("pelvis")
+					zh.power = 0.0155
+					zh.impulse = 0.000001
+					db.actor:hit(zh)
+					--level.add_pp_effector("snd_shock.ppe", 10101, true)
+					--news_manager.send_tip(db.actor, " bloodsucker_proto хит", nil, "freedom", 9000)
+				end
+			end
+		end
+
+		-- Атака спор паразита
+		if parasits[sec] and self.object:see(act) then
+
+			if dist_to_actor < 12 then
+				level.add_pp_effector("dead_zone.ppe", 1001, true)
+				level.set_pp_effector_factor(1001, 12 - dist_to_actor * 10)
+
+				local actorpos = db.actor:position()
+				db.actor.health = -0.00085
+
+				local par_varb = math.random(1,8)
+				if par_varb == 1 then
+        				zarazjenie_parazitom()
+				end
+
+				local par_var = math.random(1,25)
+				if par_var == 1 then
+					olr.partice_on_obj(self.object:name(),[[anomaly2\group_items\gele00]])
+					olr.cough()
+					local zh = hit()
+					zh.draftsman = db.actor
+					zh.type = hit.wound
+					zh.direction = self.object:position():sub(actorpos)
+					zh:bone("pelvis")
+					zh.power = 0.0025
+					zh.impulse = 0.000001
+					db.actor:hit(zh)
+				end
+	
+				if not insect_particle:playing() then 
+					insect_particle:play_at_pos(vector():set(actorpos.x, actorpos.y+1.8, actorpos.z))
+         			end
+			end
+		else
+			level.remove_pp_effector(1001)
+		end
+
+
+		-- конторолёр берущий под контроль ГГ
+        	if cls == clsid.controller_s and controller_timer2 < time_global() then
+        		if dist_to_actor < 75 then
+
+			if self.object:section() == "m_pseudohuman_e" then
+				return 
+			end
+
+			if level.name() == "lvl13_prip" then
+				if actor_close_mozg == true then
+					self.object:set_fov(1)
+					if db.actor and db.actor:see(self.object) then
+						log1("die die")
+						self.object.health = -0.1
+					end
+				else
+					self.object:set_fov(90)
+				end
+			end
+
+			-- защита от контра и фантомов
+			local psystab = db.actor:object("psystab_helmet")
+				if psystab ~= nil then
+					--psystab:condition() = psystab:condition - 0.1
+					local pscond = psystab:condition()
+					if pscond < 0.1 then
+						alife():release(psystab, true)
+					end
+				return
+			end
+
+
+			-- под защитой мозга колбы
+			if actor_close_mozg == true then
+				return
+			end
+
+			-- харакири
+        		if dist_to_actor < 15 then 
+        			if db.actor.psy_health <= 0.25 then
+        				olr_bolezn.suicide_knife()
+        			end
+        		end
+
+                        local bol_var = math.random(1,7)
+                        	if bol_var == 1 then
+			   		get_actor_obj():block_action(32)
+                           		--news_manager.send_tip(db.actor, " СТРЕЛЬБУ", nil, "freedom", 9000)
+                           	end
+
+                           	if bol_var == 2 then
+                           		get_actor_obj():block_action(36)
+                           		--news_manager.send_tip(db.actor, " ПЕРЕЗАРЯДКУ", nil, "freedom", 9000)
+                           	end
+
+                           	if bol_var == 3 then
+                           		get_actor_obj():block_action(4)
+                           		--news_manager.send_tip(db.actor, " ПРЫЖКИ", nil, "freedom", 9000)
+                           	end
+
+                           	if bol_var == 4 then
+   		  	   		olr.rnd_camera_direction()
+                           	end
+
+                           	if bol_var == 5 then
+        				if bind_car.act_in_car_now() then
+                                		return
+					end
+					local active_item = db.actor:active_item()
+					if active_item and db.actor:active_slot()==2 then
+						olr.emu_shoot()
+                           		end
+				end
+
+                   		if bol_var == 6 then
+		           		level.add_pp_effector("proba_gray.ppe",3937,false)
+   		  	   		get_actor_obj():hold_action(9)
+                     		end
+
+				if bol_var == 7 then
+					--level.add_pp_effector("shoot\\duality_v_s"..math.random(1,5)..".ppe", 231, false)
+					--level.add_pp_effector("shoot\\duality_h_s"..math.random(1,5)..".ppe", 231, false)
+				end
+
+
+		     	end
+
+			controller_timer2 = time_global()  + math.random(1000,9550)
+                        get_actor_obj():unblock_action(4)
+                        get_actor_obj():unblock_action(36)
+	                get_actor_obj():unblock_action(32)
+			get_actor_obj():release_action(9)
+
+       end
+
+
+
+---------------------------------------------------------__hi_flyer__end__-------------------------------------------------------------
+
+
+		-- Удар контролёра руками (Автор: demover123)
+		if cls == clsid.controller_s then
+			local target = self.object:get_enemy()
+			if target and self.object:see(target) and IsStalker(target) then
+				local dist = self.object:position():distance_to(target:position())
+				if dist <= 1.7 then
+					if not self.get_hit then
+						self.get_hit = time_global() + 200
+						self.start_anim_hit_cont = true
+					elseif self.get_hit <= time_global() then
+						if self.start_anim_hit_cont then
+							if self.object:animation_count() > 0 then
+								self.object:clear_animations()
+							end
+							self.object:play_cycle("stand_attack_1", true)
+							
+							local song_start = xr_sound.get_safe_sound_object("monsters\\controller\\controller_hit_2")
+							song_start:play_at_pos(self.object, self.object:position(), sound_object.s3d)
+							self.start_anim_hit_cont = false
+						end
+						if not self.hit_to_enemy then
+							self.hit_to_enemy = time_global() + 500
+						elseif self.hit_to_enemy <= time_global() then
+							level.add_cam_effector("camera_effects\\hit_front.anm", 777, false, "")
+							
+							local h = hit()
+							h.draftsman = self.object
+							h.direction = vector():set(0,0,0)  
+							h:bone("bip01_spine")   
+							h.power     = 0.40     
+							h.impulse   = 10
+							h.type      = hit.wound
+							target:hit(h)
+							
+							self.hit_to_enemy = nil
+							self.get_hit = nil
+						end
+					end
+				else
+					self.hit_to_enemy = nil
+					self.get_hit = nil
+				end
+			end
+			
+			if self.object:animation_count() < 1 then
+				local i = math.random(0,5)
+				self.object:add_animation("stand_walk_fwd_"..i, true)
+			end
+		end
+
+----------------------------------------------------------------------------------------------------------------------
+    
+       else
+		if not self.dead then
+			self.object:set_tip_text("")
+			self.object:set_nonscript_usable(false)
+			self.dead = true
+		end
+	end
+
+	if self.st.active_section ~= nil then
+		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
+	end
+end
+
+
+function generic_object_binder:extrapolate_callback()
+	if self.object == nil then
+		return false
+	end
+
+	if self.object:get_script() == false then 
+		return false
+	end 
+	
+    	local cur_pt = self.object:get_current_point_index() 
+	local patr = self.object:patrol()
+	if patr == "" then
+		--Такая ситуация - это норма, просто ванильный движок не вылетал при вызове patrol(""), а новый вылетает, проверено.
+		log1("!![%s] Invalid patrol path name [%s] for object [%s]", script_name(), patr, self.object:name())
+	elseif patrol(patr):flags(cur_pt):get() == 0 then
+		return true
+	end
+	return false
+end
+
+
+
+function generic_object_binder:waypoint_callback(obj, action_type, index)
+	if self.st.active_section ~= nil then
+		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "waypoint_callback", obj, action_type, index)
+	end
+end
+
+
+function generic_object_binder:death_callback(victim, who)
+
+	if who:id() == db.actor:id() then
+		if victim:clsid() == clsid.zombie or victim:clsid() == clsid.zombie_s then
+        		bb_mod.npcondeath(victim, who)
+		end
+		local sobj = game.translate_string(xvars.quest_two_target_yan)
+		if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken_yan") then
+			news_manager.send_tip(db.actor, "Задание выполнено - уничтожить опасного мутанта.", 1, "volna_plots", 9000)
+			level.map_remove_object_spot(self.object:id(), "monster_part_location")
+			db.actor:change_character_reputation(15)
+		end
+	end
+
+	if db.actor then	
+		xr_statistic.addKillCount(who, self.object)
+	end
+
+	if self.st.mob_death then
+		xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", victim, who)
+	end
+
+	if self.st.active_section then
+		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", victim, who)
+	end
+
+	smart_terrain.on_death( self.object:id() )
+
+        olr_kill_arts.on_death(victim, who)
+
+end
+
+
+
+
+function generic_object_binder:hit_callback(obj, amount, local_direction, who, bone_index)
+
+	if self.st.hit then
+		xr_logic.issue_event(self.object, self.st.hit, "hit_callback", obj, amount, local_direction, who, bone_index)
+	end
+
+	-- Озвучка успешных атак мутантов, сталкеров: Scavenger [1 - 16/07/2013]
+        if obj then
+	local snd_bite = xr_sound.get_safe_sound_object("monsters\\pseudodog\\attack_hit_0", sound_object.s2d)		-- укус
+	local snd_kick = xr_sound.get_safe_sound_object("monsters\\zombie\\zombie_attack_hit_0", sound_object.s2d)	-- удар
+	local snd_slice = xr_sound.get_safe_sound_object("monsters\\flesh\\flesh_attack_hit_0", sound_object.s2d)	-- удар плоти 1
+	local snd_slice2 = xr_sound.get_safe_sound_object("monsters\\flesh\\flesh_attack_hit_1", sound_object.s2d)	-- удар плоти 2
+
+	if who:clsid()==clsid.boar_s or who:clsid()==clsid.chimera_s or who:clsid()==clsid.bloodsucker_s or who:clsid()==clsid.dog_s or who:clsid()==clsid.pseudodog_s or who:clsid()==clsid.psy_dog_s then
+		snd_bite:play_at_pos(db.actor, obj:position(), sound_object.s3d)
+	end
+	if who:clsid()==clsid.burer_s or who:clsid()==clsid.snork_s or who:clsid()==clsid.poltergeist_s or who:clsid()==clsid.gigant_s or who:clsid()==clsid.controller_s or who:clsid()==clsid.zombie_s or who:clsid()==clsid.fracture_s 	then
+		snd_kick:play_at_pos(db.actor, obj:position(), sound_object.s3d)
+	end
+	if who:clsid()==clsid.flesh_s then
+		if snd_var == 1 then
+			snd_slice:play_at_pos(db.actor, obj:position(), sound_object.s3d)
+		else
+			snd_slice2:play_at_pos(db.actor, obj:position(), sound_object.s3d)
+		end
+	end
+	end
+
+	--if self.object:name() == "lvl11_deadcity_observer" and car.health > 0 then
+
+
+	if who:id() == db.actor:id() then
+		local active_item = db.actor:active_item()  -- нож
+		if active_item and active_item:section() == "wpn_pistol_future" then
+			--if self.object:animation_count() > 0 then
+			--	self.object:clear_animations()
+			--end
+			local cls 	= self.object:clsid()
+			if cls == clsid.controller_s then
+				--self.object:play_cycle("critical_hit_torso_1", true)
+			elseif cls == clsid.boar_s then
+				--self.object:play_cycle("stand_jump_left_0", true)
+			elseif cls == clsid.flesh_s then
+				--self.object:play_cycle("shoot_eye_0", true)
+			elseif cls == clsid.burer_s then
+				--self.object:play_cycle("stand_attack_ran_0", true)
+			elseif cls == clsid.dog_s then
+				--self.object:play_cycle("jump_right_0", true)	
+			elseif cls == clsid.zombie_s then
+				--self.object:play_cycle("stand_run_atak_1", true)
+			end
+			self.object:set_custom_panic_threshold(1)
+			level.add_pp_effector("shoot\\grey_s"..math.random(1,5)..".ppe", 231, false)
+			--log1("psi pistol hit")
+		end
+	end
+
+	--if system_ini():line_exist(self.object:section(), "sound_attack_hit") then
+	--	local ssnd = system_ini():r_string(self.object:section(), "sound_attack_hit") 
+	--	local snd = xr_sound.get_safe_sound_object([[ssnd]]) or xr_sound.get_safe_sound_object("monsters\\pseudodog\\attack_hit_0", sound_object.s2d)
+	--	snd:play_at_pos(db.actor, self.object:position(), sound_object.s3d)
+	--	log1("snd attack - "..ssnd.."")
+	--end
+
+	if self.object:name() == "lvlobhod_nofeet_rad" then
+		xr_effects.mosk_fight_hitted()
+	end
+
+--[[
+        if self.object:clsid() == clsid.script_trader then
+        log1("actor shoot trader")
+        if who:id() == db.actor:id() then
+        level.add_pp_effector("fire_hit.ppe", 1523, true)
+	level.set_pp_effector_factor(154523, 2.5)
+        soundtrack.ros_shoot_max()
+        db.actor:kill(db.actor)
+        news_manager.send_tip(db.actor, "Ты что, с ума сошёл?", nil, "trader", 3000)
+        end
+        end
+]]
+
+
+
+--[[
+  local vis = self.object:get_interface():Visual()
+  if vis then 
+     local kin = vis:dcast_PKinematics()     
+     if kin then
+	 log1(""..kin.."")
+         local bn = kin:LL_BoneName(bone_index)
+         if bn ~= "" then
+            log1("mob %s, amount = %.3f ", obj:name(), amount)
+	end
+  end
+end
+]]
+
+end
+
+
+function generic_object_binder:net_spawn(sobject)
+	if not object_binder.net_spawn(self, sobject) then
+		return false
+	end
+
+	if self.object:clsid() == clsid.fracture or 
+	self.object:clsid() == clsid.fracture_s or 
+	self.object:clsid() == clsid.flesh_s or 
+	self.object:clsid() == clsid.flesh or
+	self.object:clsid() == clsid.dog or
+	self.object:clsid() == clsid.dog_s or
+	self.object:clsid() == clsid.zombie_s or 
+	self.object:clsid() == clsid.zombie or  
+	self.object:clsid() == clsid.tushkano or 
+	self.object:clsid() == clsid.tushkano_s then
+                self.object:disable_trade()
+	end
+
+	db.add_obj(self.object)
+
+	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_mobile, self.loaded )
+
+	--log1("monster netspawn - "..self.object:name().." ")
+	--log1("!!ok!!")
+
+	return true
+end
+
+
+
+
+function generic_object_binder:reload(section)
+	object_binder.reload(self, section)
+end
+
+function generic_object_binder:net_save_relevant()
+	return true
+end
+
+function generic_object_binder:save(packet)
+	object_binder.save(self, packet)
+	xr_logic.save_obj(self.object, packet)
+	if self.object:clsid() == clsid.script_trader then
+		trade_manager.save(self.object, packet)
+	end
+end
+
+function generic_object_binder:load(reader)
+	self.loaded = true
+
+	printf("generic_object_binder:load(): self.object:name()='%s'", self.object:name())
+	object_binder.load(self, reader)
+
+	if reader:r_eof() then
+		abort("SAVE FILE IS CORRUPT - monster_binder, object - "..self.object:name().."")
+	end
+
+	xr_logic.load_obj(self.object, reader)
+	if self.object:clsid() == clsid.script_trader then
+		trade_manager.load(self.object, reader)
+	end
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
+
+
+local vaild_outfits = {
+["ecolog_outfit"] = true,
+["outfit_exo"] = true,
+["exo_outfit"] = true,
+["scientific_outfit"] = true,
+["protection_outfit"] = true,
+["outfit_antirad"] = true
+}
+
+
+function zarazjenie_parazitom()
+        local par_var = math.random(1,10)
+		if par_var == 1 then
+
+		local currout = db.actor:item_in_slot(6)
+
+        	if not currout or currout:condition() < 0.8 or not vaild_outfits[currout:section()] then
+
+			--log1(" paras try ")
+
+			local has_art = db.actor:object("af_studen_m1")
+                        if has_art and db.actor:is_on_belt(has_art) then
+				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - af_studen_m1 на поясе")
+				return	
+			end			
+
+			if olr_timers.has_timer("bolezn_parasite_timer") then
+				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - ещё не кончился bolezn_parasite_timer")
+				return
+			end
+
+			if olr_timers.has_timer("bolezn_parasite_timer_m") then
+				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - ещё не кончился bolezn_parasite_timer_м")
+				return
+			end
+
+			if olr_timers.has_timer("bolezn_parasite_timer_d") then
+				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - ещё не кончился bolezn_parasite_timer_д")
+				return
+			end
+
+                        if not has_alife_info("bolezn_parazity_info") then
+                        	olr_timers.st_timer("bolezn_parasite_timer", 2250, "nick.bolezn_parasite_timer()")
+				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом")
+				db.actor:give_info_portion("bolezn_parazity_info")
+			end
+
+end
+end
+end

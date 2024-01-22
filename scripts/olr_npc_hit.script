@@ -1,0 +1,119 @@
+-- hi_flyer 27.06.17
+
+local drop_flag = false
+local drop_var = math.random(1,10)
+
+function on_hit(obj, amount, local_direction, who, bone_index)
+	on_hit_drop(obj, amount, local_direction, who, bone_index)
+	on_hit_psy(obj, amount, local_direction, who, bone_index)
+end
+
+
+function on_hit_drop(obj, amount, local_direction, who, bone_index)
+	if not obj or xr_wounded.is_wounded(obj) or not obj:alive() then
+		return
+	end
+	local active_item = obj:item_in_slot(obj:active_slot())
+	if not active_item or active_item:section() == "bolt" then
+		return
+	end	
+        if active_item:is_weapon_magazined() ~= true or active_item:is_weapon_gl() ~= true then
+        	return
+	end
+	if obj:character_community() == "voenstals"
+		or obj:character_community() == "sin"
+		or obj:character_community() == "zombied" then
+		return false
+	end
+	if bone_index and bone_index > 0 then
+		if (bone_index >= 18 and bone_index < 31) then	
+                        drop_flag = true
+		elseif (bone_index >= 31 and bone_index < 40) then	
+                        drop_flag = true
+	        end
+        end
+	if drop_flag then
+                if drop_var == 1 then
+			active_item:set_condition(math.random(5,25)/100)
+			obj:drop_item(active_item)
+                	drop_flag = false
+		end		
+	end
+end
+
+function on_hit_psy(obj, amount, local_direction, who, bone_index)
+	if obj:is_stalker() and obj:alive() then
+	if xr_wounded.is_wounded(obj) then
+		return
+	end
+	if not olr_protected.is_no_offline_alife_obj(obj:name()) then
+        if who:id() == db.actor:id() then
+		local cur_weapon = db.actor:active_item()
+		if cur_weapon then
+			local cur_weapon_sec = cur_weapon:section()
+			if cur_weapon_sec == "wpn_pistol_future" or cur_weapon_sec == "wpn_power_fists" then
+				local pos = obj:position()
+				local x, y, z = pos.x, pos.y + 1, pos.z
+				particles_object([[anomaly2\bloodsucker_shield]]):play_at_pos(vector():set(x,y,z))
+				local active_item = obj:item_in_slot(obj:active_slot())
+				if active_item and active_item:section() ~= "bolt" and active_item:section() ~= "wpn_hpsa" and active_item:section() ~= "wpn_gsh18" then
+					obj:drop_item(active_item)
+					level.add_pp_effector("shoot\\grey_s"..math.random(1,5)..".ppe", 231, false)
+				end
+			end
+		end
+	end
+	end
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

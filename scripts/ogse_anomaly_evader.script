@@ -1,0 +1,253 @@
+-----------------------------------------------------------------------
+--- ogse_anomaly_evader.script
+--- Модуль обхода аномалий
+--- KamikaZze, OGS Evolution Team 2011
+--- version 1.3 (20/08/2012)
+--- edit by hi_flyer, OLR mod
+-----------------------------------------------------------------------
+--- Настройки схемы
+----------------------------------------------------------------------- 
+function debug_flag(npc) 
+	return false
+end
+
+local excluded_npc = {
+	["lvl5_bar_stalker_0031"] =	true,  -- Гацула 
+	["lvl7_yantar_bar_bar_visitors_3_2_0002"] =	true,  -- Зяблик янтарь
+	["lvl5_bar_staler_undead_olr_0011"] 	=	true,  -- бар
+	["lvl7_yantar_stalker_bunker"] 		=	true,  -- к старому лагерю
+	["lvl6_rostok_staler_undead_olr"] 	= 	true,   -- гацула
+	["lvl5_bar_staler_undead_olr_0011"] = true,
+	["lvl1_escape_stalker_0029"] 		= true,   -- зоб
+	["lvl1_escape_stalker_0001"] 		= true,   -- дигер
+	["esc_raid_scientist"] = true,
+	["esc_raid_scientist_0000"] = true,
+	["esc_raid_scientist_0001"] = true,
+	["lvl7_uch_stalker_0006"] = true,
+	["lvl7_yantar_stalker_0067"] = true,
+	["lvl7_yantar_stalker_0003"] = true,
+	["lvl7_yantar_stalker_0068"] = true,
+	["lvl10_radar_stalker_0031"] = true,
+	["lvl1_escape_stalker_0002"] = true,
+	["lvl10_radar_stalker_0039"] = true,
+	["lvl10_radar_stalker_0038"] = true,
+	["lvl10_radar_stalker_0033"] = true,
+	["lvl10_radar_stalker_0036"] = true,
+	["lvl9_military_stalker"] = true,
+	["lvl10_radar_stalker_0034"] = true,
+	["lvl6_rostok_staler_undead_olr"] = true,
+	["lvl6_rostok_staler_undead_olr_0000"] = true,
+	["lvl5_bar_staler_undead_olr_0003_lonewolf"] = true,
+	["lvl2_garbage_staler_undead_olr_0012"] = true,
+	["lvl11_deadcity_staler_undead_olr_0004"] = true,
+
+	["lvl2_garbage_stalker_0037lloh"] = true,
+	["lvl2_garbage_stalker_0037lloh_0000"] = true,
+
+	--["bandit_trader_spawn"]	= true		
+}
+
+
+local excluded_comms = {			-- запретные коммунити
+	["zombied"] = true,
+	["sin"] = true,
+	["trader"] = true
+}
+
+local excluded_locations = {
+	--["l03u_agr_underground"] = true,
+}
+
+local added_restrictions = {}
+local last_position      = {}
+
+
+
+function death(victim)
+	local nid = victim:id()
+	local anoms = added_restrictions[nid]
+	if anoms then
+		local restrs = {}
+		for k, v in pairs(anoms) do
+			local sobj = alife():object(k)
+			if debug_flag() then log1("!!REMOVE_RESTRICT "..k.." FOR "..victim:name()) end
+			if sobj then
+				table.insert(restrs, sobj:name())
+			end
+		end
+		if table.getn(restrs) > 0 then
+			victim:remove_restrictions("", table.concat( restrs, "," ))
+		end
+		added_restrictions[nid] = nil
+		last_position[nid]      = nil
+	end
+end
+
+
+-- как часто выполнять обход аномалий (в мс)
+local freq = 1000
+
+function update_norm(obj)
+		
+	local npc = obj
+	if not npc:alive() then return end
+
+	local profile = npc:profile_name()
+	local name = npc:name()
+	local lev_name = level.name()
+
+  if
+    excluded_npc[ profile ]
+    or excluded_npc[ name ]
+    or excluded_npc[ npc:story_id() ]
+    or (
+      IsStalker( npc ) and excluded_comms[ npc:character_community() ]
+    )
+  then
+    return
+  end
+  if excluded_locations[ lev_name ] then return end
+
+  --if db.storage[obj:id()].active_scheme == "walker" then 
+  --	log1("return anom obhod WALKER --- "..obj:name().."  ")
+--	return
+ -- end  
+
+  local binder = npc:binded_object()
+  --if debug_flag(npc) then log1("UPDATING ANOMALY EVADER FOR "..obj:name()) end
+  --if debug_flag(npc) then log1("BINDER ANOMALY "..tostring(binder.ogse_anomaly_evader_t)) end
+  --if debug_flag(npc) then log1("TIME GLOBAL "..tostring(time_global())) end
+  if
+    binder.ogse_anomaly_evader_t
+    and binder.ogse_anomaly_evader_t > time_global()
+  then
+    return
+  end
+  binder.ogse_anomaly_evader_t = time_global() + freq
+  --if debug_flag(npc) then log1("BINDER ANOMALY NOW"..tostring(binder.ogse_anomaly_evader_t)) end
+  local curr_pos = npc:position()
+  local prev_pos = last_position[ npc:id() ]
+  if prev_pos then
+    if prev_pos:distance_to( curr_pos ) < 20 then
+      return
+    else
+      last_position[ npc:id() ] = curr_pos
+    end
+  else
+    last_position[ npc:id() ] = curr_pos
+  end
+  
+  if not added_restrictions[ npc:id() ] then
+    added_restrictions[ npc:id() ] = {}
+  end
+
+  if debug_flag(npc) then log1("[ANOMALY EVADER] try to enumerate anomalies "..npc:name()) end
+  local restr = {}
+
+  for a, b in pairs(bind_anomaly.get_all_nearest_anomalies_by_point_in_radius( npc:position(), 30 )) do
+
+    if debug_flag(npc) then log1("[ANOMALY EVADER] anomaly "..tostring(a)) end
+
+    local obj = level.object_by_id( a )
+    if obj then  -- and bind_anomaly.get_anomaly_status(a) ~= "off"
+	  if debug_flag(npc) then log1("[ANOMALY EVADER] anomaly "..obj:name().."") end
+      local ignore    = false
+      --for k, v in pairs( excluded_sect ) do
+      --  if string.find( b.sect, k ) then
+      --    ignore = true
+      --    break
+      --  end
+      --end
+      if not ignore then
+        restr[ obj:name() ] = true
+		if debug_flag(npc) then log1("[ANOMALY EVADER] anomaly "..obj:name().." ADDED TO TABLE") end
+      end
+    end
+  end
+
+  local del = {}
+  for k, _ in pairs( added_restrictions[ npc:id() ] ) do
+  if debug_flag(npc) then log1("[ANOMALY EVADER] 1 "..k) end
+    if restr[ k ] then
+      restr[ k ] = nil -- уже установлен
+	  if debug_flag(npc) then log1("[ANOMALY EVADER] 2 "..k) end
+    else
+      table.insert( del, k ) -- удалить старый
+	  if debug_flag(npc) then log1("[ANOMALY EVADER] 3 "..k) end
+    end
+  end
+
+  if table.getn( del ) > 0 then
+	if debug_flag(npc) then log1("[ANOMALY EVADER] REMOVE RESTRICTORS "..table.concat( del, "," )) end
+	this.remove_restrictions(npc, "", table.concat( del, "," ))
+  end
+
+  local add = {}
+  for k, _ in pairs( restr ) do
+  if debug_flag(npc) then log1("[ANOMALY EVADER] anomaly "..k.." IS ABOUT TO ADD") end
+    if not should_npc_miss_this_anomaly( npc ) then
+	if debug_flag(npc) then log1("[ANOMALY EVADER] anomaly "..k.." ADD") end
+        	table.insert( add, k ) -- добавить новый
+      		added_restrictions[ npc:id() ][ k ] = true
+    	end
+  end
+  if table.getn( add ) > 0 then
+	if debug_flag(npc) then log1("[ANOMALY EVADER] SET RESTRICTORS "..table.concat( add, "," )) end
+	this.add_restrictions(npc, "", table.concat( add, "," ))
+  end
+end
+
+
+local monster_miss_cnt = 0
+function should_npc_miss_this_anomaly( npc )
+  local miss_this_anomaly = false
+  if IsMonster( npc ) then
+    if monster_miss_cnt == 0 then
+      miss_this_anomaly = true
+      monster_miss_cnt  = init_monster_miss_cnt()
+    else
+      monster_miss_cnt = monster_miss_cnt - 1
+    end
+  end
+  return miss_this_anomaly
+end
+
+
+function init_monster_miss_cnt()
+  return ( 1 + level.get_game_difficulty() ) * 2
+end
+
+
+function invalidate_restrictions(npc)
+	local id = npc:id()
+	added_restrictions[id] = nil
+	last_position[id] = nil
+end
+function disable_restrictions(npc, restr)
+	local id = npc:id()
+	if added_restrictions[id] then
+		local t = parse_names(restr)
+		
+		for k,v in pairs(t) do
+			if added_restrictions[id][v] then
+				added_restrictions[id][v] = nil
+			end
+		end
+	end
+end
+
+function remove_all_restrictions(npc)
+	npc:remove_all_restrictions()
+	ogse_anomaly_evader.invalidate_restrictions(npc)
+end
+
+function remove_restrictions(npc, _out, _in)
+	npc:remove_restrictions(_out, _in)
+	ogse_anomaly_evader.disable_restrictions(npc, _in)
+	--log1(" !!! remove_restrictions - "..npc:name().."  -- ".._out.." -- ".._in.." ")
+end
+
+function add_restrictions(npc, _out, _in)
+	--log1("add resrt to - "..npc:name().." ")
+	npc:add_restrictions(_out, _in)
+end

@@ -1,0 +1,757 @@
+-- hi_flyer 04/10/16
+
+---------------------------------------------------------------------------------------------------------------------------
+
+local max_rnd_anoms = 5000
+
+function on_spawn()
+
+if db.actor then
+
+	if xvars and xvars.rnd_anoms_count then
+
+		local level_name = level.name()
+
+		if level_name == "lvl1_escape" and not has_alife_info("spawn_anoms_esc") then
+		    db.actor:give_info_portion("spawn_anoms_esc")
+                    spawn_esc()
+                 end
+
+		if level_name == "lvl2_garbage" and not has_alife_info("spawn_anoms_gar") then
+		    db.actor:give_info_portion("spawn_anoms_gar")
+                    spawn_garbage()
+                 end
+
+		if level_name == "lvl3_agroprom" and not has_alife_info("spawn_anoms_agr") then
+		    db.actor:give_info_portion("spawn_anoms_agr")
+                    spawn_agro()
+                 end
+
+		if level_name == "lvl4_darkdolina" and not has_alife_info("spawn_anoms_dol") then
+		    db.actor:give_info_portion("spawn_anoms_dol")
+                    spawn_dolina()
+                 end
+
+		if level_name == "lvl5_bar" and not has_alife_info("spawn_anoms_bar") then
+		    db.actor:give_info_portion("spawn_anoms_bar")
+                    spawn_bar()
+                 end
+
+		if level_name == "lvl7_yantar" and not has_alife_info("spawn_anoms_yan") then
+		    db.actor:give_info_portion("spawn_anoms_yan")
+                    spawn_yantar()
+                 end
+
+		if level_name == "lvl9_military" and not has_alife_info("spawn_anoms_mil") then
+		    db.actor:give_info_portion("spawn_anoms_mil")
+                    spawn_military()
+                 end
+
+		if level_name == "lvl10_radar" and not has_alife_info("spawn_anoms_rad") then
+		    db.actor:give_info_portion("spawn_anoms_rad")
+                    spawn_radar()
+                 end
+
+		if level_name == "lvl11_deadcity" and not has_alife_info("spawn_anoms_ded") then
+		    db.actor:give_info_portion("spawn_anoms_ded")
+                    spawn_dead()
+                 end
+
+end
+end
+end
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+function spawn_esc()
+local sectionsa = 
+{ 
+"zone_radioactive",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+
+"zone_radioactive_weak"
+
+}
+
+
+local count = math.random(10,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.1 ,bit_not(0))  -- math.random(60,90)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+if obj then
+if obj.position:distance_to_xz(vector():set( 16, 17, 677)) < 110 or  --- на свалку
+obj.position:distance_to_xz(vector():set( 132, 5, 314)) < 70 or  --- база хорька
+obj.position:distance_to_xz(vector():set( 130, 2, -20)) < 70 or  --- завод 
+obj.position:distance_to_xz(vector():set( 27, 1, 114)) < 70 or  --- под мостом
+obj.position:distance_to_xz(vector():set( -125, -2, -557)) < 20 or  --- вход в зону
+obj.position:distance_to_xz(vector():set( -76, -29, -317)) < 40 or  --- блокпост забор дырка
+obj.position:distance_to_xz(vector():set( -165, -29, -317)) < 50 or  --- перед блокпостом вояк
+obj.position:distance_to_xz(vector():set( -202, -5, -140)) < 110 or  --- жаба 
+obj.position:distance_to_xz(vector():set( -147, -30, -373)) < 50 then    --- ваяки
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+
+end
+end
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+function spawn_dolina()
+local sectionsa = 
+{ 
+"zone_radioactive",
+"zone_radioactive_weak",
+"zone_black_needle",
+"zone_orange_tuman",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+
+"zone_lisai"
+
+}
+
+
+local count = math.random(10,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.15 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( 93, -12, 203)) < 170 or  --- лаба
+obj.position:distance_to_xz(vector():set( -181, 18, 117)) < 110 or  --- база наёмников
+obj.position:distance_to_xz(vector():set( -10, 3, -26)) < 70 or  --- база зомби
+obj.position:distance_to_xz(vector():set( 44, 3, -252)) < 50 or  --- плен
+obj.position:distance_to_xz(vector():set( -245, 7, 234)) < 30 or  --- переход рядом с базой (вороний глаз)
+obj.position:distance_to_xz(vector():set( 60, 4, -143)) < 70 then    --- слизни
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+function spawn_agro()
+
+local sectionsa = 
+{ 
+"zone_radioactive",
+"zone_radioactive_weak",
+"zone_black_needle",
+"zone_orange_tuman",
+
+--"zone_mosquito_bald_new_one",
+--"zone_witches_galantine_weak",
+--"zone_morozilka",
+--"zone_zharka_static_weak",
+
+"zone_lisai"
+
+}
+
+
+local count = math.random(15,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.2 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( 17, 13, 3)) < 70 or  --- завоод
+obj.position:distance_to_xz(vector():set( -130, 3, -182)) < 70 then  --- нии
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+function spawn_garbage()
+local sectionsa = 
+{ 
+"zone_radioactive",
+"zone_radioactive_weak",
+"zone_black_needle",
+"zone_orange_tuman",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+
+"zone_lisai"
+
+}
+
+
+local count = math.random(5,15) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.15 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( 109, 8, 502)) < 70 or  --- база долга
+obj.position:distance_to_xz(vector():set( -81, 11, 262)) < 70 or  --- ангар
+obj.position:distance_to_xz(vector():set( 50, -33, -146)) < 70 or  --- бандиты
+obj.position:distance_to_xz(vector():set( -118, 20, -4)) < 20 or  --- на агро большой
+
+obj.position:distance_to_xz(vector():set( 207, 4, 284)) < 50 or  --- поле на долину
+obj.position:distance_to_xz(vector():set( 161, 4, 353)) < 50 or  --- поле на долину 2
+obj.position:distance_to_xz(vector():set( 137, 4, 424)) < 50 or  --- поле на долину 3
+
+obj.position:distance_to_xz(vector():set( 23, 5, -627)) < 20 or  --- на кордон
+
+obj.position:distance_to_xz(vector():set( -121, 22, -246)) < 20 or  --- на нии нижний
+
+obj.position:distance_to_xz(vector():set( 30, 14, -547)) < 70 or  --- поле на свалку
+
+obj.position:distance_to_xz(vector():set( 6, 5, 485)) < 50 or  --- поле вдоль перехода на бар
+
+obj.position:distance_to_xz(vector():set( 23, 20, -413)) < 70 then    --- фил
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+---------------------------------------------------------------------------------------------------------------------------
+
+function spawn_bar()
+local sectionsa = 
+{ 
+"zone_radioactive",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+--"zone_morozilka",
+--"zone_zharka_static_weak",
+
+"zone_radioactive_weak"
+--"zone_black_needle",
+--"zone_lisai"
+
+}
+
+
+local count = math.random(5,15) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.15 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( 50, -88, -195)) < 270 or  --- центр города
+obj.position:distance_to_xz(vector():set( 289, -77, -451)) < 80 or  --- на свалку
+obj.position:distance_to_xz(vector():set( -228, -85, -133)) < 20 or  --- остановка блокпост в сторону холмов
+obj.position:distance_to_xz(vector():set( -287, -65, 403)) < 50 or  --- на холмы дорога узкая
+obj.position:distance_to_xz(vector():set( 170, -83, 412)) < 70 then  --- площадка за заводом
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+---------------------------------------------------------------------------------------------------------------------------
+
+function spawn_yantar()
+local sectionsa = 
+{ 
+"zone_radioactive",
+"zone_radioactive_weak",
+"zone_black_needle",
+"zone_orange_tuman",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+"zone_dead_zone",
+
+"zone_lisai"
+
+}
+
+
+local count = math.random(15,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.15 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( -189, 11, 177)) < 140 or  --- база учёных
+obj.position:distance_to_xz(vector():set( 60, 8, -150)) < 70 or  --- база студня
+obj.position:distance_to_xz(vector():set( -180, 13, -136)) < 70 or  --- дом снайперства 
+
+
+obj.position:distance_to_xz(vector():set( -95, 13, 197)) < 55 or  --- поле 1
+obj.position:distance_to_xz(vector():set( -40, 13, 213)) < 60 or  --- поле 2 
+obj.position:distance_to_xz(vector():set( 35, 13, 229)) < 60 or  --- поле 3 
+obj.position:distance_to_xz(vector():set( 107, 13, 233)) < 60 or  --- поле 4 
+obj.position:distance_to_xz(vector():set( 194, 13, 203)) < 65 or  --- поле 4 
+obj.position:distance_to_xz(vector():set( 202, 13, 107)) < 50 or  --- поле 4 
+
+obj.position:distance_to_xz(vector():set( 200, -10, -33)) < 50 then    --- мозг колба
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+---------------------------------------------------------------------------------------------------------------------------
+
+function spawn_military()
+local sectionsa = 
+{ 
+"zone_radioactive",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+"zone_dead_zone",
+
+"zone_radioactive_weak"
+--"zone_black_needle",
+--"zone_lisai"
+
+}
+
+
+local count = math.random(15,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.15 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( -113, -14, 383)) < 70 or  --- жаба
+obj.position:distance_to_xz(vector():set( -8, -7, -17)) < 160 or  --- база греха
+obj.position:distance_to_xz(vector():set( -280, -12, 374)) < 17 or  --- в дедсити
+obj.position:distance_to_xz(vector():set( 56, -14, 377)) < 17 or  --- на радар
+obj.position:distance_to_xz(vector():set( -238, -8, 51)) < 70 then  --- база сталкеров
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+function spawn_radar()
+local sectionsa = 
+{ 
+"zone_radioactive",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+"zone_dead_zone",
+
+"zone_radioactive_weak"
+--"zone_black_needle",
+--"zone_lisai"
+
+}
+
+
+local count = math.random(15,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.35 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( -753, -44, -473)) < 70 or  --- начало где сталкеры ждут
+obj.position:distance_to_xz(vector():set( -18, -7, -67)) < 60 then  --- дом с докми
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+function spawn_dead()
+
+local sectionsa = 
+{ 
+"zone_radioactive",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+"zone_dead_zone",
+
+"zone_radioactive_weak"
+--"zone_black_needle",
+--"zone_lisai"
+
+}
+
+
+local count = math.random(15,35) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(1,2), vl_pos,lv,gv_max, 0.35 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( -21, 4, 41)) < 210 then  --- центр
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+
+--------------------------------------------------------------------------------------------
+
+
+
+
+function spawn_obhod()
+
+local sectionsa = 
+{ 
+"zone_radioactive",
+"zone_radioactive_weak",
+"zone_black_needle",
+
+"zone_mosquito_bald_new_one",
+"zone_mosquito_bald_new_two",
+"zone_mosquito_bald_new_tri",
+"zone_mosquito_bald_new_four",
+"zone_mosquito_bald_new_five",
+"zone_mosquito_bald_new_six",
+"zone_witches_galantine_weak",
+"zone_morozilka",
+"zone_zharka_static_weak",
+"zone_dead_zone",
+
+"zone_lisai"
+
+}
+
+
+local count = math.random(35,55) 
+for ind = 1, count do
+
+local lname = level.name()
+local lvtab = GetLevelVertexes( lname )
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
+
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
+
+local vl_pos = level.vertex_position(lv)
+
+local section = sectionsa[math.random(table.getn(sectionsa))] 
+local obj = olr_anoms_spawn.spawn_anom(section, math.random(3,6), vl_pos,lv,gv_max, 0.52 ,bit_not(0))
+xvars.rnd_anoms_count = xvars.rnd_anoms_count + 1
+--olr.add_spot_on_map( obj.id,"red_location", obj:name() )
+if obj then
+if obj.position:distance_to_xz(vector():set( 42, 1, -200)) < 70 or  --- хата1
+obj.position:distance_to_xz(vector():set( 65, 1, -82)) < 70 then  --- хата2
+alife():release(obj, true) 
+--news_manager.send_tip(db.actor, "дел", nil, "freedom", 9000)
+xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
+end
+end
+end
+end
+
+
+
+--------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+function spawn_anom(anom_name,plosh,position,level_vertex_id,game_vertex_id,powers_a,time_dangeros)
+if xvars.rnd_anoms_count then
+if xvars.rnd_anoms_count > max_rnd_anoms then
+log1("!!!TOO MUCH ANOMS - RETURN!!!")
+return 
+end
+end
+local obj = alife():create(anom_name,position,level_vertex_id,game_vertex_id)
+local pac = net_packet()
+obj:STATE_Write(pac)
+local game_vertex_id = pac:r_u16()
+local distance = pac:r_float()
+local direction = pac:r_u32()
+local level_vertex_id = pac:r_u32()
+local object_flags = pac:r_s32()
+local custom_data = pac:r_stringZ()
+local story_id = pac:r_s32()
+local spawn_story_id = pac:r_s32()
+local shape_count = pac:r_u8()
+for i=1,shape_count do
+local shape_type = pac:r_u8()
+if shape_type == 0 then
+local center = pac:r_vec3()
+local plosh = pac:r_float()
+else
+local box = pac:r_matrix()
+end
+end
+local restrikror_type = pac:r_u8()
+local powers = pac:r_float()
+local owner_id = pac:r_s32()
+local on_off_mode_enabled_time = pac:r_u32()
+local on_off_mode_disabled_time = pac:r_u32()
+local on_off_mode_shift_time = pac:r_u32()
+local offline_interactive_radius = pac:r_float()
+local artefact_spawn_places_count = pac:r_u16()
+local artefact_position_offset = pac:r_s32()
+local last_spawn_time_present = pac:r_u8()
+--if pac:r_elapsed()~= 0 then
+--abort("left=%d",pac:r_elapsed())
+--end
+pac:w_begin(game_vertex_id)
+pac:w_float(distance)
+pac:w_u32(direction)
+pac:w_u32(level_vertex_id)
+pac:w_u32(object_flags)
+pac:w_stringZ(custom_data)
+pac:w_s32(story_id)
+pac:w_s32(spawn_story_id)
+pac:w_u8(1)
+pac:w_u8(0)
+local sphere_center = vector()
+sphere_center:set(0,0,0)
+pac:w_vec3(sphere_center)
+pac:w_float(plosh)
+pac:w_u8(restrikror_type)
+if powers_a ~= nil then
+powers = powers_a
+end
+pac:w_float(powers)
+if time_dangeros == nil then
+owner_id = bit_not(0)
+else
+owner_id = time_dangeros
+end
+pac:w_u32(owner_id)
+pac:w_u32(on_off_mode_enabled_time)
+pac:w_u32(on_off_mode_disabled_time)
+pac:w_u32(on_off_mode_shift_time)
+pac:w_float(offline_interactive_radius)
+pac:w_u16(artefact_spawn_places_count)
+pac:w_u32(artefact_position_offset)
+pac:w_u8(last_spawn_time_present)
+pac:r_seek(0)
+obj:STATE_Read(pac,pac:w_tell())
+return obj
+end
+
+
+
+
+
+
+
+
+
+

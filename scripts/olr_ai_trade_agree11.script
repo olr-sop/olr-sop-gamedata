@@ -1,0 +1,166 @@
+--[[-----------------------------------------------------------------------------------------------
+ File         : ai_trade_agree.script
+ Description  : Trade module for PDA communication
+ Copyright    : OLR Team
+ Author       : _Boolean_, proger_Dencheek
+ Date         : 11.05.2014
+ Last edit    : 24.05.2014
+ TODO -  НПС ждёт пока к нему подойдём, он машет рукой и ждёт нас
+--]]-----------------------------------------------------------------------------------------------
+
+local state_waiting = 0
+local anim_time = 10000
+
+local a = 1
+----------------------------------------------------------------------------------------------------------------------
+-- ENABLE SCHEME
+----------------------------------------------------------------------------------------------------------------------
+function enable_scheme(npc, ini, scheme, section)
+	a = 0
+	--xvars.actor_pda_trade[npc:name()] = true
+	log1(a)
+end
+
+
+----------------------------------------------------------------------------------------------------------------------
+-- DISABLE SCHEME
+----------------------------------------------------------------------------------------------------------------------
+function disable_scheme(npc, scheme)
+	a = 1
+	--xvars.actor_pda_trade[npc:name()] = nil
+	log1(a)
+	log1("disss")
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- EVALUATORs
+----------------------------------------------------------------------------------------------------------------------
+class "trade_evaluator" (property_evaluator)
+function trade_evaluator:__init(name, storage) super (nil, "trade_evaluator")
+	self.a = storage
+end
+
+function trade_evaluator:evaluate()
+	local npc = self.object
+		log1("di111")
+	--if xvars.actor_pda_trade[npc:name()] == true then
+	if a == 0 then
+		return true
+	end
+end
+----------------------------------------------------------------------------------------------------------------------
+-- ACTIONs
+----------------------------------------------------------------------------------------------------------------------
+class "shake_hand" (action_base)
+function shake_hand:__init(npc_name, action_name, storage) super(nil, "shake_hand")
+	self.a = storage
+	self.timer = nil
+	self.state = nil
+end
+
+function shake_hand:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+
+	npc:set_desired_position()
+	npc:set_desired_direction()
+
+	npc:clear_animations()
+	utils.send_to_nearest_accessible_vertex(npc,npc:level_vertex_id())
+
+	if npc:item_in_slot(1) or npc:item_in_slot(2) and npc:active_item() then
+		state_mgr.set_state(npc,"hello_wpn",nil,nil,{look_object = db.actor},{animation = true})
+	else
+		state_mgr.set_state(npc,"hello",nil,nil,{look_object = db.actor},{animation = true})
+	end
+
+	--olr.add_spot_on_map( npc:id(),"alife_combat_fight", " база "..npc:name().." "  )
+	
+	self.state = state_waiting
+end
+
+function shake_hand:execute()
+	action_base.execute(self)
+	local npc = self.object
+	
+	if not db.actor:alive() then
+		olr_ai_trade_agree.disable_scheme(npc)
+	end
+	
+	if npc:position():distance_to(db.actor:position()) < 6 then			
+		if npc:item_in_slot(1) or npc:item_in_slot(2) and npc:active_item() then
+			state_mgr.set_state(npc,"hello_wpn",nil,nil,{look_object = db.actor},{animation = true})
+		else
+			state_mgr.set_state(npc,"hello",nil,nil,{look_object = db.actor},{animation = true})
+		end
+	end
+
+
+	state_mgr.set_state(npc,"wait",nil,nil,{look_object = db.actor},{animation = true})
+	
+	
+	if self.state == state_waiting and self.timer == nil then
+		self.timer = time_global() + anim_time
+		--log1(" timer wait - "..self.timer.." ")
+	end
+	if self.timer ~= nil and self.timer <= time_global() then
+		--log1(" timer AWAY - "..self.timer.." ")
+		olr_ai_trade_agree.disable_scheme(npc)
+		--olr_ai_trade_agree.reset_npc_logic(npc)
+		--log1("disabl")
+	end
+end
+
+function shake_hand:finalize()
+	action_base.finalize(self)
+	local npc = self.object
+	tabtrade[npc:name()] = nil
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------------------------------------------
+local property_base = 79945
+local Property = property_base + 1
+local Property_run = property_base + 2
+local act_base = 79950
+local Operator = act_base + 1
+
+function add_to_binder(npc, ini, scheme, section, storage)
+	local operators = {}
+	local properties = {}
+	xr_logic.pstor_store(npc, "active_npc_ids", true)
+	
+	local manager = npc:motivation_action_manager ()
+
+	manager:add_evaluator(Operator, trade_evaluator(storage))
+	
+	--properties["trade_evaluator"] = xr_evaluators_id.sidor_attendant_eva + 0
+	properties["attendant_follow"] = xr_evaluators_id.sidor_attendant_eva + 1
+
+    operators["shake_hand"] = xr_actions_id.sidor_attendant_act + 0
+    operators["attendant_follow"] = xr_actions_id.sidor_attendant_act + 1
+    
+   -- manager:add_evaluator(
+	--	properties["trade_evaluator"],
+	--	this.trade_evaluator ("trade_evaluator", storage)
+	--)
+	
+	local action = this.shake_hand ("shake_hand", storage)
+    action:add_precondition(world_property(stalker_ids.property_alive, true))
+    action:add_precondition(
+		world_property(stalker_ids.property_enemy, false)
+	)
+    action:add_precondition(world_property(stalker_ids.property_danger,	false))
+   -- action:add_precondition(world_property(properties["trade_evaluator"], true))
+    action:add_precondition(world_property(properties["shake_hand"], true))
+    action:add_effect(world_property(properties["shake_hand"], false))
+    manager:add_action (operators["shake_hand"], action)
+   	xr_logic.subscribe_action_for_events (npc, storage, action)
+    
+    --xr_logic.subscribe_action_for_events (npc, storage, action)
+    
+    action = manager:action(xr_actions_id.alife)
+    action:add_precondition(world_property (properties["shake_hand"], false))
+    
+end

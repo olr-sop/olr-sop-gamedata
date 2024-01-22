@@ -1,0 +1,73 @@
+-- hi_flyer 18.06.16
+
+function on_take(obj)
+
+	if level.name() == "lvl5_bar" then
+		if device().precache_frame >1 then return end
+		if not has_alife_info("bar_robbing_sms") then
+			local oname = obj:name()
+			if oname == "lvl5_bar_kolbasa" or
+				oname == "lvl5_bar_conserva" or
+				oname == "lvl5_bar_physic_object_1079" or
+				oname == "lvl5_bar_medkit_0011" or
+				oname == "lvl5_bar_vodka_0013" or
+				oname == "lvl5_bar_bread" or
+				oname == "lvl5_bar_bread_0000" or
+				oname == "lvl5_bar_antirad_0013" then
+				if not olr_timers.has_timer("bar_robber_actor") then
+					olr_timers.st_timer("bar_robber_actor", 1233, "nick.bar_robber_actor()")
+				end
+				olr.info("bar_robbing_sms")
+				--news_manager.send_tip(db.actor, "С БАРА УГРАЛ ГГ ХАЛЯВУ", nil, "flash", 35000)  
+			end
+		end
+	end
+
+	if obj:section()=="yad" then alife():release(alife():object(obj:id())) end -- !! ai_medic
+
+	if obj:section()=="device_pda" then
+		if device().precache_frame >1 then return end
+		olr.del(obj)
+		local cond = obj:condition()
+                local bobj3445 = alife():create('item_pda_dead_taken', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+                level.client_spawn_manager():add(bobj3445.id, 0, function(id,obj) obj:set_condition(cond) end)
+                --log1("item_pda_dead fix")
+		local yaz_var = math.random(1,15)
+		if yaz_var == 1 then
+			olr_treasure.create_treasure()
+		else
+			--log1("nope")
+		end
+	end
+
+
+
+	if obj:section()=="psy_blocerator" and has_alife_info("esc_to_bar_start_go_dolina") and xvars.id_psyblock_garbage == -1 then
+		news_manager.send_tip(db.actor, "Мессер: Волк, прибор у меня...", 5, "act", 15000)
+		news_manager.send_tip(db.actor, "Одинокий волк: Отлично. Только обрати внимание на один нюанс, - блокиратор работает непродолжительное время, и тебе необходимо уложиться до того как заряд иссякнет... Удачи тебе.", 15, "default", 35000)
+		xvars.id_psyblock_garbage = obj:id()
+	end
+
+	if obj:section()=="agro_pda_pilot" and not has_alife_info("agr_pilot_take_pda") then
+		olr.del_by_name("lvl4_darkdolina_physic_fog_center")
+		olr.del_by_name("lvl5_bar_physic_fog_sity")
+		olr.del_by_name("lvl7_yantar_physic_fog_center")
+		news_manager.send_tip(db.actor, "ПДА: Данные карты обновлены.", 1, "flash", 35000)
+		olr.info("agr_pilot_take_pda")
+	end
+
+	if obj:section()=="item_pda_dead" then
+                local cond = obj:condition()
+		olr.del(obj)
+                local bobj3445 = alife():create('item_pda_dead_taken', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+                level.client_spawn_manager():add(bobj3445.id, 0, function(id,obj) obj:set_condition(cond) end)
+                --log1("item_pda_dead fix")
+		local yaz_var = math.random(1,11)
+		if yaz_var == 1 then
+			olr_treasure.create_treasure()
+		else
+			--log1("nope2")
+		end
+	end
+	
+end

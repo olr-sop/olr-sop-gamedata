@@ -1,0 +1,5038 @@
+-- ----------------------------------------------------------------------------------------------------
+-- Общие функции
+-- ----------------------------------------------------------------------------------------------------
+
+function delme(actor, npc)
+if npc then
+	olr.del(npc)
+end
+end
+
+function kill_mil_nap()
+	local obj = alife():object("lvl9_military_stalker_0033")
+	local bos = level.object_by_id(obj.id)
+	if bos then
+		bos:kill(bos)
+	end
+end
+
+
+function del_mg_zombcat_talked()
+	olr.spawn_on_obj("af_soul", "lvl11_deadcity_stalker_0032")
+	olr.del_by_name("lvl11_deadcity_stalker_0032")
+end
+
+
+function yan_poltrs_spawn_ph()
+	olr.snd([[ol3\koan\BoneBodySlam]])
+	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl7_yantar_space_restrictor_0004")
+	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl7_yantar_space_restrictor_0004")
+	olr.del_by_name("lvl7_yantar_space_restrictor_0004")
+end
+
+
+function agr_podz_krovo()
+	olr.info("agr_zosi_sp")
+	for i = 1, math.random(5,11) do
+  		alife():create("m_rat_new", db.actor:position():add(db.actor:direction():mul(20)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+ 	end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\drone_long]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+end
+
+
+function bar_away_to_wolf()
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("bar_away_to_wolf_way")
+	local look = patrol("barman_kamorka_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+function kill_rosdolgovecth()
+	local obj = alife():object("lvl6_rostok_stalker_0002")
+	local bos = level.object_by_id(obj.id)
+	if bos then
+		bos:kill(bos)
+	end
+end
+
+
+function yan_attack_heli_dead()
+	olr.kill_actor()
+	db.actor.health = -1
+	local snd_obj = xr_sound.get_safe_sound_object([[weapons\svu_shoot]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+function del_final_bun_spasen_end()
+	olr.del_by_name("lvl7_yantar_stalker_0058")
+end
+
+function bar_dodik_dead()
+	olr.del_by_name("lvl5_bar_space_restrictor_0126")
+end
+
+function use_yan_tru_otkl()
+	olr.del_by_name("lvl7_yantar_physic_object_0134")
+	olr.info("pre_radar_de_done")
+end
+
+
+function del_haes_zaz()
+	if not olr_timers.has_timer("del_haes_zaz") then
+		olr_timers.st_timer("del_haes_zaz", 152, "xr_effects.del_haes_zaz2()")
+	end
+end
+function del_haes_zaz2()
+	olr.del_by_name("lvl_chaes_veh_nis_0001")
+end
+
+
+function del_barrr_zaz()
+	if not olr_timers.has_timer("del_barrr_zaz") then
+		olr_timers.st_timer("del_barrr_zaz", 52, "xr_effects.del_barrr_zaz2()")
+	end
+end
+function del_barrr_zaz2()
+	olr.del_by_name("lvl_bar_veh_nis_0001")
+end
+
+function open_rost_diplomat()
+	olr.to_online("lvl6_rostok_box_rukzak_0000") -- реальный
+	olr.del_by_name("lvl6_rostok_physic_object_0286")
+end
+
+function use_door_down_sark()
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("teleport_1_way_olr2")
+	local look = patrol("teleport_1_look_olr2")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+function doktor_house_nelez()
+	--level.add_pp_effector("teleport.ppe", 200349, false)
+	--db.actor.psy_health = -0.105
+	--db.actor:set_actor_position(vector():set(38,3,121))
+	--news_manager.send_tip(db.actor, "Ах... голова...", nil, "act", 9000)
+end
+
+
+function use_meatdevice_yan()  -- lvl7_yantar_physic_object_0760 
+	if not has_alife_info("yan_biolab_start_quest_done_talked") then
+		news_manager.send_tip(db.actor, "Не работает...", nil, "act", 39000)
+		return
+	end
+	local STbronb = db.actor:object("rat_food")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 80
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("crow_food")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 95
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_flesh_eye")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 125
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_boar_leg")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 115
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_dog_tail")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 135
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_psevdodog_tail")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 225
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_krovosos_jaw")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 325
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_burer_hand")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 385
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	local STbronb = db.actor:object("mutant_zombie_hand")
+	if STbronb then
+		xvars.meat_money = xvars.meat_money + 105
+		news_manager.send_tip(db.actor, "Передан предмет: "..STbronb:get_name().." ", nil, "default", 9000)
+		olr.del(STbronb)
+		return
+	end
+	news_manager.send_tip(db.actor, "Нет в наличии образцов...", nil, "item", 9000)
+end
+
+
+function use_door_ros()
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("towalktheros_waykl")
+	local look = patrol("towalktheros_waykl")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+function use_door_yanratt()
+	if not has_alife_info("son_yantar") then
+		news_manager.send_tip(db.actor, "Закрыто...", nil, "act", 39000)
+		return
+	end
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("towalktherat_yan")
+	local look = patrol("towalktherat_yan")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+function rat_deep_lab_scream()
+	olr.del_by_name("lvl_rat_space_restrictor_0007")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\drone_long]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end	
+	news_manager.send_tip(db.actor, "Похоже эта дверь ведёт куда-то вниз, но она закрыта...", nil, "act", 35000)
+end
+
+function try_radbun_antenaupr()  -- вводим код
+	if not has_alife_info("jornal_1_taken") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 1 некорректна.", nil, "default", 15000)
+		return
+	end
+	if not has_alife_info("jornal_3_taken") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 3 некорректна.", nil, "default", 15000)
+		return
+	end
+	if not has_alife_info("spawn_doks_holmy") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 2 некорректна.", nil, "default", 15000)
+		return
+	end
+	if not has_alife_info("spawn_doks_yantar") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 4 некорректна.", nil, "default", 15000)
+		return
+	end
+	if not has_alife_info("spawn_doks_radar") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 5 некорректна.", nil, "default", 15000)
+		return
+	end
+	if not has_alife_info("jornal_6_taken") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 6 некорректна.", nil, "default", 15000)
+		return
+	end
+	if not has_alife_info("spawn_jourlalist") then
+		news_manager.send_tip(db.actor, "Ошибка доступа. Часть кода 7 некорректна.", nil, "default", 15000)
+		return
+	end
+	if has_alife_info("radbun_antena_bar") then
+		olr.info("pre_aes_antenna_off")
+		nick.set_level_choosen_zombied("lvl5_bar")
+		news_manager.send_tip(db.actor, "Что за!? База! Ответьте! Территория бара, приём!", 50, "dolg", 35000)
+		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
+		level.add_pp_effector("blink.ppe", 20131, false)
+		return
+	end
+	if has_alife_info("radbun_antena_mg") then
+		olr.info("pre_aes_antenna_off")
+		nick.set_level_choosen_zombied("lvl11_deadcity")
+		news_manager.send_tip(db.actor, "Что за!? База! Ответьте! Мужики, приём!", 50, "freedom", 35000)
+		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
+		level.add_pp_effector("blink.ppe", 20131, false)
+		return
+	end
+	if has_alife_info("radbun_antena_yan") then
+		olr.info("pre_aes_antenna_off")
+		nick.set_level_choosen_zombied("lvl7_yantar")
+		news_manager.send_tip(db.actor, "Что за!? База! Ответьте! Мужики, приём!", 50, "ecolog", 35000)
+		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
+		level.add_pp_effector("blink.ppe", 20131, false)
+		return
+	end
+end
+
+function use_pc_radbun()
+	if not has_alife_info("pre_aes_antenna_colba_boom") then
+		news_manager.send_tip(db.actor, "Не работает.", nil, "default", 39000)
+		return
+	end
+	local STbronb = db.actor:object("radbun_karta_pc")
+	if not STbronb then
+		news_manager.send_tip(db.actor, "Необходима карта доступа к пульту управления. Свяжитесь с дежурным по работе установки в комнате персонала этого уровня.", nil, "default", 35000)
+		return
+	end
+	if has_alife_info("radbun_antena_bar") or has_alife_info("radbun_antena_mg") or has_alife_info("radbun_antena_yan") then
+		news_manager.send_tip(db.actor, "Координаты выбраны. Введите главный код в основной модуль управления.", nil, "default", 39000)
+		return
+	end
+	level.start_stop_menu(olr_pult.verstak_start(),true)
+end
+
+function use_ecetr_radbun_door()
+	if not has_alife_info("radbun_door_elecr_on") then
+		news_manager.send_tip(db.actor, "Похоже на короткое замыкание... Нужно найти способ снять его, тогда возможно дверь откроется. Нужно найти что-то похожее на распределительный щит, и попробовать обесточить его.", nil, "act", 39000)
+		return
+	end
+	olr.info("open_door_rabun_zal")
+	olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal")
+end
+
+
+function use_ecetr_radbun()
+	if not has_alife_info("rad_olr_door_open") then
+		news_manager.send_tip(db.actor, "Ничего...", nil, "act", 39000)
+		return
+	end
+	olr.spawn_on_obj("m_zombie_e", "lvl12_radar_bunker_box_rukzak_0001")
+	olr.spawn_on_obj("m_zombie_e", "lvl12_radar_bunker_box_rukzak_0001")
+	olr.spawn_on_obj("m_zombie_e", "lvl12_radar_bunker_box_rukzak_0001")
+	olr.spawn_on_obj("m_zombie_e", "lvl12_radar_bunker_box_rukzak_0001")
+	olr.spawn_on_obj("m_zombie_e", "lvl12_radar_bunker_box_rukzak_0001")
+	olr.del_by_name("lvl12_radar_bunker_electt_open")
+	olr.del_by_name("l10u_radar_bunker_physic_object_0317")
+	olr.del_by_name("l10u_radar_bunker_physic_object_0318")
+	olr.info("radbun_door_elecr_on")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\electric_crash]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end	
+end
+
+
+function use_door_garrat()
+	if not has_alife_info("zaba_gar_rat_go_now") then
+		news_manager.send_tip(db.actor, "Закрыто...", nil, "act", 39000)
+		return
+	end
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("changer_to_rat_walk")
+	local look = patrol("changer_to_rat_walk")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+
+
+
+function take_lamp_swamp()
+	if has_alife_info("swamp_izlom_start_dialog_talked") then 
+		olr.del_by_name("lvl8_swamp_physic_object_0252")
+		olr.give_item("af_art_lampa")
+		olr.info("has_lamp_swapm")
+	end
+end
+
+function swamp_izlom_spawn_lampa()
+	if has_alife_info("mg_izlom_start_talked") and has_alife_info("pogo_medzalupa_start_done") then
+		if not has_alife_info("izlom_blolota_sapawn") then
+			news_manager.send_tip(db.actor, "Это Журналист... Я здесь... под мостом... зайди, есть дело... Поход к центру...", nil, "unknown", 39000)
+			olr.info("izlom_blolota_sapawn")
+			olr.to_online("lvl8_swamp_physic_object_0252")
+			olr.kill_mon_in_radius(db.actor:position(), 300)
+			olr.beep()
+		end
+	end
+end
+
+function mil_contr_house()
+	olr.del_by_name("lvl9_military_space_restrictor_0029")
+	olr.spawn_on_obj("m_controller_e", "lvl9_military_physic_object_0211")
+end
+
+function actro_hit_napgen()
+	olr.kill_actor()
+	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\gener_last_knopka]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end	
+end
+
+function spawn_genrozd()
+	olr.del_noparent_weapons()
+	olr.del_by_name("lvl16_generators_staler_undead_olr")
+
+
+	local wait_time = 0
+  	wait_time = time_global() + 1200
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr.spawn_on_obj("m_gigant_e", "lvl16_generators_space_restrictor_0020") end
+  	)
+
+	--olr.spawn_on_obj("dead_body_skelet", "lvl16_generators_space_restrictor_0021")
+end
+
+function ac_hit_gen_durik()
+	log1("hhh")
+	olr.info("oso_start_goavay_visel")
+	olr.del_by_name("lvl16_generators_space_restrictor_0056")
+	xr_effects.actor_usel_boss()
+end
+
+function suker_sarcofag_spwn()
+	log1("k s")
+	olr.spawn_on_obj("m_bloodsucker_e", "lvl15_sarcofag_space_restrictor_0014")
+	olr.del_by_name("lvl15_sarcofag_space_restrictor_0014")
+end
+
+function mochalka_poezd_online()
+	olr.to_online("lvl1_escape_af_dummy_dummy_q1")
+	news_manager.send_tip(db.actor, "В том месте, где поезд повален есть пропа сталкерская. Обычно по ней ко мне идут сталкеры со свалки. Можешь забраться на пути, посмотреть в округе кто есть рядом...", 22, "trader", 35000)
+end
+
+function final_cutscene_start()
+	olr.snd([[ol3\koan\holod_blokpost_ending]])
+	level.set_weather("1865",true)
+	level.add_cam_effector2("camera_effects\\ending_one.anm", 30, false, "nick.final_cutscene_start_two")
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("actor_plpkor_walk")
+	local look = patrol("actor_plpkor_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\gener_last_knopka]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+        db.actor:hide_weapon()
+        level.disable_input()
+        level.hide_indicators()
+	olr.disable_walk()
+end
+
+
+function rad_psdhym_telep()
+	db.actor.psy_health = -0.21
+	olr.info("pseudohuman_first_checkup_done")
+	olr.del_by_name("lvl10_radar_space_restrictor_0009")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\heartbeat_long]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("ps_hum_lead_look")
+	local look = patrol("ps_hum_lead_walk")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	news_manager.send_tip(db.actor, "Подойди... Ближе...", 6, "unknown", 15000)
+end
+
+
+function mil_kamp_killer_dead()
+	xvars.mil_kamp_killer_dead_cnt = xvars.mil_kamp_killer_dead_cnt + 1
+	if xvars.kill_mil_karlik_cnt >= 3 and not has_alife_info("mil_kamp_killer_dead_has") then
+		olr.info("mil_kamp_killer_dead_has")
+		news_manager.send_tip(db.actor, "Жаба... группу я нашёл, и артефакта при них небыло...", 12, "act", 35000)
+		olr_timers.st_timer("jaba_otvet_start", 22, "nick.jaba_otvet_start_done()")
+	end
+end
+
+function kill_mil_karlik()
+	xvars.kill_mil_karlik_cnt = xvars.kill_mil_karlik_cnt + 1
+	if xvars.kill_mil_karlik_cnt > 2 and not has_alife_info("mil_karlics_deadsnow") then
+		olr.info("mil_karlics_deadsnow")
+		news_manager.send_tip(db.actor, "Думаю чисто... нужно вернуться к псу...", nil, "act", 35000)
+		olr.del_by_name("lvl_mmm_physic_object_0056")
+		olr.del_by_name("lvl_mmm_physic_object_0001")
+		olr.del_by_name("lvl_mmm_physic_object_0053")
+		olr.del_by_name("lvl_mmm_physic_object_0000")
+		olr.del_by_name("lvl_mmm_physic_object_0002")
+		olr.del_by_name("lvl_mmm_physic_object_0054")
+		olr.del_by_name("lvl9_military_lights_hanging_lamp_0004")
+	end
+end
+
+function karliks_done_dogdead()
+	olr.del_by_name("lvl9_military_physic_object_0449")
+	olr.spawn_on_obj("af_art_spiral", "lvl9_military_dog_strong_0003")
+	olr.spawn_on_obj("af_art_steklo", "lvl9_military_dog_strong_0003")
+	olr.spawn_on_obj("pseudodog_strong", "lvl9_military_dog_strong_0003")
+	local snd_obj1 = xr_sound.get_safe_sound_object([[ol3\new_amb\glass_crak_2]])
+	snd_obj1:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	local snd_obj = xr_sound.get_safe_sound_object([[monsters\dog\bdog_groan_3]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	local obj = alife():object("lvl9_military_dog_strong_0003")
+	local bos = level.object_by_id(obj.id)
+	if bos then
+		bos:kill(bos)
+	end
+	olr.del_by_name("lvl9_military_space_restrictor_0028")
+end
+
+---------------------------------------------------------
+-- OLR 2 - darkvalley gop mertvecy
+---------------------------------------------------------
+function cit_cam_effect()
+	level.add_cam_effector2("camera_effects\\deadcity_doctor_cam.anm", 123, false, "")
+end
+
+function cit_drop_actor_inventory(actor)
+	inv_box_2 = level_object_by_sid(18029)
+	out_object = actor
+	in_object = inv_box_2
+	actor:inventory_for_each(transfer_object_item)
+	log1("ssss")
+end
+
+
+function drop_actor_inventory_dolina_mertvecy(actor, npc, p)
+	local box = level_object_by_sid(18029)
+	if box then
+		db.actor:iterate_inventory( function(_, item)
+			if item then
+				if item:is_weapon() or item:is_grenade() then 
+					actor:transfer_item(item, box)
+					--log1("trrr has box")
+				end
+			end
+		end )
+	end 		
+end
+
+
+function drop_actor_inventory_dolina_killers(actor, npc, p)
+	--local has_art = act:object("olr_doc_lab_1")
+	--if has_art then
+	--	olr.del(has_art)
+	--end
+	level.add_pp_effector("black.ppe", 201831, false)
+	local point = patrol("prison_killers_way")
+	local look = patrol("prison_killers_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[actor\bullet_hit_4]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+	news_manager.send_tip(db.actor, "Ну вот! А майор все пугал нас, что мы с ним не справимся. А мы его, как кутенка сопливого...", nil, "killer", 15000)
+	local obox = alife():object("lvl4_darkdolina_big_safe_box")
+	local box = level.object_by_id(obox.id)
+	if box then
+		db.actor:iterate_inventory( function(_, item)
+			if item then
+				if item:is_weapon() or item:is_grenade() then 
+					actor:transfer_item(item, box)
+					--log1("trrr has box")
+				end
+			end
+		end )
+	end 
+	news_manager.send_tip(db.actor, "Ну что, парень, ты тут не околел раньше времени? Ты уж потерпи, вот сдадим тебя майору... Хотя ума не приложу, зачем ты ему понадобился. А ну-ка, С-207, сделай-ка ему анализ крови, может, он и вправду особенный.", 15, "killer", 9000)
+	news_manager.send_tip(db.actor, "К-652 и Р-788, придержите-ка нашего гостя, пока 207-й будет его обслуживать... Эй, 652-й, только не убей его случайно!", 20, "killer", 9000)		
+	olr.kill_mon_in_radius(db.actor:position(), 100)
+	nik_dialog.out_item_much("olr_doc_lab_1",1)
+	olr.blow_add(300)
+	olr.del_by_name("lvl4_darkdolina_gigant_normal")
+end
+
+
+function killers_second_sleep()
+	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[actor\bullet_hit_3]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+	olr.kill_mon_in_radius(db.actor:position(), 100)
+	olr.del_by_name("lvl_dolia_lights_projector")
+	olr.del_by_name("lvl_dolia_lights_projector_0000")
+	olr.del_by_name("lvl_dolia_lights_projector_0001")
+
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0002")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0003")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0004")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0005")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0006")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0007")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0008")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0009")
+	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0010")
+	olr.info("killers_go_vertuha")
+	news_manager.send_tip(db.actor, "Кравцов: Так, кажется вот их база... Отряды, всем готовность номер один. Основная цель уничтожить базу, и ферму крыс... Кабан, ваш отряд выдвигается с заднего входа, мы прикроем вас с воздуха... Вперёд!", 5, "dolg", 9000)
+	olr_timers.st_timer("killers_specops_go", 22, "nick.killers_specops_go()")
+end
+
+---------------------------------------------------------
+
+function disable_ui_elements(actor, npc, p)
+    local i, v = 0, 0
+    for i, v in pairs(p) do
+        if v == "all" then
+            db.actor:hide_weapon()
+            level.disable_input()
+            level.hide_indicators()
+            break
+        elseif v == "weapon" then
+            db.actor:hide_weapon()
+        elseif v == "input" then
+            level.disable_input()
+        elseif v == "hud" then
+            level.hide_indicators()
+        end
+    end
+    --printf("xr_effects <disable_ui_elements>")
+end
+
+function enable_ui_elements(actor, npc, p)
+    local i, v = 0, 0
+    for i, v in pairs(p) do
+        if v == "all" then
+            level.show_indicators()
+            level.enable_input()
+            db.actor:restore_weapon()
+            break
+        elseif v == "hud" then
+            level.show_indicators()
+        elseif v == "input" then
+            level.enable_input()
+        elseif v == "weapon" then
+            db.actor:restore_weapon()
+        end
+    end
+end
+
+function disable_ui(actor, npc)
+    db.actor:hide_weapon()
+    level.disable_input()
+    level.hide_indicators()
+    olr.disable_walk()
+    --printf("xr_effects <disable_ui>")
+end
+
+function enable_ui(actor, npc)
+    level.show_indicators()
+    level.enable_input()
+    db.actor:restore_weapon()
+    olr.enable_walk()
+    --printf("xr_effects <enable_ui>")
+end
+
+function run_cam_effector(actor, npc, p)
+    if p[1] then
+        local loop, num = false, (1000 + math.random(100))
+        
+        if p[2] and type(p[2]) == "number" and p[2] > 0 then
+            num = p[2]
+        end
+
+        if p[3] and p[3] == "true" then
+            loop = true
+        end
+        
+        --level.add_pp_effector(p[1] .. ".ppe", num, loop)
+	    level.add_cam_effector("camera_effects\\" .. p[1] .. ".anm", num, loop, "")	                  
+    end
+end
+
+function stop_cam_effector(actor, npc, p)
+    if p[1] and type(p[1]) == "number" and p[1] > 0 then
+        level.remove_cam_effector(p[1])
+    end
+end
+
+function run_postprocess(actor, npc, p)
+    if p[1] then
+        local loop, num = false, (2000 + math.random(100))
+        
+        if p[2] and type(p[2]) == "number" and p[2] > 0 then
+            num = p[2]
+        end
+
+        if p[3] and p[3] == "true" then
+            loop = true
+        end
+        
+        level.add_pp_effector(p[1] .. ".ppe", num, loop)
+    end
+end
+
+function stop_postprocess(actor, npc, p)
+    if p[1] and type(p[1]) == "number" and p[1] > 0 then
+        level.remove_pp_effector(p[1])
+    end
+end
+
+function run_tutorial(actor, npc, p)
+	game.start_tutorial(p[1])
+end
+function run_tutorial_if_newbie(actor, npc, p)
+	if has_alife_info("esc_trader_newbie") then
+		game.start_tutorial(p[1])
+	end
+end
+
+function teleport_actor(actor, npc, p)
+	local point = patrol(p[1])
+	local look = patrol(p[2])
+	
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())	
+end
+
+-----------------------------------------------------------------------------
+local drop_point, drop_object = 0, 0
+local function drop_object_item(item)
+    drop_object:drop_item_and_teleport(item, drop_point)
+    --log1("drop to point")
+end
+
+function drop_actor_inventory(actor, npc, p)
+    if p[1] then
+        drop_point  = patrol(p[1]):point(0)
+        drop_object = actor
+        actor:inventory_for_each(drop_object_item)
+    end
+end
+
+-- FIXME: drop_npc_inventory doesn't work
+function drop_npc_inventory(actor, npc, p)
+    if p[1] then
+        drop_point  = patrol(p[1]):point(0)
+        drop_object = npc
+        npc:inventory_for_each(drop_object_item)
+    end
+end
+
+function drop_npc_item(actor, npc, p)
+    if p[1] then
+        local item = npc:object(p[1])
+        if item then
+		    npc:drop_item(item)
+		end
+    end
+end
+
+function drop_npc_items(actor, npc, p)
+    local item = 0
+	for i, v in pairs(p) do
+        item = npc:object(v)
+        if item then
+		    npc:drop_item(item)
+        end
+    end
+end
+
+function give_item(actor, npc, p)
+    if p[1] then
+        alife():create(p[1], npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+    end
+end
+
+function give_items(actor, npc, p)
+    local pos, lv_id, gv_id, npc_id = npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id()
+	for i, v in pairs(p) do
+        alife():create(v, pos, lv_id, gv_id, npc_id)
+    end
+end
+
+function respawner_spawn(actor, npc, p)
+    if p[1] then
+		se_respawn.spawn(p[1])
+    end
+end
+
+function play_particle_on_path(actor, npc, p)
+    local name = p[1]
+    local path = p[2]
+    local point_prob = p[3]
+    if name == nil or path == nil then
+        return
+    end
+
+    if point_prob == nil then
+        point_prob = 100
+    end
+    
+    local path = patrol(path)
+    local count = path:count()
+    for a = 0,count-1,1 do   
+        local particle = particles_object(name)
+        if math.random(100) <= point_prob then
+            particle:play_at_pos(path:point(a))
+        end
+    end   
+end
+
+
+-----------------------------------------------------------------------------
+function monster_berserk(actor, npc)
+    npc:berserk()
+end
+
+function activate_bolt(actor, npc)
+	db.actor:activate_slot(5)
+end
+
+--[[
+send_tip(news_id:sender:sender_id)
+    1. news_id
+    2. sender*
+    3. sender_id*
+    * - not necessary
+--]]
+function send_tip(actor, npc, p)
+    news_manager.send_tip(actor, p[1], nil, p[2], nil, p[3])
+end
+
+
+
+--[[
+Дать сталкеру небольшой пинок. Например чтоб скинуть его с возвышения.
+параметры: actor, npc, p[direction,bone,power,impulse,reverse=false]
+    1. direction - если строка, то считается, что это имя пути и в сторону
+        первой точки производится толчек. Если же это число, то оно
+        рассматривается как story_id персонажа от которого должен поступить хит.
+    2. bone - строка. Имя кости, по которой наносится удар.
+    3. power - сила удара
+    4. impulse - импульс
+    5. reverse (true/false) - изменение направления удара. по умолчанию false
+--]]
+function hit_npc(actor, npc, p)
+	local h = hit()
+	local rev = p[5] and p[5] == 'true'
+	h.draftsman = npc
+	h.type = hit.wound
+	if type(p[1]) == 'number' then
+		local hitter = level_object_by_sid(p[1])
+		if not hitter then return end
+	    if rev then
+	        h.draftsman = hitter
+		    h.direction = hitter:position():sub(npc:position())
+	    else
+		    h.direction = npc:position():sub(hitter:position())
+	    end
+	else
+	    if rev then
+	        h.draftsman = nil
+		    h.direction = npc:position():sub(patrol(p[1]):point(0))
+	    else
+		    h.direction = patrol(p[1]):point(0):sub(npc:position())
+	    end
+	end
+	h:bone(p[2])
+	h.power = p[3]
+	h.impulse = p[4]
+	--printf("HIT EFFECT: (%s, %s,%d,%d) health(%s)", npc:name(), p[2], h.power, h.impulse, npc.health)
+	npc:hit(h)
+end
+
+--[[
+Дать обьекту, заданному story_id, хит.
+параметры: actor, npc, p[sid,bone,power,impulse,hit_src=npc:position()]
+    1. sid - story_id обьекта, по которому наносится хит.
+    2. bone - строка. Имя кости, по которой наносится удар.
+    3. power - сила удара
+    4. impulse - импульс
+    5. hit_src - если число, то рассматривается как story_id обьекта, со стороны
+        которого наносится хит (он же является и инициатором хита), иначе это
+        точка (waypoint), из которой по объекту наносится хит.
+        Если не задано, то берется позиция обьекта, из которого была вызвана
+        данная функция.
+--]]
+function hit_obj(actor, npc, p)
+	local h = hit()
+	local obj = level_object_by_sid(p[1])
+	local sid = nil
+
+	if not obj then
+--		abort("HIT_OBJ [%s]. Target object does not exist", npc:name())
+		return
+	end
+
+	h:bone(p[2])
+	h.power = p[3]
+	h.impulse = p[4]
+
+	if p[5] then
+	    sid = tonumber(p[5])
+	    if sid then
+	        sid = level_object_by_sid(sid)
+	        if sid then
+	            h.direction = vector():sub(sid:position(), obj:position())
+	        end
+	    end
+	    if not sid then
+	        h.direction = vector():sub(patrol(p[5]):point(0), obj:position())
+	    end
+	else
+	    h.direction = vector():sub(npc:position(), obj:position())
+	end
+
+	h.draftsman = sid or npc
+	h.type = hit.wound
+	obj:hit(h)
+end
+
+--[[
+Дать сталкеру небольшой пинок после смерти. Аналогично предыдущему, только направление хита теперь
+вычисляется через убийцу. Поэтому параметра direction нет.
+параметры: actor, npc, p[bone,power,impulse]
+FIXME: killer:position() isn't working
+--]]
+function hit_by_killer(actor, npc, p)
+	if not npc then return end
+	local t = db.storage[npc:id()].death
+	if t == nil or t.killer == -1 then return end
+	local killer = db.storage[t.killer]
+	if killer == nil then return end
+	local p1, p2
+	p1 = npc:position()
+	p2 = killer:position()
+	local h = hit()
+	h.draftsman = npc
+	h.type = hit.wound
+	h.direction = utils.vector_copy_by_val(p1):sub(p2)
+	h.bone = p[1]
+	h.power = p[2]
+	h.impulse = p[3]
+	npc:hit(h)
+end
+
+function set_friends(actor, npc, p)
+    local npc1
+	for i, v in pairs(p) do
+		npc1 = level_object_by_sid(v)
+		if npc1 and npc1:alive() then
+			--printf("_bp: %d:set_friends(%d)", npc:id(), npc1:id())
+			npc:set_relation(game_object.friend, npc1)
+			npc1:set_relation(game_object.friend, npc)
+		end
+	end
+end
+
+function set_enemies(actor, npc, p)
+    local npc1
+	for i, v in pairs(p) do
+		--printf("_bp: set_enemies(%d)", v)
+		npc1 = level_object_by_sid(v)
+		if npc1 and npc1:alive() then
+			npc:set_relation(game_object.enemy, npc1)
+			npc1:set_relation(game_object.enemy, npc)
+		end
+	end
+end
+
+-- играть звук в голове актёра
+function play_snd(actor, npc, p)
+	if p[1] then
+		local snd_obj = xr_sound.get_safe_sound_object(p[1])
+		--snd_obj:play(actor, p[2] or 0, sound_object.s2d)
+		snd_obj:play_no_feedback(actor, sound_object.s2d, p[2] or 0, vector(), 1.0)
+	end
+end
+
+-- играть звук от указанного объекта
+function play_snd_from_obj(actor, npc, p)
+	if p[1] and p[2] then
+		local snd_obj = xr_sound.get_safe_sound_object(p[2])
+		local obj     = level_object_by_sid(p[1])
+        if obj ~= nil then
+           printf("can't find object with story id %s", tostring(p[1]))
+        
+--		snd_obj:play_at_pos(obj, obj:position(), sound_object.s3d)
+		snd_obj:play_no_feedback(obj, sound_object.s3d, 0, obj:position(), 1.0)
+		end
+	end
+end
+
+-- играть звук от указанного объекта
+function play_snd_now(actor, npc, p)
+	xr_sound.set_sound_play(npc, p[1])
+end
+
+
+-- прибавить к указанному счётчику актёра 1
+function inc_counter(actor, npc, p)
+	if p[1] then
+		printf( "inc_counter '%s'", p[1] )
+		xr_logic.pstor_store(actor, p[1], xr_logic.pstor_retrieve(actor, p[1], 0) + 1)
+	end
+end
+
+function dec_counter(actor, npc, p)
+	if p[1] then
+		printf( "dec_counter '%s'", p[1] )
+		xr_logic.pstor_store(actor, p[1], xr_logic.pstor_retrieve(actor, p[1], 0) - 1)
+	end
+end
+
+
+-- переключает камеру на монстра или на актёра
+function alien_control( actor, npc, p )
+	printf( "alien_control(%s)", p[1] )
+	npc:set_alien_control( p[1] == "true" )
+end
+
+-- слелать актёра врагом персонажам, которые в онлайне под указанным смартом
+function set_gulag_enemy_actor( actor, npc, p )
+	if p[1] then
+		xr_gulag.setGulagEnemy(p[1], actor)
+	end
+end
+
+-- принудительное обновление смарта. Использовать только в КРАЙНИХ случаях!!!
+-- каждое использование согласовывать со мной. Чугай.
+function smart_terrain_force_update(actor, npc, p)
+	printf( "xr_effects.smart_terrain_force_update called" )
+
+	if p[1] then
+		local gulag = xr_gulag.get_gulag(p[1])
+
+		if gulag then
+			gulag.smrttrn:update()
+		end
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- постпроцесс и влияние удара в морду
+function actor_punch(npc)
+	if db.actor:position():distance_to_sqr(npc:position()) > 4 then
+		return
+	end
+
+	local active_slot = db.actor:active_slot()
+	if active_slot ~= 1 and
+	   active_slot ~= 2
+	then
+		return 
+	end
+
+	local active_item = db.actor:active_item()
+	if active_item then
+		db.actor:drop_item(active_item)
+	end
+	
+	set_inactivate_input_time(30)
+	local snd_obj = xr_sound.get_safe_sound_object([[affects\hit_fist]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	level.add_cam_effector("camera_effects\\fusker.anm", 999, false, "")		
+end
+
+-- Принудительное усыпание игрока на радаре.
+function force_actor_sleep(npc)
+	db.actor:actor_sleep(24, 0)
+end
+
+
+-- забывание обиды
+function clearAbuse(npc)
+	printf("CLEAR_ABUSE")
+	xr_abuse.clear_abuse(npc)
+end
+
+
+---Выключение динамической лампочки (hanging_lamp)
+function turn_off(actor, npc, p)
+	local obj = level_object_by_sid(p[1])
+
+	if not obj then
+		abort("TURN_OFF [%s]. Target object does not exist", npc:name())
+		return
+	end
+	obj:get_hanging_lamp():turn_off()
+end
+function turn_off_object(actor, npc)
+	npc:get_hanging_lamp():turn_off()
+end
+
+---Включение динамической лампочки (hanging_lamp)
+function turn_on(actor, npc, p)
+	local obj = level_object_by_sid(p[1])
+
+	if not obj then
+		abort("TURN_ON [%s]. Target object does not exist", npc:name())
+		return
+	end
+	obj:get_hanging_lamp():turn_on()
+end
+function turn_on_object(actor, npc)
+	npc:get_hanging_lamp():turn_on()
+end
+
+------------------------------------------------------------------------------------------------
+
+-- Кто-то из участников сценки вступил в бой - теперь нужно пообижать всех на всех
+function gar_dm_bandits_fight(actor, npc)
+	local novice = level_object_by_sid(104)
+	if not novice or not novice:alive() then
+		return
+	end
+
+	local ignore_actor = distance_between(actor, novice) > 25
+
+	local bandit1 = level_object_by_sid(101)
+	if bandit1 then
+		novice:set_relation(game_object.enemy, bandit1)
+		if not ignore_actor then
+			bandit1:set_relation(game_object.enemy, actor)
+		end
+		bandit1:set_relation(game_object.enemy, novice)
+	end
+
+	local bandit2 = level_object_by_sid(102)
+	if bandit2 then
+		novice:set_relation(game_object.enemy, bandit2)
+		if not ignore_actor then
+			bandit2:set_relation(game_object.enemy, actor)
+		end
+		bandit2:set_relation(game_object.enemy, novice)
+	end
+
+	local bandit3 = level_object_by_sid(103)
+	if bandit3 then
+		novice:set_relation(game_object.enemy, bandit3)
+		if not ignore_actor then
+			bandit3:set_relation(game_object.enemy, actor)
+		end
+		bandit1:set_relation(game_object.enemy, novice)
+	end
+end
+
+function gar_dm_bandit_demand(actor, npc)
+	printf("_bp: gar_dm_bandit_demand: actor=%s", actor:name())
+
+	if has_alife_info("gar_dm_bandit1_demand") or
+	   has_alife_info("gar_dm_bandit2_demand") or
+	   has_alife_info("gar_dm_bandit3_demand") then
+		return
+	end
+	local r = math.random(3)
+	if r == 1 then
+		actor:give_info_portion("gar_dm_bandit1_demand")
+	elseif r == 2 then
+		actor:give_info_portion("gar_dm_bandit2_demand")
+	else
+		actor:give_info_portion("gar_dm_bandit3_demand")
+	end
+end
+
+function gar_send_dymon_alarm(actor, npc)
+	if has_alife_info("gar_start_graveyard") then
+		news_manager.send_tip(actor, "tips_gar_hellcar_alarm", 2, "stalker", 10000)
+	end
+end
+
+function gar_direction_fire(actor, npc)
+	if has_alife_info("gar_hellcar_help") and not has_alife_info("gar_counter_fire") and not has_alife_info("gar_open_fire") then
+		news_manager.send_tip(actor, "gar_direction_fire", 0, "stalker", 0)
+	end
+end
+
+function gar_hellcar_victory(actor, npc)
+	if not has_alife_info("gar_hellcar_tips_end") and has_alife_info("gar_hellcar_help") and not has_alife_info("gar_hellcar_thanks") then
+		news_manager.send_tip(actor, "gar_hellcar_victory", 0, "stalker", 0)
+		db.actor:give_info_portion("gar_hellcar_tips_end")
+	end
+end
+
+
+--' Escape
+
+function play_snd_from_radio(actor, npc)
+	local snd_obj	= xr_sound.get_safe_sound_object([[characters_voice\scenario\escape\wolf_to_rangers_1]])
+	local obj		= npc:object("hand_radio")
+	snd_obj:play_no_feedback(obj, sound_object.s3d, 0, obj:position(), 1.0)	
+end
+
+	
+function actor_friend(actor, npc)
+	printf("_bp: xr_effects: actor_friend(): npc='%s': time=%d", npc:name(), time_global())
+	npc:set_relation(game_object.friend, actor)
+end
+
+function actor_neutral(actor, npc)
+	npc:set_relation(game_object.neutral, actor)
+end
+
+function actor_enemy(actor, npc)
+	npc:set_relation(game_object.enemy, actor)
+end
+
+function give_all_quests(actor, npc)
+	--bar_dialogs.quests()
+end
+
+function give_rostok_quests(actor, npc)
+	bar_dialogs.rostok_quests()
+end
+
+
+-- Вызов этой функции отключит обработчик [combat] боя для персонажа.
+-- Используется в случаях, когда все необходимые действия, такие как переключение на другую секцию,
+-- уже выполнены, и повторно выполнять их во время боя нельзя (а условия секции [combat] проверяются на каждом
+-- апдейте, когда персонаж в бою, если, конечно, не отключены вызовом этой функции).
+function disable_combat_handler(actor, npc)
+	if db.storage[npc:id()].combat then
+		db.storage[npc:id()].combat.enabled = false
+	end
+	
+	if db.storage[npc:id()].mob_combat then
+		db.storage[npc:id()].mob_combat.enabled = false
+	end
+end
+
+-- Вызов этой функции отключит обработчик [combat_ignore] перехвата боя для персонажа.
+function disable_combat_ignore_handler(actor, npc)
+	if db.storage[npc:id()].combat_ignore then
+		db.storage[npc:id()].combat_ignore.enabled = false
+	end
+end
+
+function log_bp1(actor, npc)
+	printf("xr_effects: log_bp1 (actor='%s', npc='%s'", actor:name(), npc:name())
+end
+
+function psi_hit_npc(actor, npc,p)
+end
+
+
+function mil_paul_frost_dead (actor, npc)     
+    local gulag = xr_gulag.get_gulag_by_name ("mil_freedom")
+    if (gulag) then
+       gulag:set_relation (game_object.neutral, actor)
+    end   
+end
+
+function set_freedom_actor_enemy (actor, npc)
+    local luk = level_object_by_sid (707)
+    this.actor_enemy (actor, luk)
+end
+
+function military_dolg_dead (actor, npc)
+    -- если нет актера, то вылетаем с грохотом и треском
+    if actor == nil then return end
+    -- если данные не существуют, то создадим
+    local id = actor:id ()
+    if db.storage[id] == nil then
+       db.storage[id] = {}
+    end    
+    
+    if db.storage[id].mil_dolg_killed == nil then
+       db.storage[id].mil_dolg_killed = 0
+       db.storage[id].mil_dolg_killed_by_actor = false
+    end    
+    -- проапдейтим количество мертвых долговцев
+    db.storage[id].mil_dolg_killed = db.storage[id].mil_dolg_killed + 1
+
+    --printf ("!!! DOLG STALKER IS DEAD, KILLED %d STALKERS !!!", db.storage[db.actor:id ()].mil_dolg["killed"])
+
+    -- взведем флажок, что мужика замочили мы (нужно для Свободы) 
+    local st = db.storage[npc:id ()]
+    if st.death.killer == -1 then return end
+    if id == st.death.killer then 
+       db.storage[id].mil_dolg_killed_by_actor = true
+    end
+    
+    -- если все умерли и была задача мочить снайпера, но сообщать не кому, то
+    -- ставим задачу, как не выполненую
+    if db.storage[id].mil_dolg_killed == 8 then
+       actor:give_info_portion ("mil_dolg_dead")
+    end   
+    
+end
+
+
+function search_gulag_job(actor, npc)
+	xr_gulag.resetJob(npc)
+end
+
+
+--------------------------------------------------------- 
+-- BAR-ROSTOK
+--------------------------------------------------------- 
+
+		
+function bar_territory_logic(actor, npc)
+	local level = level.name()
+	if 	level == "lvl5_bar" then
+		if dialogs.actor_in_dolg(actor,npc) then
+			if has_alife_info("bar_dolg_territory_kill") then
+				--news_manager.send_tip(actor, "bar_territory_dolg_kill", nil, "dolg", nil, 507)
+				--xr_gulag.setGulagEnemy("bar_dolg_general", db.actor)
+				xr_gulag.setGulagEnemy("bar_dolg_veterans", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_bunker", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava_2", db.actor)
+				--xr_gulag.setGulagEnemy("bar_visitors", db.actor)
+				return
+			end
+			if has_alife_info("bar_dolg_territory_3_hit") then
+				--news_manager.send_tip(actor, "bar_territory_dolg_3_hit", nil, "dolg", nil, 507)
+				--xr_gulag.setGulagEnemy("bar_dolg_general", db.actor)
+				xr_gulag.setGulagEnemy("bar_dolg_veterans", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_bunker", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava_2", db.actor)
+				return
+			end
+			if has_alife_info("bar_dolg_territory_2_hit") then
+				--news_manager.send_tip(actor, "bar_territory_dolg_2_hit", nil, "dolg", nil, 507)
+				return
+			end
+			if has_alife_info("bar_dolg_territory_1_hit") then
+				--news_manager.send_tip(actor, "bar_territory_dolg_1_hit", nil, "dolg", nil, 507)
+				return
+			end
+		else
+			if has_alife_info("bar_dolg_territory_kill") then
+				db.actor:give_info_portion("bar_territory_nodolg_kill")
+				--news_manager.send_tip(actor, "bar_territory_nodolg_kill", nil, "dolg", nil, 507)
+				--xr_gulag.setGulagEnemy("bar_dolg_general", db.actor)
+				xr_gulag.setGulagEnemy("bar_dolg_veterans", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_bunker", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava_2", db.actor)
+				--xr_gulag.setGulagEnemy("bar_visitors", db.actor)
+				return
+			end
+			if has_alife_info("bar_dolg_territory_2_hit") then
+				db.actor:give_info_portion("bar_territory_nodolg_2_hit")
+				--news_manager.send_tip(actor, "bar_territory_nodolg_2_hit", nil, "dolg", nil, 507)
+				--xr_gulag.setGulagEnemy("bar_dolg_general", db.actor)
+				xr_gulag.setGulagEnemy("bar_dolg_veterans", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_bunker", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava", db.actor)
+				--xr_gulag.setGulagEnemy("bar_dolg_zastava_2", db.actor)
+				--xr_gulag.setGulagEnemy("bar_visitors", db.actor)
+				return
+			end
+			if has_alife_info("bar_dolg_territory_1_hit") then
+				db.actor:give_info_portion("bar_territory_nodolg_1_hit")
+				--news_manager.send_tip(actor, "bar_territory_nodolg_1_hit", nil, "dolg", nil, 507)
+				return
+			end	
+		end
+	end
+	return
+end
+
+
+function rostok_kruglov_attract_1(actor,npc)
+	xr_sound.set_sound_play(npc, "kruglov_stop_enemy_1")
+	local tips_sound = news_manager.send_tip_nosound(db.actor, "bar_freedom_chase", 0, "ecolog")
+	if tips_sound ~= nil then
+		--' Играем звук забитый
+		tips_sound:play(db.actor, 0, sound_object.s2d)
+	end
+end
+
+function rostok_kruglov_attract_2(actor,npc)
+	xr_sound.set_sound_play(npc, "kruglov_stop_enemy_2",3)
+	local tips_sound = news_manager.send_tip_nosound(db.actor, "rostok_kruglov_follow_2",3000, "ecolog")
+	if tips_sound ~= nil then
+		--' Играем звук забитый
+		tips_sound:play(db.actor, 0, sound_object.s2d)
+	end
+end
+
+function rostok_kruglov_ambush(actor,npc)
+	xr_sound.set_sound_play(npc, "rostok_kruglov_help_5")
+	local tips_sound = news_manager.send_tip_nosound(db.actor, "rostok_kruglov_follow_3", 0, "ecolog")
+	if tips_sound ~= nil then
+		--' Играем звук забитый
+		tips_sound:play(db.actor, 0, sound_object.s2d)
+	end
+end
+
+
+function bar_freedom_attack_start(actor,npc)
+		if not has_alife_info("bar_freedom_defence_ecolog") then
+			news_manager.send_tip(db.actor, "bar_freedom_attack", nil, "killer", nil, 509)
+            db.actor:give_info_portion("bar_freedom_defence_ecolog")
+		end
+	end
+
+
+function esc_hit_from_fox(actor, npc)
+	local fox = level_object_by_sid (005)
+	if fox == nil then
+		return
+	end
+	local h = hit()
+	h.power = 0.01
+	h.direction = npc:direction()
+	h.draftsman = fox 
+	h.impulse = 1
+	h.type = hit.wound
+	npc:hit(h)
+end
+
+
+
+function bar_psih_come(actor, npc)
+	news_manager.send_tip(actor, "bar_psih_come", nil, "barman")
+end
+
+function bar_actor_is_enemy(actor, npc)
+			xr_gulag.setGulagEnemy("bar_dolg_general", db.actor)
+			xr_gulag.setGulagEnemy("bar_dolg_veterans", db.actor)
+			xr_gulag.setGulagEnemy("bar_dolg_bunker", db.actor)
+			xr_gulag.setGulagEnemy("bar_visitors", db.actor)
+end
+
+function bar_actor_enemy_set (actor, npc)          
+    local dog = level_object_by_sid (509)
+    if dog ~= nil then
+       dog:set_relation (game_object.enemy, db.actor) 
+    end   
+end
+
+function bar_arena_weapon_spawn ()
+	
+	local obj = level_object_by_sid (606)
+	local spawn_items = {}
+	
+	for i = 1,100 do
+		table.insert( spawn_items, "bandit_outfit")
+	end
+	
+	local k,v = 0,0
+	
+	for k,v in pairs(spawn_items) do
+		alife():create(v,	
+						obj:position(),
+						obj:level_vertex_id(),	
+						obj:game_vertex_id())
+	end	
+end
+
+local function transfer_object_item(item)
+    out_object:transfer_item(item, in_object)
+end
+
+
+function bar_arena_teleport_2 ( actor, npc)
+
+	  level.add_pp_effector ("blink.ppe", 234, false)				
+	
+		db.actor:set_actor_position(patrol("t_walk_2"):point(0))
+		local dir = patrol("t_look_2"):point(0):sub(patrol("t_walk_2"):point(0))
+		db.actor:set_actor_direction(-dir:getH())
+	
+	inv_box_2 = level_object_by_sid (574)
+
+	out_object = actor
+    in_object  = inv_box_2
+		actor:inventory_for_each(transfer_object_item) 
+end
+
+
+
+function mil_courier_death (actor, npc)
+    actor:give_info_portion ("mil_courier_dead")
+    if has_alife_info("mil_leader_quest2_start") then
+       if not has_alife_info("mil_courier_visited") then
+          level_tasks.set_task_state (task.fail, "mil_courier_job", 1)
+       end   
+       level_tasks.set_task_state (task.completed, "mil_courier_job", 2)
+       level_tasks.set_task_state (task.completed, "mil_courier_job", 0)
+    end   
+end
+
+function mil_courier_quest_fail (actor, npc)
+    if has_alife_info("mil_courier_quest") == false then return end
+    level_tasks.set_task_state (task.fail, "mil_courier_job", 0)
+    actor:give_info_portion ("mil_courier_quest_failed")
+end
+
+function mil_scull_news (actor, npc)
+end
+
+function mil_sniper_dead (actor, npc)
+    if has_alife_info("mil_dolg_final_task") then
+       level_tasks.remove_location (npc:story_id (), "mil_sniper_location")
+    end       
+end
+
+function mil_actor_enemy_set (actor, npc)
+    local sniper = level_object_by_sid (704)
+    if sniper ~= nil then
+       sniper:set_relation (game_object.enemy, db.actor) 
+    end   
+    --xr_gulag.setGulagRelation ("mil_freedom", game_object.enemy, db.actor)    
+end
+
+
+function mil_actor_enemy_reset (actor, npc)
+    local sniper = level_object_by_sid (704)
+    if sniper ~= nil then
+       sniper:set_relation (game_object.neutral, db.actor) 
+    end   
+    --xr_gulag.setGulagRelation ("mil_freedom", game_object.neutral, db.actor)    
+end
+
+function mil_bomb_explode (actor, npc)
+    local source = nil
+    local sim = alife ()
+    if sim then
+       local se_obj = sim:story_object (723)  
+       if se_obj then
+          source = level.object_by_id(se_obj.id)
+       end
+    end
+
+    if source == nil then
+       --'abort ("Bomb with story id MIL_BOMB not found")
+       return
+    end
+
+    local h = hit ();
+    h.power = 1000000;
+    h.direction = vector():set( 1, 0, 0 );
+    h.impulse = 1;
+    h.draftsman = source;
+    h.type = hit.chemical_burn;
+    source:hit (h);
+    
+    
+end
+
+function mil_set_alarm (actor, npc)
+	printf("pl:millitary base is under attack!!!!!!!")
+    actor:give_info_portion ("mil_freedom_under_attack")
+    
+    local skull = level_object_by_sid (708)
+    if skull == nil then 
+       return 
+    end
+
+    this.set_stalker_enemy (702, skull)     -- hit to Lukash
+    this.set_stalker_enemy (707, skull)     -- hit to Max
+    this.set_stalker_enemy (730, skull)     -- hit to Sniper1
+    this.set_stalker_enemy (731, skull)     -- hit to Sniper2
+    this.set_stalker_enemy (732, skull)     -- hit to Sniper3
+end
+
+function sar2_monolith_explode (actor, npc)
+    local monolith = level_object_by_sid (1305)
+    if monolith == nil then
+       abort ("Object MONOLITH with SID 1305 not found")
+    end    
+    local h = hit ();
+    h.power = 1000;
+    h.direction = vector():set( 1, 0, 0 );
+    h.impulse = 1;
+    h.draftsman = actor;
+    h.type = hit.chemical_burn;
+    monolith:hit (h);
+end
+
+function set_stalker_enemy (sid, draftsman)
+    local npc = level_object_by_sid (sid)
+    if npc == nil or npc:alive () == false then
+       return 
+    end    
+    local h = hit ()
+    h.power = 0
+    h.direction = vector():set( 1, 0, 0 )
+    h.impulse = 0
+    h.draftsman = draftsman
+    h.type = hit.strike
+    npc:hit (h)
+end
+
+
+
+function mil_remove_cook_map_spot (actor, npc)
+    level_tasks.remove_location (728, "mil_cook_location")
+end
+
+function mil_transfer_docs_to_ara (actor, npc)
+    --local ara = level_object_by_sid (719)
+    --local pavlik = level_object_by_sid (710)
+    --if ara == nil or pavlik == nil or pavlik:object ("mil_courier_doc") == nil then
+       --return
+    --end   
+    --ara:transfer_item (pavlik:object ("mil_courier_doc"), pavlik)
+end
+
+function mil_emeny_nearest (actor, npc)
+    if actor == nil or actor:alive () == false then
+       return
+    end    
+
+    local gulag = xr_gulag.get_gulag_by_name ("mil_freedom")
+    if gulag == nil then return end
+
+    if gulag:npc_is_enemy_to_anybody(actor) then
+       actor:give_info_portion ("mil_enemy_nearest")
+    end
+end
+
+
+function mil_cap_mapspot (actor, npc)
+    local cap = level_object_by_sid (724)
+    if cap == nil or cap:alive () == false then
+       return 
+    end    
+    
+    if not has_alife_info("mil_fblockpost_spot_set") then
+       actor:give_info_portion ("mil_fblockpost_spot") 
+       actor:give_info_portion ("mil_fblockpost_spot_set")
+       level_tasks.add_location (724, "mil_fblockpost_location")
+    end
+end
+
+function mil_cap_mapspot_remove (stalker1, stalker2)
+    if has_alife_info("mil_fblockpost_spot") then
+       level_tasks.remove_location_safe (724, "mil_fblockpost_location")
+       db.actor:disable_info_portion ("mil_fblockpost_spot_remove")
+    end      
+end
+
+function set_actor_enemy_for_freedom (actor, npc)
+    xr_gulag.setGulagEnemy ("mil_freedom", actor)
+end
+
+
+
+
+-------------------------------------------------------------------------------------
+-- kill
+-------------------------------------------------------------------------------------
+function killactor (actor, npc)
+    npc:set_relation (game_object.enemy, actor)
+    --actor:give_info_portion ("mil_bodyguard_kill")
+end
+
+function kill(actor, npc)
+	npc:kill( npc )
+end
+
+
+-------------------------------------------------------------------------------------
+-- Функции для Агропрома
+-------------------------------------------------------------------------------------
+
+
+function agr_knockdown ()
+	local snd_obj = xr_sound.get_safe_sound_object([[affects\tinnitus3a]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.add_cam_effector("camera_effects\\earthquake.anm", 1974, false, "")
+end
+
+
+
+function agr_weapon(actor, npc)
+	local actor = db.actor	
+	if 	actor ~= nil then actor:activate_slot(2)
+	end
+end
+function agr_hold_enemy(actor, npc)
+	local gulag = xr_gulag.get_gulag_by_name("agr_factory_hold")
+	
+	local h  = hit()
+	h.power     = 0.01
+	h.direction = vector():set( 1, 0, 0 )
+	h.draftsman = actor
+	h.impulse   = 1
+	h.type      = hit.wound
+	
+	for k, v in pairs(gulag.Object) do
+		if v ~= true and level.object_by_id( k ) ~= nil then
+			v:hit( h )
+		end
+	end	
+end
+--------------------------------------------------------- 
+-- PRIPYAT
+--------------------------------------------------------- 
+function pri_zombied_in_combat_inc(actor, npc)
+    gulag_pripyat.zombied_in_combat[npc:name()] = true
+    --printf("effect <pri>: zombied in combat(%s) inc.", npc:name())
+end
+
+function pri_zombied_in_combat_dec(actor, npc)
+    gulag_pripyat.zombied_in_combat[npc:name()] = nil
+    --printf("effect <pri>: zombied in combat(%s) dec.", npc:name())
+end
+
+function pri_drop_rpg_ammo(actor, npc)
+    local item = npc:object("ammo_og-7b")
+    if item then
+        npc:drop_item(item)
+    else
+        printf("xr_effects <pri_drop_rpg_ammo>: there is no [ammo_og-7b] in [%s] inventory.", npc:name())
+    end
+end
+
+function pri_give_ammo_og7b(actor, npc)
+    alife():create("ammo_og-7b", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+    alife():create("ammo_og-7b", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+end
+
+---------------------------------------------------------
+-- DeadCity
+---------------------------------------------------------
+
+
+---------------------------------------------------------
+-- Sarcofag + Monolith
+---------------------------------------------------------
+function osoznanie_call(actor, npc)
+	news_manager.send_tip(db.actor, "o_soznanie_text", 0, "o_soznanie")
+end
+
+
+
+---------------------------------------------------------
+-- Sarcofag2
+---------------------------------------------------------
+
+
+local sar2_heroes_sel_number, sar2_heroes_number = 0, 60
+local sar2_heroes_count, sar2_heroes_max_count = 0, 6
+local sar2_hero_next_free_id = 1
+local sar2_heroes_sel = {}
+
+function sar2_scene_start(actor, npc)
+    printf("effects <sar2>: scene start initializing.")
+    local i = 0
+    
+    sar2_heroes_sel = {}
+    sar2_heroes_sel_number = 0
+    sar2_hero_next_free_id = 1
+    for i = 1, sar2_heroes_number do
+        if has_alife_info("sar2_death_" .. i) then
+            table.insert(sar2_heroes_sel, i)
+            sar2_heroes_sel_number = sar2_heroes_sel_number + 1
+        end
+    end
+
+    print_table(sar2_heroes_sel)
+    printf("effects <sar2>: scene end initializing.")
+end
+
+function sar_hero_dead(actor, npc)
+    actor:give_info_portion("sar2_monolith_rock")
+
+    if sar2_heroes_count > 0 then
+        sar2_heroes_count = sar2_heroes_count - 1
+    end
+
+    if sar2_heroes_count == 0 and sar2_hero_next_free_id > sar2_heroes_sel_number then
+        actor:give_info_portion("sar2_monolith_end")
+    end
+
+    printf("effects <sar2>: hero dead.")
+end
+
+function sar2_hero_spawn(actor, npc)
+    printf("effects <sar2>: hero count - %d, max - %d.", sar2_heroes_count, sar2_heroes_max_count)
+    local c = sar2_heroes_max_count - sar2_heroes_count
+
+    -- check if we need to spawn stalkers
+    if sar2_hero_next_free_id <= sar2_heroes_sel_number and c > 0 then
+        local i, n = 0, math.min(sar2_hero_next_free_id + c - 1, sar2_heroes_sel_number)
+
+        for i = sar2_hero_next_free_id, n do
+            actor:give_info_portion("sar2_spawn_" .. sar2_heroes_sel[i])
+        end
+
+        if n >= sar2_hero_next_free_id then
+            printf("effects <sar2>: hero spawn.")
+        end
+        
+        sar2_heroes_count = sar2_heroes_count + (n - sar2_hero_next_free_id + 1)
+        sar2_hero_next_free_id = n + 1
+    end
+end
+
+-------------------------------------------------------------------------------------
+-- Функции для работы с вертолётами
+-------------------------------------------------------------------------------------
+
+function heli_set_enemy_actor(actor, npc)
+	local st = db.storage[npc:id()]
+	if not st.combat.enemy_id and actor:alive() then
+		st.combat.enemy_id = actor:id()
+
+		--heli_snd.play_snd( st, heli_snd.snd_see_enemy, 1 )
+	end 
+end
+
+function heli_set_enemy(actor, npc, p)
+	local st  = db.storage[npc:id()]
+	local obj = level_object_by_sid( p[1] )
+
+	if not st.combat.enemy_id and obj:alive() then
+		st.combat.enemy_id = obj:id()
+
+		--heli_snd.play_snd( st, heli_snd.snd_see_enemy, 1 )
+	end
+end
+
+function heli_clear_enemy(actor, npc)
+    db.storage[npc:id()].combat:forget_enemy()
+end
+
+function heli_start_flame(actor, npc)
+	bind_heli.heli_start_flame( npc )
+end
+
+function heli_die(actor, npc)
+	bind_heli.heli_die( npc )
+end
+
+
+-------------------------------------------------------------------------------------
+-- Функции для работы с погодными эффектами
+-------------------------------------------------------------------------------------
+function start_small_reject (actor, npc)
+    level.set_weather_fx ("surge_day")
+	level.add_pp_effector ("vibros_p.ppe", 1974, false)
+	this.aes_earthshake (npc)
+    --set_postprocess ("scripts\\postprocess1.ltx")
+end
+
+function start_full_reject (actor, npc)
+    level.set_weather_fx ("surge_day")
+    level.remove_pp_effector (1974)
+    level.add_pp_effector ("vibros.ppe", 1974, false)
+    --set_postprocess ("scripts\\postprocess.ltx")
+end
+
+
+function aes_grenade_explode (actor, npc)
+    local obj = level_object_by_sid (1101)
+    if obj == nil then return end
+    local h = hit ();
+    h.power = 1000;
+    h.direction = vector():set (1, 0, 0);
+    h.impulse = 1;
+    h.draftsman = obj;
+    h.type = hit.chemical_burn;
+    obj:hit (h);
+end
+
+function aes_kill_actor (actor, npc)
+    if actor ~= nil and actor.health > 0 then 
+       actor:kill (actor)
+    end   
+end
+
+function kill_actor() 
+       db.actor:kill(db.actor) 
+end
+
+function set_sidorovich_animation (npc)
+    local sidor = level_object_by_sid (1118)
+    if sidor == nil then
+       abort ("SIDOROVICH NOT FOUND !!!")
+    end
+    --sidor:clear_animations ()
+    sidor:play_cycle ("wonder", true)
+    --sidor:add_animation ("idle_looped", true, false)
+end
+
+
+
+
+-- постпроцесс и влияние удара в морду
+function aes_earthshake (npc)
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\earthquake]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.add_cam_effector("camera_effects\\earthquake.anm", 1974, false, "")
+    --set_postprocess ("scripts\\earthshake.ltx")
+end
+
+
+-------------------------------------------------------------------------------------
+-- Функции для Янтаря
+----------------------------------------------------------------------------------
+
+
+
+
+function yan_gluk (actor, npc)
+		
+		local sound_obj_l		= xr_sound.get_safe_sound_object( [[affects\psy_blackout_l]] )
+        local sound_obj_r		= xr_sound.get_safe_sound_object( [[affects\psy_blackout_r]] )
+        
+		sound_obj_l:play_no_feedback(actor, sound_object.s2d, 0, vector():set(-1, 0, 1), 1.0)
+		sound_obj_r:play_no_feedback(actor, sound_object.s2d, 0, vector():set( 1, 0, 1), 1.0)
+	level.add_cam_effector("camera_effects\\earthquake.anm", 1974, false, "")
+
+end
+function x18_gluk (actor, npc)
+		level.add_pp_effector ("blink.ppe", 234, false)
+		local sound_obj_l		= xr_sound.get_safe_sound_object( [[affects\psy_blackout_l]] )
+        local sound_obj_r		= xr_sound.get_safe_sound_object( [[affects\psy_blackout_r]] )
+        local snd_obj			= xr_sound.get_safe_sound_object( [[affects\tinnitus3a]] )
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+		sound_obj_l:play_no_feedback(actor, sound_object.s2d, 0, vector():set(-1, 0, 1), 1.0)
+		sound_obj_r:play_no_feedback(actor, sound_object.s2d, 0, vector():set( 1, 0, 1), 1.0)
+	level.add_cam_effector("camera_effects\\earthquake.anm", 1974, false, "")
+
+end
+
+
+
+
+
+function yantar_kruglov_talk(actor,npc)
+	xr_sound.set_sound_play(npc, "rostok_kruglov_help_6")
+end
+
+function yantar_professor_spam_1 (actor, npc)
+    news_manager.send_tip(db.actor, "general_ecolog_tip_1", nil, "saharov", nil, 902)
+end
+
+function yantar_professor_spam_2 (actor, npc)
+    news_manager.send_tip(db.actor, "general_ecolog_tip_2", nil, "saharov", nil, 902)
+end
+
+function yantar_vasilyev_spam (actor, npc)
+    news_manager.send_tip(db.actor, "storyline_vasilyev_tip", nil, "ecolog", nil, 903)
+end
+function yan_saharov_message (actor, npc)
+    news_manager.send_tip(db.actor, "yan_saharov_message", nil, "saharov", nil, 902)
+    db.actor:give_info_portion("labx16_find")
+end
+
+
+
+function start_yantar_dream(actor, npc)
+	game.start_tutorial("yantar_dream")
+end
+
+function end_yantar_dream(actor, npc)
+	db.actor:give_info_portion("tupoi_ded")
+end
+
+function end_prip_dream(actor, npc)
+	db.actor:give_info_portion("end_prip_dream_spawn")
+end
+
+function end_startolr_dream(actor, npc)
+	--db.actor:give_info_portion("storyline_actor_start")
+	get_console():execute("snd_volume_music 0")
+	--get_console():execute("snd_volume_eff 0")
+end
+
+-----------------------------radar
+function rad_sos_spam(actor, npc)
+	news_manager.send_tip(actor, "tips_rad_sos_suicide", nil, "stalker", nil, 1004)
+end
+
+
+function monolith_generator_hit (actor, npc)
+    printf ("ON GENERATOR HIT !!!")
+end
+
+
+function start_x18_dream(actor, npc)
+	game.start_tutorial("x18_dream")
+end
+function end_x18_dream(actor, npc)
+	db.actor:give_info_portion("dar_x18_dream")
+	nick.move_online_blokpost()
+end
+
+function aes_final_movie(actor, npc)
+	game.start_tutorial("mov_refuse_osoznanie")
+end
+------------------------------------------------------------------------------------
+-- Функции для Радара
+------------------------------------------------------------------------------------
+
+
+function start_radar_dream(actor, npc)
+	game.start_tutorial("radar_dream")
+end
+
+
+------------------------------------------------------------------------------------
+-- Функции для саркофага
+------------------------------------------------------------------------------------
+function destroy_monolith_generator(actor, npc)
+    local source = nil
+    local sim = alife()
+    if sim then
+       local se_obj = sim:story_object(1305)  
+       if se_obj then
+          source = level.object_by_id(se_obj.id)
+       end
+    end
+
+    if source == nil then
+       abort ("MONOLITH GENERATOR story id 1305 not found")
+       return
+    end
+
+    local h = hit ();
+    h.power = 1000000;
+    h.direction = vector():set( 1, 0, 0 );
+    h.impulse = 1;
+    h.draftsman = source;
+    h.type = hit.chemical_burn;
+    source:hit (h);        
+end
+
+function sar_monolith_miracle(actor, npc)
+
+	--' продолжаем искать себя
+	if has_alife_info("jurn_sudb_done") then
+		nick.start_sarcofag_cutscene_findmyself()
+		nick.start_sarcofag_findmyself_del_all()
+		olr.info("choose_destiny_done")
+		return
+	end
+
+	olr_monolith.select_fake_ending()	
+	
+end
+
+function game_credits(actor, npc)
+	db.gameover_credits_started = true
+	game.start_tutorial("credits_seq")
+end
+
+function game_over(actor, npc)
+	if db.gameover_credits_started ~= true then
+		return
+	end
+	local c = get_console()
+--	c:execute("disconnect")
+	printf("main_menu on console command is executed")
+	c:execute("main_menu on")
+end
+
+function after_credits(actor, npc)
+	if db.gameover_credits_started ~= true then
+		return
+	end
+	local c = get_console()
+	c:execute("disconnect")
+end
+
+
+function pri_game_over(actor, npc)
+	local c = get_console()
+--	c:execute("disconnect")
+	printf("main_menu on console command is executed")
+	c:execute("main_menu on")
+end
+
+function esc_init_dialod ()
+	local trader = level_object_by_sid(003)
+	db.actor:run_talk_dialog(trader)
+end
+
+
+function actor_inventory_by_levels ()
+	local level = level.name()
+    local spawn_items = {}
+    local start_point = ""
+    
+	if level == "l03_agroprom" then
+		start_point = "agr_start_actor"	
+	elseif level == "l05_bar" then
+		start_point = "bar_way_if_reject_to_gar"			
+	elseif level == "l08_yantar" then
+		start_point = "yan_start_actor"			
+	elseif 	level == "l11_pripyat" then
+		start_point = "pri_way_if_reject_to_rad"	
+	end
+	db.actor:set_actor_position(patrol(start_point):point(0))
+	local dir = patrol(start_point):point(1):sub(patrol(start_point):point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	
+end
+
+
+
+
+
+function change_leader(actor, npc)
+	if xr_gulag.getGulagPopulation(823) == 0 then
+		db.actor:give_info_portion("pri_followers_all_dead")
+	end
+end
+
+function on_tutor_gameover_stop()
+	local c = get_console()
+--	c:execute("disconnect")
+	printf("main_menu on console command is executed")
+	c:execute("main_menu on")
+end
+
+
+
+-------------OLR PDA
+--Согласие на торговлю
+function def_trade_1_end(actor, npc)
+	olr_ai_trade_agree.enable_scheme(actor, nil, "trade_agree")
+end
+
+--Согласие прийти на помощь
+function def_save_me_1_end(actor, npc)
+	olr_ai_follower_agree.enable_scheme(actor, nil, "follower_agree")
+end
+
+--Согласие уйти
+function def_out_you_1_end(actor, npc)
+
+end
+-------------OLR PDA
+
+
+function use_verstak_aktion(actor, npc)
+	level.start_stop_menu(olr_verstak.verstak_start(),true)
+end
+
+function use_light_hata(actor, npc)
+	--level.start_stop_menu(olr_light_switch.interact_gui(),true)
+        level.start_stop_menu(verstak.verstak(),true)
+end
+
+
+function use_lestniza_esc()
+	level.add_pp_effector("black.ppe", 20131, false)
+	olr_teleport.tele_lestnica()
+end
+
+function use_drink_yan()
+	if xvars.yan_use_drink_yan == false then
+            news_manager.send_tip(db.actor, "Чайник пуст...", nil, "default", 9000)
+	return
+	end
+            local ustalost = db.actor:get_actor_thirst()
+            if ustalost>0.80 then
+            news_manager.send_tip(db.actor, "Я не хочу пить...", nil, "default", 9000)
+            return 
+            end
+	db.actor:set_actor_thirst(1)
+	xvars.yan_use_drink_yan = false
+	olr_timers.st_timer("use_drink_yan", 950, "nick.yan_use_drink_yan_on()")
+end
+
+
+
+function start_aah_shii(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Мессер\\nЧёрт... ноги подкашиваются...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+news_manager.send_tip(db.actor, "Чёрт... ноги подкашиваются...", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+soundtrack.achit2()
+end
+
+
+
+function start_aah_shii_mesto_znak(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Мессер\\nЭто место... оно кажется мне знакомым...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+news_manager.send_tip(db.actor, "Это место... оно кажется мне знакомым...", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function start_aah_shii_mesto_znak2(actor, npc)
+	local STbronb = db.actor:object("give_yashik_kvest_1_item")
+	if STbronb then
+		if has_alife_info("kvest_esc_1_dialog_start") then
+			--local sactor = alife():actor()
+			--local cactor = level.object_by_id(sactor.id)
+			--cactor:give_game_news("Мессер\\nЧёрт... кровь... Поездка была явно так себе.. Ещё этот ящик...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+			news_manager.send_tip(db.actor, "Чёрт... кровь... Поездка была явно так себе.. Ещё этот ящик...", 3, "act", 15000)
+			local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+		else
+			news_manager.send_tip(db.actor, "Эй, ты! Куда куда побежал с ящиком?! Вернулся быстро!", 5, "trader", 25000)
+		end
+	else
+		if has_alife_info("kvest_esc_1_dialog_start") then
+			news_manager.send_tip(db.actor, "Эй, ты! Какого хрена!? Ящик возьми со скамьи!", nil, "trader", 25000)
+		end
+	end
+	if not has_alife_info("kvest_esc_1_dialog_start") then
+		news_manager.send_tip(db.actor, "Эй, ты! Куда ты без оружия?! Мы с тобой не закончили!", 5, "trader", 25000)
+	end
+end
+
+
+function deadcity_monolit_proverka(actor, npc)
+if has_alife_info("olr_traders_night") and has_alife_info("deadcity_mon_quest_start") then
+	db.actor:give_info_portion("deadcity_mon_quest_on_place")
+end
+end
+
+
+function esc_prizrak_proverka(actor, npc)
+if has_alife_info("olr_traders_night") and has_alife_info("jaba_start_phanrom_start") and not has_alife_info("jaba_start_phanrom_spawen") then
+	db.actor:give_info_portion("jaba_start_phanrom_spawen")
+	olr.spawen_phantoms()
+end
+end
+
+
+
+function pokushat_out(actor)
+local point = patrol("tivdiridit2_walk")
+local look = patrol("tivdiridit2_look")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+function del_fist_gar_vorony_glaz(actor)
+  local se_obj = alife():object("lvl2_garbage_staler_undead_olr_0001")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+function del_storoz_pes(actor)
+  local se_obj = alife():object("lvl2_garbage_staler_undead_olr_0000")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+function del_glazovoron(actor)
+  local se_obj = alife():object("lvl2_garbage_staler_undead_olr")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+function dol_kumiry_1(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nЗачем ты разоряешь наши кумиры?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+soundtrack.darklab_start_bassz()
+olr.kill_mon_in_radius(db.actor:position(), 25)
+end
+
+
+function dol_kumiry_2(actor, npc)
+---sactor = alife():actor()
+---local cactor = level.object_by_id(sactor.id)
+---cactor:give_game_news("Сообщение\\nКто вы? ","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Кто вы?", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+function dol_kumiry_3(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nМы... люди...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_4(actor, npc)
+---local sactor = alife():actor()
+---local cactor = level.object_by_id(sactor.id)
+---cactor:give_game_news("Сообщение\\nЯ могу вас увидеть?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Я могу вас увидеть?", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+function dol_kumiry_5(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nЗачем?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+function dol_kumiry_6(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nНо вы же меня видите... Я хотел бы разговаривать в равных условиях.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Но вы же меня видите... Я хотел бы разговаривать в равных условиях.", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_7(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nМы не хотим... равных условий.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_8(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nЧто вы делаете с ПДА?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Зачем вы хороните миникомпы?", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function dol_kumiry_9(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nВ них живут души сталкеров.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function dol_kumiry_10(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nЗначит вы специально «убиваете» души сталкеров?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Значит вы специально убиваете души сталкеров?", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function dol_kumiry_11(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nМы не хотим отвечать на этот вопрос.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_12(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nМне нужны документы, папки с бумагами...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Мне нужны документы, папки с бумагами...", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_13(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nЗачем?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function dol_kumiry_14(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nЧто бы узнать правду.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Что бы узнать правду...", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_15(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nКакую... правду?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function dol_kumiry_16(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nКто такой Стрелок? ","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Кто такой Стрелок?", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_17(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nА ты не знаешь?... Если мы отдадим тебе все бумаги, ты уйдешь?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_18(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nСкорей всего.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Скорей всего.", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_19(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nЭто не ответ.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function dol_kumiry_20(actor, npc)
+--local sactor = alife():actor()
+--local cactor = level.object_by_id(sactor.id)
+--cactor:give_game_news("Сообщение\\nНу, хорошо, я обязательно уйду.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+	news_manager.send_tip(db.actor, "Ну, хорошо, я обязательно уйду.", 3, "act", 15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function dol_kumiry_21(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nНаверняка ты нас обманешь... Мы... мы не дадим тебе ничего.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+  local se_obj = alife():object("lvl4_darkdolina_staler_undead_olr_0000")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+  local se_obj = alife():object("lvl4_darkdolina_physic_object_0027_tomb")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+	news_manager.send_tip(db.actor, "Соединение прервано.", 5, "default", 15000)
+	news_manager.send_tip(db.actor, "Черт... похоже дверь в лабораторию закрылась... нужно найти подстанцию питания...", 11, "act", 15000)
+end
+
+
+
+function del_obossanetz(actor)
+	local sobj = alife():object("lvl2_garbage_stalker_0031")
+  if sobj then
+  local pk = get_netpk(sobj,1)
+  local data = pk:get()
+  data.custom_data:setString(
+  "[smart_terrains]\n"
+  .. "lvl3_agroprom_smart_terrain_0020 = true\n")
+  pk:set( data )
+  table.insert(olr_offline_walk.tabst, sobj)
+  end
+
+  --local se_obj = alife():object("lvl2_garbage_stalker_0031")
+  --if se_obj then
+  --  alife():release(se_obj, true)
+  --end
+end
+
+
+
+function del_glazovoron_dolina(actor)
+  local se_obj = alife():object("lvl4_darkdolina_stalker_0095")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+function del_odvolk2(actor)
+  local se_obj = alife():object("lvl1_escape_staler_undead_olr")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+function del_mechenyy_swapm(actor)
+  local se_obj = alife():object("lvl8_swamp_stalker_0020")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+function del_bar_dudoed(actor)
+  local se_obj = alife():object("lvl5_bar_staler_undead_olr_0000")
+  if se_obj then
+    alife():release(se_obj, true)
+    db.actor:give_info_portion("mg_spawen_ludoed_now")
+  end
+  local se_obj = alife():object("lvl11_deadcity_physic_object_0747")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+function multicutscene_one(actor)
+xr_effects.disable_ui(db.actor, nil)
+level.add_pp_effector("blink.ppe", 20131, false) 
+level.add_cam_effector2("camera_effects\\dolina_cam_1.anm", 30, false, "xr_effects.multicutscene_two")
+--log1("1")
+end
+
+function multicutscene_two(actor)
+level.add_cam_effector2("camera_effects\\dolina_cam_2.anm", 30, false, "xr_effects.multicutscene_tri")
+--log1("2")
+end
+
+function multicutscene_tri(actor)
+level.add_cam_effector2("camera_effects\\dolina_cam_3.anm", 30, false, "xr_effects.enable_newui")
+--log1("3")
+end
+
+
+function enable_newui(actor)
+xr_effects.enable_ui(db.actor, nil)
+  local se_obj = alife():object("lvl4_darkdolina_staler_undead_olr_0000")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+
+function sms_magnit_pat(actor, npc)
+if not has_alife_info("bar_magn_profuse") then
+olr.info("bar_magn_profuse")
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nФух, заработало..","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+particles_object([[anomaly2\plasma_generator_death]]):play_at_pos(vector():set(-14,-87,-127))  
+local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\electric_crash]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+end
+
+
+
+
+function use_bar_doska_quests(actor)
+	olr_doska_qusts.on_use()
+end
+
+
+
+
+function krugliy_help_gop(actor, npc)
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Сообщение\\nБратишка! Давай скорее сюда, братан подыхает, нужна твоя помощь! Давай за мной, скорее! Кровосос кажется утащил его, помоги мне, пожалуйста!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	--local snd_obj = xr_sound.get_safe_sound_object([[ol3\voices\bro_help_bandos]])
+	--snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function yan_labirint_telep_dead_strahovka()
+	local point = patrol("to_deadyan_walk")
+	local look = patrol("to_deadyan_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+end
+
+
+
+function yan_labirint_telep_dead()
+
+for i= 1, 65535 do
+	local obj = level.object_by_id(i)
+	if obj ~= nil then
+		if obj:clsid()==clsid.zombie_s or obj:clsid()==clsid.zombie and not obj:alive() then
+			olr.del(obj)
+		end
+	end
+end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\lenin]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	local pos = db.actor:position()
+	local x, y, z = pos.x, pos.y, pos.z
+	particles_object([[nature\fog_foggy_big]]):play_at_pos(vector():set(x,y,z))
+	olr_timers.st_timer("step_yan_dead", 5, "nick.step_yan_dead()")
+	bind_stalker.hide_weapon()
+	level.disable_input()
+	level.hide_indicators()
+	olr_timers.st_timer("hit_yan_zombies", 25, "nick.hit_yan_zombies()")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\yantar_dead_st]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr_timers.st_timer("explode_lenin", 15, "nick.explode_lenin()")
+	local point = patrol("to_deadyan_walk")
+	local look = patrol("to_deadyan_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+	for k,v in pairs(db.storage) do
+		npc = level.object_by_id(k)
+		if npc and npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
+			npc:enable_memory_object(db.actor,false)
+		end
+	end
+end
+
+
+
+
+function yan_labirint_telep_1()
+local yaz_var = xvars.yan_lab_tele
+
+if yaz_var < 5 then
+
+	nick.gar_lamb_zombs()
+	olr.blow_add(100)
+
+	local rnddir = math.random(1,5)
+	if rnddir == 1 then 
+	local point = patrol("yan_labirint_telep_1_walk")
+	local look = patrol("yan_labirint_telep_1_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 2 then
+	local point = patrol("yan_labirint_telep_2_walk")
+	local look = patrol("yan_labirint_telep_2_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 3 then
+	local point = patrol("yan_labirint_telep_3_walk")
+	local look = patrol("yan_labirint_telep_3_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 4 then
+	local point = patrol("yan_labirint_telep_4_walk")
+	local look = patrol("yan_labirint_telep_4_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 5 then
+	local point = patrol("yan_labirint_telep_5_walk")
+	local look = patrol("yan_labirint_telep_5_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+end
+end
+end
+
+
+
+
+
+function yan_labirint_telep_2()
+
+local yaz_var = xvars.yan_lab_tele
+
+if yaz_var < 5 then
+
+	nick.gar_lamb_zombs()
+	olr.blow_add(100)
+
+	local rnddir = math.random(1,5)
+	if rnddir == 1 then 
+	local point = patrol("yan_labirint_telep_1_walk")
+	local look = patrol("yan_labirint_telep_1_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 2 then
+	local point = patrol("yan_labirint_telep_2_walk")
+	local look = patrol("yan_labirint_telep_2_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 3 then
+	local point = patrol("yan_labirint_telep_3_walk")
+	local look = patrol("yan_labirint_telep_3_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 4 then
+	local point = patrol("yan_labirint_telep_4_walk")
+	local look = patrol("yan_labirint_telep_4_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 5 then
+	local point = patrol("yan_labirint_telep_5_walk")
+	local look = patrol("yan_labirint_telep_5_look")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+end
+end
+end
+
+
+
+
+
+function yan_labirint_telep_3()
+
+local yaz_var = xvars.yan_lab_tele
+
+if yaz_var < 5 then
+
+	nick.gar_lamb_zombs()
+	olr.blow_add(100)
+
+	local rnddir = math.random(1,5)
+	if rnddir == 1 then 
+	local point = patrol("yan_labirint_telep_1_walk")
+	local look = patrol("yan_labirint_telep_1_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 2 then
+	local point = patrol("yan_labirint_telep_2_walk")
+	local look = patrol("yan_labirint_telep_2_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 3 then
+	local point = patrol("yan_labirint_telep_3_walk")
+	local look = patrol("yan_labirint_telep_3_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 4 then
+	local point = patrol("yan_labirint_telep_4_walk")
+	local look = patrol("yan_labirint_telep_4_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 5 then
+	local point = patrol("yan_labirint_telep_5_walk")
+	local look = patrol("yan_labirint_telep_5_look")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+end
+end
+end
+
+
+
+function yan_labirint_telep_4()
+
+local yaz_var = xvars.yan_lab_tele
+
+if yaz_var < 5 then
+
+	nick.gar_lamb_zombs()
+	olr.blow_add(100)
+
+	local rnddir = math.random(1,5)
+	if rnddir == 1 then 
+	local point = patrol("yan_labirint_telep_1_walk")
+	local look = patrol("yan_labirint_telep_1_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 2 then
+	local point = patrol("yan_labirint_telep_2_walk")
+	local look = patrol("yan_labirint_telep_2_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 3 then
+	local point = patrol("yan_labirint_telep_3_walk")
+	local look = patrol("yan_labirint_telep_3_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 4 then
+	local point = patrol("yan_labirint_telep_4_walk")
+	local look = patrol("yan_labirint_telep_4_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 5 then
+	local point = patrol("yan_labirint_telep_5_walk")
+	local look = patrol("yan_labirint_telep_5_look")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+end
+end
+end
+
+
+
+function yan_labirint_telep_5()
+
+local yaz_var = xvars.yan_lab_tele
+
+if yaz_var < 5 then
+
+	nick.gar_lamb_zombs()
+	olr.blow_add(100)
+
+	local rnddir = math.random(1,5)
+	if rnddir == 1 then 
+	local point = patrol("yan_labirint_telep_1_walk")
+	local look = patrol("yan_labirint_telep_1_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 2 then
+	local point = patrol("yan_labirint_telep_2_walk")
+	local look = patrol("yan_labirint_telep_2_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 3 then
+	local point = patrol("yan_labirint_telep_3_walk")
+	local look = patrol("yan_labirint_telep_3_look")
+db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 4 then
+	local point = patrol("yan_labirint_telep_4_walk")
+	local look = patrol("yan_labirint_telep_4_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	elseif rnddir == 5 then
+	local point = patrol("yan_labirint_telep_5_walk")
+	local look = patrol("yan_labirint_telep_5_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 201831, false)
+	xvars.yan_lab_tele = xvars.yan_lab_tele + 1
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\demon_voice_low]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+end
+end
+
+
+
+function rad_to_hidden()
+	if nik_dialog.item_much("foto_radar_totem",1) and nik_dialog.item_much("foto_radar_totem_add",2) then
+		local point = patrol("waa_rad_walk")
+		local look = patrol("waa_rad_look")
+		db.actor:set_actor_position(point:point(0))
+		local dir = look:point(0):sub(point:point(0))
+		db.actor:set_actor_direction(-dir:getH())
+        	level.add_pp_effector("black.ppe", 201831, false)
+        	local song_start = xr_sound.get_safe_sound_object("affects\\heartbeat")
+		song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
+		olr.del_by_name("lvl10_radar_space_restrictor_0007")
+		nik_dialog.out_item_much("foto_radar_totem",1)
+		nik_dialog.out_item_much("foto_radar_totem_add",2)
+	end
+end
+
+
+
+function esc_prizrak_hitted()
+	if not has_alife_info("jaba_start_phanrom_spawen_agressive") then
+		olr.kill_actor()
+	        db.actor.health = -11
+	end
+        db.actor.health = -0.03
+	level.add_pp_effector ("dead_zone.ppe", 971974, false)
+        --level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
+        local song_start = xr_sound.get_safe_sound_object("affects\\heartbeat")
+	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
+        db.actor.psy_health = -0.05
+
+	local rnd = math.random(1,5)
+	if rnd == 1 then
+		olr.horror_snd()
+	elseif rnd == 2 then
+		olr.spawen_phantoms()
+	elseif rnd == 3 then
+		olr.spawn_crows(2,22)
+	elseif rnd == 4 then
+		olr.spawn_crows(2,22)
+	elseif rnd == 5 then
+		for id=1, math.random(1,2) do
+		local sectionsa = { 
+		"m_zombie_e",
+		"zombie_normal",
+		"zombie_strong",
+		"zombie_blue"
+		}
+		local section = sectionsa[math.random(table.getn(sectionsa))] 
+		alife():create(section, db.actor:position():add(db.actor:direction():mul(-24)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	end
+
+	end
+
+	for i=1, 65534 do
+	local car = level.object_by_id(i)
+	if car then
+	if car ~= nil and 
+	car:name() == "lvl1_escape_stalker_0038" then
+
+        local boss_particle = particles_object("anomaly2\\body_tear_00") 
+	boss_particle:play_at_pos(vector():set(car:position().x, car:position().y, car:position().z))
+
+        local bez_var = math.random(1,5)
+
+	if bez_var == 1 then
+	local bloodbridgew = vector():set( 46, 3, 145 )
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
+	level.object_by_id(car:id()):set_position(bloodbridgew)
+	--log1("telep 1")
+
+	elseif bez_var == 2 then
+	local bloodbridgew2 = vector():set( 64, 3, 169 )
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew2)
+	level.object_by_id(car:id()):set_position(bloodbridgew2)
+	--log1("telep 2")
+
+	elseif bez_var == 3 then
+	local bloodbridgew3 = vector():set( 71, 11, 164 )
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew3)
+	level.object_by_id(car:id()):set_position(bloodbridgew3)
+	--log1("telep 3")
+
+	elseif bez_var == 4 then
+	local bloodbridgew4 = vector():set( 66, 3, 150 )
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew4)
+	level.object_by_id(car:id()):set_position(bloodbridgew4)
+	--log1("telep 4")
+
+	elseif bez_var == 5 then
+	local bloodbridgew5 = vector():set( 56, -0.36, 157 )
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+	level.object_by_id(car:id()):set_position(bloodbridgew5)
+	--log1("telep 5")
+
+   	end
+	end
+	end
+
+end
+end
+
+
+
+
+
+
+
+
+--' удаляем зяблика в баре
+function xrbar_zablik_sp()
+  local se_obj = alife():object("bar_bar_visitors_3_2_0002")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+
+function kkk_baby_avay_wack()
+  local se_obj = alife():object("lvl5_bar_stalker_0035")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+function del_bar_gopstoper1()
+  local se_obj = alife():object("lvl5_bar_stalker_0053")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+function del_bar_gopstoper2()
+  local se_obj = alife():object("lvl5_bar_stalker_0054")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+function del_bar_rosomaha()
+  local se_obj = alife():object("bar_bar_visitor_hunter")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+function del_rat_scared_novice()
+  local se_obj = alife():object("lvl_rat_stalker_0002")
+  if se_obj then
+    alife():release(se_obj, true)
+    db.actor:give_info_portion("rat_sokol_can_walk")
+  end
+end
+
+
+
+
+function del_horok_esc()
+ level.add_pp_effector("black.ppe", 201831, false)
+  local se_obj = alife():object("lvl1_escape_stalker")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+function kill_tarel_cutscene()
+
+for i=1, 65534 do
+local car = level.object_by_id(i)
+if car then
+if car ~= nil and 
+car:name() == "lvl_mars_stalker" then
+
+local h = hit ()
+h.power = 100
+h.direction = vector():set (0, -1, 0)
+h.impulse = 0
+h.draftsman = car
+h.type = hit.strike
+car:hit (h)
+end
+end
+end
+end
+
+
+--- люк у башни
+function use_kk_door1()
+
+       if not has_alife_info("stader_kv_7_katakomby_start_info") then
+	olr.hud_tip("", "Люк надёжно закрыт.", 5)
+	--news_manager.send_tip(db.actor, "Люк надёжно закрыт.", nil, "default", 9000)
+		return
+	end
+
+level.add_pp_effector("black.ppe", 201831, false)
+local point = patrol("telep_zavod_door_walk")
+local look = patrol("telep_zavod_door_look")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+
+--- дверь завод
+function use_kk_door2()
+
+       if not has_alife_info("rat_spawn_kontr") then
+	--news_manager.send_tip(db.actor, "Дверь закрыта изнутри.", nil, "default", 9000)
+	olr.hud_tip("", "Дверь закрыта изнутри.", 5)
+		return
+	end
+
+level.add_pp_effector("black.ppe", 201831, false)
+local point = patrol("telep_zavod_door_walk_0000")
+local look = patrol("telep_zavod_door_look_0000")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+-- дверь в ТД
+function use_kk_dolina()
+
+       if not has_alife_info("yan_first") then
+	olr.hud_tip("", "Дверь закрыта.", 5)
+		return
+	end
+
+level.add_pp_effector("black.ppe", 201831, false)
+local point = patrol("kk_dolina_walk")
+local look = patrol("kk_dolina_walk")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+
+--- колодец
+function use_kk_luk()
+
+       if not has_alife_info("rat_spawn_kontr") then
+	--news_manager.send_tip(db.actor, "Люк закрыт изнутри.", nil, "default", 9000)
+	olr.hud_tip("", "Люк закрыт изнутри.", 5)	
+		return
+	end
+
+level.add_pp_effector("black.ppe", 201831, false)
+local point = patrol("telep_zavod_door_walk_0001")
+local look = patrol("telep_zavod_door_look_0001")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+function use_kk_luk_mil()
+
+       if not has_alife_info("start_greh_prisoning_rush_killemall") then
+	--news_manager.send_tip(db.actor, "Люк закрыт изнутри.", nil, "default", 9000)
+	olr.hud_tip("", "Люк закрыт изнутри.", 5)	
+		return
+	end
+
+level.add_pp_effector("black.ppe", 201831, false)
+local point = patrol("towmilradway_walk")
+local look = patrol("towmilradway_walk")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+
+
+function del_lonewolf_kk()
+  local se_obj = alife():object("lvl_rat_staler_undead_olr")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+
+
+function kvest_esc_5_kill_voyaka()
+
+local sactor = alife():actor()
+local cactor = level.object_by_id(sactor.id)
+cactor:give_game_news("Хорёк:\\nА... Ты от торговца..","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+
+for i=1, 65534 do
+local car = level.object_by_id(i)
+if car then
+if car ~= nil and 
+car:name() == "lvl1_escape_stalker_0003" then
+
+local h = hit ()
+h.power = 100
+h.direction = vector():set (0, -1, 0)
+h.impulse = 0
+h.draftsman = car
+h.type = hit.strike
+car:hit (h)
+end
+end
+end
+end
+
+
+
+function balon_kk_pshh()
+local snd_obj = xr_sound.get_safe_sound_object([[weapons\rpg7_shoot]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+particles_object([[weapons\generic_weapon02]]):play_at_pos(vector():set(12,1,-11))
+end
+
+
+
+
+
+
+
+
+function mg_boloto_hitted()
+local effect_for_wpn = 
+{
+["wpn_rg-6"] = true,
+["wpn_rg6_m1"] = true,
+["wpn_rg-6_small"] = true,
+["wpn_gm94"] = true,
+["wpn_gm94_slozhenniy"] = true,
+["wpn_rpg7"] = true
+}
+
+local cur_weapon = db.actor:active_item()
+	if cur_weapon ~= nil then
+	local cur_weapon_sec = cur_weapon:section()
+	if effect_for_wpn[cur_weapon_sec] ~= nil then
+
+        db.actor.health = -0.05
+	level.add_pp_effector ("dead_zone.ppe", 971974, false)
+        --level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
+        local song_start = xr_sound.get_safe_sound_object("affects\\heartbeat")
+	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
+        db.actor.psy_health = -0.05
+	nick.rnd_ppe_eff()
+	nick.phantasms_zombies()
+
+	for i=1, 65534 do
+	local car = level.object_by_id(i)
+	if car then 
+	if car:name() == "lvl11_deadcity_observer" and car.health > 0 then
+	log1("health - "..car.health.." ")
+
+        local bez_var = math.random(1,5)
+	if bez_var == 1 then
+	--local bloodbridgew = vector():set( 192, -5, 159 )
+	--level.object_by_id(car:id()):set_position(bloodbridgew)
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
+	for i=1,12 do
+	local wait_time = 0
+  	wait_time = time_global() + i*1000
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function()
+		local rndx = math.random(186,195) 
+		local rndy = math.random(146,165) 	
+		local bloodbridgew = vector():set( rndx, -5, rndy )
+		level.object_by_id(car:id()):set_position(bloodbridgew)
+		local snd_obj = xr_sound.get_safe_sound_object([[monsters\swamp_karlito\die_0]])
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+  	)
+	end
+	olr.spawen_phantoms()
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\earthquake]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 2.0)
+	--log1("telep 1")
+
+	elseif bez_var == 2 then
+	local bloodbridgew2 = vector():set( 178, -9, 186 )
+	level.object_by_id(car:id()):set_position(bloodbridgew2)
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew2)
+	--log1("telep 2")
+	olr.spawen_phantoms()
+	olr.horror_snd()
+	local snd_obji = xr_sound.get_safe_sound_object([[heart\2]])
+	snd_obji:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 3.0)
+
+	elseif bez_var == 3 then
+	local bloodbridgew3 = vector():set( 177, -9, 127 )
+	level.object_by_id(car:id()):set_position(bloodbridgew3)
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew3)
+	--log1("telep 3")
+	olr.spawen_phantoms()
+	olr.horror_snd()
+	local snd_obj = xr_sound.get_safe_sound_object([[anomaly\emi_blowout]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 4.0)	
+
+	elseif bez_var == 4 then
+	local bloodbridgew4 = vector():set( 165, -9, 151 )
+	level.object_by_id(car:id()):set_position(bloodbridgew4)
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew4)
+	--log1("telep 4")
+	olr.spawen_phantoms()
+	olr.horror_snd()
+	local snd_obj = xr_sound.get_safe_sound_object([[affects\hit_fist]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 3.0)
+
+	elseif bez_var == 5 then
+	local bloodbridgew5 = vector():set( 176, -9, 151 )
+	level.object_by_id(car:id()):set_position(bloodbridgew5)
+	--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+	--log1("telep 5")
+	olr.spawen_phantoms()
+	olr.horror_snd()
+
+   end
+end
+end
+end
+end
+end
+end
+
+
+
+
+
+
+
+
+
+
+function phantsam_hitted()
+
+if math.random(1,25) == 2 then
+	nick.phantasms_zombies()
+	olr.horror_snd()
+end
+
+local effect_for_wpn = 
+{
+["wpn_rg-6"] = true,
+["wpn_rg6_m1"] = true,
+["wpn_rg-6_small"] = true,
+["wpn_gm94"] = true,
+["wpn_gm94_slozhenniy"] = true,
+["wpn_rpg7"] = true
+}
+
+local cur_weapon = db.actor:active_item()
+	if cur_weapon ~= nil then
+	local cur_weapon_sec = cur_weapon:section()
+	if effect_for_wpn[cur_weapon_sec] ~= nil then
+
+        db.actor.health = -0.06
+	level.add_pp_effector ("dead_zone.ppe", 971974, false)
+        --level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
+        local song_start = xr_sound.get_safe_sound_object("affects\\heartbeat")
+	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
+        db.actor.psy_health = -0.1
+	nick.phantasms_zombies()
+	nick.rnd_ppe_eff()
+	phatstm_telep()
+
+	end
+	end
+	
+end
+
+
+function phatstm_telep()
+	for i=1, 65534 do
+		local car = level.object_by_id(i)
+		if car then
+			if car ~= nil and 
+	car:name() == "lvl8_swamp_phantasm" then
+	--log1("health - "..car.health.." ")
+
+        local bez_var = math.random(1,5)
+	if bez_var == 1 then
+	local bloodbridgew = vector():set( -3, 3, -213 )
+	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
+	--log1("telep 1")
+
+	elseif bez_var == 2 then
+	local bloodbridgew2 = vector():set( 127, 2, -179 )
+	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew2)
+	--log1("telep 2")
+
+	elseif bez_var == 3 then
+	local bloodbridgew3 = vector():set( 184, 3, -202 )
+	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew3)
+	--log1("telep 3")
+
+	elseif bez_var == 4 then
+	local bloodbridgew4 = vector():set( 65, -6, -181 )
+	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew4)
+	--log1("telep 4")
+
+	elseif bez_var == 5 then
+	local bloodbridgew5 = vector():set( 0, -6, -207 )
+	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+	--log1("telep 5")
+
+   	end
+	end
+	end
+end
+end
+
+
+function del_mg_ludoed()
+  local se_obj = alife():object("lvl11_deadcity_stalker_0048")
+  if se_obj then
+    alife():release(se_obj, true)
+    db.actor:change_character_reputation(-10)
+  end
+end
+
+
+
+function del_final_mg_ds()
+	olr.del_by_name("lvl11_deadcity_staler_undead_olr_0003")
+    	db.actor:change_character_reputation(10)
+    	db.actor:give_info_portion("mg_ds_now_done")
+end
+
+
+
+function del_final_mg_izlom_talked()
+	news_manager.send_tip(db.actor, "Излом: Я буду ждать тебя у входа на нижних болотах...", nil, "unknown", 39000)
+	olr.del_by_name("lvl11_deadcity_m_fracture_e")
+end
+
+
+function del_swatoy_second()
+  local se_obj = alife():object("lvl12_radar_bunker_staler_undead_olr_0000")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+
+function rad_bun_ne_lez_suda()
+--bind_stalker.hide_weapon()
+local point = patrol("farbun_gluk_walk")
+local look = patrol("farbun_gluk_look")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 20131, false)
+--log1("ssg")
+end
+
+
+
+function rad_bun_ne_lez_suda_osn()
+	--db.actor:restore_weapon()
+	local point = patrol("rad_bun_nackalo_walk")
+	local look = patrol("rad_bun_nackalo_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 20131, false)
+end
+
+
+
+
+function del_na_kordone_komandira()
+  local se_obj = alife():object("lvl1_escape_stalker_0039")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+function use_spat_hata()
+       if not has_alife_info("lonewolf_bar_spawn") then
+		news_manager.send_tip(db.actor, "Не стоит спать здесь сейчас...", nil, "act", 30000)
+		return
+	end
+       if has_alife_info("sleeped_in_shlkola_done") then
+		news_manager.send_tip(db.actor, "Не стоит спать здесь сейчас...", nil, "act", 30000)
+		return
+	end
+	olr_sleep.sleep_main(6)
+	db.actor:give_info_portion("sleeped_in_shlkola_done")
+end
+
+
+function use_spat_hata_esc()
+	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        	news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+        	return
+	end
+	if not has_alife_info("olr_traders_day") then
+		this.go_sleep_place()
+		return
+	else
+		if db.actor:get_actor_sleep() > 0.3 then
+			news_manager.send_tip(db.actor, "Не стоит спать сейчас...", nil, "act", 30000)
+		end
+	end
+
+	if db.actor:get_actor_sleep() < 0.3 then
+		this.go_sleep_place()
+		return
+	else
+		news_manager.send_tip(db.actor, "Не стоит спать сейчас... не хочется.", nil, "act", 30000)
+	end
+
+end
+
+function go_sleep_place()
+	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        	news_manager.send_tip(db.actor, "Нельзя спать во время выброса!")
+        	return false
+	end
+	for k,v in pairs(db.storage) do
+        	local stalker = level.object_by_id(k)
+            	if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() and stalker:relation(db.actor)==game_object.enemy then
+			if stalker:position():distance_to(db.actor:position()) < 45 then
+				local hud = get_hud()
+				hud:AddCustomStatic("cant_sleep_near_enemies", true)
+				hud:GetCustomStatic("cant_sleep_near_enemies").m_endTime = time_global()/1000 + 5
+				return
+			end
+		end		
+    	end
+	local rnd = math.random(10,14)
+	olr_sleep.sleep_main(rnd)
+	if db.actor.satiety < 0.05 then
+        	db.actor.satiety = 0.1
+	end
+	if db.actor.health < 0.1 then
+        	db.actor.health = 0.1
+	end
+end
+
+
+
+function del_bar_wolfy()
+  local se_obj = alife():object("lvl5_bar_staler_undead_olr_0003_lonewolf")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+  olr.del_by_name("lvl5_bar_space_restrictor_0129")
+end
+
+
+function del_bar_meshkow()
+  local se_obj = alife():object("bar_bar_guard_0004_maijor")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+function del_dead_kontr_robbber()
+  local se_obj = alife():object("lvl1_escape_stalker_0040")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+
+function greh_pris_1()
+alife():create("ph_food_conserv1", db.actor:position():add(db.actor:direction():add(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+alife():create("ph_food_vater", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+db.actor.health = 1
+db.actor.satiety = 1
+db.actor:set_actor_thirst(1)
+db.actor:set_actor_sleep(1)
+olr_sleep.sleep_main(8)
+olr.blow_add(250)
+local STbron = db.actor:object("device_pda") 
+if STbron then
+STbron:set_condition(0.03)
+end
+end
+
+
+function greh_pris_5()
+alife():create("vodka_used_empty", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+olr.blow_add(250)
+db.actor.health = 1
+db.actor.satiety = 1
+db.actor:set_actor_thirst(1)
+db.actor:set_actor_sleep(1)
+olr_sleep.sleep_main(8)
+news_manager.send_tip(db.actor, "Крыса: Эй, ты куда пропал? Я договорился насчёт встречи с Профессором, он ждёт.. В тех документах что ты принёс из лаборатории под Тёмной Долиной упоминались некие Ветры Безумия. Возможно это заинтересует его...", nil, "barman", 31000)
+end
+
+
+function greh_pris_10()
+olr.blow_add(250)
+db.actor.health = 1
+db.actor.satiety = 1
+news_manager.send_tip(db.actor, "Что происходит...?", 5, "act", 31000)
+db.actor:give_info_portion("start_greh_prisoning_rush")
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then     
+		if kill:name() == "lvl9_military_box_rukzak" then        
+                alife():create("wpn_knife_old_rotten", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id, kill.id)
+                alife():create("battery_change", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id, kill.id)
+end
+end
+end
+end
+
+
+function greh_pris_11()
+	olr.blow_add(250)
+	news_manager.send_tip(db.actor, "Это шанс... нужно срочно найти способ сломать замок... Найти что-то подходящее, тут в камере...", 10, "act", 31000)
+	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("rad_soldier_master", db.actor:position():add(db.actor:direction():mul(-42)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("rad_soldier_master", db.actor:position():add(db.actor:direction():mul(42)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+end
+
+
+
+
+
+function use_greh_save()
+local STbron = db.actor:object("greh_leader_key") 
+if not STbron then
+news_manager.send_tip(db.actor, "Нужен ключ...", nil, "default", 31000)
+return
+end
+alife():create('vetri_bezumia_doki', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+olr.del(STbron)
+news_manager.send_tip(db.actor, "Получен документ: Ветры безумия", nil, "default", 31000)
+end
+
+
+
+function swatoy_wtf1()
+olr.kill_mon_in_radius(db.actor:position(), 120)
+news_manager.send_tip(db.actor, "Святой: Что ты сделал!", nil, "default", 31000)
+end
+
+function swatoy_wtf2()
+news_manager.send_tip(db.actor, "Святой: Ты понимаешь что теперь мы все фактически мертвы? Ты думаешь что вспомнил всё... а помнишь свой второй поход? После того как Доктор собрал тебя из дымящихся ошмётков? И вот опять всё по новой...", nil, "default", 31000)
+end
+
+function swatoy_wtf3()
+news_manager.send_tip(db.actor, "Святой: Я знаю что ты задумал... Но ты не понимаешь... Твой поход к Генераторам уничтожит всё живое... каждая из этих шести штук мощнее чем тысяча ядерных взрывов... Земля провалится в чёрную дыру...", nil, "default", 31000)
+end
+
+function swatoy_wtf4()
+news_manager.send_tip(db.actor, "Святой: Хотя, к этому всё и шло... прощай, великий Кри...", nil, "default", 31000)
+            level.show_indicators()
+            level.enable_input()
+            db.actor:restore_weapon()
+end
+
+function swatoy_wtf5()
+local snd_obj = xr_sound.get_safe_sound_object([[weapons\pistol_future\gauss_pistol_shoot]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+for i=1, 65534 do
+local car = level.object_by_id(i)
+if car then
+if car ~= nil and 
+car:name() == "lvl12_radar_bunker_staler_undead_olr_0001" then
+local h = hit ()
+h.power = 100000
+h.direction = vector():set (0, -1, 0)
+h.impulse = 0
+h.draftsman = car
+h.type = hit.strike
+car:hit (h)
+end
+end
+end
+end
+
+
+
+
+
+function del_fil_done_glaz()
+  local se_obj = alife():object("lvl2_garbage_stalker_0030")
+  if se_obj then
+    alife():release(se_obj, true)
+  end
+end
+
+
+
+
+function now_iremember()
+	news_manager.send_tip(db.actor, "Теперь я всё вспомнил...", nil, "default", 30000)
+	db.actor:give_info_portion("now_iremember_demand")
+end
+
+
+
+function use_tip_press_button_gar()
+	db.actor:give_info_portion("now_use_tip_press_button_gar")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\x18_hit_2]])
+	if not snd_obj:playing() then 
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr.spawn_on_obj("kanistra_benz", "lvl2_garbage_physic_object_0017")	
+	end
+	olr.del_by_name("lvl2_garbage_physic_object_0110")
+end
+
+
+
+function use_spat_hata_yan()
+       if not has_alife_info("laborant_otpravlaet_spat_gg_finished") then
+		news_manager.send_tip(db.actor, "Не стоит спать здесь сейчас...", nil, "default", 30000)
+		return
+	end
+       if has_alife_info("otpravlaet_spat_gg_done") then
+		return
+	end
+	olr_sleep.sleep_main(6)
+        db.actor:set_actor_sleep(1)
+	olr_timers.st_timer("dedsmert", 10, "nick.ded_pomeraet_yan()")
+end
+
+
+
+
+
+function first_doska_use_start_1()
+	olr.hud_tip("Жаба:", "Ага, всё-же решил объявления глянуть?", 4)
+end
+
+
+function first_doska_use_start_2()
+	olr.hud_tip("Жаба:", "Я слышал, что в Баре тоже такая доска имеется кстати... Обьявления обновляются примерно пару раз в день, что у меня, что там. Всё что есть, сейчас - мои заказы.", 10)
+end
+
+
+function first_doska_use_start_3()
+	olr.hud_tip("Жаба:", "Сделаешь дело, подходи ко мне, поговорим насчёт оплаты.", 17)
+end
+
+
+function first_doska_use_start_4()
+	bind_stalker.restore_weapon()
+	level.enable_input()
+	level.remove_cam_effector(30)
+	olr.del_by_name("lvl1_escape_space_restrictor_0106")
+end
+
+
+
+
+
+function use_drink_mg()
+            local ustalost = db.actor:get_actor_thirst()
+            if ustalost>0.80 then
+            news_manager.send_tip(db.actor, "Я не хочу пить...", nil, "default", 9000)
+            return 
+            end
+	    db.actor:set_actor_thirst(1)
+	    if not has_alife_info("bolezn_parazity_info") then
+            olr_timers.st_timer("bolezn_parasite_timer", 2250, "nick.bolezn_parasite_timer()")
+	    --news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом")
+	    db.actor:give_info_portion("bolezn_parazity_info")
+	    end
+end
+
+
+
+function use_yanprib_hata()
+       if not has_alife_info("prof_uletel_gde_laborant_start_talked") then
+		news_manager.send_tip(db.actor, "Не стоит это трогать сейчас...", nil, "default", 30000)
+		return
+	end
+       if not has_alife_info("yan_dot_start_zamery") then
+		news_manager.send_tip(db.actor, "Измеритель пси-излучиения: Старт измерения, не переключать фазу замеров! Текущая фаза - "..xvars.yan_phase_zam_quest.." из 5")
+		db.actor:give_info_portion("yan_dot_start_zamery")
+		xvars.yan_phase_zam_quest_flag = false
+		olr_timers.st_timer("omsffsss3", 25, "xr_effects.yan_phase_zam_quest_on()")
+		if not has_alife_info("yan_dot_start_zamery_done") then
+			olr_timers.st_timer("yan_zam_zombies_rush", 8, "nick.yan_zam_zombies_rush_spawen()")
+		end
+		return
+	end
+	if xvars.yan_phase_zam_quest_flag == true then
+		xvars.yan_phase_zam_quest = xvars.yan_phase_zam_quest + 1
+		if xvars.yan_phase_zam_quest < 5 then
+			olr_timers.st_timer("omsffsss3", 25, "xr_effects.yan_phase_zam_quest_on()")
+		end
+		xvars.yan_phase_zam_quest_flag = false
+		news_manager.send_tip(db.actor, "Измеритель пси-излучиения: Старт новой фазы замера...")
+	if xvars.yan_phase_zam_quest >= 5 then
+		db.actor:give_info_portion("yan_dot_start_zamery_done")
+		news_manager.send_tip(db.actor, "Измеритель пси-излучиения: Замер окончен.")
+		olr.del_by_name("lvl7_yantar_lights_hanging_lamp_0031")
+		end
+	end
+end
+
+
+
+function yan_phase_zam_quest_on()
+	if xvars.yan_phase_zam_quest < 5 then
+		news_manager.send_tip(db.actor, "Измеритель пси-излучиения: Переключите фазу замеров!")
+		xvars.yan_phase_zam_quest_flag = true
+		olr_timers.st_timer("omsffsss3", 5, "xr_effects.yan_phase_zam_quest_off()")
+	end
+end
+
+
+function yan_phase_zam_quest_off()
+	if xvars.yan_phase_zam_quest < 5 then
+		news_manager.send_tip(db.actor, "Измеритель пси-излучиения: Старт следующего цикла. Текущая фаза - "..xvars.yan_phase_zam_quest.." из 5")
+		xvars.yan_phase_zam_quest_flag = false
+		olr_timers.st_timer("omsffsss3", math.random(35,90), "xr_effects.yan_phase_zam_quest_on()")
+	end
+end
+
+
+function del_leader_clearsky()
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+
+		if string.find(kill:section_name(),"^mounted_weapon") then
+
+	local pos = vector():set(1,0,-5)
+	local obj = kill
+	local loh = level.object_by_id(obj.id)
+	if loh then
+		level.object_by_id(loh:id()):set_direction(pos,0)
+	end
+
+end
+end
+end
+	olr.del_by_name("lvl7_yantar_staler_undead_olr")
+	db.actor:give_info_portion("spawn_bar_leader_clearsky_info")
+	news_manager.send_tip(db.actor, "Информация для всех, кто имеет с группировкой Чистое небо, и непосредсвенно её руководством. На данный момент наше сотрудничество окончено, и представитель группировки более не базируется на нашей базе.", nil, "saharov", 9000)
+end
+
+
+
+function del_contr_pogreb()
+	olr.del_by_name("lvl7_yantar_stalker_0065")
+end
+
+
+
+
+function use_take_art_gar()
+	olr.del_by_name("lvl2_garbage_physic_object_0111")
+	db.actor:give_info_portion("gar_vhod_art_taken_info")
+	olr.give_item("af_rusty_thorn")
+end
+
+function take_bar_bm()
+	alife():create("wpn_bm16", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
+	olr.del_by_name("lvl5_bar_physic_object_1399")
+end
+
+
+function take_bar_minigun()
+	local obj = alife():create("wpn_m134", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
+	--obj:set_ammo_elapsed(0)
+	olr.del_by_name("lvl5_bar_physic_object_1456")
+end
+
+function del_artvhod_done()
+	olr.del_by_name("lvl2_garbage_stalker_0051")
+end
+
+function take_bar_knife()
+	alife():create("wpn_knife", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
+	olr.del_by_name("lvl5_bar_physic_object_0241")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\glass_crak_2]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+
+function journalist_timer_sms()
+	olr_timers.st_timer("dfds", math.random(135,190), "nick.the_god_is_seven()")
+end
+
+
+
+function del_barhaata_novice()
+	olr.del_by_name("lvl5_bar_stalker_0052")
+end
+
+
+function use_upsters()
+local point = patrol("teleport_2_way_olr2")
+local look = patrol("teleport_2_look_olr2")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 20131, false)
+end
+
+
+
+
+function del_flyer_dolina()
+	olr.del_by_name("lvl4_darkdolina_stalker_0071")
+end
+
+
+function use_book_agr()
+	if has_alife_info("olr_agro_2_start") then
+		olr.hud_tip("Заметка на книге:", "Перепрятал миникомп за комплексом, в подвальных помещениях. Кажется там поселились карлики, что хорошо - мало кто туда сунется сейчас", 15)
+		olr.info("agr_perepat_tainik_start")
+	end
+end
+
+
+
+function gen_labirint_telep()
+local point = patrol("teleport_gen_way_olr2")
+local look = patrol("teleport_gen_look_olr2")
+	db.actor:set_actor_position(point:point(0))
+local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+        level.add_pp_effector("black.ppe", 20131, false)
+end
+
+
+function del_fil_gener()
+	olr.del_by_name("lvl5_bar_stalker_0052")
+end
+
+function del_fil_swamp()
+	olr.del_by_name("lvl8_swamp_stalker_0022")
+end
+
+
+
+
+function take_psyhead_yan()
+	if has_alife_info("yan_doc_psy_start_has") then
+	olr.del_by_name("lvl7_yantar_lights_hanging_lamp_0018")
+	olr.del_by_name("lvl7_yantar_physic_object_0708")
+	nik_dialog.out_item_much("proto_psy_shap",1)
+	if math.random(2) == 1 then
+		db.actor.health = -db.actor.health/math.random(2,5)
+	end
+	if math.random(2) == 1 then
+		db.actor.power = -db.actor.power/math.random(2,5)
+	end
+	if math.random(2) == 1 then
+		db.actor.psy_health = -db.actor.psy_health/math.random(2,5)
+	end
+	if math.random(2) == 1 then
+		db.actor.radiation = -db.actor.radiation/math.random(2,5)
+	end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\low_base]])
+	if not snd_obj:playing() then 
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+	alife():create("af_dummy_glassbeads", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
+        level.add_pp_effector("radar_wake.ppe", 20131, false)
+	db.actor:give_info_portion("take_psyhead_yan_have")
+	--nik_dialog.out_item_much("proto_psy_shap",1)
+	end
+end
+
+
+function head_feeling_scare()
+	if has_alife_info("spaven_karlics_mars") then
+		db.actor:set_actor_position(vector():set(db.actor:position().x + 0.3,db.actor:position().y + 2.8,db.actor:position().z + 0.3))
+		if not olr_timers.has_timer("ufo_fly_away") then
+			olr_timers.st_timer("ufo_fly_away", 2, "nick.ufo_fly_away()")
+		end
+	end
+end
+
+
+
+
+
+
+function take_nii_gravmolot()
+	if has_alife_info("kvest_gravimolot_go") then
+		alife():create("grav_molot", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
+		olr_timers.st_timer("molot_burers", 7, "nick.molot_burers()")
+		nick.del_molot_agr()
+	end	
+end
+
+
+
+function rat_ending_death_spawn()
+	local wait_time = 0
+  	wait_time = time_global() + 1100
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() olr.del_by_name("lvl16_generators_rat_volk") end
+  	)
+	--xr_effects.disable_ui(db.actor, nil)
+	alife():create("rat_volk_undead", db.actor:position():add(db.actor:direction():add(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	level.add_pp_effector("black.ppe", 201831, false)
+	olr_timers.st_timer("rat_fly_away", 10, "nick.rat_fly_away()")
+end
+
+
+
+function rat_labirint_telep()
+	local point = patrol("start_rat_ending_walk")
+	local look = patrol("start_rat_ending_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	level.add_pp_effector("black.ppe", 201831, false)
+end
+
+
+
+
+function borziy_esc_dead()
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_escape_space_restrictor_0108"})) then
+		--log1("fail")
+		news_manager.send_tip(db.actor, "Канал военных: ... высылай вертушку, сталкеры нашего завалили...", nil, "heli", 49000)
+		olr_timers.st_timer("expl_actor", 5, "nick.expl_actor_away()")
+		db.actor:give_info_portion("esc_vetruha_atack")
+	else
+		--log1("ok")
+		db.actor:give_info_portion("esc_kill_okay_mil")
+	end
+end
+
+
+
+function tops_stlks()
+	level.start_stop_menu(ui_best_stalkers.ui_best_stalkers(),true)
+end
+
+
+function use_nasos_pover()
+	if has_alife_info("bunlab_light_etqj2") and has_alife_info("bunlab_light_etqj1") then
+		db.actor:give_info_portion("on_nasos_radarbun")
+	else
+		news_manager.send_tip(db.actor, "Нет питания для включения насосов!", nil, "default", 19000)
+	end
+end
+
+
+function del_mosk_radar_all()
+	olr.del_by_name("rad_start_btr_0001")
+	olr.del_by_name("psy_izl_0003_script")
+	news_manager.send_tip(db.actor, "Я уже почти дома...", nil, "unknown", 19000)
+	olr.del_by_name("lvl10_radar_space_restrictor_0008")
+	olr.del_by_name("radar_nofeet_rad")
+	olr.del_by_name("lvl12_radar_bunker_brain_lab_nofeet")
+	olr.del_by_name("psy_izl_0000")
+	olr.del_by_name("psy_izl")
+	olr.del_by_name("psy_izl")
+	olr.del_by_name("psy_izl_0001")
+end
+
+
+
+function prip_sniper_kill()
+	if db.actor:alive() then
+		db.actor.health = -1
+		local snd_obj = xr_sound.get_safe_sound_object([[weapons\svu_shoot]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end	
+	end
+end
+
+
+
+function topim_actora_chaes()
+	if db.actor:alive() then
+		db.actor.health = -1
+        	level.add_pp_effector("black.ppe", 20131, false)
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\underwater]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end	
+	end
+end
+
+
+
+function kill_actor_psy()
+	if db.actor:alive() then
+		db.actor.health = -1
+        	level.add_pp_effector("black.ppe", 20131, false)
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\dolina_psy_noise]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end	
+	end
+end
+
+
+
+function fighting_zone_mosk()
+	if has_alife_info("start_mosk_figh_go") then
+		db.actor.health = -0.2
+		local point = patrol("tlpmoskfight_walk")
+		local look = patrol("tlpmoskfight_look")
+		db.actor:set_actor_position(point:point(0))
+		local dir = look:point(0):sub(point:point(0))
+		db.actor:set_actor_direction(-dir:getH())
+        	level.add_pp_effector("black.ppe", 20131, false)
+		olr.horror_snd()
+	end
+end
+
+
+function mosk_dead_now()
+	olr.del_by_name("lvl_level12_space_restrictor_0002")
+	--olr.del_by_name("lvlobhod_nofeet_rad")
+	olr_timers.st_timer("expl_ttftor", 12, "nick.leltwl_actor_away()")
+end
+
+
+
+function mosk_fight_hitted()
+	--log1("mosk hit "..xvars.mosk_hits.."")
+	
+	local effect_for_wpn = 
+	{
+	["wpn_rg-6"] = true,
+	["wpn_rg6_m1"] = true,
+	["wpn_rg-6_small"] = true,
+	["wpn_gauss"] = true,
+	["wpn_gm94"] = true,
+	["wpn_gm94_slozhenniy"] = true,
+	["wpn_rpg7"] = true,
+	grenade_f1 = true,
+	grenade_rgo = true,
+	grenade_rgd5 = true,
+	grenade_flashbang_zaria = true
+	}
+
+	local cur_weapon = db.actor:active_item()
+	if cur_weapon ~= nil then
+	local cur_weapon_sec = cur_weapon:section()
+	if effect_for_wpn[cur_weapon_sec] ~= nil then
+		xvars.mosk_hits = xvars.mosk_hits + 1
+		olr.spawen_phantoms()
+	end
+	end
+
+	if xvars.mosk_hits > 10 then
+	
+	for i=1, 65534 do
+	local car = level.object_by_id(i)
+	if car then
+	if car ~= nil and 
+	car:name() == "lvlobhod_nofeet_rad" then
+	car:kill(car)
+	olr.horror_snd()
+	olr_timers.st_timer("expl_ttftor", 1, "nick.punck_mosk_up()")
+	end
+	end
+	end
+
+	end
+end
+
+
+
+function ahahahahaz()
+	olr.del_by_name("lvl6_rostok_space_restrictor_0046")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\basemnt]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+
+function gen_zombi_bazooka()
+	olr.del_by_name("lvl16_generators_space_restrictor_0054")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\fear_hata]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0096")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0096")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0096")
+
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0091")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0091")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0091")
+end
+
+
+function gen_start_open_door_one()
+	olr.del_by_name("lvl17_warlab_space_restrictor_0000")
+	news_manager.send_tip(db.actor, "Нужно найти способ открыть эту дверь...", nil, "act", 49000)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\siren_gen]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+
+function use_gen_klava()
+	if not has_alife_info("gen_two_door_open_spusk") then
+	db.actor:give_info_portion("gen_two_door_open_spusk")
+	nick.rad_bun_tv_casuality_room()
+	olr.del_by_name("lvl16_generators_physic_object_0224")
+	olr.del_by_name("lvl17_warlab_space_restrictor_0000")
+	olr.del_by_name("labu_prefix_lights_hdsfanging_lamp_0039")
+	olr.del_by_name("lvl16_generators_controller_tubeman")
+	olr.kill_mon_in_radius(db.actor:position(), 95)
+	olr.to_online("lvl16_generators_physic_object_0249")
+	end
+end
+
+
+function gen_wtoroy_etaj_start()
+	olr.del_by_name("lvl16_generators_space_restrictor_0053")
+	news_manager.send_tip(db.actor, "Стой...", nil, "unknown", 5000)
+	olr_timers.st_timer("tark_wt_et", 5, "nick.tark_wt_et_one()")
+        	level.add_pp_effector("black.ppe", 20131, false)
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\dolina_psy_noise]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+end
+
+
+
+
+function actor_podosel_boss()
+	db.actor:hide_weapon()
+        level.add_pp_effector("black.ppe", 20131, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\explode_deep]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+	olr.del_by_name("lvl16_generators_space_restrictor_0056")
+	level.add_cam_effector2("camera_effects\\gen_boss_actor_close.anm", 22, false, "xr_effects.hid_bos_scream")
+	olr.disable_walk()
+	level.disable_input()
+	level.hide_indicators()	
+	local point = patrol("gen_ac_last_walk")
+	local look = patrol("gen_ac_last_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	olr_timers.st_timer("molot_bure54rs", 12, "xr_effects.hid_bos_screamsnd()")
+        db.actor:hide_weapon()
+end
+
+
+function hid_bos_screamsnd()
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\sob2]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+	olr.horror_snd()
+end
+
+
+function hid_bos_scream()
+	dialogs_aes.olr_fin()
+end
+
+
+function boss_dance_boom_black1()
+	olr.horror_snd()
+	local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
+	local bosp = level.object_by_id(objp.id)
+	if objp and bosp then
+		local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
+		if not boss_particle:playing() then 
+			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
+		end
+	end
+        	level.add_pp_effector("black.ppe", 20131, false)
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\explode_deep]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\drone_long_deep]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\thunder_3]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+end
+
+
+function boss_dance_boom_black2()
+	olr.horror_snd()
+	local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
+	local bosp = level.object_by_id(objp.id)
+	if bosp then
+		local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
+		if not boss_particle:playing() then 
+			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
+		end
+	end
+		level.add_cam_effector2("camera_effects\\gen_boss_black2.anm", 11, false, "")
+        	level.add_pp_effector("black.ppe", 20131, false)
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\explode_large_away]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+end
+
+
+
+function boss_dance_boom_black3()
+	olr.horror_snd()
+	local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
+	local bosp = level.object_by_id(objp.id)
+	if bosp then
+		local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
+		if not boss_particle:playing() then 
+			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
+		end
+	end
+		level.add_cam_effector2("camera_effects\\gen_boss_black3.anm", 11, false, "")
+        	level.add_pp_effector("black.ppe", 20131, false)
+		local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\explode_large_away_2]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+end
+
+
+function boss_dance_boom_black4()
+	olr.horror_snd()
+	local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
+	local bosp = level.object_by_id(objp.id)
+	if bosp then
+		local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
+		if not boss_particle:playing() then 
+			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
+		end
+	end
+	olr_timers.st_timer("molot_bure54r4s", 9, "xr_effects.en_gen_ui_deadboss()")
+        level.add_pp_effector("black.ppe", 20131, false)
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\fear_hata]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+
+function en_gen_ui_deadboss()
+	level.remove_cam_effector(3496)
+	olr.enable_walk()
+    	level.show_indicators()
+    	level.enable_input()
+	nick.spawn_warlab_kostri()
+	olr.info("choise_exit_or_boss")
+end
+
+
+function actor_usel_boss()
+	olr.horror_snd()
+	local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
+	local bosp = level.object_by_id(objp.id)
+	if bosp then
+		local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
+		if not boss_particle:playing() then 
+			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
+		end
+	end
+	olr_blowout.blowout_additional_timer()
+	news_manager.send_tip(db.actor, "Нужно срочно выбираться отсюда...", nil, "act", 49000)
+	olr.info("oso_start_goavay_visel")
+	for i=1, 65534 do
+	local car = level.object_by_id(i)
+	if car then
+	if car ~= nil and 
+	car:name() == "lvl16_generators_staler_undead_olr_0003" then
+	local h = hit ()
+	h.power = 9999999
+	h.direction = vector():set (0, 1, 0)
+	h.impulse = 2
+	h.draftsman = db.actor
+	h.type = hit.strike
+	car:hit (h)
+	end
+	end
+	end
+	olr.del_by_name("lvl16_generators_space_restrictor_0070")
+	olr.del_by_name("lvl16_generators_space_restrictor_0057")
+	olr.del_by_name("lvl16_generators_space_restrictor_0056")
+end
+
+function start_oso_killed_shahta()
+	level.add_cam_effector("camera_effects\\shell_shock.anm", 34956, false, "")
+	olr.del_by_name("lvl16_generators_space_restrictor_0061")
+	local obj = olr.spawn_on_obj("ph_med_stolik_01", "lvl16_generators_space_restrictor_0058")
+	level.client_spawn_manager():add(obj.id, 0, 
+	function(id,obj) 		
+                             	local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+		                h.direction = vector():set(math.random(1),0.1,math.random(1))
+		                h.power = 1
+		                h.impulse = 2
+		                obj:hit(h)
+	end)
+	local obj = olr.spawn_on_obj("dead_body_skelet", "lvl16_generators_space_restrictor_0058")
+	level.client_spawn_manager():add(obj.id, 0, 
+	function(id,obj) 		
+                             	local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+		                h.direction = vector():set(math.random(1),0.1,math.random(1))
+		                h.power = 1
+		                h.impulse = 2
+		                obj:hit(h)
+	end)
+	local obj = olr.spawn_on_obj("ph_med_stoyka_01", "lvl16_generators_space_restrictor_0058")
+	level.client_spawn_manager():add(obj.id, 0, 
+	function(id,obj) 		
+                             	local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+		                h.direction = vector():set(math.random(1),0.1,math.random(1))
+		                h.power = 1
+		                h.impulse = 2
+		                obj:hit(h)
+	end)
+	local obj = olr.spawn_on_obj("ph_shkaf_4", "lvl16_generators_space_restrictor_0058")
+	level.client_spawn_manager():add(obj.id, 0, 
+	function(id,obj) 		
+                             	local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+		                h.direction = vector():set(math.random(1),0.1,math.random(1))
+		                h.power = 1
+		                h.impulse = 2
+		                obj:hit(h)
+	end)
+	local obj = olr.spawn_on_obj("ph_item_mks10", "lvl16_generators_space_restrictor_0058")
+	level.client_spawn_manager():add(obj.id, 0, 
+	function(id,obj) 		
+                             	local h = hit()
+		                h.draftsman = obj
+		                h.type = hit.strike
+		                h.direction = vector():set(math.random(1),0.1,math.random(1))
+		                h.power = 1
+		                h.impulse = 2
+		                obj:hit(h)
+	end)
+	for i=1,65535 do
+	local lokobj = level.object_by_id(i)
+	if lokobj then
+	if get_clsid(lokobj) == clsid.hanging_lamp and lokobj:position():distance_to(db.actor:position()) < 50 then
+	if lokobj:mass() == 0 then
+	lokobj:get_hanging_lamp():set_brightness(0.01)
+	end
+	end
+	end
+	end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\explode_large_away]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+function gen_oso_killed_ecolgs()
+	bind_stalker.hide_weapon()
+	olr_timers.del_timer("blowout_additional_timer")
+	olr_timers.del_timer("blowout_additional_timer2")
+	olr_timers.del_timer("blowout_additional_timer3")
+	olr_timers.del_timer("blowout_additional_timer4")
+	olr_timers.del_timer("blowout_additional_timer5")
+	level.add_pp_effector("black.ppe", 20131, false)
+	olr.del_by_name("lvl16_generators_space_restrictor_0047")
+	olr.del_by_name("hidden_final_sr_rest")
+	olr.del_by_name("var_sms_1")
+	olr.del_by_name("genertsra_matugalnik")
+	olr.del_by_name("genertsra_matugalnik_0000")
+	local point = patrol("away_from_triway_look")
+	local look = patrol("away_from_triway_walk")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+	db.actor:give_info_portion("oso_killed_actor_visel")
+	olr.kill_mon_in_radius(db.actor:position(), 155)
+end
+
+
+
+function gen_away_from_klava()
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("gen_away_from_klava_look")
+	local look = patrol("gen_away_from_klava_walk")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+function gen_close_bosk()
+	news_manager.send_tip(db.actor, "Что?!", nil, "act", 5000)
+	level.add_pp_effector("black.ppe", 20131, false)
+	olr.del_by_name("labu_prefix_ligmsok")
+	olr.del_by_name("lvl16_generators_physic_object_0228")
+	olr.del_by_name("lvl16_generators_lights_hanging_lamp_0002")
+	olr.del_by_name("lvl16_generators_space_restrictor_0060")
+	olr.info("oso_spawn_contr")
+end
+
+function gen_contr_dead_zal()
+	--olr.del_by_name("lvl16_generators_controller_tubeman")
+	olr.del_by_name("lvl16_generators_space_restrictor_0059")
+	level.add_pp_effector("black.ppe", 20131, false)
+end
+
+
+function start_oso_killed_shahta_exit()
+	level.add_cam_effector("camera_effects\\shell_shock.anm", 34956, false, "")
+	olr.del_by_name("lvl16_generators_space_restrictor_0062")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\explode_large_away]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+end
+
+function go_to_jaba_escgen()
+	olr.del_by_name("lvl16_generators_staler_undead_olr_0006")
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("ac_on_jaba_walk")
+	local look = patrol("ac_on_jaba_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+function rat_spawn_rats(actor,obj)
+	olr.info("rat_can_spawn")
+	olr.del(obj)
+	alife():create("m_rat_e", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("m_rat_e2", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("m_rat_e3", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	alife():create("m_rat_e4", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+end
+
+
+
+function use_agr_anihilator()
+
+	if has_alife_info("agr_anihil_shooted") then
+		news_manager.send_tip(db.actor, "Внимание! Недостаточно мощности! Зарядка в процессе.", nil, "default", 5000)
+		return
+	end
+
+	olr_timers.st_timer("anihil_shooted", 62, "nick.anihil_shooted()")
+	db.actor.psy_health = -0.21
+	db.actor:give_info_portion("agr_anihil_shooted")
+	olr.kill_mon_in_radius(db.actor:position(), 25)
+	level.add_cam_effector("camera_effects\\shell_shock.anm", 346, false, "")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\pc_beep]])
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+
+end
+
+
+function ros_marod_done()
+	local snd_obj = xr_sound.get_safe_sound_object([[affects\hit_fist]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+
+	level.add_cam_effector("camera_effects\\fusker.anm", 999, false, "")
+
+	olr.del_by_name("lvl6_rostok_stalker_0016")	
+end
+
+
+function dolina_pris_ecol()
+	news_manager.send_tip(db.actor, "Тихо! Тут есть кто-то...", nil, "ecolog", 5000)
+	olr.spawn_on_obj("bloodsucker_proto", "lvl4u_darklab_space_restrictor_0008")
+	olr.del_by_name("lvl4_darkdolina_physic_object_0362")
+	olr_timers.st_timer("kill_ec_dolin", 10, "nick.kill_ec_dolin()")
+end
+
+
+
+function bar_babah_start()
+	olr.del_by_name("lvl5_bar_space_restrictor_0126")
+	olr_timers.st_timer("killin", 15, "nick.barbah()")
+	news_manager.send_tip(db.actor, "Мессер: Эй, ты чего тут делаешь?", nil, "default", 5000)
+	news_manager.send_tip(db.actor, "Сталкер: Чего? Да... нашел балон тут в квартире... вроде полный. Проверить хочу. Может Крысе откачу, отвалит чего за него... Ржавый зараза... сейчас тряпкой протру. Я тут ЗАЗ починить ещё пробовал, но ничего не получилось...", 5, "default", 25000)
+end
+
+
+function bar_gop_fail()
+	local kos = 0
+	if kos == 0 then
+		if has_alife_info("bar_gop_fail_info") then
+			return
+		end
+		news_manager.send_tip(db.actor, "Эй, я же просил помочь! Это такое у тебя отношение к сталкерам? Ну гуляй...", nil, "default", 5000)
+		olr.info("bar_gop_fail_info")
+		kos = 1
+	end
+end
+
+
+function take_gar_deathlamp()
+	if has_alife_info("garbage_can_take_lamp") then
+		olr.del_by_name("lvl2_garbage_physic_object_0114")
+		olr.del_by_name("gar_prefix_lights_hanging_lamp_0048")
+		olr.del_by_name("gar_prefix_lights_hanging_lamp_0049")
+		olr.give_item("af_art_lampa")
+		olr.horror_snd()
+		news_manager.send_tip(db.actor, "Чёрт... Не могу прикоснуться к этой штуке...", 5, "act", 15000)
+		news_manager.send_tip(db.actor, "Я не могу выбросить её...", 9, "act", 15000)
+		news_manager.send_tip(db.actor, "Нужно найти способ избавиться от этого артефакта...", 14, "act", 15000)
+	end
+end
+
+
+function lmp_prip()
+	olr.info("prp_lamp_start")
+	olr.del_by_name("lvl13_prip_space_restrictor_0017")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\electric_crash]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function use_oldgauss_yan()
+       if not has_alife_info("laborant_otpravlaet_spat_gg_finished") then
+		news_manager.send_tip(db.actor, "Не стоит брать это сейчас...", nil, "default", 30000)
+		return
+	end
+		olr.del_by_name("lvl7_yantar_physic_object_0013")
+		olr.give_item("wpn_sv17")
+end
+
+
+
+
+function kill_rats_garbage_killer_start_sms()
+	olr.kill_mon_in_radius(db.actor:position(), 90)
+	olr.del_by_name("lvl2_garbage_space_restrictor_0026")
+	olr_timers.st_timer("kill_go_krisa", 30, "nick.kill_go_krisa()")
+	news_manager.send_tip(db.actor, "Так, ты на месте. Смотри по сторонам, подозреваемый должен будет отправиться к месту встречи с тем, кому он сливает инфу. Главное - старайся не попасться им на глаза.", nil, "dolg", 15000)
+end
+
+
+function start_killing_kris_gar()
+	olr.del_by_name("lvl2_garbage_space_restrictor_0029")
+	olr.del_by_name("lvl2_garbage_space_restrictor_0027")
+	news_manager.send_tip(db.actor, "Это я, не стреляй...", 1, "dolg", 15000)
+	news_manager.send_tip(db.actor, "Принёс? Давай сюда быстрее, времени мало...", 6, "unknown", 15000)
+	olr_timers.st_timer("kill_go_krisa_st_kills", 10, "nick.kill_go_krisa_st_kills()")
+end
+
+
+function find_killer_agro()
+	olr.info("spawn_killer_deader")
+	news_manager.send_tip(db.actor, "Новый контакт ПДА", nil, "unknown", 15000)
+	olr.del_by_name("lvl3_agroprom_space_restrictor_0021")	
+end
+
+function kill_actor_killers()
+		db.actor.health = -1
+		local snd_obj = xr_sound.get_safe_sound_object([[weapons\svu_shoot]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+end
+
+
+
+
+function use_lift_bar_verh()
+        if not has_alife_info("informer_under_prison_talked") then
+		news_manager.send_tip(db.actor, "Нет электричества...", nil, "default", 30000)
+		return
+	end
+	if not has_alife_info("informer_under_prison_first_down") then
+		olr.info("informer_under_prison_first_down")
+		olr_timers.st_timer("furstunderbar", 4, "nick.first_under_bar()")	
+	end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\bridge_start]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("bar_prison_down_walk")
+	local look = patrol("bar_prison_down_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+function use_lift_bar_niz()
+        if not has_alife_info("informer_under_down_power_on") then
+		news_manager.send_tip(db.actor, "Нет электричества...", nil, "default", 30000)
+		return
+	end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\bridge_start]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("bar_prison_verh_walk")
+	local look = patrol("agr_u_bandits_walk6")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+function use_lift_bar_povon()
+        if not has_alife_info("informer_under_down_power_on") then
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\electric_crash]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr.info("informer_under_down_power_on")
+	olr.del_by_name("lvl5_bar_physic_object_1449")
+	end
+end
+
+
+
+
+function use_garage_door1()
+
+       if not has_alife_info("rat_spawn_kontr") then
+		olr.hud_tip("", "Дверь закрыта", 5)
+		return
+	end
+
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("esc_garage_in_walk")
+	local look = patrol("esc_garage_in_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+
+
+
+function use_garage_door2()
+	level.add_pp_effector("black.ppe", 20131, false)
+	local point = patrol("esc_garage_out_walk")
+	local look = patrol("esc_garage_out_look")
+	db.actor:set_actor_position(point:point(0))
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
+end
+
+
+function use_zs_bar()
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\chisti]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr.del_by_name("lvl5_bar_physic_object_1451")
+end
+
+
+function use_telephone_bar()
+	if has_alife_info("olr_traders_day") then
+		olr.hud_tip("", "Тишина...", 5)
+		return
+	end
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\bar_phone]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr.disable_walk()
+	olr_timers.st_timer("telephone", 40, "olr.enable_walk()")
+	olr.del_by_name("lvl5_bar_physic_object_1453")
+	olr.to_online("lvl5_bar_physic_object_1454")
+	olr.to_online("lvl5_bar_physic_object_1455")
+	local snd_obj = xr_sound.get_safe_sound_object([[ol3\new_amb\heartbeat_fast]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+
+function mil_dok_feik()
+	olr.del_by_name("lvl9_military_space_restrictor_0026")
+	olr.disable_walk()
+	olr.hud_tip("", "Доктор!?", 5)
+	olr_timers.st_timer("dok_feik", 10, "nick.mil_dok_feik_enable()")
+end
+
+function mil_doglead_sms()
+	xvars.kill_mil_karlik_cnt = 0
+	local sobj = alife():object("lvl9_military_physic_object_0449") 
+	if sobj then 
+		olr.add_spot( sobj.id,"crlc_mdl","Сообщение от неизвестного..." )
+	end
+	olr.info("mil_dog_spawn")
+	local snd_obj = xr_sound.get_safe_sound_object([[monsters\dog\idle_2]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	news_manager.send_tip(db.actor, "Сталкер... Зайди, нам нужна твоя помощь... Мы в деревне... в доме.", nil, "unknown", 30000)
+	olr.del_by_name("lvl9_military_space_restrictor_0027")
+	olr.del_by_name("lvl10_radar_physic_fog_center")
+end
+
+
+function gen_talk_1()
+	olr.del_by_name("restrictor_monologe_gen")
+	news_manager.send_tip(db.actor, "Ты зашёл слишком далеко, как бы мы ни пытались тебя остановить. Мы не верили, что кто-то сумеет пройти через всю нашу защиту, однако тебе почти это удалось. Только ответь нам: зачем тебе это? Ты так сильно желаешь знать, кто стоит за всем этим? Ты пытаешься выяснить, кто сотворил Зону?", nil, "unknown", 30000)
+end
+
+
+
+function gen_talk_2()
+	olr.del_by_name("restrictor_monologe_gen_0000")
+	news_manager.send_tip(db.actor, "Мы можем утолить твоё любопытство. Но мы не можем допустить, чтобы кто-то вышел с этими знаниями за пределы лаборатории. Это опасно для нас самих и для достижения нашей цели. Мы надеемся, что ты сможешь понять нас. Твоя жизнь - цена за ту информацию, которую мы поведаем тебе.", nil, "unknown", 30000)
+end
+
+
+function gen_talk_3()
+	olr.del_by_name("restrictor_monologe_gen_0001")
+	news_manager.send_tip(db.actor, "Кто вы?", nil, "act", 30000)
+	news_manager.send_tip(db.actor, "Мы - группа учёных, поставивших перед собой цель изменить мир к лучшему. Мы считаем, что это возможно, если внести изменения в природу человека. В нашем понимании, человек - это существо, отягощённое злом. Если убрать зло или хотя бы снизить его концентрацию, то это сбережёт человечество от самоуничтожения.", 5, "unknown", 30000)
+end
+
+
+
+function gen_talk_4()
+	olr.del_by_name("restrictor_monologe_gen_0002")
+	olr_blowout.blowout_additional_timer3()
+	news_manager.send_tip(db.actor, "Нами была построена установка, которая позволяла объединять сознания людей воедино. Мощности сознания одного человека недостаточно, чтобы достичь нашей цели. С помощью установки мы смогли подключиться к Ноосфере, информационному полю Земли. В Ноосфере хранятся мысли, образы и эмоции всех разумных существ. Мы собирались убрать из человека всё то, что заставляет его совершать зло против своих собратьев.", 5, "unknown", 30000)
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
+	olr.spawn_on_obj("zombie_normal", "lvl16_generators_physic_object_0133")
+	olr.spawn_on_obj("zombie_strong", "lvl16_generators_physic_object_0133")
+end
+
+
+
+function gen_talk_5()
+	olr.del_by_name("restrictor_monologe_gen_0003")
+	olr_blowout.blowout_additional_timer2()
+	news_manager.send_tip(db.actor, "Мы не были готовы к тому, что эксперимент с подключением к Ноосфере пойдёт не по плану. Произошёл первый в истории человечества выброс аномальной энергии. Мощности наших сознаний хватило только для того, чтобы создать пробой. Но нам не удалось ни закрыть его, ни как-то повлиять на природу человека.", 5, "unknown", 30000)
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
+end
+
+
+
+function gen_talk_6()
+	olr.del_by_name("restrictor_monologe_gen_0004")
+	olr_blowout.blowout_additional_timer()
+	olr.spawn_on_obj("wpn_groza_old", "lvl16_generators_physic_object_0164")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0164")
+	olr.spawn_on_obj("zombie_normal", "lvl16_generators_physic_object_0164")
+	olr.spawn_on_obj("zombie_strong", "lvl16_generators_physic_object_0164")
+	news_manager.send_tip(db.actor, "Мы в курсе, какую опасность для человечества Зона представляет сейчас и пытаемся сделать всё, что есть в наших силах, чтобы остановить её. Однако нашлись те, кто мешает нам ликвидировать последствия неудачного эксперимента. Это вы. Сталкеры. Ваше влияние на Ноосферу равносильно тому, как она влияет на нашу планету. Вы жестоки от природы, вы агрессивны и опасны. Вас здесь слишком много. Ваши мысли, ваши образы и воспоминания формируют Ноосферу и наполняют её энергией.", 5, "unknown", 30000)
+end
+
+
+function gen_talk_7()
+	olr.del_by_name("restrictor_monologe_gen_0005")
+	olr_blowout.blowout_additional_timer3()
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0136")
+	olr.spawn_on_obj("zombie_normal", "lvl16_generators_physic_object_0136")
+	olr.spawn_on_obj("zombie_strong", "lvl16_generators_physic_object_0136")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0136")
+	olr.spawn_on_obj("zombie_normal", "lvl16_generators_physic_object_0136")
+	olr.spawn_on_obj("zombie_strong", "lvl16_generators_physic_object_0136")
+	news_manager.send_tip(db.actor, "В какой-то момент энергии становится так много, что происходит выброс. Пробой увеличивается. Сейчас наша цель - это вернуть жизнь в прежнее русло и не допустить распространения Зоны на весь мир. Это очень непросто, когда есть неучтённый элемент, который своими действиями рушит годы работы. В какой-то момент нам пришлось перебросить все свои силы на то, чтобы не пустить тебя в эту лабораторию.", 5, "unknown", 30000)
+end
+
+
+
+function gen_talk_8()
+	olr.del_by_name("restrictor_monologe_gen_0006")
+	olr_blowout.blowout_additional_timer2()
+	news_manager.send_tip(db.actor, "Мы надеемся, что ты не осуждаешь нас за то, что мы сотворили. Благими намерениями вымощена дорога в Ад. Но всё это было сделано только ради человечества...", 5, "unknown", 30000)
+end
+
+
+
+function gen_talk_9()
+	olr.del_by_name("restrictor_monologe_gen_0007")
+	olr_blowout.blowout_additional_timer()
+	news_manager.send_tip(db.actor, "Последствия твоих поступков будет очень нелегко исправить. Мы не можем позволить остальному миру знать правду о том, что на самом деле происходит в Зоне. Человечество ещё не готово к этому. И ты, сталкер, этому прямое доказательство. ", nil, "unknown", 20000)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+

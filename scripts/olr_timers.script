@@ -1,0 +1,122 @@
+-- таймеры
+-- исходный код by АМК, модификация by hi_flyer
+
+local func = nil
+local tUpd = 0
+local tUpdTime = 1000
+local tUpdz = 0
+local tUpdTimez = 3500
+cnt_st = 0
+local tmt = nil
+local tmp = nil
+
+--старт таймера в реальном времени
+function st_timer(name,delay,action)
+  	if not delay then
+  		return false
+  	end
+  	if not action then
+  		action = ""
+  	end
+  	if xvars.timers_count <= 0 then
+  		xvars.timers_count = 1
+  	end
+  	xvars.timers_count = xvars.timers_count + 1
+  	--log1("timer start - "..xvars.timers_count.."")
+  	local time = game.time()
+  	save_xvars("xt"..xvars.timers_count, name)
+  	save_xvars("xd"..xvars.timers_count, time + delay * 1000 * system_ini():r_float("alife","time_factor"))
+  	save_xvars("xp"..xvars.timers_count, action)
+  	xvars.timers_started = xvars.timers_started + 1
+  	--news_manager.send_tip(db.actor, "cтарт новый таймер - ["..name.."]", nil, "freedom", 9000)
+end
+
+function upd()
+	if time_global() > tUpdz then
+  		tUpdz = time_global() + tUpdTimez	
+  		cnt_st = cnt_st + 1
+	end
+  	if cnt_st > 4 then
+  		if device().precache_frame < 1 then
+  			if time_global() > tUpd then
+  				tUpd = time_global() + tUpdTime
+  				if level.present() then
+  					if xvars then
+  						for a = 1, xvars.timers_count do
+    							tmt = load_xvars("xt"..a,nil)
+    							if tmt then
+      								olr_timers.timer_found(a)  
+    							end
+  						end
+					end
+				end
+			end
+		end
+	end
+end
+
+function timer_found(idx)
+  	local time = game.time()
+  	local timvar = load_xvars("xd"..idx, nil)
+  	local name, params
+  	if timvar and time then
+  		if timvar <= time then
+    			name = load_xvars("xt"..idx, nil)
+    			params = load_xvars("xp"..idx, nil)
+			amk.oau_reason="cn do_olr_timer_action - "..name.." "
+    			olr_timers.do_timer_action(name, params, idx)
+  		end
+	end
+end
+
+function do_timer_action(select_string,params_string,idx)
+	func = loadstring(params_string)
+	if func then
+		pcall(func)
+    		del_xvars("xt"..idx)
+    		del_xvars("xd"..idx)
+    		del_xvars("xp"..idx)
+		xvars.timers_done = xvars.timers_done + 1
+		--log1("! timers debug execute start")
+		--log1("tmr execute ["..select_string.."] - ["..params_string.."] ")
+		--log1("timers count - "..xvars.timers_count.."")
+		--log1("timers ended - "..xvars.timers_done.."")
+		--log1("! timers debug execute end")
+		if tostring(xvars.timers_done)  == tostring(xvars.timers_count) then
+			xvars.timers_count = 1
+			xvars.timers_done = 1
+		end
+	end	
+end
+
+function has_timer(name)
+	if xvars and xvars.timers_count then
+  		for a = 1, xvars.timers_count do
+    			tmp = load_xvars("xt"..a,nil)
+    			if tmp and tmp == name then
+      				return true
+    			end
+  		end  
+  		return false
+	end
+end
+
+function del_timer(name)
+  	for a = 1, xvars.timers_count do
+    		tmp = load_xvars("xt"..a,nil)
+    		if tmp and tmp == name then
+			log1("! del timer - "..tmp.."")
+     			xvars.timers_done = xvars.timers_done + 1
+    			del_xvars("xt"..a)
+    			del_xvars("xd"..a)
+    			del_xvars("xp"..a) 
+    		end
+  	end  
+end
+
+
+
+
+
+
+

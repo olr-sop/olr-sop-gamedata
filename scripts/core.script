@@ -1,0 +1,113 @@
+-- list of registered modules, can have dependence one from other
+-- in every module must be an "init()" function for module's initialization  
+local register_modules = {
+
+        --"xrs_medic",  -- TODO иногда лечишь зависшего нпс а он не лечится изза этого скрипта 
+        "xrs_ladder",
+        "xrs_trade",  
+	"xrs_grenade",
+	"olr_ai_trade",
+	"xr_ai_blow",
+        "olr_ui_inv_acinfo"
+}
+
+-- prevent dublicate init
+local registered_modules = {}
+-- calback links storage
+local callbacks_recipients = {}
+
+-- called from game start callback
+function core_init()
+	for dummy,module in pairs(register_modules) do
+		if type(module)=="table" then
+			can_register = true
+			for dummy1,dep_module in pairs(module) do
+				local registerable = _G[dep_module] and _G[dep_module].init
+				can_register = can_register and registerable
+				if not registerable then 
+					nc.mylog("core error: can't init dependenced module '"..dep_module.."', there is no such module OR it has no 'init()' function")			
+				end
+			end
+			if can_register then
+				for dummy1,dep_module in pairs(module) do
+					if not registered_modules[dep_module] then
+						_G[dep_module].init()
+						registered_modules[dep_module]=true
+					end
+				end
+			else
+				nc.mylog("core error: can't init some dependenced modules, look info above")
+			end
+		else
+			if _G[module] and _G[module].init then
+				if not registered_modules[module] then
+					_G[module].init()
+					registered_modules[module]=true
+				end
+			else
+				nc.mylog("core error: can't init module '"..module.."', there is no such module OR it has no 'init()' function")
+			end
+		end
+	end
+end
+
+-- adds callback recipient by callback name
+function ac(callback_name,funct)
+	if callback_name and funct and type(funct)=="function" then
+		if not callbacks_recipients[callback_name] then
+			callbacks_recipients[callback_name]={}
+		end
+		table.insert(callbacks_recipients[callback_name],funct)
+	else
+		nc.mylog("core error: can't add callback with empty name OR invalid function was passed to registrator")
+	end
+end
+
+-- triiger callback by name, must be called from external files or modules for shot
+function tc(callback_name,...)
+	if callback_name then
+		if callbacks_recipients[callback_name] then
+			for dummy,funct in pairs(callbacks_recipients[callback_name]) do
+				funct(...)
+			end
+		end
+	else
+		nc.mylog("core error: trying shot calback with empty name ")
+	end
+end
+
+-- proxy function for safe cross-modules calls, if function does not exist returns nil
+-- has anti-recurse mechanism
+local max_deep = 100 -- deny more than XX recursive calls
+local stack_deep = 0
+function proxy(nspace,funct,...)
+
+	if stack_deep > max_deep then
+		stack_deep = 0
+		nc.mylog("core error: too many recursions via proxy - module '"..nspace.."', function '"..funct.."'")
+	end
+	--prevent of core's functions
+	if nspace == "core" then return end
+	if _G[nspace] and _G[nspace][funct] then
+		stack_deep = stack_deep + 1
+		return _G[nspace][funct](...)
+	end
+	nc.mylog("core error: called function '"..funct.."' does not exists in module'"..nspace.."'")
+end
+
+-- safely get var, if not exist returns defval or nil
+function gv(nspace,var,defval)
+	if not _G[nspase] then 
+		return defval
+	end
+	return _G[nspase][var]
+end
+
+-- safely set var, if not exist creates it
+function sv(nspace,var,value)
+	if not _G[nspase] then 
+		_G[nspace] = {}
+	end
+	_G[nspace][var] = value
+end
+

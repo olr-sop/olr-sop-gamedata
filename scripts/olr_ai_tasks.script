@@ -1,0 +1,759 @@
+----------------------------------------------------------------------------------
+-- менеджер заданий для НПС (оффлайн) 
+-- hi_flyer 01.03.2019
+-- olr_ai_tasks.script
+----------------------------------------------------------------------------------
+
+-- 1.	Добраться до Монолита, чтобы исполнилось желание
+-- 2.	Найти причину возникновения Зоны и добиться ее исчезновения (поиск документов)
+-- 3.	Месть другому сталкеру (старые счеты еще до Зоны)
+-- 4.	Заработок (богатство, деньги на лечение)
+-- 5.	В поисках приключений (адреналин, желание стать героем)
+-- 6.	Попытки разобраться в себе
+-- 7.	Побег в Зону (преступление, предательство, депрессия)
+
+
+local global_task = {
+		 [1] = {name = "find_monolit",		complete_target_walk = "aes_desant_wave2_look1"},  	
+		 [2] = {name = "reason_zone",		complete_target_walk = "gen_find_exit_look"},		
+		 [3] = {name = "revenge",		complete_target_walk = "случайный путь смарта"},	
+		 [4] = {name = "cash",			complete_target_walk = "путь из зоны на кордоне"},		
+		 [5] = {name = "tourism",		complete_target_walk = "случайный путь "},		
+		 [6] = {name = "find_himself",		complete_target_walk = "случайный путь "},		
+		 [7] = {name = "escape_in_zone",	complete_target_walk = "случайный путь "}		
+}
+
+local global_task_rnd_way = {
+		 [1] = {name = "esc_specnaz_way6"},  				-- esc blokpost	
+		 [2] = {name = "lvl1_escape_smart_terrain_0025_kamp_1"},		-- esc jaba	
+		 [3] = {name = "komandir_esc_4_look"},					-- esc zavod
+		 [4] = {name = "lvl1_escape_smart_terrain_0014_home_1"},		-- esc right wood blokbost		
+		 [5] = {name = "licker_look"},					-- esc derevnya	
+		 [6] = {name = "lvl1_escape_smart_terrain_0023_kamp_1"},				-- esc wood
+		 [7] = {name = "way_dolg_gar_commander_look"},			-- gar dolg
+		 [8] = {name = "lvl2_garbage_smart_terrain_0034_kamp_1"},				-- gar angar
+		 [9] = {name = "gar_bandit_stroyka_2_walk"},				-- gar bandits
+		 [10] = {name = "kamp_center_svalka_nachalour"},				-- gar kran
+		 [11] = {name = "lvl3_agroprom_smart_terrain_0016_kamp_1"},		-- agr boloto	
+		 [12] = {name = "lvl3_agroprom_smart_terrain_0024_kamp_1"},		-- arg nii
+		 [13] = {name = "lvl3_agroprom_smart_terrain_0007_home_1"},		-- agr voyaki
+		 [14] = {name = "lvl4_darkdolina_smart_terrain_0014_kamp_1"},		-- dol les
+		 [15] = {name = "x18_point_knock"},					-- dol stroika
+		 [16] = {name = "marlboro_men_camp"},					-- dol razvalini vint	
+		 [17] = {name = "lvl5_bar_smart_terrain_united_dolg_stalkers_0001_kamp_1"},				-- bar	 bar
+		 [18] = {name = "lvl5_bar_smart_terrain_0029_home_1"},			-- bar rost vhod 1
+		 [19] = {name = "bar_mons_home_22"},					-- bar ozero mal	
+		 [20] = {name = "agr_u_bandits_look6"},				-- bar ploshadka
+		 [21] = {name = "lvl5_bar_smart_terrain_0038_home_1"},		-- bar shkola
+		 [22] = {name = "ros_smart_stalker_bandits1_sleep_2"},		-- ros smart stalkers
+		 [23] = {name = "lvl6_rostok_smart_terrain_0002_kamp_1"},	-- ros stroika
+		 [24] = {name = "lvl7_yantar_smart_terrain_0020_home_1"},	-- yan scients monsters
+		 [25] = {name = "yan_zombies_home_bunker"},			-- yan dot
+		 [26] = {name = "lvl7_yantar_smart_terrain_0016_kamp_1"},	-- yan zomb derevnya
+		 [27] = {name = "lvl7_yantar_smart_terrain_0000_home_1"},	-- yan krovososovka
+		 [28] = {name = "suda_letit"},					-- yan fly bochki
+		 [29] = {name = "lvl9_military_smart_terrain_0003_home_1"},	-- mil pole
+		 [30] = {name = "lvl9_military_smart_terrain_home_1"},		-- mil krovososovka
+		 [31] = {name = "morak_way_walk"},				-- mil morak
+		 [32] = {name = "lvl9_military_smart_terrain_0004_home_1"},	-- mil vozle bazy
+		 [33] = {name = "lvl10_radar_smart_terrain_0000_1"},		-- rad lez
+		 [34] = {name = "lvl10_radar_smart_terrain_0003_home_1"},	-- rad anteny
+		 [35] = {name = "radar_idl_walk"},				-- rad vhod laba
+		 [36] = {name = "lvl11_deadcity_smart_terrain_0035_kamp_1"},	-- dead vozle bolota
+		 [37] = {name = "lvl11_deadcity_smart_terrain_0011_home_1"},	-- dead to swamp
+		 [38] = {name = "lvl11_deadcity_smart_terrain_0003_home_1"},	-- dead ludoed house
+		 [39] = {name = "lvl11_deadcity_smart_terrain_0019_home_1"},	-- dead home
+		 [40] = {name = "lvl11_deadcity_smart_terrain_0018_home_1"},	-- dead home 2
+		 [41] = {name = "pri_monolith_sniper_3_look"},			-- pri koop
+		 [42] = {name = "near_left_hand_kamp"},			-- pri magaz
+		 [43] = {name = "lvl13_prip_smart_terrain_0003_home_1"},			-- pri  skola
+		 [44] = {name = "lvl13_prip_smart_terrain_0000_home_1"},		-- pri kran
+		 [45] = {name = "aes_tourism_findtarget1"},			-- chaes geners
+		 [46] = {name = "aes_cash_findtarget1"},			-- chaes krai
+		 [47] = {name = "lvltwele_boness"},				-- lvl12 hata
+		 [48] = {name = "ratlevel_homepath_27"},	-- rat
+		 [49] = {name = "ratlevel_homepath_32"},
+		 [50] = {name = "ratlevel_homepath_34"},		
+		 [51] = {name = "ratlevel_homepath_43"},
+		 [52] = {name = "gar_lesok_esc_pere"},	-- gar
+		 [53] = {name = "gar_kucha_dol"},
+		 [54] = {name = "gar_kucha_one"},		
+		 [55] = {name = "gar_holm_left"},
+		 [56] = {name = "gar_agr_niz"},
+		 [57] = {name = "lvl2_garbage_smart_terrain_0032_kamp_1"},
+		 [58] = {name = "gar_nizina"},
+		 [59] = {name = "lvl2_garbage_smart_terrain_0031_kamp_1"},
+		 [60] = {name = "gar_left_angar"},
+		 [61] = {name = "gar_holm_left"},
+		 [62] = {name = "gar_sever_angar"},
+		 [63] = {name = "lvl2_garbage_smart_terrain_0004_home_1"},
+		 [64] = {name = "lvl2_garbage_smart_terrain_0008_home_1"},
+		 [65] = {name = "gar_smart_bandit_2_guard_3_walk"},
+		 [66] = {name = "gar_lesok_reka"},
+		 [67] = {name = "lvl2_garbage_smart_terrain_0002_home_1"},
+		 [68] = {name = "gar_tunel_right"},
+		 [69] = {name = "gar_bandit_stroyka_2_walk"},
+		 [70] = {name = "gar_tennel_left"},
+		 [71] = {name = "lvl2_garbage_smart_terrain_0011_home_1"},
+		 [72] = {name = "agr_left_holm"},
+		 [73] = {name = "agr_centr_holm"},
+		 [74] = {name = "agr_holm_right"},
+		 [75] = {name = "agr_holm_feft_mal"},
+		 [76] = {name = "agr_boar_nest_home_1"},
+		 [77] = {name = "agr_kazarma_one"},
+		 [78] = {name = "agr_rad_nizina"},
+		 [79] = {name = "agr_boloto"},
+		 [80] = {name = "agr_kolbat_place"},
+		 [81] = {name = "dol_razlavin_band"},
+		 [82] = {name = "dar_tunnel_midl"},
+		 [83] = {name = "kamp_center_slizni"},
+		 [84] = {name = "dar_garazh_midl"},
+		 [85] = {name = "dar_plen_house"},
+		 [86] = {name = "dar_garaz_razval"},
+		 [87] = {name = "dar_vint_house"},
+		 [88] = {name = "dar_holm_garb"},
+		 [89] = {name = "dar_pre_holm"},
+		 [90] = {name = "dar_ugol_holm"},
+		 [91] = {name = "dar_ugol_lab"},
+		 [92] = {name = "bar_dogs_holm"},
+		 [93] = {name = "bar_krilzo"},
+		 [94] = {name = "bar_zakol_house"},
+		 [95] = {name = "bar_house_anom"},
+		 [96] = {name = "bar_det_plos"},
+		 [97] = {name = "bar_actor_house"},
+		 [98] = {name = "lvl5_bar_smart_terrain_0049_kamp_1"},
+		 [99] = {name = "bar_dolg_holm"},
+		 [100] = {name = "bar_pole_one"},
+		 [101] = {name = "bar_pole_two"},
+		 [102] = {name = "bar_pole_tri"},
+		 [103] = {name = "bar_ros_pere"},
+		 [104] = {name = "lvl5_bar_smart_terrain_0034_home_1"},
+		 [105] = {name = "bar_boloro"},
+		 [106] = {name = "bar_boars_home_22"},
+		 [107] = {name = "lead_ohotik_pl_walk"},
+		 [108] = {name = "bar_magnit_grop"},
+		 [109] = {name = "bar_pamatnik"},
+		 [110] = {name = "ros_vorota"},
+		 [111] = {name = "ros_garaz"},
+		 [112] = {name = "ros_budka"},
+		 [113] = {name = "ros_kinoteatr"},
+		 [114] = {name = "ros_hidden"},
+		 [115] = {name = "ros_postancia"},
+		 [116] = {name = "ros_krisha"},
+		 [117] = {name = "ros_rad_konts"},
+		 [118] = {name = "ros_zagorodka"},
+		 [119] = {name = "ros_anom_lesok"},
+		 [120] = {name = "ros_stroika"},
+		 [121] = {name = "ros_kod_house"},
+		 [122] = {name = "ros_ugol"},
+		 [123] = {name = "ros_bukda"},
+		 [124] = {name = "ros_darazii"},
+		 [125] = {name = "ros_bukdara"},
+		 [126] = {name = "ros_mogoanom"},
+		 [127] = {name = "ros_komlpeks"},
+		 [128] = {name = "ros_ugolkompl"},
+		 [129] = {name = "ros_budkaugol"},
+		 [130] = {name = "yan_angar"},
+		 [131] = {name = "yan_vagon"},
+		 [132] = {name = "yan_psi_ugol"},
+		 [133] = {name = "yan_fuel_st"},
+		 [134] = {name = "yan_ribhouse"},
+		 [135] = {name = "yan_krovohouse"},
+		 [136] = {name = "yan_vodonap"},
+		 [137] = {name = "yan_stoyanka"},
+		 [138] = {name = "yan_himeraplace"},
+		 [139] = {name = "yan_olddead"},
+		 [140] = {name = "mil_torad"},
+		 [141] = {name = "mil_choppa"},
+		 [142] = {name = "mil_holm_vagon"},
+		 [143] = {name = "mil_barlook"},
+		 [144] = {name = "mil_neutrals"},
+		 [145] = {name = "mil_bazaugol"},
+		 [146] = {name = "mil_gzhde"},
+		 [147] = {name = "mil_seredina"},
+		 [148] = {name = "mil_hose"},
+		 [149] = {name = "mil_hoseee"},
+		 [150] = {name = "rad_ugoll"},
+		 [151] = {name = "rad_tocity"},
+		 [152] = {name = "rad_holm"},
+		 [153] = {name = "rad_phtest"},
+		 [154] = {name = "rad_house"},
+		 [155] = {name = "ded_podezd"},
+		 [156] = {name = "ded_svoboda"},
+		 [157] = {name = "ded_anom_place"},
+		 [158] = {name = "ded_skola"},
+		 [159] = {name = "ded_nizina"},
+		 [160] = {name = "pri_sportzal"},
+		 [161] = {name = "pri_ploshad"},
+		 [162] = {name = "pri_visotka"},
+		 [163] = {name = "pri_hostel"},
+		 [164] = {name = "pri_shkola"},
+		 [165] = {name = "cha_plos"},
+		 [166] = {name = "cha_lenin"},
+		 [167] = {name = "cha_nil_sevendok"},
+		 [168] = {name = "cha_strelook"},
+		 [169] = {name = "cha_vorola"}
+		
+}
+
+
+-- регистрация основной миссии при появлении в зоне
+function on_spawn_npc(obj)
+	if obj and IsStalker(obj) and xvars.npcs_tasks then
+		if obj:community()=="monolith" or obj:community()=="military" or obj:community()=="zombied" then
+			return
+		end
+		if not xvars.npcs_tasks[obj:name()] then
+		local s_name = game.translate_string(obj:name())
+			if s_name then
+
+				local rndpos = math.random(#global_task)
+				local rnd_quest = global_task[rndpos].name
+
+				xvars.npcs_tasks[obj:name()] = game.translate_string(rnd_quest)
+
+				if xvars.npcs_tasks[obj:name()] then
+					--log1("REG NEW npc task ["..obj:name().."] - main task - ["..rnd_quest.."] on level - ["..obj.level_name.."]")
+					set_maintask_substates(obj, rnd_quest) -- установка подзадач для основного квеста
+				end
+
+			end
+		end
+	end
+end
+
+
+-------------smart_terrain-----
+function has_task(obj)
+
+	if obj and IsStalker(obj) then
+
+		--торговля бар
+		if xvars.npc_ofl_trade[obj:name()] == true then
+			return true	
+		end
+
+		-- торговля янтарь
+		if xvars.npc_ofl_trade_yan[obj:name()] == true then
+			return true	
+		end
+
+		-- глоб задачи
+		-- добраться до монолита
+		if xvars.npcs_tasks[obj:name()] == "find_monolit" then
+			if precondition_find_monolot(obj) then
+				return true
+			end
+		-- Найти причину возникновения Зоны и добиться ее исчезновения (поиск документов)
+		elseif xvars.npcs_tasks[obj:name()] == "reason_zone" then
+			if precondition_reason_zone(obj) then
+				return true
+			end
+		-- Месть сталкеру
+		elseif xvars.npcs_tasks[obj:name()] == "revenge" and xvars.npcs_tasks_rndway[obj:name()] ~= nil then
+				return true
+		-- Ппаднять бабла
+		elseif xvars.npcs_tasks[obj:name()] == "cash" and xvars.npcs_tasks_rndway[obj:name()] ~= nil then
+				return true
+		-- Ткризм
+		elseif xvars.npcs_tasks[obj:name()] == "tourism" and xvars.npcs_tasks_rndway[obj:name()] ~= nil then
+				return true
+		-- Поиск себя
+		elseif xvars.npcs_tasks[obj:name()] == "find_himself" and xvars.npcs_tasks_rndway[obj:name()] ~= nil then
+				return true
+		end
+
+	end
+
+	return false
+end
+
+-- выполняется если есть has_task выше
+function get_task_walk(obj)
+
+	-- офл торговля бар
+	if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true then
+		--olr.add_spot_on_map( obj.id,"red_location"," идёт торговать в бар офлайн "..obj:name().."")
+		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в бар в оффлайне", nil, "dolg", 36000)
+		return "serogas_look"	
+	end
+	-- офл торговля янтарь
+	if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true then
+		--olr.add_spot_on_map( obj.id,"red_location"," идёт торговать в янтарь офлайн "..obj:name().."")
+		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в янтарь в оффлайне", nil, "dolg", 36000)
+		return "proff_prilavok_look"
+	end
+
+	-- глоб задачи
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_monolit" then
+		return "sarkoy_cutscene_walk"
+	end
+
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "reason_zone" then
+		return "gen_find_exit_look"
+	end
+
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "revenge" then
+		if not precondition_revenge_is_dead(obj) then
+			local waycash = xvars.npcs_tasks_rndway[obj:name()]
+				if waycash then
+				local waycashname = game.translate_string(waycash)
+				if waycashname then
+					--log1("has tourism rnd way - "..waycashname.." ")
+					return waycashname
+				end
+			end
+		else
+			--log1("цель убита - тикаем из зоны")
+			return "esc_garage_out_look"  -- тикаем из зоны на кордоне
+		end
+	end
+
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "cash" then  
+		local waycash = xvars.npcs_tasks_rndway[obj:name()]
+		if waycash then
+			local waycashname = game.translate_string(waycash)
+			if waycashname then
+				--log1("has cash rnd way - "..waycashname.." ")
+				return waycashname
+			end
+		end
+	end
+
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "tourism" then  
+		local waycash = xvars.npcs_tasks_rndway[obj:name()]
+		if waycash then
+			local waycashname = game.translate_string(waycash)
+			if waycashname then
+				--log1("has tourism rnd way - "..waycashname.." ")
+				return waycashname
+			end
+		end
+	end
+
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_himself" then  
+		if not precondition_find_himself(obj) then
+			local waycash = xvars.npcs_tasks_rndway[obj:name()]
+			if waycash then
+				local waycashname = game.translate_string(waycash)
+				if waycashname then
+					--log1("has find_himself rnd way - "..waycashname.." ")
+					return waycashname
+				end
+			end
+		else
+			return "esc_garage_out_look"  -- тикаем из зоны на кордоне
+		end
+	end
+
+	--log1(" !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().." set new ")
+	--news_manager.send_tip(db.actor, " !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().."  идёт под смарт  "..obj.level_name.."  ", nil, "dolg", 36000)
+	--olr.add_spot_on_map( obj.id,"green_location",obj:name() )
+	--this.set_obj_rndway(obj)
+	--return "escccc_cutscene_walk"  -- default Jaba's place
+end
+
+local flgmond = false
+local flgmondr = false
+
+-- проверка выполнения основного квеста. выполняется если есть has_task выше
+function check_complete_main(obj)
+
+	-- офл торговля бар
+	if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true and obj.level_name == "lvl5_bar" then
+		local bar_pos = vector():set(-107,-90,-231)
+		if obj.position:distance_to(bar_pos) < 20 then
+			--news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в бар и торгует сейчас", nil, "dolg", 36000)
+			olr_ofl_trade.on_point_bar(obj)
+			amk_offline_alife.now_trade_ofl_bar(obj)
+		end
+	end
+	-- офл торговля янтарь
+	if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true and obj.level_name == "lvl7_yantar" then
+		local yan_pos = vector():set(-177,6,177)
+		if obj.position:distance_to(yan_pos) < 10 then
+			--news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в янтарь и торгует сейчас", nil, "dolg", 36000)
+			xvars.npc_ofl_trade_yan[obj:name()] = nil
+			olr_ofl_trade.on_point_yan(obj)
+		end
+	end
+
+	-- глоб задачи
+	-- добраться до монолита и загадать желание (идем в саркофаг) 
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_monolit" then
+		local monolit_pos = vector():set(20,51,25)
+		if obj.level_name == "lvl15_sarcofag" and obj.position:distance_to(monolit_pos) < 20 then
+			local rndm = math.random(1,10)
+			if rndm == 3 then
+				local bos = level.object_by_id(obj.id)
+				if bos then
+					bos:kill(bos)				
+				end
+				local pk = get_netpk(obj,1)
+  				if pk:isOk() then
+    					local data = pk:get()
+          				local name = data.character_name
+					data.health = 0
+					data.updhealth = 0
+					pk:set(data)
+					smart_terrain.on_death(obj.id)
+					if flgmond == false then
+  						if level.name() == "lvl16_generators" then return end
+  						if level.name() == "lvl_mars" then return end
+  						if level.name() == "lvl_nightmare" then return end
+						news_manager.send_tip(db.actor, "Слышал что "..name..", тот что монолит искал, таки попал в саркофаг на станции... Кто знает...", 1, "default", 36000)
+						flgmond = true
+					end
+				end
+			end
+		end	
+	end
+	-- Найти причину возникновения Зоны и добиться ее исчезновения (добраться на генераторы)
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "reason_zone" then
+		if obj.level_name == "lvl16_generators" then
+			local rndstn = math.random(1,4)
+			if rndstn == 2 then
+				local bos = level.object_by_id(obj.id)
+				if bos then
+					bos:kill(bos)				
+				end
+				local pk = get_netpk(obj,1)
+  				if pk:isOk() then
+    					local data = pk:get()
+          				local name = data.character_name
+					data.health = 0
+					data.updhealth = 0
+					pk:set(data)
+					smart_terrain.on_death(obj.id)
+					if flgmondr == false then
+  						if level.name() == "lvl16_generators" then return end
+  						if level.name() == "lvl_mars" then return end
+  						if level.name() == "lvl_nightmare" then return end
+						news_manager.send_tip(db.actor, "Говорял что "..name..", хмурый мужик, ненавидел всё и всех, попал каким-то образом за станцию... Что он там забыл - чёрт его знает.", 1, "default", 36000)
+						flgmondr = true
+					end
+				end
+			end
+		end	
+	end
+	-- Месть сталкеру
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "revenge" then
+		if this.precondition_revenge_is_dead(obj) then
+			--olr.add_spot_on_map( obj.id,"green_location", " revenge go out "..obj:name().."" )
+			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  месть мертва - уходим из зоны сейчас на уровне - "..obj.level_name.."   "..obj.position.x.." - "..obj.position.y.." - "..obj.position.z.."  ", nil, "dolg", 36000)
+			this.away_from_zone_revenge(obj)
+		else
+			-- ищем дальше - устанавливаем рнд путь гуляния
+			this.set_rnd_way_walk(obj) 
+		end	
+	end
+	-- Поднял бабла
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "cash" then
+		if xvars.cash_need_summa_has[obj:name()] == true then
+			-- собрали нужное колво денег - валим с зоны
+			--news_manager.send_tip(db.actor, "у сталкера Поднял бабла "..obj:name().."  Поднял бабла- уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 36000)
+			this.away_from_zone_cash(obj)
+		else
+			-- собираем бабки дальше - устанавливаем рнд путь гуляния
+			this.set_rnd_way_walk(obj) 
+		end	
+	end
+	-- Туризм
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "tourism" then
+		if this.precondition_tourism(obj) then
+			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  натуристился - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 36000)
+			this.away_from_zone_tourism(obj)
+		else
+			-- туристим дальше - устанавливаем рнд путь гуляния
+			this.set_rnd_way_walk(obj) 
+		end	
+	end
+	-- Нашли себя
+	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_himself" then
+		if this.precondition_find_himself(obj) then
+			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  нашёл себя - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 36000)
+			--olr.add_spot_on_map( obj.id,"green_location", obj:name() )
+			this.away_from_zone(obj)	
+		else
+			-- ищем себя дальше - устанавливаем рнд путь гуляния
+			this.set_rnd_way_walk(obj) 
+		end
+	end
+
+
+end
+-------------smart_terrain-----
+
+function set_rnd_way_walk(obj)
+	local xpath = xvars.npcs_tasks_rndway[obj:name()]
+	if xpath then
+		local rnd_path = patrol(xpath)
+		local rnd_path_vert = rnd_path:level_vertex_id(0)
+		if tostring(obj.m_level_vertex_id) == tostring(rnd_path_vert) then
+			--olr.add_spot_on_map( obj.id,"green_location", obj:name() )
+			--local itms = table.getn(amk_offline_alife.items[obj.id]) or 0  ставим новый итемов - "..itms.."
+			--news_manager.send_tip(db.actor, " "..obj:name().." -- "..xvars.npcs_tasks[obj:name()].."  пришёл на свой путь - "..xpath.."  на "..obj.level_name.."  ", nil, "dolg", 36000)
+			-- todo если можем (есть экипировка) то гуляем дальше, если нет идём в бар 
+			this.set_obj_rndway(obj)
+			amk_offline_alife.process_trade(obj) -- переберем свой хабар
+			amk_offline_alife.offline_alife(tostring(obj.level_name))
+			local rndrank = math.random(10,60)
+			obj:set_rank(obj:rank() + rndrank)
+		else
+			--log1(" stalker идёт "..tostring(obj.m_level_vertex_id).."  на "..tostring(rnd_path_vert).." ")
+		end
+	end
+end
+
+
+function set_obj_rndway(obj)
+	local rndway = math.random(#global_task_rnd_way)
+	local rnd_task_way = global_task_rnd_way[rndway].name
+	--log1(" set_obj_rndway "..obj:name().." set rndway - "..rnd_task_way.." ")
+	xvars.npcs_tasks_rndway[obj:name()] = game.translate_string(rnd_task_way)
+	--olr.add_spot_on_map( obj.id,"red_location"," идёт на новый путь  "..obj:name().." --- "..game.translate_string(rnd_task_way).." ")
+end
+
+
+function away_from_zone_cash(obj)
+	if obj:alive() and obj.level_name == "lvl1_escape" then
+		local rnd = math.random(1,12)
+		if rnd == 2 then
+			xvars.cash_need_summa_has[obj:name()] = nil
+			local wait_time = 0
+  			wait_time = time_global() + 500
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() olr.to_offline(obj:name()) end
+  			)
+			local pk = get_netpk(obj,1)
+  			if pk:isOk() then
+    				local data = pk:get()
+          			local name = data.character_name
+				data.health = 0
+				data.updhealth = 0
+				pk:set(data)
+				smart_terrain.on_death(obj.id)
+				news_manager.send_tip(db.actor, "Слышал что "..name.." пропал где-то на кордоне... Говорят артефактов продал кучу, деньги нужны были сильно... Ушёл из зоны видимо...", 5, "default", 36000)
+			end
+			--log1("away from zone cash kill - "..obj:name().." ")	
+		end	
+	end 
+end
+
+
+function away_from_zone_tourism(obj)
+	if obj:alive() and obj.level_name == "lvl14_stancia" then
+		local rnd = math.random(1,10)
+		if rnd == 3 then
+			local wait_time = 0
+  			wait_time = time_global() + 500
+  			level.add_call(
+    			function() return time_global() > wait_time end,
+    			function() olr.to_offline(obj:name()) end
+  			)
+			local pk = get_netpk(obj,1)
+  			if pk:isOk() then
+    				local data = pk:get()
+          			local name = data.character_name
+				data.health = 0
+				data.updhealth = 0
+				pk:set(data)
+				smart_terrain.on_death(obj.id)
+				news_manager.send_tip(db.actor, "Слышал что "..name.." пропал где-то на севере... Говорят турист был опытный...", 5, "default", 36000)
+			end
+			--log1("away from zone tourism kill - "..obj:name().." ")
+		end	
+	end 
+end
+
+
+
+function away_from_zone_revenge(obj)
+	if obj and obj.level_name == "lvl1_escape" then
+			local yan_pos = vector():set(147,0,-13)
+			if obj.position:distance_to(yan_pos) < 20 then
+				local wait_time = 0
+  				wait_time = time_global() + 200
+  				level.add_call(
+    				function() return time_global() > wait_time end,
+    				function() olr.to_offline(obj:name()) end
+  				)
+				local pk = get_netpk(obj,1)
+  				if pk:isOk() then
+    					local data = pk:get()
+          				local name = data.character_name
+					data.health = 0
+					data.updhealth = 0
+					pk:set(data)
+					smart_terrain.on_death(obj.id)
+     					news_manager.send_tip(db.actor, ""..name.." покинул зону отчуждения.", nil, "unknown", 39000)
+					news_manager.send_tip(db.actor, "О, "..name.." из Зоны ушёл... Говорят отомстить кому-то хотел тут, да и похоже добился своего... отомстил.", 5, "default", 36000)
+				end	
+			end	
+		end 
+end
+
+function away_from_zone(obj)
+	if obj and obj.level_name == "lvl1_escape" then
+			local yan_pos = vector():set(147,0,-13)
+			if obj.position:distance_to(yan_pos) < 20 then
+				local wait_time = 0
+  				wait_time = time_global() + 200
+  				level.add_call(
+    				function() return time_global() > wait_time end,
+    				function() olr.to_offline(obj:name()) end
+  				)
+				local pk = get_netpk(obj,1)
+  				if pk:isOk() then
+    					local data = pk:get()
+          				local name = data.character_name
+					data.health = 0
+					data.updhealth = 0
+					pk:set(data)
+					smart_terrain.on_death(obj.id)
+     					news_manager.send_tip(db.actor, "Сталкер "..name.." покинул зону отчуждения.", nil, "unknown", 39000)
+					news_manager.send_tip(db.actor, "О, "..name.." из Зоны ушёл... Говорят искал себя он тут... да видимо нашёл.", 5, "default", 36000)
+				end	
+			end	
+		end 
+end
+
+
+function set_maintask_substates(obj, rnd_quest)
+
+	-- месть сталкеру
+	if xvars.npcs_tasks[obj:name()] == "revenge" then
+		local places = {}
+		for _, kill in ipairs(olr_offline_walk.tabst) do
+		if kill then
+                if IsStalker(kill) then
+                	if kill.alive and kill:alive() and kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl3_agroprom" or kill.level_name == "lvl4_darkdolina" then
+				if not olr_protected.is_no_offline_alife_obj(kill:name()) then
+					table.insert(places, kill)
+				end
+			end
+		end
+		end	
+	end
+	local rand_kill = places[math.random(#places)]
+	xvars.npcs_tasks_revenge_targets[obj:name()] = rand_kill:name()
+	--log1("revenge "..obj:name().." - set revenge target "..rand_kill:name().." ")
+	end
+
+end
+
+--------------------------------------------------------------------------
+-- !! в этих прекондишенах ещё добавить проверку например на колво денег (второстепенные квесты)
+-- !! это проверка на то, можем ли мы идти по пути
+
+
+function precondition_find_himself(obj)
+	if obj:rank() >= 3150 then 
+		return true
+	end
+end
+
+function precondition_tourism(obj)
+	if obj:rank() >= 1650 and has_alife_info("bun_antenna_off") then 
+		return true
+	end
+end
+
+function precondition_cash(obj)
+	if xvars.cash_need_summa_has[obj:name()] == true then 
+		return true
+	end
+end
+
+
+function precondition_find_monolot(obj)
+	if obj:rank() >= 250 and has_alife_info("bun_antenna_off") then 
+		return true
+	end
+end
+
+
+function precondition_reason_zone(obj)
+	-- условие: если мы в симуляции нашли какой нибудь документ
+	--if xvars.npcs_who_find_docs_id and xvars.npcs_who_find_docs_id[obj:name()] and xvars.npcs_who_find_docs_id[obj:name()] == obj.id then
+		--log1("we find docs and can walk to generators "..obj:name().."")
+		if IsStalker(obj) and obj:rank() >= 200 and has_alife_info("bun_antenna_off") then 
+			return true
+		end
+	--end
+end
+
+
+function precondition_revenge(obj)
+	local targetkill = xvars.npcs_tasks_revenge_targets[obj:name()]
+	if targetkill then
+		local se_obj = alife():object(targetkill)
+		if se_obj and se_obj:alive() then
+			--log1("цель мести "..se_obj:name().." жива  - ищем её для "..obj:name().."  ")
+			return true
+		end
+		return false
+	end
+end
+
+function precondition_revenge_is_dead(obj)
+	local targetkill = xvars.npcs_tasks_revenge_targets[obj:name()]
+	if targetkill then
+		local se_obj = alife():object(targetkill)
+		if se_obj and not se_obj:alive() then
+			return true
+		end
+		return false
+	end
+end
+
+
+function set_walkers_rndways()
+	local cnt =  0
+	local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill and IsStalker(kill) and kill:alive() then
+			if xvars.npcs_tasks[kill:name()] == "cash" or 
+				xvars.npcs_tasks[kill:name()] == "tourism" or 
+				xvars.npcs_tasks[kill:name()] == "revenge" or 
+				xvars.npcs_tasks[kill:name()] == "find_himself" then
+				cnt=cnt+1
+				--olr.add_spot_on_map( kill.id,"controller_spotmap",kill:name() )
+				local rndway = math.random(#global_task_rnd_way)
+				local rnd_task_way = global_task_rnd_way[rndway].name
+				--log1(" "..kill:name().." set rndway - "..rnd_task_way.." ")
+				xvars.npcs_tasks_rndway[kill:name()] = game.translate_string(rnd_task_way)
+				local rnd = math.random(1,2)
+				if rnd == 1 then
+					--log1(" SET no RND WAY "..kill:name().." go to base ")
+					--olr.add_spot_on_map( kill.id,"red_location"," идёт в лагерь  "..kill:name().."")
+					xvars.npcs_tasks_rndway[kill:name()] = nil
+				end				
+			end	
+		end
+	end
+	log1(cnt)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

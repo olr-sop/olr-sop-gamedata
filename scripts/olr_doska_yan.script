@@ -1,0 +1,337 @@
+-- hi_flyer 30.04.17
+
+class "ui_quests_table" (CUIScriptWnd)
+
+function ui_quests_table:__init() super()
+	self:InitControls()
+	self:InitCallBacks()
+end
+
+function ui_quests_table:__finalize()
+end
+
+function ui_quests_table:InitControls()
+	local xml = CScriptXmlInit()
+	self:Init(0,0,1024,768)
+	xml:ParseFile("ui_quests_table.xml")
+	self.background_main = xml:InitStatic("background_main", self)
+	self.background_table = xml:InitStatic("background_main:background_table", self.background_main)
+	self.frame_desc_quest = xml:InitFrame("background_main:background_table:frame_desc_quest", self.background_table)
+	self.static_desc_quest = xml:InitStatic("background_main:background_table:frame_desc_quest:static_desc_quest", self.frame_desc_quest)
+	self.frame_list_quest = xml:InitFrame("background_main:background_table:frame_list_quest", self.background_table)
+	self:Register(xml:Init3tButton("background_main:background_table:frame_list_quest:bt_find_item", self.frame_list_quest), "bt_find_item")
+	self:Register(xml:Init3tButton("background_main:background_table:frame_list_quest:bt_kill_stalker", self.frame_list_quest), "bt_kill_stalker")
+	self:Register(xml:Init3tButton("background_main:background_table:button_exit", self.background_table), "button_exit")
+	self:Register(xml:Init3tButton("background_main:background_table:button_take_quest", self.background_table), "button_take_quest")
+	self.Static3 = xml:InitStatic("background_main:background_table:Static3", self.background_table)
+	local job_selected = false 
+	local job_selected_kill = false
+	local nm = "" 
+end
+
+function ui_quests_table:InitCallBacks()
+	self:AddCallback("bt_find_item", ui_events.BUTTON_CLICKED, self.bt_find_item_button_clicked, self)
+	self:AddCallback("bt_kill_stalker", ui_events.BUTTON_CLICKED, self.bt_kill_stalker_button_clicked, self)
+	self:AddCallback("button_exit", ui_events.BUTTON_CLICKED, self.button_exit_button_clicked, self)
+	self:AddCallback("button_take_quest", ui_events.BUTTON_CLICKED, self.button_take_quest_button_clicked, self)
+end
+
+function ui_quests_table:bt_find_item_button_clicked()
+	job_selected_kill = false 
+	local textdesc = game.translate_string(""..xvars.quest_one_text_yan.." - "..xvars.quest_one_text_name_yan..", Оплата: "..xvars.quest_one_cost_yan.." ")
+	if not has_alife_info("doska_one_taken_yan") then
+		self.static_desc_quest:SetText(textdesc)
+		job_selected = true
+	elseif xvars.quest_one_target_yan == "" and has_alife_info("doska_one_taken_yan") then
+		self.static_desc_quest:SetText("Пока работы нет")
+	else
+		self.static_desc_quest:SetText("Взято задание на добычу предмета: "..xvars.quest_one_text_name_yan..", Оплата: "..xvars.quest_one_cost_yan.." ")
+	end  
+end
+
+function ui_quests_table:bt_kill_stalker_button_clicked()
+	job_selected = false
+	local sobj = game.translate_string(xvars.quest_two_target_yan)
+	local obj = alife():object(sobj)
+	if not obj then
+		olr_doska_yan.gen_kill_stalker()
+ 		nm = "Нет записей" 
+		return
+	end
+	local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(obj.m_game_vertex_id):level_id()), vector():set(obj.position.x,obj.position.y,obj.position.z))
+	if xvars.quest_two_target_yan == "" then
+		nm = "empty"
+	end
+	local textdesc = game.translate_string("Необходимо уничтожить опастного мутанта. Последнее местоположение - "..pos.."")
+	if not has_alife_info("doska_two_taken_yan") then
+		self.static_desc_quest:SetText(textdesc)
+		job_selected_kill = true
+	elseif xvars.quest_two_target_yan == "" and has_alife_info("doska_two_taken_yan") then
+		self.static_desc_quest:SetText("Пока работы нет")
+	else
+		self.static_desc_quest:SetText("Взято задание на уничтожение опасного мутанта.")
+	end  
+end
+
+function ui_quests_table:button_exit_button_clicked()
+	job_selected = false
+	job_selected_kill = false 
+	self:GetHolder():start_stop_menu(self, true)
+	bind_stalker.restore_weapon()
+	level.remove_cam_effector(30)
+end
+
+function ui_quests_table:button_take_quest_button_clicked()
+	if job_selected == true then
+		job_selected_kill = false
+		xvars.quests_all_ids = xvars.quests_all_ids + 1
+		--log1("quest take now -  clear job one")
+		job_selected = false
+		self:GetHolder():start_stop_menu(self, true)
+		bind_stalker.restore_weapon()
+		level.remove_cam_effector(30)
+		olr.info("doska_one_taken_yan")
+		olr.info("doska_one_working_yan")
+		news_manager.send_tip(db.actor, "Полученно задание - достать "..xvars.quest_one_text_name_yan.." для Профессора на Янтаре.", 1, "item", 9000)
+		olr_timers.st_timer("doska_one_gen_timer_fail_yan", 8500, "olr_doska_yan.doska_one_gen_timer_fail_yan()")
+	else
+		--log1("cannot take quest")
+	end
+
+	if job_selected_kill == true then
+		--log1("take two")
+		job_selected = false
+		xvars.quests_all_ids = xvars.quests_all_ids + 1
+		job_selected_kill = false
+		self:GetHolder():start_stop_menu(self, true)
+		bind_stalker.restore_weapon()
+		level.remove_cam_effector(30)
+		olr.info("doska_two_taken_yan")
+		olr.info("doska_two_working_yan")
+		news_manager.send_tip(db.actor, "Полученно задание - уничтожить опасного мутанта", 1, "volna_plots", 9000)
+		local sobj = game.translate_string(xvars.quest_two_target_yan)
+		local obj = alife():object(sobj)
+		obj:brain():update(true)
+		olr.add_spot_on_map( obj.id,"monster_part_location", "Заказ от Профессора на Янтаре: убить мутанта" )
+		olr_timers.st_timer("doska_two_gen_timer_fail_yan", 8500, "olr_doska_yan.doska_two_gen_timer_fail_yan()")
+	else
+		--log1("cannot take quest")
+	end
+end
+
+function ui_quests_table:Hide()
+	self:GetHolder():start_stop_menu(self, true)
+	bind_stalker.restore_weapon()
+	level.remove_cam_effector(30)
+end
+
+----------------------------------------------------------------------------------------------------------------------------
+-- Поиск предметов
+
+-- таймер на провал задания 
+function doska_one_gen_timer_fail_yan()
+	olr_doska_yan.clear_find_item()
+	olr_timers.st_timer("doska_one_gen_yan", 33, "olr_doska_yan.gen_rnd_item_find()")
+	db.actor:disable_info_portion("doska_one_working_yan")
+	db.actor:change_character_reputation(-20)
+end 
+
+
+-- преконд наличия итема
+function precond_user_task_doska_item()
+	if xvars.quest_one_target_yan == "" then
+		return false
+	end
+	local obj_targ = tostring(xvars.quest_one_target_yan)
+	--log1("need- "..obj_targ.." ")
+	local art = db.actor:object(obj_targ)
+	if art and art:is_artefact() then
+		return false
+	end
+     return nik_dialog.item_much(obj_targ,1) ~= false 
+end
+
+function precond_user_task_doska_item_art()
+	if xvars.quest_one_target_yan == "" then
+		return false
+	end
+	local obj_targ = game.translate_string(xvars.quest_one_target_yan)
+	local art = db.actor:object(obj_targ)
+	if art and not art:is_artefact() then
+		return false
+	end
+	if art and art:is_artefact() then
+	local ini = system_ini()
+		local known_inf = ini:r_string(obj_targ, "known_info")
+		local known_inf_desc = game.translate_string(known_inf)
+     	return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf_desc)
+	end
+end
+
+-- сдаём квест на предмет
+function one_complete_func_item()
+	local mon = math.floor(xvars.quest_one_cost_yan) 
+	db.actor:give_money(mon)
+	game_stats.money_quest_update(mon)
+	news_manager.send_tip(db.actor, "Получены деньги - "..mon.."", nil, "item", 3000)
+	local obj_targ = tostring(xvars.quest_one_target_yan)
+	nik_dialog.out_item_much(obj_targ,1)
+	olr_doska_yan.clear_find_item()
+	db.actor:disable_info_portion("doska_one_working_yan")
+	local time = math.random(96,466)
+	olr_timers.st_timer("doska_one_genyan", time, "olr_doska_yan.gen_rnd_item_find()")
+	olr_timers.del_timer("doska_one_gen_timer_fail_yan")
+end
+
+
+-- генерация предмета для поиска
+function gen_rnd_item_find()
+	--log1("gen one find jaba")
+	db.actor:disable_info_portion("doska_one_taken_yan")
+	local find_item_obj = {
+	 
+		 [1] = {name = "mutant_flesh_eye",            		cost = 120,  text = "образец тканей мутанта (Плоть)"},
+		 [2] = {name = "mutant_boar_leg",       		cost = 140,  text = "образец тканей мутанта (Кабан)"},
+		 [3] = {name = "mutant_dog_tail",       		cost = 140,  text = "образец тканей мутанта (Слепой пёс)"},
+		 [4] = {name = "mutant_psevdodog_tail",       			cost = 250,  text = "образец тканей мутанта (Псевдособака)"},
+		 [5] = {name = "mutant_krovosos_jaw",       			cost = 350,  text = "образец тканей мутанта (Кровосос)"},
+		 [6] = {name = "mutant_burer_hand",       			cost = 400,  text = "образец тканей мутанта (Бюрер)"},
+		 [7] = {name = "mutant_zombie_hand",       			cost = 170,  text = "образец тканей мутанта (Зомби)"},
+		 [8] = {name = "af_night_star",       			cost = 800,  text = "артефакт Магнит"},
+		 [9] = {name = "af_drops",       			cost = 300,  text = "артефакт Зуда"},
+		 [10] = {name = "af_electra_sparkler",       		cost = 300,  text = "артефакт Меркурий"},
+		 [11] = {name = "af_ameba_mica",       			cost = 300,  text = "артефакт Ртутный Шар"},
+		 [12] = {name = "af_mincer_meat",       		cost = 200,  text = "артефакт Ржавые Волосы"},
+		 [13] = {name = "af_medusa",       			cost = 200,  text = "артефакт Бублик"},
+		 [14] = {name = "af_art_kub",       			cost = 500,  text = "артефакт Невидимый куб"},
+		 [15] = {name = "rat_food",       			cost = 135,  text = "образец тканей мутанта (Крыса)"},
+		 [16] = {name = "af_gold_fish",       			cost = 800,  text = "артефакт сильный гравитационный"},
+		 [17] = {name = "af_gold_fish_black",       			cost = 1500,  text = "артефакт чёрный грави"},
+		 [18] = {name = "crow_food",       				cost = 150,  text = "образец тканей мутанта (Ворона)"}
+
+		}
+
+	local irnd = math.random(#find_item_obj) or 1
+	local item = tostring(find_item_obj[irnd].name)
+	local cost = tostring(find_item_obj[irnd].cost)
+	local text = tostring(find_item_obj[irnd].text)
+
+	xvars.quest_one_target_yan = item
+	xvars.quest_one_cost_yan = cost
+	xvars.quest_one_text_name_yan = text
+
+	local text_phrase = {
+		"Нужно достать", 
+		"Поступил заказ на", 
+		"Научный комплекс выкупит за хорошую плату", 
+		"Научному комплексу требуется для исследований"
+	}
+	local text_find = text_phrase[math.random(#text_phrase)]
+	xvars.quest_one_text_yan = text_find
+
+	--log1("jaba doska need find new - "..xvars.quest_one_target_yan.."  --- "..xvars.quest_one_cost_yan.."")
+end
+
+-- отчистка итема для поиска
+function clear_find_item()
+	xvars.quest_one_target_yan = ""
+	xvars.quest_one_cost_yan = 0
+	xvars.quest_one_text_yan = ""
+	xvars.quest_one_text_name_yan = ""
+end
+
+-- завершаем квест
+function one_complete_task_item()
+	return not has_alife_info("doska_one_working_yan")
+end
+
+function one_complete_task_item_fail()
+	return false
+end
+
+
+----------------------------------------------------------------------------------------------------------------------------
+-- убить мутанта
+
+-- таймер на провал задания 
+function doska_two_gen_timer_fail_yan()
+     	local sobj = game.translate_string(xvars.quest_two_target_yan)
+     	local obj = alife():object(sobj)
+	level.map_remove_object_spot(obj.id, "monster_part_location")
+	olr_doska_yan.clear_find_kill()
+	olr_timers.st_timer("gen_kill_monster", 26, "olr_doska_yan.gen_kill_stalker()")
+	db.actor:disable_info_portion("doska_two_working_yan")
+	db.actor:change_character_reputation(-20)
+end 
+
+function gen_kill_stalker()
+	db.actor:disable_info_portion("doska_two_taken_yan")
+	local montabl = 
+	{
+       		[clsid.burer_s] = true,
+       		[clsid.controller_s] = true,
+       		[clsid.gigant_s] = true,
+       		[clsid.fracture_s] = true,
+       		[clsid.chimera_s] = true
+	}
+	local places = {}
+	for _, kill in ipairs(olr_offline_walk.tabst) do
+	--local sim = alife()
+	--for id=1, 65534 do
+	--local kill = sim:object(id)
+	if kill then
+			if montabl[kill:clsid()] then
+                	if kill.alive and kill:alive() and kill.level_name == "lvl3_agroprom" or kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl4_darkdolina" or kill.level_name == "lvl6_rostok"
+					or kill.level_name == "lvl7_yantar" or kill.level_name == "lvl9_military" or kill.level_name == "lvl11_deadcity" then
+					if not olr_protected.is_no_offline_alife_obj(kill:name()) then
+						table.insert(places, kill)
+					end
+				end
+		end
+	end	
+	end
+	local rand_kill = places[math.random(#places)]
+	xvars.quest_two_target_yan = rand_kill:name()
+	--olr.add_spot_on_map( rand_kill.id,"crlc_big", "килл" )
+	--news_manager.send_tip(db.actor, "есть rand_kill "..rand_kill:name().." -- "..rand_kill.level_name.." ")
+end
+
+
+-- преконд убитого мутанта
+function precond_user_task_doska_kill()
+	if xvars.quest_two_target_yan == "" then
+		return false
+	end
+     	local sobj = game.translate_string(xvars.quest_two_target_yan)
+     	local obj = alife():object(sobj)
+	if obj then
+     		return not obj:alive() and has_alife_info("doska_two_taken_yan")
+	end
+end
+
+-- сдаём квест на мутанта
+function two_complete_func_kill()
+	local mon = 350
+     	local sobj = game.translate_string(xvars.quest_two_target_yan)
+     	local obj = alife():object(sobj)
+	level.map_remove_object_spot(obj.id, "monster_part_location")
+	db.actor:give_money(mon)
+	game_stats.money_quest_update(mon)
+	news_manager.send_tip(db.actor, "Получены деньги - "..mon.."", nil, "item", 3000)
+	db.actor:disable_info_portion("doska_two_working_yan")
+	local time = math.random(90,160)
+	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_yan.gen_kill_stalker()")
+	olr_doska_yan.clear_find_kill()
+	olr_timers.del_timer("doska_two_gen_timer_fail_yan")
+end
+
+-- отчистка текущего убитого для поиска
+function clear_find_kill()
+	xvars.quest_two_target_yan = ""
+end
+
+
+
+
+
+

@@ -1,0 +1,46 @@
+-- hi_flyer 11/03/17
+
+function init(obj)
+	local new_binder = crow_binder(obj)
+	obj:bind_object(new_binder)
+end
+
+class "crow_binder" (object_binder)
+
+function crow_binder:__init(obj) super(obj)
+end 
+
+function crow_binder:reinit()
+	object_binder.reinit(self)
+	self.object:set_callback(callback.hit,	self.hit_callback, self)
+	self.object:set_callback( callback.use_object, self.use_callback, self )
+end
+
+function crow_binder:net_destroy()
+	object_binder.net_destroy(self)
+	self.object:set_callback(callback.hit,	nil)
+	self.object:set_callback( callback.use_object, nil )
+end
+
+function crow_binder:net_save_relevant()
+	return true
+end
+
+function crow_binder:hit_callback(obj, amount, local_direction, who, bone_index)
+	--news_manager.send_tip(db.actor, "crow hit", nil, "default", 9000)
+end
+
+function crow_binder:use_callback(obj,who)
+	if not self.object:alive()  then
+		local bol_var = math.random(1,2)
+		if bol_var == 1 then
+			olr.hud_tip("", "Сгодится...", 2)
+        		local objj = alife():create("crow_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+        		level.client_spawn_manager():add(objj.id, 0, function(id,obj) obj:set_condition((math.random(30,55)/100)) end)
+			olr.del(self.object)
+		elseif bol_var == 2 then
+			olr.hud_tip("", "Слишком повреждено..", 4)
+			olr.del(self.object)
+		end
+	end	
+end

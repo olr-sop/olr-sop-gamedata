@@ -1,0 +1,184 @@
+--[[-----------------------------------------------------------------------------------------------
+ File         : sr_water.script
+ Description  : Логика нахождения актора под водой
+ Copyright    : Oblivion Lost Remake 3.0
+ Author       : hi_flyer
+ Date         : 16.05.16
+ Last Edit    : 17.05.16
+--]]----------------------------------------------------------------------------------------------- 
+
+
+local state_nowhere = 0 -- схема только что включилась
+local state_inside = 1 -- актер внутри
+local state_outside = 2 -- актер снаружи
+local bubles_particle = particles_object("anomaly2\\mozg")
+local snd_underwater = xr_sound.get_safe_sound_object([[ol3\underwater]])
+local snd_in_water = xr_sound.get_safe_sound_object([[ol3\in_water]])
+local snd_from_water = xr_sound.get_safe_sound_object([[ol3\from_water]])
+local time_apdeyta_wat = 0
+local timerupwat = 1000
+local breath = 100
+local hud = get_hud()
+local custom_static = hud:GetCustomStatic("custom_sms_text")
+
+
+class "action_water"
+
+function action_water:__init( obj, storage )
+	self.object = obj
+	self.st = storage
+end
+
+function action_water:reset_scheme()
+	
+	self.state = state_nowhere -- еще неясно, в зоне он, или нет
+	
+	self:switch_state(db.actor)
+end
+
+function action_water:update( delta )
+	local actor = db.actor
+
+	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
+		return
+	end	
+	
+	self:switch_state(actor)
+
+	local underwater = self.object:inside(device().cam_pos)
+
+	if not underwater then
+		snd_underwater:stop()
+		--get_console():execute("ph_timefactor 1")
+		--hud:RemoveCustomStatic("cs_oxigen")
+		level.remove_pp_effector(1138)
+		--bubles_particle:stop()	
+	end
+	
+	if self.state == state_inside then
+
+	if underwater then
+		bind_stalker.hide_weapon()
+		level.add_pp_effector("underwater_olr.ppe", 1138, true)
+		level.set_pp_effector_factor(1138, breath)
+		--news_manager.send_tip(db.actor, "актор внутри под водой", nil, "default", 39000)
+		get_console():execute("ph_timefactor 0.2")
+
+	if has_alife_info("ui_inventory") then 
+		local inv_window = level.main_input_receiver()
+		if inv_window and inv_window:IsShown() then
+			level.start_stop_menu(inv_window,true)
+		end
+	end
+
+	local actor_pos = db.actor:position()
+	if time_global() > time_apdeyta_wat then
+
+		time_apdeyta_wat = time_global() + timerupwat
+		--if not bubles_particle:playing() and underwater then 
+		bubles_particle:play_at_pos(vector():set(actor_pos.x, actor_pos.y+0.1, actor_pos.z))
+        --end
+
+	if not snd_underwater:playing() then 
+		snd_underwater:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	end
+
+	breath = breath - math.random(1,4)
+
+	if breath < 15 then
+		db.actor.health = -0.05
+	end
+
+	if breath < 5 then
+		breath = 0
+	end
+
+	if underwater then
+		hud:AddCustomStatic("cs_oxigen", true)
+		hud:GetCustomStatic("cs_oxigen"):wnd():SetTextST(tostring("Воздух: "..breath.." %"))    
+	else
+		hud:RemoveCustomStatic("cs_oxigen")
+	end
+
+	end
+
+
+
+
+	end
+
+	
+end	 
+end
+
+
+
+function action_water:switch_state( actor )
+	local state = self.state
+	
+	if state == state_outside or state == state_nowhere then
+		if self.object:inside( actor:center() ) then
+			self:zone_enter()
+			return
+		end
+	end
+	
+	if state == state_inside or state == state_nowhere then
+		if not self.object:inside( actor:center() ) then
+			self:zone_leave()
+			return
+		end
+	end
+end
+
+function action_water:zone_enter()
+	self.state = state_inside
+	bind_stalker.hide_weapon()
+	if device().precache_frame < 1 then
+		snd_in_water:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end	
+	--news_manager.send_tip(db.actor, "актор зашёл", nil, "default", 39000)
+end
+
+function action_water:zone_leave()
+	self.state = state_outside
+        --news_manager.send_tip(db.actor, "актор вышел", nil, "default", 39000)
+	level.remove_pp_effector(1138)
+	bind_stalker.restore_weapon()
+	--if bubles_particle:playing() then 
+		bubles_particle:stop()
+        --end
+	snd_underwater:stop()
+	breath = 100	
+	hud:RemoveCustomStatic("cs_oxigen")
+	get_console():execute("ph_timefactor 1")
+	if device().precache_frame < 1 then
+		snd_from_water:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+end
+
+
+---------------------------------------------------------------------------------------------------------------------
+function add_to_binder(npc, ini, scheme, section, storage)
+	printf("DEBUG: add_to_binder: scheme='%s', section='%s'", scheme, section)
+
+	local new_action = action_water(npc, storage)
+
+	-- Зарегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
+	xr_logic.subscribe_action_for_events(npc, storage, new_action)
+end
+
+function set_scheme(npc, ini, scheme, section, gulag_name)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+end
+
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+
+		
+	
+	

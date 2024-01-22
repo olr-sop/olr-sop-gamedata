@@ -1,0 +1,176 @@
+local max_mass_by_sect = {
+        bagaznik_big = 200,
+        bagaznik_avto = 140,
+        bagaznik_mal = 80,
+        big_safe_box = 250,
+        box_rukzak = 20,
+	box_rukzak_treasure = 20,
+        big_container = 300,
+	box_capsule = 135,
+	other = 30
+}
+
+local repaintnow = false
+
+function init(obj)
+	local new_binder = CInventoryBoxBinder(obj)
+	obj:bind_object(new_binder)
+end
+
+class "CInventoryBoxBinder" (object_binder)
+function CInventoryBoxBinder:__init(obj) super(obj)
+	self.inv_mass = 0
+	self.max_inv_mass = max_mass_by_sect[obj:section()] or max_mass_by_sect.other
+end 
+
+function CInventoryBoxBinder:reload(section)
+	object_binder.reload(self, section)
+end
+
+function CInventoryBoxBinder:reinit()
+	object_binder.reinit(self)
+ 
+        self.object:set_callback(callback.on_inv_box_item_take, self.on_inv_box_item_take, self)
+        self.object:set_callback(callback.on_inv_box_item_drop, self.on_inv_box_item_drop, self)
+
+end
+
+function CInventoryBoxBinder:on_inv_box_item_take(obj)
+
+	if not obj or obj == nil then return end
+
+	olr_ruck_limit.on_to_box(obj)	
+	
+	self.inv_mass = self.inv_mass + obj:weight()
+	if db.actor and self.inv_mass > self.max_inv_mass then
+		  --log1("noplase  -- "..obj:name().."  -- "..self.object:name().."") 
+		  if has_alife_info("ui_car_body") then 
+                  self.object:transfer_item(obj, db.actor)
+                  local wnd = ui.get_car_body_wnd()
+                  level.start_stop_menu(wnd, true)
+		  if device().precache_frame < 1 then 
+                  	news_manager.send_tip(db.actor, "Нет места для предмета.")
+		  end
+		  end
+	end
+	--log1("cur mass  -- "..self.inv_mass.."  max -- "..self.max_inv_mass.."") 
+	bind_inventory_box.repaint()
+	bind_inventory_box.repaint()
+end
+
+
+function CInventoryBoxBinder:on_inv_box_item_drop(obj)
+	self.inv_mass = self.inv_mass - obj:weight()
+	if self.inv_mass < 0 then
+		self.inv_mass = 0
+	end
+	--log1("cur mass out  -- "..self.inv_mass.."  max -- "..self.max_inv_mass.."")
+	bind_inventory_box.repaint()
+	bind_inventory_box.repaint()
+end
+
+function CInventoryBoxBinder:update(delta)
+	--for i = 0, self.object:inv_box_count() - 1 do
+	--	local obj = self.object:object_from_inv_box(i)
+	--	log1("box - "..self.object:name().." has item - "..obj:name().."")
+	--end
+
+	if db.actor:has_info("ui_car_body") and repaintnow == false then
+		vol_obem = self.inv_mass
+		vol_obem_max = self.max_inv_mass
+		if ui.get_car_body_wnd() and not att and bind_stalker.loked_obj_name == self.object:name() then
+			ptatt = ui.get_car_body_wnd()
+			att = bind_inventory_box.ui_trade()
+			ptatt:AttachChild(att)
+			att:SetAutoDelete(true)
+			att:Show(true)
+			--log1("show true")
+		end	
+	else
+		if att and ptatt then
+			att:Show(false)
+			ptatt:DetachChild(att)
+			att = nil
+			ptatt = nil
+		end
+	end
+
+end
+
+function CInventoryBoxBinder:net_spawn(data)
+	if not object_binder.net_spawn(self, data) then
+		return false
+	end
+	--log1("netspawn box - "..self.object:name().."")
+	return true
+end
+
+function CInventoryBoxBinder:net_destroy()
+	object_binder.net_destroy(self)	
+	self.object:set_callback(callback.on_inv_box_item_take, nil)
+        self.object:set_callback(callback.on_inv_box_item_drop, nil)
+end
+
+function CInventoryBoxBinder:net_save_relevant()
+	return true
+end
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------
+local att 				
+local ptatt
+
+-- ui.reinit_shown_ui()
+
+function repaint()
+	repaintnow = true
+	local wait_time = 0
+  	wait_time = time_global() + 5
+  	level.add_call(
+    	function() return time_global() > wait_time end,
+    	function() repaintnow = false end
+  	)
+end	
+
+class "ui_trade" (CUIScriptWnd)
+
+function ui_trade:__init(owner) super()
+	self.owner = owner
+        self.inv_vol = vol_obem 
+	self.inv_vol_max = vol_obem_max
+	self:InitControls()
+	--log1("show true 0")
+end
+
+function ui_trade:__finalize() end
+
+function ui_trade:InitControls()
+	self:Init(0,0,1024,768)
+
+    	self.back = CUIStatic()
+    	self.back:Init(0,0,0,0)
+    	self.back:InitTexture("ui\\ui_verst_list2")
+    	self.back:SetOriginalRect(0,0,0,0)
+	self:AttachChild(self.back)
+		
+	-- 
+    	self.vo = CUIStatic()
+    	self.vo:Init(785,280,133,25)
+	if self.inv_vol < 0 then
+		self.inv_vol=0
+	end
+	local vol_cur = string.format("%1.0f", self.inv_vol)
+	local vol_cur_max = string.format("%1.0f", self.inv_vol_max)
+        self.vo:SetTextST(string.format("Вес: %s / "..vol_cur_max.."",  vol_cur))
+	self.vo:SetFont(GetFontGraffiti22Russian())
+	self.vo:SetTextColor(255,255,255,255)
+	self.back:AttachChild(self.vo)
+
+	--log1("show true 1")
+
+end
+
+
+

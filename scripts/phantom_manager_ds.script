@@ -1,0 +1,61 @@
+class "PhantomManagerDs"
+function PhantomManagerDs:__init()
+	self.phantom_count		= 0;
+end
+g_PhantomManagerDs			= PhantomManagerDs();
+
+function PhantomManagerDs:add_phantom		()
+	self.phantom_count		= self.phantom_count + 1;
+end
+function PhantomManagerDs:remove_phantom	()
+	self.phantom_count		= self.phantom_count - 1;
+end
+function PhantomManagerDs:spawn_phantom	(pos)
+	level.spawn_phantom_ds		(pos);
+end
+
+class "PhantomDs"		(object_binder)
+function PhantomDs:__init(obj) super(obj)
+	g_PhantomManagerDs:add_phantom();
+end
+
+function PhantomDs:net_destroy()
+	g_PhantomManagerDs:remove_phantom();
+	if db.actor and self.object:position():distance_to(db.actor:position()) < 1.5 then
+
+		--// защита от контра и фантомов
+		local psystab = db.actor:object("psystab_helmet")
+		if psystab and psystab:condition() > 0.1 then
+			local condloss = 0.06
+			psystab:set_condition(psystab:condition() - condloss)
+			if psystab:condition() < 0.1 then
+				news_manager.send_tip(db.actor, "Пси-стабилизатор вышел из стоя.")
+				olr.del(psystab)
+			end
+			return
+		end
+		if db.actor:is_actor_outdoors() == false then
+			db.actor.power = -0.05
+			return
+		end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
+		local rnd = math.random(1,5)
+		if rnd == 1 then
+			alife():create("m_poltergeist_normal_tele", db.actor:position():add(db.actor:direction():mul(2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		end
+	end
+end
+
+
+function bind(obj)
+	obj:bind_object	(PhantomDs(obj))
+end
+
+function spawn_phantom		(pos)
+	g_PhantomManagerDs:spawn_phantom(pos);
+end
+function phantom_count		()
+	return g_PhantomManagerDs.phantom_count;
+end

@@ -1515,7 +1515,10 @@ function esc_blockpost_normal_timer()
 		if not has_alife_info("choose_destiny_done") then
 			local rnd = math.random(160,224)
 			olr_timers.st_timer("esc_blockpost_normal_timer_now", rnd, "nick.esc_blockpost_normal_timer_now()")
-			news_manager.send_tip(db.actor, "Жаба: Тебя военные видели... принимаю их сигнал рации... прячся где нибудь, пока не пристрелили...", 2, "trader", 39000)
+			local rnd = math.random(1,2)
+			if rnd == 1 then
+				news_manager.send_tip(db.actor, "Жаба: Тебя военные видели... принимаю их сигнал рации... прячся где нибудь, пока не пристрелили...", 2, "trader", 39000)
+			end
 		end
 	end
 end
@@ -15104,7 +15107,7 @@ function dolina_barman_house_doki_precond()
 end
 
 function actor_have_medkitfix()
-     return nik_dialog.item_much("medkit",1) ~= false 
+     return nik_dialog.item_much("medkit",1) ~= false or nik_dialog.item_much("medkit_army",1) ~= false or nik_dialog.item_much("medkit_scientic",1) ~= false
 end    
 
 

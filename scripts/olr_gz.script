@@ -52,8 +52,8 @@ function update()
 		end
 
 		-- лучевая болезнь Усталость восстанавливается хуже
-		if db.actor.power > 0.2 and xvars.count_rad_weak > 0 then
-			db.actor.power = - xvars.count_rad_weak * 2.5
+		if db.actor.power > 0.7 and xvars.count_rad_weak > 0 then
+			db.actor.power = - xvars.count_rad_weak
 		end
 		if db.actor.health > 0.5 and xvars.count_rad_weak > 0 then
 			db.actor.health = - xvars.count_rad_weak * 0.5
@@ -68,7 +68,7 @@ function update()
 		end
 
 		-- Радиационное облучение,  Усталость восстанавливается хуже
-		if db.actor.power > 0.5 and db.actor.radiation > 0 then
+		if db.actor.power > 0.75 and db.actor.radiation > 0 then
 			db.actor.power = - db.actor.radiation / 35
 		end
 
@@ -84,15 +84,15 @@ function update()
 		local a = get_actor_obj()
 		if a then 
 		if a.state.sprint then
-			db.actor.satiety = -0.0020
+			db.actor.satiety = -0.0010
 		end
 
 		local cur_jumps = iCurrPowJump * 6 + jump_golmar_outfit() + jump_exo_outfit() - exo_check_jump()
-		if cur_jumps < 4.5 then
-			cur_jumps = 4.5
+		if cur_jumps < 5 then
+			cur_jumps = 5
 		end
 		if iCurrPowJump < 0.1 then
-			cur_jumps = 1.4
+			cur_jumps = 1.8
 		end
 		a.jump_speed = cur_jumps
 		--log1(" "..iCurrPowJump.." --- "..cur_jumps.."")

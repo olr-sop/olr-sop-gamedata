@@ -14696,7 +14696,11 @@ end
 function daem_pochinenyy_item_rem()
 	local currep = xvars.cur_rest_wpn
 	local stng = game.translate_string(currep)
-	local wpn = alife():create(currep, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	if tostring(stng) == tostring("FN HPSA") then
+		--log1("!!!!!!!!!! FIX "..stng.."")
+		stng = "wpn_hpsa"
+	end
+	local wpn = alife():create(stng, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	local cwpn = level.object_by_id(wpn.id)
 	if wpn and cwpn and cwpn:is_weapon() then
 		cwpn:unload_magazine()
@@ -19588,7 +19592,11 @@ local cactor = level.object_by_id(sactor.id)
 cactor:give_game_news("Мессер\\nЧёрт.. Что это было?.. Нужно похоронить парня..","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr.del_by_name("gar_zaraza_nap_0001")
+	olr.del_by_name("gar_zaraza_nap_0000")
+	olr.del_by_name("gar_zaraza_nap")
 end
+
 
 
 function kostumu_pesda_agr()

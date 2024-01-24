@@ -80,11 +80,23 @@ function kill_neutral11(victim, who)
 			then
                 		if not has_alife_info("messer_killar_pre") then
 					if not olr_timers.has_timer("first_killer_timer") then
-						olr_timers.st_timer("first_killer_timer_sms", 900, "nick.first_killer_timer_seen("..tostring(victim:id())..")")
-						--log1(""..tostring(victim:character_name()).."")
-                				olr_timers.st_timer("first_killer_timer", 790, "nick.first_killer_timer()")
-						olr.info("just_kill_the_man")
-						xvars.kill_count = 1000
+
+    					for k,v in pairs(db.storage) do
+        					local stalker = level.object_by_id(k)
+            					if stalker and stalker:is_stalker() and stalker:alive() then
+							if stalker:see_right_now(db.actor) then
+			    					--log1("see how kill 1")
+
+								olr_timers.st_timer("first_killer_timer_sms", 900, "nick.first_killer_timer_seen("..tostring(victim:id())..")")
+								--log1(""..tostring(victim:character_name()).."")
+                						olr_timers.st_timer("first_killer_timer", 790, "nick.first_killer_timer()")
+								olr.info("just_kill_the_man")
+								xvars.kill_count = 1000
+
+							end
+						end
+					end
+
 					end
 				end
 			end

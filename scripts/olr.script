@@ -6,7 +6,7 @@
 olrdbg = false
 is_crush = false
 
-modver = "3.0.5"
+modver = "3.0.6"
 
 bad_items = {
 	["jurn_psi_defence"] = true,
@@ -688,11 +688,24 @@ if time_global() > tup25000 then
 
 			amk.oau_reason="cn news_main time 2 st"
 
-			olr.check_time()
+			local func = loadstring("olr.check_time()")
+			if func then
+				pcall(func)
+			else
+				log1("!!! ERROR LUA olr.check_time() PCALL")
+			end
+			--olr.check_time()
 
 			amk.oau_reason="cn news_main time 3 st"
 
-			news_main.check_news()
+
+			local func = loadstring("news_main.check_news()")
+			if func then
+				pcall(func)
+			else
+				log1("!!! ERROR LUA news_main.check_news() PCALL")
+			end
+			--news_main.check_news()
 
 			amk.oau_reason="cn news_maincheck_news end"
     		end
@@ -727,7 +740,15 @@ if time_global() > tup25000 then
 			amk.oau_reason="cn gta end"
 		elseif rndgta == 5 then
 			amk.oau_reason="cn xrs_trade_olr st"
-			xrs_trade.on_item_drop()
+
+			--xrs_trade.on_item_drop()
+			local func = loadstring("xrs_trade.on_item_drop()")
+			if func then
+				pcall(func)
+			else
+				log1("!!! ERROR LUA xrs_trade.on_item_drop() PCALL")
+			end
+
 			amk.oau_reason="cn xrs_trade_olr end"
 		end
 	end
@@ -736,9 +757,13 @@ end
 
 function check_time()
 	if xr_conditions.is_day() then
+		amk.oau_reason="cn olr_traders_day 1 st"
      		db.actor:give_info_portion("olr_traders_day")
+		amk.oau_reason="cn olr_traders_day 1 end"
        	elseif not xr_conditions.is_day() then
+		amk.oau_reason="cn olr_traders_night 1 st"
         	db.actor:give_info_portion("olr_traders_night")
+		amk.oau_reason="cn olr_traders_night 1 end"
 	end
 end
 

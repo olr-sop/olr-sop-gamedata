@@ -32,13 +32,33 @@ function tmr_drop______old(obj)
 	end
 end
 
-
 function tmr_drop(obj)
 	if obj == nil then return end
 	if xvars.pos_x == 0 then xvars.pos_x = db.actor:position().x end
 	if xvars.pos_y == 0 then xvars.pos_y = db.actor:position().y end
 	if xvars.pos_z == 0 then xvars.pos_z = db.actor:position().z end
 	xvars.item_drop_inv[obj:name()] = true 
+end
+
+local artefact_classes_table = {
+	[clsid.artefact] = true,
+	[clsid.art_gravi] = true,
+	[clsid.art_galantine] = true,
+	[clsid.art_rusty_hair] = true,
+	[clsid.art_electric_ball] = true,
+	[clsid.art_faded_ball] = true,
+	[clsid.art_thorn] = true,
+	[clsid.art_zuda] = true,
+	[clsid.art_dummy] = true,
+	[clsid.art_gravi_black] = true,
+	[clsid.art_bast_artefact] = true,
+	[clsid.art_needles] = true,
+	[clsid.art_black_drops] = true,
+	[clsid.art_mercury_ball] = true,
+}
+
+function isArtefact(item)
+	return artefact_classes_table[item:clsid()]
 end
 
 function upd_drop()
@@ -55,8 +75,16 @@ function upd_drop()
 						xvars.pos_x = 0  
 						xvars.pos_y = 0
 						xvars.pos_z = 0
+						local item_name = obj:get_name()
+						if isArtefact and system_ini():line_exist(obj:section(), "known_info") then
+							-- свойства
+							local known_inf = system_ini():r_string(obj:section(), "known_info")
+							if not has_alife_info(known_inf) then
+								item_name = game.translate_string("ui_st_unknown_art_name")
+							end
+						end
 						if tab_objs_on_slots[tostring(obj:id())] == nil then
-							news_manager.send_tip(db.actor, "Нет места для - "..obj:get_name()..".", nil, "act", 3000)
+							news_manager.send_tip(db.actor, "Нет места для - "..item_name..".", nil, "act", 3000)
 							db.actor:drop_item(obj)
 						end
 						if has_alife_info("ui_car_body") then
@@ -188,7 +216,15 @@ function obj_to_ruck(obj)
 						--	return
 						--end
 						olr_ruck_limit.tmr_drop(obj, true)
-						olr.hud_tip("", "Нет места в рюкзаке для: "..obj:get_name()..", объем - "..drop_cur.." / "..tostring(max_item_amount).."", 6)
+						local item_name = obj:get_name()
+						if isArtefact and system_ini():line_exist(obj:section(), "known_info") then
+							-- свойства
+							local known_inf = system_ini():r_string(obj:section(), "known_info")
+							if not has_alife_info(known_inf) then
+								item_name = game.translate_string("ui_st_unknown_art_name")
+							end
+						end
+						olr.hud_tip("", "Нет места в рюкзаке для: "..item_name..", объем - "..drop_cur.." / "..tostring(max_item_amount).."", 6)
 					end
 				end
 			end

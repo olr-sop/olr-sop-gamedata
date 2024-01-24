@@ -149,266 +149,217 @@ function CArtBinder:update(delta)
 	--pt:start()
 
 
-        	local iParent = self.object:parent()
-		local isec = self.object:section()
+    local iParent = self.object:parent()
+	local isec = self.object:section()
 
 	
-		--local a = self.object:get_artefact()
-		--if a then
-		--a.trail_light_range = math.random(10,100)
-		--end
+	--local a = self.object:get_artefact()
+	--if a then
+	--a.trail_light_range = math.random(10,100)
+	--end
 
-        	if isec == "af_electra_moonlight" or isec == "af_fuzz_kolobok" or isec == "af_fireball" then
-        	if not iParent then
-	 		local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
-			shelbone:apply_force(70,math.random(10,750),math.random(100,900))
-        	end
-        	end
-
-
-		--рутный шар
-                if isec == "af_ameba_mica" then
-			self.object:set_condition(self.object:condition() - self:TimeCondLostSh())
-                	self.object:set_weight(self.object:condition() * 10 - self:TimeCondLostSh())
-			if self.object:condition() <= 0.01 then
-				olr.del(self.object) 
-			end			
+    if isec == "af_electra_moonlight" or isec == "af_fuzz_kolobok" or isec == "af_fireball" then
+		if not iParent then
+		local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
+		shelbone:apply_force(70,math.random(10,750),math.random(100,900))
 		end
+    end
 
 
-        	if db.actor then
+	--рутный шар
+	if isec == "af_ameba_mica" then
+		self.object:set_condition(self.object:condition() - self:TimeCondLostSh())
+		self.object:set_weight(self.object:condition() * 10 - self:TimeCondLostSh())
+		if self.object:condition() <= 0.01 then
+			olr.del(self.object) 
+		end			
+	end
+
+
+    if db.actor then
 		if self.object:position():distance_to(db.actor:position()) > 7 then 
 			return 
 		end
 
 
 		-- испаряем эти арты когда кондишн в ноль 
-                if isec == "af_art_ruchk" or isec == "af_night_star" or isec == "af_vyvert" or isec == "af_gravi" or isec == "af_gold_fish" or isec == "af_gold_fish_black" then
+		if isec == "af_art_ruchk" or isec == "af_night_star" or isec == "af_vyvert" or isec == "af_gravi" or isec == "af_gold_fish" or isec == "af_gold_fish_black" then
 			if self.object:condition() <= 0.01 then
 				olr.del(self.object) 
 			end			
 		end
-
+	
 		--рутный шар
-                if loaded == false then
-		if device().precache_frame >1 then
-		for i = 0, db.actor:belt_count() - 1 do
-    			local item = db.actor:item_on_belt(i)
-                	if item and item:section() == "af_ameba_mica" then
-				db.actor:drop_item(item)
-				db.actor:transfer_item(item, db.actor)
-				local wait_time = 0
-  				wait_time = time_global() + 300
-  				level.add_call(
-    				function() return time_global() > wait_time end,
-    				function() db.actor:move_to_belt(item) end
-  				)
-                		db.actor:invalidate_inventory()
-                		loaded = true
-                	end
-                end
-                end
-                end
-
-
-		-- плёнка ремонт брони
-        	if isec == "af_dummy_pellicle" then
-           		if iParent then
-	       			if get_clsid(iParent) == clsid.actor then
-					local outfit = db.actor:get_current_outfit()
-					local condpen = self.object:condition()
-					if outfit and db.actor:is_on_belt(self.object) and condpen > 0.01 then
-						outfit:set_condition(outfit:condition() + 0.000004)
-						--log1("плёнка ремонт брони cond - ["..outfit:condition().."]")
+		if loaded == false then
+			if device().precache_frame >1 then
+				for i = 0, db.actor:belt_count() - 1 do
+					local item = db.actor:item_on_belt(i)
+						if item and item:section() == "af_ameba_mica" then
+							db.actor:drop_item(item)
+							db.actor:transfer_item(item, db.actor)
+							local wait_time = 0
+							wait_time = time_global() + 300
+							level.add_call(function() return time_global() > wait_time end, function() db.actor:move_to_belt(item) end)
+							db.actor:invalidate_inventory()
+							loaded = true
+						end
+				end
+			end
+		end
+			if isec == "af_studen" or isec == "af_electra_flash" then
+				if iParent then
+					if get_clsid(iParent) == clsid.actor then
+						db.actor.health = -0.001
+						local par_var = math.random(1,128)
+						if par_var == 1 then
+							local snd_obj = xr_sound.get_safe_sound_object([[ol3\cough]])
+							if not snd_obj:playing() then 
+								snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+								olr.hud_tip("Хм...:", "Похоже этот артефакт очень опасен... Нужен контейнер.", 2)
+							end
+						end		
 					end
 				end
 			end
-		end
-
-		-- сонливости спираль
-        	if isec == "af_art_spiral" then
-           		if iParent then
-	       			if get_clsid(iParent) == clsid.actor then
-					if db.actor:is_on_belt(self.object) then
-						local curslep = db.actor:get_actor_sleep()
-						if curslep then
-							db.actor:set_actor_sleep(- 0.0001)
-						end
+	
+	
+			if ini:line_exist(self.object:section(), "known_info") then
+				-- свойства
+				local known_inf = ini:r_string(self.object:section(), "known_info") or ""
+				--	db.actor:give_info_portion(known_inf) -- дебаг
+				if has_alife_info(known_inf) then
+					if not level.main_input_receiver() then 
+						return 
 					end
+					local art_desctiption = ini:r_string(self.object:section(), "description") or ""
+					local stng_desc = game.translate_string(art_desctiption)
+	
+					local val_health_restore_speed = ini:r_float(self.object:section(), "health_restore_speed") or 0
+					StatText_health = " //  Влияние на здоровье: "..string.format("%1.0f", val_health_restore_speed * 1000000).."%  // "
+					local stng_h = game.translate_string(StatText_health)
+	
+					local val_radiation_restore_speed = ini:r_float(self.object:section(), "radiation_restore_speed") or 0
+					StatText_radiation = "Радиоактивность: " ..string.format("%1.0f", val_radiation_restore_speed * 10000).."%  // "
+					local stng_r = game.translate_string(StatText_radiation)
+	
+					local val_satiety_restore_speed = ini:r_float(self.object:section(), "satiety_restore_speed") or 0
+					StatText_satiety = "Голод: ".. string.format("%1.0f", val_satiety_restore_speed* 1000000).."%  // "
+					local stng_s = game.translate_string(StatText_satiety)
+	
+					local val_power_restore_speed = ini:r_float(self.object:section(), "power_restore_speed") or 0
+					StatText_power = "Выносливость: "..string.format("%1.0f", val_power_restore_speed* 1000000).."%  // "
+					local stng_p = game.translate_string(StatText_power)
+	
+					local val_bleeding_restore_speed = ini:r_float(self.object:section(), "bleeding_restore_speed") or 0
+					StatText_bleeding = "Кровотечение: "..string.format("%1.0f", val_bleeding_restore_speed* 1000000).."%  // "
+					local stng_b = game.translate_string(StatText_bleeding)
+	
+	
+	
+	
+	
+					--local val_psy_restore_speed = ini:r_float(self.object:section(), "telepatic_immunity") or 1.0
+					local val_psy_restore_speed = ltx:r_float(self.object:section().."_absorbation", "telepatic_immunity") or 1.0
+					if val_psy_restore_speed == 1.0 then
+					StatText_psy = "Сопротивление телепатии: 0%  // "
+					else
+					StatText_psy = "Сопротивление телепатии: "..string.format("%1.0f",100 - val_psy_restore_speed * 100).."%  // "
+					end
+					local stng_psy = game.translate_string(StatText_psy)
+	
+	
+	
+	
+	
+					--local val_burn_restore_speed = ini:r_float(self.object:section(), "burn_immunity") or 1.0
+					local val_burn_restore_speed = ltx:r_float(self.object:section().."_absorbation", "burn_immunity") or 1.0
+					if val_burn_restore_speed == 1.0 then
+					StatText_burn = "Сопротивление ожогам: 0%  // "
+					else
+					StatText_burn = "Сопротивление ожогам: "..string.format("%1.0f",100 - val_burn_restore_speed * 100).."%  // "
+					end
+					local stng_burn = game.translate_string(StatText_burn)
+	
+	
+	
+	
+					--local val_strike_restore_speed = ini:r_float(self.object:section(), "strike_immunity") or 1.0
+					local val_strike_restore_speed = ltx:r_float(self.object:section().."_absorbation", "strike_immunity") or 1.0
+					if val_strike_restore_speed == 1.0 then
+					StatText_strike = "Сопротивление ударам: 0%  // "
+					else
+					StatText_strike = "Сопротивление ударам: "..string.format("%1.0f",100 - val_strike_restore_speed * 100).."%  // "
+					end
+					local stng_strike = game.translate_string(StatText_strike)
+	
+	
+	
+	
+					--local val_shock_restore_speed = ini:r_float(self.object:section(), "shock_immunity") or 1.0
+					local val_shock_restore_speed = ltx:r_float(self.object:section().."_absorbation", "shock_immunity") or 1.0
+					if val_shock_restore_speed == 1.0 then
+					StatText_shock = "Сопротивление электричеству: 0%  // "
+					else
+					StatText_shock = "Сопротивление электричеству: "..string.format("%1.0f",100 - val_shock_restore_speed * 100).."%  // "
+					end
+					local stng_shock = game.translate_string(StatText_shock)
+	
+	
+	
+	
+					--local val_wound_restore_speed = ini:r_float(self.object:section(), "wound_immunity") or 1.0
+					local val_wound_restore_speed = ltx:r_float(self.object:section().."_absorbation", "wound_immunity") or 1.0
+					if val_wound_restore_speed == 1.0 then
+					StatText_wound = "Сопротивление порезам: 0%  // "
+					else
+					StatText_wound = "Сопротивление порезам: "..string.format("%1.0f",100 - val_wound_restore_speed * 100).."%  // "
+					end
+					local stng_wound = game.translate_string(StatText_wound)
+	
+	
+	
+	
+					--local val_radiation_restore_speed = ini:r_float(self.object:section(), "radiation_immunity") or 1.0
+					local val_radiation_restore_speed = ltx:r_float(self.object:section().."_absorbation", "radiation_immunity") or 1.0
+					if val_radiation_restore_speed == 1.0 then
+					StatText_radiation = "Сопротивление радиации: 0%  // "
+					else
+					StatText_radiation = "Сопротивление радиации: "..string.format("%1.0f",100 - val_radiation_restore_speed * 100).."%  // "
+					end
+					local stng_radiation = game.translate_string(StatText_radiation)
+	
+	
+	
+					--local val_chemical_restore_speed = ini:r_float(self.object:section(), "chemical_burn_immunity") or 1.0
+					local val_chemical_restore_speed = ltx:r_float(self.object:section().."_absorbation", "chemical_burn_immunity") or 1.0
+					if val_chemical_restore_speed == 1.0 then
+					StatText_chemical = "Сопротивление химическим ожогам: 0%  // "
+					else
+					StatText_chemical = "Сопротивление химическим ожогам: "..string.format("%1.0f",100 - val_chemical_restore_speed * 100).."%  // "
+					end
+					local stng_chemical = game.translate_string(StatText_chemical)
+	
+	
+	
+	
+					--local val_explosion_restore_speed = ini:r_float(self.object:section(), "explosion_immunity") or 1.0
+					local val_explosion_restore_speed = ltx:r_float(self.object:section().."_absorbation", "explosion_immunity") or 1.0
+					if val_explosion_restore_speed == 1.0 then
+					StatText_explosion = "Сопротивление взрывам: 0%  // "
+					else
+					StatText_explosion = "Сопротивление взрывам: "..string.format("%1.0f",100 - val_explosion_restore_speed * 100).."%  // "
+					end
+					local stng_explosion = game.translate_string(StatText_explosion)
+	
+	
+					local fulltext = stng_desc .. stng_h  ..  stng_r  ..  stng_s  ..  stng_p  ..  stng_b  ..  stng_psy  ..  stng_burn  ..  stng_strike  ..  stng_shock  ..  stng_wound  ..  stng_radiation  ..  stng_chemical  ..  stng_explosion
+					local stng_full = game.translate_string(fulltext)
+						self.object:set_description(stng_full)
 				end
 			end
-		end
-
-
-
-        	if isec == "af_studen" or isec == "af_electra_flash" then
-           		if iParent then
-	       			if get_clsid(iParent) == clsid.actor then
-					db.actor.health = -0.001
-					local par_var = math.random(1,128)
-					if par_var == 1 then
-						local snd_obj = xr_sound.get_safe_sound_object([[ol3\cough]])
-						if not snd_obj:playing() then 
-							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-							olr.hud_tip("Хм...:", "Похоже этот артефакт очень опасен... Нужен контейнер.", 2)
-						end
-					end		
-				end
-			end
-		end
-
-
-
-		-- свойства
-		local known_inf = ini:r_string(self.object:section(), "known_info") or ""
-		local known_inf_desc = game.translate_string(known_inf)
-		if not has_alife_info(known_inf_desc) then 
-			self.object:set_description("Артефакт с неизвестными свойствами.")
-        		self.object:set_name("Неизвестный артефакт")
-		else
-			local name_inf = ini:r_string(self.object:section(), "inv_name") or ""
-			local name_desc = game.translate_string(name_inf)
-        		self.object:set_name(name_desc)
-
-		if not level.main_input_receiver() then 
-			return 
-		end
-				local art_desctiption = ini:r_string(self.object:section(), "description") or ""
-				local stng_desc = game.translate_string(art_desctiption)
-
-				local val_health_restore_speed = ini:r_float(self.object:section(), "health_restore_speed") or 0
-				StatText_health = " //  Влияние на здоровье: "..string.format("%1.0f", val_health_restore_speed * 1000000).."%  // "
-				local stng_h = game.translate_string(StatText_health)
-
-				local val_radiation_restore_speed = ini:r_float(self.object:section(), "radiation_restore_speed") or 0
-				StatText_radiation = "Радиоактивность: " ..string.format("%1.0f", val_radiation_restore_speed * 10000).."%  // "
-				local stng_r = game.translate_string(StatText_radiation)
-
-				local val_satiety_restore_speed = ini:r_float(self.object:section(), "satiety_restore_speed") or 0
-				StatText_satiety = "Голод: ".. string.format("%1.0f", val_satiety_restore_speed* 1000000).."%  // "
-				local stng_s = game.translate_string(StatText_satiety)
-
-				local val_power_restore_speed = ini:r_float(self.object:section(), "power_restore_speed") or 0
-				StatText_power = "Выносливость: "..string.format("%1.0f", val_power_restore_speed* 1000000).."%  // "
-				local stng_p = game.translate_string(StatText_power)
-
-				local val_bleeding_restore_speed = ini:r_float(self.object:section(), "bleeding_restore_speed") or 0
-				StatText_bleeding = "Кровотечение: "..string.format("%1.0f", val_bleeding_restore_speed* 1000000).."%  // "
-				local stng_b = game.translate_string(StatText_bleeding)
-
-
-
-
-
-				--local val_psy_restore_speed = ini:r_float(self.object:section(), "telepatic_immunity") or 1.0
-				local val_psy_restore_speed = ltx:r_float(self.object:section().."_absorbation", "telepatic_immunity") or 1.0
-				if val_psy_restore_speed == 1.0 then
-				StatText_psy = "Сопротивление телепатии: 0%  // "
-				else
-				StatText_psy = "Сопротивление телепатии: "..string.format("%1.0f",100 - val_psy_restore_speed * 100).."%  // "
-				end
-				local stng_psy = game.translate_string(StatText_psy)
-
-
-
-
-
-				--local val_burn_restore_speed = ini:r_float(self.object:section(), "burn_immunity") or 1.0
-				local val_burn_restore_speed = ltx:r_float(self.object:section().."_absorbation", "burn_immunity") or 1.0
-				if val_burn_restore_speed == 1.0 then
-				StatText_burn = "Сопротивление ожогам: 0%  // "
-				else
-				StatText_burn = "Сопротивление ожогам: "..string.format("%1.0f",100 - val_burn_restore_speed * 100).."%  // "
-				end
-				local stng_burn = game.translate_string(StatText_burn)
-
-
-
-
-				--local val_strike_restore_speed = ini:r_float(self.object:section(), "strike_immunity") or 1.0
-				local val_strike_restore_speed = ltx:r_float(self.object:section().."_absorbation", "strike_immunity") or 1.0
-				if val_strike_restore_speed == 1.0 then
-				StatText_strike = "Сопротивление ударам: 0%  // "
-				else
-				StatText_strike = "Сопротивление ударам: "..string.format("%1.0f",100 - val_strike_restore_speed * 100).."%  // "
-				end
-				local stng_strike = game.translate_string(StatText_strike)
-
-
-
-
-				--local val_shock_restore_speed = ini:r_float(self.object:section(), "shock_immunity") or 1.0
-				local val_shock_restore_speed = ltx:r_float(self.object:section().."_absorbation", "shock_immunity") or 1.0
-				if val_shock_restore_speed == 1.0 then
-				StatText_shock = "Сопротивление электричеству: 0%  // "
-				else
-				StatText_shock = "Сопротивление электричеству: "..string.format("%1.0f",100 - val_shock_restore_speed * 100).."%  // "
-				end
-				local stng_shock = game.translate_string(StatText_shock)
-
-
-
-
-				--local val_wound_restore_speed = ini:r_float(self.object:section(), "wound_immunity") or 1.0
-				local val_wound_restore_speed = ltx:r_float(self.object:section().."_absorbation", "wound_immunity") or 1.0
-				if val_wound_restore_speed == 1.0 then
-				StatText_wound = "Сопротивление порезам: 0%  // "
-				else
-				StatText_wound = "Сопротивление порезам: "..string.format("%1.0f",100 - val_wound_restore_speed * 100).."%  // "
-				end
-				local stng_wound = game.translate_string(StatText_wound)
-
-
-
-
-				--local val_radiation_restore_speed = ini:r_float(self.object:section(), "radiation_immunity") or 1.0
-				local val_radiation_restore_speed = ltx:r_float(self.object:section().."_absorbation", "radiation_immunity") or 1.0
-				if val_radiation_restore_speed == 1.0 then
-				StatText_radiation = "Сопротивление радиации: 0%  // "
-				else
-				StatText_radiation = "Сопротивление радиации: "..string.format("%1.0f",100 - val_radiation_restore_speed * 100).."%  // "
-				end
-				local stng_radiation = game.translate_string(StatText_radiation)
-
-
-
-				--local val_chemical_restore_speed = ini:r_float(self.object:section(), "chemical_burn_immunity") or 1.0
-				local val_chemical_restore_speed = ltx:r_float(self.object:section().."_absorbation", "chemical_burn_immunity") or 1.0
-				if val_chemical_restore_speed == 1.0 then
-				StatText_chemical = "Сопротивление химическим ожогам: 0%  // "
-				else
-				StatText_chemical = "Сопротивление химическим ожогам: "..string.format("%1.0f",100 - val_chemical_restore_speed * 100).."%  // "
-				end
-				local stng_chemical = game.translate_string(StatText_chemical)
-
-
-
-
-				--local val_explosion_restore_speed = ini:r_float(self.object:section(), "explosion_immunity") or 1.0
-				local val_explosion_restore_speed = ltx:r_float(self.object:section().."_absorbation", "explosion_immunity") or 1.0
-				if val_explosion_restore_speed == 1.0 then
-				StatText_explosion = "Сопротивление взрывам: 0%  // "
-				else
-				StatText_explosion = "Сопротивление взрывам: "..string.format("%1.0f",100 - val_explosion_restore_speed * 100).."%  // "
-				end
-				local stng_explosion = game.translate_string(StatText_explosion)
-
-
-				local fulltext = stng_desc .. stng_h  ..  stng_r  ..  stng_s  ..  stng_p  ..  stng_b  ..  stng_psy  ..  stng_burn  ..  stng_strike  ..  stng_shock  ..  stng_wound  ..  stng_radiation  ..  stng_chemical  ..  stng_explosion
-				local stng_full = game.translate_string(fulltext)
-       				self.object:set_description(stng_full)
-
-
-
-
-       
-end
-end
-
-
+	end
 	--pt:stop()
 	--prints("работало (art binder) "..pt:time().." ms")
-
 
 end
 

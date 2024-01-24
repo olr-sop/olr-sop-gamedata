@@ -1,0 +1,30 @@
+-- hi_flyer
+-- 21.01.24
+
+
+
+function on_update(obj)
+
+	-- чтобы военные не лезли в хутор Жабы
+	if not obj then
+		return
+	end
+	if not obj:alive() then
+		return
+	end
+	if level.name() ~= "lvl1_escape" then
+		return
+	end
+
+	local zzone = alife():object("dedevhya_zaba_i_novisov")
+	if zzone == nil then return end
+
+	local community = obj:character_community()
+	if community == "military" then
+		if zzone then
+			--log1(" add jabazone rest for militaris "..obj:name().." "..zzone:name().." ")
+			obj:add_restrictions("",zzone:name())
+		end
+	end
+
+end

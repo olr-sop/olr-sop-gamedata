@@ -317,12 +317,17 @@ function sleep_starter(scale)
     	level.set_time_factor(factor)
     	bind_stalker.actor_in_sleep = true
 	blow_sleep_timer_low(scale)
+	cursatsleepbef = db.actor.satiety
+	zazdasleepbef = db.actor:get_actor_thirst()
 end
  
 function sleep_dreamer()
     	level.set_time_factor(basic_time_factor)
     	game.start_tutorial("without_dream") 
     	bind_stalker.actor_in_sleep = false
+	db.actor.satiety = cursatsleepbef - db.actor.satiety / 4
+	local aftrslepzaz = zazdasleepbef - db.actor:get_actor_thirst() / 4
+	db.actor:set_actor_thirst(aftrslepzaz)
 end
  
 function sleep_stopper()

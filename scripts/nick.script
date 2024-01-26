@@ -1714,6 +1714,29 @@ end
 
 function out_doki_osved_journals()
 
+
+
+	if has_alife_info("navodka_jurnal_finded_high_1") and not has_alife_info("jornal_1_taken") then
+		local m_where = "Да, вот наши мы то что ты просил..."
+		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
+		local sim = alife()
+		for id=1, 65534 do
+		local obj = sim:object(id)
+		if obj then
+				local sect = obj:section_name()
+				if
+					sect == "jornal_1"
+				then
+					alife():release(obj, true)	
+				end					
+		end
+		end
+		olr.give_item("jornal_1")
+		return
+	end
+
+
+
 	if has_alife_info("navodka_jurnal_finded_high_2") and not has_alife_info("jornal_2_taken") then
 		local m_where = "Да, вот наши мы то что ты просил..."
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
@@ -1815,6 +1838,49 @@ function out_doki_osved_journals()
 	db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	return
 end
+
+
+----- 1 -------------------------------------------
+function navodka_jurnal_1_high()
+	olr_timers.st_timer("navodka_jurnal_1_high", 1545, "nick.navodka_jurnal_finded_high_1()")
+end
+
+function navodka_jurnal_finded_high_1()
+	news_manager.send_tip(db.actor, "Осведомитель: Зайди... есть для тебя кое-что из документов.", nil, "flash", 29000)
+	olr.info("navodka_jurnal_finded_high_1")
+end
+
+function navodka_jurnal_1()
+	olr_timers.st_timer("navodka_jurnal_1", 3415, "nick.navodka_jurnal_finded_1()")
+end
+function navodka_jurnal_finded_1()
+	local dok = nil
+	local cnt = 0
+	local sim = alife()
+	for id=1, 65534 do
+		local obj = sim:object(id)
+		if obj then
+				local sect = obj:section_name()
+				if
+					sect == "jornal_1"
+				then
+					cnt=cnt+1
+					dok=obj	
+				end					
+		end
+	end
+	if cnt == 0 then
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №1 - ничего найти не смогли... нет никаких сведений где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		return
+	end
+	if cnt > 0 then
+		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x,dok.position.y,dok.position.z))
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №1 - есть сведения о местоположении. "..pos.." ", nil, "flash", 29000)
+		return
+	end
+end
+
+
 
 ----- 2 -------------------------------------------
 function navodka_jurnal_2_high()
@@ -13332,6 +13398,7 @@ end
 function del_prizrak_esk_most_deltimer()
 	olr.del_by_name("level_prefix_lights_hanging_lamp_00153fff")
 	olr.del_by_name("lvl1_escape_stalker_0038")
+	nick.set_norm_relation_stalkers()
 end
 
 
@@ -19218,6 +19285,8 @@ olr.del_by_name("lvl2_garbage_stalker_0042")
 
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0015")
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0014")
+
+	nick.actor_set_stolkir()
 end
 
 

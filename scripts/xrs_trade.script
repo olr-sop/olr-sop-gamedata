@@ -43,12 +43,7 @@ local no_levels = {
 local places = {}
 function on_item_drop() 
 
-	--log1(" fff "..nc.load_variable("npc_trade_state","").."" )
-
-	--if nc.load_variable("npc_trade_state","") ~= "" then
-	--	log1("ret trade is now")
-	--	return
-	--end
+	amk.oau_reason="cn xrs_trade st1 st"
 
 	if not has_alife_info("esc_kill_gunslinger") then
 		return
@@ -58,30 +53,63 @@ function on_item_drop()
 		return
 	end
 	
+
+	amk.oau_reason="cn xrs_trade st2 st"
+
+	places = {}
 	for a=1,65534 do
 		local obj = level.object_by_id(a)
-		if obj and obj:id()~=db.actor:id() and obj.clsid and obj:clsid() == clsid.script_stalker and obj:alive() then
-		if db.storage[obj:id()].active_scheme ~= "remark" then
-		if obj:character_community() ~= "neutral" 
-			or obj:character_community() ~= "zombied"
-			or obj:character_community() ~= "sin" then
-				table.insert(places, obj)	
+		if obj then
+			if not obj:is_actor() then
+			if obj:is_stalker() and obj:alive() then
+			if not olr_protected.is_no_offline_alife_obj(obj:name()) then
+				if obj:character_community() ~= "neutral" 
+					or obj:character_community() ~= "zombied"
+					or obj:character_community() ~= "sin" then
+					--log1(" add places - "..obj:name().." ")
+					table.insert(places, obj)	
+				end
+			end
+			end
 			end
 		end
-		end
 	end
+
+	amk.oau_reason="cn xrs_trade st3 st"
 
 	if #places < 4 then
 		return
 	end
 
+	--log1(" places - "..#places.." ")
+
+	amk.oau_reason="cn xrs_trade st4 st"
+
 	local rand_obj1 = places[math.random(#places)]
 	local rand_obj2 = places[math.random(#places)]
 
-	if rand_obj1 and rand_obj2 then
-		--log1(" id1 - "..rand_obj1:id().." ---  id2 - "..rand_obj2:id().." ---     ")
-		table.insert( traders, { base = rand_obj1:id(), client = rand_obj2:id(), data = { stage = 0 } } )
-	end
+	amk.oau_reason="cn xrs_trade st4.1 st"
+	--log1("places id1 - "..rand_obj1:id().." ---  id2 - "..rand_obj2:id().." ---     ")
+	amk.oau_reason="cn xrs_trade st4.2 st"
+
+	local stobj1 = level.object_by_id(rand_obj1:id())
+	local stobj2 = level.object_by_id(rand_obj2:id())
+
+	if stobj1:id() == stobj2:id() then return end
+
+	amk.oau_reason="cn xrs_trade st5 st"
+
+	if stobj1 == nil then return end
+	if stobj2 == nil then return end
+
+	if stobj1:id() == nil then return end
+	if stobj2:id() == nil then return end
+
+	amk.oau_reason="cn xrs_trade st6 st"
+	table.insert( traders, { base = stobj1:id(), client = stobj2:id(), data = { stage = 0 } } )
+
+	amk.oau_reason="cn xrs_trade st7 st"
+
 end
 
 
@@ -89,14 +117,19 @@ function on_sms_trade_otvet(npc)
 	
 	for a=1,65534 do
 		local obj = level.object_by_id(a)
-		if obj and obj:id()~=db.actor:id() and obj.clsid and obj:clsid() == clsid.script_stalker and obj:alive() then
-		if db.storage[obj:id()].active_scheme ~= "remark" then
-		if obj:character_community() ~= "neutral" 
-			or obj:character_community() ~= "sin"
-			or obj:character_community() ~= "zombied" then
-				table.insert(places, obj)	
+		if obj then
+			if not obj:is_actor() then
+			if obj:is_stalker() and obj:alive() then
+			if not olr_protected.is_no_offline_alife_obj(obj:name()) then
+				if obj:character_community() ~= "neutral" 
+					or obj:character_community() ~= "zombied"
+					or obj:character_community() ~= "sin" then
+					--log1(" add places - "..obj:name().." ")
+					table.insert(places, obj)	
+				end
 			end
-		end
+			end
+			end
 		end
 	end
 

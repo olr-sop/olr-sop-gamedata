@@ -1517,7 +1517,9 @@ function esc_blockpost_normal_timer()
 			olr_timers.st_timer("esc_blockpost_normal_timer_now", rnd, "nick.esc_blockpost_normal_timer_now()")
 			local rnd = math.random(1,2)
 			if rnd == 1 then
-				news_manager.send_tip(db.actor, "Жаба: Тебя военные видели... принимаю их сигнал рации... прячся где нибудь, пока не пристрелили...", 2, "trader", 39000)
+				if not has_alife_info("actor_in_jaba_zone") then
+					news_manager.send_tip(db.actor, "Жаба: Тебя военные видели... принимаю их сигнал рации... прячся где нибудь, пока не пристрелили...", 2, "trader", 39000)
+				end
 			end
 		end
 	end
@@ -8585,6 +8587,8 @@ function create_agro_case_del()
 	olr.del_by_name("gar_zaraza_nap_0001")
 	olr.del_by_name("gar_zaraza_nap_0000")
 	olr.del_by_name("gar_zaraza_nap")
+	olr.del_by_name("lvl2_garbage_stalker_0043")
+
 end
 
 
@@ -13059,7 +13063,7 @@ function start_kk_plen_quest()
 end
 
 function start_kk_plen_quest_go()
-        news_manager.send_tip(db.actor, "jackal_podz", nil, "trader", 9000)
+        news_manager.send_tip(db.actor, "jackal_podz", nil, "trader", 29000)
         db.actor:give_info_portion("start_kk_plen_quest_now_info")
 	local sobj = alife():object("lvl_rat_stalker_0003") 
 	if sobj then 
@@ -15948,6 +15952,7 @@ function naparnik_blackened()
 	olr.del_by_name("gar_zaraza_nap")
 	olr.del_by_name("gar_zaraza_nap_0000")
 	olr.del_by_name("gar_zaraza_nap_0001")
+	olr.del_by_name("lvl2_garbage_stalker_0043")
       local se_obj = alife():object("lvl2_garbage_stalker_0037lloh")
       if se_obj then 
     local te = texture_find("act\\act_stalker_nap_norm")
@@ -19681,6 +19686,7 @@ snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("gar_zaraza_nap_0001")
 	olr.del_by_name("gar_zaraza_nap_0000")
 	olr.del_by_name("gar_zaraza_nap")
+	olr.del_by_name("lvl2_garbage_stalker_0043")
 end
 
 
@@ -20520,13 +20526,16 @@ end
 
 function kol()
 	olr.beep()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Неизвестный сталкер:".."\\n".."%c[255,160,160,160]Сталкер, зайди ко мне в здание школы, нужно поговорить. Кольбат.".."".."\n", nil, "default", 30000)
-local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\geiger_8]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Неизвестный сталкер:".."\\n".."%c[255,160,160,160]Сталкер, зайди ко мне в здание школы, нужно поговорить. Кольбат.".."".."\n", nil, "default", 30000)
+	local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\geiger_8]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("lvl5_bar_physic_object_1411")
 	olr.del_by_name("lvl5_bar_physic_object_0011")
 	olr.del_by_name("lvl5_bar_physic_object_0308")
 	olr.del_by_name("lvl5_bar_stalker_0025")
+	if has_alife_info("olr_traders_night") then
+		news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Кобальт:".."\\n".."%c[255,160,160,160]Приходи только лучше днем, сейчас ночь, не особо подходящее время для разговора.".."".."\n", nil, "default", 30000)	
+	end
 end
 
 function tele3()

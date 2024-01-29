@@ -41,6 +41,15 @@ function evaluator_trading:evaluate()
 	if npc:is_talking() then
 		return false
 	end
+
+	if db.actor:is_talking() then
+		local npctalk = level:get_second_talker()
+		if npctalk:name() == "bar_barman" or npctalk:name() == "lvl9_military_m_trader" or npctalk:name() == "escape_trader_0000" then
+			--log1("nope")
+			return false
+		end
+	end
+
 	if has_alife_info("olr_traders_night") then
 		return false
 	end
@@ -93,7 +102,7 @@ function evaluator_trading:evaluate()
 		if not has_alife_info("open_bar_door_start_krisa") then
 			return false -- бармен ещё не появился с начала
 		end
-		if has_alife_info("greh_leader_key_taken_docs_vetri_pogo_prof") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
+		if has_alife_info("greh_leader_key_taken_docs_vetri") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
 			return false -- бармен свалил и ещё не вернулся
 		end
 		if has_alife_info("bun_antenna_off") then

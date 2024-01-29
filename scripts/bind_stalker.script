@@ -13,6 +13,7 @@ local game_difficulty_by_num = {
 	[3] = "gd_master"
 	}
 
+max_item_amount = 0
 lasthealth  = 0
 lasttime	= 0
 post_process = 0
@@ -26,6 +27,11 @@ function actor_binder:__init (obj) super(obj)
 	self.weather_manager = level_weathers.WeatherManager()
 	self.actor_detector = xr_detector.actor_detector()
         _G.xvars = get_stored_vars()
+	max_item_amount = system_ini():r_float("actor", "item_amount_base")
+end
+
+function GetBaseWeight()
+	return max_item_amount
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:net_spawn(data)		

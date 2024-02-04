@@ -123,7 +123,7 @@ function yan_ohr_system()
         				local boss_particle = particles_object("damage_fx\\burn_creatures00") 
 					boss_particle:play_at_pos(vector():set(stalker:position().x, stalker:position().y+0.2, stalker:position().z))
 					stalker:kill(stalker)
-					--news_manager.send_tip(db.actor, "БАН  yan", nil, "default", 39000)
+					--news_manager.send_tip(db.actor, game.translate_string("yan_ohr_system_0"), nil, "default", 39000)
 			    		break
 				end
 			end
@@ -148,7 +148,7 @@ function ds_snipers()
 					a.z=math.random(4,10)
 					snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
 					stalker:kill(stalker)
-					--news_manager.send_tip(db.actor, "БАН", nil, "default", 39000)
+					--news_manager.send_tip(db.actor, game.translate_string("ds_snipers_0"), nil, "default", 39000)
 			    		break
 				end
 			end
@@ -165,7 +165,7 @@ function fire_roots()
 	if time_global() > tup then
 		tup = time_global() + tmerup
 		if has_alife_info("monolit_na_kordone") then
-			--news_manager.send_tip(db.actor, "rad weapons hit", nil, "default", 39000)
+			--news_manager.send_tip(db.actor, game.translate_string("fire_roots_0"), nil, "default", 39000)
 			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-5.68,19.15,-200.36))
 			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-103.68,23.15,-153.36))
 			particles_object([[explosions\campfire_08]]):play_at_pos(vector():set(-147.68,16.15,-120.36))
@@ -215,7 +215,7 @@ function check_rad_time()
 		db.actor:give_info_portion("vor_glaz_radar_pre_go_have")
 		db.actor:give_info_portion("go_rush_radar_posoni")
 		olr.blow_add(300)
-		news_manager.send_tip(db.actor, "Всё, время! Выдвигаемся. Мессер, за нас особо не переживай, наша основная цель - чтобы ты проник внутрь комплекса...", nil, "dolg", 35000)
+		news_manager.send_tip(db.actor, game.translate_string("check_rad_time_0"), nil, "dolg", 35000)
 	end
 end
 
@@ -248,7 +248,7 @@ function swamp_rain()
 		if level.rain_factor() > 0 then
 			if not has_alife_info("about_swamp_rain") then
 				db.actor:give_info_portion("about_swamp_rain")
-				news_manager.send_tip(db.actor, "Будь осторожен, в этой местности идут кислотные дожди. Чтобы находиться там в дождь, необходимо иметь защитный костюм, в хорошем состоянии. Или же можно попытаться спрятаться под какое либо укрытие.", 9, "trader", 35000)
+				news_manager.send_tip(db.actor, game.translate_string("swamp_rain_0"), 9, "trader", 35000)
 			end
 			db.actor.health = -0.00045
 			local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
@@ -406,7 +406,7 @@ function boss_unl_health()
 					db.actor.health = -1
 					olr.del_by_name("lvl16_generators_staler_undead_olr_0002")
         				level.add_pp_effector("black.ppe", 20131, false)
-					news_manager.send_tip(db.actor, "!!!!ГГ БЛИЗКО К БОССУ подошёл!!!!", 2, "unknown", 5000)
+					news_manager.send_tip(db.actor, game.translate_string("boss_unl_health_0"), 2, "unknown", 5000)
 				end
 				if not boss_particle:playing() then 
 					boss_particle:play_at_pos(vector():set(bos:position().x, bos:position().y+1.6, bos:position().z))
@@ -423,7 +423,7 @@ function boss_unl_health()
 				if not bos:see(db.actor) and bos:position():distance_to(db.actor:position()) <= 3 then
 					nick.teleport_boss_fight()
 					level.add_pp_effector("black.ppe", 5014331, false)
-					--news_manager.send_tip(db.actor, "!!!!БОСС НЕ ВИДИТ ГГ НО ОН РЯДОМ !!!!", nil, "unknown", 5000)	
+					--news_manager.send_tip(db.actor, game.translate_string("boss_unl_health_1"), nil, "unknown", 5000)	
 				end
 				if bos:see(db.actor) then
 					if flycoprs == false then
@@ -431,7 +431,7 @@ function boss_unl_health()
 						--nick.flying_corpses()
 					end
 					see_count = see_count + 1
-					--news_manager.send_tip(db.actor, "!!!!БОСС ВИДИТ ГГ!!!!", 2, "unknown", 5000)
+					--news_manager.send_tip(db.actor, game.translate_string("boss_unl_health_2"), 2, "unknown", 5000)
 					level.add_pp_effector("esc_fade.ppe", 1523, true)
 					level.set_pp_effector_factor(1523, see_count / 40)
 					db.actor.psy_health = -0.01
@@ -447,7 +447,7 @@ function boss_unl_health()
          				end
 					if see_count >= 50 then
 						db.actor.health = -1
-						--news_manager.send_tip(db.actor, "!!!!БОСС сотрит - смерт!!!!", 2, "unknown", 5000)
+						--news_manager.send_tip(db.actor, game.translate_string("boss_unl_health_3"), 2, "unknown", 5000)
 					end
 					if see_count == 20 then
 						if math.random(1,10) == 1 then
@@ -467,7 +467,7 @@ function boss_unl_health()
 			end
 		end
 		if obj:health() <= 0.1 or obj:health() <= 0 then
-			--news_manager.send_tip(db.actor, "!!!!БОСС Умер!!!!", 2, "unknown", 5000)
+			--news_manager.send_tip(db.actor, game.translate_string("boss_unl_health_4"), 2, "unknown", 5000)
 			if not has_alife_info("gen_last_boss_dead") then
 				level.remove_pp_effector(1523)
 				local snd_obj = xr_sound.get_safe_sound_object([[ol3\gen_boss_scream_dead]])
@@ -533,7 +533,7 @@ function yan_hit_acid()
 	local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
 	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
 
-	--news_manager.send_tip(db.actor, "ACTOR IN ACID YANTAR", nil, "default", 10000)
+	--news_manager.send_tip(db.actor, game.translate_string("yan_hit_acid_0"), nil, "default", 10000)
 
 	local has_boots = db.actor:object("actor_boots")
 		if has_boots ~= nil then
@@ -541,7 +541,7 @@ function yan_hit_acid()
 		has_boots:set_condition(condb - 0.001)
 		if condb <= 0.05 then
 			olr.del(has_boots)
-			news_manager.send_tip(db.actor, "Ботинки полностью расплавились...")
+			news_manager.send_tip(db.actor, game.translate_string("yan_hit_acid_1"))
 		end
 		return 
 	end

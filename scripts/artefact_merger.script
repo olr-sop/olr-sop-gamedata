@@ -419,7 +419,7 @@ function MergerMenu:OnTryClick()
                 
                  
                 xvars.cur_trans_art = to_end_table[3]
-                news_manager.send_tip(db.actor, "Процесс трансмутации запущен", nil, "af_merger", 9000)
+                news_manager.send_tip(db.actor, game.translate_string("MergerMenuOnTryClick_0"), nil, "af_merger", 9000)
                 --self:GetHolder():start_stop_menu(self, true)
                 local rand_time_varka = math.random(100,600)
                 olr_timers.st_timer("artefact_merger_timer",rand_time_varka, "artefact_merger.create_artefact()")
@@ -559,7 +559,7 @@ end
 function on_game_load(obj)
 	if obj:section() == "atifact_merger" then
                 if xvars.cur_trans_art ~= "" then
-                	news_manager.send_tip(db.actor, "Процесc трансмутации ещё не завершён", nil, "af_merger", 9000)
+                	news_manager.send_tip(db.actor, game.translate_string("on_game_load_0"), nil, "af_merger", 9000)
                 	return
                 end
 		--olr.hide_inv()
@@ -590,7 +590,7 @@ function create_artefact()
 
 	local art_name = xvars.cur_trans_art
 	if not art_name then
-		news_manager.send_tip(db.actor, "Ошибка процесса трансмутации!", nil, "af_merger", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("create_artefact_0"), nil, "af_merger", 9000)
 		return
 	end
 
@@ -602,19 +602,19 @@ function create_artefact()
 			local p_obj = alife():object(mer.parent_id)
 				if p_obj then
 					alife():create(art_name, p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
-					news_manager.send_tip(db.actor, "Процесс трансмутации завершён", nil, "af_merger", 9000)
+					news_manager.send_tip(db.actor, game.translate_string("create_artefact_1"), nil, "af_merger", 9000)
 					--log1("atmerger spawn in parentID")
 					xvars.cur_trans_art = ""
 					if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then 
-						news_manager.send_tip(db.actor, "Ошибка процесса трансмутации! Под воздействием повышенной аномальной энергии произошла генерация неизвестного объекта!", nil, "af_merger", 9000)
+						news_manager.send_tip(db.actor, game.translate_string("create_artefact_2"), nil, "af_merger", 9000)
 						alife():create("af_art_kub", p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
 					end
 				else 
 					--log1("atmerger spawn in merger pos")
-					news_manager.send_tip(db.actor, "Процесс трансмутации завершён", nil, "af_merger", 9000)
+					news_manager.send_tip(db.actor, game.translate_string("create_artefact_3"), nil, "af_merger", 9000)
 					alife():create(art_name, mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
 					if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then 
-						news_manager.send_tip(db.actor, "Ошибка процесса трансмутации! Под воздействием повышенной аномальной энергии произошла генерация неизвестного объекта!", nil, "af_merger", 9000)
+						news_manager.send_tip(db.actor, game.translate_string("create_artefact_4"), nil, "af_merger", 9000)
 						alife():create("af_kolco", mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
 					end
 					xvars.cur_trans_art = ""

@@ -38,52 +38,52 @@ function on_press(actor, id)
 
 	-- бывает что можно говорить и с мёртвыми
 	if obj:is_stalker() and not obj:alive() then
-		news_manager.send_tip(db.actor, "Контакт мёртв")
+		news_manager.send_tip(db.actor, game.translate_string("on_press_0"))
 		return nil
 	end
 	
 	if (obj:relation(db.actor) == game_object.enemy) then
 		local rnd = math.random(1,4)
 		if rnd == 1 then
-			news_manager.send_tip(db.actor, "Чё ты хочешь? Вали лучше отсюда...")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_1"))
 		elseif rnd == 1 then
-			news_manager.send_tip(db.actor, "Пошёл нахер отсюда...")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_2"))
 		elseif rnd == 2 then
-			news_manager.send_tip(db.actor, "Вали лучше...")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_3"))
 		end
 		return nil
 	end
 
 	if obj:name() == "lvl4u_darklab_stalker_0023" or obj:name() == "lvl4u_darklab_stalker_0026" then
-		news_manager.send_tip(db.actor, "...", nil, "zombied", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "zombied", 5000)
 		return nil
 	end
 
 
 	if obj:name() == "lvl4_darkdolina_staler_undead_olr_0001" then
-		news_manager.send_tip(db.actor, "Ошибка соединения. Контакт не отвечает...", nil, "default", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_5"), nil, "default", 5000)
 		return nil
 	end
 
 	if db.actor:has_info("olr_blowout_phase_2") then
-		news_manager.send_tip(db.actor, "Ошибка соединения. Нет связи. Дождитесь окончания выброса.")
+		news_manager.send_tip(db.actor, game.translate_string("on_press_6"))
 		return nil
 	end
 
 	if obj:name() == "bar_barman" and has_alife_info("olr_traders_night") then
-		news_manager.send_tip(db.actor, "Отвали, я сплю...", nil, "barman", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_7"), nil, "barman", 5000)
 		return nil
 	end
 
 	if level.name() == "lvl16_generators" then
-		news_manager.send_tip(db.actor, "Ошибка соединения. Сильные помехи неизвестного происхождения.")
+		news_manager.send_tip(db.actor, game.translate_string("on_press_8"))
 		return nil
 	end
 	
 	for i=0, ignore_ini:line_count("main") - 1 do
 		local _, val = ignore_ini:r_line("main", i, "", "")
 		if obj:profile_name() == val then
-			news_manager.send_tip(db.actor, "Ошибка соединения связи.")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_9"))
 			return nil
 		end
 	end
@@ -257,7 +257,7 @@ function pda_talk:Update()
 		self.object ~= nil and not self.object:alive() and 
 		not xr_wounded.is_heavy_wounded_by_id(self.object:id())
 	) then
-		news_manager.send_tip(db.actor, "Соединение потеряно")
+		news_manager.send_tip(db.actor, game.translate_string("pda_talkUpdate_0"))
 		self:Exit()
 	end
 	

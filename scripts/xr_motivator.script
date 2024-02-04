@@ -550,9 +550,11 @@ function motivator_binder:update(delta)
 					se_respawn.create_ammo(strammo, self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id(), 10)
 					--log1("create ammo - "..strammo.." for "..selfob:name().." ")
 					--news_manager.send_tip(db.actor, "npc create panic ammo - ["..self.object:name().."] ", nil, "freedom", 9000)
-					local snd_obj = xr_sound.get_safe_sound_object([[ol3\prof_blin_patroni]])
-					if snd_obj and not snd_obj:playing() then
-						snd_obj:play_no_feedback(selfob, sound_object.s3d, 0, selfob:position(), 1.0)
+					if device().precache_frame < 1 then
+						local snd_obj = xr_sound.get_safe_sound_object([[ol3\prof_blin_patroni]])
+						if snd_obj and not snd_obj:playing() then
+							snd_obj:play_no_feedback(selfob, sound_object.s3d, 0, selfob:position(), 1.0)
+						end
 					end
 					self.ammo_create = true
 				end

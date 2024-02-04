@@ -1799,7 +1799,6 @@ function on_document_found(victim, vdata)
 						xvars.sim_deaths[victim:name()] = 1	
 
 						victim:set_rank(victim:rank() + rate_doc_found)
-						news_main.on_document_find(victim, obj)
 
 						--olr.add_spot_on_map( victim.id,"green_location",victim:name() )
 						--log1("cталкер "..victim:name().." нашёл documents "..obj:name().." - его ранк теперь "..victim:rank().."")
@@ -1808,26 +1807,34 @@ function on_document_found(victim, vdata)
 						if obj:section_name() == "jornal_1" then
 							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на медприборе 1", nil, "default", 59000)
 							--log1("find dok on medpribor 1")
+							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						elseif obj:section_name() == "jornal_3" then
 							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на медприборе 3", nil, "default", 59000)
 							--log1("find dok on medpribor 3")
+							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						elseif obj:section_name() == "jornal_2" then
 							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на свалке", nil, "default", 59000)
 							--log1("find dok on svalka")
+							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						elseif obj:section_name() == "jornal_4" then
 							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на тихих холмах", nil, "default", 59000)
 							--log1("find dok on holmy")
+							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						elseif obj:section_name() == "jornal_5" then
 							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на тихих янтаре", nil, "default", 59000)
 							--log1("find dok on yantar")
+							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						elseif obj:section_name() == "jornal_6" then
 							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на радаре", nil, "default", 59000)
 							--log1("find dok on radar")
+							if has_alife_info("bun_antenna_off") then
+								news_main.on_document_find(victim, obj)
+							end
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						end
 
@@ -1839,7 +1846,6 @@ function on_document_found(victim, vdata)
 	this.process_trade(victim)
 	this.set_nickname(victim)
 end
-
 
 
 
@@ -2576,6 +2582,10 @@ local flgwpn = false
 local flgwpna = false
 
 function now_trade_ofl_bar(obj)
+
+	if has_alife_info("bun_antenna_off") then
+		return false -- бармен свалил
+	end
 
 	local old_m = 0
 	local new_mon = 0

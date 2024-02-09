@@ -6776,16 +6776,18 @@ end
 
 function is_pda_dead()
 	local STbron = db.actor:object("device_pda")
-	if STbron:condition() <= 0.01 then 
+	if STbron ~= nil and STbron:condition() <= 0.01 then 
 		return true
 	end
 end
 
 function enable_senf() 
-	local STbron = db.actor:object("device_pda") 
-	STbron:set_condition(0.99)
-	db.actor:disable_info_portion("pda_dead_off")
-	olr.show_minimap(true)
+	local STbron = db.actor:object("device_pda")
+	if STbron ~= nil then
+		STbron:set_condition(0.99)
+		db.actor:disable_info_portion("pda_dead_off")
+		olr.show_minimap(true)
+	end
 end
 
 

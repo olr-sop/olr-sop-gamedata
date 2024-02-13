@@ -28,6 +28,11 @@ function evaluator_trading:__init(st) super (nil, "evaluator_trading")
 	self.st = st
 end
 
+local not_allowed_npcs = {
+["lvl5_bar_staler_undead_olr_0003_lonewolf"] = true,
+["lvl9_military_stalker_0033"] = true,
+["lvl5_bar_stalker_0052"] = true
+}
 -- evaluator
 function evaluator_trading:evaluate()
 
@@ -53,10 +58,7 @@ function evaluator_trading:evaluate()
 	if has_alife_info("olr_traders_night") then
 		return false
 	end
-	if npc:name() == "lvl5_bar_staler_undead_olr_0003_lonewolf" then
-		return false
-	end
-	if npc:name() == "lvl9_military_stalker_0033" then
+	if not_allowed_npcs[npc:name()] then
 		return false
 	end
 	if npc:character_community() == "military" 

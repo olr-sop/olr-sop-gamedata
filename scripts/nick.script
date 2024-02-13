@@ -3064,8 +3064,14 @@ function actor_robbered_timer_sms()
 	news_manager.send_tip(db.actor, game.translate_string("actor_robbered_timer_sms_0"), nil, "unknown", 39000)	
 end
 
+local invalid_levels = {
+["lvl14_stancia"] = true,
+["lvl1_escape"] = true,
+["lvl5_bar"] = true,
+["lvl16_generators"] = true
+}
 function zombu_ressurect(victim,who)
-	if level.name() == "lvl14_stancia" or level.name() == "lvl1_escape" or level.name() == "lvl5_bar" then
+	if invalid_levels[level.name()] then
 		return
 	end 
 	local id = tostring(victim:id())
@@ -4004,6 +4010,9 @@ function nagrada_escape_dolg()
 	olr.give_item("wpn_aps_sk1")
 	olr.give_item("wpn_tiss")
 	olr_timers.st_timer("barmmntchse", 8, "nick.barman_gotodolkick()")
+	if not has_alife_info("dolina_killer_dolg_escape_done_krav_have") then
+		news_manager.send_tip(db.actor, "Майор Кравцов: Мессер, с братом поговорил, молодец. Ко мне зайдт тоже, есть разговор...", nil, "dolg_mask1", 25000)
+	end
 end
 
 function barman_gotodolkick()
@@ -4014,6 +4023,9 @@ function barman_gotodolkick()
 	olr.to_offline("gar_bandit_stroyka4")
 	olr.to_offline("gar_bandit_stroyka5")
 	news_manager.send_tip(db.actor, game.translate_string("barman_gotodolkick_0"), nil, "barman", 79000)
+	if not has_alife_info("dolina_killer_dolg_escape_done_krav_have") then
+		news_manager.send_tip(db.actor, "Майор Кравцов: Мессер, с братом поговорил, молодец. Ко мне зайдт тоже, есть разговор...", nil, "dolg_mask1", 25000)
+	end
 end
 
 function kravcov_brother_spawn_bar()
@@ -15068,7 +15080,7 @@ olr_timers.st_timer("jaba_about_deathtruck", 755, "nick.jaba_about_deathtruck()"
 if has_alife_info("agr_olr_1_pogo_koluchki") then
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Мессер\\nДумаю стоит проверить Гоплита как найду что либо здесь...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+cactor:give_game_news("Мессер\\nДумаю стоит проверить Гоплита как найду что либо здесь...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),55000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end

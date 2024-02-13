@@ -1,13 +1,28 @@
 -- hi_flyer 21.04.15
 
 local hit_rand = math.random(1,4)
-local time_apdeytab = 0 
+local time_apdeytab = 0
+
+
+local rats_sib_sections = {
+["rat_volk"] = true,
+["m_rat_e"] = true,
+["m_rat_e2"] = true,
+["m_rat_e3"] = true,
+["m_rat_e4"] = true,
+["m_rat_new"] = true
+}
+
+local rats_sections = {
+["m_rat_e"] = true,
+["m_rat_new"] = true
+}
 
 function on_actor_hit(who)
 
-	local bol_var = math.random(1,8)
-        local bez_var = math.random(1,10)
-        local yaz_var = math.random(1,12)
+	local bol_var = math.random(1,16)
+	local bez_var = math.random(1,18)
+	local yaz_var = math.random(1,20)
 
 	-- Бешенство
 	if who:clsid()==clsid.dog_s then
@@ -44,7 +59,7 @@ function on_actor_hit(who)
 
 
         -- Крысиное безумие
-        if who:section()=="m_rat_e" or who:section()=="m_rat_new" then
+        if rats_sections[who:section()] then
 		if bez_var == 1 then
 
 			if not has_alife_info("gar_first") then
@@ -76,7 +91,7 @@ function on_actor_hit(who)
 	end
 
          -- Сибирская язва
-        if who:section()=="rat_volk" or who:section()=="m_rat_e" or who:section()=="m_rat_e2" or who:section()=="m_rat_e3" or who:section()=="m_rat_e4" or who:section()=="m_rat_new" then
+        if rats_sib_sections[who:section()] then
 		if yaz_var == 1 then
 
 			if not has_alife_info("gar_first") then

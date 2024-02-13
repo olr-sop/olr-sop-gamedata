@@ -1647,29 +1647,31 @@ local sim = alife()
 	for id=1, 65534 do
 		local kill = sim:object(id)
 		if kill and kill.level_name ~= "lvl5_bar" then
-                if montabl[kill:clsid()]  then
-                 
-                local section = sectionsa[math.random(table.getn(sectionsa))] 
-                local bol_var = math.random(1,320)
-                if bol_var == 1 then
-                alife():create(section,kill.position,kill.m_level_vertex_id,kill.m_game_vertex_id)
-
-                count = count + 1
-                --news_manager.send_tip(db.actor, "всего радиоактивных обломков "..count.." нау ииии", nil, "freedom", 9000)
-
-
-end
-end
-end
-end
+			if montabl[kill:clsid()]  then
+				local section = sectionsa[math.random(table.getn(sectionsa))] 
+				local bol_var = math.random(1,420)
+				if bol_var == 1 then
+					alife():create(section,kill.position,kill.m_level_vertex_id,kill.m_game_vertex_id)
+					count = count + 1
+					--news_manager.send_tip(db.actor, "всего радиоактивных обломков "..count.." нау ииии", nil, "freedom", 9000)
+				end
+			end
+		end
+	end
 end
 
 ----------------------------------------------
 
+
+local invalid_levels = {
+["lvl16_generators"] = true,
+["lvl7_yantar"] = true,
+["lvl12_radar_bunker"] = true
+}
 function ph_impulse_blow()
-	if level.name() == "lvl16_generators" or level.name() == "lvl7_yantar" or level.name() == "lvl12_radar_bunker" then
+	if invalid_levels[level.name()] then
 		return
-	end
+	end 
 	for id=1, 65534 do
 		local npc = level.object_by_id(id)
 		if npc and npc:is_obj_outdoors() == true and not npc:is_stalker() and npc:section() ~= "m_crow" then

@@ -22,6 +22,10 @@ function net_destroy(obj)
 	obj:set_callback(callback.on_pda_contact_item_click, nil)
 end
 
+local zombies_names = {
+["lvl4u_darklab_stalker_0023"] = true,
+["lvl4u_darklab_stalker_0026"] = true
+}
 --Коллбек на нажатие по элементу в списке контактов
 function on_press(actor, id)
 	local obj = level.object_by_id(id)
@@ -54,7 +58,7 @@ function on_press(actor, id)
 		return nil
 	end
 
-	if obj:name() == "lvl4u_darklab_stalker_0023" or obj:name() == "lvl4u_darklab_stalker_0026" then
+	if zombies_names[obj:name()] or obj:character_community() == "zombied" then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "zombied", 5000)
 		return nil
 	end

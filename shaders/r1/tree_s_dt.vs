@@ -51,10 +51,17 @@ vf main (av v)
 	float3 	N 		= normalize 	(mul (m_xform,  unpack_normal(v.nc)));
 	float 	L_base 	= v.nc.w;									// base hemisphere
 	float4 	L_unpack= c_scale*L_base+c_bias;					// unpacked and decompressed
+#if R1_FUCKUP_LEVEL == 1 || R1_FUCKUP_LEVEL == 2
 	float3 	L_rgb 	= L_unpack.xyz;								// precalculated RGB lighting
-	float3 	L_hemi 	= v_hemi_wrap(N,.75f)* L_unpack.w;			// hemisphere
+	float3 	L_hemi 	= L_hemi_color*L_unpack.w;						// hemisphere
+	float3 	L_sun 	= L_sun_color*(L_base*c_sun.x+c_sun.y)*max(0,dot(N,-L_sun_dir_w));	// sun
+	float3 	L_final	= L_rgb + L_hemi + L_sun + L_ambient;
+#else
+	float3 	L_rgb 	= L_unpack.xyz;								// precalculated RGB lighting
+	float3 	L_hemi 	= v_hemi_wrap(N,.75f)* L_unpack.w;					// hemisphere
 	float3 	L_sun 	= v_sun_wrap_flyer (N,.25f)* (L_base*c_sun.x+c_sun.y);			// sun
 	float3 	L_final	= L_rgb + L_hemi + L_sun;
+#endif
 
 	// final xform, color, tc
 	o.TEX0.xy		= (v.misc * consts).xy;

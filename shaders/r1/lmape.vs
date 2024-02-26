@@ -25,9 +25,15 @@ vf main (v_lmap v)
 	o.tc1		= unpack_tc_lmap	(v.uv1);			// copy tc 
 	o.tch 		= o.tc1;
 	o.tc2		= calc_reflection	(pos_w, norm_w);
+	o.fog 		= calc_fogging 		(v.P);			// fog, input in world coords
+	
+#if R1_FUCKUP_LEVEL == 1 || R1_FUCKUP_LEVEL == 2
+	o.c0		= L_hemi_color*v.N.w+L_ambient;		// hemisphere+ambient
+	o.c1 		= L_sun_color*dot(norm_w,-L_sun_dir_w);  // sun
+#else
 	o.c0		= v_hemi(norm_w);	// just hemisphere
 	o.c1 		= v_sun	(norm_w);  	// sun
-	o.fog 		= calc_fogging 		(v.P);			// fog, input in world coords
+#endif
 
 	return o;
 }

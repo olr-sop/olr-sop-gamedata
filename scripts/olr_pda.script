@@ -3,14 +3,9 @@
 --Общение через КПК
 -- edit hi_flyer 28.10.18
 
-local TEXTURE_UI = "ui\\ui_pda_talking"
-
 local ignore_ini = ini_file("pda_dialogs\\ignore_npc.ltx") --НПЦ, которые не участвуют в диалогах
 
 local ui_obj = nil --Объект текущего интерфейса
-local is_wide_16 = (
-	device().width/device().height > (1024/768+0.01)
-)	--Формат экрана определен
 
 --Вызывать как "olr_pda.reinit(self.object)"
 function reinit(obj)
@@ -180,7 +175,7 @@ function pda_talk:InitControls()
 	
 	self.xml = CScriptXmlInit()
 	
-	if is_wide_16 then
+	if self.xml:is_16_9_mode() then
 		self.xml:ParseFile("pda_talk_16.xml")
 	else
 		self.xml:ParseFile("pda_talk.xml")

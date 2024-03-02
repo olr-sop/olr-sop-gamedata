@@ -128,7 +128,10 @@ function phrase_list_item:__init(item_name, id) super()
 	self.text_item:SetFont(GetFontLetterica18Russian())
 	self.text_item:SetTextComplexMode(true)
 	self.text_item:SetWidth(310)
-	self.text_item:SetTextColor(255,255,255,255)              --------------------------- self.text_item:SetTextColor(255,255,255,255)
+	self.text_item:AdjustHeightToText()
+	local lheight = self.text_item:GetHeight() * 2
+	self.text_item:SetHeight(lheight)
+	self.text_item:SetTextColor(255,255,255,255)
 	
 	self.text_item:SetText(game.translate_string(item_name))
 	
@@ -206,8 +209,6 @@ function pda_talk:InitControls()
 	self.PDA_root_top_static = self.xml:InitStatic("frame:PDA_root_top_static", self)
 	self.PDA_root_down_static = self.xml:InitStatic("frame:PDA_root_down_static", self)
 	
-    local out_text = "#root 15/FD-665#68/".."contacts/"..self.object:character_name()	
-	
 	local texture = 1
 	local text = 0
 	
@@ -244,9 +245,9 @@ function pda_talk:InitControls()
 	self.story = self.xml:InitScrollView("frame:story", self.frame)
 
 	self:Register(self.xml:Init3tButton("frame:exit_btn", self.frame), "exit_btn")
-	local out_text = "#root 15/FD-665#68/".."Ñontacts/".."partner"
+	local out_text = "#root 15/FD-665#68/".."Ñontacts/"..self.object:character_name()
     self.PDA_root_top_static:SetText(out_text)
-	local out_text_actor = "#root 15/FD-665#68/".."Ñontacts/".."actor"
+	local out_text_actor = "#root 15/FD-665#68/".."Ñontacts/"..db.actor:character_name()
 	self.PDA_root_down_static:SetText(out_text_actor)
 end
 

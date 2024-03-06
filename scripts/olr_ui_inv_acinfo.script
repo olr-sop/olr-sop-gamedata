@@ -7,57 +7,27 @@ local ptatt
 
 local repaintnow = false			
 
-function get_reputation(num)
-	if num >= -10000 and num <= -1000 then
-		return game.translate_string("Ужасная")
-	elseif num > -1000 and num <= -150 then
-		return game.translate_string("Очень плохая")
-	elseif num > -150 and num <= -50 then
-		return game.translate_string("Плохая")
-	elseif num > -50 and num <= 50 then
-		return game.translate_string("Нейтральная")
-	elseif num > 50 and num <= 150 then
-		return game.translate_string("Хорошая")
-	elseif num > 150 and num <= 1000 then
-		return game.translate_string("Очень хорошая")
-	else
-		return game.translate_string("Отличная")
-	end
-end
-
-function get_rank(num)
-	if num >= 0 and num <= 300 then
-		return game.translate_string("Новичок")
-	elseif num > 300 and num <= 600 then
-		return game.translate_string("Опытный")
-	elseif num > 600 and num <= 900 then
-		return game.translate_string("Ветеран")
-	elseif num > 900 then
-		return game.translate_string("Мастер")
-	end
-end
-
 function get_vater(num)
 	if num >= 0 and num <= 0.1 then
-		return game.translate_string("Очень сильная")
+		return game.translate_string("st_very_strong")
 	elseif num > 0.1 and num <= 0.3 then
-		return game.translate_string("Сильная")
+		return game.translate_string("st_strong")
 	elseif num > 0.3 and num <= 0.4 then
-		return game.translate_string("Средняя")
+		return game.translate_string("st_middle")
 	elseif num > 0.4 then
-		return game.translate_string("Нет")
+		return game.translate_string("st_none")
 	end
 end
 
 function get_sleep(num)
 	if num >= 0 and num <= 0.1 then
-		return game.translate_string("Очень сильная")
+		return game.translate_string("st_very_strong")
 	elseif num > 0.1 and num <= 0.3 then
-		return game.translate_string("Сильная")
+		return game.translate_string("st_strong")
 	elseif num > 0.3 and num <= 0.4 then
-		return game.translate_string("Средняя")
+		return game.translate_string("st_middle")
 	elseif num > 0.4 then
-		return game.translate_string("Нет")
+		return game.translate_string("st_none")
 	end
 end
 
@@ -102,8 +72,8 @@ class "ui_trade" (CUIScriptWnd)
 function ui_trade:__init(owner) super()
 	self.owner = owner
         self.comm = game.translate_string(db.actor:character_community())
-        self.rank = get_rank(db.actor:character_rank())                                                                                
-        self.repa = get_reputation(db.actor:character_reputation())                     
+        self.rank = game.translate_string(level.get_rank_as_text(db.actor:character_rank()))
+        self.repa = game.translate_string(level.get_reputation_as_text(db.actor:character_reputation()))
         self.vater = get_vater(db.actor:get_actor_thirst())
         self.sleep = get_sleep(db.actor:get_actor_sleep())
         self.blows = xvars.blow_count

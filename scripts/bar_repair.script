@@ -3,8 +3,8 @@
 -- edit: hi_flyer 02.06.15 (Ремонт теперь занимает время)
 --------------------------------------------------------------------------------------------------------
 
-local weapon_profit_margin = 2
-local armor_profit_margin = 2
+local weapon_profit_margin = 1.2
+local armor_profit_margin = 1.2
 
 function trader_repair_precond(trader, actor)
 	local item_in_slot_1 = db.actor:item_in_slot(1)
@@ -76,6 +76,7 @@ function trader_repiar_weapon_s2(trader, actor)
 		local item_repair_cost = math.floor( (1-item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin )
 		local time_to_repair = math.floor( (1-item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin * 2 )
 		dialogs.relocate_money(actor, item_repair_cost, "out")
+		
 	        olr.del(item_in_slot)
                 local sect = item_in_slot:section()
                 local stng = game.translate_string(sect)

@@ -1,7 +1,15 @@
 -- Различные сюжетные функции
--- hi_flyer, OLR mod 2012-2024
+-- hi_flyer, OLR mod 2012-2024 
 -- olr.beep()
 
+
+function holmi_uch_spas_fail()
+	if has_alife_info("otpravlaet_spat_gg_done") or has_alife_info("fobos_dead_mil") or has_alife_info("fobos_dead_mil_uchen") then
+		return true
+	else
+		return false
+	end
+end
 
 function has_radweaknow()
 	if xvars.count_rad_weak > 0.0020 then
@@ -14,7 +22,7 @@ end
 function esc_polter_dead_st()
 	olr.beep()
 	db.actor:change_character_reputation(15)
-	news_manager.send_tip(db.actor, "Мессер, похоже, тварь в деревне мертва. Можешь возвращаться.", 5, "trader", 25000)
+	news_manager.send_tip(db.actor, "Мессер, похоже, тварь в деревне мертва - можешь возвращаться.", 5, "trader", 25000)
 end
 
 
@@ -129,7 +137,7 @@ end
 
 
 function jaba_otvet_start_done()
-	news_manager.send_tip(db.actor, "Черт, приближается выброс. Я перехватил их радиопередачу, все они сейчас ломанулись на их базу. Артефакт должен быть где-то там. Погоди, сейчас подъедет сталкер на Ниве, поговори с ним.", 2, "trader", 25000)
+	news_manager.send_tip(db.actor, "Черт, приближается выброс. Я перехватил их радиопередачу: все они сейчас ломанулись на их базу. Артефакт должен быть где-то там. Погоди, сейчас подъедет сталкер на Ниве, поговори с ним.", 2, "trader", 25000)
 	level.set_weather_fx("surge_day")
 	olr.blow_add(500)
 	olr.info("mil_quest_art_spawn_naparnik")
@@ -139,7 +147,7 @@ end
 function give_battery_charge()
 	olr.give_item("battery_change")
 	olr.beep()
-	news_manager.send_tip(db.actor, "Сообщение: Наука, ты спрячься там у себя, а ты, зомбированный, давай выходи по-доброму!", 3, "exo_neutral", 20000)
+	news_manager.send_tip(db.actor, "Сообщение: Наука, ты спрячься там у себя! А ты, зомбированный, давай выходи по-доброму!", 3, "exo_neutral", 20000)
 end
 
 
@@ -389,7 +397,7 @@ end
 
 function dopseif_bar_done()
 	olr.beep()
-	news_manager.send_tip(db.actor, "Ремонтник: Насчёт сейфа. Можешь подходить, всё готово, он в хате стоит уже.", nil, "af_merger", 10000)
+	news_manager.send_tip(db.actor, "Ремонтник: Насчёт сейфа: можешь подходить, всё готово - он в хате стоит уже.", nil, "af_merger", 10000)
 	olr.del_by_name("lvl5_bar_physic_object_0028")
 	olr.to_online("lvl5_bar_inventory_box_dopseif")
 end
@@ -471,7 +479,7 @@ end
 
 function kill_dolina_malboro_dead_all_spaw_now()
 	olr.beep()
-	news_manager.send_tip(db.actor, "Осведомитель, группа в Долине уже мертва. Опоздал я немного.", nil, "act", 30000)
+	news_manager.send_tip(db.actor, "Осведомитель, группа в Долине уже мертва - опоздал я немного.", nil, "act", 30000)
 	news_manager.send_tip(db.actor, "Осведомитель: Понял тебя. Видимо, Долг уже подсуетился пораньше. Жди инфу о следующей группе, по моим данным, она последняя.", 4, "flash", 30000)
 	olr_timers.st_timer("osved_turisty_band_kill", 414, "nick.osved_turisty_band_kill()")
 end
@@ -548,31 +556,31 @@ end
 
 function sim_dialog_aboutlevel(obj,act)
 	if level.name() == "lvl1_escape" then
-		lm_where = "Предбанник Зоны, армейский кордон. В погребе за деревенькой, возле армейского блокпоста, найдешь торговца. Соваться на блокпост и попадаться на глаза солдатам не советую: у них приказ стрелять без предупреждения. Убивать солдат нельзя, только в крайнем случае, за каждого убитого торговцу приходится расплачиваться, и он не будет доволен таким раскладом. На равнинах крупные стаи слепых псов, суются к ним только смертники."
+		lm_where = "Предбанник Зоны, армейский кордон. В погребе за деревенькой, возле армейского блокпоста, найдешь торговца. Соваться на блокпост и попадаться на глаза солдатам не советую: у них приказ стрелять без предупреждения. Убивать солдат нельзя, только в крайнем случае, за каждого убитого торговцу приходится расплачиваться, и он не будет доволен таким раскладом. На равнинах крупные стаи слепых псов - суются к ним только смертники."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl2_garbage" then
-		lm_where = "Это большая вонючая свалка, куда после аварии в 86-ом году свозили горы радиоактивного мусора: разбитые краны, техника, останки старых построек. Здесь в основном новички крутятся и, само собой, бандиты, куда ж без них. Можно встретить мутантов, можно найти артефактов по мелочи, но лучше здесь надолго не останавливаться. Дальше очень много радиационных очагов - без защиты туда нельзя."
+		lm_where = "Это большая вонючая свалка, куда после аварии в 86-ом году свозили горы радиоактивного мусора: разбитые краны, технику, останки старых построек. Здесь в основном новички крутятся и, само собой, бандиты, куда ж без них. Можно встретить мутантов, можно найти артефактов по мелочи, но лучше здесь надолго не останавливаться. Дальше очень много радиационных очагов - без защиты туда нельзя."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl3_agroprom" then
-		lm_where = "Сталкеры называют эту территорию мертвой - тут слишком сильная радиация. Если продвигаться в глубь территории, то выйдешь на радиоактивные равнины. Можно найти мелкое ржавое озеро, все оно заполнено останками машин, - одна большая куча ржавого хлама, слегка покрытая водой. Еще можно найти старый институт и фабрику, только она слишком обросла какой-то мутировавшей гадостью. Без противогаза не ходи - на раз схлопочешь дозу."
+		lm_where = "Сталкеры называют эту территорию мертвой: тут слишком сильная радиация. Если продвигаться в глубь территории, то выйдешь на радиоактивные равнины. Можно найти мелкое ржавое озеро, все оно заполнено останками машин - по сути, это одна большая куча ржавого хлама, слегка покрытая водой. Еще можно найти старый институт и фабрику, только она слишком обросла какой-то мутировавшей гадостью. Без противогаза не ходи - на раз схлопочешь дозу."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl4_darkdolina" then
-		lm_where = "Это Темная Долина, тут всегда мрачно и туманно. Часто идет дождь. Ко всему, здесь одна из самых высоких концентраций аномалий - можно разжиться неплохими артефактами, а можно легко расстаться с жизнью. Обязательно встретишь ветеранов, они здесь денежки зарабатывают, вытаскивая из самой задницы артефакты. Слышал, говорили про банду Слизней, типа опять появились, на самом деле хрен знает, их вроде перестреляли уже всех. Есть вход в лабораторию, только оттуда никто не возвращался, потому не советую туда соваться. Вроде карлики... А может, и что пострашнее."
+		lm_where = "Это Темная Долина, тут всегда мрачно и туманно, часто идет дождь. Ко всему, здесь одна из самых высоких концентраций аномалий - можно разжиться неплохими артефактами, а можно легко расстаться с жизнью. Обязательно встретишь ветеранов, они здесь денежки зарабатывают, вытаскивая из самой задницы артефакты. Слышал, говорили про банду Слизней, типа опять появились. На самом деле хрен знает, их вроде перестреляли уже всех. Есть вход в лабораторию, только оттуда никто не возвращался, потому не советую туда соваться. Вроде карлики... А может, и что пострашнее."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl5_bar" then
-		lm_where = "До аварии в 86-ом это был обычный поселок городского типа. Теперь, как понимаешь, это уже разваленные остатки бывшего поселка. В местной подземной кафешке продовольственного магазина найдешь бар сталкеров, тут собираются сталкеры со всей Зоны, местный торговец работает здесь барменом... содержит, так сказать, помещение. Тебе туда, если хочешь поторговать, пообщаться и интересное задание получить, ну и новости последние узнаешь. Если идти от поселка, то придешь к старому заводу \"Росток\", за заводом находится база группировки Долг. База закрыта от посторонних, не советую туда ломиться."
+		lm_where = "До аварии в 86-ом это был обычный поселок городского типа. Теперь, как понимаешь, это уже разваленные остатки бывшего поселка. В местной подземной кафешке продовольственного магазина найдешь бар сталкеров, тут собираются сталкеры со всей Зоны, местный торговец работает здесь барменом... содержит, так сказать, помещение. Тебе туда, если хочешь поторговать, пообщаться и интересное задание получить, ну и новости последние узнаешь. Если идти от поселка, то придешь к старому заводу \"Росток\", за заводом находится база группировки \"Долг\". База закрыта от посторонних, не советую туда ломиться."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl6_rostok" then
-		lm_where = "Мрачный, я тебе скажу, этот заводик. Скоко наших там полегло... просто нет слов. Кровососы там развелись, гады. Уже ночами выползать начали, а они, как известно, становятся сильнее, когда крови напьются. Но говорят, что-то важное на этом заводе находится, что-то просто жизненно необходимое. Недавно вот сунулись из Долга туда, да так все и сгинули, только крики их мы целый день по округе слышали. Не ходи туда, пусть они там все сгниют, кровососы эти."
+		lm_where = "Мрачный, я тебе скажу, этот заводик. Скоко наших там полегло... просто нет слов. Кровососы там развелись, гады. Уже ночами выползать начали, а они, как известно, становятся сильнее, когда крови напьются. Говорят, что-то важное на этом заводе находится, что-то просто жизненно необходимое. Недавно вот сунулись из Долга туда, да так все и сгинули, только крики их мы целый день по округе слышали. Не ходи туда, пусть они там все сгниют, кровососы эти."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl7_yantar" then
-		lm_where = "Легендарное озеро Янтарь, как же, конечно знаю. Черное, маслянистое... Души оно сталкерские выпивает, стоит подойти к бережку - враз! И нет тебя, только оболочка пустая бултых в воду и туда... к островку, значит, в тумане плывет... И зомбяки-пустышки кругом бродят, увидят - выть начинают и за тобой, тут уж ноги делать надо, потому как много их, сталкеров бывших, сгинуло на этом озере, а теперь пустышки только бродят. Если обойти озеро и зомбяков, то лагерь научный найдешь, они там изучают что-то. Их, кстати, вертолет привез, он же им регулярно провизию поставляет, так что они там хорошо окопались. С ними потолковать можно, они артефакты покупают, даже что-то выполнить могут попросить."
+		lm_where = "Легендарное озеро Янтарь, как же, конечно знаю. Черное, маслянистое... Души оно сталкерские выпивает, стоит подойти к бережку - враз! И нет тебя, только оболочка пустая бултых в воду и туда... к островку, значит, в тумане плывет... И зомбяки кругом, увидят - выть начинают и за тобой, тут уж ноги делать надо, потому как много их, сталкеров бывших, сгинуло на этом озере, а теперь пустышки только бродят. Если обойти озеро и зомбяков, то лагерь научный найдешь, они там изучают что-то. Их, кстати, вертолет привез, он же им регулярно провизию поставляет, так что они там хорошо окопались. С ними потолковать можно, они артефакты покупают, даже что-то выполнить могут попросить."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl9_military" then
@@ -580,7 +588,7 @@ function sim_dialog_aboutlevel(obj,act)
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl11_deadcity" then
-		lm_where = "Светлый Луч - город зомби и группировки Свобода, куда входят все анархистские ублюдки Зоны. В многоэтажках сидят снайперы-анархисты и отстреливают всех чужих. Так что дважды подумай, прежде чем соваться туда."
+		lm_where = "Светлый Луч - город зомби и группировки \"Свобода\", куда входят все анархистские ублюдки Зоны. В многоэтажках сидят их снайперы и отстреливают всех чужих. Так что дважды подумай, прежде чем соваться туда."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	local _s = CUIStatic();
@@ -605,7 +613,7 @@ end
 
 function gen_choise_exit_or_boss()
 	if has_alife_info("flyer_fly") then
-		news_manager.send_tip(db.actor, "Расскажу тебе пару шуток... перед финалом. Первая - ты не Стрелок...", 3, "unknown", 11000)
+		news_manager.send_tip(db.actor, "Расскажу тебе пару шуток перед финалом. Первая - ты не Стрелок.", 3, "unknown", 11000)
 		news_manager.send_tip(db.actor, "А вторая... Ты думаешь, я настоящий?", 6, "unknown", 11000)
 	end
 	olr.kill_mon_in_radius(db.actor:position(), 150)
@@ -614,7 +622,7 @@ end
 
 function prof_sos_talk_izlom_here_now()
 	olr.blow_add(200)
-	news_manager.send_tip(db.actor, "Сынок, помоги, подыхаю...", 1, "unknown", 7000)
+	news_manager.send_tip(db.actor, "Сынок, подыхаю - помоги мне...", 1, "unknown", 7000)
 	olr.spawn_on_obj("zombie_normal", "lvl7_yantar_smart_terrain_0016")
 	olr.spawn_on_obj("zombie_normal", "lvl7_yantar_smart_terrain_0016")
 	olr.spawn_on_obj("zombie_normal", "lvl7_yantar_smart_terrain_0016")
@@ -630,7 +638,7 @@ end
 
 
 function sos_talk_izlom_here_now2()
-	news_manager.send_tip(db.actor, "Сынок, скорее, совсем хреново мне...", 1, "unknown", 7000)
+	news_manager.send_tip(db.actor, "Сынок, скорее: совсем хреново мне...", 1, "unknown", 7000)
 	nick.gar_lamb_zombs()
 	local snd_obj = xr_sound.get_safe_sound_object([[monsters\zombies\zombie_idle_2]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -787,7 +795,7 @@ function look_yantar(obj)
 	if obj:name() == "lvl7_yantar_staler_undead_olr_0007" and not has_alife_info("dosent_kompl_dead_cheked") then
 		news_manager.send_tip(db.actor, "Доцент, кажется, нашёл твоего приятеля, только один он тут.", nil, "act", 19000)
 		news_manager.send_tip(db.actor, "Доцент: Один? Чёрт, значит, подтвердились худшие опасения. Судя по всему, они спустились в катакомбы. У них в костюмах есть встроенные маячки, сейчас попробуем активировать...", 8, "ecolog", 49000)
-		news_manager.send_tip(db.actor, "Доцент: Кажется, получилось... Да, они, судя по сигналу, глубоко под комплексом, их пятеро. Тебе нужно спуститься вниз и найти их. Вход в катакомбы находится в здании возле дороги на Светлый Луч.", 15, "ecolog", 49000)
+		news_manager.send_tip(db.actor, "Доцент: Кажется, получилось... Да, они, судя по сигналу, глубоко под комплексом, их пятеро. Тебе нужно спуститься вниз и найти их. Вход в катакомбы находится в здании возле дороги в Светлый Луч.", 15, "ecolog", 49000)
 		news_manager.send_tip(db.actor, "Ладно, разберусь.", 22, "act", 19000)
 
 		alife():create("karlito_yellow", db.actor:position():add(db.actor:direction():mul(-22)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -795,7 +803,7 @@ function look_yantar(obj)
 
 		local se_obj = alife():object("lvl_rat_level_changer_0007")
   		if se_obj then
-    			olr.add_spot_on_map( se_obj.id,"level_changer","На янтарь")
+    			olr.add_spot_on_map( se_obj.id,"level_changer","На Янтарь")
   		end
 
 	
@@ -908,7 +916,7 @@ end
 
 
 function chaes_anoms_dell_jurn()
-	news_manager.send_tip(db.actor, "Общая сеть: Сейчас находимся в районе станции. Смогли деактивировать большое количество аномалий, блокирующих подходы к саркофагу. Кто рядом, просим поддержки, тут повсюду мутанты.", 28, "freedom", 19000)
+	news_manager.send_tip(db.actor, "Общая сеть: Сейчас находимся в районе станции. Смогли деактивировать большое количество аномалий, блокирующих подходы к саркофагу. Кто рядом, просим поддержки! Тут повсюду мутанты.", 28, "freedom", 19000)
 	olr.kill_mon_in_radius(db.actor:position(), 50)
 	olr.del_by_name("zone_gravi_zone_zeh_1")
 	olr.del_by_name("zone_mosquito_bald0030_stan")
@@ -1503,7 +1511,7 @@ function nov_marevo_gtfodel_arra_now()
 	olr.del_by_name("lvl3_agroprom_stalker_0039")
 	olr.del_by_name("lvl3_agroprom_lights_hanging_lamp")
 	olr.del_by_name("lvl3_agroprom_space_restrictor_0007")
-	news_manager.send_tip(db.actor, "Ярик: Спасибо ещё раз тебе, братка! Не забудь с Информатором поговорить, он уже в курсе.", nil, "default", 39000)
+	news_manager.send_tip(db.actor, "Ярик: Спасибо ещё раз тебе, братка! Не забудь с Осведомителем поговорить, он уже в курсе.", nil, "default", 39000)
 end
 
 function actor_problem_with_stalkers()
@@ -1552,6 +1560,7 @@ end
 function esc_blockpost_normal_timer()
 	if not olr_timers.has_timer("esc_blockpost_normal_timer_now") then
 		if not has_alife_info("choose_destiny_done") then
+		if not has_alife_info("kvest_bar_2_dialog_start") then
 			local rnd = math.random(160,224)
 			olr_timers.st_timer("esc_blockpost_normal_timer_now", rnd, "nick.esc_blockpost_normal_timer_now()")
 			local rnd = math.random(1,2)
@@ -1560,6 +1569,7 @@ function esc_blockpost_normal_timer()
 					news_manager.send_tip(db.actor, "Жаба: Тебя военные видели - принимаю их сигнал рации. Прячься где-нибудь, пока не пристрелили!", 2, "trader", 39000)
 				end
 			end
+		end
 		end
 	end
 end
@@ -1571,7 +1581,7 @@ end
 function veterans_go_to_ploskd()
 	olr.snd([[ol3\koan\L_discombat]])
 	olr.blow_add(400)
-	news_manager.send_tip(db.actor, "Гацула: Так, отряд, время. Выдвигаемся!", nil, "default", 39000)
+	news_manager.send_tip(db.actor, "Гацула: Так, отряд, время - выдвигаемся!", nil, "default", 39000)
 	olr.del_by_name("lvl6_rostok_physic_object_0157")
 	olr.del_by_name("lvl5_bar_physic_object_1341")
 	olr.spawn_on_obj("chimera_midl", "lvl5_bar_smart_terrain_0008")
@@ -1720,7 +1730,7 @@ end
 
 function doki_seven_online()
 	olr.to_online("lvl14_stancia_jornal_7") 
-	news_manager.send_tip(db.actor, "Обращение к тем, кто планирует идти на территорию станции, дорога туда, кажется, скоро будет свободна. Мы давно потеряли группу, которая обладала очень важными сведениями, особенную ценность представляла собой красная папка бумаг. Тем, кто добудет эту информацию, следует связаться с нашим руководством.", 50, "freedom", 59000) 
+	news_manager.send_tip(db.actor, "Обращение к тем, кто планирует идти на территорию станции, дорога туда, кажется, скоро будет свободна: мы давно потеряли группу, которая обладала очень важными сведениями, особенную ценность представляла собой красная папка бумаг. Тем, кто добудет эту информацию, следует связаться с нашим руководством.", 50, "freedom", 59000) 
 end
 
 
@@ -1911,7 +1921,7 @@ function navodka_jurnal_finded_1()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №1 - ничего найти не смогли. Нет никаких сведений, где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №1 - ничего найти не смогли. Нет никаких сведений, где они - нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
 		return
 	end
 	if cnt > 0 then
@@ -1953,7 +1963,7 @@ function navodka_jurnal_finded_2()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №2 - ничего найти не смогли. Нет никаких сведений, где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №2 - ничего найти не смогли. Нет никаких сведений, где они - нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
 		return
 	end
 	if cnt > 0 then
@@ -1993,7 +2003,7 @@ function navodka_jurnal_finded_3()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №3 - ничего найти не смогли. Нет никаких сведений, где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №3 - ничего найти не смогли. Нет никаких сведений, где они - нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
 		return
 	end
 	if cnt > 0 then
@@ -2034,7 +2044,7 @@ function navodka_jurnal_finded_4()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №4 - ничего найти не смогли. Нет никаких сведений, где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №4 - ничего найти не смогли. Нет никаких сведений, где они - нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
 		return
 	end
 	if cnt > 0 then
@@ -2076,7 +2086,7 @@ function navodka_jurnal_finded_5()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №5 - ничего найти не смогли. Нет никаких сведений, где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №5 - ничего найти не смогли. Нет никаких сведений, где они - нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
 		return
 	end
 	if cnt > 0 then
@@ -2116,7 +2126,7 @@ function navodka_jurnal_finded_6()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №6 - ничего найти не смогли. Нет никаких сведений, где они, нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
+		news_manager.send_tip(db.actor, "Осведомитель: Насчёт поиска секретных документов №6 - ничего найти не смогли. Нет никаких сведений, где они - нужен куда более дорогостоящий поиск. Подходи, можем договориться.", nil, "flash", 29000)
 		return
 	end
 	if cnt > 0 then
@@ -2244,7 +2254,7 @@ function chekart_belt()
 		end
 	end
 	if artcnt > 1 then
-		local m_where = "Нужно оставить только один артефакт на поясе. Возникают помехи при сканировании."
+		local m_where = "Нужно оставить только один артефакт на поясе: возникают помехи при сканировании."
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 		return
 	end
@@ -2269,7 +2279,7 @@ function chekart_belt()
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 		return
 	end
-	local m_where = "Хм, какой-то сбой - что-то создаёт помехи на вашем поясе артефактов."
+	local m_where = "Хм, какой-то сбой: что-то создаёт помехи на вашем поясе артефактов."
 	db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 end
 
@@ -2346,10 +2356,10 @@ end
 end
 
 function ty_norm_ne_done_try_spsgo_art()
-	news_manager.send_tip(db.actor, "Мессер, спасибо ещё раз за то, что помог мне там, на Тихих Холмах. Я тут вспомнил кое-что интересное, на базе психов услышал, будет тебе в благодарность.", nil, "zombied", 29000)
+	news_manager.send_tip(db.actor, "Мессер, спасибо ещё раз за то, что помог мне там, на Тихих Холмах. Я тут вспомнил кое-что интересное, на базе психов услышал - будет тебе в благодарность.", nil, "zombied", 29000)
 	olr.info("encyclopedy_zone_artifact_af-dummy-glassbeads")
 	olr.del_by_name("lvl9_military_stalker_0027")
-	news_manager.send_tip(db.actor, "Получена информация об артефакте: Мертвая Голова", 6, "default", 9000)
+	news_manager.send_tip(db.actor, "Получена информация об артефакте: Мертвая голова", 6, "default", 9000)
 end
 
 function ty_norm_ne_done_try_spsgo()
@@ -2438,8 +2448,13 @@ end
 
 function otdaem_device_pda_majors(first_speaker, second_speaker)
 nik_dialog.out_item_much("device_pda_majors",1)
-dialogs.relocate_money(first_speaker, 650, "in")
-olr.give_item("medkit")
+dialogs.relocate_money(first_speaker, 2650, "in")
+if level.name() == "lvl5_bar" then
+	news_manager.send_tip(db.actor, "Ага, значит завалил этого гада? Ну, это от меня, тебе персональный подарок.", 1, "barman", 19000)
+	olr.give_item("medkit")
+	olr.give_item("wpn_striker")
+	olr.give_item("wpn_desert_eagle")
+end
 end
 function precond_device_pda_majors()
      return nik_dialog.item_much("device_pda_majors",1) ~= false 
@@ -2654,7 +2669,7 @@ function ratlab_strt_onln()
 	if sp1_place then
 		olr.add_spot_on_map( sp1_place.id,"crlc_mdl", "Место, где проводили замеры учёные." )
 	end
-	news_manager.send_tip(db.actor, "Короче, если удастся проникнуть внутрь, и если что найдешь интересного там, под Свалкой, тащи сразу мне, наградой не обижу.", 15, "trader", 29000)
+	news_manager.send_tip(db.actor, "Короче, если удастся проникнуть внутрь и найти что интересного там, под Свалкой, то тащи сразу мне, наградой не обижу.", 15, "trader", 29000)
 end
 
 function jaba_rat_lowlevels() -- старт квеста на нижние уровни
@@ -2693,7 +2708,10 @@ end
 function kanistra_savkin()
 	olr.give_item("kanistra_benz")
 	olr.give_item("kanistra_benz")
-	news_manager.send_tip(db.actor, "Не забудь, пригнать грузовик нужно к КПП, который за заводом на Кордоне. Там уже должен будет ждать наш человек, из гражданских, он перегонит его дальше на большую землю.", 15, "ecolog", 29000)
+	olr.give_item("item_razradnik")
+	olr.give_item("item_razradnik")
+	olr.give_item("item_razradnik")
+	news_manager.send_tip(db.actor, "Не забудь: пригнать грузовик нужно к КПП, который за заводом на Кордоне. Там уже должен будет ждать наш человек, из гражданских, он перегонит его дальше на Большую землю.", 15, "ecolog", 29000)
 end
 
 function kamaz_priehal_kordon_sav()
@@ -2749,7 +2767,7 @@ end
 
 function ratcat_digger_cheked()
 	olr.del_by_name("lvl_rat_staler_undead_olr_0000")
-	news_manager.send_tip(db.actor, "И тут завал. Видимо, разбирать надо будет. Место интересное, наверняка можно чего найти ценного. Нужно Жабе рассказать, что тут увидел, может, подгонит чего...", nil, "act", 39000)
+	news_manager.send_tip(db.actor, "И тут завал - видимо, разбирать придется. Место интересное, наверняка можно чего найти ценного. Нужно Жабе рассказать, что тут увидел, может, подгонит чего.", nil, "act", 39000)
 end
 
 function clear_zavar_gar_rat()
@@ -2823,7 +2841,7 @@ function sim_informator_lastnews(obj,act)
 	local tab = news_main.news_stack
 	local tabraz = #tab
 	if tabraz == 0 then
-		local m_where = "Данные ещё обновляются, зайди позже."
+		local m_where = "Данные ещё обновляются - зайди позже."
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 		return
 	end
@@ -2831,12 +2849,12 @@ function sim_informator_lastnews(obj,act)
 		local npc_name = ""
 		local textn = v.text
 		if v.author_id == nil then
-			local m_where = "Ошибка получения данных, зайди позже."
+			local m_where = "Ошибка получения данных - зайди позже."
 			db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 			return
 		end
 		if textn == nil then
-			local m_where = "Хм, ошибка получения данных, зайди позже."
+			local m_where = "Хм, ошибка получения данных - зайди позже."
 			db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 			return
 		end
@@ -2850,7 +2868,7 @@ function sim_informator_lastnews(obj,act)
 			db.actor:give_talk_message(""..npc_name.." - "..textn.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 			return
 		else
-			local m_where = "Нет никаких новостей пока, зайди позже."
+			local m_where = "Нет никаких новостей пока - зайди позже."
 			db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 			return
 		end
@@ -2884,7 +2902,7 @@ function sim_npc_mainquest(obj,act)
 		return
 	end
 	if xvars.npcs_tasks[obj:name()] == "reason_zone" then
-		m_where = "Скажу прямо: хочу найти причину возникновения Зоны и добиться ее исчезновения. Я думаю, необходимо остановить распространение всей этой заразы. В конце концов, если не я, то кто?"
+		m_where = "Скажу прямо, хочу найти причину возникновения Зоны и добиться ее исчезновения. Я думаю, необходимо остановить распространение всей этой заразы. В конце концов, если не я, то кто?"
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 		this.save_dial_zel(m_where)
 		return
@@ -2896,7 +2914,7 @@ function sim_npc_mainquest(obj,act)
 		return
 	end
 	if xvars.npcs_tasks[obj:name()] == "cash" then
-		m_where = "А ты как думаешь? Конечно, бабки! Чем ещё тут можно заниматься? Не понимаю всяких ученых, что тут за идею чалятся."
+		m_where = "А ты как думаешь? Конечно, бабки! Чем ещё тут можно заниматься? Не понимаю всяких ученых, которые тут за идею чалятся."
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 		this.save_dial_zel(m_where)
 		return
@@ -3057,7 +3075,7 @@ function flying_corpses()
 end
 
 function actor_robbered_timer_sms()
-	news_manager.send_tip(db.actor, "Ха! Какой-то кадр развалился под открытым небом, десятый сон видит. Да ещё и алкаш, кажется. Ну, хабаром и поделился со мной...", nil, "unknown", 39000)	
+	news_manager.send_tip(db.actor, "Ха! Какой-то кадр развалился под открытым небом, десятый сон видит. Кажется, ещё и алкаш был - ну, хабаром и поделился со мной...", nil, "unknown", 39000)	
 end
 
 function zombu_ressurect(victim,who)
@@ -3172,9 +3190,9 @@ end
 
 function gen_prisli_kdverin()
 	nick.enable_senf()
-	news_manager.send_tip(db.actor, "Пришли... Только, похоже, дверь закрыта. Возможно, код находится где-то здесь или, может, у тебя есть какие записи?", nil, "default", 39000)
+	news_manager.send_tip(db.actor, "Пришли... Только, похоже, дверь закрыта. Думаю, код находится где-то здесь или, может, у тебя есть какие записи?", nil, "default", 39000)
 	if has_alife_info("glaz_fila_checked") then
-		news_manager.send_tip(db.actor, "Нужно проверить ПДА, возможно, что-то есть...", 11, "act", 39000)
+		news_manager.send_tip(db.actor, "Нужно проверить ПДА, возможно, что-то найдется...", 11, "act", 39000)
 	end
 end
 
@@ -3248,7 +3266,7 @@ end
 
 function chaes_1_sms()
 
-	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сообщение:".."\\n".."%c[255,160,160,160]Стрелок, приём. Ты уже на станции? Это... Впрочем, лучше нам встретиться, я тоже здесь. Точнее, уже за ней. На территории, где стоит что-то вроде генераторов. Жду.".."".."\n", nil, "default", 30000)
+	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сообщение:".."\\n".."%c[255,160,160,160]Стрелок, приём. Ты уже на станции? Это... Впрочем, лучше нам встретиться, я тоже здесь. Точнее, уже за ней, на территории, где стоит что-то вроде генераторов. Жду.".."".."\n", nil, "default", 30000)
 	local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_news]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 
@@ -3336,7 +3354,7 @@ end
 
 function del_kamaz_questmono()
 	olr.del_by_name("lvl7_dcccdewry_m_car_0000")
-	news_manager.send_tip(db.actor, "Хром: Всем внимание на дорогу с болот. Сейчас мы хоть и выбили фанатиков оттуда, но не факт, что они снова не появятся.", 42, "freedom", 39000)
+	news_manager.send_tip(db.actor, "Хром: Всем внимание на дорогу с Болот. Сейчас мы хоть и выбили фанатиков оттуда, но не факт, что они снова не появятся.", 42, "freedom", 39000)
 end
 
 function yan_figura_mosk_st()
@@ -3361,7 +3379,7 @@ function yan_figura_mosk_st()
 end
 
 function ten2()
-	news_manager.send_tip(db.actor, "Нечто не принадлежащее этому миру. Если ты уничтожишь меня, то получишь ее в наследство, как я однажды получил ее, давным-давно убив одного сталкера. Но она не так проста, как кажется, - тень ведет носителя к неминуемой гибели, рано или поздно она приведет и тебя к смерти. Последуй моему примеру.", 2, "unknown", 39000)
+	news_manager.send_tip(db.actor, "Нечто не принадлежащее этому миру. Если ты уничтожишь меня, то получишь ее в наследство, как я однажды получил, давным-давно убив одного сталкера. Но она не так проста, как кажется: тень ведет носителя к неминуемой гибели - рано или поздно она приведет и тебя к смерти. Последуй моему примеру.", 2, "unknown", 39000)
 	olr.enable_walk()
     	level.show_indicators()
     	level.enable_input()
@@ -3472,7 +3490,7 @@ function blowout_time_ret_jaba()
 		return
 	end
 	if cur <= 130 and cur >= 60 then
-		item_name_and_price = game.translate_string("Начнётся скоро, так что лучше позаботиться об укрытии.")
+		item_name_and_price = game.translate_string("Начнётся скоро - лучше позаботиться об укрытии.")
 		db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "iconed_trade_info")
 		--log1("начнётся с минуты на минуту")
 		return
@@ -3501,12 +3519,12 @@ end
 
 
 function scary_greh_finded_now()
-	news_manager.send_tip(db.actor, "Что это за место и кто все эти люди? Лучше тут не задерживаться, надо скорее возвращаться в бар.", nil, "act", 29000)
+	news_manager.send_tip(db.actor, "Что это за место? Кто эти люди? Лучше тут не задерживаться - надо скорее возвращаться в бар.", nil, "act", 29000)
 end
 
 function onlineered_docs_rostok()
 	olr.to_online("lvl6_rostok_bar_golg_docs")
-	news_manager.send_tip(db.actor, "Будь осторожен на территории завода - наш отряд заметил подозрительную активность там.", 12, "dolg_voronin", 9000)
+	news_manager.send_tip(db.actor, "Будь осторожен на территории завода: наш отряд наблюдал там подозрительную активность.", 12, "dolg_voronin", 9000)
 end
 
 function mil_dok_feik_enable()
@@ -3538,7 +3556,7 @@ function morak_talk_one_done()
 end
 
 function morak_zombvoen()
-	news_manager.send_tip(db.actor, "Моряк: Забыл сказать совсем: ты в районе Холмов будь осторожнее, в последнее время видели много зомбированных армейских частей. Видимо, с Радара прут. Да, если есть желание подзаработать, подваливай, есть одно дельце.", nil, "freedom", 39000)
+	news_manager.send_tip(db.actor, "Моряк: Забыл тебе сказать совсем: ты в районе Холмов будь осторожнее, в последнее время там видели много зомбированных армейских частей. Видимо, с Радара прут. Да, и если есть желание подзаработать, подваливай, имеется одно дельце.", nil, "freedom", 39000)
 	olr.info("morak_job_two")
 end
 
@@ -3765,7 +3783,7 @@ function vorglaz_way_dolgbazaa_zombigo()
 	olr.kill_mon_in_radius(db.actor:position(), 140)
 	news_manager.send_tip(db.actor, "Вороний глаз: Что за... Что с блокпостом? Я проверю свой тайник, будь здесь.", nil, "dolg", 9000)
 	news_manager.send_tip(db.actor, "Мессер: Хорошо.", 8, "act", 9000)
-	news_manager.send_tip(db.actor, "Мессер: Нужно проверить документы, что парень вернул мне...", 16, "act", 9000)
+	news_manager.send_tip(db.actor, "Мессер: Нужно проверить документы, которые парень вернул мне...", 16, "act", 9000)
 
 	olr.del_by_name("lvl5_bar_physic_object_0214")
 	olr.del_by_name("lvl5_bar_physic_object_0798")
@@ -3801,7 +3819,7 @@ function vorglaz_away_from_garbage()
 
 	nick.kill_all_dolgs_garbage()
 	level.add_pp_effector("black.ppe", 20131, false)
-	news_manager.send_tip(db.actor, "Вороний глаз: Мессер, встретимся на Свалке, жду тебя там. А со Свалки уже в Бар, нужно всё рассказать генералу.", nil, "dolg", 9000)
+	news_manager.send_tip(db.actor, "Вороний глаз: Мессер, встретимся на Свалке - жду тебя там. А со Свалки уже в Бар, нам нужно всё рассказать генералу.", nil, "dolg", 9000)
 	olr.del_by_name("lvl4_darkdolina_stalker_0036")
 	local sobj = alife():object("lvl2_garbage_stalker_0055") 
 	if sobj then 
@@ -3860,7 +3878,7 @@ function killers_specops_go()
 		olr.spawn_on_obj("gar_dolg_respawn_2", "lvl4u_darklab_physic_object_0376")
 	end
 	news_manager.send_tip(db.actor, "Общий канал: Где он?", 10, "unknown", 9000)
-	news_manager.send_tip(db.actor, "А вы его, видать, не на шутку боитесь, ишь как засуетились. Ах, вы опоздали, он... был у нас в руках, был, да сплыл!", 15, "killer", 9000)
+	news_manager.send_tip(db.actor, "А вы его, видать, не на шутку боитесь, ишь как засуетились! Надо сказать, вы опоздали. Он... был у нас в руках, был да сплыл.", 15, "killer", 9000)
 	olr_timers.st_timer("chaes_ratss", 32, "nick.vorglaz_killers_spawn()")	
 end
 
@@ -3916,7 +3934,7 @@ end
 
 function dolcutone()
 	olr.kill_mon_in_radius(db.actor:position(), 100)
-	news_manager.send_tip(db.actor, "Мы выплатим сумму, которая позволит вам занять лидирующее место в этом регионе.", nil, "unknown", 9000)
+	news_manager.send_tip(db.actor, "Мы выплатим сумму, которая позволит вам занять лидирующую позицию в этом регионе.", nil, "unknown", 9000)
 	olr_timers.st_timer("dolcutont", 8, "nick.dolcutt()")		
 end
 
@@ -3938,7 +3956,7 @@ end
 
 function dolcuttrp()
 	olr.kill_mon_in_radius(db.actor:position(), 100)
-	news_manager.send_tip(db.actor, "Не проще. Так вы будете продолжать охоту? ", nil, "unknown", 9000)
+	news_manager.send_tip(db.actor, "Не проще. Так вы будете продолжать поиск? ", nil, "unknown", 9000)
 	olr_timers.st_timer("dolcutontchs", 8, "nick.dolcuttchs()")		
 end
 
@@ -3950,7 +3968,7 @@ end
 
 function dolcuttrpse()
 	olr.kill_mon_in_radius(db.actor:position(), 100)
-	news_manager.send_tip(db.actor, "Во-первых, ваша группа не единственная. Во-вторых, мы просто могли бы сообщить остальным, где вы вырыли свою нору. К тому же, после сегодняшнего цирка, когда вся ваша шайка в течение получаса не могла справиться с одним чокнутым зомби...", nil, "unknown", 29000)
+	news_manager.send_tip(db.actor, "Во-первых, ваша группа не единственная. Во-вторых, мы просто могли бы сообщить остальным, где вы вырыли свою нору. К тому же после сегодняшнего цирка, когда вся ваша шайка в течение получаса не могла справиться с одним чокнутым зомби...", nil, "unknown", 29000)
 	olr_timers.st_timer("dolcutontchse", 8, "nick.dolcuttchse()")		
 end
 
@@ -3965,7 +3983,7 @@ function dolcuttchse()
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
 	xr_effects.enable_ui()
-	news_manager.send_tip(db.actor, "Значит, меня заказали-таки военные сталкеры, но зачем?", 15, "act", 9000)
+	news_manager.send_tip(db.actor, "Значит, меня заказали-таки военные сталкеры, но зачем им это?", 15, "act", 9000)
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0013")
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0012")
 	olr.del_by_name("lvl4_darkdolina_physic_object_0364")
@@ -4001,7 +4019,7 @@ function nagrada_escape_dolg()
 	olr.give_item("wpn_tiss")
 	olr_timers.st_timer("barmmntchse", 8, "nick.barman_gotodolkick()")
 	if not has_alife_info("dolina_killer_dolg_escape_done_krav_have") then
-		news_manager.send_tip(db.actor, "Майор Кравцов: Мессер, с братом моим поговорил, молодец. Ко мне тоже зайди, есть дело.", nil, "dolg_mask1", 25000)
+		news_manager.send_tip(db.actor, "Майор Кравцов: Мессер, с братом моим поговорил - молодец. Ко мне тоже зайди, есть дело.", nil, "dolg_mask1", 25000)
 	end
 end
 
@@ -4012,7 +4030,7 @@ function barman_gotodolkick()
 	olr.to_offline("gar_bandit_stroyka3")
 	olr.to_offline("gar_bandit_stroyka4")
 	olr.to_offline("gar_bandit_stroyka5")
-	news_manager.send_tip(db.actor, "Мессер, что за дела у тебя?! Мы же договорились с тобой, что ты будешь искать документы в лаборатории! Долго работаешь, сталкер, ох как долго! Короче, дуй в Долину, найдешь там одного прихвостня, колоритный такой урка, вот с ним насчёт лаборатории и перетри. Он должен знать что-то насчёт неё. Всё, конец связи.", nil, "barman", 79000)
+	news_manager.send_tip(db.actor, "Мессер, что за дела у тебя?! Мы же договорились с тобой, что ты будешь искать документы в лаборатории! Долго работаешь, сталкер, ох как долго! Короче, дуй в Долину: найдешь там одного прихвостня, колоритный такой урка, вот с ним насчёт лаборатории и перетри. Он должен знать что-то насчёт неё. Всё, конец связи.", nil, "barman", 79000)
 end
 
 function kravcov_brother_spawn_bar()
@@ -4029,7 +4047,7 @@ end
 
 function kravcov_brother_killer_start()
 	olr.beep()
-	news_manager.send_tip(db.actor, "Майор Кравцов: Я знаю, что ты сейчас работаешь на Клан Убийц. Твоё право, но мне нужна помощь, и только ты сможешь мне помочь - своих ребят я отправить не смогу.", 10, "dolg_mask1", 45000)
+	news_manager.send_tip(db.actor, "Майор Кравцов: Я знаю, что ты сейчас работаешь на клан Убийц. Твоё право, но мне нужна помощь, и только ты сможешь мне помочь, потому что своих ребят я отправить не смогу.", 10, "dolg_mask1", 45000)
 	olr_timers.st_timer("kravcov_brother_killer_start_two", 12, "nick.kravcov_brother_killer_start_two()")
 	olr.del_by_name("lvl5_bar_physic_object_0787")
 	olr.del_by_name("lvl5_bar_explosive_fuelcan")
@@ -4181,7 +4199,7 @@ function dolina_killers_acessss()
 	olr.beep()
 	local snd_obj = xr_sound.get_safe_sound_object([[ol3\voices\merc_radio_speech]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	news_manager.send_tip(db.actor, "Зайди к нам, есть разговор. Оружием не свети особо на нашей базе - никто тебя не тронет, если сам палить не начнешь. Отправил координаты.", nil, "killer", 39000)
+	news_manager.send_tip(db.actor, "Зайди к нам, есть разговор. Оружием не свети особо на нашей базе: никто тебя не тронет, если сам палить не начнешь. Отправил координаты.", nil, "killer", 39000)
 	olr.del_by_name("dolg_zone_0001")
 	local sobj = alife():object("lvl4_darkdolina_physic_object_0361") 
 	if sobj then 
@@ -4298,7 +4316,7 @@ function yan_biogroup_online()
 	olr.to_online("yan_contr_home_lamp1_0004")
 	olr.to_online("yan_contr_home_lamp1_0005")
 	olr.to_online("lvl7_yantar_lights_hanging_lamp_0001")
-	news_manager.send_tip(db.actor, "Внимание всем! Рядом с озером Янтарь открылась новая лабораторная группа. Есть работа для сталкеров. Всем, кто хочет подзаработать - подходите.", nil, "artefact", 45000)
+	news_manager.send_tip(db.actor, "Внимание всем! Рядом с озером Янтарь открылась новая лабораторная группа - есть работа для сталкеров. Всем, кто хочет подзаработать - подходите.", nil, "artefact", 45000)
 	olr.del_by_name("lvl5_bar_physic_object_0603")	
 	olr.del_by_name("lvl7_yantar_controller_tubeman")	
 	olr.del_by_name("lvl7_yantar_stalker_0002")	
@@ -4348,7 +4366,7 @@ end
 
 
 function bar_minsk()
-	news_manager.send_tip(db.actor, "Хех, Серёга-то все же починил мотоцикл, что у бара валялся! Мотанул на радостях куда-то в сторону Тихих Холмов, придурок, и забыл, что там излучение лупит.", nil, "default", 39000)
+	news_manager.send_tip(db.actor, "Хех, Серёга-то все же починил мотоцикл, который у бара валялся! Мотанул на радостях куда-то в сторону Тихих Холмов, придурок, и забыл, что там излучение лупит.", nil, "default", 39000)
 end
 
 function daem_luparu_ds()
@@ -4359,8 +4377,8 @@ function jaba_about_esc_sleep()
 	if has_alife_info("kvest_esc_1_dialog_start") and not has_alife_info("jaba_about_esc_sleep_done") then
 		olr.info("jaba_about_esc_sleep_done")
 		olr.beep()
-		news_manager.send_tip(db.actor, "Ночь уже, советую не шастать по округе в это время. Если заночевать надумаешь, у меня рядом с бункером подвал есть. В чистом поле спать не советую - сожрут, а если не сожрут, так коллеги твои не прочь обшманать, кто мимо проходить будет.", nil, "trader", 35000)
-		news_manager.send_tip(db.actor, "Да, и ещё: ночи сейчас холодные, поэтому советую спать возле костра, шанс простудиться в наших условиях очень высок. Кроме того, не забывай костюм в надлежащем состоянии держать, лохмотья тебя не согреют особо.", 11, "trader", 35000)
+		news_manager.send_tip(db.actor, "Ночь уже - советую не шастать по округе в это время. Если заночевать надумаешь, у меня рядом с бункером подвал есть. В чистом поле спать не советую: сожрут, а если не сожрут, так коллеги твои не прочь обшманать, кто мимо проходить будет.", nil, "trader", 35000)
+		news_manager.send_tip(db.actor, "Да, и ещё, ночи сейчас холодные, поэтому советую спать возле костра: шанс простудиться в наших условиях очень высок. Кроме того, не забывай костюм в надлежащем состоянии держать, лохмотья тебя не согреют особо.", 11, "trader", 35000)
 	end
 end
 
@@ -4512,7 +4530,7 @@ end
 
 function pre_radar_off_effs_ebaa()
 	olr.del_by_name("lvl5_bar_space_restrictor_0128")
-	news_manager.send_tip(db.actor, "Мужики! Кажется, реально излучение спало! Учёные говорят, что в районе Радара его больше нет! Сейчас все ломанутся, похоже, в Припять.", nil, "default", 39000)
+	news_manager.send_tip(db.actor, "Мужики! Кажется, реально излучение спадает! Учёные говорят, что в районе Радара оно сейчас хоть и осталось, но постепенно ослабевает! Похоже, сейчас все в Припять ломанутся.", nil, "default", 39000)
 	olr_timers.st_timer("esc_son_novic", 225, "nick.esc_son_novic()")
 end
 
@@ -4695,7 +4713,7 @@ end
 
 function olr_blowout_first_hideouts()
 	olr.beep()
-	news_manager.send_tip(db.actor, "Мессер, советую искать какое-нибудь укрытие и как можно быстрее, если жить хочешь.", nil, "trader", 25000)
+	news_manager.send_tip(db.actor, "Мессер, советую искать какое-нибудь укрытие, и как можно быстрее, если жить хочешь.", nil, "trader", 25000)
 end
 
 function enemys_sms_pda_escape_mon()
@@ -4743,7 +4761,7 @@ end
 
 function garbage_timer_bigrat_done()
 	db.actor:change_character_reputation(20)
-	news_manager.send_tip(db.actor, "Говорит майор Кравцов. Ребята с блокпоста доложили, что ты вроде как справился, наблюдали за тобой. Молодец! Замолвлю словечко нашему лидеру насчёт тебя. Будет время, зайди, дело есть.", nil, "dolg_mask1", 25000)
+	news_manager.send_tip(db.actor, "Говорит майор Кравцов: ребята с блокпоста доложили, что ты вроде как справился, наблюдали за тобой. Молодец! Замолвлю словечко нашему лидеру насчёт тебя. Будет время - зайди, дело есть.", nil, "dolg_mask1", 25000)
 	olr.del_by_name("lvl2_garbage_space_restrictor_0025")
 	olr.del_by_name("lvl1_escape_stalker_0011") 
 	olr.del_by_name("lvl1_escape_stalker_0013") 
@@ -4832,10 +4850,10 @@ function docutsc_5()
 	news_manager.send_tip(db.actor, "Какой еще Мессер, не знаю я никакого Мессера! А вот свою работу я всегда узнаю... Вот этот шрам за ухом не тянет, не зудит?", nil, "dok", 5000)
 end
 function docutsc_6()
-	news_manager.send_tip(db.actor, "У меня только одно зудит и тянет - это моя память. Точнее, беспамятство.", nil, "act", 5000)
+	news_manager.send_tip(db.actor, "Меня сейчас волнует только одно - это моя память. Точнее, беспамятство.", nil, "act", 5000)
 end
 function docutsc_7()
-	news_manager.send_tip(db.actor, "Ну, после воздействия Монолита так и должно быть...", nil, "dok", 5000)
+	news_manager.send_tip(db.actor, "Ну, после воздействия Монолита это неудивительно...", nil, "dok", 5000)
 end
 function docutsc_8()
 	news_manager.send_tip(db.actor, "К чёрту эти бредни о Монолите! Доктор, вы знаете, кто я?", nil, "act", 5000)
@@ -4877,7 +4895,7 @@ function swapm_dok_hello_to_stol()
 	olr.del_by_name("lvl8_swamp_staler_undead_olr_0000")
 	olr_timers.st_timer("swapm_dok_hello", 4, "nick.swapm_dok_hello_to_stol2()")
 	level.add_pp_effector("black.ppe", 20131, false)
-	news_manager.send_tip(db.actor, "Положи его на стол. Ему надо переспать со своим новым приобретением.", 2, "dok", 5000)
+	news_manager.send_tip(db.actor, "Положи его на стол: ему надо переспать со своим новым приобретением.", 2, "dok", 5000)
 end
 
 function swapm_dok_hello_to_stol2()
@@ -4896,7 +4914,7 @@ function final_swapm_doctor_cutscene_two3()
 	olr.info("final_spawn_dok_swmp_cutscene")
 	news_manager.send_tip(db.actor, "А, очнулся...", 2, "dok", 5000)
 	news_manager.send_tip(db.actor, "Ну-ну, ты же храбрый человек, о тебе уже ходят легенды в Зоне!", 4, "dok", 5000)
-	news_manager.send_tip(db.actor, "Сейчас мы выпьем чайку, тут в округе такая травка сформировалась, усталость как рукой снимает. Посуда, правда, специфическая, но ты не бойся, всё стерильно...", 8, "dok", 5000)
+	news_manager.send_tip(db.actor, "Сейчас мы выпьем чайку... Тут в округе такая травка сформировалась, усталость как рукой снимает. Посуда, правда, специфическая, но ты не бойся, всё стерильно...", 8, "dok", 5000)
 	level.add_cam_effector2("camera_effects\\swapm_dok_one_stol_wakep.anm", 30, false, "nick.final_swapm_doctor_cutscene_two4")
 	olr_timers.st_timer("on_ui_start", 11, "olr.on_ui()")
 	db.actor:restore_weapon()
@@ -4978,7 +4996,7 @@ function gauss_door_boss_fight_open()
 		alife():create_ammo("ammo_gauss", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 10)
 	end
 	olr.del_by_name("lvl16_generators_physic_object_0203")
-	news_manager.send_tip(db.actor, "Система безопастности комплекса: Пожарная тревога! Всем покинуть здание! Экстренное открытие всех помещений.", 1, "item", 25000)
+	news_manager.send_tip(db.actor, "Система безопасности комплекса: Пожарная тревога! Всем покинуть здание! Экстренное открытие всех помещений.", 1, "item", 25000)
 	olr.del_by_name("lvl16_generators_staler_undead_olr")
 	local snd_obj = xr_sound.get_safe_sound_object([[ol3\door_amb_open]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -4986,7 +5004,7 @@ end
 
 
 function bar_killer_sanya_txk()
-	news_manager.send_tip(db.actor, "Саня Боров: Братишка, спасибо тебе за помощь, уже думал всё, кранты мне! Извиняй, лично поблагодорить не смогу, сваливаю я из Зоны, поэтому скидываю метку на свой схрон, всё что там осталось - всё твоё. Пользуйся, и ещё раз спасибо тебе!", nil, "default", 39000)
+	news_manager.send_tip(db.actor, "Саня Боров: Братишка, спасибо тебе за помощь, уже думал всё, кранты мне! Извиняй, лично поблагодорить не смогу, сваливаю я из Зоны. Скидываю метку на свой схрон, всё что там осталось - всё твоё. Пользуйся, и ещё раз спасибо тебе!", nil, "default", 39000)
 	db.actor:change_character_reputation(40)
 	olr_treasure.create_treasure()
 end
@@ -5007,7 +5025,7 @@ end
 function give_killer_barmen_finish_talk()
 	if not has_alife_info("kill_sanya_borov") then
 		olr_timers.st_timer("bar_killer_sanya_txk", 810, "nick.bar_killer_sanya_txk()")
-		news_manager.send_tip(db.actor, "Охрана, приём. Отпустите пленного, всё, невиновен он.", 15, "barman", 39000)
+		news_manager.send_tip(db.actor, "Охрана, приём. Отпустите пленного. Всё, невиновен он.", 15, "barman", 39000)
 		news_manager.send_tip(db.actor, "Принял.", 25, "default", 39000)
 	end
 	if has_alife_info("kill_sanya_borov") then
@@ -5235,7 +5253,7 @@ end
 function del_naity_doki_zablika_spaven()
 	news_manager.send_tip(db.actor, "Опа, мародёр очередной! Так, давай без лишних движений, дёрнешься - лишишься содержимого черепной коробки.", 2, "freedom", 5000)
 	news_manager.send_tip(db.actor, "Погоди, личико поверни чуток... Да ну нафиг!", 7, "freedom", 8000)
-	news_manager.send_tip(db.actor, "Ладно, не дергайся, сейчас будет немного больно, и я тебя не видел.", 12, "freedom", 8000)
+	news_manager.send_tip(db.actor, "Ладно, не дергайся, сейчас будет немного больно - и я тебя не видел.", 12, "freedom", 8000)
 	news_manager.send_tip(db.actor, "Какого?!", 18, "act", 18000)
 end
 
@@ -5250,7 +5268,7 @@ function daem_zombu_done2()
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	news_manager.send_tip(db.actor, "Мля, убежал, гад! Ну ничего, пуля догонит рано или поздно.", 2, "dolg", 5000)
-	news_manager.send_tip(db.actor, "Крыса: Идиоты. И кого генерал послал сюда!", 6, "barman", 5000)
+	news_manager.send_tip(db.actor, "Крыса: Идиоты... И кого генерал послал сюда!", 6, "barman", 5000)
 end
 
 function daem_zombu_art()
@@ -5263,12 +5281,12 @@ function daem_zombu_art()
 end
 
 function zobmu_barman_gde()
-	news_manager.send_tip(db.actor, "Крыса: Э, ну где он там?! Мы уже ждём, всем коллективом. Ребята из Долга, что на крыше у нас дежурят, говорят, что ты нашёл его. Давай, заканчивай разговоры и веди его на площадку с края бара.", 1, "barman", 25000)
+	news_manager.send_tip(db.actor, "Крыса: Э, ну где он там?! Мы уже ждём, всем коллективом. Ребята из Долга, что на крыше у нас дежурят, говорят, что ты нашёл его. Давай заканчивай разговоры и веди его на площадку около бара.", 1, "barman", 25000)
 	news_manager.send_tip(db.actor, "Идут вроде. Если что, он у меня как на ладони.", 6, "dolg", 35000)
 end
 
 function dogskill_start_zombu()
-	news_manager.send_tip(db.actor, "Крыса: Да, ещё. Тут недалеко видели зомбированного, он сейчас бродит за Ростком, - это пропавший несколько недель назад сталкер-ветеран. Тащи его к бару, можно будет попытаться привести его в себя и узнать, что с ним стряслось.", 1, "barman", 45000)
+	news_manager.send_tip(db.actor, "Крыса: Да, и ещё, тут недалеко видели зомбированного, он сейчас бродит за Ростком, - это пропавший несколько недель назад сталкер-ветеран. Тащи его к бару, можно будет попытаться привести его в себя и узнать, что с ним стряслось.", 1, "barman", 45000)
 	local gar = alife():object("lvl5_bar_physic_object_0954")
 	if gar then
 		olr.add_spot_on_map( gar.id,"tutorial_wounded_location", "Зомбированный ветеран" )
@@ -5318,7 +5336,7 @@ function mg_pre_explode_one()
 olr_timers.st_timer("spawn_bombs_parasite_mg_house", 16, "nick.spawn_bombs_parasite_mg_house()")
 olr_timers.st_timer("spawn_bombs_parasite_mg_house", 22, "nick.spawn_bombs_parasite_mg_house()")
 news_manager.send_tip(db.actor, "Филин: Ну и сраное же место этот городок! Побыстрее бы свалить уже отсюда.", 20, "dolg", 35000)
-news_manager.send_tip(db.actor, "Филин: Ты, кстати, особо не зевай тут - снайперы Свободы отстреливают нечисть возле их базы. Если надумаешь пальцы гнуть, сразу пулю поймаешь!", 50, "dolg", 35000)
+news_manager.send_tip(db.actor, "Филин: Ты, кстати, особо не зевай тут: снайперы Свободы отстреливают нечисть возле их базы, так что если надумаешь пальцы гнуть - сразу пулю поймаешь!", 50, "dolg", 35000)
 db.actor:give_info_portion("mg_pre_explode_one_done")
 nick.explode_bombs_parasite_mg()
 local sactor = alife():actor()
@@ -5340,7 +5358,7 @@ local cactor = level.object_by_id(sactor.id)
 cactor:give_game_news("Филин:\\nТак, пришли... Подрывайте заряды!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(100, 200),10000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-news_manager.send_tip(db.actor, "Филин: Ну, всё вроде, дело сделано. Теперь поговори с генералом в Баре, он уже должен ждать тебя.", 5, "dolg", 35000)
+news_manager.send_tip(db.actor, "Филин: Ну всё вроде, дело сделано. Теперь поговори с генералом, он уже должен ждать тебя.", 5, "dolg", 35000)
 end
 
 
@@ -5368,7 +5386,7 @@ end
 
 
 function nine_pda_rasch()
-	news_manager.send_tip(db.actor, "Кольбат: Эй, прием. Вроде получилось расшифровать твой ПДА с болот, правда, нифига не понятно, возможны битые данные. Короче, скидываю информацию.", nil, "flash", 35000)
+	news_manager.send_tip(db.actor, "Кольбат: Эй, прием. Вроде получилось расшифровать твой ПДА с болот, правда, нифига не понятно - возможны битые данные. Короче, скидываю информацию.", nil, "flash", 35000)
 	db.actor:give_info_portion("nine_pda_rasch_rashifrvn")
 	olr.spawn_on_obj("af_kolco", "lvl1_escape_physic_object_0266")
 	olr.spawn_on_obj("af_kolco", "lvl1_escape_smart_terrain_0026")
@@ -5504,7 +5522,7 @@ function about_kamorka_habar()
 		alife():create("af_fuzz_kolobok",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 		alife():create("af_night_star",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 	end
-	news_manager.send_tip(db.actor, "Прошел такой слух: у командира вояк на Кордоне личный ящик есть, в котором тот хранит хабар, который патрули с убитых сталкеров снимают. Говорят, куча артов там у него.", nil, "unknown", 35000)
+	news_manager.send_tip(db.actor, "Прошел такой слух: у командира вояк на Кордоне личный ящик есть, где тот хранит хабар, который патрули с убитых сталкеров снимают. Говорят, куча артов там у него.", nil, "unknown", 35000)
 end
 
 
@@ -5822,7 +5840,7 @@ function agr_cheking_studen()
      					news_manager.send_tip(db.actor, "Профессор Штоклов: Приём. Кажется, есть информация о местонахождении артефакта \"Студень\". "..pos..". Думаю, там получится найти его.", nil, "artefact", 19000)
 					break
 				else
-					news_manager.send_tip(db.actor, "Профессор Штоклов: Приём. Насчёт артефакта \"Студень\" - нет никаких данных о возможном местоположении артефакта, так что придётся тебе искать его самому.", nil, "artefact", 19000)
+					news_manager.send_tip(db.actor, "Профессор Штоклов: Приём. Насчёт артефакта \"Студень\" - нет никаких данных о возможном местоположении артефакта - придётся тебе искать его самому.", nil, "artefact", 19000)
 					break
 				end				
 			end
@@ -5830,7 +5848,7 @@ function agr_cheking_studen()
 	end
 
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, "Приём, это группа на НИИ. Насчёт артефакта - нет никаких данных о его возможном местоположении, так что придётся тебе искать самому.", nil, "artefact", 19000)
+		news_manager.send_tip(db.actor, "Приём, это группа на НИИ насчёт артефакта: нет никаких данных о его возможном местоположении, так что придётся тебе искать самому.", nil, "artefact", 19000)
 	end
 end
 
@@ -6006,7 +6024,7 @@ end
 function agro_ecologs_clear_hlam()
 	db.actor:give_info_portion("agr_spawn_ecologs_exp")
 	nick.agr_ecols_online()
-	news_manager.send_tip(db.actor, "Внимание! В комплексе на НИИ \"Медприбор\" открылась новая лабораторная группа, есть работа для сталкеров и диггеров. Всем, кто хочет подзаработать - подходите.", nil, "artefact", 25000)
+	news_manager.send_tip(db.actor, "Внимание! В комплексе на НИИ \"Медприбор\" открылась новая лабораторная группа - есть работа для сталкеров и диггеров. Всем, кто хочет подзаработать - подходите.", nil, "artefact", 25000)
 	olr.del_by_name("agrfire_vedro_0001")
 	olr.del_by_name("lvl3_agroprom_physic_object_0323")
 	olr.del_by_name("lvl3_agroprom_physic_object_0319")
@@ -6190,7 +6208,7 @@ function tark_wt_et_one()
 end
 
 function tark_wt_et_two()
-	news_manager.send_tip(db.actor, "Зачем ты идёшь туда?..", 2, "unknown", 5000)
+	news_manager.send_tip(db.actor, "Зачем ты идёшь туда?", 2, "unknown", 5000)
 end
 
 function start_boss_podval_battle_now()
@@ -6685,7 +6703,7 @@ end
 
 function start_kill_gen_now()
 	olr.del_by_name("lvl16_generators_physic_object_0214")
-	news_manager.send_tip(db.actor, "Мозговой линк...", 3, "act", 5000)
+	news_manager.send_tip(db.actor, "Мозговой Линк...", 3, "act", 5000)
 end
 
 
@@ -6704,7 +6722,7 @@ function zov_kontakta_pdamarevomarevo()
 end
 
 function has_all_mil_sms()
-	news_manager.send_tip(db.actor, "Мессер: Осведомитель, я нашёл группу. Все мертвы. Кажется, угодили в неизвестные аномальные образования, но не уверен.", nil, "act", 19000)
+	news_manager.send_tip(db.actor, "Мессер: Осведомитель, я нашёл группу. Все мертвы. Кажется, угодили в неизвестные аномальные образования.", nil, "act", 19000)
 	olr_timers.st_timer("atta44k333323", 11, "nick.has_all_mil_sms2()")
 end
 
@@ -6714,7 +6732,7 @@ function has_all_mil_sms2()
 	db.actor:change_character_reputation(40)
 	db.actor:give_info_portion("kvest_holmy_expedition_done")
 	olr_treasure.create_treasure()
-	news_manager.send_tip(db.actor, "Осведомитель: Понял тебя, Мессер, спасибо за помощь. Вообще, я узнал, что у них с учёными какие-то дела были... Ну да ладно. Те ребята были явно не бедные, думаю, уже нашёл у них чего прикольного для себя. Тем не менее, скину наводку на один тайничок, будет время - глянешь, что там. Ну, бывай, до связи!", nil, "flash", 29000)
+	news_manager.send_tip(db.actor, "Осведомитель: Понял тебя, Мессер, спасибо за помощь. Вообще я узнал, что у них с учёными какие-то дела велись... Ну да ладно. Те ребята были явно не бедные, думаю, уже нашёл у них чего полезного для себя. Тем не менее скину наводку на один тайничок, будет время - глянешь, что там. Ну, бывай, до связи!", nil, "flash", 29000)
 end
 
 function osved_yan_gauss()
@@ -6758,7 +6776,7 @@ end
 
 
 function holmy_expedition_start_now()
-	news_manager.send_tip(db.actor, "Осведомитель: Мессер, один из сталкерских отрядов решил продвинуться далеко вглубь Зоны и изучить территорию Тихих Холмов. Среди сталкеров отряда больше половины - элита, экипированы они были превосходно. Сможешь сходить посмотреть, что с ними? Всё, что найдёшь при них, - твоё. Только скажи мне, что с ними случилось, лады?", nil, "flash", 49000)
+	news_manager.send_tip(db.actor, "Осведомитель: Мессер, один из сталкерских отрядов решил продвинуться далеко вглубь Зоны и изучить территорию Тихих Холмов. Среди сталкеров отряда больше половины - элита, экипированы они были превосходно. Сможешь сходить посмотреть, что с ними? Что найдёшь при них - твоё. Только скажи мне, что с ними случилось, лады?", nil, "flash", 49000)
 	olr_timers.st_timer("attak333323", 14, "nick.holmy_expedition_startsss()")
 end
 
@@ -6766,11 +6784,16 @@ end
 
 function holmy_expedition_startsss()
 	db.actor:give_info_portion("kvest_holmy_expedition_start_now_go")
-	news_manager.send_tip(db.actor, "Осведомитель: В группе было три сталкера: два в экзоскелетах, один был в чёрном научном комбинезоне, если, конечно, не сменил костюм... Точно знаю, что он снайпер. Пропали они где-то в районе деревни, как найдёшь их, свяжись со мной. Жду сигнала.", nil, "flash", 29000)
+	news_manager.send_tip(db.actor, "Осведомитель: В группе было три сталкера: два в экзоскелетах, один был в чёрном научном комбинезоне, - конечно, если не сменил костюм... Точно знаю, что он снайпер. Пропали они где-то в районе деревни, как найдёшь их - свяжись со мной. Жду сигнала.", nil, "flash", 29000)
 end
 
 
-
+function is_pda_predead()
+	local STbron = db.actor:object("device_pda")
+	if STbron:condition() <= 0.20 then 
+		return true
+	end
+end
 
 
 function is_pda_dead()
@@ -6936,13 +6959,13 @@ end
 
 
 function leltwl_actor_away()
-	news_manager.send_tip(db.actor, "Эй, ты жив?! Кажется, излучение спало. Чёрт его знает, может, Зона не хочет пускать тебя к себе...", nil, "trader", 29000)
+	news_manager.send_tip(db.actor, "Эй, ты жив?! Кажется, излучение спало. Чёрт его знает, может, сама Зона не хочет пускать тебя...", nil, "trader", 29000)
 	olr_timers.st_timer("attakvert", 9, "nick.attakvert()")
 	olr.del_by_name("lvl_lvltw_veh_nis_0001")
 end
 
 function attakvert()
-	news_manager.send_tip(db.actor, "Общий канал: База, ястреб один сбит. Наблюдаю обломки. И, кажется, излучения нет, - аппаратура не фиксирует.", nil, "heli", 29000)
+	news_manager.send_tip(db.actor, "Общий канал: База, Ястреб-1 сбит. Наблюдаю обломки. И кажется, излучения нет, аппаратура не фиксирует.", nil, "heli", 29000)
 	news_manager.send_tip(db.actor, "Общий канал: База, вижу неизвестное лицо на закрытой территории. Возможно, тяжело вооружен. Запрашиваю открыть огонь.", 9, "heli", 29000)
 	olr_timers.st_timer("attakrpgspawn", 7, "nick.attakrpgspawn()")
 end
@@ -6960,7 +6983,7 @@ end
 
 function start_shvatka_mosk_tmrst()
 	db.actor:detach_vehicle()
-	news_manager.send_tip(db.actor, "Стой! Дальше сильный источник излучения! Кажется кто-то...", nil, "trader", 29000)
+	news_manager.send_tip(db.actor, "Стой! Дальше сильный источник излучения! Кажется, кто-то...", nil, "trader", 29000)
 	olr_timers.st_timer("attak1", 2, "nick.tlpmoskfight()")
 	olr_timers.st_timer("attak2", 6, "nick.tlpmoskfight2()")
 	olr_timers.st_timer("attak3", 16, "nick.tlpmoskfight3()")
@@ -6988,7 +7011,7 @@ end
 
 function tlpmoskfight2()
 	db.actor:give_info_portion("start_mosk_figh_go")
-	news_manager.send_tip(db.actor, "Ты не должен пройти дальше...", nil, "unknown", 49000)
+	news_manager.send_tip(db.actor, "Дальше ты не пойдешь.", nil, "unknown", 49000)
 	news_manager.send_tip(db.actor, "Поиграй со мной!", 12, "unknown", 49000)
 	olr_timers.st_timer("attak3", 366, "nick.kill_mosk_strahovka()")
 	local bsobj = alife():object("lvl_level12_big_container") 
@@ -7120,7 +7143,7 @@ function spawn_barman_prip_now()
 	db.actor.power = -db.actor.power/math.random(2,5)
 	level.add_cam_effector2("camera_effects\\punch_effector.anm", 950, false, "")
 	olr.blow_add(300)
-	news_manager.send_tip(db.actor, "Что за... Кажется, в том доме кто-то есть, нужно проверить.", 2, "act", 29000)
+	news_manager.send_tip(db.actor, "Что за... Кажется, в том доме кто-то есть - нужно проверить.", 2, "act", 29000)
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\gauss_shoot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
 	local sobj = alife():object("lvl13_prip_space_restrictor_0010") 
@@ -7183,7 +7206,7 @@ function pr_bar_angr1()
 	level.disable_input()  -- при виде крысы
 	level.disable_input()  -- при виде крысы ХАК
 	olr_timers.st_timer("attak1", 14, "nick.pr_bar_angr2()")
-	news_manager.send_tip(db.actor, "Мне говорили, что тебе помогает сам дьявол, а я, дурак, не верил... Оружие бросил себе под ноги, чтобы я видел!", nil, "barman", 9000)
+	news_manager.send_tip(db.actor, "Мне говорили, что тебе помогает сам дьявол, а я, дурак такой, не верил... Оружие бросил себе под ноги, чтобы я видел!", nil, "barman", 9000)
 	local act = db.actor		
 	act:iterate_inventory(
 			function(act, obj) 
@@ -7208,7 +7231,7 @@ function pr_bar_angr3()
 	level.disable_input()  -- при виде крысы ХАК
 	olr_timers.st_timer("attak231", 17, "nick.kill_krisa_deagle()")
 	olr_timers.st_timer("attak31", 18, "nick.kill_krisa_pri()")
-	news_manager.send_tip(db.actor, "Ну зачем тебе Монолит? Ведь ты уже был там, и ничем хорошим это для тебя не кончилось. Ну что ты можешь попросить, что ты вообще понимаешь о жизни?! Ты просто не будешь знать, чего просить! Ты-ы-ы...", nil, "barman", 16000)
+	news_manager.send_tip(db.actor, "Ну зачем тебе Монолит? Ведь ты уже был там, и ничем хорошим это для тебя не кончилось. Ну чего ты можешь желать, что ты вообще понимаешь о жизни?! Ты даже не знаешь, чего просить! Ты-ы...", nil, "barman", 16000)
 end
 
 
@@ -7365,7 +7388,7 @@ function pr_molols_1()
 	if sobj then 
 		olr.add_spot_on_map(sobj.id,"blue_location","Сталкер Монолита") 
 	end
-	news_manager.send_tip(db.actor, "Сообщение: Не стреляй, дваждырожденный, мы пришли помочь тебе! Без нас ты не пройдёшь дальше, везде снайперы военных.", nil, "monolith", 9000)
+	news_manager.send_tip(db.actor, "Сообщение: Не стреляй, дважды рожденный, мы пришли помочь тебе! Без нас ты не пройдёшь дальше, здесь везде снайперы военных.", nil, "monolith", 9000)
 	olr_timers.st_timer("matta2k", 9, "nick.pr_molols_2()")
 end
 
@@ -7377,12 +7400,12 @@ end
 
 
 function pr_molols_3()
-	news_manager.send_tip(db.actor, "Сообщение: Мы из клана Монолит. Мы верим, что Зона сама тебя выбрала, и поможем тебе пройти к станции, но дальше ты пойдешь один: Зона не любит, когда кто-то непрошенный подбирается близко к ее сердцу. Однако учти, что не все в нашем клане разделяют эти взгляды. Идём за нами.", nil, "monolith", 15000)
+	news_manager.send_tip(db.actor, "Сообщение: Мы из клана Монолит. Мы верим, что Зона сама тебя выбрала, и поможем тебе пройти к станции, но дальше ты пойдешь один: Зона не любит, когда кто-то непрошеный подбирается близко к ее сердцу. Однако учти, что не все в нашем клане разделяют эти взгляды. Идём за нами.", nil, "monolith", 15000)
 end
 
 
 function onolsgoo_prip_now()
-	news_manager.send_tip(db.actor, "Сообщение: Идём, только не отставай - тут снайперы военных повсюду, они охраняют подход.", nil, "monolith", 9000)
+	news_manager.send_tip(db.actor, "Сообщение: Идём, только не отставай: тут снайперы военных повсюду - они охраняют подход.", nil, "monolith", 9000)
 end
 
 function onolsgoo_prip_nowpri()
@@ -7505,7 +7528,7 @@ function bun_mosk_start_otkachka()
 	olr.spawn_on_obj("af_lichinka", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 
 
-	news_manager.send_tip(db.actor, "Кажется, нижние уровни затоплены - нужно найти способ откачать воду...", nil, "act", 49000)
+	news_manager.send_tip(db.actor, "Кажется, нижние уровни затоплены - нужно найти способ откачать воду.", nil, "act", 49000)
 
 	olr.to_online("l10u_radar_bunker_physic_object_0008")
 	olr.to_online("l10u_radar_bunker_physic_object_0007")
@@ -7577,8 +7600,8 @@ end
 
 function rad_bun_to_mosk_prip_go_kontrs()
 	olr.info("mosk_prip_go_sturm")
-	news_manager.send_tip(db.actor, "Мозговая масса: Иду, иду!", 2, "default", 30000)
-	news_manager.send_tip(db.actor, "Мозговая масса: В Доме культуры сильное излучение... Иди рядом со мной, я тебя уберегу.", 8, "default", 60000)
+	news_manager.send_tip(db.actor, "Мозговая масса: Иду-иду!", 2, "default", 30000)
+	news_manager.send_tip(db.actor, "Мозговая масса: В Доме культуры сильное излучение... Будь рядом со мной, я тебя уберегу.", 8, "default", 60000)
 end
 
 function rad_mosk_away_prip()
@@ -7666,7 +7689,7 @@ function kvest_gravimolot_acessss()
 	db.actor:give_info_portion("kvest_gravimolot_go")
 	olr.del_by_name("lvl3_agroprom_physic_object_0382")
 	olr.del_by_name("lvl3_agroprom_rat_zaval")
-	news_manager.send_tip(db.actor, "Осведомитель: Мессер, ты ведь бывал уже на НИИ? Меня интересует одна вещь оттуда: в подземельях под главным комплексом есть логово карликов или кого покрупнее. В общем, у них есть такая штука... похожа на большую кувалду, что-то вроде молота. Принесёшь мне её - отблагодарю.", nil, "flash", 49000)
+	news_manager.send_tip(db.actor, "Осведомитель: Мессер, ты ведь бывал уже на НИИ? Меня интересует одна вещь оттуда. В подземельях под главным комплексом есть логово карликов или кого покрупнее, у них есть такая штука... Похожа на большую кувалду, что-то вроде молота. Принесёшь мне её - отблагодарю.", nil, "flash", 49000)
 end
 
 
@@ -7682,7 +7705,7 @@ function agr_del_zaval()
 	olr.del_by_name("lvl3_agroprom_physic_object_0365")
 	olr.del_by_name("lvl1_escape_space_restrictor_0107")
 	olr.del_by_name("lvl1_escape_stalker_0056")
-	news_manager.send_tip(db.actor, "Жаба: Мессер, дело сделано. Можешь идти проверять свой подвал на Медприборе.", nil, "trader", 49000)
+	news_manager.send_tip(db.actor, "Жаба: Мессер, дело сделано - можешь идти проверять свой подвал на Медприборе.", nil, "trader", 49000)
 end
 
 function zaval_remove_start_talk_tmrst()
@@ -7695,7 +7718,7 @@ function esc_kil_mil_go()
 		olr.add_spot( sobj.id,"eliminate_lager_location","Дерево" )
 	end
 	db.actor:give_info_portion("start_kill_mil_esc")
-	news_manager.send_tip(db.actor, "Жаба: Давай иди, он уже в районе моста должен быть. Спрячься на дереве, метку скинул на твой ПДА, и оттуда грохни его. Только не вздумай попасться на глаза ему, он не должен увидеть тебя!", nil, "trader", 49000)
+	news_manager.send_tip(db.actor, "Жаба: Давай иди, он уже в районе моста должен быть. Спрячься на дереве, метку скинул на твой ПДА, и оттуда грохни его. Только не вздумай попасться ему на глаза, он не должен увидеть тебя!", nil, "trader", 49000)
 end
 
 function on_wood_talk_tmrst()
@@ -7725,7 +7748,7 @@ end
 
 function bar_robber_actor()
 	db.actor:change_character_reputation(-50)
-	news_manager.send_tip(db.actor, "Сообщение: Ну вы прикиньте! Знаете того, с грузовика смерти? Ну что за люди пошли... В баре вынес всё что плохо лежало, прямо со столов! Мы с парнями только диву давались, вот наглёж-то, а! Ну ничего, будем знать...", nil, "unknown", 49000)
+	news_manager.send_tip(db.actor, "Сообщение: Ну вы прикиньте! Знаете того, из грузовика смерти? Ну что за люди пошли... В баре вынес всё что плохо лежало, прямо со столов! Мы с парнями только диву давались, вот наглёж-то, а! Ну ничего, будем знать...", nil, "unknown", 49000)
 end
 
 function first_killer_timer_seen(id)
@@ -7738,7 +7761,7 @@ function first_killer_timer_seen(id)
     			local data = pk:get()
           		local name = data.character_name
 			local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-     			news_manager.send_tip(db.actor, "Мужики, знаете того контуженного с грузовика смерти? Походу он совсем того - нашего завалил! Я сам видел, успел только засечь контакт в ПДА - "..name.."... Имейте в виду... "..pos.." сейчас лежит труп. Сами посмотрите, кто не верит.", nil, "unknown", 39000)
+     			news_manager.send_tip(db.actor, "Мужики, знаете того контуженного с грузовика смерти? Походу он совсем того! Нашего завалил! Я сам видел, успел только засечь контакт в ПДА - "..name.."... Имейте в виду... "..pos.." сейчас лежит труп. Сами посмотрите, кто не верит.", nil, "unknown", 39000)
 		end
   	end	
 end
@@ -7863,7 +7886,7 @@ function otdaem_detector_zomscan()
 end
 
 function scan_sms_zomb_doc()
-	news_manager.send_tip(db.actor, "Это Доцент. Группа находится на территории Тихих Холмов, возможно, ты уже был там. После того, как всё сделаешь, не забудь прибор, - это единственный экземпляр на данный момент.", nil, "ecolog", 39000)
+	news_manager.send_tip(db.actor, "Это Доцент. Группа находится на территории Тихих Холмов, возможно, ты уже был там. После того, как всё сделаешь, не забудь прибор - это единственный экземпляр на данный момент.", nil, "ecolog", 39000)
 end
 
 function daem_detector_zomscan()
@@ -7914,26 +7937,26 @@ end
 
 function sky_resarch()
 	if not has_alife_info("kolbat_research_knife") then
-		news_manager.send_tip(db.actor, "Это Кольбат. Подходи - кажется, что-то получилось. Да, и прихвати с собой штык-нож - есть одна идея.", nil, "flash", 39000)
+		news_manager.send_tip(db.actor, "Это Кольбат. Кажется, что-то получилось - подходи. Да, и прихвати с собой штык-нож, есть одна идея.", nil, "flash", 39000)
 		db.actor:give_info_portion("kolbat_research_knife")
 		return
 	end
 	if not has_alife_info("kolbat_research_rgd") then
-		news_manager.send_tip(db.actor, "Это Кольбат. Подходи - кажется, что-то получилось. А, и возьми с собой гранату RGD-5.", nil, "flash", 39000)
+		news_manager.send_tip(db.actor, "Это Кольбат. Кажется, что-то получилось - подходи. А, и возьми с собой гранату RGD-5.", nil, "flash", 39000)
 		db.actor:give_info_portion("kolbat_research_rgd")
 		return
 	end
 	if not has_alife_info("kolbat_research_efka") then
-		news_manager.send_tip(db.actor, "Это Кольбат. Подходи - кажется, что-то получилось сделать для тебя.", nil, "flash", 39000)
+		news_manager.send_tip(db.actor, "Это Кольбат. Кажется, что-то получилось сделать для тебя - подходи.", nil, "flash", 39000)
 		db.actor:give_info_portion("kolbat_research_efka")
 		return
 	end
 	if not has_alife_info("kolbat_research_ammo") then
-		news_manager.send_tip(db.actor, "Это Кольбат. Подходи - кажется, что-то получилось.", nil, "flash", 39000)
+		news_manager.send_tip(db.actor, "Это Кольбат. Кажется, что-то получилось - подходи.", nil, "flash", 39000)
 		db.actor:give_info_portion("kolbat_research_ammo")
 		return
 	end
-	news_manager.send_tip(db.actor, "Это Кольбат. Эксперимент не состоялся, к сожалению. Может, в следующий раз что-то получится.", nil, "flash", 39000)
+	news_manager.send_tip(db.actor, "Это Кольбат. К сожалению, эксперимент провалился. Может, в следующий раз что-то получится.", nil, "flash", 39000)
 end
 
 
@@ -8107,14 +8130,14 @@ function daem_proto_psy_shap()
 end
 
 function daem_otdaem_psy_golovu()
-	news_manager.send_tip(db.actor, "Доцент: Извини, забыл наградить тебя. Вот, координаты схрона, они мне ни к чему - я туда сам вряд ли когда попаду. Ещё раз спасибо за помощь науке.", nil, "ecolog", 39000)
+	news_manager.send_tip(db.actor, "Доцент: Извини, забыл наградить тебя. Вот координаты схрона, я туда сам вряд ли когда попаду - они мне ни к чему. Ещё раз спасибо за помощь науке.", nil, "ecolog", 39000)
 	db.actor:change_character_reputation(10)
 	olr_treasure.create_treasure()
 end
 
 function oh_fuck_yan_escape()
 	nick.start_ohranik_quest_yan()
-	news_manager.send_tip(db.actor, "Ассистент: О, чёрт, только не он опять! Я сваливаю!", nil, "ecolog", 39000)
+	news_manager.send_tip(db.actor, "Ассистент: Чёрт, только не он опять! Я сваливаю!", nil, "ecolog", 39000)
 	olr.del_by_name("lvl7_yantar_stalker_bunker")
 	olr.del_by_name("lvl7_yantar_stalker_0068")
 	nick.gar_lamb_zombs()
@@ -8129,7 +8152,9 @@ end
 
 function otdaem_pribor_paras_spory()
 	nik_dialog.out_item_much("pribor_paras_spory",1)
- 	dialogs.relocate_money(first_speaker, 1200, "in")
+	news_manager.send_tip(db.actor, "Получены деньги - 1200.", nil, "money", 39000)
+ 	db.actor:give_money(1200)
+	game_stats.money_quest_update(1200)
 	olr.del_by_name("lvl7_yantar_physic_object_0704")
 	olr.blow_add(500)
 end
@@ -8172,13 +8197,13 @@ end
 function yan_killmonster_go()
 		db.actor:give_info_portion("yan_kill_himera_start")
 		olr.del_by_name("lvl7_yantar_physic_object_0704")
-		news_manager.send_tip(db.actor, "Сталкер, это Профессор! Мы засекли мутанта, он находится за нашим бункером, уничтожь его!", nil, "saharov", 30000)
+		news_manager.send_tip(db.actor, "Сталкер, это Профессор! Мы засекли мутанта, он находится за нашим бункером - уничтожь его!", nil, "saharov", 30000)
 end
 
 
 function yan_killmonster_timer()
 		olr_timers.st_timer("yan_killmonster_go", 1135, "nick.yan_killmonster_go()")
-		news_manager.send_tip(db.actor, "Сталкер, это Профессор. Благодарим Вас за помощь с прошлым делом. У нас появилась новая проблема: в районе нашей базы стал появляться странный мутант, похожий на Химеру, её засекают наши камеры наблюдения. Мы не можем позволить находиться ей здесь! Судя по нашим наблюдениям, следующий раз она появится примерно через 4 часа, я сообщу тебе посредством ПДА. Ты должен уничтожить её.", nil, "saharov", 30000)
+		news_manager.send_tip(db.actor, "Сталкер, это Профессор. Благодарим Вас за помощь с прошлым делом. У нас появилась новая проблема: в районе нашей базы стал появляться странный мутант, похожий на Химеру, её засекают наши камеры наблюдения. Мы не можем позволить находиться ей здесь! Судя по нашим наблюдениям, следующий раз она появится примерно через 4 часа, я сообщу Вам посредством ПДА. Вы должны уничтожить её.", nil, "saharov", 30000)
 end
 
 
@@ -8199,7 +8224,7 @@ end
 
 function esc_yan_seli()
 	level.add_pp_effector("black.ppe", 20131, false)
-	news_manager.send_tip(db.actor, "Спасибо, сталкер, за помощь! Профессор просил передать: после окончания задания направляйся на их базу. Там есть какое-то дело для тебя.", nil, "ecolog", 30000)
+	news_manager.send_tip(db.actor, "Спасибо, сталкер, за помощь! Профессор просил передать, чтобы после окончания задания ты направлялся на их базу. Там есть какое-то дело для тебя.", nil, "ecolog", 30000)
 	olr_timers.st_timer("del_vertuhaescsc_timer", 135, "nick.del_vertuhaescsc_timer()")
 	olr.del_by_name("esc_raid_scientist")
 	olr.del_by_name("esc_raid_scientist_0000")
@@ -8231,7 +8256,7 @@ end
 
 
 function give_prof_sos_talk_donesmspre()
-		news_manager.send_tip(db.actor, "Сталкер, поторопитесь, есть шанс, что он ещё жив. Высылаю вам координаты места SOS, где его видели последний раз.", nil, "saharov", 30000)
+		news_manager.send_tip(db.actor, "Сталкер, поторопитесь, есть шанс, что он ещё жив. Высылаю вам координаты места SOS, где его видели в последний раз.", nil, "saharov", 30000)
 		local sobj = alife():object("lvl7_yantar_physic_object_0282") 
 		if sobj then 
 			olr.add_spot( sobj.id,"tutorial_wounded_location","SOS" )
@@ -8307,7 +8332,7 @@ function on_chhose_tri_way_gen_fin_room()
 end
 
 function what_you_want_1()
-	news_manager.send_tip(db.actor, "...что ты хочешь... в обмен на свою жизнь?...", nil, "unknown", 10000)
+	news_manager.send_tip(db.actor, "Что ты хочешь... в обмен на свою жизнь?", nil, "unknown", 10000)
 	olr_timers.st_timer("open_war_door_1", 15, "nick.what_you_want_2()")
 end
 
@@ -8316,7 +8341,7 @@ function what_you_want_2()
 end
 
 function open_war_door_napar()
-	news_manager.send_tip(db.actor, "...Стрелок... Стрелок!...", nil, "sos", 10000)
+	news_manager.send_tip(db.actor, "Стрелок... Стрелок!", nil, "sos", 10000)
 end
 
 function open_war_door_tri()
@@ -8441,7 +8466,7 @@ end
 
 
 function jaba_ab_patrols()
-	news_manager.send_tip(db.actor, "Смотри в оба - дорога патрулируется военными. Если попадёшься им на глаза, учти, они не будут долго думать насчёт тебя.", nil, "trader", 30000)
+	news_manager.send_tip(db.actor, "Смотри в оба! Дорога патрулируется военными. Если попадёшься им на глаза, учти, они не будут долго думать насчёт тебя.", nil, "trader", 30000)
 end
 
 function deadcity_jaba_about()
@@ -8454,7 +8479,7 @@ function deadcity_jaba_about()
       			pk:set( data )
 		end	
 	end
-	news_manager.send_tip(db.actor, "Принимаю твой сигнал из города... Да, далеко тебя занесло, приятель, не думал, что доберёшься туда вовсе. Значит, слушай, проинформирую тебя насчёт этого места: без защитного герметичного костюма даже не думай там шастать - город заражён неизвестной заразой, которая мигом превратит тебя в кишащую паразитами биомассу. Хе... Ну, будь здоров.", nil, "trader", 20000)
+	news_manager.send_tip(db.actor, "Принимаю твой сигнал из города... Да, далеко тебя занесло, приятель. Не думал я, что вообще туда доберёшься. Значит, слушай, проинформирую тебя насчёт этого места: без защитного герметичного костюма даже не думай там шастать, город заражён неизвестной заразой, которая мигом превратит тебя в кишащую паразитами биомассу. Хе... Ну, будь здоров.", nil, "trader", 20000)
 end
 
 function step_yan_deadtw()
@@ -9018,16 +9043,16 @@ function goaway_from_dolina()
 	end
 
 	if level.name() == "lvl4_darkdolina" then
-		news_manager.send_tip(db.actor, "Неизвестно: Эй, приятель, мы засекли твой сигнал ПДА! Ты явно заблудился. Сделай одолжение, покинь территорию Тёмной Долины раз и навсегда. Мы подождём, пока подождём.", nil, "unknown", 60000)
+		news_manager.send_tip(db.actor, "Неизвестно: Эй, приятель, мы засекли твой сигнал ПДА! Ты явно заблудился. Сделай одолжение, покинь территорию Тёмной Долины раз и навсегда. Мы подождём. Пока подождём.", nil, "unknown", 60000)
 		olr_timers.st_timer("goaway_from_dolina2", 105, "nick.goaway_from_dolina2()")
 	else
-		news_manager.send_tip(db.actor, "Неизвестно: Сделай одолжение, не ходи больше в Тёмную Долину, - это наша территория, и сталкерам тут делать нечего. Предупреждаем только один раз.", nil, "unknown", 60000)
+		news_manager.send_tip(db.actor, "Неизвестно: Сделай одолжение, не ходи больше в Тёмную Долину - это наша территория, и сталкерам тут делать нечего. Предупреждаем только один раз.", nil, "unknown", 60000)
 	end
 end
 
 function goaway_from_dolina2()
 	if level.name() == "lvl4_darkdolina" then
-		news_manager.send_tip(db.actor, "Неизвестно: Что ж, ты всё ещё здесь и, значит, достаточно самонадеян. Одно предупреждение ты уже получил, выходит...", nil, "unknown", 60000)
+		news_manager.send_tip(db.actor, "Неизвестно: Что ж, ты всё ещё здесь, значит, достаточно самонадеян. Одно предупреждение ты уже получил, так что...", nil, "unknown", 60000)
 	end
 end
 
@@ -9058,7 +9083,7 @@ function rostok_spawn_unic_vss()
 	olr.spawn_on_obj("wpn_vintorez_gravi", "lvl6_rostok_stalker_0027")
 	olr.spawn_on_obj("chimera_strong", "lvl6_rostok_stalker_0027")
 	db.actor:give_info_portion("rostok_spawn_unic_vss_timer")
-	news_manager.send_tip(db.actor, "Мужики, учёные, что магниты скупали, уже всё?! Блин, я им четыре штуки со Свалки нёс, а их и след простыл, похоже, с концами! Да и братан мой винтовку им пристреливал какую-то на Ростке, правда, от него уже давно новостей никаких. Эх, меняется зона...", nil, "af_merger", 69000)
+	news_manager.send_tip(db.actor, "Мужики, учёные, которые магниты скупали, уже всё?! Блин, я им четыре штуки со Свалки нёс, а их и след простыл, похоже, с концами! Да и братан мой винтовку им пристреливал какую-то на Ростке, правда, от него уже давно новостей никаких. Эх, меняется Зона...", nil, "af_merger", 69000)
 end
 
 
@@ -9066,7 +9091,7 @@ function angar_art_jaba()
 	if has_alife_info("find_art_spiral_done") then
 		return 
 	end
-	news_manager.send_tip(db.actor, "Мессер, где мой чёртов артефакт с ангара на Свалке?! Даже не вздумай прикарманить его себе, я всё равно узнаю.", nil, "trader", 39000)
+	news_manager.send_tip(db.actor, "Мессер, где мой чёртов артефакт с ангара на Свалке?! Даже не вздумай прикарманить его себе, я всё равно узнаю!", nil, "trader", 39000)
 	db.actor:change_character_reputation(-10)
 end
 
@@ -9099,7 +9124,7 @@ end
 if has_alife_info("bar_dolg_propusk_have") then
 return 
 end
-news_manager.send_tip(db.actor, "Мессер, где мой чёртов артефакт с вышки?! Ты что, решил удрать с моим добром? Учти, в таком случае ты долго не протянешь.", nil, "trader", 39000)
+news_manager.send_tip(db.actor, "Мессер, где мой чёртов артефакт с вышки?! Ты что, решил удрать с моим добром? Учти, в таком случае ты долго не протянешь!", nil, "trader", 39000)
 db.actor:change_character_reputation(-5)
 end
 
@@ -9172,7 +9197,7 @@ function arpop_und_killer()
 end
 
 function daem_mg_zaparas()
-	olr.give_item("wpn_val")
+	olr.give_item("wpn_gm94")
 	olr_timers.st_timer("yatector", 1930, "nick.mg_del_parasites()")
 	olr.del_by_name("lvl11_deadcity_space_restrictor_0035")
 	olr.del_by_name("lvl11_deadcity_staler_undead_olr_0004")
@@ -9207,7 +9232,7 @@ end
 function the_god_is_seven()
 	olr.del_by_name("lvl11_deadcity_lights_hanging_lamp_0008")
 	olr.del_by_name("lvl11_deadcity_stalker_0012")
-	news_manager.send_tip(db.actor, "Журналист: Стрелок, думаю, ты сейчас испытываешь старые, несколько забытые чувства. Опять дежавю? Может быть... Я отправляюсь туда, в одно укромное место за станцией, - сейчас есть возможность попасть. Не иди за мной. Думаю, ещё увидимся, друг. Прощай.", nil, "default", 99000)
+	news_manager.send_tip(db.actor, "Журналист: Стрелок, думаю, ты сейчас испытываешь старые, несколько забытые чувства. Опять дежавю? Может быть... Я отправляюсь туда, в одно укромное место за станцией, сейчас есть возможность попасть туда. Не иди за мной. Думаю, ещё увидимся, друг. Прощай.", nil, "default", 99000)
 end
 
 
@@ -9422,7 +9447,7 @@ olr.del_by_name("lvl7_yantar_physic_object_0546")
 end
 
 function del_bomj_and_sosach_vedmak()
-news_manager.send_tip(db.actor, "Ведьмак: Мессер, будешь в баре, зайдешь ко мне. Есть любопытная информация, возможно, тебя заинтересует.", nil, "default", 39000)
+news_manager.send_tip(db.actor, "Ведьмак: Мессер, будешь в баре - зайдешь ко мне. Есть любопытная информация, возможно, тебя заинтересует.", nil, "default", 39000)
 olr.info("zedmak_lampa_start")
 olr.del_by_name("lvl5_bar_bloodsucker_weak")
 --olr.del_by_name("lvl5_bar_stalker_0005")
@@ -9447,7 +9472,7 @@ olr.del_by_name("bar_prefix_lights_hanging_lamp_0056")
 olr.del_by_name("lvl5_bar_physic_object_1388")
 olr.del_by_name("lvl5_bar_physic_object_1389")
 olr_timers.st_timer("toprip", 15, "nick.to_prip_alc_gaaway()")
-news_manager.send_tip(db.actor, "Неизвестно: Мужики, не поверите! Помните того мастера в Баре, который постоянно ошивался возле школы? Всё ещё говорил, что доберётся до Центра, чего бы ему это ни стоило.", nil, "default", 60000)
+news_manager.send_tip(db.actor, "Неизвестно: Мужики, не поверите! Помните того мастера в Баре, который постоянно ошивался возле школы? Всё ещё говорил, что доберётся до Центра, чего бы ему это ни стоило...", nil, "default", 60000)
 
 local jaba_place = alife():object("lvl1_escape_jaba_place")
   local sobj = alife():create("agr_stalker_veteran", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
@@ -9566,7 +9591,7 @@ local jaba_place = alife():object("lvl9_military_zone_radioactive_killing_0016")
   .. "lvl13_prip_smart_terrain_0005 = true\n")
   pk:set( data )
   table.insert(olr_offline_walk.tabst, sobj)
-  olr.add_spot_on_map(sobj.id,"green_location","Сталкер, что пытается пробиться к Центру")
+  olr.add_spot_on_map(sobj.id,"green_location","Сталкер, который пытается пробиться к Центру")
 end
 end
 
@@ -9582,7 +9607,7 @@ function esc_prizrak_spot()
 	if xr_conditions.is_day() then
     		news_manager.send_tip(db.actor, "Жаба: Короче, как ночь настанет, иди туда, под мост, и решай проблему. Сейчас пока светло еще, пошастай где-нибудь.", nil, "trader", 60000)
       	elseif not xr_conditions.is_day() then
-       		news_manager.send_tip(db.actor, "Жаба: Так, стемнело уже... Наверняка он сейчас там. Ну давай, иди к мосту.", nil, "trader", 60000)
+       		news_manager.send_tip(db.actor, "Жаба: Так, стемнело уже... Наверняка он сейчас там. Ну, давай иди к мосту.", nil, "trader", 60000)
 	end
 local sobj = alife():object("lvl1_escape_space_restrictor_0102") 
 if sobj then 
@@ -9685,7 +9710,7 @@ end
 
 
 function pre_yantar_off_effs_ebaa()
-news_manager.send_tip(db.actor, "Излучение спало... Объект не ждать, выдвигайтесь сейчас. Повторяю, группа, выезжайте.", nil, "default", 39000)
+news_manager.send_tip(db.actor, "Излучение спало... Объект не ждать - выдвигайтесь сейчас. Повторяю, группа, выезжайте.", nil, "default", 39000)
 local snd_obj = xr_sound.get_safe_sound_object([[ol3\babka_noise]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 db.actor:change_character_reputation(45)
@@ -9734,7 +9759,7 @@ end
 
 
 function jaba_bigbrotha_remind()
-news_manager.send_tip(db.actor, "Эй, мне там доложили, что ты что-то нашёл интересное, какие-то странные папки. Да, мои ребята присматривают за тобой: что делаешь, куда ходишь, что ищешь, - у меня глаза есть по всей Зоне. Если это что-то стоящее, то затаскивай, посмотрю, что за добро такое.", nil, "trader", 39000)
+news_manager.send_tip(db.actor, "Эй, мне там доложили, что ты что-то нашёл интересное, какие-то странные папки. Да, мои ребята присматривают за твоими действиями: что делаешь, куда ходишь, что ищешь, - у меня глаза есть по всей Зоне. Если нашёл что-то стоящее - затаскивай, посмотрю, что за добро такое.", nil, "trader", 39000)
   local sobj = nil
   local jaba_place = alife():object("lvl1_escape_jaba_place")
   local sobj = alife():create("agr_stalker_veteran", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
@@ -9879,7 +9904,7 @@ end
 
 
 function tihonow_cool_generators()
-    	news_manager.send_tip(db.actor, "Лаборант Тихонов: Стрелок, кажется, уровень пси-активности за станцией начинает спадать. Я надеюсь, ты знаешь, что делаешь.", nil, "ecolog", 15000)
+    	news_manager.send_tip(db.actor, "Лаборант Тихонов: Стрелок, кажется, уровень пси-активности за станцией начинает спадать. Надеюсь, ты знаешь, что делаешь.", nil, "ecolog", 15000)
 end
 
 
@@ -10104,7 +10129,7 @@ function bar_zombied_start_nagrada()
 local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_news]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 db.actor:give_info_portion("dezint_bar_zombied_start_nagrada_info")
-news_manager.send_tip(db.actor, "Профессор Марков: Эй, сталкер, ты меня слышишь?! Это профессор Марков. Я улетел на большую землю, но оставить тебя без награды не мог, ведь ты как-никак принёс мне новую учёную степень! Поговори с охранником у входа в бар, я оставил у него свой прототип активации дезинтегратора. Возможно, он тебе ещё пригодится, а если же нет, то можешь продать его за хорошие деньги. Лады, бывай, сталкер.", nil, "item", 90000)	
+news_manager.send_tip(db.actor, "Профессор Марков: Эй, сталкер, ты меня слышишь?! Это профессор Марков. Я улетел на Большую землю, но оставить тебя без награды не мог, ведь ты как-никак принёс мне новую учёную степень! Поговори с охранником у входа в бар, я оставил у него свой прототип активации дезинтегратора. Возможно, он тебе ещё пригодится, а если и нет, то можешь продать его за хорошие деньги. Ладно, бывай, сталкер.", nil, "item", 90000)	
 end
 
 
@@ -10139,7 +10164,7 @@ end
 
 function bar_zombied_start_teleporting()
 level.disable_input()
-news_manager.send_tip(db.actor, "Учёный: Ну что, готов к волшебному магическому путешествию? Стой на месте и не двигайся.", nil, "default", 10000)
+news_manager.send_tip(db.actor, "Учёный: Ну что, готов к волшебному путешествию? Стой на месте и не двигайся.", nil, "default", 10000)
 level.add_pp_effector("black.ppe", 20131, false)
 xr_effects.disable_ui(db.actor, nil)
 level.add_pp_effector("blink.ppe", 20131, false)
@@ -10229,7 +10254,7 @@ end
 
 
 function daem_dezintegrator_two_done()
-	news_manager.send_tip(db.actor, "Получены деньги - 1000", nil, "money", 39000)
+	news_manager.send_tip(db.actor, "Получены деньги - 1000.", nil, "money", 39000)
 	db.actor:give_money(1000)
 	game_stats.money_quest_update(1000)
 	olr_timers.st_timer("markov_tri", 8000, "nick.markov_tri_diattt()")
@@ -10237,7 +10262,7 @@ end
 
 
 function markov_tri_diattt()
-	news_manager.send_tip(db.actor, "Это профессор Марков. Можете подходить - есть работа и любопытная информация для вас.", nil, "ecolog", 39000)
+	news_manager.send_tip(db.actor, "Это профессор Марков. Можете подходить, есть работа и любопытная информация для вас.", nil, "ecolog", 39000)
 	olr.info("can_markov_quest_tri")
 end
 
@@ -10250,7 +10275,7 @@ snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 local snd_obj = xr_sound.get_safe_sound_object([[anomaly\anomaly_gravy_hit]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 alife():create("zone_zharka_static", db.actor:position():add(db.actor:direction():mul(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-news_manager.send_tip(db.actor, "Какого чёрта?! Чуть не поджарился! Кажется, она появилась прямо передо мной...", 4, "act", 39000)
+news_manager.send_tip(db.actor, "Какого чёрта?! Чуть не поджарился! Кажется, она появилась прямо передо мной.", 4, "act", 39000)
 db.actor:give_info_portion("dezint_qt_spawn_done_info")	
 end
 
@@ -10329,9 +10354,9 @@ function jaba_art_zakaz_spawn()
 	if math.random(1,2) == 1 then
 		alife():create("agr_stalker_regular", level.vertex_position(lv), lv, gv_max)
 	end
-        local text_phrase = {"У меня тут особый заказ есть. Тащи все, что найдешь странного - никогда не знаешь, какой сюрприз преподнесет в очередной раз Зона. За неизвестный артефакт десятикратный тариф, и поспеши, ты такой не один.", 
-	"Эй, ты за Кордоном сейчас? Мне сказали, что в той местности видели странный артефакт. Тащи все, что найдешь странного - никогда не знаешь, какой сюрприз преподнесет в очередной раз Зона. За неизвестный артефакт десятикратный тариф, и поспеши, ты такой не один.", 
-	"Есть информация об особом артефакте в той местности, где ты сейчас находишься. Тащи все, что найдешь странного - никогда не знаешь, какой сюрприз преподнесет в очередной раз Зона."}
+        local text_phrase = {"У меня тут особый заказ есть. Тащи все, что найдешь странного: никогда не знаешь, какой сюрприз преподнесет в очередной раз Зона. За неизвестный артефакт десятикратный тариф, и поспеши, ты такой не один.", 
+	"Эй, ты за Кордоном сейчас? Мне сказали, что в той местности видели странный артефакт. Тащи все, что найдешь странного: никогда не знаешь, какой сюрприз преподнесет в очередной раз Зона. За неизвестный артефакт десятикратный тариф, и поспеши, ты такой не один.", 
+	"Есть информация об особом артефакте в той местности, где ты сейчас находишься. Тащи все, что найдешь странного: никогда не знаешь, какой сюрприз преподнесет в очередной раз Зона."}
 	local news_text = "%c[255,245,118,54]"..game.translate_string("Жаба:").."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
 	db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(50,0,50,50),3*1000, 15000)
 
@@ -10372,8 +10397,8 @@ function gen_piss_sms()
 end
 
 function antenna_off_jaba_sms()
-news_manager.send_tip(db.actor, "Стрелок, это Жаба. Я знаю, где ты и куда направляешься. У тебя сейчас два есть пути: первый - идти через Припять, но что там теперь происходит, я представляю смутно. Знаю, что город горит, и там зашкаливает радиация - без защиты не пройти точно. Второй путь - идти по старой дороге на станцию. Там что-то с пси-излучением, наблюдались некоторые всплески, но, вероятно, путь безопасный.", nil, "trader", 39000)
-news_manager.send_tip(db.actor, "К тому же я слышал, что в районе старой дороги пропала военная группа - есть шанс разжиться снарягой. Да, и ещё: я за тебя слово замолвлю, а то нехорошо как-то в монолитовцах ходить тебе.", 11, "trader", 39000)
+news_manager.send_tip(db.actor, "Стрелок, это Жаба. Я знаю, где ты и куда направляешься. У тебя сейчас есть два пути: первый - идти через Припять, но что там теперь происходит, я представляю смутно. Знаю, что город горит, и там зашкаливает радиация - без защиты не пройти точно. Второй путь - идти по старой дороге на станцию. Там что-то с пси-излучением, наблюдались некоторые всплески, но вероятно, путь безопасный.", nil, "trader", 39000)
+news_manager.send_tip(db.actor, "К тому же я слышал, что в районе старой дороги пропала военная группа - есть шанс разжиться снарягой. Да, и ещё, я за тебя слово замолвлю, а то нехорошо как-то в монолитовцах ходить тебе.", 11, "trader", 39000)
   local se_obj = alife():object("lvl10_radar_level_changer_0002")
   if se_obj then
     olr.add_spot_on_map( se_obj.id,"level_changer","На забытую дорогу")
@@ -10957,7 +10982,7 @@ olr_timers.st_timer("braindok_navodka_timer", 5000, "nick.braindok_navodka_timer
 end
 
 function braindok_navodka_timer_patnashka()
-	news_manager.send_tip(db.actor, "Мессер, это Осведомитель. Есть документы, подходи забирай.", nil, "flash", 95000)
+	news_manager.send_tip(db.actor, "Мессер, это Осведомитель. Есть документы - подходи забирай.", nil, "flash", 95000)
 	db.actor:give_info_portion("bar_doki_patnashak_timer")
 end
 
@@ -10992,7 +11017,7 @@ function give_treasure_brain_docs()
 	--	olr.add_spot_on_map( metka.id,"crlc_big", "Приблизительное место, где находится схрон с документами" )
 	--	alife():create("documentacia_zombibrain_doki", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
 	--	local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x,rand_obj.position.y,rand_obj.position.z))
-	--	news_manager.send_tip(db.actor, "...спрятал пока хабар, а то в рюкзаке места нет. Да и документы выложил, а то мало ли, бандиты могут докопаться. Чтобы не забыть, где оставил, запишу: "..pos..".", nil, "artefact", 19000)
+	--	news_manager.send_tip(db.actor, "...спрятал пока хабар, а то в рюкзаке места нет. Да и документы выложил, а то мало ли какие бандиты могут докопаться. Чтобы не забыть, где оставил, запишу: "..pos..".", nil, "artefact", 19000)
 
 	local tab = {}
 	local sim = alife()
@@ -11011,10 +11036,10 @@ function give_treasure_brain_docs()
 	if rand_obj and rand_obj.id then
 		--log1("  rand_obj   "..rand_obj:name().."  "..rand_obj.id.."   "..rand_obj.level_name.." ")
 		local metka = alife():create("treasure_place_metka", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
-		olr.add_spot_on_map( metka.id,"crlc_big", "Приблизительное место где находится схрон с документами" )
+		olr.add_spot_on_map( metka.id,"crlc_big", "Приблизительное место, где находится схрон с документами" )
 		alife():create("documentacia_zombibrain_doki", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id, rand_obj.id) -- серверный
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x,rand_obj.position.y,rand_obj.position.z))
-		news_manager.send_tip(db.actor, "...спрятал пока хабар, а то в рюкзаке места нет. Да и документы выложил, а то мало ли, бандиты могут докопаться. Чтобы не забыть, где оставил, запишу: "..pos..".", nil, "artefact", 19000)
+		news_manager.send_tip(db.actor, "...спрятал пока хабар, а то в рюкзаке места нет. Да и документы выложил, а то мало ли какие бандиты могут докопаться. Чтобы не забыть, где оставил, запишу: "..pos..".", nil, "artefact", 19000)
 	end
 
 	for id=1, 65534 do
@@ -11080,7 +11105,7 @@ end
                 news_manager.send_tip(db.actor, "Мессер, это Осведомитель. По поводу документации: узнал я насчёт того парня, короче, звать его "..name..". "..pos.." видели его в последний раз. В общем, там его и ищи, метку тебе поставил. Да, и советую поспешить, пока он не пропал. У меня всё.", nil, "flash", 95000)
 		olr.beep()
 	else
-		news_manager.send_tip(db.actor, "Мессер, это Осведомитель. Извиняй, данных нет о сталкере твоём, так что могу помочь - достану их самостоятельно. Подходи, если что, только деньги не забудь.", nil, "default", 95000)
+		news_manager.send_tip(db.actor, "Мессер, это Осведомитель. Извиняй, данных нет о сталкере твоём, так что могу помочь другим способом: достану их самостоятельно. Подходи если что, только деньги не забудь.", nil, "default", 95000)
 		olr.beep()
 	end
 	local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_news]])
@@ -11100,6 +11125,7 @@ end
 function precond_meddol_flash_done(t1,t2)
 	nik_dialog.out_item_much("med_dolga_flash",1)
 	olr.give_item("wpn_toz34_old")
+	olr.give_item("wpn_desert_eagle")
 	olr_treasure.create_treasure()
 end
 
@@ -11152,7 +11178,7 @@ function jaba_med_dolg_info(id)
 	local sobj = alife():object(id)
   	if sobj then
 	local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-	news_manager.send_tip(db.actor, "Мессер, тебя там вроде лекарь долговский ко мне послал? Так вот, медикаменты я эти уже отправил, ушел человек уже от меня. Скидываю в ПДА тебе его метку, если нужны будут сильно, там уже с ним сам разбирайся. "..pos..". Только учти, метка долго висеть не будет на нём по определённым причинам, так что поторопись.", nil, "trader", 31000)	
+	news_manager.send_tip(db.actor, "Мессер, тебя там вроде лекарь долговский ко мне послал? Так вот, медикаменты я эти уже отправил, ушел человек уже от меня. Скидываю в ПДА тебе его метку - там уже с ним сам разбирайся. "..pos..". Только учти, метка долго висеть не будет на нём по определённым причинам, так что поторопись.", nil, "trader", 31000)	
 	end
 end
 
@@ -11210,7 +11236,7 @@ function kill_grehs_all()
 	olr_timers.st_timer("wtf_holmi", 1473, "nick.wtf_holmi()")
   	olr.del_by_name("lvl_rat_psy_to_new_mil")  -- удаляем пси под милитари рат
 	olr.del_by_name("lvl9_military_space_restrictor_0014")  
-	news_manager.send_tip(db.actor, "Нужно перестрелять этих чёртовых психов... и найти свои вещи.", nil, "act", 31000)
+	news_manager.send_tip(db.actor, "Нужно перестрелять этих психов... и найти свои вещи.", nil, "act", 31000)
 	relation_registry.set_community_goodwill ("sin", db.actor:id(), -3000)
 	for k,v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
@@ -11368,7 +11394,7 @@ level.add_cam_effector("camera_effects\\fusker.anm", 999, false, "")
 level.add_pp_effector("blink.ppe", 20131, false)
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Мессер:\\nЧто они сделали со мной? Ну Крыса... Я тебе это запомню.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),5000)
+cactor:give_game_news("Мессер:\\nЧто они сделали со мной? Ну, Крыса... Я тебе это запомню.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0) 
 db.actor:give_info_portion("start_greh_prisoning")
@@ -11665,7 +11691,7 @@ function otdaem_goplit_pda(t1,t2)
 end
 
 function give_info_gopl_pda_new()
-	news_manager.send_tip(db.actor, "Есть прогресс по ПДА Гоплита, можешь подходить, только Мёртвую голову не забудь за работу.", nil, "default", 9000)
+	news_manager.send_tip(db.actor, "Есть прогресс по ПДА Гоплита - можешь подходить, только Мёртвую голову не забудь за работу.", nil, "default", 9000)
 	olr.info("give_info_gopl_pda_new")
 end
 
@@ -11692,7 +11718,7 @@ end
 
 
 function yan_acid_terrain_hitted_fuck()
-olr.hud_tip("Мессер:", "Чёрт, похоже, что земля здесь, в низине, полна кислоты - нужна защита, чтобы ходить тут. Может, учёные смогут подсказать чего?", 27)
+olr.hud_tip("Мессер:", "Чёрт, похоже, земля в низине полна кислоты - нужна защита, чтобы ходить тут. Может, учёные смогут подсказать чего?", 27)
 end
 
 
@@ -11781,7 +11807,7 @@ end
 
 
 function spawn_yaroslav_garbage()
-news_manager.send_tip(db.actor, "Жаба: Мессер, я тут ещё кое-какие справки навёл насчёт твоего Стрелка. Короче, есть такой сталкер, звать Ярослав, по слухам, ходил со Стрелком до Припяти. Думаю, тебе стоило бы с ним переговорить насчёт этого. Он сейчас на блокпосту Долга на Свалке, хотя может и свалить. Скинул тебе его метку, в общем.", nil, "trader", 49000)
+news_manager.send_tip(db.actor, "Жаба: Мессер, я тут ещё кое-какие справки навёл насчёт твоего Стрелка. Короче, есть такой сталкер, звать Ярослав, по слухам, ходил со Стрелком до Припяти. Думаю, тебе стоило бы с ним переговорить насчёт этого. Он сейчас у заставы Долга на Свалке, хотя может и свалить. Скинул тебе его метку, в общем.", nil, "trader", 49000)
 local sim = alife()
 	for id=1, 65534 do
 		local kill = sim:object(id)
@@ -11983,7 +12009,7 @@ end
 function bar_krisa_gavgav3()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Майор\\nЗдравствуй, Крыса, решил провернуть свои делишки у меня за спиной?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 1500),5000)
+cactor:give_game_news("Майор\\nЗдравствуй, Крыса. Решил провернуть свои делишки у меня за спиной?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 1500),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -11991,7 +12017,7 @@ end
 function bar_krisa_gavgav4()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Крыса\\nЗдравствуйте, майор. Я действовал исключительно по вашей инструкции.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(5000, 7000),5000)
+cactor:give_game_news("Крыса\\nЗдравствуйте, майор. Я действовал исключительно по вашим указаниям.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(5000, 7000),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 level.add_pp_effector("black.ppe", 20131, false)
@@ -12166,7 +12192,7 @@ end
 function medyasik_have_sms()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба:\\nМессер, я слышал, что в сторону Медприбора военные отправили группу, скорее всего, за теми документами, что ты должен достать мне. Короче, если столкнёшься с ними, попробуй позвать кого-нибудь на помощь по ПДА, хоть отвлечёт на себя часть неприятелей. Всё. И про ящик не забудь!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+cactor:give_game_news("Жаба:\\nМессер, я слышал, что в сторону Медприбора военные отправили группу, скорее всего, за теми документами, что ты должен достать мне. Короче, если столкнёшься с ними, попробуй позвать кого-нибудь на помощь в ПДА, пусть хоть отвлекут на себя часть неприятелей. Всё. И про ящик не забудь!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -12175,7 +12201,7 @@ end
 
 
 function hmm_final_journal_where_start2()
-  news_manager.send_tip(db.actor, "Сталкер, говорит группировка Свобода. Я знаю, ты помогал нам когда-то, и мы хотим попросить тебя ещё об одной услуге. Ты ведь сейчас у станции, верно? Год назад одна из наших групп пропала на её северной части. Мы принимали тогда оттуда какие-то сообщения, но сейчас уже ясно, что они мертвы. При них должна быть красная папка, она очень ценна для нас. Попытайся достать её - мы будем крайне признательны! Передвигалась группа на БТР-е, если что.", nil, "freedom", 19000)
+  news_manager.send_tip(db.actor, "Сталкер, говорит группировка \"Свобода\". Я знаю, ты помогал нам когда-то, и мы хотим попросить тебя ещё об одной услуге. Ты ведь сейчас у станции, верно? Год назад одна из наших групп пропала у её северной части. Мы принимали тогда оттуда какие-то сообщения, но сейчас уже ясно, что они мертвы. При них должна быть красная папка, она очень ценна для нас - попытайся достать её, мы будем крайне признательны! Кстати, передвигалась группа тогда на БТР-е.", nil, "freedom", 19000)
   local se_obj = alife():object("lvl13_prip_space_restrictor_0008")
   if se_obj then
     alife():release(se_obj, true)
@@ -12571,7 +12597,7 @@ function mg_mg_darkstalker_spawn4_check_allcool()
 	if has_alife_info("leader_temniy_start_tri_done") then
 	local sobj = alife():object("lvl11_deadcity_staler_undead_olr_0003") 
 	if sobj then 
-	olr.add_spot_on_map(sobj.id,"crlc_big","Неизвестный сигнал СОС") 
+	olr.add_spot_on_map(sobj.id,"crlc_big","Неизвестный сигнал SOS") 
 	end
 
 	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
@@ -12640,7 +12666,7 @@ end
 
 function ludoed_away_feedback()
 	db.actor:change_character_reputation(-60)
-	news_manager.send_tip(db.actor, "Слышали про Голиафа, что в баре тёрся? Он, по слухам, человечину жрал - то-то он, помню, постоянно консервами барыжил! Да, и еще Мессера с ним как-то видели, как бы он не сообщником его был...", nil, "unknown", 49000)
+	news_manager.send_tip(db.actor, "Слышали про Голиафа, который в баре тёрся? Он, по слухам, человечину жрал - то-то он, помню, постоянно консервами барыжил! Да, и еще Мессера с ним как-то видели, как бы тот не сообщником его оказался...", nil, "unknown", 49000)
 end
 
 function del_mg_ludoed_door()
@@ -12787,7 +12813,7 @@ end
 function radar_na_tochke_govlab_sms()
     	local sactor = alife():actor()
 	local cactor = level.object_by_id(sactor.id)
-	cactor:give_game_news("Сообщение:\\nДальше ты сам - мы не пойдём с тобой туда, наш приказ - держать эту местность.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+	cactor:give_game_news("Сообщение:\\nДальше ты сам. Мы не пойдём с тобой туда, наш приказ - держать эту местность.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 end
 
 
@@ -12830,7 +12856,7 @@ function timer_jaba_mil_quest3()
 end
 
 function timer_jaba_mil_quest4()
-	news_manager.send_tip(db.actor, "Значит, вот что: главный у этих Убийц - некий Пёс, возможно, артефакт у него. Соваться на базу я тебе не советую, там сейчас снайпера у них на вышках, - сразу снимут тебя. Попробуй проверить хутор у дороги в Бар, там сейчас трётся одна из их групп, возможно, они что-то знают об артефакте.", nil, "trader", 29000)	
+	news_manager.send_tip(db.actor, "Значит, вот что: главный у этих Убийц - некий Пёс, возможно, артефакт у него. Соваться на базу я тебе не советую, там сейчас снайпера у них на вышках - сразу снимут тебя. Попробуй проверить хутор у дороги в Бар: там сейчас трётся одна из их групп, возможно, они что-то знают об артефакте.", nil, "trader", 29000)	
 	olr.info("mil_jaba_quest_art_start")
 	olr.blow_add(1000)
 end
@@ -13141,7 +13167,7 @@ function otdaem_blackbox_rat()
 end
 
 function jaba_zavali_off()
-	news_manager.send_tip(db.actor, "Да, забыл сказать: завалы, в том месте под Свалкой, кажется, разобрали, так что можешь сходить проверить.", nil, "trader", 29000)
+	news_manager.send_tip(db.actor, "Да, забыл сказать: завалы в том месте под Свалкой, кажется, разобрали, так что можешь сходить проверить.", nil, "trader", 29000)
 end
 
 function precond_black_box_rat()
@@ -15053,7 +15079,7 @@ end
 function done_kill_gopllit_hmm_actor2()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Мессер\\nГорло перерезано от уха до уха... Кровь потемнела и запеклась - иголки выдохлись, не смогли затянуть рану. И кому мог помешать этот божий одуванчик? Хм, личный ПДА отсутствует...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
+cactor:give_game_news("Мессер\\nГорло перерезано от уха до уха... Кровь потемнела и запеклась... Иголки выдохлись, не смогли затянуть рану. И кому мог помешать этот бедняга? Хм, личный ПДА отсутствует...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -15065,7 +15091,7 @@ olr_timers.st_timer("jaba_about_deathtruck", 755, "nick.jaba_about_deathtruck()"
 if has_alife_info("agr_olr_1_pogo_koluchki") then
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Мессер\\nСтоит проверить Гоплита, как найду что-либо здесь...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),55000)
+cactor:give_game_news("Мессер\\nСтоит проверить Гоплита после того, как найду что-либо здесь...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(3000, 4000),55000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 olr.beep()
@@ -15073,7 +15099,7 @@ end
 end
 
 function jaba_about_deathtruck()
-	news_manager.send_tip(db.actor, "Мессер, мне поступила информация о том, что видели ещё один грузовик смерти в районе Свалки. Точно такой, как и тот, в котором тебя нашли. Ещё прошёл слух, что видели зомбированных тут, на южных территориях, что, вообще говоря, не является обычным делом. Одного такого подстрелили сталкеры, и при нем был ПДА с заметкой \"Убить стрелка\", ровно как у тебя. Делай выводы.", nil, "trader", 35000)
+	news_manager.send_tip(db.actor, "Мессер, мне поступила информация о том, что видели ещё один грузовик смерти в районе Свалки. Точно такой, как и тот, в котором тебя нашли. Ещё прошёл слух, что засекли зомбированных тут, на южных территориях, что вообще говоря, не является обычным делом. Одного такого подстрелили сталкеры, и при нем был ПДА с заметкой \"Убить стрелка\", ровно как у тебя. Делай выводы.", nil, "trader", 35000)
 end
 
 function sms_city_monol_fake_take()
@@ -15101,7 +15127,7 @@ end
 function ahh_banki_agr()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Мессер\\nДумаю, стоит попробовать на тварях банку с холодцом - он должен без проблем сжечь их.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Мессер\\nДумаю, стоит попробовать на тварях банку с холодцом, он должен без проблем сжечь их.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -15308,7 +15334,7 @@ end
 
 function enaple_pda()
    db.actor:disable_info_portion("pda_dead_off")
-   news_manager.send_tip(db.actor, "ПДА: Батарея полностью заряжена", nil, "default", 9000)
+   news_manager.send_tip(db.actor, "ПДА: Батарея полностью заряжена.", nil, "default", 9000)
 end
 
 
@@ -15505,7 +15531,7 @@ function give_konservas(first_speaker, second_speaker)
  dialogs.relocate_item_section(second_speaker, "af_banka_s_holodcom","in")
  dialogs.relocate_item_section(second_speaker, "af_banka_s_holodcom","in")
  if not has_alife_info("komandir_zdoh_nahui") then
-	news_manager.send_tip(db.actor, "Сталкер, приём, это командир. Спасибо тебе ещё раз за то, что выручил! Слушай, я всё равно сейчас из Зоны сваливаю, поэтому инфой поделюсь: у нас на блокпосте есть ящичек один, так вот, туда наши солдатики барахло скидывают всякое, что у сталкеров собирают. Если хочешь, можешь рискнуть ночью по-тихому пробраться туда - в это время там никого нет. Ну бывай, может, ещё увидимся!", 17, "military", 49000)
+	news_manager.send_tip(db.actor, "Сталкер, приём, это командир. Спасибо тебе ещё раз за то, что выручил! Слушай, я всё равно сейчас из Зоны сваливаю, поэтому инфой поделюсь: у нас на блокпосте есть ящичек один, так туда наши солдатики барахло скидывают всякое, которое со сталкеров трясут. Если хочешь, можешь рискнуть ночью по-тихому пробраться туда, в это время там никого нет. Ну бывай, может, ещё увидимся!", 17, "military", 49000)
  end
 end
 
@@ -15619,7 +15645,7 @@ end
 function esc_detector_diger_otdaem()
 	db.actor:change_character_reputation(20)
 	nik_dialog.out_item_much("detector_simple",1)
-	news_manager.send_tip(db.actor, "Диггер: Мужики, а парень с грузовика-то смышленый, да и посмелее ваших будет! Не зассал на чердак завода идти-то!", 55, "default", 19000)
+	news_manager.send_tip(db.actor, "Диггер: Мужики, а парень с грузовика-то смышленый, да и посмелее ваших будет! Не зассал-таки на чердак завода слазить!", 55, "default", 19000)
 end
 
 
@@ -16294,7 +16320,7 @@ end
 function otdaem_kalasha_u()
 nik_dialog.out_item_much("wpn_ak74u",1)
 db.actor:change_character_reputation(20)
-news_manager.send_tip(db.actor, "Зоб: Мессер, спасибо ещё раз за помощь. Я ребятам сказал, ты вроде нормальный, несмотря на то, как и где нашли тебя.", 55, "default", 19000)
+news_manager.send_tip(db.actor, "Зоб: Мессер, спасибо ещё раз за помощь! Я ребятам сказал, что ты вроде нормальный сталкер, несмотря на то, откуда тебя достали.", 55, "default", 19000)
 end
 
 
@@ -16413,7 +16439,7 @@ end
 function otdaem_kalasha()
 nik_dialog.out_item_much("wpn_akm74",1)
 db.actor:change_character_reputation(20)
-news_manager.send_tip(db.actor, "Зоб: Мессер, спасибо ещё раз за помощь. Я ребятам сказал, ты вроде нормальный, несмотря на то, как и где нашли тебя. Слово держишь, а это многого стоит.", 55, "default", 19000)
+news_manager.send_tip(db.actor, "Зоб: Мессер, спасибо ещё раз за помощь! Я ребятам сказал, что ты вроде нормальный сталкер, несмотря на то, откуда тебя достали. Слово держишь, а это многого стоит.", 55, "default", 19000)
 end
 
 
@@ -16462,7 +16488,7 @@ end
 
 function angry_barman_knife_fec()
 db.actor:change_character_reputation(-10)
-news_manager.send_tip(db.actor, "Мессер, слышишь, ты! Этот нож, что якобы ты нашёл в подземке Ростка, ни хрена не тот! За такой развод мы с тобой ещё поговорим.", nil, "barman", 25000)
+news_manager.send_tip(db.actor, "Мессер, слышишь, ты! Этот нож, который ты якобы нашёл в подземке Ростка, ни хрена не тот! За такой развод мы с тобой ещё поговорим.", nil, "barman", 25000)
 end
 
 function precond_pda_mg()
@@ -17135,7 +17161,7 @@ end
 
 --' удаляем двери мг лидеров
 function mg_doors_leadesr_spawen()
-  news_manager.send_tip(db.actor, "Внимание всем! Основной состав группировки Свобода вернулся в Светлый Луч. Всем, кому нужно подзаработать, - подваливайте.", 21, "freedom", 29000)
+  news_manager.send_tip(db.actor, "Внимание всем! Основной состав группировки \"Свобода\" вернулся в Светлый Луч. Все, кому нужно подзаработать, подваливайте.", 21, "freedom", 29000)
   local se_obj = alife():object("lvl11_deadcity_physic_object_0737")
   if se_obj then
     alife():release(se_obj, true)
@@ -17582,7 +17608,7 @@ end
 
 --' удаляем зяблика зону
 function grazn_yan()
-  news_manager.send_tip(db.actor, "Хм, похоже, это брат Зябликова. Пожалуй, стоит известить брата о неприятной новости.", nil, "act", 29000)
+  news_manager.send_tip(db.actor, "Хм, похоже, что это брат Зябликова. Пожалуй, стоит известить родственника о неприятной новости.", nil, "act", 29000)
   local se_obj = alife():object("lvl7_yantar_space_restrictor_0037")
   if se_obj then
     alife():release(se_obj, true)
@@ -18433,7 +18459,7 @@ end
 function del_radovoy_dolineaa()
   olr.spawn_on_obj("wpn_lr300", "lvl4_darkdolina_stalker_0015")
   db.actor:change_character_reputation(20)
-  news_manager.send_tip(db.actor, "Спасибо, брат, будет возможность - лично ещё сочтемся! А пока инфу одну подскажу: я знаю, один из наших, в своём сейфе на блокпосту Кордона хабар собирает со сталкеров. Если вдруг решишься сунуться туда, знай, что хабара там знатно должно быть. И вот, забери мою винтовку, в знак благодарности!", 2, "military", 9000)
+  news_manager.send_tip(db.actor, "Спасибо, брат! Будет возможность - лично ещё сочтемся! А пока инфу одну подскажу: я знаю, что один из наших в своём сейфе на блокпосте Кордона хабар собирает со сталкеров. Если вдруг решишься сунуться туда, знай, что хабара там знатно должно быть. И вот, забери мою винтовку в знак благодарности!", 2, "military", 9000)
   local se_obj = alife():object("lvl4_darkdolina_stalker_0015")
   if se_obj then
     alife():release(se_obj, true)
@@ -18899,7 +18925,7 @@ end
 function sms_val_garbage_bandits()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Сообщение:\\nЭй, братан, подойди, дело есть!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Сообщение:\\nЭй, братан, подойди! Дело есть.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -18960,7 +18986,7 @@ local cactor = level.object_by_id(sactor.id)
 cactor:give_game_news("Сообщение \\nСоединение потеряно.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-news_manager.send_tip(db.actor, "Мессер, что там с тайником? Жду тебя с нетерпением.", 5, "trader", 25000)
+news_manager.send_tip(db.actor, "Мессер, что с тайником? Давай быстрее там! Жду тебя.", 5, "trader", 25000)
 end
 
 
@@ -18988,7 +19014,7 @@ end
 function progulka_prisli_plos_lead7()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Сообщение: Чёрный Слизень \\nДа нет тут ни хрена! Давай уже шманать этих и валить быстрее, мля!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Сообщение: Чёрный Слизень \\nДа нет тут ни хрена! Давай уже шмонать этих и валить быстрее, мля!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19020,7 +19046,7 @@ end
 function progulka_prisli_plos_lead4()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Сообщение: Чёрный Слизень \\nСтоять! Завалим гадов! Не двигаться всем! Опаньки, кто это тут у нас такие?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Сообщение: Чёрный Слизень \\nСтоять! Завалим гадов! Не двигаться всем... Опаньки, кто это у нас тут такие?","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 nick.fix_rostok_slizni_weapons()
@@ -19086,7 +19112,7 @@ end
 function rush_rostok_tmer_mochii()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Сообщение: Группа \\nЧёрт, там кто-то есть, всем быть на чеку.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Сообщение: Группа \\nЧёрт, там кто-то есть - всем быть начеку.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19185,7 +19211,7 @@ end
 function noobik_progulka_tri()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Входящее сообщение.\\nСерёга... Всё, хана группе. И главное, тут все полегли, в безопасности... Чёртовы кровососы! Твою же, что теперь делать-то... Сталкер, спасибо тебе, за мной должок. Если нужен буду, ищи меня там же, где и был, или в баре. Всё, мне нужно выпить...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Входящее сообщение.\\nСерёга... Всё, хана группе. И главное, тут все полегли, в безопасности... Чёртовы кровососы! Твою же, что теперь делать-то... Сталкер, спасибо тебе - за мной должок. Если нужен буду, ищи меня там же, где и был, или в баре. Всё, мне надо выпить...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19217,7 +19243,7 @@ end
 function noobik_progulka_one()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Входящее сообщение.\\nТвою же, я так и знал, что здесь что-то не так! Ладно, идём в ещё одно место.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Входящее сообщение.\\nТвою же... Я так и знал, что здесь что-то не так! Ладно, идём ещё в одно место.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19252,7 +19278,7 @@ if not has_alife_info("start_zagon_bandosa_dead") then
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Входящее сообщение:\\nСпрут: Мужик, давай с нами! Мы загнали эту бандитскую сволочь, что положила семь наших ребят, в тот дом на холме. Помоги нам пришлёпнуть эту гниду! Подойди, расскажу что к чему.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Входящее сообщение:\\nСпрут: Мужик, давай с нами! Мы загнали эту бандитскую сволочь, которая положила семеро наших ребят, в тот дом на холме. Помоги нам пришлёпнуть эту гниду! Подойди, расскажу что к чему.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 --local snd_obj = xr_sound.get_safe_sound_object([[ol3\voices\sproot_bandit_quest_01_v2_radio_v1]])
 --snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19286,7 +19312,7 @@ end
 function lonewolf_gar_smsm3()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Одинокий Волк\\nТебе нужен специальный блокиратор. Недавно у вояк был рейд там, и, похоже, все они полегли. У меня есть информация, что пара солдат выбралась на Свалку, наверняка у кого-то из них есть блокиратор. Видели их у перехода, с которого течёт небольшой ручей.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),65000)
+cactor:give_game_news("Одинокий Волк\\nТебе нужен специальный блокиратор. Недавно у вояк был рейд там, и похоже, все они полегли. У меня есть информация, что пара солдат выбралась на Свалку, наверняка у кого-то из них есть блокиратор. Видели их у перехода, с которого течёт небольшой ручей.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),65000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19363,7 +19389,7 @@ end
 function volk_sasesc_bar2()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Одинокий Волк\\nНу вот мы и пришли. Подушка в твоём распоряжении, располагайся, думаю, тебе надо поспать часиков семь-восемь. Двери запираются изнутри, и как только дверь открыта, отсек считается не занятым. Снаружи его запереть нельзя, поэтому каждый всё свое таскает с собой, да и мало ли что, надо быть постоянно готовым к срочной эвакуации. Выспишься, а потом сходим в бар, там можно будет и выпить, и закусить, и поговорить.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Одинокий Волк\\nНу вот мы и пришли. Подушка в твоём распоряжении, располагайся. Думаю, тебе надо поспать часиков семь-восемь. Двери запираются изнутри, и как только дверь открыта, отсек считается не занятым. Снаружи его запереть нельзя, поэтому каждый всё свое таскает с собой, да и мало ли что может случиться - надо быть постоянно готовым к срочной эвакуации. Как выспишься, сходим в бар, а там уже можно будет и выпить, и закусить, и поговорить.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("lvl5_bar_physic_object_1351")
@@ -19391,7 +19417,7 @@ function bad_timer_del_novic_sms()
 	olr.beep()
 	local sactor = alife():actor()
 	local cactor = level.object_by_id(sactor.id)
-	cactor:give_game_news("Зоб\\nГде моя пушка, Мессер?! Ты что, решил её себе оставить? Ну я тебе это ещё припомню!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+	cactor:give_game_news("Зоб\\nГде моя пушка, Мессер?! Ты что, решил её себе забрать? Ну я тебе это ещё припомню!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 	local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	db.actor:change_character_reputation(-20)
@@ -19405,7 +19431,7 @@ function bar_dolg_lider_stuka()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Лидер Долга\\nТак, с Крысой мы разобрались, всё верно, - толкал он налево наш боезапас. Зайди к нашему торговцу за наградой.","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),15000)
+cactor:give_game_news("Лидер Долга\\nТак, с дельцом мы разобрались. Всё-таки тот толкал налево наш боезапас - всё верно. Зайди к нашему торговцу за наградой.","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19432,7 +19458,7 @@ function dofhodi_kvestpat()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nМессер, приём. Значит, ситуация следующая: мне нужно достать одну вещь, называется \"Жабий Глаз\". Находится она на Свалке, севернее отсюда. До прошлого выброса я уже отправил туда одну группу, но связь с ней пропала почти сразу, как они вышли туда. Один из моих перебежчиков сказал, что в том месте, где видели артефакт, спала аномальная активность, но лезть туда они побоялись. Значит, отправляйся на Свалку и добудь мне этот артефакт. Координаты места прилагаю.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
+cactor:give_game_news("Жаба\\nМессер, приём. Значит, ситуация следующая: мне нужно достать одну вещь, называется \"Жабий глаз\". Находится она на Свалке, севернее отсюда. До прошлого выброса я уже отправил туда одну группу, но связь с ней пропала почти сразу, как они вышли туда. Один из моих перебежчиков сказал, что в том месте, где видели артефакт, спала аномальная активность, но лезть туда они побоялись. Короче, отправляйся на Свалку и добудь мне этот артефакт. Координаты места прилагаю.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local sobj = alife():object("lvl2_garbage_af_jabiy_glaz_garbage") 
@@ -19450,7 +19476,7 @@ function jaba_zavod_doki_escsa()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nДа, ещё: эта тварь, что вы пристрелили, стащила у одного из моих курьеров документы, пока он спал на заводе. Он сказал, что на крыше у неё было что-то вроде логова, возможно, тварь утащила их туда. Найди их и принеси мне, они имеют некоторую ценность... Без них можешь не возвращаться.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 3500),35000)
+cactor:give_game_news("Жаба\\nДа, ещё: эта тварь, которую вы пристрелили, стащила у одного из моих курьеров документы, пока он спал на заводе. Он сказал, что на крыше у неё было что-то вроде логова - возможно, тварь утащила их туда. Найди документы и принеси мне, они имеют некоторую ценность... Без них можешь не возвращаться.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 3500),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 olr.del_by_name("lvl1_escape_physic_object_0570")
@@ -19461,7 +19487,7 @@ function horok_ne_have_go_nazad()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nНе понял, он что там, сдох что ли? Елки, ты куда смотрел?! Я же тебя к нему отправил... Так, давай назад ко мне.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
+cactor:give_game_news("Жаба\\nНе понял, он что там, сдох что ли? Елки, ты куда смотрел?! Я же тебя к нему отправил... Так, давай назад ко мне!","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19472,7 +19498,7 @@ olr.to_online("esc_jaba_radio")
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nДа, и вот еще что: у тебя в ПДА есть возможность отображения контактов сталкеров, что находятся в радиусе примерно 200 метров от тебя. С некоторыми из них ты можешь поговорить на расстоянии, для этого в разделе \"Контакты\" выбери нужного сталкера, там же найдешь его краткую биографию. Попробуй выйти на Диггера через ПДА, как будешь рядом с ним. Ну, думаю, освоишься.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
+cactor:give_game_news("Жаба\\nДа, и вот еще что, у тебя в ПДА есть возможность отображения контактов сталкеров в радиусе примерно 200 метров. С некоторыми из них ты можешь поговорить на расстоянии, для этого в разделе \"Контакты\" выбери нужного сталкера, там же найдешь его краткую биографию. Попробуй выйти на Диггера через ПДА, как будешь рядом с ним. Ну, думаю, освоишься.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("lvl1_escape_physic_object_0341")
@@ -19483,7 +19509,7 @@ end
 function pda_zarad_info_zaba()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nДа, и ещё... ПДА твой имеет заряд и разряжается он со временем. Следи за уровнем заряда, чтобы в нужный момент без ПДА не остаться.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
+cactor:give_game_news("Жаба\\nДа, и учти, что ПДА твой имеет ограниченный заряд, так что следи за его уровнем, чтобы в нужный момент без связи не остаться.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 news_manager.send_tip(db.actor, "Обучение: Чтобы проверить уровень заряда ПДА, нажмите кнопку ТАВ в окне ПДА.", 10, "default", 39000)
@@ -19503,7 +19529,7 @@ function olr_blowout_first_zaba_blok()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nМессер, тут после выброса фигня какая-то на блокпосту у вояк творится. Я не могу принять оттуда никаких сигналов, будто там и нет никого. Слушай, сбегай по-тихому туда, посмотри, что там. Только, в случае чего, сразу вали оттуда. Расскажешь потом.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
+cactor:give_game_news("Жаба\\nМессер, тут после выброса фигня какая-то на блокпосте вояк творится: я не могу принять оттуда никаких сигналов, будто там и нет никого. Слушай, сбегай по-тихому туда, посмотри, что там. Только в случае чего сразу вали оттуда! Расскажешь потом.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19514,7 +19540,7 @@ function bar_dolg_lider_zom3()
 nick.rnd_zombies_spawn()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Лидер Долга\\nВнимание всем! Мы засекаем странные помехи в эфире, всем смотреть в оба!","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),15000)
+cactor:give_game_news("Лидер Долга\\nВнимание! Мы засекаем странные помехи в эфире, всем смотреть в оба!","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19536,12 +19562,12 @@ function pes_propaganda()
 	olr.del_by_name("lvl1_escape_stalker_0055")
 	olr.del_by_name("lvl1_escape_stalker_0054")
 	olr_timers.st_timer("pes_propaganda", 21, "nick.pes_propaganda222()")
-	news_manager.send_tip(db.actor, "Помните, бойцы! Мы - барьер, и ни одна тварь, ни одна бумажка, ни один предмет не должны проскользнуть во внешний мир. Зона их породила, здесь они будут и похоронены!", nil, "dolg", 29000)
-	news_manager.send_tip(db.actor, "Да, ещё, Мессер. Поделимся с тобой информацией: если выброс застанешь на нашем блокпосту, то прячься тут у скалы, рядом с забором, - эти скалы хорошо защищают от него. Ну, всё, спасибо тебе.", 12, "dolg", 29000)	
+	news_manager.send_tip(db.actor, "Помните, бойцы, мы - барьер! Ни одна тварь не должна проскользнуть во внешний мир: Зона их родила, здесь они и будут похоронены!", nil, "dolg", 29000)
+	news_manager.send_tip(db.actor, "Да, ещё, Мессер. Поделимся с тобой информацией: если выброс застанешь у нашей заставы, то прячься тут, у скалы рядом с забором, эти скалы хорошо защищают от него. Ну всё, спасибо тебе.", 12, "dolg", 29000)	
 end
 
 function pes_propaganda222()
-	news_manager.send_tip(db.actor, "Ладно... Черт, в ангарах опять крысы завелись! Всё с Тёмной Долины прут и прут... Что их там, разводят что ли? Мессер, можешь зайти на территорию Бара, мы тебя пропустим. Сам бар, где сталкеры собираются, закрыт сейчас, но ты можешь зайти на нашу базу, возможно, для тебя что-то будет.", nil, "dolg", 29000)
+	news_manager.send_tip(db.actor, "Ладно... Черт, в ангарах опять крысы завелись! Всё с Тёмной Долины прут и прут... Что их там, разводят что ли? Мессер, мы разрешим тебе посетить территорию Бара. В сам бар тебе сейчас вход закрыт, но ты сможешь зайти на нашу базу, возможно, для тебя что-то будет.", nil, "dolg", 29000)
 end
 
 function fraer_yeag_3()
@@ -19572,7 +19598,7 @@ end
 function st_pes_go_talk3()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Вороний Глаз\\nОн молодцом! Да и не новичок он,  если бы ты видел, как он ловко снял вожака!","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),5000)
+cactor:give_game_news("Вороний Глаз\\nОн молодцом! Да и не новичок он совсем: если бы ты видел, как он ловко снял вожака!","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19594,7 +19620,7 @@ local cactor = level.object_by_id(sactor.id)
 cactor:give_game_news("Лидер Долга\\nВыше нос, бойцы! Идёт ещё одна волна!","ui\\ui_icons_task",Frect():set(150,0,50,50),math.random(1000, 15000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	news_manager.send_tip(db.actor, "Твари... Видимо, с Севера прут. Возможно, после того, как установка на озере перестала работать. Откуда их столько? Мессер, держи пулемётную точку, мы прикроем тыл!", 12, "dolg_voronin", 9000)
+	news_manager.send_tip(db.actor, "Твари... С Севера прут, возможно, после того как установка на озере перестала работать. Откуда их столько? Мессер, держи пулемётную точку, мы прикроем тыл!", 12, "dolg_voronin", 9000)
 end
 
 
@@ -19611,7 +19637,7 @@ end
 
 
 function monolit_pridi()
-news_manager.send_tip(db.actor, "Прийди ко мне, сталкер... Прийди..", nil, "sos", 39000)
+news_manager.send_tip(db.actor, "Иди ко мне, сталкер... Иди..", nil, "sos", 39000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19621,7 +19647,7 @@ function jaba_killar_washe()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nВнимание всем! Отныне сталкер по кличке Мессер объявлен убийцей! За его голову назначено вознаграждение - пусть послужит очередным примером того, как нельзя обращаться с братом-сталкером. Он еще может получить шанс искупить свои грехи, если, конечно, доберётся до меня.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 15000),35000)
+cactor:give_game_news("Жаба\\nВнимание всем! Отныне сталкер по кличке Мессер объявлен убийцей! За его голову назначено вознаграждение - пусть это послужит очередным примером того, как нельзя обращаться с братом-сталкером. Он еще может получить шанс искупить свои грехи, если конечно, доберётся до меня.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 15000),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19632,7 +19658,7 @@ function jaba_killar_pre()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nЭй, ты что делаешь?! За смерть еще одного нейтрала по твоей вине ты будешь объявлен убийцей - путь к сталкерам тебе будет закрыт, и на тебя объявится охота, учти это.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 15000),35000)
+cactor:give_game_news("Жаба\\nЭй, ты что делаешь?! За смерть еще одного нейтрала по твоей вине ты будешь объявлен убийцей: путь к сталкерам тебе будет закрыт, и на тебя объявится охота, учти это.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 15000),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19654,7 +19680,7 @@ function komandir_zdohnah()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nМессер, какого хрена?! Он что, умер?! На кой чёрт я тебя туда отправил?! Ты что, ещё от амнезии не отошёл, что я теперь воякам скажу?! Двигай сюда!","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(500, 1000),35000)
+cactor:give_game_news("Жаба\\nМессер, какого хрена?! Он что, умер?! На кой чёрт я тебя туда отправил?! Ты что, ещё от амнезии не отошёл? Что я теперь воякам скажу?! Быстро двигай сюда!","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(500, 1000),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19674,7 +19700,7 @@ function voy_dolineaa()
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nМессер, вояки устроили рейд на бандитов в том районе, где ты сейчас находишься, смотри не нарвись. Пару часов назад с Кордона выехал армейский джип - человек 6 или 7 было - да ещё аппаратуру какую-то везли с собой. Как у них заварушка утихнет, посмотри, что там было такое, заодно машину можешь одолжить у господ в погонах. В общем, если что найдешь, я на связи.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 2000),35000)
+cactor:give_game_news("Жаба\\nМессер, вояки устроили рейд на бандитов в том районе, где ты сейчас находишься - смотри не нарвись. Пару часов назад с Кордона выехал армейский джип - человек 6 или 7 было - да ещё аппаратуру какую-то везли с собой. Как у них заварушка утихнет, посмотри, что там было такое, заодно машину можешь одолжить у господ в погонах. В общем, если что найдешь - я на связи.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 2000),35000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19682,7 +19708,7 @@ end
 
 function kolodetz_task_jaba()
 	olr.beep()
-news_manager.send_tip(db.actor, "Мессер, ты вроде около деревушки сейчас? Тут такое дело... Один бродяга мне передачку с Бара нес да пропал где-то в этом районе. Пойди посмотри, что там, найдёшь чего - сразу неси мне. Всё, конец связи.", nil, "trader", 55000)
+news_manager.send_tip(db.actor, "Мессер, ты вроде около деревушки сейчас? Тут такое дело... Один бродяга мне передачку с Бара нес да пропал где-то в этом районе. Пойди посмотри, что там, найдёшь чего - неси мне. Всё, конец связи.", nil, "trader", 55000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19720,7 +19746,7 @@ end
 function coolweather_napaai33()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Напарник\\nДа нет, не надо... Ох, передохнуть бы немного... Пойдём к тому дереву поваленному... Сейчас аптечку приму, и двинем дальше, ах...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),5000)
+cactor:give_game_news("Напарник\\nДа нет, не надо... Ох, передохнуть бы немного... Пойдём к тому дереву поваленному... Сейчас аптечку приму - и двинем дальше, ах...","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19755,7 +19781,7 @@ if has_alife_info("medpribor_kvest_start_find_friend") then
 	olr.beep()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nТы вообще мог быть хоть немного предусмотрительнее? Так, если не на территории комплексов сейчас, и фона нет, то беги ко мне, подлатаю. Ну а если же там, то влип ты конкретно, сталкер. Так, что бы придумать... Хех, можешь попробовать на медицине сделать рывок, хотя не факт, что у тебя выйдет, да и светиться будешь потом похлеще реактора. Или подожди... Там на комплексах велись работы какие-то по экспериментальным антирадам. Кажется, кто-то говорил мне, что здорово помогают они от фона на НИИ. Попробуй поискать в комплексах, возможно, валяются еще их остатки где-то.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Жаба\\nТы вообще мог быть хоть немного предусмотрительнее? Так, если ты не на территории комплексов сейчас и фона нет, то беги ко мне, подлатаю. Ну а если же там, то влип ты конкретно, сталкер. Что бы придумать... Хех, можешь попробовать на медицине сделать рывок, хотя не факт, что у тебя выйдет, да и светиться будешь потом похлеще реактора. Или подожди... Там на комплексах велись работы какие-то по экспериментальным антирадам. Кажется, кто-то говорил мне, что здорово помогают они от фона на НИИ - попробуй поискать в помещениях, возможно, где-то еще валяются их остатки.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19765,7 +19791,7 @@ end
 function coolweather_nap3()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Напарник\\nХм, что это там? Похоже на мёртвую хваталку. Нужно посмотреть, может, иголку сможем найти!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Напарник\\nХм, что это там? Похоже на мёртвую хваталку. Нужно посмотреть, может, Иголку сможем найти!","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19978,7 +20004,7 @@ end
 function prof_heliequp_sms_pilot()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Пилот\\nНаблюдаю подозрительную активность в районе. Кажется, шпана местная. Сталкер, профессор сказал, что отправил тебя прикрыть нас - разберись с ними. Бегут от разрушенного здания без крыши.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),25000)
+cactor:give_game_news("Пилот\\nНаблюдаю подозрительную активность в районе. Кажется, шпана местная. Сталкер, Профессор сказал, что отправил тебя прикрыть нас - разберись с ними. Бегут от разрушенного здания без крыши.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),25000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -20052,7 +20078,7 @@ function zaba_ab_note()
 olr_timers.st_timer("jaba_ab_radweak", 165, "nick.jaba_ab_radweak()")
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Жаба\\nДа, и вот ещё что: у тебя в ПДА имеется специальный блокнот для заметок. Можешь писать туда свои записи, если найдешь чего интересного.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(2000, 5000),15000)
+cactor:give_game_news("Жаба\\nДа, и вот ещё что, у тебя в ПДА имеется специальный блокнот для заметок. Можешь писать туда свои записи, если посчитаешь нужным.","ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(2000, 5000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -20072,7 +20098,7 @@ olr.del_by_name("psy_izl_0001")
 olr.del_by_name("psy_izl")
 olr.del_by_name("psy_izl_0003_script")
 
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,245,118,54]Сталкер, в городе наблюдается большая активность пси-излучения, которая блокирует проход к станции. Я засёк большую группу контроллёров где-то в центре города, возможно, именно она мешает пройти. Рекомендую использовать артефакт Мёртвая голова, и даже не один, в той области.".."".."\n", nil, "trader", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,245,118,54]Сталкер, в городе наблюдается большая активность пси-излучения, которая блокирует проход к станции. Я засёк большую группу контролёров где-то в центре города, возможно, именно она мешает пройти. Рекомендую использовать артефакт \"Мёртвая голова\", и даже не один, в той области.".."".."\n", nil, "trader", 30000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 if has_alife_info("bun_mosk_start_quest_go_done") then
@@ -20089,7 +20115,7 @@ olr.add_spot_on_map(sobj.id,"crlc_big","Неизвестный сталкер")
 end
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Зоб: \\nСталкер, подойди, дело есть. Я тут, у склона горы.","ui\\ui_icons_task",Frect():set(350,50,50,50),math.random(1000, 3000),5000)
+cactor:give_game_news("Зоб: \\nСталкер, подойди, есть одно дело. Я тут, у склона горы.","ui\\ui_icons_task",Frect():set(350,50,50,50),math.random(1000, 3000),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -20106,7 +20132,7 @@ function oobrataan_thk_start()
 	if has_alife_info("yan_zablik_dead") then
 		return
 	end
-	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Зябликов:".."\\n".."%c[255,245,118,54]Спасибо ещё раз за помощь. Я решил покинуть зону - мне здесь нечего больше делать. Покинуть, пока она не забрала и меня. Даю тебе наводку на свой тайник, мне он уже всё равно ни к чему. Прощай.".."".."\n", nil, "default", 30000)
+	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Зябликов:".."\\n".."%c[255,245,118,54]Спасибо ещё раз за помощь. Я решил покинуть зону, мне здесь нечего больше делать. Покинуть, пока она не забрала и меня. Даю тебе наводку на свой тайник, мне он уже всё равно ни к чему. Прощай.".."".."\n", nil, "default", 30000)
 	olr.del_by_name("lvl7_yantar_bar_bar_visitors_3_2_0002")
 	db.actor:change_character_reputation(20)
 	olr_treasure.create_treasure()
@@ -20145,20 +20171,20 @@ end
 
 
 function killlll_plot_mg_sms1()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Снайпер Свободы:".."\\n".."%c[255,245,118,54]Чёртовы плоти, ещё их тут не хватало. Отправляйся к праотцам, хрюшка!".."".."\n", nil, "freedom", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Снайпер Свободы:".."\\n".."%c[255,245,118,54]Чёртовы плоти, ещё их тут не хватало... Бывай, хрюшка!".."".."\n", nil, "freedom", 30000)
 end
 
 
 
 
 function freedom_podriv_bazar_1()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сапёр Свободы:".."\\n".."%c[255,245,118,54]О, здарова, брат! Пошли, не будем задерживаться тут.".."".."\n", nil, "freedom", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сапёр Свободы:".."\\n".."%c[255,245,118,54]О, здарова, брат! Пойдем, не будем задерживаться тут.".."".."\n", nil, "freedom", 30000)
 olr.blow_add(500)
 end
 
 
 function freedom_podriv_bazar_2()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сапёр Свободы:".."\\n".."%c[255,245,118,54]Так, на месте. Блин, какая же дверь была... а, вот эта вроде. Братан, ты это, отойди подальше лучше, а то взрывчатка тут всё же.".."".."\n", nil, "freedom", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сапёр Свободы:".."\\n".."%c[255,245,118,54]Так, на месте. Блин, какая же дверь была... А, вот эта вроде. Братан, ты это, отойди подальше лучше, а то взрывчатка тут всё же.".."".."\n", nil, "freedom", 30000)
 end
 
 function freedom_podriv_bazar_3()
@@ -20172,7 +20198,7 @@ end
 
 
 function freedom_podriv_bazar_5()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сапёр Свободы:".."\\n".."%c[255,245,118,54]Ха! Похоже, что тут они решили неплохо так оттянуться. Чувак, посмотри только на это! Ха, вот ведь кадры... Ладно, я на базу потопал, фонит тут, а ты разбирайтся, что тебе тут надо.".."".."\n", nil, "freedom", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сапёр Свободы:".."\\n".."%c[255,245,118,54]Ха! Похоже, тут они решили неплохо так оттянуться. Чувак, посмотри только на это! Ха, вот ведь кадры... Ладно, я на базу потопал, фонит тут, а ты разбирайтся, что тебе тут надо.".."".."\n", nil, "freedom", 30000)
 end
 
 
@@ -20213,13 +20239,13 @@ end
 
 
 function zomb_zametka_lab()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Мессер:".."\\n".."%c[255,160,160,160]Хм, странно, моё фото... И задание убить.".."".."\n", nil, "default", 10000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Мессер:".."\\n".."%c[255,160,160,160]Хм, странно, моё фото... И задание на убийство.".."".."\n", nil, "default", 10000)
 end
 
 
 
 function zomb_zametka_agro()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Мессер:".."\\n".."%c[255,160,160,160]Хм, странно... Тут моя фотография! И задание убить... Кажется, у кого-то на меня счёты.".."".."\n", nil, "default", 10000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Мессер:".."\\n".."%c[255,160,160,160]Хм, странно... Тут моя фотография! И задание на убийство... Кажется, кто-то хотел свести со мной счёты.".."".."\n", nil, "default", 10000)
 end
 
 
@@ -20244,20 +20270,20 @@ end
 
 
 function basement_seryy_dee_dee_dee()
-news_manager.send_tip(db.actor, "%c[255,245,118,54]".."Ведьмак:".."\\n".."%c[255,245,118,54]Пришли. Вводи код - 9783.".."".."\n", nil, "default", 20000)
+news_manager.send_tip(db.actor, "%c[255,245,118,54]".."Ведьмак:".."\\n".."%c[255,245,118,54]Пришли. Вводи код: 9783.".."".."\n", nil, "default", 20000)
 end
 
  
 
 function basement_seryy_dee_dee()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Ведьмак:".."\\n".."%c[255,245,118,54]Хм, нет, явно не здесь. Что ж, значит, в другом месте, пойдём!".."".."\n", nil, "default", 20000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Ведьмак:".."\\n".."%c[255,245,118,54]Хм, нет, явно не здесь... Что ж, значит, пойдём дальше.".."".."\n", nil, "default", 20000)
 end
 
 
 function basement_seryy_dee()
 	olr.beep()
 news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Мессер:".."\\n".."%c[255,245,118,54]Ведьмак, приём. Похоже, твой человек мёртв.".."".."\n", nil, "default", 30000)
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Ведьмак:".."\\n".."%c[255,245,118,54]Чёрт... Ладно, возвращайся, есть мысль.".."".."\n", 8, "default", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Ведьмак:".."\\n".."%c[255,245,118,54]Чёрт... Ладно, возвращайся. Есть одна мысль.".."".."\n", 8, "default", 30000)
 olr_timers.st_timer("rost_alarm_korps", 22, "nick.rost_alarm_korps()")
 end
 
@@ -20268,7 +20294,7 @@ end
 
 
 function ohran_zdoher()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Профессор:".."\\n".."%c[255,245,118,54]Что с охранником? Чёрт возьми, придётся нанимать нового!".."".."\n", nil, "saharov", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Профессор:".."\\n".."%c[255,245,118,54]Что случилось с охранником? Чёрт возьми, придётся нанимать нового!".."".."\n", nil, "saharov", 30000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -20311,7 +20337,7 @@ end
 
 function flacke2_mons()
 olr_timers.st_timer("flacke3", 6, "nick.flacke3_mons()")
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сообщение:".."\\n".."%c[255,160,160,160]Вольфрам, тут датчики барахлят, или я чего не так понял. Похоже, к комплексу приближется большая стая зверья!".."".."\n", nil, "default", 30000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Сообщение:".."\\n".."%c[255,160,160,160]Вольфрам, тут датчики барахлят, или я чего не так понял. Похоже, к комплексу приближается большая стая зверья.".."".."\n", nil, "default", 30000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -20363,7 +20389,7 @@ end
 
 function barmen_abyantar_pre_blow_psy()
 	olr.beep()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,160,160,160]Сталкер, ты в районе озера?! Советую быстрее искать какое-либо укрытие. Когда начинается выброс, те антенны, что там находятся, начинают работать в усиленном режиме. Советую поторопиться, если жить хочешь.".."".."\n", nil, "trader", 90000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,160,160,160]Сталкер, ты в районе озера?! Советую быстрее искать какое-либо укрытие. Когда начинается выброс, местные антенны начинают работать в усиленном режиме. Советую поторопиться, если жить хочешь.".."".."\n", nil, "trader", 90000)
 end
 
 
@@ -20401,7 +20427,7 @@ end
 
 function proffes_aftrbrain_sms()
 	olr.beep()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Профессор:".."\\n".."%c[255,160,160,160]Зайдите к нам в бункер, мы отблагодарим Вас за то, что Вы сделали. Да, в сторону Болот я не рекомендую всё ещё отправляться, так как остаточное пси-поле всё еще способно прикончить Вас в два счёта - пару дней придётся подождать...".."".."\n", nil, "saharov", 60000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Профессор:".."\\n".."%c[255,160,160,160]Зайдите к нам в бункер, мы отблагодарим Вас за то, что Вы сделали. Да, в сторону Болот я все ещё не рекомендую отправляться, так как остаточное пси-поле всё еще способно прикончить Вас в два счёта - пару дней придётся подождать...".."".."\n", nil, "saharov", 60000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -20453,7 +20479,7 @@ snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
 
 --local sactor = alife():actor()
 --local cactor = level.object_by_id(sactor.id)
---cactor:give_game_news("Бармен\\nГоворит Бармен! Приборы не фиксируют излучения с севера, дорога на Припять открыта! Мессер, если ты будешь ещё у нас, знай, что мы ценим то, что ты сделал! Зайди, если сможешь.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+--cactor:give_game_news("Бармен\\nГоворит Бармен! Приборы не фиксируют излучения с севера - дорога к Припяти открыта! Мессер, знай, мы очень ценим то, что ты сделал! Зайди, как сможешь.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 --local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 --snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 
@@ -20582,7 +20608,7 @@ function kol()
 	olr.del_by_name("lvl5_bar_physic_object_0308")
 	olr.del_by_name("lvl5_bar_stalker_0025")
 	if has_alife_info("olr_traders_night") then
-		news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Кобальт:".."\\n".."%c[255,160,160,160]Приходи, только лучше днем, ночь - плохо подходящее время для разговора.".."".."\n", nil, "default", 30000)	
+		news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Кобальт:".."\\n".."%c[255,160,160,160]Приходи, только лучше днем, ночь не подходящее время для разговора.".."".."\n", nil, "default", 30000)	
 	end
 end
 
@@ -20598,7 +20624,7 @@ function tele2()
 olr_timers.st_timer("dok_zaidi_jurn_propal", 35, "nick.dok_zaidi_jurn_propal()")
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Входящее сообщение Тихонов:\\nМессер, вы живы? Тут чёрт знает что происходит! Это мобильная научная группа на территории болот. Зайдите к нам, у нас есть тема для разговора с вами.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),5000)
+cactor:give_game_news("Входящее сообщение Тихонов:\\nМессер, вы живы? Тут чёрт знает что происходит! Это мобильная научная группа на территории Болот. Зайдите к нам, у нас есть тема для разговора с вами.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),5000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.info("tihonov_zaidi_jurn_propal_st") 
@@ -20686,7 +20712,7 @@ end
 function jurnl()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Журналист\\nЯ буду на территории, где хозяйничает группировка Свобода, найдёшь меня в одном из домов на окраине города.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
+cactor:give_game_news("Журналист\\nЯ буду на территории, где хозяйничает группировка \"Свобода\", найдёшь меня в одном из домов на окраине города.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("chaes_add_spawn_doki_seven", 5, "nick.chaes_add_spawn_doki_seven()")
@@ -20744,7 +20770,7 @@ end
 
 
 function slizen()
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Звуковое сообщение: Неизвестный сталкер".."\\n".."%c[255,160,160,160]Эй, слышишь, браток! Подойди-ка сюда, это наша территория. Перетереть надо.".."".."\n", nil, "unknown", 40000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Звуковое сообщение: Неизвестный сталкер".."\\n".."%c[255,160,160,160]Эй, слышишь, браток! Это наша территория. Подойди-ка сюда, перетереть надо.".."".."\n", nil, "unknown", 40000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr\slizen\sms]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 olr.del_by_name("lvl5_bar_staler_undead_olr_0012")
@@ -20752,7 +20778,7 @@ olr.del_by_name("lvl5_bar_staler_undead_olr_0012")
 end
 
 function dolg_pro_slizeny()
-	news_manager.send_tip(db.actor, "Сталкер, приём, на связи база Долга. Мы приняли сигнал, который поступил тебе от одной из групп отморозков Тёмной Долины. Это мародёры и убийцы - они имели наглость напасть на один из наших отрядов. Будь начеку с ними и знай, если тебе выдастся возможность положить этих гадов, буду тебе лично признателен. Но это дело твоё, конец связи.", nil, "dolg_voronin", 39000)
+	news_manager.send_tip(db.actor, "Сталкер, приём, на связи база Долга. Мы приняли сигнал, который поступил тебе от одной из групп отморозков Тёмной Долины. Это мародёры и убийцы, они имели наглость напасть на один из наших отрядов. Будь начеку с ними и знай, если тебе выдастся возможность положить этих гадов, буду тебе лично признателен. Но это дело твоё, конец связи.", nil, "dolg_voronin", 39000)
 end
 
 function poeh()
@@ -20773,7 +20799,7 @@ end
 
 function zaba_sobaki_angar()
 	olr.beep()
-	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,160,160,160]Да, и ещё: сталкеры доложили, что в том районе сейчас большое скопление слепых псов. Попробуй узнать, в чем причина их присутствия там в таком количестве. Сталкеры обходят эту стаю стороной, никто пока не решился уничтожить её.".."".."\n", nil, "trader", 30000)
+	news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,160,160,160]И ещё, сталкеры доложили, что в том районе замечена большая стая слепых псов. Попробуй узнать, в чем причина их скопления в таком количестве. Сталкеры обходят эту стаю стороной, никто пока не решился уничтожить её.".."".."\n", nil, "trader", 30000)
 end
 
 function zaba_art_garb()
@@ -20784,7 +20810,7 @@ local jaba_place = alife():object("lvl2_garbage_stalker_0012")
 if jaba_place then
 local sobj = alife():create("kanistra_benz", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 end
-news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,160,160,160]Мессер, в разрушенных складских помещениях ангара видели один специфический артефакт. Достань мне его, не обижу деньгами.".."".."\n", nil, "trader", 40000)
+news_manager.send_tip(db.actor, "%c[255,160,160,160]".."Жаба:".."\\n".."%c[255,160,160,160]Мессер, в разрушенных складских помещениях ангара видели один специфический артефакт. Достань мне его, деньгами не обижу.".."".."\n", nil, "trader", 40000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 olr_timers.st_timer("zaba_gar_rat_go", 95, "nick.zaba_gar_rat_go()")

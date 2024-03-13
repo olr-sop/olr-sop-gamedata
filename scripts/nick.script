@@ -3,6 +3,14 @@
 -- olr.beep()
 
 
+function holmi_uch_spas_fail()
+	if has_alife_info("otpravlaet_spat_gg_done") or has_alife_info("fobos_dead_mil") or has_alife_info("fobos_dead_mil_uchen") then
+		return true
+	else
+		return false
+	end
+end
+
 function has_radweaknow()
 	if xvars.count_rad_weak > 0.0020 then
 		return true
@@ -2442,8 +2450,13 @@ end
 
 function otdaem_device_pda_majors(first_speaker, second_speaker)
 nik_dialog.out_item_much("device_pda_majors",1)
-dialogs.relocate_money(first_speaker, 650, "in")
+dialogs.relocate_money(first_speaker, 2650, "in")
+if level.name() == "lvl5_bar" then
+	news_manager.send_tip(db.actor, "Ага, значит завалил этого гада? Ну, это от меня, тебе персональный подарок.", 1, "barman", 19000)
 olr.give_item("medkit")
+	olr.give_item("wpn_striker")
+	olr.give_item("wpn_desert_eagle")
+end
 end
 function precond_device_pda_majors()
      return nik_dialog.item_much("device_pda_majors",1) ~= false 
@@ -2697,6 +2710,9 @@ end
 function kanistra_savkin()
 	olr.give_item("kanistra_benz")
 	olr.give_item("kanistra_benz")
+	olr.give_item("item_razradnik")
+	olr.give_item("item_razradnik")
+	olr.give_item("item_razradnik")
 	news_manager.send_tip(db.actor, game.translate_string("kanistra_savkin_0"), 15, "ecolog", 29000)
 end
 
@@ -6783,7 +6799,12 @@ function holmy_expedition_startsss()
 end
 
 
-
+function is_pda_predead()
+	local STbron = db.actor:object("device_pda")
+	if STbron:condition() <= 0.20 then 
+		return true
+	end
+end
 
 
 function is_pda_dead()
@@ -8144,7 +8165,9 @@ end
 
 function otdaem_pribor_paras_spory()
 	nik_dialog.out_item_much("pribor_paras_spory",1)
- 	dialogs.relocate_money(first_speaker, 1200, "in")
+	news_manager.send_tip(db.actor, "Получены деньги - 1200.", nil, "money", 39000)
+ 	db.actor:give_money(1200)
+	game_stats.money_quest_update(1200)
 	olr.del_by_name("lvl7_yantar_physic_object_0704")
 	olr.blow_add(500)
 end

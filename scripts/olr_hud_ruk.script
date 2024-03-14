@@ -8,6 +8,7 @@ if db.actor then
 		if db.actor:is_in_slot(obj) then
 			local snd_obj = xr_sound.get_safe_sound_object([[ol3\chandge_outfit]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			this.fix_wpn()
 		end
 	end
 end
@@ -21,6 +22,7 @@ function on_slot(obj)
 		level.add_pp_effector("black.ppe", 2203131, false)
 		local snd_obj = xr_sound.get_safe_sound_object([[ol3\chandge_outfit]])
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+		this.fix_wpn()
 	end	
 end
 
@@ -32,6 +34,7 @@ function on_drop(obj)
 			if db.actor:is_in_slot(obj) then
 				local snd_obj = xr_sound.get_safe_sound_object([[ol3\chandge_outfit]])
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+				this.fix_wpn()
 			end
 		end
 	end
@@ -79,3 +82,16 @@ function update2(obj)
 	end
 end
 
+function fix_wpn()
+	local aitem = db.actor:active_item()
+       	if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then
+		bind_stalker.hide_weapon()
+		local wait_time = 0
+  		wait_time = time_global() + 2000
+  		level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() bind_stalker.restore_weapon() end
+  		)
+		--log1('fix wpn')
+	end	
+end

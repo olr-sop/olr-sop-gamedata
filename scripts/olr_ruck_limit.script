@@ -1,5 +1,6 @@
 -- hi_flyer 09/04/16
 
+local val_add = 0
 local drop_cur = 0
 cur_amount = 0
 max_item_amount = 15 
@@ -87,7 +88,11 @@ function recheck_limit()
 	if outfit then
 		cur_outfit = outfit:id()
 		--log1("cur out id- "..cur_outfit.." ")
-		local val_add = ini:line_exist(outfit:section(), "item_amount_add") and ini:r_float(outfit:section(), "item_amount_add") or 0
+		if level.get_game_difficulty() ~= 0 then
+			val_add = ini:line_exist(outfit:section(), "item_amount_add") and ini:r_float(outfit:section(), "item_amount_add") or 0
+		else
+			val_add = ini:line_exist(outfit:section(), "item_amount_add_novice") and ini:r_float(outfit:section(), "item_amount_add_novice") or 0
+		end
 		max_item_amount = max_item_amount + val_add		
 	end
 	--log1("пересчитывем всё по норме")
@@ -198,7 +203,11 @@ function obj_to_ruck(obj)
 	if obj:id() == cur_outfit then
 		cur_outfit = -1
 		--log1(" сняли броню ")
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		if level.get_game_difficulty() ~= 0 then
+			val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		else
+			val_add = ini:line_exist(obj:section(), "item_amount_add_novice") and ini:r_float(obj:section(), "item_amount_add_novice") or 0
+		end
 		max_item_amount = max_item_amount - val_add
 	end
 
@@ -214,7 +223,11 @@ function on_to_box(obj)
 	if obj:id() == cur_outfit then
 		cur_outfit = -1
 		--log1(" сняли броню ")
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		if level.get_game_difficulty() ~= 0 then
+			val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		else
+			val_add = ini:line_exist(obj:section(), "item_amount_add_novice") and ini:r_float(obj:section(), "item_amount_add_novice") or 0
+		end
 		max_item_amount = max_item_amount - val_add
 	end
 end
@@ -263,7 +276,11 @@ function take_item_on_slot(obj)
 	if obj:is_outfit() then
 		cur_outfit = obj:id()
 		--log1(" надели броню ")
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		if level.get_game_difficulty() ~= 0 then
+			val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		else
+			val_add = ini:line_exist(obj:section(), "item_amount_add_novice") and ini:r_float(obj:section(), "item_amount_add_novice") or 0
+		end
 		max_item_amount = max_item_amount + val_add
 	end
 	olr_ui_inv_acinfo.repaint()

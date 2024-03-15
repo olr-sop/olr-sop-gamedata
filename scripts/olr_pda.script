@@ -116,20 +116,16 @@ end
 class "phrase_list_item" (CUIListItemEx)
 
 function phrase_list_item:__init(item_name, id) super()
-	self.id = id
-	self.item_name = item_name
 	self.text_item = CUIStatic()
 	self:AttachChild(self.text_item)
+	self.text_item:SetText(game.translate_string(item_name))
 	self.text_item:SetFont(GetFontLetterica18Russian())
 	self.text_item:SetTextComplexMode(true)
 	self.text_item:SetWidth(310)
 	self.text_item:AdjustHeightToText()
 	local lheight = self.text_item:GetHeight() * 2
-	self.text_item:SetHeight(lheight)
+	self:SetHeight(lheight)
 	self.text_item:SetTextColor(255,255,255,255)
-	
-	self.text_item:SetText(game.translate_string(item_name))
-	
 end
 
 function phrase_list_item:__finalize()
@@ -369,7 +365,7 @@ end
 --Добавление элемента в список phrase_list
 function pda_talk:AddQuestion(item_name, id)
 	local _itm = phrase_list_item(item_name, id)
-	self.phrase_list:AddItem(_itm)
+	self.phrase_list:AddItem(_itm, _itm:GetHeight())
 end
 
 --Добавление элемента в список story

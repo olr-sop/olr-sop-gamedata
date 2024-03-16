@@ -125,7 +125,12 @@ function phrase_list_item:__init(item_name, id) super()
 	self.text_item:SetTextComplexMode(true)
 	self.text_item:SetWidth(310)
 	self.text_item:AdjustHeightToText()
-	local lheight = self.text_item:GetHeight() * 2
+	self.text_item:EnableTextHighlighting(true)
+	self.text_item:SetUnderlinedTextUsing(true)
+	local lheight = self.text_item:GetHeight()
+	if string.len(self.text_item:GetText()) > 10 then -- работает криво, не могу найти причину
+		lheight = self.text_item:GetHeight() * 2
+	end
 	self:SetHeight(lheight)
 	self.text_item:SetTextColor(255,255,255,255)
 end

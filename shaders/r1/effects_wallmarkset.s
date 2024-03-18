@@ -1,6 +1,6 @@
 function normal		(shader, t_base, t_second, t_detail)
 	shader:begin	("wmark",	"vert")
-			: sorting	(1, false)
+			: sorting	(2, true)
 			: aref 		(false,0)
 			: zb 		(true,true)
 			: fog		(true)

@@ -1,6 +1,6 @@
 function normal		(shader, t_base, t_second, t_detail)
 	shader:begin	("wmark",	"wmarkmult")
-			: sorting	(2, false)
+			: sorting	(2, true)
 			: blend		(true,blend.destcolor,blend.srccolor)
 			: aref 		(false,0)
 			: zb 		(true,true)

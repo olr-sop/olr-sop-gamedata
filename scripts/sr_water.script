@@ -62,7 +62,7 @@ function action_water:update( delta )
 		level.add_pp_effector("underwater_olr.ppe", 1138, true)
 		level.set_pp_effector_factor(1138, breath)
 		--news_manager.send_tip(db.actor, game.translate_string("action_waterupdate_0"), nil, "default", 39000)
-		get_console():execute("ph_timefactor 0.2")
+		level.physics_world():set_ph_time_factor(0.2)
 
 	if has_alife_info("ui_inventory") then 
 		local inv_window = level.main_input_receiver()
@@ -151,7 +151,7 @@ function action_water:zone_leave()
 	snd_underwater:stop()
 	breath = 100	
 	hud:RemoveCustomStatic("cs_oxigen")
-	get_console():execute("ph_timefactor 1")
+	level.physics_world():set_ph_time_factor(1)
 	if device().precache_frame < 1 then
 		snd_from_water:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end

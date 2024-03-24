@@ -7,434 +7,458 @@ local section = item_in_hands:section()
 
 --news_manager.send_tip(db.actor, "EAT HUD ITEM "..item_in_hands:name().." ", nil, "default", 4000)
 
-if section == "water" then 
-        local bobj2 = alife():create("ph_food_vater", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-        level.client_spawn_manager():add(bobj2.id, 0, 
-        function(id,obj) 
-	if obj then
-        local h = hit()
-	h.draftsman = obj
-	h.type = hit.strike
-	h.direction = vector():set(math.random(1),0.1,math.random(1))
-	h.power = 1
-	h.impulse = 2
-	obj:hit(h)
-        end
-        end)
-        --log1("eat voda")
-end
-
-
-if section == "mutant_dog_tail" or section == "mutant_psevdodog_tail" then
-	local bol_var = math.random(1,4)
-	if bol_var == 1 then
-		if olr_timers.has_timer("bolezn_beshenstvo_timer") then
-			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_0"))
-			return
-		end
-		if olr_timers.has_timer("bolezn_beshenstvo_timer_m") then
-			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_1"))
-			return
-		end
-		if olr_timers.has_timer("bolezn_beshenstvo_timer_d") then
-			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_2"))
-			return
-		end
-                if not has_alife_info("bolezn_beshenstvo_info") then
-			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_3"))
-                       	olr_timers.st_timer("bolezn_beshenstvo_timer", 1950, "nick.bolezn_beshenstvo_timer()")
-                       	db.actor:disable_info_portion("bolezn_beshenstvo_info_first_dis")
-			db.actor:give_info_portion("bolezn_beshenstvo_info")             
+	if section == "water" then 
+			local bobj2 = alife():create("ph_food_vater", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			level.client_spawn_manager():add(bobj2.id, 0, 
+			function(id,obj) 
+		if obj then
+			local h = hit()
+		h.draftsman = obj
+		h.type = hit.strike
+		h.direction = vector():set(math.random(1),0.1,math.random(1))
+		h.power = 1
+		h.impulse = 2
+		obj:hit(h)
+			end
+			end)
+			--log1("eat voda")
+	end
+	
+	
+	if section == "mutant_dog_tail" or section == "mutant_psevdodog_tail" then
+		local bol_var = math.random(1,4)
+		if bol_var == 1 then
+			if olr_timers.has_timer("bolezn_beshenstvo_timer") then
+				--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_0"))
+				return
+			end
+			if olr_timers.has_timer("bolezn_beshenstvo_timer_m") then
+				--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_1"))
+				return
+			end
+			if olr_timers.has_timer("bolezn_beshenstvo_timer_d") then
+				--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_2"))
+				return
+			end
+					if not has_alife_info("bolezn_beshenstvo_info") then
+				--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_3"))
+							olr_timers.st_timer("bolezn_beshenstvo_timer", 1950, "nick.bolezn_beshenstvo_timer()")
+							db.actor:disable_info_portion("bolezn_beshenstvo_info_first_dis")
+				db.actor:give_info_portion("bolezn_beshenstvo_info")			 
+			end
 		end
 	end
-end
-
-
-if section == "mutant_zombie_hand" or section == "mutant_boar_leg" or section == "mutant_flesh_eye" then
-	local bol_var = math.random(1,4)
-	if bol_var == 1 then
-		bind_monster.zarazjenie_parazitom()
-	end
-	if section == "mutant_zombie_hand" then
-	for k,v in pairs(db.storage) do
-        local stalker = level.object_by_id(k)
-            if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() then
-				if stalker:position():distance_to(db.actor:position()) < 20 and stalker:see(db.actor) and not olr_protected.is_no_offline_alife_obj(stalker:name()) then
-			
-				local seer_name = news_main.get_npc_name(stalker)
-				news_manager.send_tip(db.actor, ""..seer_name..": Мужики... сейчас сам видел... Мессер, тот, что с грузовика смерти, сейчас кусок мяса какого-то странного жрал! Будте внимательны.", 15, "unknown", 39000)
-				db.actor:change_character_reputation(-60)
-				break
+	
+	
+	if section == "mutant_zombie_hand" or section == "mutant_boar_leg" or section == "mutant_flesh_eye" then
+		local bol_var = math.random(1,4)
+		if bol_var == 1 then
+			bind_monster.zarazjenie_parazitom()
+		end
+		if section == "mutant_zombie_hand" then
+		for k,v in pairs(db.storage) do
+			local stalker = level.object_by_id(k)
+				if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() then
+					if stalker:position():distance_to(db.actor:position()) < 20 and stalker:see(db.actor) and not olr_protected.is_no_offline_alife_obj(stalker:name()) then
 				
-				end
-		end
-	end
-	end
-end
-
-
-if section == "snotvornoe" then
-	db.actor.alcohol = 1
-        db.actor:set_actor_sleep(-1)
-end
-
-if section == "psy_stabilizator" then
-	db.actor.alcohol = -1
-        db.actor.psy_health = 1
-        if ( xr_conditions.actor_in_zone(nil,nil,{"lvl12_radar_bunker_space_restrictor_fake_lab_waro"}))  then
-		if has_alife_info("radbun_mosk_start") then
-			olr_teleport.rad_back_bun_nacalo()
-		end
-	end
-end
-
-
-if section == "antirad" then
-        db.actor:give_info_portion("actor_healing_antirad")
-        olr_timers.st_timer("eat_radiation_tmr_timer", 20, "nick.eat_radiation_tmr_timer()")
-	if xvars.count_rad_weak > 0 then
-		xvars.count_rad_weak = xvars.count_rad_weak - 0.0015
-		if xvars.count_rad_weak < 0 then
-			xvars.count_rad_weak = 0
-		end
-		--news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-	end
-end
-
-
-if section == "vodka" then
-	if has_alife_info("actor_healing_antirad") then
-		db.actor:set_actor_sleep(-1)
-	end
-        db.actor:give_info_portion("actor_healing_antirad")
-        olr_timers.st_timer("eat_radiation_tmr_timer", 10, "nick.eat_radiation_tmr_timer()")
-        db.actor.psy_health = db.actor.psy_health + 0.3
-        local bobj2 = alife():create("vodka_used_empty", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-        level.client_spawn_manager():add(bobj2.id, 0, 
-        function(id,obj) 
-	if obj then
-        	local h = hit()
-		h.draftsman = obj
-		h.type = hit.strike
-		h.direction = vector():set(math.random(1),0.1,math.random(1))
-		h.power = 1
-		h.impulse = 2
-		obj:hit(h)
-        end
-        end)
-        --log1("eat vodka")
-	xvars.drinked_vodkas = xvars.drinked_vodkas + 1
-	if xvars.drinked_vodkas > 2 then
-		if db.actor.health > 0.31 then
-			db.actor.health = - 0.3
-		end
-		olr.hud_tip("", "Что-то я перепил...", 7)
-		db.actor:set_actor_sleep(-0.6)
-		--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_4"), nil, "default", 6000)
-	end
-        if ( xr_conditions.actor_in_zone(nil,nil,{"lvl12_radar_bunker_space_restrictor_fake_lab_waro"}))  then
-		if has_alife_info("radbun_mosk_start") then
-			olr_teleport.rad_back_bun_nacalo()
-		end
-	end
-        if has_alife_info("eat_medkit_tmr") then
-		db.actor:set_actor_sleep(-1)
-	end
-	if xvars.count_rad_weak > 0 then
-		xvars.count_rad_weak = xvars.count_rad_weak - 0.001
-		if xvars.count_rad_weak < 0 then
-			xvars.count_rad_weak = 0
-		end
-		--news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-	end
-end
-
-if section == "medkit" then 
-        db.actor:give_info_portion("eat_medkit_tmr")
-        db.actor:give_info_portion("actor_healing_medkit")
-        olr_timers.st_timer("eat_medkit_tmr_timer", 20, "nick.eat_medkit_tmr_timer()")
-        --log1("eat medkit")
-        local par_var = math.random(1,3)
-        if par_var == 1 then
-        	alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        end
-end
-
-
-
-if section == "medkit_army" then 
-        db.actor:give_info_portion("eat_medkit_tmr")
-        db.actor:give_info_portion("actor_healing_medkit")
-        olr_timers.st_timer("eat_medkit_tmr_timer", 25, "nick.eat_medkit_tmr_timer()")
-        --log1("eat medkit_army")
-        alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-end
-
-
-if section == "medkit_scientic" then 
-        db.actor:give_info_portion("eat_medkit_tmr")
-        db.actor:give_info_portion("actor_healing_medkit")
-        olr_timers.st_timer("eat_medkit_tmr_timer", 30, "nick.eat_medkit_tmr_timer()")
-        --log1("eat medkit_scientic")
-        local par_var = math.random(1,3)
-        if par_var == 1 then
-        	alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        	alife():create('bandage', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        end
-end
-
-
-if section == "sigaret" then 
-        db.actor.psy_health = db.actor.psy_health + 0.1
-        db.actor.alcohol = db.actor.alcohol + 0.01
-        db.actor.power = 0.05
-        --log1("eat sigaret")
-	nick.sigaret_smoke()
-	if xvars.count_rad_weak > 0 then
-		xvars.count_rad_weak = xvars.count_rad_weak - 0.0001
-		if xvars.count_rad_weak < 0 then
-			xvars.count_rad_weak = 0
-		end
-		--news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-	end
-end
-
-
-if section == "crow_food" then 
-        --log1("eat crow_food")
-	xvars.count_rad_weak = xvars.count_rad_weak + 0.0015
-	db.actor.radiation = 0.02315
-end
-
-
-if section == "item_razradnik" then 
-        olr_razradnik.on_use()
-end
-
-
-
-if section == "rat_food" then 
-        local par_var = math.random(1,5)
-        if par_var == 1 then
-		if not has_alife_info("bolezn_ratcrazy_info") then
-			olr_timers.st_timer("bolezn_ratcrazy_timer", 2150, "nick.bolezn_ratcrazy_timer()")
-			db.actor:give_info_portion("bolezn_ratcrazy_info")
-        		--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_5"))
-		end
-        	--log1("eat rat_food")
-	end
-end
-
-
-if section == "anti_beshenstvo_dog_caps" then 
-        db.actor:give_info_portion("bolezn_beshenstvo_info_lech")
-        db.actor.alcohol = db.actor.alcohol + 0.3
-        --log1("eat anti_beshenstvo_dog_caps")
-end
-
-
---if section == "hand_torch" then 
---	db.actor:disable_info_portion("hand_torch_on")
---        alife():create('hand_torch', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
---end
-
-
-
-if section == "detector_activator_deznt" then 
-        alife():create('detector_activator_deznt', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	activate_dezint_arts()
-end
-
-
-if section == "med_injector" then 
-        alife():create('med_injector_empty', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	nick.clear_all_bolezns()
-end
-
-
-
--- тут но_енд сделать?
-if section == "med_injector_empty" then 
-        alife():create('med_injector_empty', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-end
-if section == "planshet" then 
-        alife():create('planshet', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-end
-if section == "detector_zomscan" then 
-        alife():create('detector_zomscan', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	local obj = bind_stalker.loked_obj
-	if obj then
-	local item_in_hands = db.actor:active_item()
-	if item_in_hands then
-	local section = item_in_hands:section()
-	if section == "detector_zomscan" then
-		if obj:is_stalker() and obj:alive() then
-			if not has_alife_info("mil_zomb_check_one") and obj:name() == "lvl9_military_stalker_0055" then
-				db.actor:give_info_portion("mil_zomb_check_one")
-				news_manager.send_tip(db.actor, game.translate_string("use_hud_item_6"), nil, "zombied", 5000)
-			end
-			if not has_alife_info("mil_zomb_check_two") and obj:name() == "lvl9_military_stalker_0054" then
-				db.actor:give_info_portion("mil_zomb_check_two")
-				news_manager.send_tip(db.actor, game.translate_string("use_hud_item_7"), nil, "zombied", 5000)
-			end
-			if not has_alife_info("mil_zomb_check_tri") and obj:name() == "lvl9_military_stalker_0053" then
-				db.actor:give_info_portion("mil_zomb_check_tri")
-				news_manager.send_tip(db.actor, game.translate_string("use_hud_item_8"), nil, "zombied", 5000)
-			end
-			
-		end
-		if obj:is_stalker() and not obj:alive() then
-			if not has_alife_info("mil_zomb_check_one_dead") and obj:name() == "lvl9_military_stalker_0055" then
-				db.actor:give_info_portion("mil_zomb_check_one_dead")
-				news_manager.send_tip(db.actor, game.translate_string("use_hud_item_9"), nil, "zombied", 5000)
-			end
-			if not has_alife_info("mil_zomb_check_two_dead") and obj:name() == "lvl9_military_stalker_0054" then
-				db.actor:give_info_portion("mil_zomb_check_two_dead")
-				news_manager.send_tip(db.actor, game.translate_string("use_hud_item_10"), nil, "zombied", 5000)
-			end
-			if not has_alife_info("mil_zomb_check_tri_dead") and obj:name() == "lvl9_military_stalker_0053" then
-				db.actor:give_info_portion("mil_zomb_check_tri_dead")
-				news_manager.send_tip(db.actor, game.translate_string("use_hud_item_11"), nil, "zombied", 5000)
+					local seer_name = news_main.get_npc_name(stalker)
+					news_manager.send_tip(db.actor, ""..seer_name..": Мужики... сейчас сам видел... Мессер, тот, что с грузовика смерти, сейчас кусок мяса какого-то странного жрал! Будте внимательны.", 15, "unknown", 39000)
+					db.actor:change_character_reputation(-60)
+					break
+					
+					end
 			end
 		end
-		if obj:is_stalker() and has_alife_info("docent_scan_zomb_done_inf") then
-			if obj:character_community() == "zombied" or obj:character_community() == "sin" then
-				news_manager.send_tip(db.actor, "Имя -  "..obj:character_name()..". Поддвергся воздействию пси-излучению. Статус: Зомбированный.", nil, "zombied", 5000)
-			else
-				news_manager.send_tip(db.actor, "Имя - "..obj:character_name()..". Не поддвергалcя пси-излучению.", nil, "medkit", 5000)
+		end
+	end
+	
+	
+	if section == "snotvornoe" then
+		db.actor.alcohol = 1
+			db.actor:set_actor_sleep(-1)
+	end
+	
+	if section == "psy_stabilizator" then
+		db.actor.alcohol = -1
+			db.actor.psy_health = 1
+			if ( xr_conditions.actor_in_zone(nil,nil,{"lvl12_radar_bunker_space_restrictor_fake_lab_waro"}))  then
+			if has_alife_info("radbun_mosk_start") then
+				olr_teleport.rad_back_bun_nacalo()
 			end
 		end
 	end
+	
+	
+	if section == "antirad" then
+			db.actor:give_info_portion("actor_healing_antirad")
+			olr_timers.st_timer("eat_radiation_tmr_timer", 20, "nick.eat_radiation_tmr_timer()")
+		if xvars.count_rad_weak > 0 then
+			xvars.count_rad_weak = xvars.count_rad_weak - 0.0015
+			if xvars.count_rad_weak < 0 then
+				xvars.count_rad_weak = 0
+			end
+			--news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
+		end
 	end
+	
+	
+	if section == "vodka" then
+		if has_alife_info("actor_healing_antirad") then
+			db.actor:set_actor_sleep(-1)
+		end
+			db.actor:give_info_portion("actor_healing_antirad")
+			olr_timers.st_timer("eat_radiation_tmr_timer", 10, "nick.eat_radiation_tmr_timer()")
+			db.actor.psy_health = db.actor.psy_health + 0.3
+			local bobj2 = alife():create("vodka_used_empty", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			level.client_spawn_manager():add(bobj2.id, 0, 
+			function(id,obj) 
+		if obj then
+				local h = hit()
+			h.draftsman = obj
+			h.type = hit.strike
+			h.direction = vector():set(math.random(1),0.1,math.random(1))
+			h.power = 1
+			h.impulse = 2
+			obj:hit(h)
+			end
+			end)
+			--log1("eat vodka")
+		xvars.drinked_vodkas = xvars.drinked_vodkas + 1
+		if xvars.drinked_vodkas > 2 then
+			if db.actor.health > 0.31 then
+				db.actor.health = - 0.3
+			end
+			olr.hud_tip("", "Что-то я перепил...", 7)
+			db.actor:set_actor_sleep(-0.6)
+			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_4"), nil, "default", 6000)
+		end
+			if ( xr_conditions.actor_in_zone(nil,nil,{"lvl12_radar_bunker_space_restrictor_fake_lab_waro"}))  then
+			if has_alife_info("radbun_mosk_start") then
+				olr_teleport.rad_back_bun_nacalo()
+			end
+		end
+			if has_alife_info("eat_medkit_tmr") then
+			db.actor:set_actor_sleep(-1)
+		end
+		if xvars.count_rad_weak > 0 then
+			xvars.count_rad_weak = xvars.count_rad_weak - 0.001
+			if xvars.count_rad_weak < 0 then
+				xvars.count_rad_weak = 0
+			end
+			--news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
+		end
 	end
-end
-
-
-
-if section == "antirad_medpribor" then
-	xvars.count_rad_weak = 0 
-        db.actor:give_info_portion("anti_glob_rad")
-        olr_timers.st_timer("anti_glob_rad_timer", 250, "nick.anti_glob_rad_timer()")
-        olr_timers.st_timer("anti_glob_rad_timer", 265, "nick.anti_glob_rad_timer()")
-        --log1("eat antirad_medpribor")
-end
-
-
-if section == "battery_change" then 
-        --log1("eat battery_change")
-        nick.enable_senf()
-	olr.show_minimap(true)
-end
-
-
-if section == "battery_change_headlamp" then 
-        local has_torch = db.actor:item_in_slot(9)
-        if has_torch then
-        	--log1("eat battery_change_headlamp")
-        	db.actor:item_in_slot(9):set_condition(1)
+	
+	if section == "medkit" then 
+			db.actor:give_info_portion("eat_medkit_tmr")
+			db.actor:give_info_portion("actor_healing_medkit")
+			olr_timers.st_timer("eat_medkit_tmr_timer", 20, "nick.eat_medkit_tmr_timer()")
+			--log1("eat medkit")
+			local par_var = math.random(1,3)
+			if par_var == 1 then
+				alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			end
 	end
-end
-
-if section == "bread" or section == "kolbasa" or section == "conserva" or section == "rat_food" or section == "crow_food" then 
-	if xvars.foods[item_in_hands:name()] == true then
-		--news_manager.send_tip(db.actor, "сожрали облучённую еду - накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-		xvars.count_rad_weak = xvars.count_rad_weak + 0.00086
-		xvars.foods[item_in_hands:name()] = nil
-		--log1("del food variable")
+	
+	
+	
+	if section == "medkit_army" then 
+			db.actor:give_info_portion("eat_medkit_tmr")
+			db.actor:give_info_portion("actor_healing_medkit")
+			olr_timers.st_timer("eat_medkit_tmr_timer", 25, "nick.eat_medkit_tmr_timer()")
+			--log1("eat medkit_army")
+			alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end
-	local cond = item_in_hands:condition()
-	if cond <= 0 then
-		db.actor.satiety = 0.15
+	
+	
+	if section == "medkit_scientic" then 
+			db.actor:give_info_portion("eat_medkit_tmr")
+			db.actor:give_info_portion("actor_healing_medkit")
+			olr_timers.st_timer("eat_medkit_tmr_timer", 30, "nick.eat_medkit_tmr_timer()")
+			--log1("eat medkit_scientic")
+			local par_var = math.random(1,3)
+			if par_var == 1 then
+				alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+				alife():create('bandage', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			end
 	end
-end
-
-if section == "conserva" then
-        local bobj2 = alife():create("ph_food_conserv1", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-        level.client_spawn_manager():add(bobj2.id, 0, 
-        function(id,obj) 
-	if obj then
-        	local h = hit()
-		h.draftsman = obj
-		h.type = hit.strike
-		h.direction = vector():set(math.random(1),0.1,math.random(1))
-		h.power = 1
-		h.impulse = 2
-		obj:hit(h)
-        end
-	end)
-	local full_sat = 0.85
-	--local full_satc -- он конченный или да? зачем макс уровень сытости от сложности???
-	--local gdiff = level.get_game_difficulty()
-	--if gdiff == 0 then
-	--	full_satc = 0.7
-	--elseif gdiff == 1 then
-	--	full_satc = 0.65
-	--elseif gdiff == 2 then
-	--	full_satc = 0.60
-	--elseif gdiff == 3 then
-	--	full_satc = 0.50
+	
+	
+	if section == "sigaret" then 
+			db.actor.psy_health = db.actor.psy_health + 0.1
+			db.actor.alcohol = db.actor.alcohol + 0.01
+			db.actor.power = 0.05
+			--log1("eat sigaret")
+		nick.sigaret_smoke()
+		if xvars.count_rad_weak > 0 then
+			xvars.count_rad_weak = xvars.count_rad_weak - 0.0001
+			if xvars.count_rad_weak < 0 then
+				xvars.count_rad_weak = 0
+			end
+			--news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
+		end
+	end
+	
+	
+	if section == "crow_food" then 
+			--log1("eat crow_food")
+		xvars.count_rad_weak = xvars.count_rad_weak + 0.0015
+		db.actor.radiation = 0.02315
+	end
+	
+	
+	if section == "item_razradnik" then 
+			olr_razradnik.on_use()
+	end
+	
+	
+	
+	if section == "rat_food" then 
+			local par_var = math.random(1,5)
+			if par_var == 1 then
+			if not has_alife_info("bolezn_ratcrazy_info") then
+				olr_timers.st_timer("bolezn_ratcrazy_timer", 2150, "nick.bolezn_ratcrazy_timer()")
+				db.actor:give_info_portion("bolezn_ratcrazy_info")
+					--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_5"))
+			end
+				--log1("eat rat_food")
+		end
+	end
+	
+	
+	if section == "anti_beshenstvo_dog_caps" then 
+			db.actor:give_info_portion("bolezn_beshenstvo_info_lech")
+			db.actor.alcohol = db.actor.alcohol + 0.3
+			--log1("eat anti_beshenstvo_dog_caps")
+	end
+	
+	
+	--if section == "hand_torch" then 
+	--	db.actor:disable_info_portion("hand_torch_on")
+	--		alife():create('hand_torch', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	--end
-	local s_cond = 1 - item_in_hands:condition()
-	local curr_sat = full_sat - s_cond / 3
-	db.actor.satiety = curr_sat
-	if curr_sat < 0 then
-		--log1(" CONSERVA < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-		db.actor.satiety = 0.15
+	
+	
+	
+	if section == "detector_activator_deznt" then 
+			alife():create('detector_activator_deznt', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		activate_dezint_arts()
 	end
-	--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-end
-
-if section == "bread" then
-	local full_sat = 0.45
-	local s_cond = 1 - item_in_hands:condition()
-	local curr_sat = full_sat - s_cond / 3
-	db.actor.satiety = curr_sat
-	if curr_sat < 0 then
-		--log1(" BREAD < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-		db.actor.satiety = 0.12
+	
+	
+	if section == "med_injector" then 
+			alife():create('med_injector_empty', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		nick.clear_all_bolezns()
 	end
-	--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-end
-
-if section == "kolbasa" then
-	local full_sat = 0.65
-	local s_cond = 1 - item_in_hands:condition()
-	local curr_sat = full_sat - s_cond / 3
-	db.actor.satiety = curr_sat
-	if curr_sat < 0 then
-		--log1(" KOLBASA < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-		db.actor.satiety = 0.15
+	
+	
+	
+	-- тут но_енд сделать?
+	if section == "med_injector_empty" then 
+			alife():create('med_injector_empty', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end
-	--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-end
-
-
---------------------------------------------------------------------------
-if section == "detector_siniy" then 
-        db.actor:give_info_portion ("esc_zam_jab_sdelal")
-        amk.spawn_item_in_inv("fake_pribor_jaba")
-end
-if section == "detector_siniy_2" then 
-        db.actor:give_info_portion ("esc_zam_jab_sdelal2")
-        amk.spawn_item_in_inv("fake_pribor_jaba")
-end
-if section == "detector_siniy_3" then 
-        db.actor:give_info_portion ("esc_zam_jab_sdelal3")
-        amk.spawn_item_in_inv("fake_pribor_jaba")
-end
-if section == "detector_siniy_4" then 
-        db.actor:give_info_portion ("esc_zam_jab_sdelal4")
-        amk.spawn_item_in_inv("fake_pribor_jaba")
-end
-if section == "detector_siniy_5" then 
-        db.actor:give_info_portion ("esc_zam_jab_sdelal5")
-        amk.spawn_item_in_inv("fake_pribor_jaba")
-end
-if section == "detector_siniy_6" then 
-        db.actor:give_info_portion ("esc_zam_jab_sdelal6")
-        amk.spawn_item_in_inv("fake_pribor_jaba_zameryany")
-end
--------------------------------------------------------------------------
+	if section == "planshet" then 
+			alife():create('planshet', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	end
+	if section == "detector_zomscan" then 
+			alife():create('detector_zomscan', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		local obj = bind_stalker.loked_obj
+		if obj then
+		local item_in_hands = db.actor:active_item()
+		if item_in_hands then
+		local section = item_in_hands:section()
+		if section == "detector_zomscan" then
+			if obj:is_stalker() and obj:alive() then
+				if not has_alife_info("mil_zomb_check_one") and obj:name() == "lvl9_military_stalker_0055" then
+					db.actor:give_info_portion("mil_zomb_check_one")
+					news_manager.send_tip(db.actor, game.translate_string("use_hud_item_6"), nil, "zombied", 5000)
+				end
+				if not has_alife_info("mil_zomb_check_two") and obj:name() == "lvl9_military_stalker_0054" then
+					db.actor:give_info_portion("mil_zomb_check_two")
+					news_manager.send_tip(db.actor, game.translate_string("use_hud_item_7"), nil, "zombied", 5000)
+				end
+				if not has_alife_info("mil_zomb_check_tri") and obj:name() == "lvl9_military_stalker_0053" then
+					db.actor:give_info_portion("mil_zomb_check_tri")
+					news_manager.send_tip(db.actor, game.translate_string("use_hud_item_8"), nil, "zombied", 5000)
+				end
+				
+			end
+			if obj:is_stalker() and not obj:alive() then
+				if not has_alife_info("mil_zomb_check_one_dead") and obj:name() == "lvl9_military_stalker_0055" then
+					db.actor:give_info_portion("mil_zomb_check_one_dead")
+					news_manager.send_tip(db.actor, game.translate_string("use_hud_item_9"), nil, "zombied", 5000)
+				end
+				if not has_alife_info("mil_zomb_check_two_dead") and obj:name() == "lvl9_military_stalker_0054" then
+					db.actor:give_info_portion("mil_zomb_check_two_dead")
+					news_manager.send_tip(db.actor, game.translate_string("use_hud_item_10"), nil, "zombied", 5000)
+				end
+				if not has_alife_info("mil_zomb_check_tri_dead") and obj:name() == "lvl9_military_stalker_0053" then
+					db.actor:give_info_portion("mil_zomb_check_tri_dead")
+					news_manager.send_tip(db.actor, game.translate_string("use_hud_item_11"), nil, "zombied", 5000)
+				end
+			end
+			if obj:is_stalker() and has_alife_info("docent_scan_zomb_done_inf") then
+				if obj:character_community() == "zombied" or obj:character_community() == "sin" then
+					news_manager.send_tip(db.actor, "Имя -  "..obj:character_name()..". Поддвергся воздействию пси-излучению. Статус: Зомбированный.", nil, "zombied", 5000)
+				else
+					news_manager.send_tip(db.actor, "Имя - "..obj:character_name()..". Не поддвергалcя пси-излучению.", nil, "medkit", 5000)
+				end
+			end
+		end
+		end
+		end
+	end
+	
+	
+	
+	if section == "antirad_medpribor" then
+		xvars.count_rad_weak = 0 
+			db.actor:give_info_portion("anti_glob_rad")
+			olr_timers.st_timer("anti_glob_rad_timer", 250, "nick.anti_glob_rad_timer()")
+			olr_timers.st_timer("anti_glob_rad_timer", 265, "nick.anti_glob_rad_timer()")
+			--log1("eat antirad_medpribor")
+	end
+	
+	
+	if section == "battery_change" then 
+			--log1("eat battery_change")
+			nick.enable_senf()
+		olr.show_minimap(true)
+	end
+	
+	
+	if section == "battery_change_headlamp" then 
+			local has_torch = db.actor:item_in_slot(9)
+			if has_torch then
+				--log1("eat battery_change_headlamp")
+				db.actor:item_in_slot(9):set_condition(1)
+		end
+	end
+	
+	if section == "battery_change_det1" then 
+			local has_detector_sim = db.actor:object("detector_simple")
+			if has_detector_sim and db.actor:is_on_belt(has_detector_sim) then
+				--log1("eat battery_change_det1")
+				has_detector_sim:set_condition(1)
+		end
+	end
+	
+	if section == "battery_change_det2" then 
+			local has_detector_adv = db.actor:object("detector_advances")
+			if has_detector_adv and db.actor:is_on_belt(has_detector_adv) then
+				--log1("eat battery_change_det1")
+				has_detector_adv:set_condition(1)
+		end
+	end
+	
+	if section == "battery_change_det3" then 
+			local has_detector_el = db.actor:object("detector_elite")
+			if has_detector_el and db.actor:is_on_belt(has_detector_el) then
+				--log1("eat battery_change_det1")
+				has_detector_el:set_condition(1)
+		end
+	end
+	
+	if section == "bread" or section == "kolbasa" or section == "conserva" or section == "rat_food" or section == "crow_food" then 
+		if xvars.foods[item_in_hands:name()] == true then
+			--news_manager.send_tip(db.actor, "сожрали облучённую еду - накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
+			xvars.count_rad_weak = xvars.count_rad_weak + 0.00086
+			xvars.foods[item_in_hands:name()] = nil
+			--log1("del food variable")
+		end
+		local cond = item_in_hands:condition()
+		if cond <= 0 then
+			db.actor.satiety = 0.15
+		end
+	end
+	
+	if section == "conserva" then
+			local bobj2 = alife():create("ph_food_conserv1", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			level.client_spawn_manager():add(bobj2.id, 0, 
+			function(id,obj) 
+		if obj then
+			local h = hit()
+			h.draftsman = obj
+			h.type = hit.strike
+			h.direction = vector():set(math.random(1),0.1,math.random(1))
+			h.power = 1
+			h.impulse = 2
+			obj:hit(h)
+			end
+		end)
+		local full_sat = 0.85
+		--local full_satc -- он конченный или да? зачем макс уровень сытости от сложности???
+		--local gdiff = level.get_game_difficulty()
+		--if gdiff == 0 then
+		--	full_satc = 0.7
+		--elseif gdiff == 1 then
+		--	full_satc = 0.65
+		--elseif gdiff == 2 then
+		--	full_satc = 0.60
+		--elseif gdiff == 3 then
+		--	full_satc = 0.50
+		--end
+		local s_cond = 1 - item_in_hands:condition()
+		local curr_sat = full_sat - s_cond / 3
+		db.actor.satiety = curr_sat
+		if curr_sat < 0 then
+			--log1(" CONSERVA < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
+			db.actor.satiety = 0.15
+		end
+		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
+	end
+	
+	if section == "bread" then
+		local full_sat = 0.45
+		local s_cond = 1 - item_in_hands:condition()
+		local curr_sat = full_sat - s_cond / 3
+		db.actor.satiety = curr_sat
+		if curr_sat < 0 then
+			--log1(" BREAD < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
+			db.actor.satiety = 0.12
+		end
+		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
+	end
+	
+	if section == "kolbasa" then
+		local full_sat = 0.65
+		local s_cond = 1 - item_in_hands:condition()
+		local curr_sat = full_sat - s_cond / 3
+		db.actor.satiety = curr_sat
+		if curr_sat < 0 then
+			--log1(" KOLBASA < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
+			db.actor.satiety = 0.15
+		end
+		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
+	end
+	
+	
+	--------------------------------------------------------------------------
+	if section == "detector_siniy" then 
+			db.actor:give_info_portion ("esc_zam_jab_sdelal")
+			amk.spawn_item_in_inv("fake_pribor_jaba")
+	end
+	if section == "detector_siniy_2" then 
+			db.actor:give_info_portion ("esc_zam_jab_sdelal2")
+			amk.spawn_item_in_inv("fake_pribor_jaba")
+	end
+	if section == "detector_siniy_3" then 
+			db.actor:give_info_portion ("esc_zam_jab_sdelal3")
+			amk.spawn_item_in_inv("fake_pribor_jaba")
+	end
+	if section == "detector_siniy_4" then 
+			db.actor:give_info_portion ("esc_zam_jab_sdelal4")
+			amk.spawn_item_in_inv("fake_pribor_jaba")
+	end
+	if section == "detector_siniy_5" then 
+			db.actor:give_info_portion ("esc_zam_jab_sdelal5")
+			amk.spawn_item_in_inv("fake_pribor_jaba")
+	end
+	if section == "detector_siniy_6" then 
+			db.actor:give_info_portion ("esc_zam_jab_sdelal6")
+			amk.spawn_item_in_inv("fake_pribor_jaba_zameryany")
+	end
+	-------------------------------------------------------------------------
 
 
 end
@@ -445,15 +469,40 @@ function on_slot(obj)
 	med_inj_diagnoz(obj)
 	pda_check(obj)  
 	torch_check(obj)
+	detector_check(obj)
 end
 
+
+function detector_check(obj)
+	if obj then
+		local section = obj:section()
+		local has_detector_sim = db.actor:object("detector_simple")
+		local has_detector_adv = db.actor:object("detector_advances")
+		local has_detector_el = db.actor:object("detector_elite")
+		if section == "battery_change_det1" and has_detector_sim == nil and db.actor:is_on_belt(has_detector_sim) then
+			olr.del(obj)
+			alife():create("battery_change_det1", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			news_manager.send_tip(db.actor, game.translate_string("detector_check_0"), nil, "default", 6000)
+		end
+		if section == "battery_change_det2" and has_detector_adv == nil and db.actor:is_on_belt(has_detector_adv) then
+			olr.del(obj)
+			alife():create("battery_change_det2", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			news_manager.send_tip(db.actor, game.translate_string("detector_check_0"), nil, "default", 6000)
+		end
+		if section == "battery_change_det3" and has_detector_el == nil and db.actor:is_on_belt(has_detector_el) then
+			olr.del(obj)
+			alife():create("battery_change_det3", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			news_manager.send_tip(db.actor, game.translate_string("detector_check_0"), nil, "default", 6000)
+		end
+	end
+end
 
 function torch_check(obj)
 	if obj then
 		local section = obj:section()
 		if section == "battery_change_headlamp" then 
 		local has_torch = db.actor:item_in_slot(9)
-        		if has_torch == nil then
+				if has_torch == nil then
 				olr.del(obj)
 				alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 				news_manager.send_tip(db.actor, game.translate_string("torch_check_0"), nil, "default", 6000)
@@ -464,79 +513,78 @@ end
 
 
 function pda_check(obj)
-	if device().precache_frame >1 then return end
+	if device().precache_frame >1 then
+		return
+	end
 	if obj ~= nil then
-	local section = obj:section()
+		local section = obj:section()
 
-	if section == "battery_change" then 
-
-   	local pdaitm = db.actor:object("device_pda") 
-   	local namecond = pdaitm:condition() * 100
-    	local nameconddel = "Заряд ПДА: "..string.format("%1.0f", namecond).."%"
-    	news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
-
-	-- TODO - убрал изза вылета по правке выгрузки текстур из памяти
-	if pdaitm:condition() >= 0.6 and pdaitm:condition() <= 1 then
-		--pda_norm()
-		return
+		if section == "battery_change" then 
+			local pdaitm = db.actor:object("device_pda") 
+			local namecond = pdaitm:condition() * 100
+			local nameconddel = "Заряд ПДА: "..string.format("%1.0f", namecond).."%"
+			news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
+		
+			-- TODO - убрал изза вылета по правке выгрузки текстур из памяти
+			if pdaitm:condition() >= 0.6 and pdaitm:condition() <= 1 then
+				--pda_norm()
+				return
+			end
+		
+			if pdaitm:condition() >= 0.3 and pdaitm:condition() <= 0.6 then
+				--news_manager.send_tip(db.actor, game.translate_string("pda_check_0"), nil, "dolg", 6000)
+				--pda_midle()
+				return
+			end
+		
+			if pdaitm:condition() >= 0.1 and pdaitm:condition() <= 0.3 then
+				--news_manager.send_tip(db.actor, game.translate_string("pda_check_1"), nil, "dolg", 6000)
+				--pda_low()
+				return
+			end
+		
+			if pdaitm:condition() >= 0 and pdaitm:condition() <= 0.05 then
+				--pda_dead()
+				--news_manager.send_tip(db.actor, game.translate_string("pda_check_2"), nil, "dolg", 6000)
+				return
+			end
+		end
 	end
-
-	if pdaitm:condition() >= 0.3 and pdaitm:condition() <= 0.6 then
-		--news_manager.send_tip(db.actor, game.translate_string("pda_check_0"), nil, "dolg", 6000)
-		--pda_midle()
-		return
-	end
-
-	if pdaitm:condition() >= 0.1 and pdaitm:condition() <= 0.3 then
-		--news_manager.send_tip(db.actor, game.translate_string("pda_check_1"), nil, "dolg", 6000)
-		--pda_low()
-		return
-	end
-
-	if pdaitm:condition() >= 0 and pdaitm:condition() <= 0.05 then
-		--pda_dead()
-		--news_manager.send_tip(db.actor, game.translate_string("pda_check_2"), nil, "dolg", 6000)
-		return
-	end
-
-	end
-	end
-
 end
 
 function pda_norm()
-    local te = texture_find("item\\item_pda_idle")
-    if te then
-    te:set_name("item\\item_pda_norm")
-    te:reload() 
-    --news_manager.send_tip(db.actor, game.translate_string("pda_norm_0"), nil, "dolg", 6000)
-end
+	local te = texture_find("item\\item_pda_idle")
+	if te then
+	te:set_name("item\\item_pda_norm")
+	te:reload() 
+	--news_manager.send_tip(db.actor, game.translate_string("pda_norm_0"), nil, "dolg", 6000)
+	end
 end
 function pda_midle()
-    local te = texture_find("item\\item_pda_idle")
-    if te then
-    te:set_name("item\\item_pda_midle")
-    te:reload() 
---    news_manager.send_tip(db.actor, game.translate_string("pda_midle_0"), nil, "dolg", 6000)
-end
+	local te = texture_find("item\\item_pda_idle")
+	if te then
+		te:set_name("item\\item_pda_midle")
+		te:reload() 
+		--	news_manager.send_tip(db.actor, game.translate_string("pda_midle_0"), nil, "dolg", 6000)
+	end
 end
 
 function pda_low()
-    local te = texture_find("item\\item_pda_idle")
-    if te then
-    te:set_name("item\\item_pda_low")
-    te:reload() 
-    --news_manager.send_tip(db.actor, game.translate_string("pda_low_0"), nil, "dolg", 6000)
-end
+	local te = texture_find("item\\item_pda_idle")
+	if te then
+		te:set_name("item\\item_pda_low")
+		te:reload() 
+		--news_manager.send_tip(db.actor, game.translate_string("pda_low_0"), nil, "dolg", 6000)
+	end
 end
 
 function pda_dead()
-    local te = texture_find("item\\item_pda_idle")
-    if te then
-    te:set_name("item\\item_pda_dead")
-    te:reload() 
-    --news_manager.send_tip(db.actor, game.translate_string("pda_dead_0"), nil, "dolg", 6000)
-end
+	local te = texture_find("item\\item_pda_idle")
+	if te then
+		te:set_name("item\\item_pda_dead")
+		te:reload() 
+		--news_manager.send_tip(db.actor, game.translate_string("pda_dead_0"), nil, "dolg", 6000)
+	end
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -632,9 +680,9 @@ end
 function activate_dezint_arts()
 	for i=1, 65534 do
 		local artid = level.object_by_id(i)
-        	if artid and artid:is_artefact() then
+		if artid and artid:is_artefact() then
 			if not artid:parent() then
-			local dist = db.actor:position():distance_to_sqr(artid:position())
+				local dist = db.actor:position():distance_to_sqr(artid:position())
 				if dist <= 80 then
 					if artid:section() == "af_dummy_battery" then
 						local obj = olr_anoms_spawn.spawn_anom("zone_buzz_dezint", math.random(2,4), artid:position(),artid:level_vertex_id(),artid:game_vertex_id(), 0.095 ,bit_not(0))
@@ -650,7 +698,7 @@ end
 
 function del_desint_anomaly(id)
 	local sobj = alife():object(id)
-  	if sobj then
+	if sobj then
 		--local bloodbridgew = vector():set( 0, -1123, 0 )
 		--alife():teleport_object(sobj.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
 		--olr.to_offline(sobj:name())
@@ -699,14 +747,14 @@ function injector_info:InitControls()
 	self.sibyazva = get_sibyazva()
 	self.zombied = get_zombied()
 
-        self.Static11:SetTextST(string.format("Температура тела: %s", self.temperatura))
-        self.Static7:SetTextST(string.format("Заражение паразитом: %s", self.paras))
-        self.Static9:SetTextST(string.format("Бешенство: %s", self.beshenstv))
-        self.Static12:SetTextST(string.format("Лучевая болезнь (RвЧ): %s", self.luchevaya))
-        self.Static10:SetTextST(string.format("Крысиное безумие: %s", self.ratbezum))
-        self.Static15:SetTextST(string.format("Сибирская язва: %s", self.sibyazva))
-        self.Static17:SetTextST(string.format("Зомбирование: %s", self.sibyazva))
-        self.Static8:SetTextST("Состояние организма:")
+		self.Static11:SetTextST(string.format("Температура тела: %s", self.temperatura))
+		self.Static7:SetTextST(string.format("Заражение паразитом: %s", self.paras))
+		self.Static9:SetTextST(string.format("Бешенство: %s", self.beshenstv))
+		self.Static12:SetTextST(string.format("Лучевая болезнь (RвЧ): %s", self.luchevaya))
+		self.Static10:SetTextST(string.format("Крысиное безумие: %s", self.ratbezum))
+		self.Static15:SetTextST(string.format("Сибирская язва: %s", self.sibyazva))
+		self.Static17:SetTextST(string.format("Зомбирование: %s", self.sibyazva))
+		self.Static8:SetTextST("Состояние организма:")
 
 	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_mapspot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -781,47 +829,48 @@ function kick_object_ph()
 	local loked_obj = bind_stalker.loked_obj
 	if loked_obj ~= nil and not has_alife_info("ui_inventory") then
 		if loked_obj:position():distance_to(db.actor:position()) < 2 then
-		if not loked_obj:is_entity_alive() and not loked_obj:alive() then
-		local shelbonehp = loked_obj:get_physics_shell()
-		if not shelbonehp then return end
-		local shelbone = shelbonehp:get_element_by_bone_id(0)
-		if shelbone then
+			if not loked_obj:is_entity_alive() and not loked_obj:alive() then
+				local shelbonehp = loked_obj:get_physics_shell()
+				if not shelbonehp then
+					return
+				end
+				local shelbone = shelbonehp:get_element_by_bone_id(0)
+				if shelbone then
+					if loked_obj:mass() < 120 then
 
-		if loked_obj:mass() < 120 then
-
-	   	local look_vec = vector():set(device().cam_dir):normalize()
-    		look_vec.x = look_vec.x
-    		look_vec.z = look_vec.z + math.random(50, 90)
-    		look_vec.y = look_vec.y
-		look_vec:normalize()
-	   	local h = hit()
-	   	h.draftsman = db.actor
-	  	h.type = hit.explosion
-           	h.direction = vector():set(look_vec)
-	   	h.power = 0.00001
-	   	h.impulse = loked_obj:mass() * math.random(10,30)
-	   	loked_obj:hit(h)
+						local look_vec = vector():set(device().cam_dir):normalize()
+						look_vec.x = look_vec.x
+						look_vec.z = look_vec.z + math.random(50, 90)
+						look_vec.y = look_vec.y
+						look_vec:normalize()
+						local h = hit()
+						h.draftsman = db.actor
+						h.type = hit.explosion
+						h.direction = vector():set(look_vec)
+						h.power = 0.00001
+						h.impulse = loked_obj:mass() * math.random(10,30)
+						loked_obj:hit(h)
 
 
-    		local dir = vector():set(device().cam_dir):sub(loked_obj:position())
-    		dir.x = dir.x
-    		dir.z = dir.z + math.random(50, 90)
-    		dir.y = dir.y
-   		dir:normalize()
-		loked_obj:set_const_force(dir, loked_obj:mass() * math.random(15,30), 10)
- 
-		local snd_obj = xr_sound.get_safe_sound_object([[ol3\kick_object]])
-		if not snd_obj:playing() then 
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+						local dir = vector():set(device().cam_dir):sub(loked_obj:position())
+						dir.x = dir.x
+						dir.z = dir.z + math.random(50, 90)
+						dir.y = dir.y
+						dir:normalize()
+						loked_obj:set_const_force(dir, loked_obj:mass() * math.random(15,30), 10)
+					
+						local snd_obj = xr_sound.get_safe_sound_object([[ol3\kick_object]])
+						if not snd_obj:playing() then 
+							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+						end
+						db.actor.health = -0.001
+							db.actor.power = -0.006
+						db.actor.satiety = -0.004
+						end
+					end
+				end 
+			end
 		end
-		db.actor.health = -0.001
-        	db.actor.power = -0.006
-		db.actor.satiety = -0.004
-	end
-	end
-	end 
-	end
-	end
 
 	end
 

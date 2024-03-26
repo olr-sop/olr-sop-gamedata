@@ -40,8 +40,13 @@ function CItemBinder:net_spawn(data)
 	if not object_binder.net_spawn(self, data) then
 		return false
 	end
-	set_radfood_flag(self.object)
-        return true
+	
+	local _sect_ = self.object:section()
+	local obj_class = self.object:clsid()
+	if _sect_ ~= "battery_change" or _sect_ ~= "battery_change_headlamp" or obj_class ~= clsid.device_pda or obj_class ~= clsid.device_torch or obj_class ~= clsid.device_detector_simple then
+		set_radfood_flag(self.object)
+	end
+	return true
 end
 
 function CItemBinder:net_destroy()
@@ -94,30 +99,26 @@ end
 
 	
 function set_radfood_flag(obj)
-
 	if xvars then
-	if xvars.foods then
+		if xvars.foods then
 
-	if xvars.foods[obj:name()] == nil and obj:parent() then
-	--log1("net spawn food - "..obj:name().." parent - "..obj:parent().."")
-	end 
-
-	if xvars.foods[obj:name()] ~= nil then
-	--log1("net spawn food - "..obj:name().." ”∆≈ «¿–≈√¿Õ¿")
-	return
+			if xvars.foods[obj:name()] == nil and obj:parent() then
+				--log1("net spawn food - "..obj:name().." parent - "..obj:parent().."")
+			end 
+		
+			if xvars.foods[obj:name()] ~= nil then
+				--log1("net spawn food - "..obj:name().." ”∆≈ «¿–≈√¿Õ¿")
+			return
+			end
+			if math.random(1,2) == 1 then
+				xvars.foods[obj:name()] = true
+				--log1("net spawn food - "..obj:name().." SET raded = TRUE")
+			else
+				xvars.foods[obj:name()] = false
+				--log1("net spawn food  - "..obj:name().." SET raded = FALSE")
+			end
+		end
 	end
-	if math.random(1,2) == 1 then
-	xvars.foods[obj:name()] = true
-	--log1("net spawn food - "..obj:name().." SET raded = TRUE")
-	else
-	xvars.foods[obj:name()] = false
-	--log1("net spawn food  - "..obj:name().." SET raded = FALSE")
-	end
-	end
-
-	end
-
-
 end
 
 	

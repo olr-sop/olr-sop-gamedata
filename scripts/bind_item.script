@@ -54,22 +54,26 @@ function CItemBinder:update(delta)
 
 	--local pt = profile_timer()
 	--pt:start()
-
+	local _sect_ = self.object:section()
+	local obj_class = self.object:clsid()
+	if _sect_ == "battery_change" or _sect_ == "battery_change_headlamp" or obj_class == clsid.device_pda or obj_class == clsid.device_torch or obj_class == clsid.device_detector_simple then
+		return -- нужно проверять на класс
+	end
 	local cond = self.object:condition()
 
-        if cond == 1 then
-        	if self.object:section() == "kolbasa" or self.object:section() == "bread" or self.object:section() == "conserva" then
-        		self.object:set_condition((math.random(45,95)/100))
-        	end
-        end
+	if cond == 1 then
+		if self.object:section() == "kolbasa" or self.object:section() == "bread" or self.object:section() == "conserva" then
+			self.object:set_condition((math.random(45,95)/100))
+		end
+	end
 
 	if time_global() > time_apdeyta then
 		time_apdeyta = time_global() + timerup
-        	if ini:line_exist(self.object:section(), "cor_time") and cond > 0.01 then	  
+		if ini:line_exist(self.object:section(), "cor_time") and cond > 0.01 then	  
 			self.object:set_condition(cond - self:TimeCondLost())
 			--log1("cond up food - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
 		end
-        end
+	end
 
 	--pt:stop()
 	--prints("работало (item binder) "..pt:time().." ms")

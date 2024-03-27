@@ -1083,6 +1083,7 @@ description			= enc_equipment_devic_device-pda1
 radius				= 200; 50 ;75
 uncharge_speed 		= 0.0000085
 slot				= 7
+suitable_batteries	= battery_change
 
 inv_name			= st_pda
 inv_name_short		= st_pda
@@ -1128,12 +1129,12 @@ can_trade				= true
 position				= 0.35,0.25,0.0
 light_trace_bone		= cone_bone
 uncharge_speed 			= 0.0000055
+suitable_batteries		= battery_change_headlamp
 attach_angle_offset		= 0, -3.14, 1.6
 attach_position_offset	= 0.105, 0.00, 0.085
 attach_bone_name		= bip01_head
 auto_attach				= false
-belt					= true
-;slot = 9
+slot = 9
 ;script_binding  		= bind_torch.Init
 
 3d_static_visual_name = 3dstatics\t1.ogf
@@ -1156,7 +1157,8 @@ visual					= equipments\item_datchik1.ogf
 description				= enc_equipment_devic_detect1
 radius					= 10
 radius_art				= 5
-uncharge_speed 			= 0; 0.0000085
+uncharge_speed 			= 0.0000085
+suitable_batteries		= battery_change
 buzzer_radius			= 1.5
 noise					= detectors\geiger_noise_loop
 buzzer					= detectors\geiger_click1
@@ -1211,7 +1213,6 @@ zone_sound_2_		= detectors\DA-2_beep1
 zone_min_freq_2		= 6
 zone_max_freq_2		= 24
 
-uncharge_speed 		= 0; 0.0000085
 
 [detector_advances]:identity_immunities
 GroupControlSection	= spawn_group
@@ -1225,7 +1226,8 @@ description			= enc_equipment_devic_detect2
 radius				= 10	;15
 buzzer_radius		= 1.5
 radius_art			= 10
-uncharge_speed 		= 0; 0.0000085
+uncharge_speed 		= 0.0000085
+suitable_batteries	= battery_change
 snd_art 			= detectors\buzzer
 noise				= detectors\geiger_noise_loop
 buzzer				= detectors\da-2_noise1_loop
@@ -1274,7 +1276,6 @@ default_to_ruck		= true
 
 ;script_binding  		= bind_idetectors.Init
 ;life_time			= 20
-uncharge_speed 		= 0; 0.0000085
 
 
 [detector_elite]:identity_immunities
@@ -1288,7 +1289,8 @@ visual					= equipments\item_datchik3.ogf
 radius					= 15
 buzzer_radius			= 1.5
 radius_art				= 15
-uncharge_speed 			= 0; 0.0000085
+uncharge_speed 			= 0.0000085
+suitable_batteries		= battery_change
 snd_art 				= detectors\buzzer
 noise					= detectors\geiger_noise_loop
 buzzer					= detectors\da-2_alarm_loop
@@ -2055,19 +2057,25 @@ use_hud = false
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-[battery_change]:vodka
+[battery_change]:identity_immunities
 $spawn 				= "food and drugs\battery_change"
 inv_name			= battery_change_name
 inv_name_short		= battery_change_short_name
-visual				= equipments\item_battery_02.ogf
+cform                   = skeleton
+class					= II_BATTE
+visual                  = equipments\item_battery_02.ogf
 description			= enc_equipment_battery_change
+
+script_binding  		= bind_item.Init
+cor_time				= 40
 cost				= 250
+charge_level			= 1.0
 
 inv_grid_width		= 1
 inv_grid_height		= 1
 inv_grid_x			= 10
-inv_grid_y			= 23 
-inv_weight			= 0.25
+inv_grid_y			= 23
+inv_weight				= 0.025
 item_amount 		= 0.1
 eat_health			= 0.0
 eat_satiety			= 0
@@ -2088,10 +2096,10 @@ snd_eat =      weapons\battery_change\battery_change
 slot				= 4
 animation_slot		= 4
 
-hud = wpn_battery_change_hud
+;hud = wpn_battery_change_hud
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-use_hud = true
+use_hud = false
 
 [wpn_battery_change_hud]
 visual = weapons\change_battery\change_battery.ogf
@@ -2106,50 +2114,78 @@ anim_eat = change_battery
 anim_eat0 = change_battery
 anim_eat1 = change_battery
 
-position         	        = 0,-0.08,0.3			; position (offset) and orientation of the weapon in the hands of character
+position         	        = 0,-0.1,0.3			; position (offset) and orientation of the weapon in the hands of character
 orientation      	        = 0,7,0						; (3rd person view)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+[battery_change_det1]:battery_change
+$spawn 				= "food and drugs\battery_change_det1"
+description			= enc_equipment_battery_change_det1
+;hud 				= wpn_battery_change_det1_hud
 
+[wpn_battery_change_det1_hud]:wpn_battery_change_hud
+visual = weapons\change_battery\detect1_reload.ogf
 
-[battery_change_headlamp]:vodka
-$spawn 				= "food and drugs\battery_change_headlamp"
-inv_name			= battery_change_headlamp_short_name
-inv_name_short		= battery_change_headlamp_short_name
-visual				= weapons\change_battery\battery_gp.ogf
-description			= enc_equipment_battery_change_headlamp
-cost				= 18
+[battery_change_det2]:battery_change
+$spawn 				= "food and drugs\battery_change_det2"
+description			= enc_equipment_battery_change_det2
+;hud 				= wpn_battery_change_det2_hud
 
-inv_grid_width		= 1
-inv_grid_height		= 1
-inv_grid_x			= 10 
-inv_grid_y			= 24
-inv_weight			= 0.07
+[wpn_battery_change_det2_hud]:wpn_battery_change_hud
+visual = weapons\change_battery\detect2_reload.ogf
 
-eat_health			= 0.0
-eat_satiety			= 0
-eat_power			= 0.0
-eat_alcohol			= 0
-eat_radiation		= 0
-wounds_heal_perc	= 0.0
-eat_portions_num	= 1
-eat_max_power		= 0.0
-water_power			= 0
-eat_sleep			= 0
-item_amount 		= 0.1
+[battery_change_det3]:battery_change
+$spawn 				= "food and drugs\battery_change_det3"
+description			= enc_equipment_battery_change_det3
+;hud 				= wpn_battery_change_det3_hud
+
+[wpn_battery_change_det3_hud]:wpn_battery_change_hud
+visual = weapons\change_battery\detect3_reload.ogf
+
+[battery_change_headlamp]:identity_immunities
+$spawn 					= "food and drugs\battery_change_headlamp"
+inv_name				= battery_change_headlamp_short_name
+inv_name_short			= battery_change_headlamp_short_name
+cform                   = skeleton
+class					= II_BATTE
+visual                 	= weapons\change_battery\battery_gp.ogf
+description				= enc_equipment_battery_change_headlamp
+
+script_binding  		= bind_item.Init
+cor_time				= 40
+cost					= 18
+
+inv_grid_width			= 1
+inv_grid_height			= 1
+inv_grid_x				= 10 
+inv_grid_y				= 24
+inv_weight				= 0.025
+charge_level			= 1.0
+
+eat_health				= 0.0
+eat_satiety				= 0
+eat_power				= 0.0
+eat_alcohol				= 0
+eat_radiation			= 0
+wounds_heal_perc		= 0.0
+eat_portions_num		= 1
+eat_max_power			= 0.0
+water_power				= 0
+eat_sleep				= 0
+item_amount 			= 0.1
 attach_angle_offset		= 0.000000, 0.000000, 0.000000
 attach_position_offset	= 0.087266, -0.078540, 0.052360
 attach_bone_name		= bip01_r_hand
 auto_attach				= false
-snd_eat 			=      weapons\battery_change\battery_change_headlamp
-slot				= 4
-animation_slot		= 4
+snd_eat 				= weapons\battery_change\battery_change_headlamp
+slot					= 4
+animation_slot			= 4
 
-hud = wpn_battery_change_headlamp_hud
+;hud = wpn_battery_change_headlamp_hud
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-use_hud = true
+use_hud = false
 
 [wpn_battery_change_headlamp_hud]
 visual = weapons\change_battery\change_battery_headlamp.ogf

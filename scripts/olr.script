@@ -7,7 +7,9 @@ olrdbg = false
 
 is_crush = false
 
-modver = "OPEN BETA VERSION - 3.0.16 SOP"
+--modver = game.translate_string("st_mod_ver") -- оставил ванильный текст
+modver = game.translate_string("st_mod_ver").."xrCore id:"..get_engine_build_id().." Date: "..get_engine_build_date()..""
+--modver = game.translate_string("st_mod_ver").."commit: c7a52f0 ".."xrCore id:"..get_engine_build_id().." Date: "..get_engine_build_date().."" -- для вывода версии у игроков
 
 bad_items = {
 	["art_mil_jaba"] = true,
@@ -171,7 +173,7 @@ function actor_net_spawn()
 	level.map_add_object_spot_ser(db.actor, "olr_actor_spot", "")
 
 	if has_alife_info("cit_fail_first_task") then
-		db.actor:get_inventory_owner():SetName("Стрелок") 
+		db.actor:get_inventory_owner():SetName(game.translate_string("st_actor_name_real")) 
 	end
 
   	if db.actor and has_alife_info("start_olr_mod") and db.storage[db.actor:id()].pstor == nil then
@@ -222,7 +224,7 @@ end
 function addtorch()
         db.actor:iterate_inventory(
 	function(actor, obj) 
-		if obj and obj:section()=="device_torch" and not db.actor:is_on_belt(obj) then
+		if obj and db.actor:item_in_slot(9) then
 			db.actor:drop_item(obj)
 			local wait_time = 0
   			wait_time = time_global() + 200
@@ -383,7 +385,7 @@ function to_slot(obj)
 	end
 	if db.actor and obj:section()=="battery_change_headlamp" then
 		db.actor:iterate_inventory( function(_, item)
-		if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
+		if item and item:section() == "device_torch" and db.actor:item_in_slot(9) then
 			item:get_torch():enable(false)
 		end
 	end )
@@ -392,28 +394,6 @@ function to_slot(obj)
 end
 
 function to_belt(obj)
-	if db.actor and obj:section()=="device_torch" then
-		local tCount = 0
-		db.actor:iterate_inventory( function(_, item)
-		if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
-			tCount = tCount + 1
-			if tCount > 1 then
-				db.actor:move_to_ruck(obj)
-				--news_manager.send_tip(db.actor, game.translate_string("to_belt_0"), nil, "default", 3000)
-			end
-			--news_manager.send_tip(db.actor, "фонарей на поясе: "..tCount.."", nil, "default", 3000)
-		end
-	end )
-	tCount = 0
-	end
-	if db.actor and obj:section()=="device_torch" then
-		local wait_time = 0
-  		wait_time = time_global() + 100
-  		level.add_call(
-    		function() return time_global() > wait_time end,
-    		function() olr.addtorch() end
-  		)
-	end
 	if db.actor and obj:section()=="af_art460" then
 		local tCount = 0
 		db.actor:iterate_inventory( function(_, item)
@@ -964,12 +944,11 @@ function create_on_pos(item,level_name, pos)
 end
 
 function switch_torch(bool)
-	db.actor:iterate_inventory( function(_, item)
-	if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
-		item:get_torch():enable(bool)
+	local torch = db.actor:get_torch()
+	if torch then
+		torch:enable(bool)
 		--news_manager.send_tip(db.actor, game.translate_string("switch_torch_0"), nil, "default", 3000)
 	end
-	end)
 end
 
 function snd(sound)

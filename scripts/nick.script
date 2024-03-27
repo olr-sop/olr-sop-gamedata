@@ -121,8 +121,7 @@ function start_actor_params_food()
 	if db.actor then
 		db.actor.satiety  = -0.11
 		local bobj445 = alife():create('device_torch', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
- 		level.client_spawn_manager():add(bobj445.id, 0, function(id,obj) obj:set_condition(1) end)	
- 		--level.client_spawn_manager():add(bobj445.id, 0, function(id,obj) obj:set_condition((math.random(15,45)/100)) end)	
+ 		level.client_spawn_manager():add(bobj445.id, 0, function(id,obj) obj:set_charge((math.random(15,45)/100)) end)
 	end
 end
 
@@ -6801,20 +6800,24 @@ end
 
 
 function is_pda_predead()
-	local STbron = db.actor:object("device_pda")
-	return STbronb ~= nil and STbron:condition() <= 0.20
+	local STbron = db.actor:item_in_slot(9)
+	if STbron ~= nil then
+		return STbron:get_charge() <= 0.20
+	end
 end
 
 
 function is_pda_dead()
-	local STbron = db.actor:object("device_pda")
-	return STbronb ~= nil and STbron:condition() <= 0.01
+	local STbron = db.actor:item_in_slot(9)
+	if STbron ~= nil then
+		return STbron:get_charge() <=  0.01
+	end
 end
 
-function enable_senf() 
-	local STbron = db.actor:object("device_pda")
+function enable_senf()
+	local STbron = db.actor:item_in_slot(9)
 	if STbron ~= nil then
-		STbron:set_condition(0.99)
+		STbron:set_charge(0.99)
 		db.actor:disable_info_portion("pda_dead_off")
 		olr.show_minimap(true)
 	end
@@ -18134,7 +18137,7 @@ end
 function device_torch_bad()
 	local STfonar = db.actor:item_in_slot(9)
 	if STfonar and STfonar:condition() > 0.16 then
-	--	STfonar:set_condition(0.16)
+		STfonar:set_charge(0.16)
 	end
 end
 

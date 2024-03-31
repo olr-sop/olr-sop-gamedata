@@ -62,7 +62,7 @@ local section = item_in_hands:section()
 					if stalker:position():distance_to(db.actor:position()) < 20 and stalker:see(db.actor) and not olr_protected.is_no_offline_alife_obj(stalker:name()) then
 				
 					local seer_name = news_main.get_npc_name(stalker)
-					news_manager.send_tip(db.actor, ""..seer_name..": Мужики... сейчас сам видел... Мессер, тот, что с грузовика смерти, сейчас кусок мяса какого-то странного жрал! Будте внимательны.", 15, "unknown", 39000)
+					news_manager.send_tip(db.actor, ""..seer_name..game.translate_string("st_olr_items_efs_saw_disgusting_meat"), 15, "unknown", 39000)
 					db.actor:change_character_reputation(-60)
 					break
 					
@@ -128,7 +128,7 @@ local section = item_in_hands:section()
 			if db.actor.health > 0.31 then
 				db.actor.health = - 0.3
 			end
-			olr.hud_tip("", "Что-то я перепил...", 7)
+			olr.hud_tip("", game.translate_string("st_olr_item_efs_too_much_drink"), 7)
 			db.actor:set_actor_sleep(-0.6)
 			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_4"), nil, "default", 6000)
 		end
@@ -299,9 +299,9 @@ local section = item_in_hands:section()
 			end
 			if obj:is_stalker() and has_alife_info("docent_scan_zomb_done_inf") then
 				if obj:character_community() == "zombied" or obj:character_community() == "sin" then
-					news_manager.send_tip(db.actor, "Имя -  "..obj:character_name()..". Поддвергся воздействию пси-излучению. Статус: Зомбированный.", nil, "zombied", 5000)
+					news_manager.send_tip(db.actor, game.translate_string("st_olr_item_efs_name")..obj:character_name()..game.translate_string("st_olr_items_efs_succumbed_to_psi"), nil, "zombied", 5000)
 				else
-					news_manager.send_tip(db.actor, "Имя - "..obj:character_name()..". Не поддвергалcя пси-излучению.", nil, "medkit", 5000)
+					news_manager.send_tip(db.actor, game.translate_string("st_olr_item_efs_name")..obj:character_name()..game.translate_string("st_olr_items_efs_did_not_succumb_to_psi"), nil, "medkit", 5000)
 				end
 			end
 		end
@@ -522,7 +522,7 @@ function pda_check(obj)
 		if section == "battery_change" then 
 			local pdaitm = db.actor:object("device_pda") 
 			local namecond = pdaitm:condition() * 100
-			local nameconddel = "Заряд ПДА: "..string.format("%1.0f", namecond).."%"
+			local nameconddel = game.translate_string("st_olr_item_efs_pda_charge")..string.format("%1.0f", namecond).."%"
 			news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
 		
 			-- TODO - убрал изза вылета по правке выгрузки текстур из памяти
@@ -747,14 +747,14 @@ function injector_info:InitControls()
 	self.sibyazva = get_sibyazva()
 	self.zombied = get_zombied()
 
-		self.Static11:SetTextST(string.format("Температура тела: %s", self.temperatura))
-		self.Static7:SetTextST(string.format("Заражение паразитом: %s", self.paras))
-		self.Static9:SetTextST(string.format("Бешенство: %s", self.beshenstv))
-		self.Static12:SetTextST(string.format("Лучевая болезнь (RвЧ): %s", self.luchevaya))
-		self.Static10:SetTextST(string.format("Крысиное безумие: %s", self.ratbezum))
-		self.Static15:SetTextST(string.format("Сибирская язва: %s", self.sibyazva))
-		self.Static17:SetTextST(string.format("Зомбирование: %s", self.sibyazva))
-		self.Static8:SetTextST("Состояние организма:")
+		self.Static11:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_temp"), self.temperatura))
+		self.Static7:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_parasite"), self.paras))
+		self.Static9:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_rabies"), self.beshenstv))
+		self.Static12:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_radpoison"), self.luchevaya))
+		self.Static10:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_rat_rabies"), self.ratbezum))
+		self.Static15:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_anthrax"), self.sibyazva))
+		self.Static17:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_zombification"), self.sibyazva))
+		self.Static8:SetTextST(game.translate_string("st_olr_item_efs_status_organism"))
 
 	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_mapspot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -779,41 +779,41 @@ end
 
 function get_paras()
 	if has_alife_info("bolezn_parazity_info") then
-		return game.translate_string("Положительно")
+		return game.translate_string(game.translate_string("st_olr_item_efs_positive"))
 	else
-		return game.translate_string("Отсутствует")
+		return game.translate_string(game.translate_string("st_olr_item_efs_negative"))
 	end
 end
 
 function get_besh()
 	if has_alife_info("bolezn_beshenstvo_info") then
-		return game.translate_string("Положительно")
+		return game.translate_string(game.translate_string("st_olr_item_efs_positive"))
 	else
-		return game.translate_string("Отсутствует")
+		return game.translate_string(game.translate_string("st_olr_item_efs_negative"))
 	end
 end
 
 function get_ratbezum()
 	if has_alife_info("bolezn_ratcrazy_info") then
-		return game.translate_string("Положительно")
+		return game.translate_string(game.translate_string("st_olr_item_efs_positive"))
 	else
-		return game.translate_string("Отсутствует")
+		return game.translate_string(game.translate_string("st_olr_item_efs_negative"))
 	end
 end
 
 function get_sibyazva()
 	if has_alife_info("bolezn_sibyazva_info") then
-		return game.translate_string("Положительно")
+		return game.translate_string(game.translate_string("st_olr_item_efs_positive"))
 	else
-		return game.translate_string("Отсутствует")
+		return game.translate_string(game.translate_string("st_olr_item_efs_negative"))
 	end
 end
 
 function get_zombied()
 	if olr_timers.has_timer("bolezn_zombied_timer_m") or olr_timers.has_timer("bolezn_zombied_timer_d") then
-		return game.translate_string("Положительно")
+		return game.translate_string(game.translate_string("st_olr_item_efs_positive"))
 	else
-		return game.translate_string("Отсутствует")
+		return game.translate_string(game.translate_string("st_olr_item_efs_negative"))
 	end
 end
 

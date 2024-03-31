@@ -38,12 +38,12 @@ end
 
 function ui_quests_table:bt_find_item_button_clicked()
 	job_selected_kill = false 
-	local textdesc = game.translate_string(""..xvars.quest_one_text.." - "..xvars.quest_one_text_name..", Оплата: "..xvars.quest_one_cost.." ")
+	local textdesc = game.translate_string(""..xvars.quest_one_text.." - "..xvars.quest_one_text_name..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost.." ")
 	if not has_alife_info("doska_one_taken") then
 		self.static_desc_quest:SetText(textdesc)
 		job_selected = true
 	elseif xvars.quest_one_target == "" and has_alife_info("doska_one_taken") then
-		self.static_desc_quest:SetText("Пока работы нет")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
 		self.static_desc_quest:SetText("Взято задание на добычу предмета: "..xvars.quest_one_text_name..", Оплата: "..xvars.quest_one_cost.." ")
 	end  
@@ -68,12 +68,12 @@ function ui_quests_table:bt_kill_stalker_button_clicked()
 	if xvars.quest_two_target == "" then
 		nm = "empty"
 	end
-	local textdesc = game.translate_string("Убить сталкера - "..nm..". Последнее местоположение - "..pos.."")
+	local textdesc = game.translate_string(game.translate_string("st_olr_doska_kill_stalker_preface")..nm..game.translate_string("st_olr_doska_kill_stalker_last_location")..pos.."")
 	if not has_alife_info("doska_two_taken") then
 		self.static_desc_quest:SetText(textdesc)
 		job_selected_kill = true
 	elseif xvars.quest_two_target == "" and has_alife_info("doska_two_taken") then
-		self.static_desc_quest:SetText("Пока работы нет")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 		if not olr_timers.has_timer("gen_kill_stalker") then
 			olr_timers.st_timer("gen_kill_stalker", 52, "olr_doska_escape.gen_kill_stalker()")
 		end
@@ -102,7 +102,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		level.remove_cam_effector(30)
 		olr.info("doska_one_taken")
 		olr.info("doska_one_working")
-		news_manager.send_tip(db.actor, "Полученно задание - достать "..xvars.quest_one_text_name.." для торговца.", 1, "item", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_escape_task_1")..xvars.quest_one_text_name..game.translate_string("st_olr_doska_escape_task_2"), 1, "item", 9000)
 		olr_timers.st_timer("doska_one_gen_timer_fail", 6500, "olr_doska_escape.doska_one_gen_timer_fail()")
 	else
 		--log1("cannot take quest")
@@ -118,11 +118,11 @@ function ui_quests_table:button_take_quest_button_clicked()
 		level.remove_cam_effector(30)
 		olr.info("doska_two_taken")
 		olr.info("doska_two_working")
-		news_manager.send_tip(db.actor, "Полученно задание - убить сталкера "..nm.."", 1, "zombied", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_escape_task_3")..nm.."", 1, "zombied", 9000)
 		local sobj = game.translate_string(xvars.quest_two_target)
 		local obj = alife():object(sobj)
 		obj:brain():update(true)
-		olr.add_spot_on_map( obj.id,"kill_stalker_location", "Заказ от Жабы: убить сталкера - "..nm.."" )
+		olr.add_spot_on_map( obj.id,"kill_stalker_location", game.translate_string("st_olr_doska_escape_task_4")..nm.."" )
 		olr_timers.st_timer("doska_two_gen_timer_fail", 6500, "olr_doska_escape.doska_two_gen_timer_fail()")
 		if not has_alife_info("assasin_jaba_about") then
 			olr.info("assasin_jaba_about")
@@ -185,7 +185,7 @@ function one_complete_func_item()
 	local mon = math.floor(xvars.quest_one_cost) 
 	db.actor:give_money(mon)
 	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, "Получены деньги - "..mon.."", nil, "item", 3000)
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received")..mon.."", nil, "item", 3000)
 	local obj_targ = game.translate_string(xvars.quest_one_target)
 	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_escape.clear_find_item()
@@ -205,52 +205,52 @@ function gen_rnd_item_find()
 	--log1("init esc doska")
 	zfind_item_obj = {
 	 
-		 [1] = {name = "wpn_pb",            		cost = 300,  text = "бесшумный пистолет ПБ"},
-		 [2] = {name = "wpn_walther",       		cost = 400,  text = "пистолет Вальтер"},
-		 [3] = {name = "wpn_bm16",       		cost = 450,  text = "ружьё БМ-16"},
-		 [4] = {name = "killer_outfit",       		cost = 1150,  text = "комбинезон убийц"},
-		 [5] = {name = "scientific_outfit",       	cost = 1250,  text = "научный сталкерский костюм (Комбинезон защитный)"},
-		 [6] = {name = "wpn_spas12",       		cost = 1000,  text = "дробовик СПАС-12"},
-		 [7] = {name = "wpn_svd",       		cost = 1100,  text = "СВД"},
-		 [8] = {name = "af_night_star",       		cost = 400,  text = "артефакт Магнит"},
-		 [9] = {name = "af_drops",       		cost = 300,  text = "артефакт Зуда"},
-		 [10] = {name = "af_electra_sparkler",       		cost = 300,  text = "артефакт Меркурий"},
-		 [11] = {name = "af_ameba_mica",       			cost = 300,  text = "артефакт Ртутный Шар"},
-		 [12] = {name = "af_rusty_thorn",       		cost = 100,  text = "артефакт Колючки"},
-		 [13] = {name = "af_medusa",       			cost = 200,  text = "артефакт Бублик"},
-		 [14] = {name = "af_art_kub",       			cost = 500,  text = "артефакт Невидимый куб"}
+		 [1] = {name = "wpn_pb",            		cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_pb")},
+		 [2] = {name = "wpn_walther",       		cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_walther")},
+		 [3] = {name = "wpn_bm16",       		cost = 450,  text = game.translate_string("st_olr_doska_esc_find_item_bm16")},
+		 [4] = {name = "killer_outfit",       		cost = 1150,  text = game.translate_string("st_olr_doska_esc_find_item_killer_outfit")},
+		 [5] = {name = "scientific_outfit",       	cost = 1250,  text = game.translate_string("st_olr_doska_esc_find_item_protective_outfit")},
+		 [6] = {name = "wpn_spas12",       		cost = 1000,  text = game.translate_string("st_olr_doska_esc_find_item_spas12")},
+		 [7] = {name = "wpn_svd",       		cost = 1100,  text = game.translate_string("st_olr_doska_esc_find_item_svd")},
+		 [8] = {name = "af_night_star",       		cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_magnet")},
+		 [9] = {name = "af_drops",       		cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_zuda")},
+		 [10] = {name = "af_electra_sparkler",       		cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_mercury")},
+		 [11] = {name = "af_ameba_mica",       			cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_mercury_ball")},
+		 [12] = {name = "af_rusty_thorn",       		cost = 100,  text = game.translate_string("st_olr_doska_esc_find_item_thorns")},
+		 [13] = {name = "af_medusa",       			cost = 200,  text = game.translate_string("st_olr_doska_esc_find_item_bagel")},
+		 [14] = {name = "af_art_kub",       			cost = 500,  text = game.translate_string("st_olr_doska_esc_find_item_invisible_cube")}
 
 		}
 	else
 	--log1("init mil doska")
 	zfind_item_obj = {
 	 
-		 [1] = {name = "wpn_desert_eagle",            		cost = 700,  text = "пистолет Desert Eagle"},
-		 [2] = {name = "wpn_usp",       		cost = 680,  text = "пистолет USP"},
-		 [3] = {name = "wpn_protecta",       		cost = 2050,  text = "ружьё Protecta"},
-		 [4] = {name = "killer_outfit",       		cost = 1550,  text = "комбинезон убийц"},
-		 [5] = {name = "scientific_outfit",       	cost = 2250,  text = "научный сталкерский костюм (Комбинезон защитный)"},
-		 [6] = {name = "wpn_spas12",       		cost = 1500,  text = "дробовик СПАС-12"},
-		 [7] = {name = "wpn_svd",       		cost = 1700,  text = "СВД"},
-		 [8] = {name = "af_night_star",       		cost = 770,  text = "артефакт Магнит"},
-		 [9] = {name = "af_drops",       		cost = 380,  text = "артефакт Зуда"},
-		 [10] = {name = "af_electra_sparkler",       		cost = 360,  text = "артефакт Меркурий"},
-		 [11] = {name = "af_ameba_mica",       			cost = 370,  text = "артефакт Ртутный Шар"},
-		 [12] = {name = "af_rusty_thorn",       		cost = 160,  text = "артефакт Колючки"},
-		 [13] = {name = "af_medusa",       			cost = 270,  text = "артефакт Бублик"},
-		 [14] = {name = "af_art_kub",       			cost = 590,  text = "артефакт Невидимый куб"},
+		 [1] = {name = "wpn_desert_eagle",            		cost = 700,  text = game.translate_string("st_olr_doska_esc_find_item_deagle")},
+		 [2] = {name = "wpn_usp",       		cost = 680,  text = game.translate_string("st_olr_doska_esc_find_item_usp")},
+		 [3] = {name = "wpn_protecta",       		cost = 2050,  text = game.translate_string("st_olr_doska_esc_find_item_protecta")},
+		 [4] = {name = "killer_outfit",       		cost = 1550,  text = game.translate_string("st_olr_doska_esc_find_item_killer_outfit")},
+		 [5] = {name = "scientific_outfit",       	cost = 2250,  text = game.translate_string("st_olr_doska_esc_find_item_protective_outfit")},
+		 [6] = {name = "wpn_spas12",       		cost = 1500,  text = game.translate_string("st_olr_doska_esc_find_item_spas12")},
+		 [7] = {name = "wpn_svd",       		cost = 1700,  text = game.translate_string("st_olr_doska_esc_find_item_svd")},
+		 [8] = {name = "af_night_star",       		cost = 770,  game.translate_string("st_olr_doska_esc_find_item_magnet")},
+		 [9] = {name = "af_drops",       		cost = 380,  text = game.translate_string("st_olr_doska_esc_find_item_zuda")},
+		 [10] = {name = "af_electra_sparkler",       		cost = 360,  text = game.translate_string("st_olr_doska_esc_find_item_mercury")},
+		 [11] = {name = "af_ameba_mica",       			cost = 370,  text = game.translate_string("st_olr_doska_esc_find_item_mercury_ball")},
+		 [12] = {name = "af_rusty_thorn",       		cost = 160,  text = game.translate_string("st_olr_doska_esc_find_item_thorns")},
+		 [13] = {name = "af_medusa",       			cost = 270,  text = game.translate_string("st_olr_doska_esc_find_item_bagel")},
+		 [14] = {name = "af_art_kub",       			cost = 590,  text = game.translate_string("st_olr_doska_esc_find_item_invisible_cube")},
 
-		 [15] = {name = "af_lichinka",       			cost = 700,  text = "артефакт Личинка"},
-		 [16] = {name = "af_lchernaya_busina",       			cost = 350,  text = "артефакт Чёрная бусина"},
-		 [17] = {name = "af_art_lampa",       		cost = 10000,  text = "артефакт Смерть лампа"},
-		 [18] = {name = "af_art_lenss",       			cost = 400,  text = "артефакт Линза"},
-		 [19] = {name = "af_art_ruchk",       			cost = 450,  text = "артефакт Ручка"},
+		 [15] = {name = "af_lichinka",       			cost = 700,  text = game.translate_string("st_olr_doska_esc_find_item_leech")},
+		 [16] = {name = "af_lchernaya_busina",       			cost = 350,  text = game.translate_string("st_olr_doska_esc_find_item_black_bead")},
+		 [17] = {name = "af_art_lampa",       		cost = 10000,  text = game.translate_string("st_olr_doska_esc_find_item_death_lamp")},
+		 [18] = {name = "af_art_lenss",       			cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_lens")},
+		 [19] = {name = "af_art_ruchk",       			cost = 450,  text = game.translate_string("st_olr_doska_esc_find_item_handle")},
 
-		 [20] = {name = "wpn_tiss",       			cost = 1700,  text = "автомат ТИСС"},
-		 [21] = {name = "outfit_stalker_golmar",       		cost = 7350,  text = "костюм Голмара"},
-		 [22] = {name = "wpn_vintorez_gravi",       		cost = 2000,  text = "ВСС с сильными гравитационными свойствами"},
-		 [23] = {name = "wpn_binoc",       			cost = 400,  text = "бинокль"},
-		 [24] = {name = "hand_torch",       			cost = 450,  text = "ручной фонарь"}
+		 [20] = {name = "wpn_tiss",       			cost = 1700,  text = game.translate_string("st_olr_doska_esc_find_item_tiss")},
+		 [21] = {name = "outfit_stalker_golmar",       		cost = 7350,  text = game.translate_string("st_olr_doska_esc_find_item_golmars_outfit")},
+		 [22] = {name = "wpn_vintorez_gravi",       		cost = 2000,  text = game.translate_string("st_olr_doska_esc_find_item_gravity_vss")},
+		 [23] = {name = "wpn_binoc",       			cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_binocs")},
+		 [24] = {name = "hand_torch",       			cost = 450,  text = game.translate_string("st_olr_doska_esc_find_item_hand_torch")}
 
 		}
 	end
@@ -265,12 +265,12 @@ function gen_rnd_item_find()
 	xvars.quest_one_text_name = text
 
 	local text_phrase = {
-		"Нужно достать", 
-		"Поступил заказ на", 
-		"Выкуплю за хорошую цену", 
-		"Мне нужен"
+		"st_olr_doska_find_item_preface_1", 
+		"st_olr_doska_find_item_preface_2", 
+		"st_olr_doska_find_item_preface_3", 
+		"st_olr_doska_find_item_preface_4"
 	}
-	local text_find = text_phrase[math.random(#text_phrase)]
+	local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
 	xvars.quest_one_text = text_find
 
 	--log1("jaba doska need find new - "..xvars.quest_one_target.."  --- "..xvars.quest_one_cost.."")
@@ -289,18 +289,18 @@ end
 function give_quest_item_find()
 	local new_task = CGameTask()
 	new_task:load("user_task_doska_item")
-	new_task:set_title("Найти предмет для Жабы")
+	new_task:set_title(game.translate_string("st_olr_doska_esc_find_item_for_toad"))
 	local idr = xvars.quests_all_ids
 	--new_task:set_id(idr)
 
 	local SubTask = SGameTaskObjective (new_task, 1)
 	local target = game.translate_string(xvars.quest_one_text_name)
-	SubTask:set_description("Найти "..target.."")
+	SubTask:set_description(game.translate_string("st_olr_doska_esc_find_target")..target.."")
 	SubTask:add_complete_func("olr_doska_escape.precond_user_task_doska_item")
 	new_task:add_objective(SubTask)
 
 	local SubTask2 = SGameTaskObjective (new_task, 2)
-	SubTask2:set_description("Поговорить с заказчиком")
+	SubTask2:set_description(game.translate_string("st_olr_doska_esc_talk_to_client"))
 	new_task:add_objective(SubTask2)
 	local time = math.random(19600,46600)
 	db.actor:give_task(new_task, time*1000, true)
@@ -388,7 +388,7 @@ function two_complete_func_kill()
 	end
 	db.actor:give_money(mon)
 	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, "Получены деньги - "..mon.."", nil, "item", 3000)
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received")..mon.."", nil, "item", 3000)
 	db.actor:disable_info_portion("doska_two_working")
 	local time = math.random(90,160)
 	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_escape.gen_kill_stalker()")

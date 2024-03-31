@@ -2204,72 +2204,74 @@ end
 ]]
 
 local snames={
-"Сивый",
-"Бешеный",
-"Гнилой",
-"Хирург",
-"Коматозник",
-"Косой",
-"Косолапый",
-"Костлявый",
-"Кривой",
-"Кривоног",
-"Ловкач",
-"Сиплый",
-"Лысак",
-"Синий",
-"Любимчик",
-"Лютый",
-"Малыш",
-"Болотный",
-"Мертвец",
-"Мёртвый",
-"Местный",
-"Мрачный",
-"Паук",
-"Пес",
-"Мутный",
-"Мятый",
-"Нарцисс",
-"Чёрный",
-"Небрежный",
-"Неудачник",
-"Нуб",
-"Нытик",
-"Идиот",
-"Хам",
-"Нудный",
-"Одноглазый",
-"Паук",
-"Паразит",
-"Параноик",
-"Пижон",
-"Неуязвимый",
-"Плут",
-"Подлец",
-"Покойник",
-"Праведный",
-"Простак",
-"Псих"
+"st_amk_offline_alife_sname_1",
+"st_amk_offline_alife_sname_2",
+"st_amk_offline_alife_sname_3",
+"st_amk_offline_alife_sname_4",
+"st_amk_offline_alife_sname_5",
+"st_amk_offline_alife_sname_6",
+"st_amk_offline_alife_sname_7",
+"st_amk_offline_alife_sname_8",
+"st_amk_offline_alife_sname_9",
+"st_amk_offline_alife_sname_10",
+"st_amk_offline_alife_sname_11",
+"st_amk_offline_alife_sname_12",
+"st_amk_offline_alife_sname_13",
+"st_amk_offline_alife_sname_14",
+"st_amk_offline_alife_sname_15",
+"st_amk_offline_alife_sname_16",
+"st_amk_offline_alife_sname_17",
+"st_amk_offline_alife_sname_18",
+"st_amk_offline_alife_sname_19",
+"st_amk_offline_alife_sname_20",
+"st_amk_offline_alife_sname_21",
+"st_amk_offline_alife_sname_22",
+"st_amk_offline_alife_sname_23",
+"st_amk_offline_alife_sname_24",
+"st_amk_offline_alife_sname_25",
+"st_amk_offline_alife_sname_26",
+"st_amk_offline_alife_sname_27",
+"st_amk_offline_alife_sname_28",
+"st_amk_offline_alife_sname_29",
+"st_amk_offline_alife_sname_30",
+"st_amk_offline_alife_sname_31",
+"st_amk_offline_alife_sname_32",
+"st_amk_offline_alife_sname_33",
+"st_amk_offline_alife_sname_34",
+"st_amk_offline_alife_sname_35",
+"st_amk_offline_alife_sname_36",
+"st_amk_offline_alife_sname_37",
+"st_amk_offline_alife_sname_38",
+"st_amk_offline_alife_sname_39",
+"st_amk_offline_alife_sname_40",
+"st_amk_offline_alife_sname_41",
+"st_amk_offline_alife_sname_42",
+"st_amk_offline_alife_sname_43",
+"st_amk_offline_alife_sname_44",
+"st_amk_offline_alife_sname_45",
+"st_amk_offline_alife_sname_46",
+"st_amk_offline_alife_sname_47"
 }
 
 function set_nickname(sobj)
+	local unknown_novice = game.translate_string("neizvestnyy_novichok")
+	local unknown_stalker = game.translate_string("neizvestnyy_stalker")
 	local rnd = math.random(1,5)
 	if rnd == 1 then
 	local pk = get_netpk(sobj,1)
   	if pk:isOk() then
     		local data = pk:get()
         	stname = tostring(data.character_name)
-		if stname == "Неизвестный новичок" or stname == "Неизвестный сталкер" then
-			local ssname=snames[math.random(table.getn(snames))]
+		if stname == unknown_novice or stname == unknown_stalker then
+			local ssname=game.translate_string(snames[math.random(table.getn(snames))])
 			data.character_name = tostring(ssname)
 			pk:set(data)
 			--news_manager.send_tip(db.actor, "set nickname -- "..sobj:name().." SET -- "..ssname.." ", nil, "freedom", 9000)
 			local seer = news_main.get_nearest_stalker(sobj.level_name, sobj.position, 30, 1)
 			if seer then
 				seer_name = news_main.get_npc_name(seer)
-				if tostring(seer_name) ~= tostring("Неизвестный новичок") or tostring(seer_name) ~= tostring("Неизвестный сталкер") then
-					news_manager.send_tip(db.actor, ""..seer_name..": Интересный сталкер тут появился, да без кликухи... будешь теперь так зваться - "..ssname.." ", 5, "default", 9000)
+				if tostring(seer_name) ~= tostring(unknown_novice) or tostring(seer_name) ~= tostring(unknown_stalker) then
+					news_manager.send_tip(db.actor, ""..seer_name.. game.translate_string("st_amk_offline_alife_name_giver") ..ssname.." ", 5, "default", 9000)
 				end
 			end
 		end
@@ -2667,7 +2669,7 @@ function now_trade_ofl_bar(obj)
 		if (curmoney > 0) then
 			if xvars and xvars.npcs_tasks and xvars.npcs_tasks[obj:name()] == "cash" and obj:rank() > 300 then
 				xvars.cash_need_summa_has[obj:name()] = true
-				news_manager.send_tip(db.actor, ""..npcname..": Всё! К черту зону эту, валить буду! ", 3, "default", 19000)			
+				news_manager.send_tip(db.actor, ""..npcname.. game.translate_string("st_amk_offline_alife_npc_leave_zone"), 3, "default", 19000)			
 			end 
 		end
 		

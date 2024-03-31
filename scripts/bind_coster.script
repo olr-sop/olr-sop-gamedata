@@ -70,17 +70,17 @@ function coster_binder:update(delta)
 		xvars.cooked_food_name = ""
 	end
 
-	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+	--self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
 
 	local active_item = db.actor:active_item()
 	if active_item then
 		if food_sections[active_item:section()] then 
-			self.object:set_tip_text("Готовить "..active_item:get_name().." (F)")
+			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_cook")..active_item:get_name().." (F)")
 		else
-			self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
 		end
 	else
-		self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+		self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook_expanded"))
 	end
 	end
 
@@ -123,7 +123,7 @@ function coster_binder:use_callback(obj,who)
 
 
 	--news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_2"), nil, "default", 3000)
-	olr.hud_tip("", "Приготовление началось...", 4)
+	olr.hud_tip("", game.translate_string("st_bind_coster_tip_cooking_start"), 4)
 	olr_timers.st_timer("coocking_timer_start", 7, "bind_coster.create_coster_food()")
 	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент, чтобы потушить нажмите TAB")
 	end

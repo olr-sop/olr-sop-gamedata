@@ -98,13 +98,13 @@ function generic_object_binder:use_callback( obj, who )
 				--self.object:drop_item(item)  -- тут вылет dBodyStateValide(b)	
 				--self.object:transfer_item(item, db.actor)
 				--log1("has part - "..item:name().."")
-				olr.hud_tip("", "Получено: "..item:get_name().."", 2)
+				olr.hud_tip("", game.translate_string("st_bind_monster_received_items")..item:get_name().."", 2)
 				take_flag = 1
 				local wait_time = 0
   				wait_time = time_global() + 1000
   				level.add_call(
     				function() return time_global() > wait_time end,
-    				function() self.object:set_tip_text("Нет нужных частей") end
+    				function() self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts")) end
   				)
 			--else
 				--log1(" non has part ")
@@ -114,7 +114,7 @@ function generic_object_binder:use_callback( obj, who )
   			wait_time = time_global() + 1000
   			level.add_call(
     			function() return time_global() > wait_time end,
-    			function() self.object:set_tip_text("Нет нужных частей") end
+    			function() self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts")) end
   			)
 		end
 	end )
@@ -123,9 +123,9 @@ function generic_object_binder:use_callback( obj, who )
   			wait_time = time_global() + 3000
   			level.add_call(
     			function() return time_global() > wait_time end,
-    			function() self.object:set_tip_text("Нет нужных частей") end
+    			function() self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts")) end
   			)
-			olr.hud_tip("", "Нет подходящих образцов...", 2)
+			olr.hud_tip("", game.translate_string("st_bind_monster_no_proper_samples"), 2)
 			return
 		end
 	end
@@ -138,10 +138,10 @@ function generic_object_binder:use_callback( obj, who )
 			if bol_var == 1 then
         			local objj = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
         			level.client_spawn_manager():add(objj.id, 0, function(id,obj) obj:set_condition((math.random(30,55)/100)) end)
-				olr.hud_tip("", "Сгодится...", 2)
+				olr.hud_tip("", game.translate_string("st_bind_monster_itlldo"), 2)
 				olr.del(self.object)
 			else
-				olr.hud_tip("", "Слишком повреждено...", 2)
+				olr.hud_tip("", game.translate_string("st_bind_monster_too_damaged"), 2)
 				olr.del(self.object)
 			end
 		end

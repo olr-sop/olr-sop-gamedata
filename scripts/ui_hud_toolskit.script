@@ -943,7 +943,7 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 			else
 				soObj = alife():create( sSection, vPos, idLvA, idGvA )
 				if soObj then sMsg = "Spawned:"..sMsg end
-				soObj.squad = Random.I(64)
+				soObj.squad = math.random(64)
 			end
 		end
 --		log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+") --/#~#
@@ -951,7 +951,9 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 		log("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!")
 		sMsg = "Warning!:NOT_found_spawn_section="..sMsg
 	end
-	if bNoMsg ~= false then news_manager.send_tip(db.actor, sMsg, 0, "default", 0) end
+	if bNoMsg ~= false then
+		news_manager.send_tip(db.actor, sMsg, nil, "default", 0)
+	end
 	return soObj --/>
 end
 
@@ -1186,7 +1188,7 @@ end
 --/ Name of boxes on PDA map
 --/ ------------------------------------------------------------------------------------------------
 function Get_BoxNames(bLog,bDrop)
-	local tBoxNames = Get_IniSection("lost_alpha\\debug.ltx","invbox_names","true") --/#?#
+	local tBoxNames = Get_IniSection("debug\\debug.ltx","invbox_names","true") --/#?#
 	for i=1,65534 do
 		local oObj = level.object_by_id(i)
 		if oObj and oObj:clsid() == clsid.inventory_box and oObj:section() == "inventory_box" then

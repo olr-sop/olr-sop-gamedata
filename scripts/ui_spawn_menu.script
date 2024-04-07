@@ -1,0 +1,713 @@
+--[[ ----------------------------------------------------------------------------------------------
+ File       : ui_spawn_menu.script [optional & only for development and testing!]
+ Description: Spawn-menu
+ Copyright  : 2012 © LA-team
+ Author     : Artos
+ Last edit  : 23.05.2013 [...]
+--]] ----------------------------------------------------------------------------------------------
+
+--/ -----------------------------------------------------------------
+--/ VARIABLEs
+--/ -----------------------------------------------------------------
+local bInit   = false --/ flag of module initialization
+local sModule = script_name() --/ string name of file-module
+
+--/ VARIABLEs
+--/ -----------------------------------------------------------------
+local spawn_menu = nil
+local tSpawnMenu = {}
+local tMySlots = nil
+local tMyItems = nil
+local tNames   = {}
+local tClassId = {}
+local tInvName = {}
+local tComName = {}
+local iMaxRows = 10
+--/ -----------------------------------------------------------------
+--/ Process: Initialize Module
+--/ -----------------------------------------------------------------
+function init()
+--	log("init:>") --/#~#
+	this.Build_Table()
+	bInit = true
+end
+--/ -------------------------
+--/ CLASS CONSTRUCTOR
+--/ -----------------------------------------------------------------------------------------------
+class "UI_SpawnMenu" (CUIScriptWnd)
+--/ -----------------------------------------------------------------------------------------------
+function UI_SpawnMenu:__init() super()
+	if not bInit then init() end
+	self.wide = device().width/device().height > 1.333
+	self:InitControls()
+	self:InitCallBacks()
+	this.UI_MySpawn(self) --/ add
+end
+
+function UI_SpawnMenu:__finalize() end
+
+function UI_SpawnMenu:InitControls()
+	--self:SetWndRect(Frect():set(0,0,1024,768)) --/STCS&SCOP
+	self:Init(25,25,1024,1024)
+	self:SetAutoDelete(true)
+	
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_wnd\\ui_spawn_menu.xml")
+	self.background = xml:InitStatic("background", self)
+	--/ header
+	--title:SetWndRect(45,10,300,33) --/SHOC
+	self.title = xml:InitStatic("title", self)
+	--/ picture (texture)
+	self.pic = xml:InitButton("get_equipment_btn", self)
+	if self.wide then --/ selecting offset and width of pic
+		self.pic:SetWidth(124)
+	end
+	self:Register(self.pic,"btn_pic")
+	--/ spawn-menu buttons
+	local btn,x,y
+	local tP = {x=25,y=75,w=117,h=29}
+	for i=1,#tSpawnMenu do
+		x = tP.x + 120*math.floor((i-1)/iMaxRows)
+		y = tP.y + 35*math.fmod((i-1), iMaxRows) -- здесь отступы между ячейками
+		btn = this.Get_Button(x,y,tP.w,tP.h)
+		btn:SetText(tSpawnMenu[i].title or "")
+		self:AttachChild(btn)
+		self:Register(btn,"btn_"..i)
+	end
+	--/ exit button (quit)
+	self.exit = xml:Init3tButton("exit_btn", self)
+	self:Register(self.exit,"btn_quit")
+	--/ copyright
+	self.copyright = xml:InitStatic("great_modder_copyright", self)
+
+	self.name = xml:InitStatic("great_modder_nickname", self)
+
+end
+
+function UI_SpawnMenu:InitCallBacks()
+	for i=1,#tSpawnMenu do
+		self:AddCallback("btn_"..i, ui_events.BUTTON_CLICKED, function() self:Get_MenuDlg(i) end, self)
+	end
+	self:AddCallback("btn_pic",  ui_events.BUTTON_CLICKED, self.OnList, self)
+	self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.OnQuit, self)
+end
+
+function UI_SpawnMenu:OnKeyboard(dik, keyboard_action)
+	local bRes = CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+	if bRes == false then
+		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+			if dik == DIK_keys.DIK_ESCAPE then
+				self:OnQuit()
+			end
+		end
+	end
+	return bRes --/>
+end
+
+function UI_SpawnMenu:OnQuit()
+	--/ return: closing dialog window
+	if self:GetHolder() then
+		if self.owner then
+			self.owner:StopWnd(self)
+		else			
+			self:GetHolder():start_stop_menu(self, false)
+		end
+	end
+end
+--/ -----------------------------------------------------------------
+--/ Menu
+--/ -----------------------------------------------------------------
+function UI_SpawnMenu:Get_MenuDlg(idx)
+	if not self.spawn_dlg then self.spawn_dlg = {} end
+	if not self.spawn_dlg[idx] then
+		self.spawn_dlg[idx] = UI_SpawnDlg(idx, self)
+		self.spawn_dlg[idx].owner = self
+	end
+
+	self:GetHolder():start_stop_menu(self.spawn_dlg[idx], false)
+	self:GetHolder():start_stop_menu(self, false)
+end
+function UI_SpawnMenu:OnList()
+	this.Debug_Spawn()
+	self:OnQuit()
+end
+--/ -----------------------------------------------------------------------------------------------
+class "UI_MySpawn" (CUIScriptWnd)
+--/ -----------------------------------------------------------------------------------------------
+function UI_MySpawn:__init(owner) super()
+	self.owner = owner
+	self.to_actor = nil
+--	self:InitControls()
+--	self:InitCallBacks()
+end
+
+function UI_MySpawn:__finalize() end
+
+function UI_MySpawn:InitControls()
+	--/ string of header
+	self.note = CUIStatic()
+	self.note:SetWndRect(185,460,200,23) --/SHOC
+	self.note:SetFont(GetFontLetterica16Russian())
+	--self.note:SetTextColor(255,216,188,140)
+	self.note:SetTextAlign(0)
+	self.note:SetTextST("st_type_your_own_object_section")
+	self.note:SetAutoDelete(true)
+	self.owner:AttachChild(self.note)
+	--/ string/input window
+	self.box = CUIEditBox()
+	self.box:Init(145,475,255,23) --/SetWndRect
+	self.box:InitTexture("ui_linetext_e")
+	self.box:SetAutoDelete(true)
+	self.owner:AttachChild(self.box)
+	self:Register(self.box,"box_edt")
+	--/ check-button
+	self.chk = this.Get_CheckButton(175,400,52,21)
+	self.chk:SetText("<~ToActor")
+	self.chk:SetTextColor(255,231,153,022)
+	self.owner:AttachChild(self.chk)
+	self:Register(self.chk,"btn_chk")
+	self.chk:Show(false)
+	--/ action button (act)
+	self.act = this.Get_Button(283,400,117,29)
+	self.act:SetTextST("ui_mm_apply")
+	self.act:Show(false)
+	self.owner:AttachChild(self.act)
+	self:Register(self.act,"btn_act")
+end
+
+function UI_MySpawn:InitCallBacks()
+	self:AddCallback("box_edt", ui_events.EDIT_TEXT_CHANGED, self.OnButton_change, self)
+	self:AddCallback("btn_act", ui_events.BUTTON_CLICKED,    self.OnButton_spawn,  self)
+end
+
+function UI_MySpawn:OnButton_change()
+	local sStr = self.box:GetText() or ""
+	local iClassId = sStr:len() >= 3 and this.Get_ClassId(sStr)
+	if iClassId then
+		self.note:SetTextST(this.Get_Name(sStr) or "")
+		self.note:SetTextColor(255,128,255,128)
+		self.act:Show(true)
+		local sInvName = this.Get_InvName(sStr) or ""
+		if sInvName ~= "" then
+			self.chk:Show(true)
+			if self.to_actor == nil then
+				self.to_actor = true
+				self.chk:SetCheck(true)
+			end
+		end
+	elseif self.act:IsShown() then
+		self.note:SetTextST("st_type_object_section")
+		self.note:SetTextColor(255,255,255,128)
+		self.act:Show(false)
+		self.chk:Show(false)
+	end
+end
+
+function UI_MySpawn:OnButton_spawn()
+	local sSection = self.box:GetText() or ""
+	if this.Get_ClassId(sSection) then
+		local iDist = 8
+		if self.chk and self.chk:GetCheck() then
+			iDist = 0 --/ spawn to actor
+		elseif this.Get_InvName(sStr) ~= "" then
+			iDist = 1.5 --/ item: spawn close
+		end
+		this.Make_Spawn(sSection,iDist)
+	end
+end
+
+--/ -----------------------------------------------------------------------------------------------
+class "UI_SpawnDlg" (CUIScriptWnd)
+--/ -----------------------------------------------------------------------------------------------
+function UI_SpawnDlg:__init(iNum, owner) super()
+	self.menu = iNum and tSpawnMenu[iNum]
+	if self.menu then
+		self:InitControls()
+		self:InitCallBacks()
+	end
+	
+	self.owner = owner
+end
+
+function UI_SpawnDlg:Update()
+	CUIScriptWnd.Update(self)
+	if not self.first_upd then
+		self.first_upd = true
+		if self.btn_chk then
+			self.btn_chk:SetCheck(true)
+		end
+	end
+end
+
+function UI_SpawnDlg:__finalize() end
+
+function UI_SpawnDlg:InitControls()
+	self:Init(25,25,1024,1024)
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_wnd\\ui_spawn_menu.xml")
+	self:SetAutoDelete(true)
+	self.background = xml:InitStatic("background", self)
+	--/ header
+	self.title = xml:InitStatic("title", self)
+	--/ buttons
+	local btn,x,y
+	local tP = {x=25,y=75,w=117,h=29}
+	local tD = self.menu.data
+	for i=1,#tD do
+		x = tP.x + 120*math.floor((i-1)/iMaxRows)
+		y = tP.y + 35*math.fmod((i-1), iMaxRows) -- здесь отступы между ячейками
+		btn = this.Get_Button(x,y,tP.w,tP.h)
+		if not (tD[i].text and tD[i].text ~= "") then
+			tD[i].text = this.Get_Name(tD[i].sect)
+		end
+		btn:SetTextST(tD[i].text)
+		self:AttachChild(btn)
+		self:Register(btn,"btn_"..i)
+	end
+	if self.menu.inv then --/ 'inventory' sign of item
+		--/ check-button
+		self.btn_chk = xml:InitCheck("check_toinv", self)
+		self:Register(self.btn_chk,"btn_chk") --/#?# it's needed?
+	end
+	--/ button back
+	self.btn = xml:Init3tButton("back_btn", self)
+	self:Register(self.btn,"btn_back")
+	--/ exit button
+--	self.exit = xml:Init3tButton("exit_btn", self)
+--	self:Register(self.exit,"btn_quit")
+
+	self.copyright = xml:InitStatic("great_modder_copyright", self)
+
+	self.name = xml:InitStatic("great_modder_nickname", self)
+end
+
+function UI_SpawnDlg:InitCallBacks()
+	for i=1,#self.menu.data do
+		self:AddCallback("btn_"..i, ui_events.BUTTON_CLICKED, function() self:Get_Spawn(i) end, self)
+	end
+	--/ quit&back
+	self:AddCallback("btn_back", ui_events.BUTTON_CLICKED, self.OnBack, self)
+	self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.OnQuit, self)
+end
+
+function UI_SpawnDlg:OnKeyboard(dik, keyboard_action)
+	local bRes = CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+	if bRes == false then
+		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+			if dik == DIK_keys.DIK_ESCAPE then
+				self:OnQuit()
+			end
+		end
+	end
+	return bRes --/>
+end
+
+--/ Back
+function UI_SpawnDlg:OnBack()
+	--/ closing window menu, return to previous
+	self:GetHolder():start_stop_menu(self.owner, false)
+	self:GetHolder():start_stop_menu(self, false)
+end
+
+--/ Quit
+function UI_SpawnDlg:OnQuit()
+	--/ closing window menu, reutrn to previous (or return to game)
+	self:GetHolder():start_stop_menu(self.owner, false)
+	self:GetHolder():start_stop_menu(self, false)
+end
+
+function UI_SpawnDlg:Get_Spawn(iNum)
+	local sSection = self.menu.data[iNum].sect
+	local iDist = self.menu.data[iNum].dist or 8
+	if self.btn_chk and self.btn_chk:GetCheck() then
+		iDist = 0 --/ spawn to actor
+	elseif self.menu.inv or this.Get_InvName(sStr) ~= "" then
+		iDist = 1.5 --/ item: spawn near
+	end
+	this.Make_Spawn(sSection,iDist)
+end
+
+--/ -----------------------------------------------------------------
+--/ HELPERs
+--/ -----------------------------------------------------------------
+function get_ui_menu()
+--	log("get_ui_menu:[>]") --/#~#
+	if not spawn_menu then
+		spawn_menu = UI_SpawnMenu()
+	end
+	return spawn_menu --/>
+end
+--/ ---------------------------------------------
+function Get_Button(x,y,w,h)
+	local btn = CUI3tButton()
+	btn:Init("ui_inv_btn_buy",x,y,w,h)
+	btn:SetStretchTexture(true)
+	btn:SetTextAlign(2) --/ Left|Right|Center: 0|1|2
+	btn:SetAutoDelete(true)
+	return btn --/>
+end
+
+function Get_CheckButton(x,y,w,h)
+	local btn = CUICheckButton()
+	btn:Init(x,y,w,h)
+	btn:SetAutoDelete(true)
+	return btn --/>
+end
+
+function Check_Game()
+	if level.present() and (db.actor ~= nil) and db.actor:alive() then
+		return true --/>
+	end
+	return false --/>
+end
+
+function Get_ClassId(sSection)
+	if tClassId[sSection] == nil then
+		local sini = system_ini()
+		if sSection and sini:section_exist(sSection) then
+			if sini:line_exist(sSection,"class") then
+				tClassId[sSection] = sini:r_clsid(sSection,"class")
+			else
+				log("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!") --/#~#
+				tClassId[sSection] = false
+			end
+			tNames[sSection] = this.Get_Name(sSection)
+			if not tNames[sSection] or tNames[sSection] == "" then
+				if tClassId[sSection] == clsid.car_s or tClassId[sSection] == clsid.car then
+					if string.find(sSection,"btr",1,true) then
+						tNames[sSection] = "БТР"
+					else
+						tNames[sSection] = "Автомобиль"
+					end
+				elseif tClassId[sSection] == clsid.script_heli or tClassId[sSection] == clsid.helicopter then
+					tNames[sSection] = "Вертолет"
+				end
+			end
+		else
+--			log("Get_ClassId:Section=[%s]~Not_exist:<%s>", sSection, "Info!") --/#~#
+		end
+	end
+	return tClassId[sSection] --/>
+end
+
+function Get_Name(sSection)
+	if not tNames[sSection] then
+		local sName = this.Get_InvName(sSection)
+		if not sName or sName == "" then
+			sName = this.Get_ComName(sSection)
+		end
+		tNames[sSection] = sName or sSection
+	end
+	return tNames[sSection] or "" --/>
+end
+
+function Get_InvName(sSection)
+	if not tInvName[sSection] then
+		local sInvName = utils.cfg_get_string(system_ini(), sSection, "inv_name", nil, false, "", nil)
+		if sInvName then
+			local sInvNameShort = utils.cfg_get_string(system_ini(), sSection, "inv_name_short", nil, false, "", nil)
+			tInvName[sSection] = sInvNameShort or sInvName
+		end
+	end
+	return tInvName[sSection] or "" --/>
+end
+
+function Get_ComName(sSection)
+	if not tComName[sSection] then
+		local sCommunity = utils.cfg_get_string(system_ini(), sSection, "community", nil, false, "", nil)
+		if sCommunity then
+			local sRank    = utils.cfg_get_string(system_ini(), sSection, "spec_rank", nil, false, "", nil)
+			if sRank then
+				local sName = sCommunity.."_"..sRank
+				local sNameST = game.translate_string(sName)
+				if sNameST ~= sName then
+					tComName[sSection] = sNameST
+				else
+					tComName[sSection] = game.translate_string(sCommunity).." ("..game.translate_string(sRank)..")"
+				end
+			else
+				tComName[sSection] = game.translate_string(sCommunity)
+			end
+		end
+	end
+	return tComName[sSection] or "" --/>
+end
+
+function Make_Spawn(sSection,iDist,bNoMsg)
+	if this.Check_Game() then --/ spawn only in game
+		local sMsg = string.format("[%s]/(%s)", game.translate_string(this.Get_InvName(sSection)), tostring(sSection))
+		local iClassId = this.Get_ClassId(sSection)
+		local soObj
+		if iClassId then
+--			log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]:(%s)", sSection, iClassId, iDist, ">") --/#~#
+			local oActor = db.actor
+			local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
+			local vPosA,vDirA = oActor:position(), oActor:direction()
+			local bToActor = not (iDist and iDist ~= 0) and system_ini():line_exist(sSection, "cost")
+			if bToActor then --/ spawn to actor
+				if iClassId == clsid.wpn_ammo then --/ ammo we spawn differently
+					soObj = this.Create_Ammo( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo")..sMsg end
+				elseif iClassId == clsid.wpn_knife_s then
+					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife")..sMsg end
+				elseif iClassId == clsid.wpn_ak74_s or iClassId == clsid.wpn_automatic_shotgun_s or iClassId == clsid.wpn_lr300_s or iClassId == clsid.wpn_bm16_s or iClassId == clsid.wpn_groza_s or iClassId == clsid.wpn_svd_s or iClassId == clsid.wpn_hpsa_s or iClassId == clsid.wpn_pm_s or iClassId == clsid.wpn_rg6_s or iClassId == clsid.wpn_rpg7_s or iClassId == clsid.wpn_shotgun_s or iClassId == clsid.wpn_svu_s or iClassId == clsid.wpn_usp45_s or iClassId == clsid.wpn_val_s or iClassId == clsid.wpn_vintorez_s or iClassId == clsid.wpn_walther_s then
+					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon")..sMsg end
+				else
+					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned")..sMsg end
+				end
+			else
+				local vPos = vPosA:add(vDirA:mul(iDist or 1))
+				if iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter then --/ for teh need 'own' spawn
+					if iClassId == clsid.script_heli or iClassId == clsid.helicopter then vPos.y = vPos.y + 8 end
+					soObj = this.Create_Vehicle( sSection, vPos, idLvA, idGvA, iClassId )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_car")..sMsg end
+				elseif iClassId == clsid.wpn_ammo then --/ ammo we spawn differently
+					soObj = this.Create_Ammo( sSection, vPos, idLvA, idGvA )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo")..sMsg end
+				elseif iClassId == clsid.wpn_knife_s then
+					soObj = alife():create( sSection, vPos, idLvA, idGvA )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife")..sMsg end
+					soObj.squad = Random.I(64)
+				elseif iClassId == clsid.wpn_ak74_s or iClassId == clsid.wpn_automatic_shotgun_s or iClassId == clsid.wpn_lr300_s or iClassId == clsid.wpn_bm16_s or iClassId == clsid.wpn_groza_s or iClassId == clsid.wpn_svd_s or iClassId == clsid.wpn_hpsa_s or iClassId == clsid.wpn_pm_s or iClassId == clsid.wpn_rg6_s or iClassId == clsid.wpn_rpg7_s or iClassId == clsid.wpn_shotgun_s or iClassId == clsid.wpn_svu_s or iClassId == clsid.wpn_usp45_s or iClassId == clsid.wpn_val_s or iClassId == clsid.wpn_vintorez_s or iClassId == clsid.wpn_walther_s then
+					soObj = alife():create( sSection, vPos, idLvA, idGvA )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon")..sMsg end
+					soObj.squad = Random.I(64)
+				else
+					soObj = alife():create( sSection, vPos, idLvA, idGvA )
+					if soObj then sMsg = game.translate_string("st_cheater_spawned")..sMsg end
+					soObj.squad = Random.I(64)
+				end
+			end
+			--log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+") --/#~#
+		else
+			log("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!") --/#~#
+			sMsg = "Warning!:NOT_found_spawn_section="..sMsg
+		end
+		if bNoMsg ~= false then news_manager.send_tip(db.actor, sMsg, 0, "spawn_menu", 0) end
+		return soObj --/>
+	end
+end
+
+function Create_Ammo(sSection, vPos, idLv, idGv, idOwner)
+	if not idOwner then idOwner = 65535 end
+	local iBoxSize = 1
+	local sini = system_ini()
+	if sini:line_exist(sSection,"box_size") then
+		iBoxSize = sini:r_u32(sSection,"box_size") or 1
+	end
+	return alife():create_ammo(sSection, vPos, idLv, idGv, idOwner, iBoxSize) --/>
+end
+
+function Create_Vehicle(sSection, vPos, idLv, idGv, iClassId)
+	if iClassId and (iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter) then
+		local soObj = alife():create(sSection, vPos, idLv, idGv)
+		if type(get_netpk) == 'function' then
+--			log("Create_Vehicle:=[%s]/[%s],сid=[%s]:(%s)", soObj:name(), sSection, iClassId, ">") --/#~#
+			local pk = get_netpk(soObj,1) --/ net-packet request (only 'state')
+			if pk:isOk() then --/ did we get access to net-packet of object?
+				local data = pk:get()  --table.print( data, sModule..":NetPacket|"..soObj:name() ) --/#~#
+				--/> filling parameters
+				if iClassId == clsid.script_heli or iClassId == clsid.helicopter then
+					--data.startup_animation = "idle" --/ change '$editor'
+					data.engine_sound = "alexmx\\helicopter" --/ or "$no_sound"
+				--[[
+					if sSection:match("^helicopter_mi") and level.name() == "l01_escape" then
+						data.custom_data:setString("[logic]\ncfg = scripts\\veh\\esc_heli_fly.ltx")
+					end
+				elseif sSection:match('^vehicle_btr') then
+					data.custom_data:setString("[logic]\ncfg = scripts\\veh\\any_btr_free.ltx")
+				--]]
+				end
+				--data.object_flags = bit_not(5) --/ reset 'object_flags'
+				--data.skeleton_name = "idle" --/ change '$editor'
+				--/<
+				pk:set(data) --/< record to net-packet
+				--table.print( pk:get(), sModule..":NetPacket_changed|"..soObj:name() ) --/#~#
+				if soObj:clsid() == clsid.car_s then
+					if game_graph():vertex(soObj.m_game_vertex_id):level_id() == alife():level_id() then --/ on current location?
+						level.client_spawn_manager():add(soObj.id, -1, Callback_NetSpawn_Car, sSection)
+					end
+				end
+				return soObj --/>
+			end
+		elseif iClassId == clsid.script_heli or iClassId == clsid.helicopter then
+			se_heli = cse_alife_helicopter.cast_helicopter(soObj)
+			ASSERT(se_heli ~= nil, sModule..":Create_Vehicle: can't cast to heli")
+			se_heli:set_engine_sound("alexmx\\helicopter")
+			se_heli:set_startup_animation("idle")
+			se_heli:set_custom_data("")
+			--se_heli:set_custom_data("[logic]\ncfg = scripts\\veh\\XXX.ltx")
+			return soObj --/>
+		elseif iClassId == clsid.car_s then
+			--/#?# ...
+			if game_graph():vertex(soObj.m_game_vertex_id):level_id() == alife():level_id() then --/ on current location?
+				level.client_spawn_manager():add(soObj.id, -1, Callback_NetSpawn_Car, sSection)
+			end
+			return soObj --/>
+		end
+	end
+	return nil --/>
+end
+
+function Callback_NetSpawn_Car(uo, idObj, oObj)
+	--/ if object 'car' -> 'drop' teh on the ground (on_the_ground)
+	if get_clsid(oObj) == clsid.car_s then
+		local ph_shell = oObj:get_physics_shell()
+		if ph_shell then --/ got control under physic
+			ph_shell:apply_force(0,-1,0) --/ applying small force
+		else
+			local h = hit()
+			h.draftsman = oObj
+			h.direction = vector():set(0,-1,0)
+			h.type      = hit.strike
+			h.power     = 0.01
+			h.impulse   = 1
+			oObj:hit(h) --/ hitting with little bit impulse
+		end
+	end
+end
+
+function string_split(inputstr, sep)
+        if sep == nil then
+                sep = "%s"
+        end
+        local t={}
+        for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+                table.insert(t, str)
+        end
+        return t
+end
+
+function Build_Table()
+	local sini = system_ini()
+	--
+	local function ClearStr(sStr)
+		return sStr:match('%s*(.*%S)') or '' --/>
+	end
+	--
+	tSpawnMenu = {}
+	local sOptions,sSection,sSec = "options", "spawn_lists", ""
+	local ltx = ini_file("debug\\ui_spawn_menu.ltx")
+	if not (ltx and ltx:section_exist(sSection)) then return end --/>
+	if ltx:line_exist(sOptions, "max_rows") then
+		iMaxRows = ltx:r_s32(sOptions, "max_rows")
+	end
+	for i=0,ltx:line_count(sSection)-1 do
+		local result,idx,value = ltx:r_line(sSection,i,"","")
+		if idx and value and ClearStr(value) and ClearStr(value) ~= "" then
+			local tS = string_split(value, ",")
+			if ltx:section_exist(idx) then
+				tSpawnMenu[tonumber(idx)] = {inv = tonumber(tS[1])==1, title = tS[2]}
+			end
+		else abort("%s:Build_Tables:Error while parsing at sections line=#%s", sModule, tostring(i+1) )
+		end
+	end
+--	log("Build_Tables:#SpawnMenu=[%s]%s", table.size(tSpawnMenu), "") --/#~#
+	for k,v in pairs(tSpawnMenu) do
+		sSec = tostring(k)
+		if ltx:section_exist(sSec) then
+			v.data = {}
+			for i=0,ltx:line_count(sSec)-1 do
+				local result,idx,value = ltx:r_line(sSec,i,"","")
+				if idx and value and ClearStr(value) and ClearStr(value) ~= "" then
+					if sini:section_exist(idx) then
+						local tS = string_split(value, ",")
+						table.insert(v.data, {sect = idx, dist = tonumber(tS[1]) or 0, text = tS[2] or ""})
+					else
+						abort("Build_Tables:SubMenu=[%s],section=[%s]:[%s]", sSec, idx, "x") --/#~#
+					end
+				else abort("%s:Build_Tables:Error while parsing at sections=[%s] line=#%s", sModule, sSec, tostring(i+1) )
+				end
+			end
+		end
+	end
+	tMySlots,tMyItems = {},{}
+	ltx = ini_file("debug\\my_dbg.ltx")
+	if ltx:section_exist("dbg_spawn2slots") then
+		for i=0,ltx:line_count("dbg_spawn2slots")-1 do
+			local result,idx,value = ltx:r_line("dbg_spawn2slots",i,"","")
+			local sSection = idx and ClearStr(idx)
+			local iSlot = tonumber(value)
+			if sSection and sini:section_exist(sSection) and iSlot and iSlot < 16 then
+				tMySlots[iSlot] = sSection
+			end
+		end
+	end
+	if ltx:section_exist("dbg_spawn") then
+		for i=0,ltx:line_count("dbg_spawn")-1 do
+			local result,idx,value = ltx:r_line("dbg_spawn",i,"","")
+			local sSection = idx and ClearStr(idx)
+			if sSection and sini:section_exist(sSection) then
+				tMyItems[sSection] = tonumber(value) or 1
+			end
+		end
+	end
+	
+	--table.print(tSpawnMenu,sModule..":SpawnMenu|") --/#~#
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Spawn items from lists to actor rucksack
+--/ ------------------------------------------------------------------------------------------------
+function Debug_Spawn() --/ for tests and debug
+	local oActor = db.actor
+	if oActor then
+
+		local oItem,soItem
+		--/ spawn to slots
+		if tMySlots and not xr_logic.pstor_retrieve(oActor, "dbg_spawn_"..user_name(), nil) then
+			for k,v in pairs(tMySlots) do
+				if v and not oActor:object(v) then
+					oItem = oActor:item_in_slot(k)
+					if oItem and not oActor:marked_dropped(oItem) then --/ if slot busy: put item to 'slot<~>rucksack'
+						--oActor:mark_item_dropped(oItem) --/#x# selecting from slot with 'personal' mark of item
+						oActor:drop_item(oItem) --/> throwing out from slot
+						soItem = this.Make_Spawn(v,0) --/ spawning to rucksack->slot
+--					log("%s:Debug_Spawn:=[%s]:[%s]:[%s]", sModule, oItem:name(), Get_StrTimeOrDate("ms"), ">") --/#~#
+						--start_quick_timer(0.1, this.Timer_TransferItem,{id=oItem:id()})
+					else
+						soItem = this.Make_Spawn(v,0)
+					end
+					xr_logic.pstor_store(oActor, "dbg_spawn_"..user_name(), true)
+				end
+			end
+		end
+		--/ spawn to rucksack
+		if tMyItems then
+			for k,v in pairs(tMyItems) do
+				local iCnt = oActor:object_count()
+				for i=0, iCnt-1 do
+					if v > 0 and oActor:object(i):section() == k then
+						v = v -1 --/ decreasing to quantity of existing items
+					end
+				end
+				if v > 0 then
+					for i=1,v do
+						soItem = this.Make_Spawn(k,0,false)
+					end
+				end
+			end
+		end
+	end
+end
+
+function Timer_TransferItem(t)
+--	log("%s:Timer_TransferItem:id=[%s]:[%s]", sModule, t.id, ">") --/#~#
+	local oItem = t.id and level.object_by_id(t.id)
+	if oItem then
+		local oParent = oItem:parent()
+--		log("%s:Timer_TransferItem:Parent=[%s]:[%s]", sModule, oParent and oParent:name(), ">") --/#~#
+		if oParent then --/ or db.actor:marked_dropped(oItem)
+			oParent:transfer_item(oItem, db.actor) --/< return to rucksack
+		else
+			oItem:transfer_item(oItem, db.actor) --/< return to rucksack
+		end
+	end
+end
+--/ -----------------------------------------------------------------
+--/ Initialize Module
+--/ -----------------------------------------------------------------
+if not bInit then this.init() end
+--/ ------------------------------------------------------------------------------------------------

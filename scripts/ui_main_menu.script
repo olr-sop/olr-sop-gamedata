@@ -185,6 +185,34 @@ function main_menu:StartGame()
 	console:execute("main_menu off")
 end
 
+function main_menu:DisplayWnd(child, stop_self)
+	if self.child_wnd ~= nil and self.child_wnd:IsShown() then
+		self:StopWnd(self.child_wnd)
+	end
+
+	self:GetHolder():start_stop_menu(child, true)
+	child.owner = self
+	self.child_wnd = child
+	
+	if stop_self then
+		self:GetHolder():start_stop_menu(self, true)
+		self:Show(false)
+	end
+end
+
+function main_menu:StopWnd(child)
+	-- always return self visibility
+	
+	if not self:IsShown() then
+		child:GetHolder():start_stop_menu(self, true)
+		self:Show(true)
+	end
+	
+	child:GetHolder():start_stop_menu(child, true)
+	child:Show(false)
+	self.child_wnd = nil
+end
+
 function main_menu:OnButton_load_spawn()
 	if self.spawn_dlg == nil then
 		self.spawn_dlg = ui_spawn_dialog.spawn_dialog()
@@ -253,15 +281,39 @@ function main_menu:Dispatch(cmd, param)  --virtual function
 	return true
 end
 
+function main_menu:OnButton_show_toolskit_menu() --/#+# (debug tools)
+	if (ui_hud_toolskit) then --/ and self:check_game()
+		if not self.toolskit_dlg then
+			self.toolskit_dlg = ui_hud_toolskit.get_ui_menu()
+			self.toolskit_dlg.owner = self
+		end
+		self:GetHolder():start_stop_menu(self.toolskit_dlg, true)
+	end
+end
+
+function main_menu:OnButton_show_spawn_menu() --/#+# (debug spawn)
+	if (ui_spawn_menu) then --/ and self:check_game()
+		if not self.spaw_dlg then
+			self.spawn_dlg = ui_spawn_menu.get_ui_menu()
+			self.spawn_dlg.owner = self
+		end
+		self:DisplayWnd(self.spawn_dlg, true)
+	end
+end
+
 function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
 	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
 	local bind = dik_to_bind(dik)
 	local console = get_console()
 	
 	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-		if dik == DIK_keys.DIK_ESCAPE then
-			if level.present() and (db.actor ~= nil) and db.actor:alive() then
-				console:execute("main_menu off")
+		if level.present() and (db.actor ~= nil) and db.actor:alive() then
+			if dik == DIK_keys.DIK_ESCAPE then
+				self:OnButton_return_game()
+			elseif dik == DIK_keys.DIK_F2 then
+				self:OnButton_show_toolskit_menu()
+			elseif dik == DIK_keys.DIK_F3 then
+				self:OnButton_show_spawn_menu()
 			end
 		end
 

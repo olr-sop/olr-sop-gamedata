@@ -1,0 +1,1215 @@
+--[[ ----------------------------------------------------------------------------------------------
+ File       : ui_hud_toolskit.script [optional]
+ Description: Toolskit for modmaker
+ Copyright  : 2008 © Artos
+ Author     : Artos
+ Last edit  : 23.05.2013 [...]
+--]] ----------------------------------------------------------------------------------------------
+
+--/#!# Note: Only for development and testing!
+--/#!# Note: This file should be removed from the release!
+--/#!# adapted for LA
+
+--/ -----------------------------------------------------------------
+--/ VARIABLEs
+--/ -----------------------------------------------------------------
+local tab_menu   = nil
+local sPpe,iPpe = "",nil
+local bInit    = false --/ flag module initialization
+local sModule  = script_name() --/ string name of file-module
+
+--/ Initialize Module
+--/ -----------------------------------------------------------------
+function init()
+--	log(sModule..":init:>") --/#~#
+	if bInit then return end --/>
+	
+	if db.actor then
+		PreSets()
+	elseif event then
+		event("actor_spawn"):register(PreSets)
+	end
+	bInit = true
+end
+--/ -----------------------------------------------------------------
+--/ Process (functions)
+--/ -----------------------------------------------------------------
+function PreSets(e)
+--	log(sModule..":PreSets:>") --/#~#
+	if xr_logic.pstor_retrieve(db.actor, "dbg_lvch") then
+		this.Del_Teleport()
+		xr_logic.pstor_clear(db.actor, "dbg_lvch") --/ clear
+	end
+end
+--/ ------------------------------------------------------------------
+--/ ћетки на карте (возможные типы/type см. в ui\map_spots.xml)
+--/ ------------------------------------------------------------------
+--/ ћетка ставитс€ на серверный объект (что не требует ее обновл€ть)
+function Add_MapSpot(idObj,sLocation,sHint)
+	if idObj and sLocation then
+		this.Del_MapSpot(idObj,sLocation) --/ удал€ем (если есть) прежние метки
+		level.map_add_object_spot_ser(idObj, sLocation, sHint or "no_text")
+	end
+end
+function Del_MapSpot(idObj,sLocation)
+	if idObj and sLocation then
+		while level.map_has_object_spot(idObj, sLocation) ~= 0 do
+			level.map_remove_object_spot(idObj, sLocation)
+		end
+	end
+end
+--/------------------------------------------------------------------------------------------------
+class "UI_Tool01" (CUIWindow) --/ Menu-1 "Informer"
+--/------------------------------------------------------------------------------------------------
+function UI_Tool01:__init() super() end
+function UI_Tool01:InitControls(xml,parent)
+	--/ frame
+	xml:InitFrame("tab1:frame", self)
+	--/ window title
+	local title = xml:InitStatic("tab1:title", self)
+	title:SetText(game.translate_string("st_info_about_actor_coordinates"))
+	--/ output window title
+	self.cap = xml:InitStatic("tab1:caption", self)
+	--/ input string/window
+	self.box = xml:InitEditBox("tab1:edit_box", self)
+	--[[ --/ string 'note' --/#?# нужна ли?
+	local note = xml:InitStatic("tab1:note", self)
+	parent.note1 = note
+	--]] --/ check-box
+	local btn = xml:InitCheck("tab1:btn_chk", self)
+	btn:SetCheck(false)
+	btn:SetText("<Show Smarts")
+	parent.chk1 = btn
+	btn = xml:InitCheck("tab1:btn_chk2", self)
+	btn:SetCheck(false)
+	btn:SetText("<Show Restrictors")
+	parent.chk1_2 = btn
+	btn = xml:InitCheck("tab1:btn_chk3", self)
+	btn:SetCheck(false)
+	btn:SetText("<Show InvBox")
+	parent.chk1_3 = btn
+	--/ check-box0
+	btn = xml:InitCheck("tab1:btn_chk0", self)
+	btn:SetCheck(false)
+	btn:SetText("<ToLog")
+	parent.log1 = btn
+	--/ action button
+	btn = xml:Init3tButton("tab1:btn_act", self)
+	btn:SetText(game.translate_string("st_show"))
+	parent:Register(btn, "btn_act1") --/ for event-handling callback processing
+	--self:Update()
+end
+function UI_Tool01:InitCallBacks(parent)
+end
+function UI_Tool01:Update()
+	if this.Check_StartGame() then
+		local sTxtPos,sTxtMap = this.Get_Position_Actor() --/#?#
+		self.cap:SetText(sTxtMap or "")
+		self.box:SetText(sTxtPos or "")
+	end
+end
+--/------------------------------------------------------------------------------------------------
+class "UI_Tool02" (CUIWindow) --/ Menu-2 "Searcher"
+--/------------------------------------------------------------------------------------------------
+function UI_Tool02:__init() super() end
+function UI_Tool02:InitControls(xml,parent)
+	--/ frame
+	xml:InitFrame("tab2:frame", self)
+	--/ window title
+	local title = xml:InitStatic("tab2:title", self)
+	title:SetText(game.translate_string("st_object_search_in_game"))
+	--/ output window title
+	local caption = xml:InitStatic("tab2:caption", self)
+	caption:SetText(game.translate_string("st_type_searching_object_name"))
+	--/ input string/window
+	local box = xml:InitEditBox("tab2:edit_box", self)
+	parent.box2 = box
+	parent:Register(box, "box_edt2")
+	--/ string 'note'
+	parent.note2 = xml:InitStatic("tab2:note", self)
+	--/ check-box
+	local btn = xml:InitCheck("tab2:btn_chk", self)
+	btn:SetCheck(false)
+	btn:SetText("<Set MapSpot")
+	parent.chk2 = btn
+	parent:Register(btn, "btn_chk2")
+	--/ action button
+	btn = xml:Init3tButton("tab2:btn_act", self)
+	btn:SetText(game.translate_string("st_search"))
+	parent:Register(btn, "btn_act2")
+end
+function UI_Tool02:InitCallBacks(parent)
+end
+function UI_Tool02:Update() end
+--/------------------------------------------------------------------------------------------------
+class "UI_Tool03" (CUIWindow) --/ Menu-3 "Spawner"
+--/------------------------------------------------------------------------------------------------
+function UI_Tool03:__init() super() end
+function UI_Tool03:InitControls(xml,parent)
+	--/ frame
+	xml:InitFrame("tab3:frame", self)
+	--/ window title
+	local txt = xml:InitStatic("tab3:title", self)
+	txt:SetText(game.translate_string("st_spawn_ojbect_by_section"))
+	--/ output window title
+	txt = xml:InitStatic("tab3:caption", self)
+	txt:SetText(game.translate_string("st_type_object_section"))
+	parent.txt3 = txt
+	--/ input string/window
+	local box = xml:InitEditBox("tab3:edit_box", self)
+	parent.box3 = box
+	box = xml:InitEditBox("tab3:edit_box2", self)
+	box:SetText("1")
+	parent.num3 = box
+	parent:Register(box, "box_edt3")
+	--/ string 'note'
+	parent.note3 = xml:InitStatic("tab3:note", self)
+	--/ check-box
+	local btn = xml:InitCheck("tab3:btn_chk", self)
+	btn:SetCheck(false)
+	btn:SetText("<ToActor")
+	parent.chk3 = btn
+	parent:Register(btn, "btn_chk3")
+	--/ action button
+	btn = xml:Init3tButton("tab3:btn_act", self)
+	btn:SetText(game.translate_string("st_spawn"))
+	parent:Register(btn, "btn_act3")
+end
+function UI_Tool03:InitCallBacks(parent)
+end
+function UI_Tool03:Update() end
+--/------------------------------------------------------------------------------------------------
+class "UI_Tool04" (CUIWindow) --/ Menu-4 "Infoporshner"
+--/------------------------------------------------------------------------------------------------
+function UI_Tool04:__init() super() end
+function UI_Tool04:InitControls(xml,parent)
+	--/ frame
+	xml:InitFrame("tab4:frame", self)
+	--/ window title
+	local txt = xml:InitStatic("tab4:title", self)
+	txt:SetText(game.translate_string("st_add-delete_infoportion"))
+	--/ output window title
+	txt = xml:InitStatic("tab4:caption", self)
+	txt:SetText(game.translate_string("st_type_infoportion_to_add-delete"))
+	parent.txt4 = txt
+	--/ input string/window
+	local box = xml:InitEditBox("tab4:edit_box", self)
+	parent.box4 = box
+	parent:Register(box, "box_edt4")
+	--/ string 'note'
+	parent.note4 = xml:InitStatic("tab4:note", self)
+	--/ check-box
+	local btn = xml:InitCheck("tab4:btn_chk", self)
+	btn:SetCheck(false)
+	btn:SetText("<Add/Del")
+	parent.chk4 = btn
+	parent:Register(btn, "btn_chk4")
+	--/ action button
+	btn = xml:Init3tButton("tab4:btn_act", self)
+	btn:SetText(game.translate_string("st_add-del"))
+	parent:Register(btn, "btn_act4")
+end
+function UI_Tool04:InitCallBacks(parent)
+end
+function UI_Tool04:Update() end
+--/------------------------------------------------------------------------------------------------
+class "UI_Tool05" (CUIWindow) --/ Menu-5 "Effector"
+--/------------------------------------------------------------------------------------------------
+function UI_Tool05:__init() super() end
+function UI_Tool05:InitControls(xml,parent)
+	--/ frame
+	xml:InitFrame("tab5:frame", self)
+	--/ window title
+	local txt = xml:InitStatic("tab5:title", self)
+	txt:SetText(game.translate_string("st_ppe_files_control"))
+	--/ output window title
+	txt = xml:InitStatic("tab5:caption", self)
+	txt:SetText(game.translate_string("st_type_ppe_file_name"))
+	parent.txt5 = txt
+	--/ input string/window
+	local box = xml:InitEditBox("tab5:edit_box", self)
+	parent.box5 = box
+	parent:Register(box, "box_edt5")
+	--/ string 'note'
+	parent.note5 = xml:InitStatic("tab5:note", self)
+	--/ check-box
+	local btn = xml:InitCheck("tab5:btn_chk", self)
+	btn:SetCheck(false)
+	btn:SetText("<On/Off")
+	parent.chk5 = btn
+	parent:Register(btn, "btn_chk5")
+	--/ action button
+	btn = xml:Init3tButton("tab5:btn_act", self)
+	btn:SetText(game.translate_string("st_on-off"))
+	parent:Register(btn, "btn_act5")
+end
+function UI_Tool05:InitCallBacks(parent)
+end
+function UI_Tool05:Update() end
+
+--/------------------------------------------------------------------------------------------------
+class "UI_TabController" ( CUIScriptWnd ) --/ main menu (shell)
+--/------------------------------------------------------------------------------------------------
+function UI_TabController:__init() super()
+--	log("TC:_init:[>]") --/#~#
+	if not bInit then init() end
+	self.wide = device().width/device().height > 1.333
+	self.active_idx = (this.Check_StartGame() and "btn1") or "btn1"
+	
+	self:InitControls()
+	self:InitCallBacks()
+end
+
+function UI_TabController:InitControls()
+	self:SetWndRect(Frect():set(0,0,device().width,device().height))
+	self:SetAutoDelete(true)
+	self:SetFont(GetFontMedium()) --/ set base font for 'menu'
+	self:Enable(true)
+	--/ widget class
+	local xml = CScriptXmlInit()
+	--/ desc-file of elements
+	xml:ParseFile("ui_wnd\\ui_hud_toolskit.xml")
+	--/active frame
+	local dlg = xml:InitStatic("main:menu", self)
+	--/ window title
+	local title = xml:InitStatic("main:title", dlg)
+	title:SetText("LA: Tools Kit")
+	--/ initialization of tab-menu
+	self.tab = xml:InitTab("main:tab", dlg)
+	self:Register(self.tab, "tab")
+	--/ frames initialization
+	local tWnds = {
+		["btn1"] = {handler = this.UI_Tool01, cap = "PosInfo"},
+		["btn2"] = {handler = this.UI_Tool02, cap = "FindObj"},
+		["btn3"] = {handler = this.UI_Tool03, cap = "SpawnObj"},
+		["btn4"] = {handler = this.UI_Tool04, cap = "Infoportions"},
+		["btn5"] = {handler = this.UI_Tool05, cap = "PpeControl"},
+	}
+	self.wnds = {}
+	for idx,v in pairs(tWnds) do
+		local wnd = v.handler()
+		wnd:Init(15,75,375,450) --/ frames size
+		wnd:SetAutoDelete(true)
+		wnd:InitControls(xml,self)
+		wnd:InitCallBacks(self)
+		wnd:Show(idx == self.active_idx)
+		dlg:AttachChild(wnd)
+		self.wnds[idx] = wnd
+		self.tab:GetButtonByIndex(idx):SetText(v.cap) --/ menu button text
+	end
+	--/ activating of 'current' frame
+	self.tab:SetNewActiveTab(self.active_idx)
+	--/ exit button
+	local btn = xml:Init3tButton("main:btn_exit", dlg)
+	if not this.Check_StartGame() then
+		btn:SetTextST("ui_inv_exit")
+	end
+	self:Register(btn, "btn_exit")
+	--/ copyright
+	xml:InitStatic("main:copyright",dlg):SetText("Copyright 2008 © Artos")
+end
+
+function UI_TabController:InitCallBacks()
+	--/ interactive elements, during certain action executes specifed function
+	self:AddCallback("tab",      ui_events.TAB_CHANGED,    self.OnTabChange, self)
+	self:AddCallback("btn_exit", ui_events.BUTTON_CLICKED, self.OnBtnExit,   self)
+	for i=1,5 do
+		--/ changes
+		self:AddCallback("box_edt"..i, ui_events.EDIT_TEXT_CHANGED, self["OnBtnChange"..i], self)
+		self:AddCallback("btn_chk"..i, ui_events.BUTTON_CLICKED,    self["OnBtnCheck"..i],  self)
+		--/ action button
+		self:AddCallback("btn_act"..i, ui_events.BUTTON_CLICKED,    self["OnBtnAction"..i], self)
+	end
+end
+
+function UI_TabController:OnTabChange()
+	self.active_idx = this.Check_StartGame() and self.tab:GetActiveIndex() or "btn1"
+--	log("TC:OnTabChange: active_id=[%s]", self.active_idx, "") --/#~#
+	for idx,wnd in pairs(self.wnds) do
+		if idx == self.active_idx then
+			wnd:Update()
+			wnd:Show(true) --/ show active window
+		elseif wnd:IsShown() then --/ hide
+			wnd:Show(false)
+		end
+	end
+end
+
+function UI_TabController:OnBtnExit()
+	if self:GetHolder() then
+		if self.owner then
+			self.owner:StopWnd(self)
+		else			
+			self:GetHolder():start_stop_menu(self, false)
+		end
+	end
+end
+
+function UI_TabController:Quit()
+--	log("TC:Quit:owner=[%s],holder=[%s]:(%s)", self.owner, self:GetHolder(), ">") --/#~#
+	if self:GetHolder() then
+		if self.owner then
+			self.owner:StopWnd(self)
+		else			
+			self:GetHolder():start_stop_menu(self, false)
+		end
+	end
+end
+
+function UI_TabController:OnKeyboard(dik, keyboard_action)
+	local bRes = CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+	if bRes == false and keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			self:OnBtnExit()
+		end
+	end
+	return bRes --/>
+end
+
+function UI_TabController:Update()
+--	log("TC:Update:[>]") --/#~#
+	CUIScriptWnd.Update(self)
+	if self.active_idx == "btn1" and time_global() > (self.tm_upd or 0) and this.Check_StartGame() then
+		self.tm_upd = time_global() + 1000
+		self.wnds[self.active_idx]:Update() --/ update PosInfo (~1sec)
+	end
+end
+
+--/------------------------------------------------------------------
+--/ Tool-1 "Position Informer"
+--/------------------------------------------------------------------
+function UI_TabController:OnBtnChange1()
+end
+function UI_TabController:OnBtnCheck1()
+end
+function UI_TabController:OnBtnAction1()
+--	log("OnBtnAction1:[>]") --/#~#
+	local sTxtPos, sTxtMap = this.Get_Position_Actor(true)
+	this.Get_SendTip(sTxtPos,"Actor_coords:",0,25)
+	this.Get_SendTip(sTxtMap,"Actor_pos:",0,25)
+	if self.chk1:GetCheck() and this.Get_SmartNames then
+		this.Get_SmartNames(self.log1:GetCheck()) --/ map smart names on PDA
+	elseif self.chk1_2:GetCheck() and this.Get_RestrNames then
+		--this.Get_RestrNames(self.log1:GetCheck()) --/ map restrictor names on PDA
+		this.Get_RespawnerNames(self.log1:GetCheck()) --/ map respawners names on PDA
+	end
+	if self.chk1_3:GetCheck() and this.Get_BoxNames then
+		this.Get_BoxNames(self.log1:GetCheck()) --/ map boxes names on PDA
+	end
+	
+	self.chk1:SetCheck(false)
+	self.chk1_2:SetCheck(false)
+	self.chk1_3:SetCheck(false)
+	self.log1:SetCheck(false)
+	self:Quit()
+end
+
+--/------------------------------------------------------------------
+--/ Tool-2 "Find&Mark Object"
+--/------------------------------------------------------------------
+function UI_TabController:OnBtnChange2()
+end
+function UI_TabController:OnBtnCheck2()
+	self:OnBtnChange2()
+end
+function UI_TabController:OnBtnAction2()
+--	log("OnBtnAction2:[>]") --/#~#
+	self.note2:SetText("")
+	local sStr = self.box2:GetText() or ""
+	sStr = sStr:match('(%S+)')
+	sStr = sStr:gsub("|", "/")
+	if sStr == "" then
+		self.note2:SetText("Error! String empty! Type object name.")
+		return --/>
+	end
+	local sim = alife()
+	local bMapSpot = self.chk2:GetCheck()
+	local oActor = db.actor
+	local soObj,i
+	local id = tonumber(sStr)
+	if not id then
+		local vPosA = oActor:position()
+		local tFound = {}
+		local iMinDist = 999999
+		for i=1,65534 do
+			soObj = sim:object(i)
+			if soObj then
+				local sSection,sName = soObj:section_name(),soObj:name()
+				if sStr == sSection or sStr == sName then
+					id = i
+					break
+				elseif ( sSection:match(sStr) or sName:match(sStr) ) then
+--					log("OnBtnAction2:name=[%s],id=[%s]%s", soObj:name(), i, "") --/#~#
+					if not id then id = i end
+					local iDist = soObj.position:distance_to(vPosA)
+					table.insert(tFound, {id=i, dist=iDist})
+				end
+			end
+		end
+		if not id and next(tFound) then
+			table.sort(tFound, function(a,b) return a.dist < b.dist end)
+			id = tFound[1].id
+		end
+	end
+	if id then
+		soObj = sim:object(id)
+		local sMap = soObj and Get_ObjectCurentLevel(soObj)
+		if not sMap then
+			log("OnBtnAction2:Obj=[%s],Id=[%s],Map=[%s]~?:<%s>", soObj and soObj:name(), id, sMap, "Warning!")
+			self.note2:SetText("Error! Object=["..sStr.."] not found or no on locations!")
+			return --/>
+		end
+		local sObjSection = soObj:section_name()
+		local sTxt = string.format( "Obj=[%s],id=[%d]", sObjSection, id, sObjSection )
+
+		local sCharName = IsHuman(soObj) and soObj:character_name()
+		if sCharName and sCharName ~= "NoName" then
+			sTxt = string.format( "%s,CharName=[%s]", sTxt, sCharName )
+		end
+		local iStoryId = soObj.m_story_id
+		if iStoryId and iStoryId ~= db.iMax_s32 then
+			sTxt = string.format( "%s,SID=[%d]", sTxt, iStoryId )
+		end
+		local idOwner = soObj.parent_id
+		if idOwner and idOwner ~= 65535 then
+			local soOwner = sim:object(idOwner)
+			if soOwner and soOwner.name then
+				sTxt = string.format( "%s\\nOwner=[%s/%d]", sTxt, soOwner:name(), idOwner )
+			end
+		end
+		sTxt = string.format( "%s\\nLevel=[%s]", sTxt, game.translate_string(sMap) )
+		if sMap == level.name() then
+			sTxt = string.format( "%s,idLv=[%d],idGv=[%d]", sTxt, soObj.m_level_vertex_id, soObj.m_game_vertex_id )
+			local vPosA,vPos = oActor:position(),soObj.position
+			sTxt = string.format( "%s\\nPos=[%.3f:%.3f:%.3f]", sTxt, vPos.x, vPos.y, vPos.z)
+			local iDist,iDistSqr = vPosA:distance_to(vPos),vPosA:distance_to_sqr(vPos)
+			sTxt = string.format( "%s\\nDist=[%.3f]/%.3f", sTxt, iDist, iDistSqr )
+			if db.m_news then
+				local sWhere = m_news.Get_WhereDesc(sMap, vPos) or ""
+				sTxt = string.format( "%s\\n%s", sTxt, string.gsub(sWhere, "%s+", "\160") )
+			end
+--			log("OnBtnAction2:Obj=[%s],Map=[%s]%s", soObj and soObj:name(), sMap, "") --/#~#
+		end
+		if bMapSpot then
+			if sCharName then
+				Add_MapSpot(id, "debug_stalker", "Found_NPC: "..sCharName)
+			else
+				local sInvName = sObjSection
+				Add_MapSpot(id, "red_location", "Found_Obj: "..sInvName)
+			end
+			log("OnBtnAction2:Obj=[%s]:%s", soObj and soObj:name(), sTxt or "") --/#~#
+		else
+			if level.map_has_object_spot(id, "debug_stalker") then
+				level.map_remove_object_spot(id, "debug_stalker")
+			end
+			if level.map_has_object_spot(id, "red_location") then
+				level.map_remove_object_spot(id, "red_location")
+			end
+		end
+--		log("OnBtnAction2:Spot=[%s],Txt=[%s]%s", bMapSpot, sTxt, "") --/#~#
+		this.Get_SendTip(sTxt,"Object_found:",0,20)
+		self.box2:SetText("")
+		self.chk2:SetCheck(false)
+		self:Quit()
+	else
+		self.note2:SetText("Error! Object=["..sStr.."]<~not found!")
+	end
+end
+
+--/------------------------------------------------------------------
+--/ Tool-3 "Spawn Object(s)"
+--/------------------------------------------------------------------
+function UI_TabController:OnBtnChange3()
+	local sSection = self.box3:GetText() or ""
+	sSection = string.gsub(sSection, '%W+', "_")
+	if sSection:len() >= 3 then
+		if system_ini():section_exist(sSection) then
+			self.chk3:SetTextColor(255,128,255,128)
+		else
+			self.chk3:SetTextColor(255,255,255,128)
+		end
+	end
+end
+function UI_TabController:OnBtnCheck3()
+	self:OnBtnChange3()
+end
+function UI_TabController:OnBtnAction3()
+--	log("OnBtnAction3:[>]") --/#~#
+	self.note3:SetText("")
+	local sSection = self.box3:GetText() or ""
+	sSection = string.gsub(sSection, '%W+', "_")
+	if sSection == "" then
+		self.note3:SetText("Error! String empty! Type object section.")
+		return --/>
+	end
+	local iNum = tonumber(self.num3:GetText()) or 1
+	local bToActor = self.chk3:GetCheck()
+	local oActor = db.actor
+	local bMob = false
+	if not bToActor then
+		for k,v in pairs (xr_statistic.monster_classes) do
+			if v == sSection then
+				sSection = sSection .. "_weak"
+				bMob = true
+				break
+			elseif sSection:match(v) then
+				bMob = true
+				break
+			end
+		end
+	else
+		if sSection == "money" then
+			oActor:give_money(iNum*1000)
+			log("OnBtnAction3:give_money=[%s]%s", iNum*1000, "") --/#~#
+			self.box3:SetText("")
+			self.num3:SetText("1")
+			self.chk3:SetCheck(false)
+			self:Quit()
+			return --/>
+		end
+	end
+	local sini = system_ini()
+	if sini:section_exist(sSection) then
+		local soObj
+		if bToActor and not bMob then
+			local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
+			local vPosA = oActor:position()
+			if items.is_ammo(sSection) then
+				local iCnt = sini:line_exist(sSection,"box_size") and sini:r_float(sSection,"box_size") or 10
+				for i=1,iNum do
+					soObj = Spawn_ItemsInv(sSection,iCnt)
+				end
+			else
+				for i=1,iNum do
+					soObj = Spawn_ItemInv(sSection)
+				end
+			end
+		else
+			local iKf = 1
+			if bMob then iKf = 10 end
+			local idLvA,idGvA  = oActor:level_vertex_id(), oActor:game_vertex_id()
+			for i=1,iNum do
+				local iRadius = math.random(1,2)*iKf
+				local vDir = vector_rotate_y(device().cam_dir, math.random(1,3))
+				local idLv = level.vertex_in_direction(idLvA, vDir, iRadius)
+				local vPos = level.vertex_position(idLv) --/ destination point
+				vPos = vector():set(vPos.x, vPos.y, vPos.z)
+				--soObj = alife():create(sSection, vPos, idLv, idGvA)
+				soObj = Make_Spawn(sSection,iRadius)
+			end
+		end
+		if soObj then --/< userdata or table (ammo)
+			local sTxt = "Obj=["..sSection.."],Num=["..iNum.."]"
+			if sSection and sSection ~= "" then
+				sTxt = string.format( "%s/[%s]", sTxt, sSection)
+			end
+--			log("OnBtnAction3:Txt=[%s]%s", sTxt, "") --/#~#
+			this.Get_SendTip(sTxt,"Spawned:",0,10)
+			self.box3:SetText("")
+			self.num3:SetText("1")
+			self.chk3:SetCheck(false)
+			self:Quit()
+		else
+			self.note3:SetText("Spawn error! Section=["..sSection.."]")
+		end
+	else
+		self.note3:SetText("Error! Section=["..sSection.."] not found!")
+	end
+end
+
+--/------------------------------------------------------------------
+--/ Tool-4 "Infoportions management"
+--/------------------------------------------------------------------
+function UI_TabController:OnBtnChange4()
+--	log("OnBtnChange4:[>]") --/#~#
+	local sInfo = self.box4:GetText() or ""
+	if sInfo:len() >= 3 then
+		local bAdd = self.chk4:GetCheck()
+		if bAdd then --/ adding info
+			if game.is_registered_info(sInfo) then
+				self.chk4:SetTextColor(255,128,255,128)
+			else --/ info not registered (simple info)
+				self.chk4:SetTextColor(255,255,255,128)
+			end
+		elseif db.actor:has_info(sInfo) then --/ can del info
+			self.chk4:SetTextColor(255,128,255,128)
+		else --/ nothing to del
+			self.chk4:SetTextColor(255,255,255,128)
+		end
+	end
+end
+function UI_TabController:OnBtnCheck4()
+	self:OnBtnChange4()
+end
+function UI_TabController:OnBtnAction4()
+--	log("OnBtnAction4:[>]") --/#~#
+	self.note4:SetText("")
+	local sInfo = self.box4:GetText() or ""
+	sInfo = sInfo:gsub('%W+', "_")
+	if sInfo ~= "" then
+		local bAdd = self.chk4:GetCheck()
+		log("OnBtnAction4: info=[%s] :(%s)", sInfo, bAdd and "+" or "-", "") --/#~#
+		if bAdd then
+			give_info(sInfo)
+			
+			if game.is_registered_info(sInfo) then
+				this.Get_SendTip("'"..sInfo.."' ~> is added type = registered", "Infoportion:", 0, 10)
+			else
+				this.Get_SendTip("'"..sInfo.."' ~> is added type = unregistered", "Infoportion:", 0, 10)
+			end
+			
+			self.box4:SetText("")
+			self.chk4:SetCheck(false)
+			
+			self:Quit()
+		elseif db.actor:has_info(sInfo) then --/ del
+			disable_info(sInfo)
+			this.Get_SendTip("'"..sInfo.."' ~> it is removed", "Infoportion:", 0, 10)
+			self.box4:SetText("")
+			self.chk4:SetCheck(false)
+			self:Quit()
+		else
+			self.note4:SetText("Warning! Infoportion = '"..tostring(sInfo).."' ~ it is not active!")
+		end
+	else
+		self.note4:SetText("Error! The line is empty! Type a name infoportion.")
+	end
+end
+
+--/------------------------------------------------------------------
+--/ Tool-5 "PPE-files management" --/#~# TODO: ...
+--/------------------------------------------------------------------
+function UI_TabController:OnBtnChange5()
+	local bChk = self.chk5:GetCheck()
+	local sFileName = self.box5:GetText() or ""
+	sFileName = string.gsub(sFileName, "%s+", "_")
+	sFileName = string.gsub(sFileName, "|", "/")
+	if sFileName:len() >= 3 then
+		if getFS():exist("$game_anims$", sFileName) and not (bChk or iPpe) then
+			self.chk5:SetTextColor(255,128,255,128)
+		else
+			self.chk5:SetTextColor(255,255,255,128)
+		end
+	end
+end
+function UI_TabController:OnBtnCheck5()
+	self:OnBtnChange5()
+end
+function UI_TabController:OnBtnAction5()
+--	log("OnBtnAction5:[>]") --/#~#
+	self.note5:SetText("")
+	local sFileName = self.box5:GetText() or ""
+	sFileName = string.gsub(sFileName, "%s+", "_")
+	sFileName = string.gsub(sFileName, "|", "/")
+	if sFileName ~= "" then
+		local bPlay = self.chk5:GetCheck()
+		if bPlay then
+			if getFS():exist("$game_anims$", sFileName) then
+				sPpe = sFileName
+				iPpe = math.random(999999)
+				level.add_pp_effector(sPpe, iPpe, true)
+				--self.box5:SetText("")
+				self.chk5:SetCheck(false)
+				self:Quit()
+			else
+				self.note5:SetText("Error! PpeFile not found!")
+			end
+		elseif iPpe then
+			level.remove_pp_effector(iPpe)
+			iPpe = nil
+			self.box5:SetText("")
+			self.chk5:SetCheck(false)
+			self:Quit()
+		else
+			self.note5:SetText("Attention! PpeFile not active!")
+		end
+		log("OnBtnAction5:File=[%s]/(%s)%s", sFileName, bPlay, "") --/#~#
+	else
+		self.note5:SetText("Error! String empty! Enter filename.")
+	end
+end
+
+--/------------------------------------------------------------------
+--/ Tool-0 (reserve)
+--/------------------------------------------------------------------
+function UI_TabController:OnBtnCheat0()
+	if this.Check_StartGame() then
+		this.Debug_Spawn() --/#!# for tests
+	end
+	self:OnBtnExit()
+end
+
+function UI_TabController:OnBtnCheck0()
+	--local btn_chk0 = self.chk0:GetCheck()
+	local btn_chk0 = self:GetCheckButton("btn_chk0")
+	log("OnBtnCheck0:Chk=[%s]%s", btn_chk0:GetCheck(), "") --/#~#
+end
+
+--/ ----------------------------------------------
+function get_ui_menu()
+	if not tab_menu then
+		tab_menu = UI_TabController()
+	end
+	return tab_menu --/>
+end
+function Show_HudTools()
+	if iTimeOut < time_global() then
+		iTimeOut = time_global() + 500
+		level.start_stop_menu(get_ui_menu(), false)
+	end
+end
+--/-----------------------------------------------
+function Check_StartGame() --/> true if game launched
+	if level.present() and db.actor and db.actor:alive() then
+		return true --/>
+	end
+	return false --/>
+end
+
+--/------------------------------------------------------------------
+--/ Calculating coordinates actor in game
+--/------------------------------------------------------------------
+function Get_Position_Actor(bSendTip)
+	local oActor = db.actor
+	if not oActor then return "","" end --/>
+	local vPos = oActor:position()
+	local idLv,idGv = oActor:level_vertex_id(), oActor:game_vertex_id()
+	local iMap,sMap = alife():level_id(), level.name()
+	local sTxtPos,sTxtMap = "",""
+	if bSendTip then
+		sTxtPos = "x= "..vPos.x.."\\ny= "..vPos.y.."\\nz= "..vPos.z
+		sTxtMap = "Level("..iMap.."): "..sMap.."\\n idLv=["..idLv.."]\\n idGv=["..idGv.."]"
+	else
+		sTxtPos = string.format(" x=[ %.3f ] y=[ %.3f ] z=[ %.3f ]", vPos.x, vPos.y, vPos.z )
+		sTxtMap = string.format("Map(%d)=[ %s ]: idLv=[ %d ] idGv=[ %d ]", iMap, sMap, idLv, idGv )
+	end
+	return sTxtPos, sTxtMap --/>
+end
+--/------------------------------------------------------------------
+--/ Output message to game screen
+--/------------------------------------------------------------------
+function Get_SendTip(sText, sHeader, iTimeOut, iTimeShow, sSender)
+	if SendTip then
+		SendTip(sText, sHeader, iTimeOut, iTimeShow, sSender)
+	else
+		if not news_manager.tips_icons[sSender] then
+			sSender = "default"
+		end
+		sText = (sHeader or "").."Ы \\n"..sText
+		news_manager.send_tip(db.actor, sText, iTimeOut, sSender, iTimeShow*1000)
+	end
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Spawn items in debug-mode (only at game start and only for Actor!)
+--/ ------------------------------------------------------------------------------------------------
+function Debug_Spawn(e) --/ for tests and debug
+	if e then e:remove() end --/ disabling callback
+	local oActor = db.actor
+	local ltx = ini_file("debug\\debug.ltx")
+	local dbg = xr_logic.pstor_retrieve(oActor, "dbg_spawn_"..user_name(), nil)
+	if oActor and ltx and db.is_dbg1 and not dbg then
+		--
+		local function ClearStr(sStr)
+			return sStr:match('(%S+)') or '' --/>
+		end
+		--
+		local tMySlots,tMyItems = {},{}
+		local sini = system_ini()
+		if ltx:section_exist("dbg_spawn2slots") then
+			for i=0,ltx:line_count("dbg_spawn2slots")-1 do
+				local result,idx,value = ltx:r_line("dbg_spawn2slots",i,"","")
+				local sSection = idx and ClearStr(idx)
+				local iSlot = tonumber(value)
+				if sSection and sini:section_exist(sSection) and iSlot and iSlot < 15 then
+					tMySlots[iSlot] = sSection
+				end
+			end
+		end
+		if ltx:section_exist("dbg_spawn") then
+			for i=0,ltx:line_count("dbg_spawn")-1 do
+				local result,idx,value = ltx:r_line("dbg_spawn",i,"","")
+				local sSection = idx and ClearStr(idx)
+				if sSection and sini:section_exist(sSection) then
+					tMyItems[sSection] = tonumber(value) or 1
+				end
+			end
+		end
+		if db.m_backpack and m_backpack.Set_TimerLoss then m_backpack.Set_TimerLoss(8000) end --/for Simbion
+		local oItem,soItem
+		--/ spawn to slots
+		if tMySlots then
+			for k,v in pairs(tMySlots) do
+				if v and not oActor:object(v) then
+					oItem = oActor:item_in_slot(k)
+					if oItem then --/ if slot busy: puting item 'slot<~>rucksack'
+						--oActor:drop_item(oItem) --/> throwing out from slot
+						oActor:move_to_ruck(oItem) --/> throwing out from slot
+						--oActor:remove_from_inventory(oItem:id())
+						soItem = this.Make_Spawn(v,0) --/ spawning to rucksack->slot
+						--oActor:transfer_item(oItem, oActor) --/< returning to rucksack
+						--level.client_spawn_manager():add(soItem.id, db.actor:id(), Callback_OnNetSpawn, soItem:section_name())
+					else
+						soItem = this.Make_Spawn(v,0)
+					end
+				end
+				
+				xr_logic.pstor_store(db.actor, "dbg_spawn_"..user_name(), true)
+			end
+		end
+		--/ spawn to rucksack
+		if tMyItems then
+			for k,v in pairs(tMyItems) do
+				local iCnt = oActor:object_count()
+				for i=0, iCnt-1 do
+					if v > 0 and oActor:object(i):section() == k then
+						v = v -1 --/ lowering to quantity of items we have
+					end
+				end
+				if v > 0 then
+					for i=1,v do
+						soItem = this.Make_Spawn(k,0,false)
+						
+					end
+				end
+			end
+		end
+		--
+		--oActor:set_character_community("actor", 0, 0) --/#~#
+		--[[
+		local sFaction = "stalker"
+		local iChkGoodwill = relation_registry.community_goodwill(sFaction, oActor:id())
+		log("Debug_Spawn:Faction=[%s],Goodwill=[%s]:[%s]", sFaction, iChkGoodwill, ">") --/#~#
+		iChkGoodwill = math.min(3000,math.max(0,iChkGoodwill +200))
+		relation_registry.set_community_goodwill (sFaction, oActor:id(), iChkGoodwill)
+		log("Debug_Spawn:Faction=[%s],Goodwill=[%s]:[%s]", sFaction, iChkGoodwill, "<") --/#~#
+		--]]
+	else
+		printf("Debug_Spawn:ltx=[%s],dbg1=[%s]:[%s]", ltx, db.is_dbg1, "Warning!")
+	end
+end
+
+function Callback_OnNetSpawn(uo, idObj, oObj)
+	if uo and oObj and db.actor and not db.actor:item_in_slot(uo) then
+		log("Callback_OnNetSpawn:Item=[%s],idObj=[%s]:[%s]", uo, idObj, ">") --/#~#
+		--db.actor:move_to_ruck(oObj)
+		db.actor:move_to_slot(oObj, true)
+	end
+end
+
+function Get_ClassId(sSection)
+	local iClassId = nil
+	local sini = system_ini()
+	if sSection and sini:section_exist(sSection) then
+		if sini:line_exist(sSection,"class") then
+			iClassId = sini:r_clsid(sSection,"class")
+		end
+	end
+	if not iClassId then
+		log("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!")
+	end
+	return iClassId --/>
+end
+
+function Make_Spawn(sSection,iDist,bNoMsg)
+	
+	local sMsg = tostring(sSection)
+	local iClassId = this.Get_ClassId(sSection)
+	local soObj
+	if iClassId then
+		log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]:[%s]", sSection, tostring(iClassId), tostring(iDist), "?") --/#~#
+		local oActor = db.actor
+		local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
+		local vPosA,vDirA = oActor:position(), oActor:direction()
+		local bToActor = not (iDist and iDist ~= 0) and system_ini():line_exist(sSection, "cost")
+		if bToActor then --/ spawn to actor
+			if iClassId == clsid.wpn_ammo and items.is_ammo(sSection) then --/ ammo spawn differently
+				soObj = this.Create_Ammo( sSection, vPosA, idLvA, idGvA, oActor:id() )
+				if soObj then sMsg = "AddedToActor_Ammo:"..sMsg end
+			else
+				soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+				if soObj then sMsg = "AddedToActor:"..sMsg end
+			end
+		else
+			local vPos = vPosA:add(vDirA:mul(iDist or 1))
+			if iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter then --/ for teh needs 'own' spawn
+				if iClassId == clsid.script_heli or iClassId == clsid.helicopter then
+					vPos.y = vPos.y + 8 --/ spawn higher actor
+				end
+				soObj = this.Create_Vehicle( sSection, vPos, idLvA, idGvA, iClassId )
+				if soObj then sMsg = "Spawned_Vehicle:"..sMsg end
+			elseif iClassId == clsid.wpn_ammo and items.is_ammo(sSection) then --/ ammo spawn differently
+				soObj = this.Create_Ammo( sSection, vPos, idLvA, idGvA )
+				if soObj then sMsg = "Spawned_Ammo:"..sMsg end
+			else
+				soObj = alife():create( sSection, vPos, idLvA, idGvA )
+				if soObj then sMsg = "Spawned:"..sMsg end
+				soObj.squad = Random.I(64)
+			end
+		end
+--		log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+") --/#~#
+	else
+		log("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!")
+		sMsg = "Warning!:NOT_found_spawn_section="..sMsg
+	end
+	if bNoMsg ~= false then news_manager.send_tip(db.actor, sMsg, 0, "default", 0) end
+	return soObj --/>
+end
+
+function Create_Ammo(sSection, vPos, idLv, idGv, idOwner)
+	if not idOwner then idOwner = 65535 end
+	local iBoxSize = 1
+	local sini = system_ini()
+	if sini:line_exist(sSection,"box_size") then
+		iBoxSize = sini:r_u32(sSection,"box_size") or 1
+	end
+	return alife():create_ammo(sSection, vPos, idLv, idGv, idOwner, iBoxSize) --/>
+end
+
+function Create_Vehicle(sSection, vPos, iLvid, iGvid, iClassId)
+	if iClassId and (iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter) then
+		log("Create_Vehicle:section=[%s]:[%s]", sSection, ">") --/#~#
+		local soObj = alife():create(sSection, vPos, iLvid, iGvid)
+		if type(get_netpk) == 'function' then
+			local soObj = alife():create(sSection, vPos, iLvid, iGvid)
+			local pk = get_netpk(soObj,1)
+			if pk:isOk() then
+				local data = pk:get() --table.print( data, sModule..":NetPacket|"..soObj:name() ) --/#~#
+				--/> filling parameters
+				if iClassId == clsid.script_heli or iClassId == clsid.helicopter then
+					data.engine_sound = "alexmx\\helicopter"
+				--[[
+					if sSection:match("^helicopter_mi") and level.name() == "l01_escape" then
+						data.custom_data:setString("[logic]\ncfg = scripts\\veh\\esc_heli_fly.ltx")
+					end
+				elseif sSection:match('^vehicle_btr') then
+					data.custom_data:setString("[logic]\ncfg = scripts\\veh\\any_btr_free.ltx")
+				--]]
+				end
+				--/<
+				pk:set(data) --/< record
+				table.print( pk:get(), sModule..":NetPacket_changed|"..soObj:name() ) --/#~#
+				if iClassId == clsid.car_s then
+					level.client_spawn_manager():add(soObj.id, -1, Callback_NetSpawn_Car, sSection)
+				end
+				return soObj --/>
+			end
+		elseif iClassId == clsid.script_heli or iClassId == clsid.helicopter then
+			se_heli = cse_alife_helicopter.cast_helicopter(soObj)
+			ASSERT(se_heli ~= nil, sModule..":Create_Vehicle: can't cast to heli")
+			se_heli:set_engine_sound("alexmx\\helicopter")
+			se_heli:set_startup_animation("idle")
+			se_heli:set_custom_data("")
+			--se_heli:set_custom_data("[logic]\ncfg = scripts\\veh\\XXX.ltx")
+			return soObj --/>
+		end
+	end
+	return nil --/>
+end
+
+function Callback_NetSpawn_Car(uo, idObj, oObj)
+	--/ if object 'car' -> 'drop' teh on the ground (on_the_ground)
+	if get_clsid(oObj) == clsid.car_s then
+		local ph_shell = oObj:get_physics_shell()
+		if ph_shell then --/ getting control over physic
+			ph_shell:apply_force(0,-1,0) --/ applying small strength
+			local h = hit()
+			h.draftsman = oObj
+			h.direction = vector():set(0,-1,0)
+			h.type      = hit.strike
+			h.power     = 0.01
+			h.impulse   = 1
+			oObj:hit(h) --/ giving small impulse
+		end
+	end
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Spawn passage/teleport
+--/ ------------------------------------------------------------------------------------------------
+function Del_Teleport()
+	local idLvChg = tonumber(xr_logic.pstor_retrieve(db.actor, "dbg_lvch", nil))
+
+	if idLvChg then
+		local soLvChg = alife():object(idLvChg)
+		if soLvChg then
+			log("Del_Teleport:idLvChg=[%s]~release:[%s]", idLvChg, "x") --/#~#
+			if level.map_has_object_spot(idLvChg, "red_location") then
+				level.map_remove_object_spot(idLvChg, "red_location")
+			end
+			alife():release(soLvChg, true)
+		end
+	end
+end
+
+function Get_Teleport(tLC)
+	if type(get_netpk) ~= 'function' then return end --/#!?#> disabled
+	local oActor = db.actor
+	
+	local lvch = xr_logic.pstor_retrieve(oActor, "dbg_lvch", nil)
+	if lvch then this.Del_Teleport() end
+	local idMapTo,idGvTo,idLvTo = la_helper.Get_IdsByLevelName(tLC.map or "none")
+	if oActor and idGvTo and idLvTo and tLC.pos then
+		log("Get_Teleport:MapTo(%s)=>idMap=[%s],idGv=[%s],idLv=[%s]:[%s]", tLC.map, idMapTo, idGvTo, idLvTo, "?") --/#~#
+		local soObj = alife():create("level_changer", oActor:position(), oActor:level_vertex_id(), oActor:game_vertex_id())
+		local pk = get_netpk(soObj,1)
+		if pk:isOk() then
+			local data = pk:get() --table.print( data, sModule..":NetPacket|(0):"..soObj:name()..":"..soObj:clsid() ) --/#~# for debug
+			data.shapes:addSphere(1)            --/ def => {}
+			data.restrictor_type      = 3       --/ def => 0
+			data.dest_game_vertex_id  = idGvTo  --/ def => 65535
+			data.dest_level_vertex_id = idLvTo  --/ def => -1
+			data.dest_position        = tLC.pos --/ def => vec3(0,0,0)
+			--data.dest_direction       = tLC.dir --/ def => vec3(0,0,0)
+			--data.dest_graph_point     = tLC.gp or ''
+			data.dest_level_name      = tLC.map --/ def => ''
+			data.silent_mode          = 1       --/ def => 1
+			pk:set(data) --/< record
+			xr_logic.pstor_store(oActor, "dbg_lvch", soObj.id)
+
+			--Add_MapSpot(soObj.id, "red_location", "LvChanger(dbg): "..soObj.id) --/#~# for debug
+			log("Get_Teleport:(%s):MapTo(%s)=[%s],idGvTo=[%s],idLvTo=[%s]:[%s]", soObj.id, idMapTo, tLC.map, idGvTo, idLvTo, "+") --/#~#
+			--table.print( pk:get(), sModule..":NetPacket|(2):"..soObj:name() ) --/#~# for debug
+		else log("Get_Teleport:LvChg=[%s]~?:<%s>", soObj:name(), "Error!")
+		end
+	else log("Get_Teleport:MapTo(%s)=[%s],idGvTo=[%s],idLv=[%s],Pos=[%s]:<%s>", idMapTo, tLC.map, idGvTo, idLv, tLC.pos, "Error!")
+	end
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Name of restrictor on PDA map
+--/ ------------------------------------------------------------------------------------------------
+function Get_RestrNames(bLog)
+	for id=1,65534 do
+		local oObj = level.object_by_id(id)
+		local iClassId = oObj and oObj:clsid()
+		if iClassId and (iClassId == clsid.space_restrictor or iClassId == clsid.script_restr or oObj:section() == "space_restrictor") then
+			local p = oObj:position()
+			local idLv,idGv = oObj:level_vertex_id(), oObj:game_vertex_id()
+			local iRadius,iRestType = -1,-1
+			if type(get_netpk) == 'function' then --/#!?#
+				local data = get_netpk(oObj,1):get() --/ reading from net-packet
+				iRestType = data.restrictor_type or -1
+				iRadius   = data.shapes:getRadius() or -1
+			end
+			local sTxt = "Restrictor:["..oObj:name().."]".."\\nClassId= "..tostring(iClassId)
+			sTxt = sTxt.."\\nx= "..string.short(p.x).."\\ny= "..string.short(p.y).."\\nz= "..string.short(p.z)
+			sTxt = sTxt.."\\nidLv= "..tostring(idLv).."\\nidGv= "..tostring(idGv)
+			sTxt = sTxt.."\\nRadius= "..string.short(iRadius).."\\nType= "..tostring(iRestType)
+			Add_MapSpot(id,"red_location",sTxt)
+			if bLog then
+				local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,ClassId=%d,Radius=%d,Type=%d,Restr=", p.x, p.y, p.z, idLv, idGv, iClassId, iRadius or -1, iRestType or -1, oObj:name() )
+				log("Get_RestrNames:%s", sText)
+			end
+		end
+	end
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Name of smarts on PDA map
+--/ ------------------------------------------------------------------------------------------------
+function Get_SmartNames(bLog)
+	local tSmartNames = {}
+	local ltx = ini_file("lost_alpha\\debug.ltx")
+	if ltx and ltx:section_exist("smart_names") then
+		tSmartNames = Get_IniSection(ltx, "smart_names", "true") --/#?#
+	end
+	local sim,oObj,soObj = alife(),nil,nil
+	for i=1,65534 do
+		oObj = level.object_by_id(i)
+		soObj = oObj and sim:object(i)
+		if soObj and (soObj:clsid() == clsid.smart_terrain or oObj:section() == "smart_terrain") then
+			local p = oObj:position()
+			local sName = oObj:name()
+			local idLv,idGv = oObj:level_vertex_id(), oObj:game_vertex_id()
+			if tSmartNames[sName] then
+				local sTxt = game.translate_string("st_name_"..sName)
+				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
+				sTxt = sTxt.."\\nlvid= "..tostring(idLv).."\\ngvid= "..tostring(idGv)
+				Add_MapSpot(i,"alife_presentation_smart_on",sTxt)
+				--
+				if bLog then
+					local sText = "x= "..tostring(p.x)..", y= "..tostring(p.y)..", z= "..tostring(p.z)
+					sText = sText..",   lvid= "..tostring(idLv)..", gvid= "..tostring(idGv)
+					sText = sText..";--/ "..game.translate_string("st_name_"..sName)
+					log("Smart:%s", sText)
+				end
+				--
+			else
+				local sTxt = "["..tostring(sName).."]"
+				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
+				sTxt = sTxt.."\\nidLv= "..tostring(idLv).."\\nidGv= "..tostring(idGv)
+				if soObj:is_gulag_available() then
+					if soObj.gulag_working then
+						Add_MapSpot(i,"alife_presentation_smart_on",sTxt)
+					else
+						Add_MapSpot(i,"alife_presentation_smart_ready",sTxt)
+					end
+				else
+					Add_MapSpot(i,"alife_presentation_smart_off",sTxt)
+				end
+				if bLog then
+					local sText = string.format("x:%d,y:%d,z:%d,idLv:%d,idGv:%d,Smrt:%s", p.x, p.y, p.z, idLv, idGv, sName )
+					log("Smart:%s", sText)
+				end
+			end
+		end
+	end
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Name of respawners on PDA map
+--/ ------------------------------------------------------------------------------------------------
+function Get_RespawnerNames(bLog)
+	for id=1,65534 do
+		--local oObj = level.object_by_id(id)
+		--if oObj and oObj:clsid() == clsid.respawn then
+			local soObj = alife():object(id)
+			if soObj and soObj:clsid() == clsid.respawn then
+				local sName = soObj.respawn_name or soObj:name()
+				local vPos,idLv,idGv = soObj.position, soObj.m_level_vertex_id, soObj.m_game_vertex_id
+				local iCountObj,iRadius = -1,-1
+				if type(get_netpk) == 'function' then --/#!?#
+					local data = get_netpk(oObj,1):get() --/ reading from net-packet
+					iRadius   = data.shapes:getRadius() or -1
+					iCountObj = (data.spawned_objects and #data.spawned_objects)  or -1
+				end
+				local sTxt = "Respawner:["..sName.."]"
+				sTxt = sTxt.."\\nidLv= "..tostring(idLv).."  idGv= "..tostring(idGv)
+				sTxt = sTxt.."\\nx= "..string.short(vPos.x).."\\ny= "..string.short(vPos.y).."\\nz= "..string.short(vPos.z)
+				sTxt = sTxt.."\\nSpawnedObj= "..tostring(iCountObj).."\\nRadius= "..string.short(iRadius)
+				Add_MapSpot(id,"red_location",sTxt)
+				if bLog then
+					local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,Radius=[%d],SpawnedObj=[%d],Respawner=[%s]", vPos.x, vPos.y, vPos.z, idLv, idGv, iRadius or -1, iCountObj or -1, sName )
+					log("Get_RespawnerNames:%s", sText)
+				end
+			end
+		--end --/
+	end
+end
+--/ ------------------------------------------------------------------------------------------------
+--/ Name of boxes on PDA map
+--/ ------------------------------------------------------------------------------------------------
+function Get_BoxNames(bLog,bDrop)
+	local tBoxNames = Get_IniSection("lost_alpha\\debug.ltx","invbox_names","true") --/#?#
+	for i=1,65534 do
+		local oObj = level.object_by_id(i)
+		if oObj and oObj:clsid() == clsid.inventory_box and oObj:section() == "inventory_box" then
+			local p = oObj:position()
+			local sName = oObj:name()
+			local idLv,idGv = oObj:level_vertex_id(), oObj:game_vertex_id()
+			local iStoryId = oObj:story_id()
+			local sStoryId = (iStoryId ~= db.iMax_s32 and tostring(iStoryId)) or ""
+			if tBoxNames[sName] then
+				local sTxt = "InvBox("..sStoryId.."):"..sName
+				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
+				sTxt = sTxt.."\\nlvid= "..tostring(idLv).."\\ngvid= "..tostring(idGv)
+				Add_MapSpot(i,"treasure",sTxt)
+			else
+				local sTxt = "InvBox("..sStoryId.."):"..sName
+				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
+				sTxt = sTxt.."\\nidLv= "..tostring(idLv).."\\nidGv= "..tostring(idGv)
+				Add_MapSpot(i,"treasure",sTxt)
+				if bLog then
+					local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,Sid=%s,InvBox=", p.x, p.y, p.z, idLv, idGv, sStoryId, sName )
+					log("Get_BoxNames:%s", sText)
+				end
+			end
+		end
+	end
+end

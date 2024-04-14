@@ -9,6 +9,9 @@ local boss_particle_actor = particles_object("zones\\zone_dead_zone_blow")
 
 function update()
 	if db.actor then
+		if level.name() == "lvl5_bar" then
+			bar_snipers()	
+		end
 		if level.name() == "lvl7_yantar" then
 			update_yantar_preblow()
 			go_zombied_yantar()
@@ -35,7 +38,6 @@ function update()
 			act_jaba_zone()
 			zone_no_map()
 			effector_laba()
-			--upd_weather()
 		end
 		if level.name() == "lvl13_prip" then
 			swamp_rain()
@@ -122,15 +124,13 @@ function yan_ohr_system()
 					boss_particle:play_at_pos(vector():set(stalker:position().x, stalker:position().y+0.1, stalker:position().z))
         				local boss_particle = particles_object("damage_fx\\burn_creatures00") 
 					boss_particle:play_at_pos(vector():set(stalker:position().x, stalker:position().y+0.2, stalker:position().z))
-					stalker:kill(stalker)
-					local h = hit()
-					h.draftsman = stalker
-					h.type = hit.fire_wound
-					h.direction = db.actor:position():sub(stalker:position())
-					h:bone("pelvis")
-					h.power = 1
-					h.impulse = 10
-					stalker:hit(h)
+					--stalker:kill(stalker)
+					local wait_time = 0
+  					wait_time = time_global() + 200
+  					level.add_call(
+    					function() return time_global() > wait_time end,
+    					function() olr.impulse_npc_body(stalker) end
+  					)
 					--news_manager.send_tip(db.actor, "¡¿Õ  yan", nil, "default", 39000)
 			    		break
 				end
@@ -155,15 +155,13 @@ function ds_snipers()
 					a.y=math.random(4,10)
 					a.z=math.random(4,10)
 					snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
-					stalker:kill(stalker)
-					local h = hit()
-					h.draftsman = stalker
-					h.type = hit.fire_wound
-					h.direction = db.actor:position():sub(stalker:position())
-					h:bone("pelvis")
-					h.power = 1
-					h.impulse = 10
-					stalker:hit(h)
+					--stalker:kill(stalker)
+					local wait_time = 0
+  					wait_time = time_global() + 200
+  					level.add_call(
+    					function() return time_global() > wait_time end,
+    					function() olr.impulse_npc_body(stalker) end
+  					)
 					--news_manager.send_tip(db.actor, "¡¿Õ", nil, "default", 39000)
 			    		break
 				end
@@ -172,6 +170,36 @@ function ds_snipers()
 	end	
 end
 
+
+local btup = 0
+local btmerup = math.random(2000,5000)
+function bar_snipers()
+	if time_global() > btup then
+		btup = time_global() + btmerup
+		for k,v in pairs(db.storage) do
+        		local stalker = level.object_by_id(k)
+            		if stalker and stalker:is_monster() and stalker:alive() then
+				if stalker:position():distance_to(vector():set(-70,-95,-226)) < 20 then 
+					local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
+					local a=vector()
+					a.x=math.random(4,10)
+					a.y=math.random(4,10)
+					a.z=math.random(4,10)
+					snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
+					--stalker:kill(stalker)
+					local wait_time = 0
+  					wait_time = time_global() + 200
+  					level.add_call(
+    					function() return time_global() > wait_time end,
+    					function() olr.impulse_npc_body(stalker) end
+  					)
+					--news_manager.send_tip(db.actor, "¡¿Õ", nil, "default", 39000)
+			    		break
+				end
+			end
+		end
+	end	
+end
 
 
 
@@ -341,6 +369,8 @@ if zombied_walk == true then
 		olr.hide_inv()
 		--log1("go to brain")
 		get_actor_obj():hold_action(9) 			   --//-------- Ë‰∏Ï ‚ÔÂ∏‰
+		get_actor_obj():hold_action(9)
+		get_actor_obj():hold_action(9)
 		db.actor.psy_health = -0.01  
 		level.add_pp_effector ("dead_zone.ppe", 1971974, false)
 	end

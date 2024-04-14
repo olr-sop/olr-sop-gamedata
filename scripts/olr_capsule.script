@@ -8,7 +8,7 @@ local oButtons = {}
 local oButtonsCap = {}
 local curent_open_id = -1
 local curent_inv_box_id = -1
-
+local ini = system_ini()
 
 
 function use(obj)
@@ -110,7 +110,15 @@ function ui_capsule:add_cap_arts()
 			local obj = box:object_from_inv_box(i)
 			--log1("box - "..box:name().." has item - "..obj:name().."")
 
-			local fName = ""..obj:get_name()..""
+			--local fName = ""..obj:get_name()..""
+			local fName
+			local known_inf = ini:r_string(obj:section(), "known_info")
+			local known_inf_desc = game.translate_string(known_inf)
+			if has_alife_info(known_inf_desc) then
+				fName = ""..obj:get_name()..""
+			else
+				fName = "Неизвестный артефакт" 
+			end 
 
 			local reg_id = ""
 			if type(obj) == "number" then
@@ -158,13 +166,21 @@ function ui_capsule:add_inv_arts()
 	local calc = function(npc, obj)
 		if obj ~= nil and obj:is_artefact() and db.actor:is_in_ruck(obj) then
 
-                       if obj:section() == "af_studen" or obj:section() == "af_ameba_slime" or obj:section() == "af_ameba_slug" or obj:section() == "af_electra_sparkler" or obj:section() == "af_electra_flash" then
+                       if obj:section() == "af_studen" or obj:section() == "af_ameba_slime" or obj:section() == "af_ameba_slug" or obj:section() == "af_electra_sparkler" or obj:section() == "af_electra_flash" or obj:section() == "af_ameba_mica" then
 
-			log1(""..obj:name().."")
+			--log1(""..obj:name().."")
 
 			--local cond = obj:condition() * 100 
 			--local condname = ""..string.format("%1.0f", cond).."%"
-			local fName = ""..obj:get_name()..""
+			--local fName = ""..obj:get_name()..""
+			local fName
+			local known_inf = ini:r_string(obj:section(), "known_info")
+			local known_inf_desc = game.translate_string(known_inf)
+			if has_alife_info(known_inf_desc) then
+				fName = ""..obj:get_name()..""
+			else
+				fName = "Неизвестный артефакт" 
+			end
 
 			local reg_id = ""
 			if type(obj) == "number" then

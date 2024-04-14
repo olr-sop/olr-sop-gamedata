@@ -3,6 +3,22 @@
 -- olr.beep()
 
 
+
+function reward_killers_ac()
+local bol_var = math.random(1,5)
+if bol_var == 1 then
+	olr.give_item("wpn_desert_eagle")
+elseif bol_var == 2 then
+	olr.give_item("wpn_aks74")
+elseif bol_var == 3 then
+	olr.give_item("wpn_aps_sk1")
+elseif bol_var == 4 then
+	olr.give_item("wpn_gsh18")
+elseif bol_var == 5 then
+	olr.give_item("wpn_mp5")
+end
+end
+
 function holmi_uch_spas_fail()
 	if has_alife_info("otpravlaet_spat_gg_done") or has_alife_info("fobos_dead_mil") or has_alife_info("fobos_dead_mil_uchen") then
 		return true
@@ -589,7 +605,7 @@ function sim_dialog_aboutlevel(obj,act)
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	if level.name() == "lvl11_deadcity" then
-		lm_where = "Светлый Луч - город зомби и группировки \"Свобода\", куда входят все анархистские ублюдки Зоны. В многоэтажках сидят их снайперы и отстреливают всех чужих. Так что дважды подумай, прежде чем соваться туда."
+		lm_where = "Светлый Луч - город зомби и группировки \"Свобода\", куда входят все анархистские сталкеры Зоны. В многоэтажках сидят их снайперы и отстреливают всех чужих. Так что дважды подумай, прежде чем соваться туда."
 		db.actor:give_talk_message(""..lm_where.."", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
 	end
 	local _s = CUIStatic();
@@ -11818,7 +11834,7 @@ local sim = alife()
 		if kill:name() == "gar_dolg_blokpost" then        
                 local obj = alife():create("yaroslav", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 		if obj then
-			olr_timers.st_timer("jar_toprip_durak", 500, "nick.jar_toprip_durak("..tostring(obj.id)..")")
+			olr_timers.st_timer("jar_toprip_durak", 1500, "nick.jar_toprip_durak("..tostring(obj.id)..")")
 			olr.add_spot_on_map( obj.id,"green_location", "Сталкер, который что-то знает о Стрелке" )
 			table.insert(olr_offline_walk.tabst, obj)
 		end
@@ -12978,6 +12994,20 @@ olr.del_by_name("lvl4_darkdolina_karlik_0020")
 olr.del_by_name("lvl4_darkdolina_karlik_0021")
 olr.del_by_name("lvl4_darkdolina_karlik_0023")
 olr.del_by_name("lvl4u_darklab_space_restrictor_0014")
+
+olr.del_by_name("lvl4u_darklab_karlik")
+olr.del_by_name("lvl4u_darklab_karlik_0000")
+olr.del_by_name("lvl4u_darklab_karlik_0001")
+olr.del_by_name("lvl4u_darklab_karlik_0002")
+olr.del_by_name("lvl4u_darklab_karlik_0004")
+olr.del_by_name("lvl4u_darklab_karlik_0005")
+olr.del_by_name("lvl4u_darklab_karlik_0006")
+olr.del_by_name("lvl4u_darklab_karlik_0007")
+olr.del_by_name("lvl4u_darklab_karlik_0008")
+olr.del_by_name("lvl4u_darklab_karlik_0009")
+olr.del_by_name("lvl4u_darklab_karlito")
+olr.del_by_name("lvl4u_darklab_karlito_0002")
+
 end
 
 
@@ -13468,6 +13498,7 @@ function del_prizrak_esk_most()
 	if car then
 	if car ~= nil and 
 	car:name() == "lvl1_escape_stalker_0038" then
+	db.actor:change_character_reputation(45)
     	local bloodbridgew5 = vector():set( 10056, -0.36, 157 )
 	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
 	end
@@ -19306,7 +19337,7 @@ end
 function lonewolf_gar_smsm2()
 local sactor = alife():actor()
 local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news("Одинокий Волк\\nЭтот хабар будет для тебя пропуском в элитный клуб - ты автоматически перейдешь в разряд опытных. Однако просто так в Долину не попасть: на её территории действует какая-то установка, которая генерирует сводящий с ума пси-шум.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),55000)
+cactor:give_game_news("Одинокий Волк\\nЭтот хабар будет для тебя пропуском в элитный клуб - ты автоматически перейдешь в разряд значимых. Однако просто так в Долину не попасть: на её территории действует какая-то установка, которая генерирует сводящий с ума пси-шум.","ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),55000)
 local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -19506,6 +19537,7 @@ local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("lvl1_escape_physic_object_0341")
 	olr_timers.st_timer("pda_zarad_info_zaba", 3, "nick.pda_zarad_info_zaba()")
+news_manager.send_tip(db.actor, "Обучение: Изменять масштаб миникарты можно при помощи клавиш - и +.", 10, "default", 39000)
 end
 
 

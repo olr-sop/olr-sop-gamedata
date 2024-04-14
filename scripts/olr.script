@@ -7,7 +7,7 @@ olrdbg = false
 
 is_crush = false
 
-modver = "OPEN BETA VERSION - 3.0.18"
+modver = "OPEN BETA VERSION - 3.0.19"
 
 bad_items = {
 	["art_mil_jaba"] = true,
@@ -262,6 +262,14 @@ function change_level()
 		olr_timers.st_timer("surge_day", 29, "nick.surge_day_now()")
 		olr_timers.st_timer("surge_day", 59, "nick.surge_day_now()")
 		olr_timers.st_timer("surge_day", 99, "nick.surge_day_now()")
+	end
+	if level.name() == "lvl3_agroprom" then
+		local wait_time = 0
+  		wait_time = time_global() + 2200
+  		level.add_call(
+    		function() return time_global() > wait_time end,
+    		function() olr.fix_npc_medpribor() end
+  		)
 	end
 end
 
@@ -1549,10 +1557,68 @@ end
 
 
 
+function fix_npc_medpribor()
+
+local visuals_anntirad = {
+	[[actors\neytral\stalker_neytral_nauchniy]],
+	[[actors\ecolog\stalker_ecolog]]
+}
+
+
+local cnt = 0
+
+local sim = alife()
+	for id=1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+                if IsStalker(kill) then
+                if kill:alive() and kill.level_name == "lvl3_agroprom" then
+                --local strn_id = kill:smart_terrain_id()
+		--if strn_id ~= 65535 then
+		if not olr_protected.is_no_offline_alife_obj(kill:name()) then
+		cnt = cnt + 1
+
+		local pk = get_netpk(kill,1)
+  		if pk and pk:isOk() then
+    		local data = pk:get()
+    		data.visual_name = tostring(visuals_anntirad[math.random(#visuals_anntirad)])
+      		pk:set(data)
+		end	
+
+		local se_obj = alife():object(kill.id)
+  		if se_obj then
+    			alife():set_switch_offline (se_obj.id, true)
+    			alife():set_switch_online (se_obj.id, false)
+    			alife():set_interactive (se_obj.id, false)
+  		end
+		olr_timers.st_timer("convert_online", 2, "olr_npc_eqp.convert_online_out("..kill.id..")")	
+
+		--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
+		--log1("found: "..kill:name().."  -- smart_terrain_id: "..tostring(strn_id).." -- "..cnt.." -- "..tostring(kill.level_name).."")
 
 
 
+end
+end
+end
+end
+end
+end
 
+
+function impulse_npc_body(stalker)
+	if not stalker then return end
+	local rnd = math.random(10,20)
+	local h = hit()
+	h.draftsman = stalker
+	h.type = hit.fire_wound
+	h.direction = db.actor:position():sub(stalker:position())
+	h:bone("pelvis")
+	h.power = 1000
+	h.impulse = rnd
+	stalker:hit(h)
+	--log1("hittt")
+end
 
 
 

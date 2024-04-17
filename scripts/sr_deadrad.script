@@ -59,44 +59,42 @@ function action_deadrad:update( delta )
 
 	local currout = db.actor:item_in_slot(6)
 
-        if not currout or currout:condition() < 0.35 or not vaild_outfits[currout:section()] then
-		eff_power = eff_power + 1
-		level.add_pp_effector ("radiation.ppe", 71974, false)
-		level.set_pp_effector_factor(71974, eff_power / math.random(1,10))               
-                local song_start = xr_sound.get_safe_sound_object("detectors\\geiger")
-	        song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
-                db.actor.radiation = 0.0024
-                db.actor.health = -0.00024
-		xvars.count_rad_weak = xvars.count_rad_weak + 0.00001
-		--news_manager.send_tip(db.actor, "накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
+		if not currout or currout:condition() < 0.35 or not vaild_outfits[currout:section()] then
+			eff_power = eff_power + 1
+			level.add_pp_effector ("radiation.ppe", 71974, false)
+			level.set_pp_effector_factor(71974, eff_power / math.random(5,10) / 10)               
+			local song_start = xr_sound.get_safe_sound_object("detectors\\geiger")
+			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+			db.actor.radiation = 0.0024
+			db.actor.health = -0.00024
+			xvars.count_rad_weak = xvars.count_rad_weak + 0.00001
+			--news_manager.send_tip(db.actor, "накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
 
 
-        	if not has_alife_info("infor_glob_rad") then
-			db.actor:give_info_portion("infor_glob_rad")
-        	end
+			if not has_alife_info("infor_glob_rad") then
+				db.actor:give_info_portion("infor_glob_rad")
+			end
 
- 			local level_name = level.name()
+			local level_name = level.name()
 			if level_name == "lvl3_agroprom" and has_alife_info("medpribor_kvest_start") then
-        			if not has_alife_info("medyasik_done") then
-        				if not has_alife_info("kostumu_pesda_agr_jaba") then
-						db.actor:give_info_portion("kostumu_pesda_agr_jaba")
-        				end
-        			end
+				if not has_alife_info("medyasik_done") then
+					if not has_alife_info("kostumu_pesda_agr_jaba") then
+					db.actor:give_info_portion("kostumu_pesda_agr_jaba")
+					end
+				end
 
-
-       			 	if time_global() > self.hit_timer then
+				if time_global() > self.hit_timer then
 					self.hit_timer = time_global() + 1500  
-                        		self:hit_actor2()  
-    	
-        			end
+					self:hit_actor2()
+				end
 
-        			if currout and vaild_outfits[currout:section()] then
+				if currout and vaild_outfits[currout:section()] then
 					eff_power = 0 
 					level.remove_pp_effector(71974)
 				end	 
 			end
+		end
 	end
-end
 end
 
 function action_deadrad:hit_actor2()

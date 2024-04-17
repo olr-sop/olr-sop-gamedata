@@ -110,7 +110,15 @@ function ui_capsule:add_cap_arts()
 			local obj = box:object_from_inv_box(i)
 			--log1("box - "..box:name().." has item - "..obj:name().."")
 
-			local fName = ""..obj:get_name()..""
+			local fName = "..obj:get_name()..""
+			if system_ini():line_exist(obj:section(), "known_info") then
+				local known_inf = ini:r_string(obj:section(), "known_info")
+				if not has_alife_info(known_inf) then
+					fName = "ui_st_unknown_art_name"
+				else
+					fName = ""..obj:get_name()..""
+				end
+			end
 
 			local reg_id = ""
 			if type(obj) == "number" then
@@ -164,7 +172,16 @@ function ui_capsule:add_inv_arts()
 
 			--local cond = obj:condition() * 100 
 			--local condname = ""..string.format("%1.0f", cond).."%"
-			local fName = ""..obj:get_name()..""
+
+			local fName = "..obj:get_name()..""
+			if system_ini():line_exist(obj:section(), "known_info") then
+				local known_inf = ini:r_string(obj:section(), "known_info")
+				if not has_alife_info(known_inf) then
+					fName = "ui_st_unknown_art_name"
+				else
+					fName = ""..obj:get_name()..""
+				end
+			end
 
 			local reg_id = ""
 			if type(obj) == "number" then

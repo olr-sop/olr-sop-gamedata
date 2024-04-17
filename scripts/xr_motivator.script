@@ -79,31 +79,31 @@ function motivator_binder:net_spawn(sobject)
 	end
     
 ----------------------------------------------------------- 
-        local act_rank = db.actor:character_rank()
-        local stk_rank = self.object:character_rank() 
+	local act_rank = db.actor:character_rank()
+	local stk_rank = self.object:character_rank() 
 	local bol_var = math.random(1,2)
-        if act_rank <= stk_rank then
-        	if self.object:character_community() ~= "trader" then
-        		if bol_var == 1 then
-       				self.object:disable_trade()
-        		else
-        			self.object:enable_trade()
-        		end
-        	end
-        end
+	if act_rank <= stk_rank then
+		if self.object:character_community() ~= "trader" then
+			if bol_var == 1 then
+				self.object:disable_trade()
+			else
+				self.object:enable_trade()
+			end
+		end
+	end
 ----------------------------------------------------------- 
-        if self.object:character_community() == "deads" or 
-           self.object:character_community() == "sin" or 
-           self.object:character_community() == "zombied" or 
-           self.object:character_community() == "monolith" or 
-           self.object:character_community() == "neutral" or 
-           self.object:character_community() == "sliznyaki" then
-        	self.object:disable_trade()
-        end
+	if self.object:character_community() == "deads" or 
+	self.object:character_community() == "sin" or 
+	self.object:character_community() == "zombied" or 
+	self.object:character_community() == "monolith" or 
+	self.object:character_community() == "neutral" or 
+	self.object:character_community() == "sliznyaki" then
+		self.object:disable_trade()
+	end
 
-        if self.object:character_community() == "zombied" then
-        	self.object:disable_talk()
-        end
+	if self.object:character_community() == "zombied" or self.object:character_community() == "monolith" then
+		self.object:disable_talk()
+	end
 -----------------------------------------------------------
 
 	news_main.on_spawn(npc)
@@ -144,7 +144,7 @@ function motivator_binder:net_spawn(sobject)
 		manager:add_evaluator		(stalker_ids.property_anomaly, property_evaluator_const(false))
 	end
 
-    	xr_sound.load_sound(self.object)
+	xr_sound.load_sound(self.object)
 
 	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_stalker, self.loaded )
 

@@ -2,6 +2,20 @@
 -- hi_flyer, OLR mod 2012-2024
 -- olr.beep()
 
+function reward_killers_ac()
+	local bol_var = math.random(1,5)
+	if bol_var == 1 then
+		olr.give_item("wpn_desert_eagle")
+	elseif bol_var == 2 then
+		olr.give_item("wpn_aks74")
+	elseif bol_var == 3 then
+		olr.give_item("wpn_aps_sk1")
+	elseif bol_var == 4 then
+		olr.give_item("wpn_gsh18")
+	elseif bol_var == 5 then
+		olr.give_item("wpn_mp5")
+	end
+end
 
 function holmi_uch_spas_fail()
 	if has_alife_info("otpravlaet_spat_gg_done") or has_alife_info("fobos_dead_mil") or has_alife_info("fobos_dead_mil_uchen") then
@@ -11827,7 +11841,7 @@ local sim = alife()
 		if kill:name() == "gar_dolg_blokpost" then        
                 local obj = alife():create("yaroslav", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 		if obj then
-			olr_timers.st_timer("jar_toprip_durak", 500, "nick.jar_toprip_durak("..tostring(obj.id)..")")
+			olr_timers.st_timer("jar_toprip_durak", 1500, "nick.jar_toprip_durak("..tostring(obj.id)..")")
 			olr.add_spot_on_map( obj.id,"green_location", game.translate_string("spawn_yaroslav_garbage_map"))
 			table.insert(olr_offline_walk.tabst, obj)
 		end
@@ -12987,6 +13001,19 @@ olr.del_by_name("lvl4_darkdolina_karlik_0020")
 olr.del_by_name("lvl4_darkdolina_karlik_0021")
 olr.del_by_name("lvl4_darkdolina_karlik_0023")
 olr.del_by_name("lvl4u_darklab_space_restrictor_0014")
+
+olr.del_by_name("lvl4u_darklab_karlik")
+olr.del_by_name("lvl4u_darklab_karlik_0000")
+olr.del_by_name("lvl4u_darklab_karlik_0001")
+olr.del_by_name("lvl4u_darklab_karlik_0002")
+olr.del_by_name("lvl4u_darklab_karlik_0004")
+olr.del_by_name("lvl4u_darklab_karlik_0005")
+olr.del_by_name("lvl4u_darklab_karlik_0006")
+olr.del_by_name("lvl4u_darklab_karlik_0007")
+olr.del_by_name("lvl4u_darklab_karlik_0008")
+olr.del_by_name("lvl4u_darklab_karlik_0009")
+olr.del_by_name("lvl4u_darklab_karlito")
+olr.del_by_name("lvl4u_darklab_karlito_0002")
 end
 
 
@@ -13466,21 +13493,21 @@ end
 
 
 function del_prizrak_esk_most()
-     	level.add_pp_effector("black.ppe", 20131, false)
+    level.add_pp_effector("black.ppe", 20131, false)
 	soundtrack.esc_prizrak_agressive()
 	olr_timers.st_timer("del_prizrak_esk_timer", 5, "nick.del_prizrak_esk_most_deltimer()")
 
  	db.actor:disable_info_portion("esc_prizrak_lamp_info")
 
 	for i=1, 65534 do
-	local car = level.object_by_id(i)
-	if car then
-	if car ~= nil and 
-	car:name() == "lvl1_escape_stalker_0038" then
-    	local bloodbridgew5 = vector():set( 10056, -0.36, 157 )
-	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
-	end
-	end
+		local car = level.object_by_id(i)
+			if car then
+				if car ~= nil and car:name() == "lvl1_escape_stalker_0038" then
+					db.actor:change_character_reputation(45)
+					local bloodbridgew5 = vector():set( 10056, -0.36, 157 )
+					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+			end
+		end
 	end
 end
 
@@ -19505,15 +19532,16 @@ end
 
 
 function sms_esc_olr_kvest_3_zametki_bio()
-olr.to_online("esc_jaba_radio")
+	olr.to_online("esc_jaba_radio")
 	olr.beep()
-local sactor = alife():actor()
-local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news(game.translate_string("st_sms_esc_olr_kvest_3_zametki_bio"),"ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
-local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	local sactor = alife():actor()
+	local cactor = level.object_by_id(sactor.id)
+	cactor:give_game_news(game.translate_string("st_sms_esc_olr_kvest_3_zametki_bio"),"ui\\ui_iconsTotal",Frect():set(332,950,50,50),math.random(1000, 1500),35000)
+	local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("lvl1_escape_physic_object_0341")
 	olr_timers.st_timer("pda_zarad_info_zaba", 3, "nick.pda_zarad_info_zaba()")
+	news_manager.send_tip(db.actor, game.translate_string("minimap_scale_info_zaba_0"), 10, "default", 39000)
 end
 
 

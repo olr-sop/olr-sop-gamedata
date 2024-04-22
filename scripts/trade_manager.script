@@ -13,11 +13,11 @@ function parse_condlist1( src )
 		ic, is = {}, {}	-- "+infop1 -infop2 +infop3 ..." -> { "infop_name" = true/false }
 
 		s1, s2, s3 = string_match( s, "([^{]*){([^}]+)}(.*)" )	-- Выделяем список info для проверки
-		if s2 then parse_infop( ic, s2 ); s = s1 .. s3 end
+		if s2 then parse_infop( ic, s2 ) s = s1 .. s3 end
 
 		-- куда переключаемся, и какие info ставим/убираем, в произвольном порядке
 		s1, s2, s3 = string_match( s, "([^%%]*)%%([^%%]+)%%(.*)" )	-- список info для установки
-		if s2 then parse_infop( is, s2 ); s = s1 .. s3 end	-- s - имя секции
+		if s2 then parse_infop( is, s2 ) s = s1 .. s3 end	-- s - имя секции
 
 		n = n + 1
 		t[n] = { ["section"] = string_match( s, "%s*(.*)" ), ["infop_check"] = ic, ["infop_set"] = is }
@@ -111,7 +111,7 @@ function save( npc, pk )
 	local tt = t_data[npc:id()]
 
 	if tt then pk:w_bool( true )
-	else pk:w_bool( false ); return
+	else pk:w_bool( false ) return
 	end
 
 	pk:w_stringZ( tt.cfg_ltx )

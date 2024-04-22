@@ -1,22 +1,22 @@
 class "PhantomManager"
 function PhantomManager:__init()
-	self.phantom_count		= 0;
+	self.phantom_count		= 0
 end
-g_PhantomManager			= PhantomManager();
+g_PhantomManager			= PhantomManager()
 
 function PhantomManager:add_phantom		()
-	self.phantom_count		= self.phantom_count + 1;
+	self.phantom_count		= self.phantom_count + 1
 end
 function PhantomManager:remove_phantom	()
-	self.phantom_count		= self.phantom_count - 1;
+	self.phantom_count		= self.phantom_count - 1
 end
 function PhantomManager:spawn_phantom	(pos)
-	level.spawn_phantom		(pos);
+	level.spawn_phantom		(pos)
 end
 
 class "Phantom"		(object_binder)
 function Phantom:__init(obj) super(obj)
-	g_PhantomManager:add_phantom();
+	g_PhantomManager:add_phantom()
 end
 
 local no_levels = {
@@ -26,9 +26,9 @@ local no_levels = {
 }
 
 function Phantom:net_destroy()
-	g_PhantomManager:remove_phantom();
+	g_PhantomManager:remove_phantom()
 	if db.actor and self.object:position():distance_to(db.actor:position()) < 1.5 then
-		--// защита от контра и фантомов
+		-- защита от контра и фантомов
 		local psystab = db.actor:object("psystab_helmet")
 		if psystab and psystab:condition() > 0.1 then
 			local condloss = 0.06
@@ -60,8 +60,8 @@ function bind(obj)
 end
 
 function spawn_phantom		(pos)
-	g_PhantomManager:spawn_phantom(pos);
+	g_PhantomManager:spawn_phantom(pos)
 end
 function phantom_count		()
-	return g_PhantomManager.phantom_count;
+	return g_PhantomManager.phantom_count
 end

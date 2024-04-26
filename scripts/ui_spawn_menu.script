@@ -21,6 +21,7 @@ local tMyItems = nil
 local tNames   = {}
 local tClassId = {}
 local tInvName = {}
+local tCarName = {}
 local tComName = {}
 local iMaxRows = 10
 --/ -----------------------------------------------------------------
@@ -407,9 +408,17 @@ function Get_InvName(sSection)
 		if sInvName then
 			local sInvNameShort = utils.cfg_get_string(system_ini(), sSection, "inv_name_short", nil, false, "", nil)
 			tInvName[sSection] = sInvNameShort or sInvName
+			return tInvName[sSection] or "" --/>
 		end
 	end
-	return tInvName[sSection] or "" --/>
+	if not tCarName[sSection] then
+		local tCarName = utils.cfg_get_string(system_ini(), sSection, "car_name", nil, false, "", nil)
+		if tCarName then
+			tCarName[sSection] = tCarName
+			return tCarName[sSection] or "" --/>
+		end
+	end
+	return ""
 end
 
 function Get_ComName(sSection)

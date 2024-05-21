@@ -75,7 +75,7 @@ local section = item_in_hands:section()
 	
 	if section == "snotvornoe" then
 		db.actor.alcohol = 1
-			db.actor:set_actor_sleep(-1)
+			db.actor:change_actor_sleep(-1)
 	end
 	
 	if section == "psy_stabilizator" then
@@ -104,7 +104,7 @@ local section = item_in_hands:section()
 	
 	if section == "vodka" then
 		if has_alife_info("actor_healing_antirad") then
-			db.actor:set_actor_sleep(-1)
+			db.actor:change_actor_sleep(-1)
 		end
 			db.actor:give_info_portion("actor_healing_antirad")
 			olr_timers.st_timer("eat_radiation_tmr_timer", 10, "nick.eat_radiation_tmr_timer()")
@@ -129,7 +129,7 @@ local section = item_in_hands:section()
 				db.actor.health = - 0.3
 			end
 			olr.hud_tip("", game.translate_string("st_olr_item_efs_too_much_drink"), 7)
-			db.actor:set_actor_sleep(-0.6)
+			db.actor:change_actor_sleep(-0.6)
 			--news_manager.send_tip(db.actor, game.translate_string("use_hud_item_4"), nil, "default", 6000)
 		end
 			if ( xr_conditions.actor_in_zone(nil,nil,{"lvl12_radar_bunker_space_restrictor_fake_lab_waro"}))  then
@@ -138,7 +138,7 @@ local section = item_in_hands:section()
 			end
 		end
 			if has_alife_info("eat_medkit_tmr") then
-			db.actor:set_actor_sleep(-1)
+			db.actor:change_actor_sleep(-1)
 		end
 		if xvars.count_rad_weak > 0 then
 			xvars.count_rad_weak = xvars.count_rad_weak - 0.001
@@ -359,6 +359,7 @@ local section = item_in_hands:section()
 		end
 	end
 	
+	local cond = item_in_hands:condition()
 	if section == "bread" or section == "kolbasa" or section == "conserva" or section == "rat_food" or section == "crow_food" then 
 		if xvars.foods[item_in_hands:name()] == true then
 			--news_manager.send_tip(db.actor, "сожрали облучённую еду - накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
@@ -366,7 +367,6 @@ local section = item_in_hands:section()
 			xvars.foods[item_in_hands:name()] = nil
 			--log1("del food variable")
 		end
-		local cond = item_in_hands:condition()
 		if cond <= 0 then
 			db.actor.satiety = 0.15
 		end
@@ -386,7 +386,6 @@ local section = item_in_hands:section()
 			obj:hit(h)
 			end
 		end)
-		local full_sat = 0.85
 		--local full_satc -- он конченный или да? зачем макс уровень сытости от сложности???
 		--local gdiff = level.get_game_difficulty()
 		--if gdiff == 0 then
@@ -398,37 +397,14 @@ local section = item_in_hands:section()
 		--elseif gdiff == 3 then
 		--	full_satc = 0.50
 		--end
-		local s_cond = 1 - item_in_hands:condition()
-		local curr_sat = full_sat - s_cond / 3
-		db.actor.satiety = curr_sat
-		if curr_sat < 0 then
-			--log1(" CONSERVA < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-			db.actor.satiety = 0.15
-		end
 		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
 	end
 	
 	if section == "bread" then
-		local full_sat = 0.45
-		local s_cond = 1 - item_in_hands:condition()
-		local curr_sat = full_sat - s_cond / 3
-		db.actor.satiety = curr_sat
-		if curr_sat < 0 then
-			--log1(" BREAD < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-			db.actor.satiety = 0.12
-		end
 		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
 	end
 	
 	if section == "kolbasa" then
-		local full_sat = 0.65
-		local s_cond = 1 - item_in_hands:condition()
-		local curr_sat = full_sat - s_cond / 3
-		db.actor.satiety = curr_sat
-		if curr_sat < 0 then
-			--log1(" KOLBASA < 0   lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-			db.actor.satiety = 0.15
-		end
 		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
 	end
 	
@@ -459,8 +435,33 @@ local section = item_in_hands:section()
 			amk.spawn_item_in_inv("fake_pribor_jaba_zameryany")
 	end
 	-------------------------------------------------------------------------
+	local ini = system_ini()
+	local eat_health_val 		= 0
+	local eat_satiety_val 		= 0
+	local eat_power_val 		= 0
+	local eat_alcohol_val 		= 0
+	local wounds_heal_perc_val	= 0
+	local water_power_val 		= 0
 
-
+	local cond_new				= cond
+	if cond <= 0.15 then
+		cond_new = 0.15
+	end
+	eat_sleep_val				= cond_new * utils.cfg_get_float(ini, section, "eat_sleep", 0)
+	eat_health_val 				= cond_new * utils.cfg_get_float(ini, section, "eat_health", 0)
+	eat_satiety_val 			= cond_new * utils.cfg_get_float(ini, section, "eat_satiety", 0)
+	eat_power_val 				= cond_new * utils.cfg_get_float(ini, section, "eat_power", 0)
+	eat_alcohol_val 			= cond_new * utils.cfg_get_float(ini, section, "eat_alcohol", 0)
+	wounds_heal_perc_val		= cond_new * utils.cfg_get_float(ini, section, "wounds_heal_perc", 0)
+	water_power_val 			= cond_new * utils.cfg_get_float(ini, section, "water_power", 0)
+	
+	db.actor:change_actor_health(eat_health_val)
+	db.actor:change_actor_satiety(eat_satiety_val)
+	db.actor:change_actor_power(eat_power_val)
+	db.actor:change_actor_alcohol(eat_alcohol_val)
+	db.actor:change_actor_sleep(eat_sleep)
+	db.actor:change_actor_thirst(water_power_val)
+	db.actor:heal_wounds(-wounds_heal_perc_val)
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

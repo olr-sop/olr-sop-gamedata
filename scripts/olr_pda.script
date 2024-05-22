@@ -177,12 +177,13 @@ function pda_talk:InitControls()
 	self:Init(0,0,1024,768)
 	
 	self.xml = CScriptXmlInit()
-	
+	local mode = ""
 	if self.xml:is_16_9_mode() then
-		self.xml:ParseFile("pda_talk_16.xml")
-	else
-		self.xml:ParseFile("pda_talk.xml")
+		mode = "_16"
 	end
+	local pda_type = string.format("%d", self.xml:get_pda_type())
+	local xml_name = "pda_type_"..pda_type.."\\pda_talk_"..pda_type..mode..".xml"
+	self.xml:ParseFile(xml_name)
 	
 	self.frame_back = self.xml:InitStatic("frame:frame_back", self)
 	self.frame_fr = self.xml:InitFrame("frame:frame", self)

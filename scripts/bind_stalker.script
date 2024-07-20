@@ -340,11 +340,28 @@ function actor_binder:OnKey(dik)
 end
 
 function actor_binder:on_hit(obj, amount, local_direction, who, bone_index) 
-        olr_bolezn.on_actor_hit(who)
 	olr.on_actor_hit(obj, amount, local_direction, who, bone_index) 
 	--log1(""..obj:name().." - "..who:name().." - "..amount.."")
 end 
+function suicide_knife()
+	if skinfe_flag == false then
+		skinfe_flag = true
+		level.disable_input()
+		level.hide_indicators()
+		olr_timers.st_timer("actor_suicide_timer", 5, "olr_bolezn.actor_suicide_timer()")
+		olr_timers.st_timer("actor_suicide_timer_1", 3, "olr_bolezn.actor_suicide_timer_1()")
 
+		local aitem = db.actor:active_item()
+		if aitem and (db.actor:active_slot()~=0) then 
+			db.actor:drop_item(aitem) 
+		end
+
+		local itm_in_knifeslot = db.actor:item_in_slot(0)
+		if itm_in_knifeslot then
+			olr.del(itm_in_knifeslot)
+		end
+	end
+end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:level_border_enter(npc, info_id)

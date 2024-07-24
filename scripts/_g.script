@@ -648,6 +648,115 @@ function pp_linear_lerp:process(pp)
 
     return          true
 end
+-------------------------------------------------------------------------------------------
+function IsMonster (object, class_id)
+    local id = class_id or get_clsid (object)
+    if id == clsid.boar_s or
+       id == clsid.bloodsucker_s or
+       id == clsid.dog_s or
+       id == clsid.flesh_s or
+       id == clsid.pseudodog_s or
+       id == clsid.psy_dog_s or
+       id == clsid.burer_s or
+       id == clsid.cat_s or
+       id == clsid.chimera_s or
+       id == clsid.controller_s or
+       id == clsid.fracture_s or
+       id == clsid.poltergeist_s or
+       id == clsid.gigant_s or
+       id == clsid.zombie_s or
+       id == clsid.tushkano_s or
+       id == clsid.snork_s
+    then
+	    return true
+	end
+    return false
+end
+-------------------------------------------------------------------------------------------
+function IsStalker (object, class_id)
+    local id = class_id or get_clsid (object)
+    if id == clsid.actor or id == clsid.script_stalker then
+       return true
+    end
+    return false
+end
+
+-- проверяет оружие ли это (передавать game_object)
+function isWeapon(object)
+    local id = get_clsid(object)
+    if id == nil then return false end
+
+    if id == clsid.wpn_vintorez_s then return true
+    elseif id == clsid.wpn_ak74_s then return true
+    elseif id == clsid.wpn_lr300_s then return true
+    elseif id == clsid.wpn_hpsa_s then return true
+    elseif id == clsid.wpn_pm_s then return true
+    elseif id == clsid.wpn_shotgun_s then return true
+    elseif id == clsid.wpn_bm16_s then return true
+    elseif id == clsid.wpn_svd_s then return true
+    elseif id == clsid.wpn_svu_s then return true
+    elseif id == clsid.wpn_rpg7_s then return true
+    elseif id == clsid.wpn_val_s then return true
+    elseif id == clsid.wpn_walther_s then return true
+    elseif id == clsid.wpn_usp45_s then return true
+    elseif id == clsid.wpn_groza_s then return true
+    elseif id == clsid.wpn_knife_s then return true
+    elseif id == clsid.wpn_vintorez then return true
+    elseif id == clsid.wpn_ak74 then return true
+    elseif id == clsid.wpn_lr300 then return true
+    elseif id == clsid.wpn_hpsa then return true
+    elseif id == clsid.wpn_pm then return true
+    elseif id == clsid.wpn_shotgun then return true
+    elseif id == clsid.wpn_bm16 then return true
+    elseif id == clsid.wpn_svd then return true
+    elseif id == clsid.wpn_svu then return true
+    elseif id == clsid.wpn_rpg7 then return true
+    elseif id == clsid.wpn_val then return true
+    elseif id == clsid.wpn_walther then return true
+    elseif id == clsid.wpn_usp45 then return true
+    elseif id == clsid.wpn_groza then return true
+    elseif id == clsid.wpn_knife then return true
+    elseif id == clsid.wpn_grenade_launcher then return true
+    elseif id == clsid.wpn_grenade_f1 then return true
+    elseif id == clsid.wpn_grenade_rpg7 then return true
+    elseif id == clsid.wpn_grenade_rgd5 then return true
+    elseif id == clsid.wpn_grenade_fake then return true
+    else return false end
+end
+
+function isArtefact(object)
+    local id = get_clsid(object)
+    if id == nil then return false end
+
+    if id == clsid.art_bast_artefact then return true
+    elseif id == clsid.art_black_drops then return true
+    elseif id == clsid.art_dummy then return true
+    elseif id == clsid.art_electric_ball then return true
+    elseif id == clsid.art_faded_ball then return true
+    elseif id == clsid.art_galantine then return true
+    elseif id == clsid.art_gravi then return true
+    elseif id == clsid.art_gravi_black then return true
+    elseif id == clsid.art_mercury_ball then return true
+    elseif id == clsid.art_needles then return true
+    elseif id == clsid.art_rusty_hair then return true
+    elseif id == clsid.art_thorn then return true
+    elseif id == clsid.art_zuda then return true
+    elseif id == clsid.artefact then return true
+    elseif id == clsid.artefact_s then return true
+    else return false end
+end
+
+function isAmmo(object)
+  local id = get_clsid(object)
+  if id == nil then
+	return false
+	end
+  if id == clsid.wpn_ammo then
+	return true
+  else
+	return false
+	end
+end
 
 function pp_linear_lerp:finished()
     return          self.stop_time < time_global()
@@ -1252,79 +1361,6 @@ function get_clsid(npc)
 --    end
 end
 
--- проверяет оружие ли это (передавать game_object)
-function isWeapon(object)
-    local id = get_clsid(object)
-    if id == nil then return false end
-
-    if id == clsid.wpn_vintorez_s then return true
-    elseif id == clsid.wpn_ak74_s then return true
-    elseif id == clsid.wpn_lr300_s then return true
-    elseif id == clsid.wpn_hpsa_s then return true
-    elseif id == clsid.wpn_pm_s then return true
-    elseif id == clsid.wpn_shotgun_s then return true
-    elseif id == clsid.wpn_bm16_s then return true
-    elseif id == clsid.wpn_svd_s then return true
-    elseif id == clsid.wpn_svu_s then return true
-    elseif id == clsid.wpn_rpg7_s then return true
-    elseif id == clsid.wpn_val_s then return true
-    elseif id == clsid.wpn_walther_s then return true
-    elseif id == clsid.wpn_usp45_s then return true
-    elseif id == clsid.wpn_groza_s then return true
-    elseif id == clsid.wpn_knife_s then return true
-    elseif id == clsid.wpn_vintorez then return true
-    elseif id == clsid.wpn_ak74 then return true
-    elseif id == clsid.wpn_lr300 then return true
-    elseif id == clsid.wpn_hpsa then return true
-    elseif id == clsid.wpn_pm then return true
-    elseif id == clsid.wpn_shotgun then return true
-    elseif id == clsid.wpn_bm16 then return true
-    elseif id == clsid.wpn_svd then return true
-    elseif id == clsid.wpn_svu then return true
-    elseif id == clsid.wpn_rpg7 then return true
-    elseif id == clsid.wpn_val then return true
-    elseif id == clsid.wpn_walther then return true
-    elseif id == clsid.wpn_usp45 then return true
-    elseif id == clsid.wpn_groza then return true
-    elseif id == clsid.wpn_knife then return true
-    elseif id == clsid.wpn_grenade_launcher then return true
-    elseif id == clsid.wpn_grenade_f1 then return true
-    elseif id == clsid.wpn_grenade_rpg7 then return true
-    elseif id == clsid.wpn_grenade_rgd5 then return true
-    elseif id == clsid.wpn_grenade_fake then return true
-    else return false end
-end
-
-
-function isArtefact(object)
-    local id = get_clsid(object)
-    if id == nil then return false end
-
-    if id == clsid.art_bast_artefact then return true
-    elseif id == clsid.art_black_drops then return true
-    elseif id == clsid.art_dummy then return true
-    elseif id == clsid.art_electric_ball then return true
-    elseif id == clsid.art_faded_ball then return true
-    elseif id == clsid.art_galantine then return true
-    elseif id == clsid.art_gravi then return true
-    elseif id == clsid.art_gravi_black then return true
-    elseif id == clsid.art_mercury_ball then return true
-    elseif id == clsid.art_needles then return true
-    elseif id == clsid.art_rusty_hair then return true
-    elseif id == clsid.art_thorn then return true
-    elseif id == clsid.art_zuda then return true
-    elseif id == clsid.artefact then return true
-    elseif id == clsid.artefact_s then return true
-    else return false end
-end
-
-function isAmmo(object)
-  local id = get_clsid(object)
-  if id==nil then return false end
-  if id==clsid.wpn_ammo then return true
-  else return false end
-end
-
 --Tvўшёы хЄ yaw т Ёрфшрэрї
 function yaw( v1, v2 )
     return  math.acos( ( (v1.x*v2.x) + (v1.z*v2.z ) ) / ( math.sqrt(v1.x*v1.x + v1.z*v1.z ) * math.sqrt(v2.x*v2.x + v2.z*v2.z ) ) )
@@ -1581,38 +1617,6 @@ end
 function get_actor_id()
 	if(level.actor() == nil) then return -1 end
 	return level.actor():id()
-end
--------------------------------------------------------------------------------------------
-function IsMonster (object, class_id)
-    local id = class_id or get_clsid (object)
-    if id == clsid.boar_s or
-       id == clsid.bloodsucker_s or
-       id == clsid.dog_s or
-       id == clsid.flesh_s or
-       id == clsid.pseudodog_s or
-       id == clsid.psy_dog_s or
-       id == clsid.burer_s or
-       id == clsid.cat_s or
-       id == clsid.chimera_s or
-       id == clsid.controller_s or
-       id == clsid.fracture_s or
-       id == clsid.poltergeist_s or
-       id == clsid.gigant_s or
-       id == clsid.zombie_s or
-       id == clsid.tushkano_s or
-       id == clsid.snork_s
-    then
-	    return true
-	end
-    return false
-end
--------------------------------------------------------------------------------------------
-function IsStalker (object, class_id)
-    local id = class_id or get_clsid (object)
-    if id == clsid.actor or id == clsid.script_stalker then
-       return true
-    end
-    return false
 end
 -------------------------------------------------------------------------------------------
 function level_object_by_sid( sid )

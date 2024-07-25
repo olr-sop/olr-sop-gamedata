@@ -40,27 +40,6 @@ function tmr_drop(obj)
 	xvars.item_drop_inv[obj:name()] = true 
 end
 
-local artefact_classes_table = {
-	[clsid.artefact] = true,
-	[clsid.art_gravi] = true,
-	[clsid.art_galantine] = true,
-	[clsid.art_rusty_hair] = true,
-	[clsid.art_electric_ball] = true,
-	[clsid.art_faded_ball] = true,
-	[clsid.art_thorn] = true,
-	[clsid.art_zuda] = true,
-	[clsid.art_dummy] = true,
-	[clsid.art_gravi_black] = true,
-	[clsid.art_bast_artefact] = true,
-	[clsid.art_needles] = true,
-	[clsid.art_black_drops] = true,
-	[clsid.art_mercury_ball] = true,
-}
-
-function isArtefact(item)
-	return artefact_classes_table[item:clsid()]
-end
-
 function upd_drop()
 	if time_global() > tup10000 then
 	tup10000 = time_global() + tmerup10000
@@ -76,7 +55,7 @@ function upd_drop()
 						xvars.pos_y = 0
 						xvars.pos_z = 0
 						local item_name = obj:get_name()
-						if isArtefact and system_ini():line_exist(obj:section(), "known_info") then
+						if isArtefact(obj) and system_ini():line_exist(obj:section(), "known_info") then
 							-- свойства
 							local known_inf = system_ini():r_string(obj:section(), "known_info")
 							if not has_alife_info(known_inf) then
@@ -218,7 +197,7 @@ function obj_to_ruck(obj)
 						--end
 						olr_ruck_limit.tmr_drop(obj, true)
 						local item_name = obj:get_name()
-						if isArtefact and system_ini():line_exist(obj:section(), "known_info") then
+						if isArtefact(obj) and system_ini():line_exist(obj:section(), "known_info") then
 							-- свойства
 							local known_inf = system_ini():r_string(obj:section(), "known_info")
 							if not has_alife_info(known_inf) then

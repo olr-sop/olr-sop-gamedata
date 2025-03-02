@@ -34,8 +34,8 @@ simulation_document =
 ["jornal_2"] = true,
 ["jornal_3"] = true,
 ["jornal_4"] = true,
-["jornal_5"] = true,
-["jornal_6"] = true,
+--["jornal_5"] = true,
+--["jornal_6"] = true,
 ["gazeta_otrivok_1"] = true,
 ["jurn_psi_defence"] = true,
 ["jurn_psi_vision"] = true,
@@ -164,7 +164,7 @@ function add_fresh_meat(obj)
 
 			if not off_npcs[map] then off_npcs[map]={monsters={},stalkers={},weapons={},artefacts={},inv_boxes={},documents={},anoms={}} end
 
-			-- // Документы
+			-- Документы
 			if simulation_document[obj:section_name()] == true then
 				--log1("!!!!добавляем ДОКУМЕНТ!!! "..obj:name().."")
 				if (obj.parent_id ~= nil) then
@@ -190,7 +190,7 @@ function add_fresh_meat(obj)
 					--log1("!!!!добавляем ДОКУМЕНТ в таблицу!!!"..obj:name().."")
 				end
 			end
-			-- // Документы
+			-- Документы
 
 			-- 4294967296
 			if IsMonster(obj) and obj.alive and obj:alive() and obj.health and obj:health()>0 and obj.m_story_id~=nil and obj.m_story_id == 4294967296 then
@@ -1805,12 +1805,12 @@ function on_document_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл documents "..obj:name().." - его ранк теперь "..victim:rank().."", nil, "default", 59000)
 
 						if obj:section_name() == "jornal_1" then
-							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на медприборе 1", nil, "default", 59000)
+							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на Агропроме 1", nil, "default", 59000)
 							--log1("find dok on medpribor 1")
 							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
 						elseif obj:section_name() == "jornal_3" then
-							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на медприборе 3", nil, "default", 59000)
+							--news_manager.send_tip(db.actor, "cталкер "..victim:name().." нашёл инфу на Агропроме 3", nil, "default", 59000)
 							--log1("find dok on medpribor 3")
 							news_main.on_document_find(victim, obj)
 							xvars.npcs_who_find_docs_id[victim:name()] = victim.id
@@ -1865,7 +1865,7 @@ function on_inv_boxes_found(victim, vdata)
 			b_stalker = true
 		end
 	end
-	--news_manager.send_tip(db.actor, " try to check box 1 ", nil, "default", 9000)
+	--news_manager.send_tip(db.actor, game.translate_string("on_inv_boxes_found_0"), nil, "default", 9000)
 	for i=1, table.getn(vdata.inv_boxes) do
 		v_obj = vdata.inv_boxes[i]
 		if (v_obj) then
@@ -1886,7 +1886,7 @@ function on_inv_boxes_found(victim, vdata)
 								if bTake then
 									news_manager.send_tip("on_inv_boxes_found 313 - found "..itA:section_name().." in "..object:name())
 									--if v_obj:name() == "lvl5_bar_inventory_box" then
-									--	news_manager.send_tip(db.actor, "воруют с нашей хаты ", nil, "default", 19000)
+									--	news_manager.send_tip(db.actor, game.translate_string("on_inv_boxes_found_1"), nil, "default", 19000)
 									--end
 									pick_item_box(victim, itA)
 								end
@@ -1961,7 +1961,7 @@ function pick_item(npc, obj)
 					return
 				end
 			elseif rnd == 2 then 
-				--news_manager.send_tip(db.actor, "солдатик с кордона берет хабар себе - не берем ", nil, "unknown", 19000)
+				--news_manager.send_tip(db.actor, game.translate_string("pick_item_0"), nil, "unknown", 19000)
 				return
 			else
 				--news_manager.send_tip(db.actor, "солдатик с кордона берет хабар себе ["..obj:name().."] ", nil, "unknown", 19000)
@@ -2204,72 +2204,74 @@ end
 ]]
 
 local snames={
-"Сивый",
-"Бешеный",
-"Гнилой",
-"Хирург",
-"Коматозник",
-"Косой",
-"Косолапый",
-"Костлявый",
-"Кривой",
-"Кривоног",
-"Ловкач",
-"Сиплый",
-"Лысак",
-"Синий",
-"Любимчик",
-"Лютый",
-"Малыш",
-"Болотный",
-"Мертвец",
-"Мёртвый",
-"Местный",
-"Мрачный",
-"Паук",
-"Пес",
-"Мутный",
-"Мятый",
-"Нарцисс",
-"Чёрный",
-"Небрежный",
-"Неудачник",
-"Нуб",
-"Нытик",
-"Идиот",
-"Хам",
-"Нудный",
-"Одноглазый",
-"Паук",
-"Паразит",
-"Параноик",
-"Пижон",
-"Неуязвимый",
-"Плут",
-"Подлец",
-"Покойник",
-"Праведный",
-"Простак",
-"Псих"
+"st_amk_offline_alife_sname_1",
+"st_amk_offline_alife_sname_2",
+"st_amk_offline_alife_sname_3",
+"st_amk_offline_alife_sname_4",
+"st_amk_offline_alife_sname_5",
+"st_amk_offline_alife_sname_6",
+"st_amk_offline_alife_sname_7",
+"st_amk_offline_alife_sname_8",
+"st_amk_offline_alife_sname_9",
+"st_amk_offline_alife_sname_10",
+"st_amk_offline_alife_sname_11",
+"st_amk_offline_alife_sname_12",
+"st_amk_offline_alife_sname_13",
+"st_amk_offline_alife_sname_14",
+"st_amk_offline_alife_sname_15",
+"st_amk_offline_alife_sname_16",
+"st_amk_offline_alife_sname_17",
+"st_amk_offline_alife_sname_18",
+"st_amk_offline_alife_sname_19",
+"st_amk_offline_alife_sname_20",
+"st_amk_offline_alife_sname_21",
+"st_amk_offline_alife_sname_22",
+"st_amk_offline_alife_sname_23",
+"st_amk_offline_alife_sname_24",
+"st_amk_offline_alife_sname_25",
+"st_amk_offline_alife_sname_26",
+"st_amk_offline_alife_sname_27",
+"st_amk_offline_alife_sname_28",
+"st_amk_offline_alife_sname_29",
+"st_amk_offline_alife_sname_30",
+"st_amk_offline_alife_sname_31",
+"st_amk_offline_alife_sname_32",
+"st_amk_offline_alife_sname_33",
+"st_amk_offline_alife_sname_34",
+"st_amk_offline_alife_sname_35",
+"st_amk_offline_alife_sname_36",
+"st_amk_offline_alife_sname_37",
+"st_amk_offline_alife_sname_38",
+"st_amk_offline_alife_sname_39",
+"st_amk_offline_alife_sname_40",
+"st_amk_offline_alife_sname_41",
+"st_amk_offline_alife_sname_42",
+"st_amk_offline_alife_sname_43",
+"st_amk_offline_alife_sname_44",
+"st_amk_offline_alife_sname_45",
+"st_amk_offline_alife_sname_46",
+"st_amk_offline_alife_sname_47"
 }
 
 function set_nickname(sobj)
+	local unknown_novice = game.translate_string("neizvestnyy_novichok")
+	local unknown_stalker = game.translate_string("neizvestnyy_stalker")
 	local rnd = math.random(1,5)
 	if rnd == 1 then
 	local pk = get_netpk(sobj,1)
   	if pk:isOk() then
     		local data = pk:get()
         	stname = tostring(data.character_name)
-		if stname == "Неизвестный новичок" or stname == "Неизвестный сталкер" then
-			local ssname=snames[math.random(table.getn(snames))]
+		if stname == unknown_novice or stname == unknown_stalker then
+			local ssname=game.translate_string(snames[math.random(table.getn(snames))])
 			data.character_name = tostring(ssname)
 			pk:set(data)
 			--news_manager.send_tip(db.actor, "set nickname -- "..sobj:name().." SET -- "..ssname.." ", nil, "freedom", 9000)
 			local seer = news_main.get_nearest_stalker(sobj.level_name, sobj.position, 30, 1)
 			if seer then
 				seer_name = news_main.get_npc_name(seer)
-				if tostring(seer_name) ~= tostring("Неизвестный новичок") or tostring(seer_name) ~= tostring("Неизвестный сталкер") then
-					news_manager.send_tip(db.actor, ""..seer_name..": Интересный сталкер тут появился, да без кликухи... будешь теперь так зваться - "..ssname.." ", 5, "default", 9000)
+				if tostring(seer_name) ~= tostring(unknown_novice) or tostring(seer_name) ~= tostring(unknown_stalker) then
+					news_manager.send_tip(db.actor, ""..seer_name.. game.translate_string("st_amk_offline_alife_name_giver") ..ssname.." ", 5, "default", 9000)
 				end
 			end
 		end
@@ -2612,7 +2614,7 @@ function now_trade_ofl_bar(obj)
 								local rnd = math.random(1,12)
 								if rnd == 1 then
 									flgwpn = true
-									news_manager.send_tip(db.actor, "Получил партию оружия на продажу. Есть интересные и дорогостоящие образцы.", 15, "barman", 39000)
+									news_manager.send_tip(db.actor, game.translate_string("now_trade_ofl_bar_0"), 15, "barman", 39000)
 								end
 								end
 							end
@@ -2640,7 +2642,16 @@ function now_trade_ofl_bar(obj)
 							local rnd = math.random(1,12)
 							if rnd == 1 then
 								flgwpna = true
-								news_manager.send_tip(db.actor, "Поступили боеприпасы для продажи... Кому надо - добро пожаловать в Бар Сталкер.", 15, "barman", 39000)
+								if not has_alife_info("open_bar_door_start_krisa") then
+									return -- бармен ещё не появился с начала
+								end
+								if has_alife_info("greh_leader_key_taken_docs_vetri") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
+									return -- бармен свалил и ещё не вернулся
+								end
+								if has_alife_info("bun_antenna_off") then
+									return -- бармен свалил
+								end
+								news_manager.send_tip(db.actor, game.translate_string("now_trade_ofl_bar_1"), 15, "barman", 39000)
 							end
 							end
 							olr.del_by_name(itm:name())
@@ -2667,7 +2678,7 @@ function now_trade_ofl_bar(obj)
 		if (curmoney > 0) then
 			if xvars and xvars.npcs_tasks and xvars.npcs_tasks[obj:name()] == "cash" and obj:rank() > 300 then
 				xvars.cash_need_summa_has[obj:name()] = true
-				news_manager.send_tip(db.actor, ""..npcname..": Всё! К черту зону эту, валить буду! ", 3, "default", 19000)			
+				news_manager.send_tip(db.actor, ""..npcname.. game.translate_string("st_amk_offline_alife_npc_leave_zone"), 3, "default", 19000)			
 			end 
 		end
 		

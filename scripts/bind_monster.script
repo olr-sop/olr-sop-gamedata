@@ -98,13 +98,13 @@ function generic_object_binder:use_callback( obj, who )
 				--self.object:drop_item(item)  -- тут вылет dBodyStateValide(b)	
 				--self.object:transfer_item(item, db.actor)
 				--log1("has part - "..item:name().."")
-				olr.hud_tip("", "Получено: "..item:get_name().."", 2)
+				olr.hud_tip("", game.translate_string("st_bind_monster_received_items")..item:get_name().."", 2)
 				take_flag = 1
 				local wait_time = 0
   				wait_time = time_global() + 1000
   				level.add_call(
     				function() return time_global() > wait_time end,
-    				function() self.object:set_tip_text("Нет нужных частей") end
+    				function() self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts")) end
   				)
 			--else
 				--log1(" non has part ")
@@ -114,7 +114,7 @@ function generic_object_binder:use_callback( obj, who )
   			wait_time = time_global() + 1000
   			level.add_call(
     			function() return time_global() > wait_time end,
-    			function() self.object:set_tip_text("Нет нужных частей") end
+    			function() self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts")) end
   			)
 		end
 	end )
@@ -123,9 +123,9 @@ function generic_object_binder:use_callback( obj, who )
   			wait_time = time_global() + 3000
   			level.add_call(
     			function() return time_global() > wait_time end,
-    			function() self.object:set_tip_text("Нет нужных частей") end
+    			function() self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts")) end
   			)
-			olr.hud_tip("", "Нет подходящих образцов...", 2)
+			olr.hud_tip("", game.translate_string("st_bind_monster_no_proper_samples"), 2)
 			return
 		end
 	end
@@ -138,10 +138,10 @@ function generic_object_binder:use_callback( obj, who )
 			if bol_var == 1 then
         			local objj = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
         			level.client_spawn_manager():add(objj.id, 0, function(id,obj) obj:set_condition((math.random(30,55)/100)) end)
-				olr.hud_tip("", "Сгодится...", 2)
+				olr.hud_tip("", game.translate_string("st_bind_monster_itlldo"), 2)
 				olr.del(self.object)
 			else
-				olr.hud_tip("", "Слишком повреждено...", 2)
+				olr.hud_tip("", game.translate_string("st_bind_monster_too_damaged"), 2)
 				olr.del(self.object)
 			end
 		end
@@ -239,7 +239,7 @@ function generic_object_binder:update(delta)
                         	if npc and npc:id() == act:id() then
                         		if self.object:see(npc) then
                         			self.object:set_custom_panic_threshold(1)
-						--news_manager.send_tip(db.actor, "актор у костра аномалии в авто - паника", nil, "freedom", 9000)
+						--news_manager.send_tip(db.actor, game.translate_string("generic_object_binderupdate_0"), nil, "freedom", 9000)
                         		else
                         			self.object:set_default_panic_threshold()		
                 			end
@@ -353,7 +353,7 @@ function generic_object_binder:update(delta)
 			if dist_to_actor < 8 then
 				act.psy_health = -0.005
 			end
-			if dist_to_actor < 6 then
+			if dist_to_actor < 3 then
 				local aitem = db.actor:active_item()
                     		if aitem and math.random()<0.5 and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then
 					local wobj = level.object_by_id(aitem:id())
@@ -400,7 +400,7 @@ function generic_object_binder:update(delta)
 					zh.impulse = 0.000001
 					db.actor:hit(zh)
 					--level.add_pp_effector("snd_shock.ppe", 10101, true)
-					--news_manager.send_tip(db.actor, " bloodsucker_proto хит", nil, "freedom", 9000)
+					--news_manager.send_tip(db.actor, game.translate_string("generic_object_binderupdate_1"), nil, "freedom", 9000)
 				end
 			end
 		end
@@ -415,12 +415,12 @@ function generic_object_binder:update(delta)
 				local actorpos = db.actor:position()
 				db.actor.health = -0.00085
 
-				local par_varb = math.random(1,8)
+				local par_varb = math.random(1,22)
 				if par_varb == 1 then
         				zarazjenie_parazitom()
 				end
 
-				local par_var = math.random(1,25)
+				local par_var = math.random(1,35)
 				if par_var == 1 then
 					olr.partice_on_obj(self.object:name(),[[anomaly2\group_items\gele00]])
 					olr.cough()
@@ -481,26 +481,21 @@ function generic_object_binder:update(delta)
 			end
 
 			-- харакири
-        		if dist_to_actor < 15 then 
-        			if db.actor.psy_health <= 0.25 then
-        				olr_bolezn.suicide_knife()
-        			end
-        		end
 
                         local bol_var = math.random(1,7)
                         	if bol_var == 1 then
 			   		get_actor_obj():block_action(32)
-                           		--news_manager.send_tip(db.actor, " СТРЕЛЬБУ", nil, "freedom", 9000)
+                           		--news_manager.send_tip(db.actor, game.translate_string("generic_object_binderupdate_2"), nil, "freedom", 9000)
                            	end
 
                            	if bol_var == 2 then
                            		get_actor_obj():block_action(36)
-                           		--news_manager.send_tip(db.actor, " ПЕРЕЗАРЯДКУ", nil, "freedom", 9000)
+                           		--news_manager.send_tip(db.actor, game.translate_string("generic_object_binderupdate_3"), nil, "freedom", 9000)
                            	end
 
                            	if bol_var == 3 then
                            		get_actor_obj():block_action(4)
-                           		--news_manager.send_tip(db.actor, " ПРЫЖКИ", nil, "freedom", 9000)
+                           		--news_manager.send_tip(db.actor, game.translate_string("generic_object_binderupdate_4"), nil, "freedom", 9000)
                            	end
 
                            	if bol_var == 4 then
@@ -646,7 +641,7 @@ function generic_object_binder:death_callback(victim, who)
 		end
 		local sobj = game.translate_string(xvars.quest_two_target_yan)
 		if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken_yan") then
-			news_manager.send_tip(db.actor, "Задание выполнено - уничтожить опасного мутанта.", 1, "volna_plots", 9000)
+			news_manager.send_tip(db.actor, game.translate_string("generic_object_binderdeath_callback_0"), 1, "volna_plots", 9000)
 			level.map_remove_object_spot(self.object:id(), "monster_part_location")
 			db.actor:change_character_reputation(15)
 		end
@@ -749,7 +744,7 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 	level.set_pp_effector_factor(154523, 2.5)
         soundtrack.ros_shoot_max()
         db.actor:kill(db.actor)
-        news_manager.send_tip(db.actor, "Ты что, с ума сошёл?", nil, "trader", 3000)
+        news_manager.send_tip(db.actor, game.translate_string("generic_object_binderhit_callback_0"), nil, "trader", 3000)
         end
         end
 ]]
@@ -862,28 +857,28 @@ function zarazjenie_parazitom()
 
 			local has_art = db.actor:object("af_studen_m1")
                         if has_art and db.actor:is_on_belt(has_art) then
-				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - af_studen_m1 на поясе")
+				--news_manager.send_tip(db.actor, game.translate_string("zarazjenie_parazitom_0"))
 				return	
 			end			
 
 			if olr_timers.has_timer("bolezn_parasite_timer") then
-				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - ещё не кончился bolezn_parasite_timer")
+				--news_manager.send_tip(db.actor, game.translate_string("zarazjenie_parazitom_1"))
 				return
 			end
 
 			if olr_timers.has_timer("bolezn_parasite_timer_m") then
-				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - ещё не кончился bolezn_parasite_timer_м")
+				--news_manager.send_tip(db.actor, game.translate_string("zarazjenie_parazitom_2"))
 				return
 			end
 
 			if olr_timers.has_timer("bolezn_parasite_timer_d") then
-				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом - ещё не кончился bolezn_parasite_timer_д")
+				--news_manager.send_tip(db.actor, game.translate_string("zarazjenie_parazitom_3"))
 				return
 			end
 
                         if not has_alife_info("bolezn_parazity_info") then
                         	olr_timers.st_timer("bolezn_parasite_timer", 2250, "nick.bolezn_parasite_timer()")
-				--news_manager.send_tip(db.actor, "ЗАБОЛЕЛИ Заражение паразитом")
+				--news_manager.send_tip(db.actor, game.translate_string("zarazjenie_parazitom_4"))
 				db.actor:give_info_portion("bolezn_parazity_info")
 			end
 

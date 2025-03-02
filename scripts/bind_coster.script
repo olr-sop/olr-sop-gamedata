@@ -70,17 +70,17 @@ function coster_binder:update(delta)
 		xvars.cooked_food_name = ""
 	end
 
-	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+	--self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
 
 	local active_item = db.actor:active_item()
 	if active_item then
 		if food_sections[active_item:section()] then 
-			self.object:set_tip_text("Готовить "..active_item:get_name().." (F)")
+			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_cook")..active_item:get_name().." (F)")
 		else
-			self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
 		end
 	else
-		self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент и нажать кнопку действие, чтобы потушить нажмите TAB")
+		self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook_expanded"))
 	end
 	end
 
@@ -98,12 +98,12 @@ end
 function coster_binder:use_callback(obj,who)
 
 	if olr_timers.has_timer("coocking_timer_start") then
-		news_manager.send_tip(db.actor, "Приготовление уже идёт...", nil, "act", 3000)
+		news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_0"), nil, "act", 3000)
 		return
 	end
 
 	if level.rain_factor() > 0 then
-		news_manager.send_tip(db.actor, "В дождь не получится приготовить...", nil, "act", 3000)
+		news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_1"), nil, "act", 3000)
 		return
 	end
 
@@ -122,8 +122,8 @@ function coster_binder:use_callback(obj,who)
 	olr.del(itm_in_slot)
 
 
-	--news_manager.send_tip(db.actor, "Приготовление начато", nil, "default", 3000)
-	olr.hud_tip("", "Приготовление началось...", 4)
+	--news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_2"), nil, "default", 3000)
+	olr.hud_tip("", game.translate_string("st_bind_coster_tip_cooking_start"), 4)
 	olr_timers.st_timer("coocking_timer_start", 7, "bind_coster.create_coster_food()")
 	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент, чтобы потушить нажмите TAB")
 	end
@@ -157,7 +157,7 @@ function create_coster_food()
 		local kill = sim:object(id)
 		if kill then    
 			if kill:section_name() == "koster_razvodnoy" then
-				news_manager.send_tip(db.actor, "Костёр: Еда приготовлена.", nil, "default", 3000)
+				news_manager.send_tip(db.actor, game.translate_string("create_coster_food_0"), nil, "default", 3000)
 				local position = vector():set( 0, 0, 0 )
     				position.x = kill.position.x + math.random( -30, 30 ) / 100
     				position.z = kill.position.z + math.random( -30, 30 ) / 100
@@ -180,41 +180,41 @@ function use_spichki(obj)
 		if obj and obj:section() == "korobok_spichek" then
 
 		if xvars.coster_id ~= 0 then
-			news_manager.send_tip(db.actor, "Я уже разжёг костёр недалеко...", nil, "act", 3000)
+			news_manager.send_tip(db.actor, game.translate_string("use_spichki_0"), nil, "act", 3000)
 			return
 		end 
 		if db.actor:is_actor_outdoors() == false and xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_0005"})  == false then
-			news_manager.send_tip(db.actor, "Здесь не стоит разводить огонь...", nil, "act", 3000)
+			news_manager.send_tip(db.actor, game.translate_string("use_spichki_1"), nil, "act", 3000)
 			return
 		end
 		if level.rain_factor() > 0 then
 			local rnd = math.random(1,2)
 			if rnd == 1 then
-				news_manager.send_tip(db.actor, "В дождь не получилось разжечь огонь...", nil, "act", 3000)
+				news_manager.send_tip(db.actor, game.translate_string("use_spichki_2"), nil, "act", 3000)
 				olr.del(obj)
 				return
 			end
 		end
 		if level.vertex_id(db.actor:position() ) == -1 then
-			news_manager.send_tip(db.actor, "Тут не получится развести огонь...", nil, "act", 3000)
+			news_manager.send_tip(db.actor, game.translate_string("use_spichki_3"), nil, "act", 3000)
 			return
 		end
 		for k,v in pairs(db.storage) do
         	local stalker = level.object_by_id(k)
             		if stalker and stalker:is_custom_monster() and stalker:alive() then
 				if stalker:position():distance_to(db.actor:position()) < 4 then
-					news_manager.send_tip(db.actor, "Враги рядом...", nil, "act", 3000)
+					news_manager.send_tip(db.actor, game.translate_string("use_spichki_4"), nil, "act", 3000)
 					return
                                 end
 			end
 		end
 		--if get_actor_obj().state.stand then
-		--	news_manager.send_tip(db.actor, "Нужно стать на месте для розжига...", nil, "act", 3000)
+		--	news_manager.send_tip(db.actor, game.translate_string("use_spichki_5"), nil, "act", 3000)
 		--	return
 		--end
 		local kobj = alife():create("koster_razvodnoy", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		if not game_graph():valid_vertex_id(kobj.m_game_vertex_id) then
-			news_manager.send_tip(db.actor, "В этом месте не получится развести огонь...", nil, "act", 3000)
+			news_manager.send_tip(db.actor, game.translate_string("use_spichki_6"), nil, "act", 3000)
 			--alife():create('korobok_spichek', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 			olr.del(kobj)
 			return

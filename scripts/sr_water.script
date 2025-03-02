@@ -61,7 +61,7 @@ function action_water:update( delta )
 		bind_stalker.hide_weapon()
 		level.add_pp_effector("underwater_olr.ppe", 1138, true)
 		level.set_pp_effector_factor(1138, breath)
-		--news_manager.send_tip(db.actor, "актор внутри под водой", nil, "default", 39000)
+		--news_manager.send_tip(db.actor, game.translate_string("action_waterupdate_0"), nil, "default", 39000)
 		get_console():execute("ph_timefactor 0.2")
 
 	if has_alife_info("ui_inventory") then 
@@ -86,7 +86,7 @@ function action_water:update( delta )
 	breath = breath - math.random(1,4)
 
 	if breath < 15 then
-		db.actor.health = -0.05
+		db.actor.health = -0.01
 	end
 
 	if breath < 5 then
@@ -95,7 +95,7 @@ function action_water:update( delta )
 
 	if underwater then
 		hud:AddCustomStatic("cs_oxigen", true)
-		hud:GetCustomStatic("cs_oxigen"):wnd():SetTextST(tostring("Воздух: "..breath.." %"))    
+		hud:GetCustomStatic("cs_oxigen"):wnd():SetTextST(tostring(game.translate_string("st_sr_water_air")..breath.." %"))    
 	else
 		hud:RemoveCustomStatic("cs_oxigen")
 	end
@@ -137,12 +137,12 @@ function action_water:zone_enter()
 	if device().precache_frame < 1 then
 		snd_in_water:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end	
-	--news_manager.send_tip(db.actor, "актор зашёл", nil, "default", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("action_waterzone_enter_0"), nil, "default", 39000)
 end
 
 function action_water:zone_leave()
 	self.state = state_outside
-        --news_manager.send_tip(db.actor, "актор вышел", nil, "default", 39000)
+        --news_manager.send_tip(db.actor, game.translate_string("action_waterzone_leave_0"), nil, "default", 39000)
 	level.remove_pp_effector(1138)
 	bind_stalker.restore_weapon()
 	--if bubles_particle:playing() then 

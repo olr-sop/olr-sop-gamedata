@@ -49,7 +49,7 @@ function CInventoryBoxBinder:on_inv_box_item_take(obj)
                   local wnd = ui.get_car_body_wnd()
                   level.start_stop_menu(wnd, true)
 		  if device().precache_frame < 1 then 
-                  	news_manager.send_tip(db.actor, "Нет места для предмета.")
+                  	news_manager.send_tip(db.actor, game.translate_string("CInventoryBoxBinderon_inv_box_item_take_0"))
 		  end
 		  end
 	end
@@ -75,6 +75,9 @@ function CInventoryBoxBinder:update(delta)
 	--	log1("box - "..self.object:name().." has item - "..obj:name().."")
 	--end
 
+	if db.actor == nil then
+		return
+	end
 	if db.actor:has_info("ui_car_body") and repaintnow == false then
 		vol_obem = self.inv_mass
 		vol_obem_max = self.max_inv_mass
@@ -163,7 +166,7 @@ function ui_trade:InitControls()
 	end
 	local vol_cur = string.format("%1.0f", self.inv_vol)
 	local vol_cur_max = string.format("%1.0f", self.inv_vol_max)
-        self.vo:SetTextST(string.format("Вес: %s / "..vol_cur_max.."",  vol_cur))
+        self.vo:SetTextST(string.format(game.translate_string("st_bind_inventory_box_weight")..vol_cur_max.."",  vol_cur))
 	self.vo:SetFont(GetFontGraffiti22Russian())
 	self.vo:SetTextColor(255,255,255,255)
 	self.back:AttachChild(self.vo)

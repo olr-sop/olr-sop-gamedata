@@ -338,11 +338,9 @@ function actor_binder:OnKey(dik)
 end
 
 function actor_binder:on_hit(obj, amount, local_direction, who, bone_index) 
-        olr_bolezn.on_actor_hit(who)
 	olr.on_actor_hit(obj, amount, local_direction, who, bone_index) 
 	--log1(""..obj:name().." - "..who:name().." - "..amount.."")
-end 
-
+end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:level_border_enter(npc, info_id)
@@ -397,49 +395,49 @@ function actor_binder:article_callback(npc, group, name)
 	
 	if group == "Diary" then
 		news_manager.send_encyclopedy("diary", group)
-		amk.send_tip(game.translate_string(name), "Заметка в ПДА:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_pda_note"), nil, 27)
 
 	elseif group == "Mutants" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Информация о мутантах:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_information_mutants"), nil, 27)
 
 	elseif group == "Social" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Информация о группировке:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_information_faction"), nil, 27)
 
 	elseif group == "Artifacts" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Информация об артефактах:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_information_artifacts"), nil, 27)
 
 	elseif group == "Anomalies" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Информация об аномалиях:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_information_anomalies"), nil, 27)
 
 	elseif group == "Locations" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Информация о локации:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_information_level"), nil, 27)
 
 	elseif group == "memuars" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Заметки:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_notes"), nil, 27)
 
 	elseif group == "zone_sevenparts" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Получена информация:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_info_received"), nil, 27)
 
 	elseif group == "zone_zakazy" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Получен заказ:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_order_received"), nil, 27)
 
 	elseif group == "zone_prosby" then
 		news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Просьбы сталкеров:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_stalkers_requests"), nil, 27)
 		
 	elseif group == "Recepies_olr" then
                 news_manager.send_encyclopedy("encyclopedy", group)
-		amk.send_tip(game.translate_string(name), "Новый рецепт:", nil, 27)
+		amk.send_tip(game.translate_string(name), game.translate_string("st_news_manager_new_recipe"), nil, 27)
 	end
-
+	olr.beep()
 
 end
 
@@ -458,20 +456,20 @@ function actor_binder:on_item_take (obj)
 
 	olr_fix_ammo.on_take(obj)
 
-	--//---- Weapouns Count
+	------ Weapouns Count
 	if device().precache_frame <1 and obj:is_weapon() then
 		xvars.ac_weapon_count = xvars.ac_weapon_count + 1
 		--log1("sobral orujia "..xvars.ac_weapon_count.." now")
 	end
 
-	--//---- Ammo Fix
+	------ Ammo Fix
   	if device().precache_frame < 1 then
   		if obj:is_weapon_magazined() and self.object:is_talking() then
   			obj:unload_magazine()
   		end
   	end
 
-	--//---- Обработчик выдачи поршня с конфига
+	------ Обработчик выдачи поршня с конфига
 	if obj then
 	if device().precache_frame < 1 then
 	if system_ini():line_exist(obj:section(), "take_info") then
@@ -547,9 +545,12 @@ function actor_binder:map_location_added_callback(spot_type_str, object_id)
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:update(delta)
+	if db.actor == nil then
+		return
+	end
 	object_binder.update(self, delta)
 
-	local time = time_global()
+	local time_ = time_global()
 	
 	game_stats.update (delta, self.object)
 	
@@ -600,9 +601,9 @@ function actor_binder:update(delta)
 	end	
 
 	-- обновление рестрикторов, которые под логикой, срабатывает через интервалы времени
-	if self.next_restrictors_update_time < time then
+	if self.next_restrictors_update_time < time_ then
 		bind_restrictor.actor_update(delta)
-		self.next_restrictors_update_time = time + 200
+		self.next_restrictors_update_time = time_ + 200
 	end
 
 	-- обновление постпроцессов
@@ -667,7 +668,7 @@ end
 function actor_binder:save(packet)
 
 	if packet:w_tell() == 0 then
-		news_manager.send_tip(db.actor, "SAVE IS BROKEN actor binder", nil, "freedom", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("actor_bindersave_0"), nil, "freedom", 9000)
 	end
 
 	--log1("!!Memory used by Lua before cleanup: "..collectgarbage("count"))
@@ -764,8 +765,8 @@ function restore_weapon()
 	weapon_hide = false
 end
 
-// this is test for section iteration
-/**
+-- this is test for section iteration
+--[[
 local function test_section_iteration(file_name, section_name)
 	printf			("file    : %s",file_name)
 	printf			("section : %s",section_name)
@@ -782,5 +783,4 @@ local function test_section_iteration(file_name, section_name)
 end
 
 test_section_iteration("system.ltx","space_restrictor")
-/**/
-
+--]]

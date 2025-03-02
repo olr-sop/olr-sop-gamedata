@@ -41,7 +41,9 @@ function lamp_binder:update(delta)
 
 	--local pt = profile_timer()
 	--pt:start()
-
+	if db.actor == nil then
+		return
+	end
 	local hidePos = 80
 	local acPos = db.actor:position()
 	if self.info == nil then
@@ -63,10 +65,12 @@ function lamp_binder:update(delta)
 	if time_global() > self.time_apdeyta then
 		self.time_apdeyta = time_global() + self.timerup
 		if olr_blowout.state_blow == 2 then
+			if level.name() ~= "lvl16_generators" then
 			local brg_var = math.random(10,250) / 100
 			local ran_var = math.random(1,6)
 	       		self.lamp:set_brightness(brg_var)
        			self.lamp:set_range(ran_var, 0)
+			end
 		end
 	end
 

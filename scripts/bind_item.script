@@ -40,7 +40,12 @@ function CItemBinder:net_spawn(data)
 	if not object_binder.net_spawn(self, data) then
 		return false
 	end
+	
+	local _sect_ = self.object:section()
+	local obj_class = self.object:clsid()
+	if not _sect_ == "battery_change" or not _sect_ == "battery_change_headlamp" or not obj_class == clsid.device_pda or not obj_class == clsid.device_torch or not obj_class == clsid.device_detector_simple then
 	set_radfood_flag(self.object)
+	end
         return true
 end
 
@@ -54,7 +59,11 @@ function CItemBinder:update(delta)
 
 	--local pt = profile_timer()
 	--pt:start()
-
+	local _sect_ = self.object:section()
+	local obj_class = self.object:clsid()
+	if _sect_ == "battery_change" or _sect_ == "battery_change_headlamp" or obj_class == clsid.device_pda or obj_class == clsid.device_torch or obj_class == clsid.device_detector_simple then
+		return -- нужно проверять на класс
+	end
 	local cond = self.object:condition()
 
         if cond == 1 then
@@ -83,14 +92,13 @@ function CItemBinder:TimeCondLost()
 	if skis < 0 then
 		return 0
 	end
-	return 100/skis/24/100/60 * 100   ---  // 100/skis/24/100/60
+	return 100/skis/24/100/60 * 100   -- 100/skis/24/100/60
 end		
 
 
 
 	
 function set_radfood_flag(obj)
-
 	if xvars then
 	if xvars.foods then
 
@@ -110,10 +118,7 @@ function set_radfood_flag(obj)
 	--log1("net spawn food  - "..obj:name().." SET raded = FALSE")
 	end
 	end
-
 	end
-
-
 end
 
 	

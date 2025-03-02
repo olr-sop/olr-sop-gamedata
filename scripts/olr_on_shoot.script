@@ -18,7 +18,7 @@ function shoot_vin_grav()
 	if active_item and active_item:section()== "wpn_vintorez_gravi" then
 		xvars.sh_vingrav_count = xvars.sh_vingrav_count + 1
 		if xvars.sh_vingrav_count >= 200 and not has_alife_info("shoot_vin_grav_nastrelal_dostatochno") then
-			news_manager.send_tip(db.actor, "Настрелял уже несколько пачек, думаю хватит...", 1, "act", 39000)
+			news_manager.send_tip(db.actor, game.translate_string("shoot_vin_grav_0"), 1, "act", 39000)
 			db.actor:give_info_portion("shoot_vin_grav_nastrelal_dostatochno")
 		end
 	end
@@ -76,11 +76,11 @@ function dolg_base_shoot()
 		xvars.dolg_base_shot = xvars.dolg_base_shot + 1
 
 		if xvars.dolg_base_shot > 2 and xvars.dolg_base_shot < 4 then
-			news_manager.send_tip(db.actor, "Тебе же сказали... Прекрати пальбу немедленно!", nil, "dolg", 25000)
+			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_0"), nil, "dolg", 25000)
 		end
 
 		if xvars.dolg_base_shot > 4 and xvars.dolg_base_shot < 6 then
-			news_manager.send_tip(db.actor, "Валите его!", nil, "dolg", 25000)
+			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_1"), nil, "dolg", 25000)
 			olr.info("dolg_bar_ohrenel_naezd")
 		end
 		end
@@ -108,11 +108,11 @@ function dolg_base_shoot()
 		xvars.bar_base_shot = xvars.bar_base_shot + 1
 
 		if xvars.bar_base_shot > 2 and xvars.bar_base_shot < 4 then
-			news_manager.send_tip(db.actor, "Ты сдурел? Прекрати пальбу немедленно!", nil, "ohranik", 25000)
+			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_2"), nil, "ohranik", 25000)
 		end
 
 		if xvars.bar_base_shot > 4 and xvars.bar_base_shot < 6 then
-			news_manager.send_tip(db.actor, "Вали его!", nil, "ohranik", 25000)
+			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_3"), nil, "ohranik", 25000)
 			olr.info("dolg_bar_ohrenel_naezd")
 		end
 		end
@@ -200,7 +200,7 @@ local gvtab  = GetGameVertexes(lname)
 local gv_min = math.min( unpack(gvtab))
 local gv_max = math.max( unpack(gvtab))
 local obj = alife():create("rad_zombied_respawn_2", level.vertex_position(lv), lv, gv_max)
-olr.add_spot_on_map( obj.id,"eliminate_lair_location","Зомбированный сталкер")
+olr.add_spot_on_map( obj.id,"eliminate_lair_location",game.translate_string("st_olr_on_shoot_zombified_stalker"))
 olr.clear_restrictors(obj)
 --olr.set_none_smart_terrain(obj)
 log1("spawen")
@@ -285,9 +285,9 @@ end
 
 function jaba_angry_shoot()
 if db.actor then
-	local text_phrase = {"Эй, ты что охренел стрелять возле моего бункера?", "Прекрати стрельбу немедленно!", "Какого чёрта ты тут стреляешь?", "Эй, умник, нехрен стрелять здесь!"}
+	local text_phrase = {"st_olr_on_shoot_toad_bunker_1", "st_olr_on_shoot_toad_bunker_2", "st_olr_on_shoot_toad_bunker_3", "st_olr_on_shoot_toad_bunker_4"}
 	local sactor = alife():actor()
 	local cactor = level.object_by_id(sactor.id)
-	cactor:give_game_news(text_phrase[math.random(#text_phrase)], "ui\\ui_icons_task",Frect():set(50,100,50,50),math.random(1000, 3000),15000)
+	cactor:give_game_news(game.translate_string(text_phrase[math.random(#text_phrase)]), "ui\\ui_icons_task",Frect():set(50,100,50,50),math.random(1000, 3000),15000)
 end
 end

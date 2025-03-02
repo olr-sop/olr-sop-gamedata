@@ -38,14 +38,14 @@ end
 
 function ui_quests_table:bt_find_item_button_clicked()
 	job_selected_kill = false 
-	local textdesc = game.translate_string(""..xvars.quest_one_text_bar.." - "..xvars.quest_one_text_name_bar..", Оплата: "..xvars.quest_one_cost_bar.." ")
+	local textdesc = game.translate_string(""..xvars.quest_one_text_bar.." - "..xvars.quest_one_text_name_bar..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost_bar.." ")
 	if not has_alife_info("doska_one_taken_bar") then
 		self.static_desc_quest:SetText(textdesc)
 		job_selected = true
 	elseif xvars.quest_one_target_bar == "" and has_alife_info("doska_one_taken_bar") then
-		self.static_desc_quest:SetText("Пока работы нет")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
-		self.static_desc_quest:SetText("Взято задание на добычу предмета: "..xvars.quest_one_text_name_bar..", Оплата: "..xvars.quest_one_cost_bar.." ")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_retrieve_item")..xvars.quest_one_text_name_bar..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost_bar.." ")
 	end  
 end
 
@@ -69,14 +69,14 @@ function ui_quests_table:bt_kill_stalker_button_clicked()
 	if xvars.quest_two_target_bar == "" then
 		nm = "empty"
 	end
-	local textdesc = game.translate_string("Убить сталкера - "..nm..". Последнее местоположение - "..pos.."")
+	local textdesc = game.translate_string(game.translate_string("st_olr_doska_kill_stalker_preface")..nm..game.translate_string("st_olr_doska_kill_stalker_last_location")..pos.."")
 	if not has_alife_info("doska_two_taken_bar") then
 		self.static_desc_quest:SetText(textdesc)
 		job_selected_kill = true
 	elseif xvars.quest_two_target_bar == "" and has_alife_info("doska_two_taken_bar") then
-		self.static_desc_quest:SetText("Пока работы нет")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
-		self.static_desc_quest:SetText("Взято задание на убийство сталкера: "..nm.."")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_kill_stalker")..nm.."")
 	end  
 end
 
@@ -99,7 +99,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		level.remove_cam_effector(30)
 		olr.info("doska_one_taken_bar")
 		olr.info("doska_one_working_bar")
-		news_manager.send_tip(db.actor, "Полученно задание - достать "..xvars.quest_one_text_name_bar.." для Информатора в баре.", 1, "item", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_bar_task_1")..xvars.quest_one_text_name_bar..game.translate_string("st_olr_doska_bar_task_2"), 1, "item", 9000)
 		olr_timers.st_timer("doska_one_gen_timer_fail_bar", 7500, "olr_doska_bar.doska_one_gen_timer_fail_bar()")
 	else
 		--log1("cannot take quest")
@@ -115,11 +115,11 @@ function ui_quests_table:button_take_quest_button_clicked()
 		level.remove_cam_effector(30)
 		olr.info("doska_two_taken_bar")
 		olr.info("doska_two_working_bar")
-		news_manager.send_tip(db.actor, "Полученно задание - убить сталкера "..nm.."", 1, "zombied", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_bar_task_3")..nm.."", 1, "zombied", 9000)
 		local sobj = game.translate_string(xvars.quest_two_target_bar)
 		local obj = alife():object(sobj)
 		obj:brain():update(true)
-		olr.add_spot_on_map( obj.id,"kill_stalker_location", "Заказ от Информатора в баре: убить сталкера - "..nm.."" )
+		olr.add_spot_on_map( obj.id,"kill_stalker_location", game.translate_string("st_olr_doska_bar_task_4")..nm.."" )
 		obj:brain():update(true)
 		local wait_time = 0
 		local rnd_tmr = math.random(10,1950)
@@ -188,7 +188,7 @@ function one_complete_func_item()
 	local mon = math.floor(xvars.quest_one_cost_bar) 
 	db.actor:give_money(mon)
 	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, "Получены деньги - "..mon.."", nil, "item", 3000)
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received")..mon.."", nil, "item", 3000)
 	local obj_targ = game.translate_string(xvars.quest_one_target_bar)
 	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_bar.clear_find_item()
@@ -205,23 +205,23 @@ function gen_rnd_item_find()
 	db.actor:disable_info_portion("doska_one_taken_bar")
 	local find_item_obj = {
 	 
-		 [1] = {name = "wpn_desert_eagle",            		cost = 700,  text = "пистолет Desert Eagle"},
-		 [2] = {name = "wpn_fn2000",       		cost = 3400,  text = "автомат FN2000"},
-		 [3] = {name = "wpn_gm94",       		cost = 1450,  text = "гранатомёт ГМ94 не складной"},
-		 [4] = {name = "wpn_p90",       		cost = 550,  text = "автомат Р90"},
-		 [5] = {name = "wpn_rpk74",       		cost = 1850,  text = "автомат РПКС74"},
-		 [6] = {name = "wpn_spas12",       		cost = 1000,  text = "дробовик СПАС-12"},
-		 [7] = {name = "wpn_svu",       		cost = 1700,  text = "СВУ"},
-		 [8] = {name = "af_night_star",       		cost = 450,  text = "артефакт Магнит"},
-		 [9] = {name = "af_drops",       		cost = 500,  text = "артефакт Зуда"},
-		 [10] = {name = "af_electra_sparkler",       		cost = 300,  text = "артефакт Меркурий"},
-		 [11] = {name = "af_ameba_mica",       			cost = 300,  text = "артефакт Ртутный Шар"},
-		 [12] = {name = "af_rusty_thorn",       		cost = 100,  text = "артефакт Ржавые Волосы"},
-		 [13] = {name = "af_medusa",       			cost = 200,  text = "артефакт Бублик"},
-		 [14] = {name = "af_art_kub",       			cost = 500,  text = "артефакт Невидимый куб"},
-		 [15] = {name = "wpn_vintorez",       			cost = 3500,  text = "автомат ВСС"},
-		 [16] = {name = "af_gold_fish",       			cost = 500,  text = "артефакт сильный гравитационный"},
-		 [17] = {name = "af_gold_fish_black",       			cost = 1500,  text = "артефакт чёрный грави"}
+		 [1] = {name = "wpn_desert_eagle",            		cost = 700,  text = game.translate_string("st_olr_doska_bar_find_item_deagle")},
+		 [2] = {name = "wpn_fn2000",       		cost = 3400,  text = game.translate_string("st_olr_doska_bar_find_item_fn2000")},
+		 [3] = {name = "wpn_gm94",       		cost = 1450,  text = game.translate_string("st_olr_doska_bar_find_item_gm94_nonfolded")},
+		 [4] = {name = "wpn_p90",       		cost = 550,  text = game.translate_string("st_olr_doska_bar_find_item_p90")},
+		 [5] = {name = "wpn_rpk74",       		cost = 1850,  text = game.translate_string("st_olr_doska_bar_find_item_rpks74")},
+		 [6] = {name = "wpn_spas12",       		cost = 1000,  text = game.translate_string("st_olr_doska_bar_find_item_spas12")},
+		 [7] = {name = "wpn_svu",       		cost = 1700,  text = game.translate_string("st_olr_doska_bar_find_item_svu")},
+		 [8] = {name = "af_night_star",       		cost = 450,  text = game.translate_string("st_olr_doska_bar_find_item_magnet")},
+		 [9] = {name = "af_drops",       		cost = 500,  text = game.translate_string("st_olr_doska_bar_find_item_zuda")},
+		 [10] = {name = "af_electra_sparkler",       		cost = 300,  text = game.translate_string("st_olr_doska_bar_find_item_sparkler")},
+		 [11] = {name = "af_ameba_mica",       			cost = 300,  text = game.translate_string("st_olr_doska_bar_find_item_mecury_ball")},
+		 [12] = {name = "af_rusty_thorn",       		cost = 100,  text = game.translate_string("st_olr_doska_bar_find_item_rusty_hair")},
+		 [13] = {name = "af_medusa",       			cost = 200,  text = game.translate_string("st_olr_doska_bar_find_item_bagel")},
+		 [14] = {name = "af_art_kub",       			cost = 500,  text = game.translate_string("st_olr_doska_bar_find_item_invisible_cube")},
+		 [15] = {name = "wpn_vintorez",       			cost = 3500,  text = game.translate_string("st_olr_doska_bar_find_item_vss")},
+		 [16] = {name = "af_gold_fish",       			cost = 500,  text = game.translate_string("st_olr_doska_bar_find_item_strong_gravity_art")},
+		 [17] = {name = "af_gold_fish_black",       			cost = 1500,  text = game.translate_string("st_olr_doska_bar_find_item_black_gravi")}
 
 		}
 
@@ -235,12 +235,12 @@ function gen_rnd_item_find()
 	xvars.quest_one_text_name_bar = text
 
 	local text_phrase = {
-		"Нужно достать", 
-		"Поступил заказ на", 
-		"Выкуплю за хорошую цену", 
-		"Мне нужен"
+		"st_olr_doska_find_item_preface_1", 
+		"st_olr_doska_find_item_preface_2", 
+		"st_olr_doska_find_item_preface_3", 
+		"st_olr_doska_find_item_preface_4"
 	}
-	local text_find = text_phrase[math.random(#text_phrase)]
+	local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
 	xvars.quest_one_text_bar = text_find
 
 	--log1("jaba doska need find new - "..xvars.quest_one_target_bar.."  --- "..xvars.quest_one_cost_bar.."")
@@ -322,7 +322,7 @@ function two_complete_func_kill()
 	end
 	db.actor:give_money(mon)
 	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, "Получены деньги - "..mon.."", nil, "item", 3000)
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received")..mon.."", nil, "item", 3000)
 	db.actor:disable_info_portion("doska_two_working_bar")
 	local time = math.random(90,160)
 	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_bar.gen_kill_stalker()")

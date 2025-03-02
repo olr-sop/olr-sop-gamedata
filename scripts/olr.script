@@ -10,6 +10,7 @@ is_crush = false
 modver = "OPEN BETA VERSION - 3.0.12"
 
 bad_items = {
+	["art_mil_jaba"] = true,
 	["jurn_psi_defence"] = true,
 	["jurn_psi_vision"] = true,
 	["jurn_rad_outfit"] = true,
@@ -114,7 +115,7 @@ local tmerup25000 = math.random(25000,40000)
 local tup200 = 0
 local tmerup200 = math.random(150,200)
 
---/// Actor callbacks start-----------------------------------------------------------
+--/ Actor callbacks start-----------------------------------------------------------
 
 function on_actor_hit(obj, amount, local_direction, who, bone_index)
 	if db.actor:alive() and amount > 0.25 then
@@ -133,7 +134,7 @@ function on_actor_hit(obj, amount, local_direction, who, bone_index)
 				--level.add_cam_effector("camera_effects\\punch_effector.anm", 3467, false, "")
 				olr.disable_walk()
 				olr_timers.st_timer("enable_walk_hit", legs_rnd, "olr.enable_walk()")
-				olr.hud_tip("Чёрт...", "сильное ранение ноги...", 3)
+				olr.hud_tip(game.translate_string("st_olr_damn"), game.translate_string("st_olr_heavy_leg_wound"), 3)
 			end
 		end
 		if bone_index >= 18 and bone_index < 31 or bone_index >= 31 and bone_index < 40 then
@@ -143,7 +144,7 @@ function on_actor_hit(obj, amount, local_direction, who, bone_index)
 	            		if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end
 				level.add_pp_effector("fire_hit.ppe", 9476, false)
 				level.add_cam_effector("camera_effects\\shell_shock.anm", 3167, false, "")
-				olr.hud_tip("Чёрт...", "сильное ранение руки...", 3)		
+				olr.hud_tip(game.translate_string("st_olr_damn"), game.translate_string("st_olr_heavy_arm_wound"), 3)		
 			end
 		end	
 	end
@@ -153,9 +154,7 @@ function actor_net_spawn()
 
         olr_blowout.on_game_load()
         olr_net_spawn.on_netspawn()
-	olr_bolezn.net_spawn()
 
-	get_console():execute("r__supersample 1")
 	get_console():execute("r2_allow_r1_lights 0")
 	get_console():execute("cam_inert 0.35")
 	get_console():execute("r2_tf_mipbias -1.5")
@@ -164,13 +163,14 @@ function actor_net_spawn()
         get_console():execute("r2_sun_near 27")
         get_console():execute("r2_mblur 0")
         get_console():execute("r__actor_shadow 1")
+	--get_console():execute("r__supersample 1")
         --get_console():execute("cl_cod_pickup_mode off")
 	--get_console():execute("ph_frequency 100")
 
 	level.map_add_object_spot_ser(db.actor, "olr_actor_spot", "")
 
 	if has_alife_info("cit_fail_first_task") then
-		db.actor:get_inventory_owner():SetName("Стрелок") 
+		db.actor:get_inventory_owner():SetName(game.translate_string("st_actor_name_real")) 
 	end
 
   	if db.actor and has_alife_info("start_olr_mod") and db.storage[db.actor:id()].pstor == nil then
@@ -207,8 +207,8 @@ end
 
 function warning_sms()
 	olr.kill_actor()
-	news_manager.send_tip(db.actor, "ВНИМАНИЕ, СЕЙВ ПОВРЕЖДЕН! (pstor АКТОРА БЫЛ ПУСТОЙ) ПЕРЕИГРАЙТЕ С ПРЕДИДУЩЕГО СОХРАНЕНИЯ! - ["..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
-	log1("!!!!ВНИМАНИЕ, pstor АКТОРА ПУСТОЙ, СЕЙВ ПОВРЕЖДЕН! ПЕРЕИГРАЙТЕ С ПРЕДИДУЩЕГО СОХРАНЕНИЯ! - ["..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_save_corruption_warn_1")..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
+	log1(game.translate_string("st_olr_save_corruption_warn_2")..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
 end
 
 function check_zavis()
@@ -264,7 +264,6 @@ function change_level()
 	end
 end
 
-
 function on_key(dik)
         if device().precache_frame >1 then return end
 	if db.actor then
@@ -278,7 +277,9 @@ function on_key(dik)
 			--end 
         		db.actor:move_to_ruck(item_in_hands)
         		db.actor:move_to_slot(item_in_hands, true)
-			if device().precache_frame >1 then return end
+				if device().precache_frame > 1 then
+					return
+				end
         		db.actor:activate_slot(11)
 		end
 	end
@@ -290,8 +291,8 @@ function on_key(dik)
 			end 
 	   		local pdaitm = db.actor:object("device_pda") 
    			local namecond = pdaitm:condition() * 100
-    			local nameconddel = "Заряд ПДА: "..string.format("%1.0f", namecond).."%"
-    			news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
+    		local nameconddel = game.translate_string("ui_pda_charge") .. " " .. string.format("%1.2f", namecond) .. "%"
+    		news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
 		end
 	end 
 	end 
@@ -331,7 +332,7 @@ function npc_hit(obj, amount, local_direction, who, bone_index)
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 			level.add_pp_effector("black.ppe", 20131, false)
 			olr.kill_actor()
-			news_manager.send_tip(db.actor, "Общая сеть: Очередной псих... бывай дружище...", 3, "freedom", 19000)
+			news_manager.send_tip(db.actor, game.translate_string("npc_hit_0"), 3, "freedom", 19000)
 		end
 		if obj:alive() and obj:name() == "lvl16_generators_staler_undead_olr" then   -- напарник ген
 			level.add_pp_effector("snd_shock.ppe", 203342431, false)
@@ -414,71 +415,71 @@ end
 
 function start_game_vars()
 
-	--//------------------Переменные задаваемые при первом старте игры-------------------
+	--------------------Переменные задаваемые при первом старте игры-------------------
 	xvars.mil_kamp_killer_dead_cnt = 0
-	xvars.npc_jobs_foractor_status = {} 	--// Таблица заданий НПС для актора
-	xvars.npc_jobs_foractor_target = {} 	--// Таблица заданий НПС для актора
-	xvars.npcs_tasks_rndway = {} 	--// Таблица рандомных путей НПС
-	xvars.rand_shit_timer_cnt = 0   --// колво рандомного хлама по таймеру
-	xvars.npc_del_afterblow = {}	--// Таблица НПС трупов что удаляем после выброса
-	xvars.del_hlam_cnt = 0		 --// колво хлама что удалил выброс
-	xvars.actor_pda_trade  = {}      --// кого позвали по ПДА торговать
+	xvars.npc_jobs_foractor_status = {} 	-- Таблица заданий НПС для актора
+	xvars.npc_jobs_foractor_target = {} 	-- Таблица заданий НПС для актора
+	xvars.npcs_tasks_rndway = {} 	-- Таблица рандомных путей НПС
+	xvars.rand_shit_timer_cnt = 0   -- колво рандомного хлама по таймеру
+	xvars.npc_del_afterblow = {}	-- Таблица НПС трупов что удаляем после выброса
+	xvars.del_hlam_cnt = 0		 -- колво хлама что удалил выброс
+	xvars.actor_pda_trade  = {}      -- кого позвали по ПДА торговать
 	xvars.blowout_timer = 1005
-	xvars.cash_need_summa_has = {}	--// Таблица НПС идущих с баблом из зоны
-	xvars.pos_x = 0  --// Позиция актора для дропа переполненого инв
+	xvars.cash_need_summa_has = {}	-- Таблица НПС идущих с баблом из зоны
+	xvars.pos_x = 0  -- Позиция актора для дропа переполненого инв
 	xvars.pos_y = 0
 	xvars.pos_z = 0
-	xvars.item_drop_inv  = {}      --// для дропа переполненого инв
-	xvars.npcs_tasks_revenge_targets = {} --// Таблица целей мести (киллер, цель)
-	xvars.goodcondweaps  = {}      --// Реестр оружия с уменьшенным износом
-	xvars.quicksave_cnt = 0 	--// Колво текущих квиксейвов
-	xvars.meat_money = 0		--// Деньги за образцы мутантов
-	xvars.npc_kileed_by_actor = {}      --// Реестр для НПС которых потушил ГГ
-	xvars.npc_seeing_news = {}      --// Реестр новостей для НПС
-	xvars.dead_in_offline = {}      --// Сталкеры и мутанты умершие в симуляции
-	xvars.rats_count = 0		--// Колво заспавненных крыс в КП
-	xvars.npc_actor_use = {}	--// Таблица НПС которых юзал актор
-	xvars.npc_ofl_trade_yan = {}	--// Таблица НПС идущих на торговлю в офлайне на Янтарь
-	xvars.npc_ofl_trade = {}	--// Таблица НПС идущих на торговлю в оффлайне в Бар
-	xvars.capsules = {}		--// Таблица капсул Р1
-	xvars.inv_capsules = {} 	--// Инвентарные капсулы Р1
-	xvars.npcs_tasks = {} 		--// Задания для НПС
-	xvars.npcs_who_find_docs_id = {} --// Таблица с id сталкеров кто нашел документы в симуляции
-	xvars.naparnik_name = "" 	--// Имя напарника на свалку
-	xvars.mosk_hits = 0 		--// Сколько раз пальнули по мозгу на lvl12
-	xvars.shoot_count = 0 		--// Сколько настрелял патронов ГГ
-	xvars.killed_npcs = 0 		--// Сколько сталкеров убил ГГ
-	xvars.gentri_door_open = math.random(1,3) 	--// Случайная дверь на Генераторах
-	xvars.sim_deaths = {} 		--// Умершие мобы в симуляции
-	xvars.weapons = {} 		--// Таблица оружия 
-	xvars.foods = {} 		--// Таблица еды
-        xvars.cur_rest_wpn = ""    	--// Текущее ремонтируемое оружие
-        xvars.blow_count = 0		--// Пережито выбросов
-        xvars.kill_count = 0    	--// Убил нейтралов
-        xvars.ac_weapon_count = 0    	--// Собрал оружия
-        xvars.chang_lev = "lvl1_escape"    --// Каллбек на смену уровня
-        xvars.ac_hunger = 0    		--// Усталость
-        xvars.timers_count = 1    	--// Количество таймеров
-        xvars.sh_vingrav_count = 0    	--// Выстрелов с гравивинтореза
-        xvars.cur_trans_art = ""    	--// Текущий арт в варке
-        xvars.olr = {}    		--// Таблица переменных
-	xvars.arts = {}    		--// Таблица переменных артов
-        xvars.saves_count = 0    	--// Количество сейвов
-	xvars.bar_base_shot = 0 	--// Сколько раз стрелял в баре самом
-	xvars.dolg_base_shot = 0 	--// Сколько раз стрелял у базы Долга
-        xvars.esc_jaba_close_shots = 0    --// Сколько раз стрелял у бункера Жабы на Кордоне
-        xvars.yan_lab_tele = 0    	--// Телепортация в подземке янтаря
-	xvars.coster_id = 0 		--// Айди костра
-	xvars.cooked_food_name = "" 	--// Что сейчас готовится
-	xvars.temperatura_actor = 36.6 --// Температура ГГ
-	xvars.drinked_vodkas = 0 	--// Сколько выпил водки
-	xvars.autosave_count = 1 	--// Колво автосейвов
-	xvars.npcs_talk_targets = "" 	--// Симуляционые разговоры
-	xvars.rnd_anoms_count = 1 	--// Сколько рандомных аномалий заспавнено
-	xvars.count_rad_weak = 0 	--// Сколько накопили радиации в организме (лучевая болезнь)
-	xvars.quests_started = 0 	--// Квестов взято
+	xvars.item_drop_inv  = {}      -- для дропа переполненого инв
+	xvars.npcs_tasks_revenge_targets = {} -- Таблица целей мести (киллер, цель)
+	xvars.goodcondweaps  = {}      -- Реестр оружия с уменьшенным износом
+	xvars.quicksave_cnt = 0 	-- Колво текущих квиксейвов
+	xvars.meat_money = 0		-- Деньги за образцы мутантов
+	xvars.npc_kileed_by_actor = {}      -- Реестр для НПС которых потушил ГГ
+	xvars.npc_seeing_news = {}      -- Реестр новостей для НПС
+	xvars.dead_in_offline = {}      -- Сталкеры и мутанты умершие в симуляции
+	xvars.rats_count = 0		-- Колво заспавненных крыс в КП
+	xvars.npc_actor_use = {}	-- Таблица НПС которых юзал актор
+	xvars.npc_ofl_trade_yan = {}	-- Таблица НПС идущих на торговлю в офлайне на Янтарь
+	xvars.npc_ofl_trade = {}	-- Таблица НПС идущих на торговлю в оффлайне в Бар
+	xvars.capsules = {}		-- Таблица капсул Р1
+	xvars.inv_capsules = {} 	-- Инвентарные капсулы Р1
+	xvars.npcs_tasks = {} 		-- Задания для НПС
+	xvars.npcs_who_find_docs_id = {} -- Таблица с id сталкеров кто нашел документы в симуляции
+	xvars.naparnik_name = "" 	-- Имя напарника на свалку
+	xvars.mosk_hits = 0 		-- Сколько раз пальнули по мозгу на lvl12
+	xvars.shoot_count = 0 		-- Сколько настрелял патронов ГГ
+	xvars.killed_npcs = 0 		-- Сколько сталкеров убил ГГ
+	xvars.gentri_door_open = math.random(1,3) 	-- Случайная дверь на Генераторах
+	xvars.sim_deaths = {} 		-- Умершие мобы в симуляции
+	xvars.weapons = {} 		-- Таблица оружия 
+	xvars.foods = {} 		-- Таблица еды
+        xvars.cur_rest_wpn = ""    	-- Текущее ремонтируемое оружие
+        xvars.blow_count = 0		-- Пережито выбросов
+        xvars.kill_count = 0    	-- Убил нейтралов
+        xvars.ac_weapon_count = 0    	-- Собрал оружия
+        xvars.chang_lev = "lvl1_escape"    -- Каллбек на смену уровня
+        xvars.ac_hunger = 0    		-- Усталость
+        xvars.timers_count = 1    	-- Количество таймеров
+        xvars.sh_vingrav_count = 0    	-- Выстрелов с гравивинтореза
+        xvars.cur_trans_art = ""    	-- Текущий арт в варке
+        xvars.olr = {}    		-- Таблица переменных
+	xvars.arts = {}    		-- Таблица переменных артов
+        xvars.saves_count = 0    	-- Количество сейвов
+	xvars.bar_base_shot = 0 	-- Сколько раз стрелял в баре самом
+	xvars.dolg_base_shot = 0 	-- Сколько раз стрелял у базы Долга
+        xvars.esc_jaba_close_shots = 0    -- Сколько раз стрелял у бункера Жабы на Кордоне
+        xvars.yan_lab_tele = 0    	-- Телепортация в подземке янтаря
+	xvars.coster_id = 0 		-- Айди костра
+	xvars.cooked_food_name = "" 	-- Что сейчас готовится
+	xvars.temperatura_actor = 36.6 -- Температура ГГ
+	xvars.drinked_vodkas = 0 	-- Сколько выпил водки
+	xvars.autosave_count = 1 	-- Колво автосейвов
+	xvars.npcs_talk_targets = "" 	-- Симуляционые разговоры
+	xvars.rnd_anoms_count = 1 	-- Сколько рандомных аномалий заспавнено
+	xvars.count_rad_weak = 0 	-- Сколько накопили радиации в организме (лучевая болезнь)
+	xvars.quests_started = 0 	-- Квестов взято
 
-	xvars.quests_all_ids = 0 	--// Айдишники для квестов с досок
+	xvars.quests_all_ids = 0 	-- Айдишники для квестов с досок
 	xvars.quest_one_target = ""
 	xvars.quest_one_cost = 0
 	xvars.quest_one_text = ""
@@ -498,10 +499,10 @@ function start_game_vars()
 	xvars.quest_two_target_yan = ""
 
 
-	xvars.yan_phase_zam_quest = 0 --// Замеры в доте Янтаря
-	xvars.yan_phase_zam_quest_flag = false --// Замеры в доте Янтаря (можно-нельзя)
-	xvars.yan_use_drink_yan = true --// Чайник у учёных активный или нет
-	xvars.id_psyblock_garbage = -1 --// id псиблокератора на свалке
+	xvars.yan_phase_zam_quest = 0 -- Замеры в доте Янтаря
+	xvars.yan_phase_zam_quest_flag = false -- Замеры в доте Янтаря (можно-нельзя)
+	xvars.yan_use_drink_yan = true -- Чайник у учёных активный или нет
+	xvars.id_psyblock_garbage = -1 -- id псиблокератора на свалке
 	xvars.timers_started = 1
 	xvars.timers_done = 1
 	xvars.doc_message_text_m_str = ""
@@ -591,11 +592,11 @@ function start_game_vars()
         get_console():execute("r2_sun_lumscale_hemi 1")
 	
 
-	--//------------------Функции выполняемые при первом старте игры-------------------
+	--------------------Функции выполняемые при первом старте игры-------------------
 
 end
 
---///Actor callbacks end-----------------------------------------------------------------------
+--/Actor callbacks end-----------------------------------------------------------------------
 function upd200()
 	if time_global() > tup200 then
 		tup200 = time_global() + tmerup200
@@ -613,7 +614,7 @@ function upd10000()
 			olr_rnd_sounds.play_rnd_snd()
 		end
 		if db.actor:alive() and db.actor:get_actor_thirst() < 0.15 and srnd == 2 then
-			olr.hud_tip("", "Жажда мучает...", 5)
+			olr.hud_tip("", game.translate_string("st_olr_suffering_from_thirst"), 5)
 		end
 		if nick.is_pda_dead() then
 			olr.show_minimap(false)
@@ -640,20 +641,20 @@ function upd10000()
 		olr.check_binder()
 		db.actor:iterate_inventory( function(_, obj)
 			if obj then
-				--news_manager.send_tip(db.actor, "obj obj objrad food hit", nil, "default", 39000)
+				--news_manager.send_tip(db.actor, game.translate_string("upd10000_0"), nil, "default", 39000)
 				--if obj:is_food_item() or obj:is_weapon() then
 					if xvars.foods[obj:name()] == true then
 			  			db.actor.radiation = 0.0015
-			  			--news_manager.send_tip(db.actor, "rad food hit", nil, "default", 39000)
+			  			--news_manager.send_tip(db.actor, game.translate_string("upd10000_1"), nil, "default", 39000)
 					end
 					if xvars.weapons[obj:name()] == true then
 			  			db.actor.radiation = 0.0025
-			  			--news_manager.send_tip(db.actor, "rad weapons hit", nil, "default", 39000)
+			  			--news_manager.send_tip(db.actor, game.translate_string("upd10000_2"), nil, "default", 39000)
 					end
 					if db.actor.radiation > 0.2 then
 						if not has_alife_info("radiation_inv_podskazka_one") and has_alife_info("tutor_radiat_jornl") then
 							olr.info("radiation_inv_podskazka_one")
-							news_manager.send_tip(db.actor, "Похоже, что что-то сильно облучено радиацией... Не стоит держать это долго при себе... Нужно ещё раз перечитать заметки о радиации от Жабы у себя в ПДА.", nil, "act", 99000)	
+							news_manager.send_tip(db.actor, game.translate_string("upd10000_3"), nil, "act", 99000)	
 						end
 					end
 				--end
@@ -705,7 +706,7 @@ if time_global() > tup25000 then
 					if rnd == 1 then
 						amk.oau_reason="cn sleep 5 between"
 						level.add_pp_effector("total_recall.ppe", 231, false)
-						olr.hud_tip("", "Нужно поспать...", 5)
+						olr.hud_tip("", game.translate_string("st_olr_need_sleep"), 5)
 					end
 				end
 			end
@@ -763,7 +764,7 @@ function on_day()
 	end
 end
 
---///----------------------------------------------------------------------- Служебные функции -----------------------------------------------------------------------
+--/----------------------------------------------------------------------- Служебные функции -----------------------------------------------------------------------
 
 function partice_on_obj(obj_name,particle)
 	local obj = level.object_by_name(obj_name)
@@ -773,7 +774,7 @@ function partice_on_obj(obj_name,particle)
 end
 
 
-// Отсрочить выброс на время time
+-- Отсрочить выброс на время time
 function blow_add(time)
 	local tec = olr_blowout.get_blow_timer()
 	if tec > 1200 then
@@ -809,7 +810,7 @@ function check_memory()
 		if memuse > MEMORY_WARNING_AFTER then
 			--prints("!![%s] MEMORY LEAK FOUND! MEMORY USAGE: [%d KB]", script_name():upper(), memuse)
 			if olr.olrdbg == true then
-				news_manager.send_tip(db.actor, "!!! DBG УТЕЧКА ПАМЯТИ - "..memuse.." MB ", nil, "sos", 59000)
+				news_manager.send_tip(db.actor, game.translate_string("st_olr_memory_leak_warning")..memuse.." MB ", nil, "sos", 59000)
 			end
 		end
 	end
@@ -861,7 +862,7 @@ function give_item(obj)
 		local name = utils.cfg_get_string(system_ini(), item:section_name(), "inv_name", item, false, "", "")
 		sname = game.translate_string(name)
 		if not db.actor:is_talking() then
-			news_manager.send_tip(db.actor, "Получен предмет: "..sname.."", nil, "item", 3000)
+			news_manager.send_tip(db.actor, game.translate_string("st_olr_item_received_notification")..sname.."", nil, "item", 3000)
 		else
 			local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_thing")
    			local news_text = "%c[255,245,118,54]"..game.translate_string("general_in_item").."\\n".."%c[255,245,118,54]"..game.translate_string(name)
@@ -877,7 +878,7 @@ function give_item(obj)
 	end
 end
 
---// add spot on map
+-- add spot on map
 function add_spot_on_map(obj_id,type,text)
 	if obj_id then
 		if text==nil then text=" " end
@@ -885,7 +886,7 @@ function add_spot_on_map(obj_id,type,text)
 	end
 end
 
---// Убить сталкера в оффлайне
+-- Убить сталкера в оффлайне
 function kill_offline_stalker(kill)
 	if kill == nil then return end
 	local pk = xs_netpk.monster(kill)
@@ -900,7 +901,7 @@ function kill_offline_stalker(kill)
 	xvars.dead_in_offline[kill:name()] = true
 end
 
---// Стреляем из оружия ГГ
+-- Стреляем из оружия ГГ
 function emu_shoot()
 	local active_item = db.actor:active_item()
 	if active_item and active_item:is_weapon() then
@@ -923,7 +924,7 @@ function polter_throw_wpn(obj)
 	end
 end
 
---// olr.create_on_pos("wpn_gauss","lvl5_bar", vector():set(110,0,50))
+-- olr.create_on_pos("wpn_gauss","lvl5_bar", vector():set(110,0,50))
 function create_on_pos(item,level_name, pos)
 	local level_vertex_id, game_vertex_id = utils.get_top_graph_ids(level_name)
 	
@@ -946,7 +947,7 @@ function snd(sound)
 	end
 end
 
---// Закрыть ПДА
+-- Закрыть ПДА
 function hide_pda()
 	if has_alife_info("ui_pda") then 
 		local inv_window = level.main_input_receiver()
@@ -956,7 +957,7 @@ function hide_pda()
 	end
 end
 
---// Закрыть инвентарь
+-- Закрыть инвентарь
 function hide_inv()
 	if has_alife_info("ui_inventory") then 
 		local inv_window = level.main_input_receiver()
@@ -966,8 +967,8 @@ function hide_inv()
 	end
 end
 
---//---- Создать объект на позиции объекта (!объект родитель должн быть на аи-сетке!) 
---//---- olr.spawn_on_obj("wpn_pm", "escape_trader_0000") - создаём ПМ на позиции Жабы
+------ Создать объект на позиции объекта (!объект родитель должн быть на аи-сетке!) 
+------ olr.spawn_on_obj("wpn_pm", "escape_trader_0000") - создаём ПМ на позиции Жабы
 function spawn_on_obj(obj, objpos)
 if not obj then return end
 if not objpos then return end
@@ -983,7 +984,7 @@ local sobjpos = alife():object(objpos)
 end
 
 
---// удалить объект по имени
+-- удалить объект по имени
 function del_by_name(name_to_del)
 	local se_obj = alife():object(name_to_del)
 	if se_obj then
@@ -997,7 +998,7 @@ function del_by_name(name_to_del)
 	end	
 end
 
---// объект в онлайн (по имени)
+-- объект в онлайн (по имени)
 function to_online(obj)
 	if obj then
 	local sobj = alife():object(obj)
@@ -1010,7 +1011,7 @@ function to_online(obj)
 	end
 end
 
---// объект в офлайн (по имени)
+-- объект в офлайн (по имени)
 function to_offline(obj)
 	if obj then
 	local sobj = alife():object(obj)
@@ -1023,7 +1024,7 @@ function to_offline(obj)
 	end
 end
 
---// удалить объект
+-- удалить объект
 function del(obj)
 	if obj then
 		local sobj = alife():object(obj:id())
@@ -1064,13 +1065,13 @@ function sopli()
 end
 
 
---// вывести custom static сообщение на худ
+-- вывести custom static сообщение на худ
 function hud_tip(sender, text, timeout)
 	if text == nil then
 		return
 	end
 	if sender == nil then
-		sender = "Сообщение"
+		sender = game.translate_string("st_tip")
 	end
 	if timeout == nil then
 		timeout = 5
@@ -1084,7 +1085,7 @@ function hud_tip(sender, text, timeout)
 end
 
 
---// добавить мапспот
+-- добавить мапспот
 function add_spot(obj, spot, text)
 	if obj == nil then
 		return
@@ -1103,7 +1104,7 @@ function beep()
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
 
---// отчистить от рестрикторов
+-- отчистить от рестрикторов
 function clear_restrictors(obj)
 local pk = get_netpk(obj,1)
 	if pk:isOk() then
@@ -1118,7 +1119,7 @@ local pk = get_netpk(obj,1)
 	end 
 end
 
---// Включить ходьбу ГГ
+-- Включить ходьбу ГГ
 function enable_walk()
 	get_actor_obj():unblock_action(key_bindings.kFWD)
 	get_actor_obj():unblock_action(key_bindings.kBACK)
@@ -1129,7 +1130,7 @@ function enable_walk()
 end
 
 
---// Выключить ходьбу ГГ
+-- Выключить ходьбу ГГ
 function disable_walk()
 	get_actor_obj():block_action(key_bindings.kFWD)
 	get_actor_obj():block_action(key_bindings.kBACK)
@@ -1140,19 +1141,19 @@ function disable_walk()
 end
 
 
---// Выключить возможность сохраняться\загружаться
+-- Выключить возможность сохраняться\загружаться
 function disable_save_load()
 	--get_actor_obj():block_action(key_bindings.kWPN_FIRE)
 	--get_actor_obj():block_action(key_bindings.kWPN_FIRE)
 end
 
---// Включить возможность сохраняться\загружаться
+-- Включить возможность сохраняться\загружаться
 function enable_save_load()
 	--get_actor_obj():unblock_action(key_bindings.kR_LOOKOUT)
 	--get_actor_obj():unblock_action(key_bindings.kWPN_FIRE)
 end
 
---// физический импульс по ГГ вверх 
+-- физический импульс по ГГ вверх 
 function ph_actor()
 	if db.actor and db.actor:alive() then
            get_actor_obj():press_action(4)
@@ -1170,7 +1171,7 @@ function ph_actor()
 	end
 end
 
---// Дамп текущих таймеров в лог
+-- Дамп текущих таймеров в лог
 function dump_timers()
 	for a = 1, 9000 do
 		tmp = load_xvars("xt"..a,nil)
@@ -1189,7 +1190,7 @@ function dump_timers()
 			log1("timers ended - "..xvars.timers_done.."")
 end
 
---//
+--
 function can_save()
 	return not (db.actor:is_talking() or has_alife_info("ui_car_body") or has_alife_info("ui_inventory") or has_alife_info("ui_pda"))
 end
@@ -1198,7 +1199,7 @@ function autosavename()
 	return "autosave"
 end
 
---// Убить монстров в радиусе
+-- Убить монстров в радиусе
 function kill_mon_in_radius(pos, radius)
 	for id=1, 65534 do
 		local npc = level.object_by_id(id)
@@ -1223,7 +1224,7 @@ function kill_mon_in_radius(pos, radius)
 end
 
 
---// Объект внутри рестриктора по имени
+-- Объект внутри рестриктора по имени
 function obj_in_zone(ob,zo)
 	local zsobj = alife():object(zo)
 	if zsobj == nil then return false end
@@ -1237,7 +1238,7 @@ function obj_in_zone(ob,zo)
 end 
 
 
---// Рандомная камера 
+-- Рандомная камера 
 function rnd_camera_direction()
 	local cam = actor_camera(0)
 	if cam then
@@ -1298,11 +1299,11 @@ end
 function npc_healing_sms(namenpc)
 	local name = tostring(namenpc)
 	if name then
-		local text_phrase = {"Ох, подлечиться бы надо...", 
-		"Черт, задело... аптечку надо принять.", 
-		"Ах, мля... аптечку...", 
-		"Черт... аптечку...", 
-		"Ах, кровь хлещет... аптечку надо."}
+		local text_phrase = {game.translate_string("st_olr_need_healing_1"), 
+		game.translate_string("st_olr_need_healing_2"), 
+		game.translate_string("st_olr_need_healing_3"), 
+		game.translate_string("st_olr_need_healing_4"), 
+		game.translate_string("st_olr_need_healing_5")}
 		local news_text = "%c[255,245,118,54]"..namenpc.."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
 		db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(250,0,50,50),1*1000, 15000)
 	end
@@ -1340,7 +1341,7 @@ function spawen_phantoms()
     end
 end
 
---// Спавн ворон
+-- Спавн ворон
 function spawn_crows(num,dist)
 	if num == nil then
 		num = 10
@@ -1353,7 +1354,7 @@ function spawn_crows(num,dist)
  	end
 end
 
---// Удалить всё халявное оружие
+-- Удалить всё халявное оружие
 function del_noparent_weapons()
 local montabl = 
 {
@@ -1461,8 +1462,8 @@ function gta_actor_car()
 	
 	if stealer then 
 
-	if has_alife_info("bar_car_protect_has") and gta_car.position:distance_to_xz(vector():set( -88, -93, -287)) < 50 and gta_car.level_name == "lvl5_bar" then
-		log1("CAR IS UNDER BAR BROTECT")
+	if has_alife_info("bar_car_protect_has") and gta_car.position:distance_to_xz(vector():set( -88, -93, -287)) < 120 and gta_car.level_name == "lvl5_bar" then
+		--log1("CAR IS UNDER BAR BROTECT")
 		return
 	end
 
@@ -1492,11 +1493,11 @@ function gta_actor_car()
 			if seer_name then
 				local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(gta_car.m_game_vertex_id):level_id()), vector():set(gta_car.position.x,gta_car.position.y,gta_car.position.z))
 
-				local text_phrase = {"Мужики, кто машину новую купил?", 
-				"Машина интересная стоит... ничья что-ли?", 
-				"Опа... тачка стоит чья-то...", 
-				"Кто машину оставил без присмотра?", 
-				"Хм... машина. Вроде ничья стоит..."}
+				local text_phrase = {game.translate_string("st_olr_grand_theft_auto_1"), 
+				game.translate_string("st_olr_grand_theft_auto_2"), 
+				game.translate_string("st_olr_grand_theft_auto_3"), 
+				game.translate_string("st_olr_grand_theft_auto_4"), 
+				game.translate_string("st_olr_grand_theft_auto_5")}
 				local txt = text_phrase[math.random(#text_phrase)]
 				local full_text = ""..seer_name..": "..txt.." "..pos.." "
 

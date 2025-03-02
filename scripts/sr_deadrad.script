@@ -47,8 +47,6 @@ function action_deadrad:update( delta )
 	self:switch_state( actor )
 	
 	if self.state == state_inside then
-
-
 	if has_alife_info("anti_glob_rad") then
 		return
 	end
@@ -62,14 +60,13 @@ function action_deadrad:update( delta )
         if not currout or currout:condition() < 0.35 or not vaild_outfits[currout:section()] then
 		eff_power = eff_power + 1
 		level.add_pp_effector ("radiation.ppe", 71974, false)
-		level.set_pp_effector_factor(71974, eff_power / math.random(1,10))               
+			level.set_pp_effector_factor(71974, eff_power / math.random(50,100))               
                 local song_start = xr_sound.get_safe_sound_object("detectors\\geiger")
 	        song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
                 db.actor.radiation = 0.0024
                 db.actor.health = -0.00024
 		xvars.count_rad_weak = xvars.count_rad_weak + 0.00001
 		--news_manager.send_tip(db.actor, "накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-
 
         	if not has_alife_info("infor_glob_rad") then
 			db.actor:give_info_portion("infor_glob_rad")
@@ -83,11 +80,9 @@ function action_deadrad:update( delta )
         				end
         			end
 
-
        			 	if time_global() > self.hit_timer then
 					self.hit_timer = time_global() + 1500  
                         		self:hit_actor2()  
-    	
         			end
 
         			if currout and vaild_outfits[currout:section()] then
@@ -147,14 +142,3 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
 end
-
-
-
----------------------------------------------------------------------------------------------------------------------
-
-
-
-
-		
-	
-	

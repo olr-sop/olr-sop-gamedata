@@ -14,19 +14,19 @@ function drop_item(obj)
         if obj:section() == "zameritel_vibrosa" then
 		if device().precache_frame >1 then return end 
 		if db.actor:is_actor_outdoors() == false then
-			news_manager.send_tip(db.actor, "Прибор: Недостаточный сигнал. Установите прибор на открытой местности.", nil, "default", 39000)
+			news_manager.send_tip(db.actor, game.translate_string("drop_item_0"), nil, "default", 39000)
 			return
 		end
 		if has_alife_info("olr_blowout_phase_0") then
-			news_manager.send_tip(db.actor, "Прибор: Аномальньная энергии для проведения замера отсутствует.", nil, "default", 39000)
+			news_manager.send_tip(db.actor, game.translate_string("drop_item_1"), nil, "default", 39000)
 			return
 		end
 		if has_alife_info("olr_blowout_phase_1") then
-			news_manager.send_tip(db.actor, "Прибор: Недостаточно аномальной энергии для проведения замера.", nil, "default", 39000)
+			news_manager.send_tip(db.actor, game.translate_string("drop_item_2"), nil, "default", 39000)
 			return
 		end
                 if not has_alife_info("zameritel_vibrosa_has_result") and has_alife_info("olr_blowout_phase_2") then
-			news_manager.send_tip(db.actor, "Прибор: Замер произведён.", 5, "default", 39000)
+			news_manager.send_tip(db.actor, game.translate_string("drop_item_3"), 5, "default", 39000)
 			local song_start = xr_sound.get_safe_sound_object("anomaly\\bfuzz_hit")
 			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
 	        	olr.info("zameritel_vibrosa_has_result")
@@ -85,7 +85,7 @@ local parasits = {
                                 anom:position():distance_to(db.actor:position()) < 5 then
 				local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-				news_manager.send_tip(db.actor, "Прибор: Обнаружены споры паразита. Начало замеров.", nil, "default", 39000)
+				news_manager.send_tip(db.actor, game.translate_string("drop_item_4"), nil, "default", 39000)
 				olr_timers.st_timer("pribor_paras", math.random(3,6), "nick.pribor_paras_inf()")
 				break
 			elseif i == 65535 then
@@ -99,7 +99,7 @@ local parasits = {
                 if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0038"}))  then
 			local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-			news_manager.send_tip(db.actor, "Прибор: Обнаружены споры паразита. Начало замеров.", nil, "default", 39000)
+			news_manager.send_tip(db.actor, game.translate_string("drop_item_5"), nil, "default", 39000)
 			olr_timers.st_timer("pribor_paras2", math.random(3,6), "nick.pribor_paras_mg()")
 		end
 	end
@@ -116,7 +116,7 @@ local parasits = {
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 				local snd_obj = xr_sound.get_safe_sound_object([[anomaly\buzz_hit]])
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-				news_manager.send_tip(db.actor, "Кажется аномалия превратилась в студень...", nil, "act", 39000)
+				news_manager.send_tip(db.actor, game.translate_string("drop_item_6"), nil, "act", 39000)
 				anom:disable_anomaly()
 				olr_timers.st_timer("dezint_qt", math.random(23,36), "nick.dezint_qt_spawn()")
 				break

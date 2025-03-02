@@ -38,52 +38,52 @@ function on_press(actor, id)
 
 	-- бывает что можно говорить и с мёртвыми
 	if obj:is_stalker() and not obj:alive() then
-		news_manager.send_tip(db.actor, "Контакт мёртв")
+		news_manager.send_tip(db.actor, game.translate_string("on_press_0"))
 		return nil
 	end
 	
 	if (obj:relation(db.actor) == game_object.enemy) then
 		local rnd = math.random(1,4)
 		if rnd == 1 then
-			news_manager.send_tip(db.actor, "Чё ты хочешь? Вали лучше отсюда...")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_1"))
 		elseif rnd == 1 then
-			news_manager.send_tip(db.actor, "Пошёл нахер отсюда...")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_2"))
 		elseif rnd == 2 then
-			news_manager.send_tip(db.actor, "Вали лучше...")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_3"))
 		end
 		return nil
 	end
 
-	if obj:name() == "lvl4u_darklab_stalker_0023" or obj:name() == "lvl4u_darklab_stalker_0026" then
-		news_manager.send_tip(db.actor, "...", nil, "zombied", 5000)
+	if obj:name() == "lvl4u_darklab_stalker_0023" or obj:name() == "lvl4u_darklab_stalker_0026" or obj:character_community() == "zombied" then
+		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "zombied", 5000)
 		return nil
 	end
 
 
 	if obj:name() == "lvl4_darkdolina_staler_undead_olr_0001" then
-		news_manager.send_tip(db.actor, "Ошибка соединения. Контакт не отвечает...", nil, "default", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_5"), nil, "default", 5000)
 		return nil
 	end
 
 	if db.actor:has_info("olr_blowout_phase_2") then
-		news_manager.send_tip(db.actor, "Ошибка соединения. Нет связи. Дождитесь окончания выброса.")
+		news_manager.send_tip(db.actor, game.translate_string("on_press_6"))
 		return nil
 	end
 
 	if obj:name() == "bar_barman" and has_alife_info("olr_traders_night") then
-		news_manager.send_tip(db.actor, "Отвали, я сплю...", nil, "barman", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_7"), nil, "barman", 5000)
 		return nil
 	end
 
 	if level.name() == "lvl16_generators" then
-		news_manager.send_tip(db.actor, "Ошибка соединения. Сильные помехи неизвестного происхождения.")
+		news_manager.send_tip(db.actor, game.translate_string("on_press_8"))
 		return nil
 	end
 	
 	for i=0, ignore_ini:line_count("main") - 1 do
 		local _, val = ignore_ini:r_line("main", i, "", "")
 		if obj:profile_name() == val then
-			news_manager.send_tip(db.actor, "Ошибка соединения связи.")
+			news_manager.send_tip(db.actor, game.translate_string("on_press_9"))
 			return nil
 		end
 	end
@@ -257,60 +257,60 @@ function pda_talk:Update()
 		self.object ~= nil and not self.object:alive() and 
 		not xr_wounded.is_heavy_wounded_by_id(self.object:id())
 	) then
-		news_manager.send_tip(db.actor, "Соединение потеряно")
+		news_manager.send_tip(db.actor, game.translate_string("pda_talkUpdate_0"))
 		self:Exit()
 	end
 	
 	if (self.NeedToUpdateQuestions) then
-		self:UpdateQuestions();
+		self:UpdateQuestions()
 	end
-	CUIScriptWnd.Update(self);
+	CUIScriptWnd.Update(self)
 end
 
 function pda_talk:NeedUpdateQuestions()
-	self.NeedToUpdateQuestions = true;
+	self.NeedToUpdateQuestions = true
 end
 
 function foreach_dialogs(dialog)
 	if (ui_obj==nil) then return end
-	ui_obj:AddQuestion(dialog:DialogCaption(), dialog:GetDialogID());
+	ui_obj:AddQuestion(dialog:DialogCaption(), dialog:GetDialogID())
 end
 function foreach_phrases(phrase)
 	if (ui_obj==nil) then return end
-	ui_obj:AddQuestion(phrase:GetText(),phrase:GetID());
+	ui_obj:AddQuestion(phrase:GetText(),phrase:GetID())
 end
 
 function pda_talk:UpdateQuestions()
 self.phrase_list:RemoveAll()
 	if (not self.current_dialog) then
-		db.actor:update_available_dialogs(self.object);
-		db.actor:available_dialogs_foreach(foreach_dialogs);
+		db.actor:update_available_dialogs(self.object)
+		db.actor:available_dialogs_foreach(foreach_dialogs)
 	elseif (self.current_dialog:IsWeSpeaking(db.actor)) then
 		if (self.current_dialog:GetPhraseListSize()~=0 and self.current_dialog:allIsDummy()) then
-			local phrase = self.current_dialog:GetRandomPhrase();
-			self:SayPhrase(phrase:GetID());	
+			local phrase = self.current_dialog:GetRandomPhrase()
+			self:SayPhrase(phrase:GetID())	
 		end
 		if (self.current_dialog and not self.current_dialog:allIsDummy()) then
-			self.current_dialog:ForeachPhraseList(foreach_phrases);
+			self.current_dialog:ForeachPhraseList(foreach_phrases)
 		else
-			self:UpdateQuestions();
+			self:UpdateQuestions()
 		end
 	end
-	self.NeedToUpdateQuestions = false;
+	self.NeedToUpdateQuestions = false
 end
 
 function pda_talk:TopicMode()
-	return (nil == self.current_dialog);
+	return (nil == self.current_dialog)
 end
 
 function pda_talk:ToTopicMode() 
-	self.current_dialog = nil;
+	self.current_dialog = nil
 end
 
 function pda_talk:SayPhrase(phrase_id)
 
-	self:AddAnswer(self.current_dialog:GetPhraseText(phrase_id), db.actor:character_name(), true);
-	db.actor:say_phrase(self.current_dialog, phrase_id);
+	self:AddAnswer(self.current_dialog:GetPhraseText(phrase_id), db.actor:character_name(), true)
+	db.actor:say_phrase(self.current_dialog, phrase_id)
 	
 	--добавить ответ собеседника в список, если он что-то сказал
 	--if (self.current_dialog:GetLastPhraseID() ~=  phrase_id) then
@@ -319,7 +319,7 @@ function pda_talk:SayPhrase(phrase_id)
 	
 	--если диалог завершился, перейти в режим выбора темы
 	if (self.current_dialog:IsFinished()) then
-		self:ToTopicMode();
+		self:ToTopicMode()
 	end
 end
 
@@ -355,20 +355,20 @@ end
 
 --Добавление элемента в список story
 function pda_talk:AddAnswer(str, who, is_actor)
-	self:AddItemTo_story(who,fcolor():set(255, 128, 0, 255));
+	self:AddItemTo_story(who,fcolor():set(255, 128, 0, 255))
 	self:AddItemTo_story(
 		(" %s"):format(game.translate_string(str)),
 		fcolor():set(255, 216, 186, 140)
-	);
-	self:AddItemTo_story("", fcolor():set(0, 0, 0, 0));
-	self.story:ScrollToEnd();
+	)
+	self:AddItemTo_story("", fcolor():set(0, 0, 0, 0))
+	self.story:ScrollToEnd()
 	
 	if is_actor == true then
-		local _s = CUIStatic();
-		_s:InitTexture(db.actor:character_icon());
-		db.actor:add_answer_news(who, game.translate_string(str), db.actor:character_icon(), _s:GetOriginalRect());
+		local _s = CUIStatic()
+		_s:InitTexture(db.actor:character_icon())
+		db.actor:add_answer_news(who, game.translate_string(str), db.actor:character_icon(), _s:GetOriginalRect())
 	else
-		db.actor:add_answer_news(who, game.translate_string(str), self.object:character_icon(), self.icon:GetOriginalRect());
+		db.actor:add_answer_news(who, game.translate_string(str), self.object:character_icon(), self.icon:GetOriginalRect())
 	end
 end
 
@@ -383,9 +383,9 @@ function pda_talk:AddItemTo_story(item_name, clr)
 	
 	local min_height=13
 	local bottom_footer=10
-	local new_h = math.max(min_height, _st2:GetHeight());
-	new_h = new_h + bottom_footer;
-	_st:SetHeight(new_h);
+	local new_h = math.max(min_height, _st2:GetHeight())
+	new_h = new_h + bottom_footer
+	_st:SetHeight(new_h)
 
 end
 
@@ -400,20 +400,20 @@ function pda_talk:phrase_clicked()
 		return nil
 	end
 	
-	local phrase_id = "";
+	local phrase_id = ""
 	local ClickedQuestionID = self.phrase_list:GetItem(index).id
 
 	--игрок выбрал тему разговора
 	if (self:TopicMode()) then
-		self.current_dialog = db.actor:get_dialog_by_id( ClickedQuestionID);
-		db.actor:init_dialog(self.object, self.current_dialog);
-		phrase_id = "0";
+		self.current_dialog = db.actor:get_dialog_by_id( ClickedQuestionID)
+		db.actor:init_dialog(self.object, self.current_dialog)
+		phrase_id = "0"
 	else
-		phrase_id = ClickedQuestionID;
+		phrase_id = ClickedQuestionID
 	end
 
-	self:SayPhrase(phrase_id);
-	self:NeedUpdateQuestions();
+	self:SayPhrase(phrase_id)
+	self:NeedUpdateQuestions()
 end
 
 function pda_talk:exit_btn_button_clicked()
@@ -445,7 +445,7 @@ end
 -- Вставить в dialogs.break_dialog
 function break_dialog()
 	if (ui_obj ~= nil) then
-		ui_obj:Exit();
+		ui_obj:Exit()
 	end
 end
 
@@ -453,12 +453,12 @@ end
 --События для движка(не вызывать!)
 function _g_need_update_questions()
 	if ui_obj ~= nil then
-		ui_obj:NeedUpdateQuestions();
+		ui_obj:NeedUpdateQuestions()
 	end
 end
 function _g_add_answer(str, who)
 	if ui_obj ~= nil then
-		ui_obj:AddAnswer(str, who, false);
+		ui_obj:AddAnswer(str, who, false)
 	end
 end
 

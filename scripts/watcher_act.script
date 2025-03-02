@@ -76,14 +76,14 @@ function bad_situation(npc)
 		end
 		
 		if db.storage[npc:id()].active_scheme == "test" then return true end                          --- если посланы игрой бежать куда-то
-		--// if db.storage[npc:id()].active_scheme == "walker" then return true end                        --- если посланы игрой бежать куда-то
+		-- if db.storage[npc:id()].active_scheme == "walker" then return true end                        --- если посланы игрой бежать куда-то
 		if db.storage[npc:id()].active_scheme == "remark" then return true end                        --- если играем в скриптовой сценке
 		if db.storage[npc:id()].active_scheme == "combat" then return true end                        --- если сражаемся
 		if db.storage[npc:id()].active_scheme == "wounded" then return true end                       --- если отыгрываем тяжелораненного
 		if db.storage[npc:id()].active_scheme == "actor_dialogs" then return true end                 --- если говорим с актором
 		
 		
-		if max_weight(npc) > 70.0 then return true end --- если непись и так уже нагрёб дохренища вещей
+		if max_weight(npc) > 40.0 then return true end --- если непись и так уже нагрёб дохренища вещей
 		if bad_danger(npc) then return true end --- если мы в опасности
 		if not npc:alive() then return true end --- если мы трупик
 		if cannot_take_that(npc) then return true end --- если мы не той фракции
@@ -652,25 +652,25 @@ function on_take(item,npc)
 	local rndd = math.random(1,5)
 	if item:cost() > 150 and item:cost() < 550 and rndd == 1 then
 
-		local text_phrase = {"Опа, повезло... Нашёл "..item:get_name().."", 
-		"Неплохо... Нашёл "..item:get_name().."", 
-		"Хм, пригодится... Нашёл "..item:get_name()..""}
+		local text_phrase = {game.translate_string("st_watcher_act_found_item_1")..item:get_name().."", 
+		game.translate_string("st_watcher_act_found_item_2")..item:get_name().."", 
+		game.translate_string("st_watcher_act_found_item_3")..item:get_name()..""}
 		local news_text = "%c[255,245,118,54]"..game.translate_string(npc:character_name()).."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
 		db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(400,100,50,50),1*500, 15000)
 
 	elseif item:cost() > 550 and item:cost() < 1550 and math.random(1,5) == 1 then
 
-		local text_phrase = {"Ух ты, неплохо... Нашёл "..item:get_name().."", 
-		"Во блин, повезло... Нашёл "..item:get_name().."", 
-		"Фартануло... Нашёл "..item:get_name()..""}
+		local text_phrase = {game.translate_string("st_watcher_act_found_item_good_1")..item:get_name().."", 
+		game.translate_string("st_watcher_act_found_item_good_2")..item:get_name().."", 
+		game.translate_string("st_watcher_act_found_item_good_3")..item:get_name()..""}
 		local news_text = "%c[255,245,118,54]"..game.translate_string(npc:character_name()).."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
 		db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(400,100,50,50),1*500, 15000)
 		
 	elseif item:cost() > 1550 and item:cost() < 9550 and math.random(1,5) == 1 then
 	
-		local text_phrase = {"Ух ты-ж ёлки... Нашёл "..item:get_name().."", 
-		"Обалдеть... Нашёл "..item:get_name().."", 
-		"Вот это повезло мне сегодня... Нашёл "..item:get_name()..""}
+		local text_phrase = {game.translate_string("st_watcher_act_found_item_great_1")..item:get_name().."", 
+		game.translate_string("st_watcher_act_found_item_great_2")..item:get_name().."", 
+		game.translate_string("st_watcher_act_found_item_great_3")..item:get_name()..""}
 		local news_text = "%c[255,245,118,54]"..game.translate_string(npc:character_name()).."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
 		db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(400,100,50,50),1*500, 15000)
 
@@ -692,11 +692,11 @@ function on_take(item,npc)
 				npc:enable_trade()
 				local sobj = alife():object(npc:name())
 				local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-				--news_manager.send_tip(db.actor, ""..""..npc:character_name()..":".."\\n".."Кто хочет поторговать? Я нахожусь тут - "..pos..". ".."".."\n", 8, "default", 30000)
+				--news_manager.send_tip(db.actor, ""..""..npc:character_name()..":".."\\n"..game.translate_string("st_watcher_act_trade_invite_1")..pos..". ".."".."\n", 8, "default", 30000)
 
-				local text_phrase = {"Кто хочет поторговать? Я нахожусь тут - "..pos.."", 
-				"Если кто хочет поторговать, я нахожусь тут - "..pos.."", 
-				"Есть хабар на продажу. Искать меня тут - "..pos..""}
+				local text_phrase = {game.translate_string("st_watcher_act_trade_invite_1")..pos.."", 
+				game.translate_string("st_watcher_act_trade_invite_2")..pos.."", 
+				game.translate_string("st_watcher_act_trade_invite_3")..pos..""}
 				local news_text = "%c[255,245,118,54]"..game.translate_string(npc:character_name()).."\\n".."%c[255,245,118,54]"..game.translate_string(text_phrase[math.random(#text_phrase)])
 				db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(400,100,50,50),4*1000, 15000)
 
@@ -769,7 +769,7 @@ function act_reach_item:execute()
 	local npc=self.object
 	local gi=getGObject(self.st)
 	if gi and gi:parent()~=nil then
-		--news_manager.send_tip(db.actor, "Эй! Куда чужое берёшь?!")
+		--news_manager.send_tip(db.actor, game.translate_string("act_reach_itemexecute_0"))
 		-- ГГ забрал вкусность. Можно добавить наезд на ГГ.
     self.st.dest_lvid=nil
 		freeGObject(self.st)

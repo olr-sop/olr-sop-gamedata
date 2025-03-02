@@ -101,7 +101,7 @@ function motivator_binder:net_spawn(sobject)
         	self.object:disable_trade()
         end
 
-        if self.object:character_community() == "zombied" then
+	if self.object:character_community() == "zombied" or self.object:character_community() == "monolith" then
         	self.object:disable_talk()
         end
 -----------------------------------------------------------
@@ -242,7 +242,6 @@ function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_i
 		xr_wounded.hit_callback(self.object:id())
         	olr_npc_hit.on_hit(obj, amount, local_direction, who, bone_index)
 		olr.npc_hit(obj, amount, local_direction, who, bone_index)
-		olr_bolezn_npc.on_npc_hit(obj,who)
 	end
 end
 
@@ -319,13 +318,13 @@ function motivator_binder:death_callback(victim, who)
 		end
 		local sobj = game.translate_string(xvars.quest_two_target)
 		if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken") then
-			news_manager.send_tip(db.actor, "Жаба: задание выполнено - убить сталкера.", 1, "zombied", 9000)
+			news_manager.send_tip(db.actor, game.translate_string("motivator_binderdeath_callback_0"), 1, "zombied", 9000)
 			level.map_remove_object_spot(self.object:id(), "kill_stalker_location")
 			db.actor:change_character_reputation(15)
 		end
 		local sobj = game.translate_string(xvars.quest_two_target_bar)
 		if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken_bar") then
-			news_manager.send_tip(db.actor, "Осведомитель: задание выполнено - убить сталкера.", 1, "zombied", 9000)
+			news_manager.send_tip(db.actor, game.translate_string("motivator_binderdeath_callback_1"), 1, "zombied", 9000)
 			level.map_remove_object_spot(self.object:id(), "kill_stalker_location")
 			db.actor:change_character_reputation(15)
 		end
@@ -550,7 +549,7 @@ function motivator_binder:update(delta)
 					se_respawn.create_ammo(strammo, self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id(), 10)
 					--log1("create ammo - "..strammo.." for "..selfob:name().." ")
 					--news_manager.send_tip(db.actor, "npc create panic ammo - ["..self.object:name().."] ", nil, "freedom", 9000)
-					if device().precache_frame < 1 then
+					if device().precache_frame < 1 and self.object:character_community() ~= "zombied" then
 						local snd_obj = xr_sound.get_safe_sound_object([[ol3\prof_blin_patroni]])
 						if snd_obj and not snd_obj:playing() then
 							snd_obj:play_no_feedback(selfob, sound_object.s3d, 0, selfob:position(), 1.0)
@@ -759,7 +758,7 @@ function motivator_binder:hear_callback(self, who, sound_type, sound_position, s
 			local result, err = pcall(check_sound, self, who, sound_type, sound_position, sound_power)
 			if not result then
 				log1("!!!!ERROR: hear_callback pcall FAIL "..self:id().." reason: "..tostring(err))
-				news_manager.send_tip(db.actor, "!!!!hear_callback pcall FAIL!!!!", nil, "sos", 30000)
+				news_manager.send_tip(db.actor, game.translate_string("motivator_binderhear_callback_0"), nil, "sos", 30000)
 			end
 			snd_check_timer[self:id()] = snd_timer + math.random(400, 800)
 		end
@@ -942,7 +941,7 @@ function check_sound(self, who, sound_type, sound_position, sound_power)
 									self:set_sight(look.point,sound_position)
 									snd_obj:play_no_feedback(self, sound_object.s3d, 0, self:position(), 1.0)
 									warn_check_timer[self:id()] = time_global() + math.random(15000, 25000) 
-									--news_manager.send_tip(db.actor, "try snd nothin_there stalker enemy")
+									--news_manager.send_tip(db.actor, game.translate_string("check_sound_0"))
 									--log1("try snd nothin_there stalker enemy")
 								end
 							end
@@ -959,7 +958,7 @@ function check_sound(self, who, sound_type, sound_position, sound_power)
 									self:set_sight(look.point,sound_position)
 									snd_obj:play_no_feedback(self, sound_object.s3d, 0, self:position(), 1.0)
 									warn_check_timer[self:id()] = time_global() + math.random(5000, 10000) 
-									--news_manager.send_tip(db.actor, "try snd hear_soething")
+									--news_manager.send_tip(db.actor, game.translate_string("check_sound_1"))
 									--log1("try snd hear_soething")
 								end
 							end
@@ -995,7 +994,7 @@ function check_sound(self, who, sound_type, sound_position, sound_power)
 								self:set_sight(look.point,sound_position)
 								snd_obj:play_no_feedback(self, sound_object.s3d, 0, self:position(), 1.0)
 								warn_check_timer[self:id()] = time_global() + math.random(15000, 25000) 
-								--news_manager.send_tip(db.actor, "try snd nothin_there monster")
+								--news_manager.send_tip(db.actor, game.translate_string("check_sound_2"))
 								--log1("try snd nothin_there monster -- "..who:name().." ")
 							end
 						end

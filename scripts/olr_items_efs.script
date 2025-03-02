@@ -328,10 +328,10 @@ end
 
 
 if section == "battery_change_headlamp" then 
-        local has_torch = db.actor:object("device_torch")
-        if has_torch and db.actor:is_on_belt(has_torch) then
+        local has_torch = db.actor:item_in_slot(9)
+        if has_torch then
         	--log1("eat battery_change_headlamp")
-        	has_torch:set_condition(1)
+        	db.actor:item_in_slot(9):set_condition(1)
 	end
 end
 
@@ -441,11 +441,11 @@ function torch_check(obj)
 	if obj then
 		local section = obj:section()
 		if section == "battery_change_headlamp" then 
-		local has_torch = db.actor:object("device_torch")
+		local has_torch = db.actor:item_in_slot(9)
         		if has_torch == nil then
-				olr.del(obj)
-				alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-				news_manager.send_tip(db.actor, "Нет фонаря", nil, "default", 6000)
+					olr.del(obj)
+					alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+					news_manager.send_tip(db.actor, "Нет фонаря", nil, "default", 6000)
 			end
 		end
 	end

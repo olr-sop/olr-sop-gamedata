@@ -221,7 +221,7 @@ end
 function addtorch()
         db.actor:iterate_inventory(
 	function(actor, obj) 
-		if obj and obj:section()=="device_torch" and not db.actor:is_on_belt(obj) then
+		if obj and db.actor:item_in_slot(9) then
 			db.actor:drop_item(obj)
 			local wait_time = 0
   			wait_time = time_global() + 200
@@ -376,38 +376,14 @@ function to_slot(obj)
 		end
 	end
 	if db.actor and obj:section()=="battery_change_headlamp" then
-		db.actor:iterate_inventory( function(_, item)
-		if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
-			item:get_torch():enable(false)
+		if db.actor:item_in_slot(9) then
+			db.actor:item_in_slot(9):get_torch():enable(false)
 		end
-	end )
 	end
 	
 end
 
 function to_belt(obj)
-	if db.actor and obj:section()=="device_torch" then
-		local tCount = 0
-		db.actor:iterate_inventory( function(_, item)
-		if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
-			tCount = tCount + 1
-			if tCount > 1 then
-				db.actor:move_to_ruck(obj)
-				--news_manager.send_tip(db.actor, "уже есть фонарь на поясе", nil, "default", 3000)
-			end
-			--news_manager.send_tip(db.actor, "фонарей на поясе: "..tCount.."", nil, "default", 3000)
-		end
-	end )
-	tCount = 0
-	end
-	if db.actor and obj:section()=="device_torch" then
-		local wait_time = 0
-  		wait_time = time_global() + 100
-  		level.add_call(
-    		function() return time_global() > wait_time end,
-    		function() olr.addtorch() end
-  		)
-	end
 	if db.actor and obj:section()=="af_art460" then
 		local tCount = 0
 		db.actor:iterate_inventory( function(_, item)
@@ -958,12 +934,9 @@ function create_on_pos(item,level_name, pos)
 end
 
 function switch_torch(bool)
-	db.actor:iterate_inventory( function(_, item)
-	if item and item:section() == "device_torch" and db.actor:is_on_belt(item) then
-		item:get_torch():enable(bool)
-		--news_manager.send_tip(db.actor, " фонарь на поясе", nil, "default", 3000)
+	if db.actor:item_in_slot(9) then
+		db.actor:item_in_slot(9):get_torch():enable(bool)
 	end
-	end)
 end
 
 function snd(sound)

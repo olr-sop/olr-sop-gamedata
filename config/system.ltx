@@ -1,11 +1,12 @@
 #include "defines.ltx"
 #include "prefetch\prefetch.ltx"
-#include "weathers\environment.ltx"
+#include "environment\environment.ltx"
 #include "creatures\monsters.ltx"
 #include "creatures\stalkers.ltx"
 #include "weapons\weapons.ltx"
 #include "misc\items.ltx"
 #include "misc\monster_items.ltx"
+#include "creatures\m_car.ltx"
 
 #include "creatures\actor.ltx"
 
@@ -22,22 +23,6 @@
 
 #include "creatures\game_relations.ltx"
 
-#include "mp\mp_actor.ltx"
-#include "mp\team_logo.ltx"
-#include "mp\weapons_mp\ammo_mp.ltx"
-#include "mp\weapons_mp\weapons_mp.ltx"
-#include "mp\weapons_mp\outfit_mp.ltx"
-#include "mp\weapons_mp\items_mp.ltx"
-
-;Game types
-#include "mp\SoundMessages\mp_snd_messages.ltx"
-#include "mp\SoundMessages\ahunt_snd_messages.ltx"
-#include "mp\SoundMessages\dm_snd_messages.ltx"
-#include "mp\SoundMessages\tdm_snd_messages.ltx"
-#include "mp\deathmatch_game.ltx"
-#include "mp\teamdeathmatch_game.ltx"
-#include "mp\artefacthunt_game.ltx"
-
 #include "evaluation.ltx"
 #include "fonts.ltx"
 
@@ -49,6 +34,9 @@
 ; Respawns
 #include "misc\respawn.ltx"
 #include "creatures\spawn_sections.ltx"
+
+; Ranks
+#include "misc\ranks.ltx"
 
 ; Extra Content
 #include "extracontent.ltx"
@@ -71,9 +59,28 @@ ang_speed1	= 0.5
 ang_speed2	= 7.0
 ang_speed3	= 2.0
 
+[lchangers]
+levels_to_show_always = lvl_rat
+
+[ui_settings]
+pda_slashes_color = 190, 187, 230, 255
+pda_slashes_x_offset = 6
+pda_charge_min_color = 255, 0, 0, 255
+pda_charge_middle_color = 227, 242, 63, 255
+pda_charge_max_color = 0, 255, 0, 255
+pda_charge_use_mid_color = true
+
+underlined_texture = ui\ui_pda_new_hor_line ;ui\ui_pda_horizontal_line
+underlined_texture_height = 5; 10
+underlined_texture_y_offset = 2; 4
+underlined_texture_color_max = 255, 255, 255, 255
+underlined_texture_color_mid = 127, 127, 127, 255
+
+marking_color_ammo = 128, 128, 255, 255
+marking_color_addons = 255, 150, 50, 255
 
 [texture_desc]
-files = ui_mp_icon_rank, ui_icons_map, ui_common, ui_old_textures, ui_ingame, ui_map_description, ui_models_multiplayer, ui_team_logo, ui_team_logo_small, ui_mainmenu, ui_mp_main, ui_statistics, ui_hud, ui_numpad, ui_inventory, ui_inventory2, ui_iconstotal, ui_pda, ui_icons_npc, ui_npc_monster, ui_npc_unique, ui_buy_menu, ui_asus_intro, amk_pda, amk_pda_blank, ui_icon_photo, ui_icons_olr, ui_buttonps_pda_new
+files = ui_mp_icon_rank, ui_icons_map, ui_ingame, ui_models_multiplayer, ui_team_logo, ui_team_logo_small, ui_mp_main, ui_statistics, ui_numpad, ui_pda, ui_icons_npc, ui_npc_monster, ui_npc_unique, ui_asus_intro, ui_icon_photo
 
 [info_portions]
 ;список xml файлов, содержащих info_portions
@@ -191,116 +198,6 @@ disp_scale			= 0.08					;масштаб прицела (относительно радиан)
 [hud_hitmark]
 hit_mark_texture = ui\ui_hud_hit_mark
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; inventory items
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-[document]
-GroupControlSection	= spawn_group
-;discovery_dependency = 
-$spawn 				= "documents\document 01"
-;$prefetch 			= 32
-class				= II_DOC
-cform				= skeleton
-visual				= equipments\item_document_01.ogf
-
-inv_name			= Document
-inv_name_short		= Document
-inv_weight			= 1	;0.2
-
-inv_grid_width		= 2
-inv_grid_height		= 1
-inv_grid_x			= 23
-inv_grid_y			= 21
-cost				= 0
-
-3d_static_scale 	= 1.25
-3d_static_rotate_x	= -50
-3d_static_allow_rotation = false
-immunities_sect			= sect_document_immunities
-
-[sect_document_immunities]
-; NO RESISTANCE
-burn_immunity 				= 0.1
-strike_immunity  				= 0.1
-shock_immunity  				= 0.1
-wound_immunity 				= 0.1
-radiation_immunity  			= 0.0
-telepatic_immunity  			= 0.0
-chemical_immunity  		= 0.1
-explosion_immunity  			= 0.1
-fire_wound_immunity  			= 0.1 
-chemical_burn_immunity                  = 0.1 
-
-
-
-[esc_vishka_dnevnik]:document
-GroupControlSection	= spawn_group
-;discovery_dependency = 
-$spawn 				= "documents\esc_vishka_dnevnik"
-;$prefetch 			= 32
-class				= II_DOC
-cform				= skeleton
-visual				= equipments\item_document_01.ogf
-
-inv_name			= esc_vishka_dnevnik_name
-inv_name_short		= esc_vishka_dnevnik_name
-description			= esc_vishka_dnevnik_opis
-inv_weight			= 0.34
-cost				= 120
-
-
-
-[ros_bloodsuk_dnevnik]:document
-GroupControlSection	= spawn_group
-;discovery_dependency = 
-$spawn 				= "documents\ros_bloodsuk"
-;$prefetch 			= 32
-class				= II_DOC
-cform				= skeleton
-visual				= equipments\item_document_01.ogf
-
-inv_name			= ros_bloodsuk_name
-inv_name_short		= ros_bloodsuk_name
-description			= ros_bloodsuk_opis
-inv_weight			= 0.54
-cost				= 420
-
-
-[city_fake_dnevnik]:document
-GroupControlSection	= spawn_group
-;discovery_dependency = 
-$spawn 				= "documents\city_fake_dnevnik"
-;$prefetch 			= 32
-class				= II_DOC
-cform				= skeleton
-visual				= equipments\item_document_01.ogf
-
-inv_name			= city_fake_dnevnik_name
-inv_name_short		= city_fake_dnevnik_name
-description			= city_fake_dnevnik_opis
-inv_weight			= 0.14
-cost				= 700
-
-
-
-[bar_journalist_dnevnik]:document
-GroupControlSection	= spawn_group
-;discovery_dependency = 
-$spawn 				= "documents\bar_journalist_dnevnik"
-;$prefetch 			= 32
-class				= II_DOC
-cform				= skeleton
-visual				= equipments\item_document_01.ogf
-
-inv_name			= bar_journalist_dnevnik_name
-inv_name_short		= bar_journalist_dnevnik_name
-description			= bar_journalist_dnevnik_opis
-inv_weight			= 0.16
-cost				= 100
-
-
 
 [spectator]
  $player 				= on
@@ -309,165 +206,6 @@ class                   = SPECT
       
 [??tg_event]
 class 			 = EVENT
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[m_car]
-GroupControlSection	= spawn_group
-discovery_dependency = 
-$spawn 			= "vehicles\car"
-cform                   = skeleton
-class                   = SCRPTCAR
-visual = physics\vehicles\niva\veh_niva_u_01
-
-;remove_time = 120
-
-
-inv_weight				= 1000
-cost					= 100000
-inv_grid_width			= 1
-inv_grid_height			= 1
-
-script_binding  		= bind_car.bind
-
-hud = niva_hud
-
-[niva_hud]
-visual = car_hands\niva_hands
-position = -0.40, 1.45, -0.20
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_zaz]:m_car
-$spawn 			= "vehicles\zaz"
-hud = zaz_hud
-
-[zaz_hud]
-visual = car_hands\zaz_hands
-position = -0.35, 1.28, -0.10
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_kam]:m_car
-$spawn 			= "vehicles\kam"
-hud = kam_hud
-
-[kam_hud]
-visual = car_hands\kamaz_hands
-position = -0.70, 2.5, 2.70
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_lad]:m_car
-$spawn 			= "vehicles\lad"
-hud = lad_hud
-
-[lad_hud]
-visual = car_hands\niva_hands
-position = -0.35, 1.34, -0.05
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_btr]:m_car
-$spawn 			= "vehicles\btr"
-hud = btr_hud
-
-[btr_hud]
-visual = car_hands\btr_hands
-position = -0.41, 1.78, 2.10
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_mos]:m_car
-$spawn 			= "vehicles\mos"
-hud = mos_hud
-
-[mos_hud]
-visual = car_hands\niva_hands
-position = -0.37, 1.42, -0.06
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_raf]:m_car
-$spawn 			= "vehicles\raf"
-hud = raf_hud
-
-[raf_hud]
-visual = car_hands\raf_hands
-position = -0.5, 1.58, 1.51
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[veh_nis]:m_car
-$spawn 			= "vehicles\nis"
-hud = nis_hud
-
-[nis_hud]
-visual = car_hands\niva_hands
-position = -0.46, 1.43, -0.28
-anim_idle = idle
-anim_idle_right = idle_r
-anim_idle_left = idle_l
-anim_return_left = return_l
-anim_return_right = return_r
-anim_rotate_left = rotate_l
-anim_rotate_right = rotate_r
-
-
-
 
 [actor_firsteye_cam]
 lim_pitch                = -1.5, 1.5
@@ -647,8 +385,8 @@ $spawn					= "equipment\attachable_item"
 cform                   = skeleton
 class					= II_ATTCH
 cost					= 100
-inv_name				= "Attachable item"
-inv_name_short			= "Attachable item"
+inv_name = st_attachable_item
+inv_name_short = st_attachable_item_short
 inv_weight				= .5
 inv_grid_width			= 2
 inv_grid_height			= 1
@@ -665,8 +403,8 @@ $spawn					= "equipment\new_attachable_item"
 cform                   = skeleton
 class					= II_BTTCH
 cost					= 100
-inv_name				= "Attachable item"
-inv_name_short			= "Attachable item"
+inv_name = st_new_attachable_item
+inv_name_short = st_new_attachable_item_short
 inv_weight				= .5
 inv_grid_width			= 2
 inv_grid_height			= 1
@@ -684,8 +422,8 @@ cform                   = skeleton
 class					= II_ATTCH
 visual                  = equipments\item_fmradio.ogf
 cost					= 0
-inv_name				= "hand_radio"
-inv_name_short			= "hand_radio"
+inv_name 				= st_hand_radio
+inv_name_short 			= st_hand_radio_short
 inv_weight				= .5
 inv_grid_width			= 2
 inv_grid_height			= 1
@@ -746,6 +484,9 @@ wounds					= 0.01,0.2,0.4,0.6,0.8
 jammed					= 0.5,0.6,0.7,0.8,0.9
 starvation				= 0.5,0.6,0.7,0.8,0.9
 fatigue					= 0.3,0.6,0.7,0.8,0.9
+sleep					= 0.3,0.6,0.7,0.8,0.9
+water					= 0.3,0.6,0.7,0.8,0.9
+stamina					= 0.3,0.6,0.7,0.8,0.9
 
 [tutorial_conditions_thresholds]
 max_power				= 0.75
@@ -772,8 +513,8 @@ cform                   = skeleton
 class					= NW_ATTCH
 visual                  = equipments\item_fmradio.ogf
 cost					= 0
-inv_name				= "custom_script_object"
-inv_name_short			= "custom_script_object"
+inv_name = st_custom_script_object
+inv_name_short = st_custom_script_object_short
 inv_weight				= .5
 inv_grid_width			= 2
 inv_grid_height			= 1

@@ -44,9 +44,9 @@ function CItemBinder:net_spawn(data)
 	local _sect_ = self.object:section()
 	local obj_class = self.object:clsid()
 	if not _sect_ == "battery_change" or not _sect_ == "battery_change_headlamp" or not obj_class == clsid.device_pda or not obj_class == clsid.device_torch or not obj_class == clsid.device_detector_simple then
-		set_radfood_flag(self.object)
+	set_radfood_flag(self.object)
 	end
-	return true
+        return true
 end
 
 function CItemBinder:net_destroy()
@@ -66,19 +66,19 @@ function CItemBinder:update(delta)
 	end
 	local cond = self.object:condition()
 
-	if cond == 1 then
-		if self.object:section() == "kolbasa" or self.object:section() == "bread" or self.object:section() == "conserva" then
-			self.object:set_condition((math.random(45,95)/100))
-		end
-	end
+        if cond == 1 then
+        	if self.object:section() == "kolbasa" or self.object:section() == "bread" or self.object:section() == "conserva" then
+        		self.object:set_condition((math.random(45,95)/100))
+        	end
+        end
 
 	if time_global() > time_apdeyta then
 		time_apdeyta = time_global() + timerup
-		if ini:line_exist(self.object:section(), "cor_time") and cond > 0.01 then	  
+        	if ini:line_exist(self.object:section(), "cor_time") and cond > 0.01 then	  
 			self.object:set_condition(cond - self:TimeCondLost())
 			--log1("cond up food - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
 		end
-	end
+        end
 
 	--pt:stop()
 	--prints("‡·ÓÚ‡ÎÓ (item binder) "..pt:time().." ms")
@@ -100,24 +100,24 @@ end
 	
 function set_radfood_flag(obj)
 	if xvars then
-		if xvars.foods then
+	if xvars.foods then
 
-			if xvars.foods[obj:name()] == nil and obj:parent() then
-				--log1("net spawn food - "..obj:name().." parent - "..obj:parent().."")
-			end 
-		
-			if xvars.foods[obj:name()] ~= nil then
-				--log1("net spawn food - "..obj:name().." ”∆≈ «¿–≈√¿Õ¿")
-			return
-			end
-			if math.random(1,2) == 1 then
-				xvars.foods[obj:name()] = true
-				--log1("net spawn food - "..obj:name().." SET raded = TRUE")
-			else
-				xvars.foods[obj:name()] = false
-				--log1("net spawn food  - "..obj:name().." SET raded = FALSE")
-			end
-		end
+	if xvars.foods[obj:name()] == nil and obj:parent() then
+	--log1("net spawn food - "..obj:name().." parent - "..obj:parent().."")
+	end 
+
+	if xvars.foods[obj:name()] ~= nil then
+	--log1("net spawn food - "..obj:name().." ”∆≈ «¿–≈√¿Õ¿")
+	return
+	end
+	if math.random(1,2) == 1 then
+	xvars.foods[obj:name()] = true
+	--log1("net spawn food - "..obj:name().." SET raded = TRUE")
+	else
+	xvars.foods[obj:name()] = false
+	--log1("net spawn food  - "..obj:name().." SET raded = FALSE")
+	end
+	end
 	end
 end
 

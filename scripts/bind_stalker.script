@@ -153,7 +153,10 @@ function actor_binder:reinit()
 	db.storage[npc_id] = { }
 
 	self.st = db.storage[npc_id]
---	self.st.pstor = nil
+
+	if alife() then
+		self.st.pstor = nil
+	end
 
 	self.next_restrictors_update_time = -10000
 
@@ -244,7 +247,7 @@ function actor_binder:actor_landed(power)
 				timej = time_global() + ftup
 				local outfit = db.actor:get_current_outfit()
 				if outfit then
-					local snd_obj = xr_sound.get_safe_sound_object([[actor\landing]])
+					local snd_obj = xr_sound.get_safe_sound_object([[ol3\landing]])
 					if not snd_obj:playing() then 
 						snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 					end
@@ -253,7 +256,7 @@ function actor_binder:actor_landed(power)
 		end
 	end
 	if power > 0.6 then
-		local snd_obj = xr_sound.get_safe_sound_object([[actor\bones_crack]])
+		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\bones_crack]])
 		if not snd_obj:playing() then 
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 			--level.add_cam_effector2("camera_effects\\fusker.anm", 1523, false, "")
@@ -261,7 +264,7 @@ function actor_binder:actor_landed(power)
 			local outfit = db.actor:get_current_outfit()
 			if outfit then
 				if outfit:section() == "exo_outfit" then
-					local snd_obj = xr_sound.get_safe_sound_object([[actor\exo_landing]])
+					local snd_obj = xr_sound.get_safe_sound_object([[ol3\exo_landing]])
 					if not snd_obj:playing() then 
 						snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 					end
@@ -323,7 +326,9 @@ end
 
 
 function actor_binder:OnKey(dik)
---[[
+	if not alife() then
+		return
+	end
 	--if dik == DIK_keys.DIK_F then
 	--	log1("fff")
 	--end
@@ -331,21 +336,16 @@ function actor_binder:OnKey(dik)
 	bind_car.update_doors = (dik == DIK_keys.DIK_F and level.get_target_obj() and level.get_target_obj():is_car())
 
 	bind_car.onKeyPress(dik)
-	olr.on_key(dik)
+        olr.on_key(dik)
 	bind_coster.onKeyPress(dik)
-	if olr.olrdbg == true and nnnn then
-		nnnn.on_button(dik)   
-	end 
+        --nnnn.on_button(dik)    
         --event("actor_on_key"):trigger({dik = dik})
-]]
 end
 
 function actor_binder:on_hit(obj, amount, local_direction, who, bone_index) 
-        olr_bolezn.on_actor_hit(who)
 	olr.on_actor_hit(obj, amount, local_direction, who, bone_index) 
 	--log1(""..obj:name().." - "..who:name().." - "..amount.."")
-end 
-
+end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:level_border_enter(npc, info_id)
@@ -462,7 +462,7 @@ function actor_binder:on_item_take (obj)
 	olr_fix_ammo.on_take(obj)
 
 	------ Weapouns Count
-	if device().precache_frame <1 and obj:is_weapon() then
+	if device().precache_frame <1 and obj:is_weapon() and alife() then
 		xvars.ac_weapon_count = xvars.ac_weapon_count + 1
 		--log1("sobral orujia "..xvars.ac_weapon_count.." now")
 	end
@@ -625,7 +625,7 @@ function actor_binder:update(delta)
 
  	if self.bCheckStart then
 		
-		if not has_alife_info("start_olr_mod") then
+		if not has_alife_info("start_olr_mod") and alife() then
 			self.object:give_info_portion("start_olr_mod")
 			_G.g_start_avi = true
 			olr.start_game_vars()
@@ -705,7 +705,9 @@ function actor_binder:save(packet)
 		utils.w_CTime(packet, self.st.disable_input_time)
 	end
 
---	xr_logic.pstor_save_all(self.object, packet)
+	if alife() then
+		xr_logic.pstor_save_all(self.object, packet)
+	end
 	self.weather_manager:save(packet)
 
 	sr_psy_antenna.save( packet )
@@ -743,7 +745,9 @@ function actor_binder:load(reader)
 		self.st.disable_input_time = utils.r_CTime(reader)
 	end
 
---	xr_logic.pstor_load_all(self.object, reader)
+	if alife() then
+		xr_logic.pstor_load_all(self.object, reader)
+	end
 	self.weather_manager:load(reader)
 
 	sr_psy_antenna.load(reader)                  

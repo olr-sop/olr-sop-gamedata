@@ -47,7 +47,7 @@ end
 -- стартовые параметры ГГ
 function start_actor_params()
 	local STbron = db.actor:object("outfit_stalker_startup")
-    if STbronb ~= nil then
+	if STbron then
 		STbron:set_condition(math.random(5,25)/100)
 		local wait_time = 0
   		wait_time = time_global() + 1500
@@ -110,18 +110,18 @@ function fixlampsstart()
 	--if lokobj and lokobj.level_name == "lvl1_escape" then
 	--	if IsAnomaly(lokobj) then
 	--
-	--	if get_clsid(lokobj) == clsid.obj_climable then
-	--		if get_clsid(lokobj) == clsid.obj_phys_destroyable or get_clsid(lokobj) == clsid.obj_physic or get_clsid(lokobj) == clsid.obj_breakable or get_clsid(lokobj) == clsid.obj_phskeleton or get_clsid(lokobj) == clsid.obj_climable then
+	--if get_clsid(lokobj) == clsid.obj_climable then
+	--if get_clsid(lokobj) == clsid.obj_phys_destroyable or get_clsid(lokobj) == clsid.obj_physic or get_clsid(lokobj) == clsid.obj_breakable or get_clsid(lokobj) == clsid.obj_phskeleton or get_clsid(lokobj) == clsid.obj_climable then
 	--
-	--			olr.add_spot_on_map( lokobj.id,"controller_spotmap",lokobj:name() )
+		--olr.add_spot_on_map( lokobj.id,"controller_spotmap",lokobj:name() )
 	--
-	--			alife():set_switch_offline (lokobj.id, true)
-	--			alife():set_switch_online (lokobj.id, false)
-	--			alife():set_interactive (lokobj.id, false)
-	--			olr_timers.st_timer("convert_online", 52, "olr_npc_eqp.convert_online_out("..lokobj.id..")")
+    		--alife():set_switch_offline (lokobj.id, true)
+    		--alife():set_switch_online (lokobj.id, false)
+    		--alife():set_interactive (lokobj.id, false)
+		--olr_timers.st_timer("convert_online", 52, "olr_npc_eqp.convert_online_out("..lokobj.id..")")
 	--
-	--			alife():release(lokobj, true) 
-	--			olr.del_by_name(lokobj:name())
+		--alife():release(lokobj, true) 
+		--olr.del_by_name(lokobj:name())
 	--
 	--			--log1(" !!! --- name - "..lokobj:name().."")
 	--		end
@@ -133,7 +133,7 @@ function start_actor_params_food()
 	if db.actor then
 		db.actor.satiety  = -0.11
 		local bobj445 = alife():create('device_torch', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
- 		level.client_spawn_manager():add(bobj445.id, 0, function(id,obj) obj:set_charge((math.random(15,45)/100)) end)
+ 		level.client_spawn_manager():add(bobj445.id, 0, function(id,obj) obj:set_condition((math.random(15,45)/100)) end)	
 	end
 end
 
@@ -1050,7 +1050,7 @@ function spawn_jourlalist_monstrs_spawn_online()
     	function() olr.snd([[ambient\special\pripyat_monsters_shootout]]) end
   	)
 	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_monstrs_spawn_online_0"), 8, "freedom", 19000)
-	news_manager.send_tip(db.actor, game.translate_string("."), 17, "dolg", 19000)
+	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_monstrs_spawn_online_1"), 17, "dolg", 19000)
 	local cnt = 0
 	local sim = alife()
 	for id=1, 65534 do
@@ -2465,7 +2465,7 @@ nik_dialog.out_item_much("device_pda_majors",1)
 dialogs.relocate_money(first_speaker, 2650, "in")
 if level.name() == "lvl5_bar" then
 	news_manager.send_tip(db.actor, game.translate_string("st_nick_snake_taken_down"), 1, "barman", 19000)
-	olr.give_item("medkit")
+olr.give_item("medkit")
 	olr.give_item("wpn_striker")
 	olr.give_item("wpn_desert_eagle")
 end
@@ -3092,14 +3092,8 @@ function actor_robbered_timer_sms()
 	news_manager.send_tip(db.actor, game.translate_string("actor_robbered_timer_sms_0"), nil, "unknown", 39000)	
 end
 
-local invalid_levels = {
-["lvl14_stancia"] = true,
-["lvl1_escape"] = true,
-["lvl5_bar"] = true,
-["lvl16_generators"] = true
-}
 function zombu_ressurect(victim,who)
-	if invalid_levels[level.name()] then
+	if level.name() == "lvl14_stancia" or level.name() == "lvl1_escape" or level.name() == "lvl5_bar" or level.name() == "lvl16_generators" then
 		return
 	end 
 	local id = tostring(victim:id())
@@ -5571,52 +5565,6 @@ end
 
 
 function clear_all_bolezns()
-	get_hud():RemoveCustomStatic("actor_bolezn",true)
-	db.actor:disable_info_portion("bolezn_sibyazva_info")
-	db.actor:disable_info_portion("bolezn_sibyazva_info_m")
-	if olr_timers.has_timer("bolezn_sibyazva_timer") then
-		olr_timers.del_timer("bolezn_sibyazva_timer")
-	end
-	if olr_timers.has_timer("bolezn_sibyazva_timer_m") then
-		olr_timers.del_timer("bolezn_sibyazva_timer_m")
-	end
-	if olr_timers.has_timer("bolezn_sibyazva_timer_d") then
-		olr_timers.del_timer("bolezn_sibyazva_timer_d")
-	end
-	db.actor:disable_info_portion("bolezn_ratcrazy_info")
-	db.actor:disable_info_portion("bolezn_ratcrazy_info_m")
-	if olr_timers.has_timer("bolezn_ratcrazy_timer") then
-		olr_timers.del_timer("bolezn_ratcrazy_timer")
-	end
-	if olr_timers.has_timer("bolezn_ratcrazy_timer_m") then
-		olr_timers.del_timer("bolezn_ratcrazy_timer_m")
-	end
-	if olr_timers.has_timer("bolezn_ratcrazy_timer_d") then
-		olr_timers.del_timer("bolezn_ratcrazy_timer_d")
-	end
-	db.actor:disable_info_portion("bolezn_parazity_info")
-	if olr_timers.has_timer("bolezn_parasite_timer") then
-		olr_timers.del_timer("bolezn_parasite_timer")
-	end
-	if olr_timers.has_timer("bolezn_parasite_timer_m") then
-		olr_timers.del_timer("bolezn_parasite_timer_m")
-	end
-	if olr_timers.has_timer("bolezn_parasite_timer_d") then
-		olr_timers.del_timer("bolezn_parasite_timer_d")
-	end
-	db.actor:give_info_portion("bolezn_beshenstvo_info_first_dis")
-	db.actor:give_info_portion("bolezn_beshenstvo_info_lech")
-	db.actor:disable_info_portion("bolezn_zombied_info")
-	if olr_timers.has_timer("bolezn_zombied_timer") then
-		olr_timers.del_timer("bolezn_zombied_timer")
-	end
-	if olr_timers.has_timer("bolezn_zombied_timer_m") then
-		olr_timers.del_timer("bolezn_zombied_timer_m")
-	end
-	if olr_timers.has_timer("bolezn_zombied_timer_d") then
-		olr_timers.del_timer("bolezn_zombied_timer_d")
-	end
-	xvars.count_rad_weak = 0
 end
 
 --------------------------------------------------------------------------------------------------------------
@@ -6811,28 +6759,21 @@ function holmy_expedition_startsss()
 end
 
 
-function is_pda_predead()
-	local STbron = db.actor:item_in_slot(7)
-	if STbron ~= nil then
-		return STbron:get_charge() <= 0.20
-	end
-end
+
 
 
 function is_pda_dead()
-	local STbron = db.actor:item_in_slot(7)
-	if STbron ~= nil then
-		return STbron:get_charge() <=  0.01
+	local STbron = db.actor:object("device_pda")
+	if STbron:condition() <= 0.01 then 
+		return true
 	end
 end
 
-function enable_senf()
-	local STbron = db.actor:item_in_slot(7)
-	if STbron ~= nil then
-		STbron:set_charge(0.99)
-		db.actor:disable_info_portion("pda_dead_off")
-		olr.show_minimap(true)
-	end
+function enable_senf() 
+	local STbron = db.actor:object("device_pda") 
+	STbron:set_condition(0.99)
+	db.actor:disable_info_portion("pda_dead_off")
+	olr.show_minimap(true)
 end
 
 
@@ -8846,10 +8787,9 @@ end
 function bolezn_beshenstvo_timer_d()
         if db.actor:has_info("bolezn_beshenstvo_info") then
         soundtrack.achit1()
-        news_manager.send_tip(db.actor, game.translate_string("bolezn_beshenstvo_timer_d_0"))
+		news_manager.send_tip(db.actor, game.translate_string("bolezn_beshenstvo_timer_d_0"))
 	db.actor.health = -0.1
         db.actor.power = -0.1
-        olr_bolezn.suicide_knife()
     end
 end
 
@@ -8895,10 +8835,9 @@ end
 function bolezn_parasite_timer_d()
         if db.actor:has_info("bolezn_parazity_info") then
         soundtrack.achit1()
-        news_manager.send_tip(db.actor, game.translate_string("bolezn_parasite_timer_d_0"))
+		news_manager.send_tip(db.actor, game.translate_string("bolezn_parasite_timer_d_0"))
 	db.actor.health = -0.1
         db.actor.power = -0.1
-        olr_bolezn.suicide_knife()
     end
 end
 
@@ -12897,7 +12836,7 @@ function otdaem_emulator_shapka(first_speaker, second_speaker)
 	olr.del_by_name("lvlradar_space_restrictor_phantasm")
 nik_dialog.out_item_much("psy_shapka_mg",1)
 olr.give_item("wpn_striker")
-db.actor:change_actor_sleep(-1)
+db.actor:set_actor_sleep(-1)
 olr.kill_mon_in_radius(db.actor:position(), 150)
 olr.blow_add(200)
   local se_obj = alife():object("lvl8_swamp_phantasm")
@@ -13491,21 +13430,21 @@ end
 
 
 function del_prizrak_esk_most()
-    level.add_pp_effector("black.ppe", 20131, false)
+     	level.add_pp_effector("black.ppe", 20131, false)
 	soundtrack.esc_prizrak_agressive()
 	olr_timers.st_timer("del_prizrak_esk_timer", 5, "nick.del_prizrak_esk_most_deltimer()")
 
  	db.actor:disable_info_portion("esc_prizrak_lamp_info")
 
 	for i=1, 65534 do
-		local car = level.object_by_id(i)
-			if car then
+	local car = level.object_by_id(i)
+	if car then
 				if car ~= nil and car:name() == "lvl1_escape_stalker_0038" then
 					db.actor:change_character_reputation(45)
-					local bloodbridgew5 = vector():set( 10056, -0.36, 157 )
-					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
-			end
-		end
+    	local bloodbridgew5 = vector():set( 10056, -0.36, 157 )
+	alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+	end
+	end
 	end
 end
 
@@ -14314,6 +14253,10 @@ end
 
 function spawn_escape_rand_medium()
 
+	if not alife() then
+		return
+	end
+
 local sectionsa = 
 { 
 "ph_item_document_01",
@@ -14365,19 +14308,19 @@ for ind = 1, count do
 
 local lname = level.name()
 local lvtab = GetLevelVertexes( lname )
---local lvx = math.max(unpack(lvtab))
---local lv  = math.random(1,lvx)
+local lvx = math.max(unpack(lvtab))
+local lv  = math.random(1,lvx)
 
---local gvtab  = GetGameVertexes(lname)
---local gv_min = math.min( unpack(gvtab))
---local gv_max = math.max( unpack(gvtab))
+local gvtab  = GetGameVertexes(lname)
+local gv_min = math.min( unpack(gvtab))
+local gv_max = math.max( unpack(gvtab))
 
 --log1(""..lv.."")
 --log1(""..gv_max.."")
 
 local section = sectionsa[math.random(table.getn(sectionsa))] 
---local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
---[[level.client_spawn_manager():add(obj.id, 0, 
+local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
+level.client_spawn_manager():add(obj.id, 0, 
 function(id,obj) 		
 
                                 local h = hit()
@@ -14393,7 +14336,7 @@ end)
 --olr.add_spot_on_map( obj.id,"red_location",obj:name() )
 end
 end
-]]
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -15106,9 +15049,9 @@ end
 
 function proverka_est_net_banok_rats()
     local STbronb = db.actor:object("af_banka_s_holodcom")
-    if STbronb ~= nil then
-    ahh_banki_agr()
-end
+    if STbronb then
+    	ahh_banki_agr()
+	end
 end
 
 
@@ -15806,7 +15749,7 @@ end
 function set_thirst_jaba()
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\water_use\water_use]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-     db.actor:change_actor_thirst(1)
+     db.actor:set_actor_thirst(1)
 		db.actor:give_money(-50)
 	game_stats.money_quest_update(-50)
 end
@@ -18162,7 +18105,7 @@ end
 function device_torch_bad()
 	local STfonar = db.actor:item_in_slot(9)
 	if STfonar and STfonar:condition() > 0.16 then
-		STfonar:set_charge(0.16)
+		STfonar:set_condition(0.16)
 	end
 end
 
@@ -19443,7 +19386,7 @@ function volk_sasesc_bar3()
 	local snd_obj = xr_sound.get_safe_sound_object([[olr_pda\pda_objective]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	db.actor.satiety = 1
-	db.actor:change_actor_thirst(1)
+	db.actor:set_actor_thirst(1)
 end
 
 

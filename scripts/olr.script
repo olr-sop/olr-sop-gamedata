@@ -7,9 +7,7 @@ olrdbg = false
 
 is_crush = false
 
---modver = game.translate_string("st_mod_ver") -- оставил ванильный текст
-modver = game.translate_string("st_mod_ver").."xrCore id:"..get_engine_build_id().." Date: "..get_engine_build_date()..""
---modver = game.translate_string("st_mod_ver").."commit: c7a52f0 ".."xrCore id:"..get_engine_build_id().." Date: "..get_engine_build_date().."" -- для вывода версии у игроков
+modver = "OPEN BETA VERSION - 3.0.12"
 
 bad_items = {
 	["art_mil_jaba"] = true,
@@ -154,20 +152,19 @@ end
 
 function actor_net_spawn()
 
-	olr_blowout.on_game_load()
-	olr_net_spawn.on_netspawn()
-	olr_bolezn.net_spawn()
+        olr_blowout.on_game_load()
+        olr_net_spawn.on_netspawn()
 
 	get_console():execute("r2_allow_r1_lights 0")
 	get_console():execute("cam_inert 0.35")
 	get_console():execute("r2_tf_mipbias -1.5")
-	get_console():execute("r1_tf_mipbias -1")
-	get_console():execute("r2_sun_near_border 1")
-	get_console():execute("r2_sun_near 27")
-	get_console():execute("r2_mblur 0")
-	get_console():execute("r__actor_shadow 1")
+        get_console():execute("r1_tf_mipbias -1")
+        get_console():execute("r2_sun_near_border 1")
+        get_console():execute("r2_sun_near 27")
+        get_console():execute("r2_mblur 0")
+        get_console():execute("r__actor_shadow 1")
 	--get_console():execute("r__supersample 1")
-	--get_console():execute("cl_cod_pickup_mode off")
+        --get_console():execute("cl_cod_pickup_mode off")
 	--get_console():execute("ph_frequency 100")
 
 	level.map_add_object_spot_ser(db.actor, "olr_actor_spot", "")
@@ -209,20 +206,20 @@ function check_binder()
 end
 
 function warning_sms()
---[[
+	if not alife() then
+		return
+	end
 	olr.kill_actor()
 	news_manager.send_tip(db.actor, game.translate_string("st_olr_save_corruption_warn_1")..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
 	log1(game.translate_string("st_olr_save_corruption_warn_2")..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
-]]
 end
 
 function check_zavis()
---[[
+
 	if olr_timers.cnt_st == 0 then
 		log1("!!!ВНИМАНИЕ try netspawn check_zavis")
 		olr.warning_sms()
 	end
-]]
 end
 
 function addtorch()
@@ -251,7 +248,9 @@ function fix_minigun()
 end
 
 function change_level()
---[[
+	if not alife() then
+		return
+	end
 	olr_del_corpses.on_del()
 	bind_coster.lev_chng()
 	olr_anoms_spawn.on_spawn()
@@ -270,46 +269,40 @@ function change_level()
 		olr_timers.st_timer("surge_day", 59, "nick.surge_day_now()")
 		olr_timers.st_timer("surge_day", 99, "nick.surge_day_now()")
 	end
-]]
 end
 
 function on_key(dik)
-    if device().precache_frame > 1 then return end
-    if db.actor then
-        if dik == 5 then
+        if device().precache_frame >1 then return end
+	if db.actor then
+	if dik == 5 then 
 	--if key == DIK_keys.DIK_5 then
-			local item_in_hands = db.actor:item_in_slot(11)
-			if item_in_hands ~= nil then
-				--if db.actor:active_item() and db.actor:active_slot()==11 then
-				--	db.actor:move_to_slot(item_in_hands, true)
-				--	return
-				--end 
-				db.actor:move_to_ruck(item_in_hands)
-				db.actor:move_to_slot(item_in_hands, true)
+        	local item_in_hands = db.actor:item_in_slot(11)
+        	if item_in_hands ~= nil then
+			--if db.actor:active_item() and db.actor:active_slot()==11 then
+			--	db.actor:move_to_slot(item_in_hands, true)
+			--	return
+			--end 
+        		db.actor:move_to_ruck(item_in_hands)
+        		db.actor:move_to_slot(item_in_hands, true)
 				if device().precache_frame > 1 then
 					return
 				end
-				db.actor:activate_slot(11)
-			end
-		end
-		if dik == 15 then -- TAB (заряд ПДА)
-			if has_alife_info("ui_pda") then
-				local inv_window = level.main_input_receiver()
-				if inv_window and inv_window:IsShown() then
-					level.start_stop_menu(inv_window,true)
-				end 
-				local pdaitm = db.actor:item_in_slot(7)
-				local namecond = pdaitm:get_charge() * 100
-				local custom_static = get_hud():GetCustomStatic("pda_action")
-				if custom_static == nil then
-					local nameconddel = game.translate_string("ui_pda_charge") .. " " .. string.format("%1.2f", namecond) .. "%"
-					get_hud():AddCustomStatic("pda_action", true)
-					get_hud():GetCustomStatic("pda_action"):wnd():SetText(nameconddel)
-					get_hud():GetCustomStatic("pda_action").m_endTime = time_global() / 1000 + 5
-				end
-			end
+        		db.actor:activate_slot(11)
 		end
 	end
+	if dik == 15 then -- TAB (заряд ПДА)
+		if has_alife_info("ui_pda") then
+			local inv_window = level.main_input_receiver()
+			if inv_window and inv_window:IsShown() then
+				level.start_stop_menu(inv_window,true)
+			end 
+	   		local pdaitm = db.actor:object("device_pda") 
+   			local namecond = pdaitm:condition() * 100
+    		local nameconddel = game.translate_string("ui_pda_charge") .. " " .. string.format("%1.2f", namecond) .. "%"
+    		news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
+		end
+	end 
+	end 
 end
 
 function on_use_npc(obj)
@@ -391,11 +384,9 @@ function to_slot(obj)
 		end
 	end
 	if db.actor and obj:section()=="battery_change_headlamp" then
-		db.actor:iterate_inventory( function(_, item)
-		if item and item:section() == "device_torch" and db.actor:item_in_slot(9) then
-			item:get_torch():enable(false)
+		if db.actor:item_in_slot(9) then
+			db.actor:item_in_slot(9):get_torch():enable(false)
 		end
-	end )
 	end
 	
 end
@@ -632,7 +623,7 @@ function upd10000()
 		if db.actor:alive() and db.actor:get_actor_thirst() < 0.15 and srnd == 2 then
 			olr.hud_tip("", game.translate_string("st_olr_suffering_from_thirst"), 5)
 		end
-		if nick.is_pda_dead() then
+		if alife() and nick.is_pda_dead() then
 			olr.show_minimap(false)
 		end
 		ogse_mental_fix.check_freezers()
@@ -682,7 +673,7 @@ end
 function upd25000()
 if time_global() > tup25000 then
 	tup25000 = time_global() + tmerup25000
-	if db.actor then
+	if db.actor and alife() then
 		nick.dead_naparnik_sms()
 		amk.oau_reason="cn news_main time 1 st"
     		if has_alife_info("start_olr_mod") then
@@ -951,10 +942,8 @@ function create_on_pos(item,level_name, pos)
 end
 
 function switch_torch(bool)
-	local torch = db.actor:get_torch()
-	if torch then
-		torch:enable(bool)
-		--news_manager.send_tip(db.actor, game.translate_string("switch_torch_0"), nil, "default", 3000)
+	if db.actor:item_in_slot(9) then
+		db.actor:item_in_slot(9):get_torch():enable(bool)
 	end
 end
 
@@ -988,6 +977,9 @@ end
 ------ Создать объект на позиции объекта (!объект родитель должн быть на аи-сетке!) 
 ------ olr.spawn_on_obj("wpn_pm", "escape_trader_0000") - создаём ПМ на позиции Жабы
 function spawn_on_obj(obj, objpos)
+	if not alife() then
+		return
+	end
 if not obj then return end
 if not objpos then return end
 local sobjpos = alife():object(objpos)

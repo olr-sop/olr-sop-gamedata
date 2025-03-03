@@ -3,9 +3,14 @@
 --Общение через КПК
 -- edit hi_flyer 28.10.18
 
+local TEXTURE_UI = "ui\\ui_pda_talking"
+
 local ignore_ini = ini_file("pda_dialogs\\ignore_npc.ltx") --НПЦ, которые не участвуют в диалогах
 
 local ui_obj = nil --Объект текущего интерфейса
+local is_wide_16 = (
+	device().width/device().height > (1024/768+0.01)
+)	--Формат экрана определен
 
 --Вызывать как "olr_pda.reinit(self.object)"
 function reinit(obj)
@@ -17,10 +22,6 @@ function net_destroy(obj)
 	obj:set_callback(callback.on_pda_contact_item_click, nil)
 end
 
-local zombies_names = {
-["lvl4u_darklab_stalker_0023"] = true,
-["lvl4u_darklab_stalker_0026"] = true
-}
 --Коллбек на нажатие по элементу в списке контактов
 function on_press(actor, id)
 	local obj = level.object_by_id(id)
@@ -53,7 +54,7 @@ function on_press(actor, id)
 		return nil
 	end
 
-	if zombies_names[obj:name()] or obj:character_community() == "zombied" then
+	if obj:name() == "lvl4u_darklab_stalker_0023" or obj:name() == "lvl4u_darklab_stalker_0026" or obj:character_community() == "zombied" then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "zombied", 5000)
 		return nil
 	end
@@ -120,19 +121,11 @@ function phrase_list_item:__init(item_name, id) super()
 	self.item_name = item_name
 	self.text_item = CUIStatic()
 	self:AttachChild(self.text_item)
-	self.text_item:SetText(game.translate_string(item_name))
 	self.text_item:SetFont(GetFontLetterica18Russian())
-	self.text_item:SetTextComplexMode(true)
-	self.text_item:SetWidth(310)
-	self.text_item:AdjustHeightToText()
-	self.text_item:EnableTextHighlighting(true)
-	self.text_item:SetUnderlinedTextUsing(true)
-	local lheight = self.text_item:GetHeight()
-	if string.len(self.text_item:GetText()) > 10 then -- работает криво, не могу найти причину
-		lheight = self.text_item:GetHeight() * 2
-	end
-	self:SetHeight(lheight)
-	self.text_item:SetTextColor(255,255,255,255)
+	self.text_item:SetTextColor(255,216,186,140)              --------------------------- self.text_item:SetTextColor(255,216,186,140)
+	
+	self.text_item:SetText(game.translate_string(item_name))
+	
 end
 
 function phrase_list_item:__finalize()
@@ -148,7 +141,7 @@ function pda_talk:__init(npc_id, owner) super()
 	self.object = level.object_by_id(npc_id)
 	self.current_dialog = nil
 	self.xml = nil
-	self.NeedToUpdateQuestions = false
+	self.NeedToUpdateQuestions = false;
 	if self.object ~= nil then
 		self:InitControls()
 		self:InitCallBacks()
@@ -177,37 +170,24 @@ function pda_talk:InitControls()
 	self:Init(0,0,1024,768)
 	
 	self.xml = CScriptXmlInit()
-	local mode = ""
-	if self.xml:is_16_9_mode() then
-		mode = "_16"
+	
+	if is_wide_16 then
+		self.xml:ParseFile("pda_talk_16.xml")
+	else
+		self.xml:ParseFile("pda_talk.xml")
 	end
-	local pda_type = string.format("%d", self.xml:get_pda_type())
-	local xml_name = "pda_type_"..pda_type.."\\pda_talk_"..pda_type..mode..".xml"
-	self.xml:ParseFile(xml_name)
 	
 	self.frame_back = self.xml:InitStatic("frame:frame_back", self)
-	self.frame_fr = self.xml:InitFrame("frame:frame", self)
-	self.frame_rt = self.xml:InitFrame("frame:frame_right", self)
-	self.frame_dn = self.xml:InitFrame("frame:frame_down", self)
-	self.frameline = self.xml:InitFrameLine("frame:top_frame_line", self)
-	self.frameline = self.xml:InitFrameLine("frame:down_frame_line", self)	
-	self.frameline = self.xml:InitFrameLine("frame:right_frame_line", self)	
-	self.frameline = self.xml:InitFrameLine("frame:time_frame_line", self)
-	self.frame = self.xml:InitAnimStatic("frame:anim_static", self)
 	self.frame = self.xml:InitStatic("frame", self)
-		
 	
+	self.frame:InitTexture(TEXTURE_UI)
 	self.frame:SetOriginalRect(0, 0, 1024, 768)   ------------------------------------ self.frame:SetOriginalRect(123, 108, 782, 536)
+	
 	self.xml:InitFrame("frame:phrase_list_frame", self.frame)
 	
 	self.phrase_list = self.xml:InitList("frame:phrase_list", self.frame)
 	self.phrase_list:ShowSelectedItem(true)
 	self:Register(self.phrase_list, "phrase_list")
-	self.rank_static = self.xml:InitStatic("frame:rank_static", self)
-	self.community_static = self.xml:InitStatic("frame:community_static", self)
-	self.relation_static = self.xml:InitStatic("frame:relation_static", self)
-	self.PDA_root_top_static = self.xml:InitStatic("frame:PDA_root_top_static", self)
-	self.PDA_root_down_static = self.xml:InitStatic("frame:PDA_root_down_static", self)
 	
 	local texture = 1
 	local text = 0
@@ -233,7 +213,6 @@ function pda_talk:InitControls()
 		self[key] = self.xml:InitStatic(_val, self.frame)
 		if val[2] == texture then
 			self[key]:InitTexture(val[1])
-			self[key]:SetMask(self.xml:InitFrame("frame:mask_frame_window", nil))
 		elseif val[2] == text then
 			if val[3] == true then
 				self[key]:SetText(game.translate_string(tostring(val[1])))
@@ -246,10 +225,7 @@ function pda_talk:InitControls()
 	self.story = self.xml:InitScrollView("frame:story", self.frame)
 
 	self:Register(self.xml:Init3tButton("frame:exit_btn", self.frame), "exit_btn")
-	local out_text = "#root 15/FD-665#68/".."Сontacts/"..self.object:character_name()
-    self.PDA_root_top_static:SetText(out_text)
-	local out_text_actor = "#root 15/FD-665#68/".."Сontacts/"..db.actor:character_name()
-	self.PDA_root_down_static:SetText(out_text_actor)
+
 end
 
 function pda_talk:InitCallBacks()
@@ -268,9 +244,9 @@ function pda_talk:InitCallBacks()
 end
 
 function pda_talk:InitDialogs()	
-	self.object:update_available_dialogs(db.actor)
-	self:NeedUpdateQuestions()
-	self:Update()
+	self.object:update_available_dialogs(db.actor);
+	self:NeedUpdateQuestions();
+	self:Update();
 end
 
 function pda_talk:Update()
@@ -374,7 +350,7 @@ end
 --Добавление элемента в список phrase_list
 function pda_talk:AddQuestion(item_name, id)
 	local _itm = phrase_list_item(item_name, id)
-	self.phrase_list:AddItem(_itm, _itm:GetHeight())
+	self.phrase_list:AddItem(_itm)
 end
 
 --Добавление элемента в список story

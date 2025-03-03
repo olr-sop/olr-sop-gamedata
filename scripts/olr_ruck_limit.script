@@ -62,6 +62,9 @@ function isArtefact(item)
 end
 
 function upd_drop()
+	if not alife() then
+		return
+	end
 	if time_global() > tup10000 then
 	tup10000 = time_global() + tmerup10000
 	if db.actor == nil then return end
@@ -76,7 +79,7 @@ function upd_drop()
 						xvars.pos_y = 0
 						xvars.pos_z = 0
 						local item_name = obj:get_name()
-						if isArtefact and system_ini():line_exist(obj:section(), "known_info") then
+						if isArtefact(obj) and system_ini():line_exist(obj:section(), "known_info") then
 							-- свойства
 							local known_inf = system_ini():r_string(obj:section(), "known_info")
 							if not has_alife_info(known_inf) then
@@ -218,7 +221,7 @@ function obj_to_ruck(obj)
 						--end
 						olr_ruck_limit.tmr_drop(obj, true)
 						local item_name = obj:get_name()
-						if isArtefact and system_ini():line_exist(obj:section(), "known_info") then
+						if isArtefact(obj) and system_ini():line_exist(obj:section(), "known_info") then
 							-- свойства
 							local known_inf = system_ini():r_string(obj:section(), "known_info")
 							if not has_alife_info(known_inf) then

@@ -206,12 +206,16 @@ function check_binder()
 end
 
 function warning_sms()
+	if not alife() then
+		return
+	end
 	olr.kill_actor()
 	news_manager.send_tip(db.actor, game.translate_string("st_olr_save_corruption_warn_1")..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
 	log1(game.translate_string("st_olr_save_corruption_warn_2")..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
 end
 
 function check_zavis()
+
 	if olr_timers.cnt_st == 0 then
 		log1("!!!ВНИМАНИЕ try netspawn check_zavis")
 		olr.warning_sms()
@@ -244,6 +248,9 @@ function fix_minigun()
 end
 
 function change_level()
+	if not alife() then
+		return
+	end
 	olr_del_corpses.on_del()
 	bind_coster.lev_chng()
 	olr_anoms_spawn.on_spawn()
@@ -616,7 +623,7 @@ function upd10000()
 		if db.actor:alive() and db.actor:get_actor_thirst() < 0.15 and srnd == 2 then
 			olr.hud_tip("", game.translate_string("st_olr_suffering_from_thirst"), 5)
 		end
-		if nick.is_pda_dead() then
+		if alife() and nick.is_pda_dead() then
 			olr.show_minimap(false)
 		end
 		ogse_mental_fix.check_freezers()
@@ -666,7 +673,7 @@ end
 function upd25000()
 if time_global() > tup25000 then
 	tup25000 = time_global() + tmerup25000
-	if db.actor then
+	if db.actor and alife() then
 		nick.dead_naparnik_sms()
 		amk.oau_reason="cn news_main time 1 st"
     		if has_alife_info("start_olr_mod") then
@@ -970,6 +977,9 @@ end
 ------ Создать объект на позиции объекта (!объект родитель должн быть на аи-сетке!) 
 ------ olr.spawn_on_obj("wpn_pm", "escape_trader_0000") - создаём ПМ на позиции Жабы
 function spawn_on_obj(obj, objpos)
+	if not alife() then
+		return
+	end
 if not obj then return end
 if not objpos then return end
 local sobjpos = alife():object(objpos)

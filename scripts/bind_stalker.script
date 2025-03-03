@@ -153,7 +153,10 @@ function actor_binder:reinit()
 	db.storage[npc_id] = { }
 
 	self.st = db.storage[npc_id]
-	self.st.pstor = nil
+
+	if alife() then
+		self.st.pstor = nil
+	end
 
 	self.next_restrictors_update_time = -10000
 
@@ -323,7 +326,9 @@ end
 
 
 function actor_binder:OnKey(dik)
-
+	if not alife() then
+		return
+	end
 	--if dik == DIK_keys.DIK_F then
 	--	log1("fff")
 	--end
@@ -620,7 +625,7 @@ function actor_binder:update(delta)
 
  	if self.bCheckStart then
 		
-		if not has_alife_info("start_olr_mod") then
+		if not has_alife_info("start_olr_mod") and alife() then
 			self.object:give_info_portion("start_olr_mod")
 			_G.g_start_avi = true
 			olr.start_game_vars()
@@ -700,7 +705,9 @@ function actor_binder:save(packet)
 		utils.w_CTime(packet, self.st.disable_input_time)
 	end
 
-	xr_logic.pstor_save_all(self.object, packet)
+	if alife() then
+		xr_logic.pstor_save_all(self.object, packet)
+	end
 	self.weather_manager:save(packet)
 
 	sr_psy_antenna.save( packet )
@@ -738,7 +745,9 @@ function actor_binder:load(reader)
 		self.st.disable_input_time = utils.r_CTime(reader)
 	end
 
-	xr_logic.pstor_load_all(self.object, reader)
+	if alife() then
+		xr_logic.pstor_load_all(self.object, reader)
+	end
 	self.weather_manager:load(reader)
 
 	sr_psy_antenna.load(reader)                  

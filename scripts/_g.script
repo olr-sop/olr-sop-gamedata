@@ -103,37 +103,39 @@ function del_xvars(name)
 end
 
 ----------------------------------------------------------------------
-function GetLevelVertexes( level )
---[[
-  local lvtab ={}
-  local i = 0
-  while game_graph():valid_vertex_id( i ) do
-    local lv = game_graph():vertex( i ):level_vertex_id()
-    local ln = alife():level_name( game_graph():vertex( i ):level_id() )
-    if not lvtab[ ln ] then
-      lvtab[ ln ] = {}
-    end
-    table.insert( lvtab[ ln ], lv )
-    i = i + 1
-  end
-  return lvtab[ level ]
-]]
+function GetLevelVertexes(level)
+	local lvtab ={}
+	if alife() then
+		local i = 0
+		while game_graph():valid_vertex_id( i ) do
+			local lv = game_graph():vertex( i ):level_vertex_id()
+			local ln = alife():level_name( game_graph():vertex( i ):level_id() )
+			if not lvtab[ ln ] then
+				lvtab[ ln ] = {}
+			end
+			table.insert( lvtab[ ln ], lv )
+			i = i + 1
+		end
+		return lvtab[ level ]
+	end
+	return lvtab[0]
 end
 
 function GetGameVertexes( level )
---[[
-  local gvtab ={}
-  local i = 0
-  while game_graph():valid_vertex_id( i ) do
-    local ln = alife():level_name( game_graph():vertex( i ):level_id() )
-    if not gvtab[ ln ] then
-      gvtab[ ln ] = {}
-    end
-    table.insert( gvtab[ ln ], i )
-    i = i + 1
-  end
-  return gvtab[ level ]
-]]
+	local gvtab ={}
+	if alife() then
+		local i = 0
+			while game_graph():valid_vertex_id( i ) do
+			local ln = alife():level_name( game_graph():vertex( i ):level_id() )
+			if not gvtab[ ln ] then
+				gvtab[ ln ] = {}
+			end
+			table.insert( gvtab[ ln ], i )
+			i = i + 1
+		end
+		return gvtab[ level ]
+	end
+	return gvtab[0]
 end
 ----------------------------------------------------------------------
 function insert_to_table(tbl, section)

@@ -31,6 +31,14 @@ function load_item:__init() super()
 	self.fage:SetText		("fileage")
 	self.fage:SetFont		(GetFontLetterica16Russian())
 	self.fage:SetTextColor	(ca,cr,cg,cb)
+
+	self.flevel				= CUIStatic	()
+	self.flevel:SetAutoDelete	(true)
+	self:AttachChild		(self.flevel)
+	self.flevel:SetWndRect	(340,0,150,22)
+	self.flevel:SetText		("fileage")
+	self.flevel:SetFont		(GetFontLetterica16Russian())
+	self.flevel:SetTextColor(ca,cr,cg,cb)
 end
 
 
@@ -57,9 +65,10 @@ function load_dialog:FillList()
 	for	it=0, f_cnt-1 	do
 		local file		=	flist:GetAt(it)			
 		local file_name = string.sub(file:NameFull(), 0, (string.len(file:NameFull()) - 4))
+		local sg 		= CSavedGameWrapper(file_name)
 		local date_time = "[" .. file:ModifDigitOnly() .. "]"
 		--menu_item =  .. 
-		self:AddItemToList(file_name, date_time)
+		self:AddItemToList(file_name, date_time, game.translate_string(sg:level_name()))
 	end
 	
 end
@@ -116,7 +125,7 @@ function load_dialog:InitCallBacks()
 end
 
 function file_exist(fname)
-	local f = getFS();
+	local f = getFS()
 	local flist = f:file_list_open_ex("$game_saves$",bit_or(FS.FS_ListFiles,FS.FS_RootOnly) , fname)
 	local f_cnt = flist:Size()
 	
@@ -154,7 +163,7 @@ function AddTimeDigit(str, dig)
 end
 
 function file_data(fname)
-	local f = getFS();
+	local f = getFS()
 	local flist = f:file_list_open_ex("$game_saves$",bit_or(FS.FS_ListFiles,FS.FS_RootOnly) , fname .. ".sav")
 	local f_cnt = flist:Size()
 	
@@ -343,13 +352,14 @@ function load_dialog:OnKeyboard(dik, keyboard_action)  --virtual function
 	return true
 end
 
-function load_dialog:AddItemToList(file_name, date_time)
+function load_dialog:AddItemToList(file_name, date_time, name_level)
 	local _itm				= load_item()
 	_itm.fn:SetText			(file_name)
 	_itm.fage:SetText		(date_time)
+	_itm.flevel:SetText		(name_level)
 	
 	local list_box			= self:GetListWnd("list_window")
-	list_box:AddItem		(_itm)
+	list_box:AddItem		(_itm, 0)
 end
 
 

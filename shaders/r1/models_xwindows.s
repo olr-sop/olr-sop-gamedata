@@ -16,7 +16,7 @@ function l_special  (shader, t_base, t_second, t_detail)
       : fog       (false)
       : distort   (true)	  :distort  (false)
   shader:sampler  ("s_base")      :texture  (t_base)
-  shader:sampler  ("s_distort")   :texture  ("pfx\\pfx_dist_glass")
+  shader:sampler  ("s_distort")   :texture  ("fx\\distort\\glass_01")
 end
 
 

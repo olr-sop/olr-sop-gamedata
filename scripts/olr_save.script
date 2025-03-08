@@ -23,14 +23,16 @@ function on_button()
 end
 
 function on_save()
---[[
-	local con = get_console()
-	if not xvars.quicksave_cnt then return end
-	xvars.quicksave_cnt=xvars.quicksave_cnt+1
-	if xvars.quicksave_cnt > max_saves then
-		xvars.quicksave_cnt = 0
+	if alife() then
+		local con = get_console()
+		if not xvars.quicksave_cnt then return end
+		xvars.quicksave_cnt=xvars.quicksave_cnt+1
+		if xvars.quicksave_cnt > max_saves then
+			xvars.quicksave_cnt = 0
+		end
+		local file_name = ("%s_quicksave_%d"):format(usero_name(), xvars.quicksave_cnt)
+		con:execute(("save %s"):format(file_name))
+	else
+		con:execute("save olr_quicksave")
 	end
-	local file_name = ("%s_quicksave_%d"):format(usero_name(), xvars.quicksave_cnt)
-	con:execute(("save %s"):format(file_name))
-]]
 end

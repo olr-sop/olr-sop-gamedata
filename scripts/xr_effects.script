@@ -2204,14 +2204,14 @@ end
 
 
 function deadcity_monolit_proverka(actor, npc)
-if has_alife_info("olr_traders_night") and has_alife_info("deadcity_mon_quest_start") then
+if not xr_conditions.is_day() and has_alife_info("deadcity_mon_quest_start") then
 	db.actor:give_info_portion("deadcity_mon_quest_on_place")
 end
 end
 
 
 function esc_prizrak_proverka(actor, npc)
-if has_alife_info("olr_traders_night") and has_alife_info("jaba_start_phanrom_start") and not has_alife_info("jaba_start_phanrom_spawen") then
+if not xr_conditions.is_day() and has_alife_info("jaba_start_phanrom_start") and not has_alife_info("jaba_start_phanrom_spawen") then
 	db.actor:give_info_portion("jaba_start_phanrom_spawen")
 	olr.spawen_phantoms()
 end
@@ -3626,7 +3626,7 @@ function use_spat_hata_esc()
         	news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_0"))
         	return
 	end
-	if not has_alife_info("olr_traders_day") then
+	if not xr_conditions.is_day() then
 		this.go_sleep_place()
 		return
 	else
@@ -4907,7 +4907,7 @@ end
 
 
 function use_telephone_bar()
-	if has_alife_info("olr_traders_day") then
+	if xr_conditions.is_day() then
 		olr.hud_tip("", game.translate_string("st_xr_effects_message_quiet"), 5)
 		return
 	end

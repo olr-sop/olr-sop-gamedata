@@ -867,28 +867,28 @@ function look_rat(obj)
 	end
 
 	if obj:name() == "lvl7_yantar_rat_staler_undead_olr_000_0000" and not has_alife_info("kkdead_chek_2") then
-		news_manager.send_tip(db.actor, game.translate_string("look_rat_1"), 1, "act", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("look_rat_0"), 1, "act", 19000)
 		nick.gar_lamb_zombs()
 		olr.info("kkdead_chek_2")
 		alife():create("karlito_yellow", db.actor:position():add(db.actor:direction():mul(-62)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		level.map_remove_object_spot(obj:id(), "esc_anomaly_field_location")
 	end
 	if obj:name() == "lvl7_yantar_rat_staler_undead_olr_000_0001" and not has_alife_info("kkdead_chek_3") then
-		news_manager.send_tip(db.actor, game.translate_string("look_rat_2"), 1, "act", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("look_rat_0"), 1, "act", 19000)
 		nick.gar_lamb_zombs()
 		olr.info("kkdead_chek_3")
 		alife():create("chimera_weak", db.actor:position():add(db.actor:direction():mul(-62)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		level.map_remove_object_spot(obj:id(), "esc_anomaly_field_location")
 	end
 	if obj:name() == "lvl7_yantar_rat_staler_undead_olr_000_0002" and not has_alife_info("kkdead_chek_4") then
-		news_manager.send_tip(db.actor, game.translate_string("look_rat_3"), 1, "act", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("look_rat_0"), 1, "act", 19000)
 		nick.gar_lamb_zombs()
 		olr.info("kkdead_chek_4")
 		alife():create("karlito_yellow", db.actor:position():add(db.actor:direction():mul(-62)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		level.map_remove_object_spot(obj:id(), "esc_anomaly_field_location")
 	end
 	if obj:name() == "lvl7_yantar_rat_staler_undead_olr_000_0003" and not has_alife_info("kkdead_chek_5") then
-		news_manager.send_tip(db.actor, game.translate_string("look_rat_4"), 1, "act", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("look_rat_0"), 1, "act", 19000)
 		nick.gar_lamb_zombs()
 		olr.info("kkdead_chek_5")
 		alife():create("chimera_strong", db.actor:position():add(db.actor:direction():mul(-62)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -8858,12 +8858,27 @@ function item_repair_bar_timer()
         db.actor:disable_info_portion("ametist_go_to_stanok_info")
 end
 
+function savedgame_exist(fname)
+	local f = getFS()
+	local flist = f:file_list_open_ex("$game_saves$",bit_or(FS.FS_ListFiles,FS.FS_RootOnly) , fname..".sav")
+	local f_cnt = flist:Size()
+	
+	if f_cnt > 0 then
+		return true
+	else
+		return false
+	end	
+end
+
 function autosave_quest()
-	if olr.can_save() then
-			get_console():execute("save "..olr.autosavename().." - "..xvars.autosave_count.."")
+	local filename = olr.autosavename().." - "..xvars.autosave_count
+	if not savedgame_exist(filename) then
+		if olr.can_save() then
+			get_console():execute("save "..filename)
 			xvars.autosave_count = xvars.autosave_count + 1
 		else
 			olr_timers.st_timer("autosave_quest", 3, "nick.autosave_quest()")
+		end
 	end
 end
 

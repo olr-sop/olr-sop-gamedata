@@ -209,7 +209,7 @@ function warning_sms()
 	if not alife() then
 		return
 	end
-	olr.kill_actor()
+	xr_effects.kill_actor()
 	news_manager.send_tip(db.actor, game.translate_string("st_olr_save_corruption_warn_1")..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
 	log1(game.translate_string("st_olr_save_corruption_warn_2")..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
 end
@@ -330,7 +330,7 @@ function npc_hit(obj, amount, local_direction, who, bone_index)
 					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 				end
 				level.add_pp_effector("black.ppe", 20131, false)
-				olr.kill_actor()
+				xr_effects.kill_actor()
 			end
 		end
 		if obj:alive() and level.name() == "lvl11_deadcity" and obj:character_community() == "freedom" then
@@ -338,19 +338,19 @@ function npc_hit(obj, amount, local_direction, who, bone_index)
 			local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 			level.add_pp_effector("black.ppe", 20131, false)
-			olr.kill_actor()
+			xr_effects.kill_actor()
 			news_manager.send_tip(db.actor, game.translate_string("npc_hit_0"), 3, "freedom", 19000)
 		end
 		if obj:alive() and obj:name() == "lvl16_generators_staler_undead_olr" then   -- напарник ген
 			level.add_pp_effector("snd_shock.ppe", 203342431, false)
 			level.add_pp_effector("black.ppe", 20131, false)
-			olr.kill_actor()
+			xr_effects.kill_actor()
 		end
 		if obj:alive() and obj:name() == "lvl8_swamp_stalker_0000" then  -- доктор
 			level.add_pp_effector("snd_shock.ppe", 203342431, false)
 			local snd_obj = xr_sound.get_safe_sound_object([[weapons\vintorez_shoot]])
 			snd_obj:play_at_pos(db.actor, db.actor:position())
-			olr.kill_actor()
+			xr_effects.kill_actor()
 		end
 	end
 end
@@ -679,13 +679,6 @@ if time_global() > tup25000 then
     		if has_alife_info("start_olr_mod") then
 
 			amk.oau_reason="cn news_main time 2 st"
-
-			local func = loadstring("olr.check_time()")
-			if func then
-				pcall(func)
-			else
-				log1("!!! ERROR LUA olr.check_time() PCALL")
-			end
 			--olr.check_time()
 
 			amk.oau_reason="cn news_main time 3 st"
@@ -748,17 +741,7 @@ end
 end
 
 function check_time()
-	if xr_conditions.is_day() then
-		amk.oau_reason="cn olr_traders_day 1 st"
-     		db.actor:give_info_portion("olr_traders_day")
-		amk.oau_reason="cn olr_traders_day 1 end"
-       	elseif not xr_conditions.is_day() then
-		amk.oau_reason="cn olr_traders_night 1 st"
-        	db.actor:give_info_portion("olr_traders_night")
-		amk.oau_reason="cn olr_traders_night 1 end"
-	end
 end
-
 function on_night()
 	--get_console():execute("r2_tonemap 0")
 end
@@ -837,7 +820,7 @@ end
 
 -- убить ГГ
 function kill_actor()
-	db.actor:kill(db.actor)
+	xr_effects.kill_actor() -- зная флаера и его любовь к вызову функций из спавна, лучше оставим здесь вызов
 end
 
 -- сделать нонеймом НПС по имени

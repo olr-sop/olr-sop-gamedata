@@ -9421,7 +9421,7 @@ end
 
 
 function prof_uletel_gde_laborant_talked_precond(actor,npc)
-    return has_alife_info("olr_traders_night") and has_alife_info("prof_uletel_gde_laborant_talked")
+    return not xr_conditions.is_day() and has_alife_info("prof_uletel_gde_laborant_talked")
 end
 
 
@@ -9807,7 +9807,7 @@ local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_1]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 level.add_cam_effector("camera_effects\\earthquake.anm", 1488228, false)
 level.add_pp_effector("blink.ppe", 20131, false)
-db.actor:kill(db.actor)
+xr_effects.kill_actor()
 get_console():execute("sv_setweather dark")
 for i=1,65535 do
 local lokobj = level.object_by_id(i)
@@ -13223,7 +13223,7 @@ function kill_actor_svd_dolina()
 		return
 	end
         soundtrack.ros_shoot_max()
-	olr.kill_actor()
+	xr_effects.kill_actor()
         db.actor.health = -10
 	local sactor = alife():actor()
 	local cactor = level.object_by_id(sactor.id)
@@ -14877,7 +14877,7 @@ end
 
 
 function bar_barman_night_precond(actor,npc)
-    return has_alife_info("olr_traders_night") and has_alife_info("bar_dogskill_done")
+    return not xr_conditions.is_day() and has_alife_info("bar_dogskill_done")
 end
 
 
@@ -14887,7 +14887,7 @@ end
 
 
 function bar_barman_day_precond(actor,npc)
-    return has_alife_info("olr_traders_day") and has_alife_info("bar_dogskill_done")
+    return xr_conditions.is_day() and has_alife_info("bar_dogskill_done")
 end
 
 
@@ -15472,7 +15472,7 @@ end
 
 
 function dolg_barter_precond(actor,npc)
-    return has_alife_info("olr_traders_night") and has_alife_info("bar_dolgovec_pre_barter_done")
+    return not xr_conditions.is_day() and has_alife_info("bar_dolgovec_pre_barter_done")
 end
 
 function is_den_dialog_bar(actor,npc)
@@ -15721,7 +15721,7 @@ function boloto_pizdez_actoru()
         --level.add_pp_effector("fire_hit.ppe", 1523, true)
 	--level.set_pp_effector_factor(154523, 2.5)
         olr_teleport.pesdets_swmp_tp()
-        --db.actor:kill(db.actor)
+        --xr_effects.kill_actor()
 end
 
 
@@ -15729,7 +15729,7 @@ function golg_attack_pizdez_actoru()
         level.add_pp_effector("fire_hit.ppe", 1523, true)
 	level.set_pp_effector_factor(154523, 2.5)
         soundtrack.ros_shoot_max()
-        db.actor:kill(db.actor)
+        xr_effects.kill_actor()
 end
 
 
@@ -15738,7 +15738,7 @@ function kill_actor_svd_yan()
         level.add_pp_effector("fire_hit.ppe", 1523, true)
 	level.set_pp_effector_factor(254523, 2.5)
         soundtrack.ros_shoot_max()
-        db.actor:kill(db.actor)
+        xr_effects.kill_actor()
 end
 end
 
@@ -15747,7 +15747,7 @@ function kill_actor_svd_esc()
         level.add_pp_effector("fire_hit.ppe", 1523, true)
 	level.set_pp_effector_factor(254523, 2.5)
         soundtrack.ros_shoot_max()
-        db.actor:kill(db.actor)
+        xr_effects.kill_actor()
 end
 
 
@@ -15957,7 +15957,7 @@ end
 
 
 function dolg_zom_quest_precond(actor,npc)
-    return has_alife_info("olr_traders_night") and has_alife_info("bar_pre_radar_talk_done")
+    return not xr_conditions.is_day() and has_alife_info("bar_pre_radar_talk_done")
 end
 
 
@@ -16286,7 +16286,7 @@ function kill_actor_geners()
 	end	
 	local sobj = alife():create("mil_stalker_respawn_3", pos, lv_id, gv_id)	
 	db.actor.health = -1
-	olr.kill_actor()
+	xr_effects.kill_actor()
 end
 
 
@@ -20394,7 +20394,7 @@ snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
 
 function bar_kill_actor_agerss()
-	olr.kill_actor()
+	xr_effects.kill_actor()
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\t_svd_shot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	news_manager.send_tip(db.actor, game.translate_string("bar_kill_actor_agerss_0"), 2, "dolg", 5000)
@@ -20601,7 +20601,7 @@ function kol()
 	olr.del_by_name("lvl5_bar_physic_object_0011")
 	olr.del_by_name("lvl5_bar_physic_object_0308")
 	olr.del_by_name("lvl5_bar_stalker_0025")
-	if has_alife_info("olr_traders_night") then
+	if not xr_conditions.is_day() then
 		news_manager.send_tip(db.actor, game.translate_string("kol_1"), nil, "default", 30000)	
 	end
 end

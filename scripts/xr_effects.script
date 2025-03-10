@@ -63,7 +63,7 @@ end
 
 
 function yan_attack_heli_dead()
-	olr.kill_actor()
+	xr_effects.kill_actor()
 	db.actor.health = -1
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\svu_shoot]])
 	if not snd_obj:playing() then 
@@ -381,7 +381,7 @@ function mil_contr_house()
 end
 
 function actro_hit_napgen()
-	olr.kill_actor()
+	xr_effects.kill_actor()
 	level.add_pp_effector("snd_shock.ppe", 2031, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\rostok_bloodsucker_call]])
 	if not snd_obj:playing() then 
@@ -1860,7 +1860,7 @@ function aes_kill_actor (actor, npc)
 end
 
 function kill_actor() 
-       db.actor:kill(db.actor) 
+	db.actor:kill(db.actor)
 end
 
 function set_sidorovich_animation (npc)
@@ -2204,14 +2204,14 @@ end
 
 
 function deadcity_monolit_proverka(actor, npc)
-if has_alife_info("olr_traders_night") and has_alife_info("deadcity_mon_quest_start") then
+if not xr_conditions.is_day() and has_alife_info("deadcity_mon_quest_start") then
 	db.actor:give_info_portion("deadcity_mon_quest_on_place")
 end
 end
 
 
 function esc_prizrak_proverka(actor, npc)
-if has_alife_info("olr_traders_night") and has_alife_info("jaba_start_phanrom_start") and not has_alife_info("jaba_start_phanrom_spawen") then
+if not xr_conditions.is_day() and has_alife_info("jaba_start_phanrom_start") and not has_alife_info("jaba_start_phanrom_spawen") then
 	db.actor:give_info_portion("jaba_start_phanrom_spawen")
 	olr.spawen_phantoms()
 end
@@ -3025,7 +3025,7 @@ end
 
 function esc_prizrak_hitted()
 	if not has_alife_info("jaba_start_phanrom_spawen_agressive") then
-		olr.kill_actor()
+		xr_effects.kill_actor()
 	        db.actor.health = -11
 	end
         db.actor.health = -0.03
@@ -3626,7 +3626,7 @@ function use_spat_hata_esc()
         	news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_0"))
         	return
 	end
-	if not has_alife_info("olr_traders_day") then
+	if not xr_conditions.is_day() then
 		this.go_sleep_place()
 		return
 	else
@@ -4907,7 +4907,7 @@ end
 
 
 function use_telephone_bar()
-	if has_alife_info("olr_traders_day") then
+	if xr_conditions.is_day() then
 		olr.hud_tip("", game.translate_string("st_xr_effects_message_quiet"), 5)
 		return
 	end

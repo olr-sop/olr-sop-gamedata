@@ -226,7 +226,7 @@ function generic_object_binder:update(delta)
 		-- жаба
 		if cls == clsid.script_trader then
 			trade_manager.update(self.object)
-        		if has_alife_info("olr_traders_night") then
+        		if not xr_conditions.is_day() then
         			self.object:disable_trade()
         		else
         			self.object:enable_trade()
@@ -743,7 +743,7 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
         level.add_pp_effector("fire_hit.ppe", 1523, true)
 	level.set_pp_effector_factor(154523, 2.5)
         soundtrack.ros_shoot_max()
-        db.actor:kill(db.actor)
+        xr_effects.kill_actor()
         news_manager.send_tip(db.actor, game.translate_string("generic_object_binderhit_callback_0"), nil, "trader", 3000)
         end
         end

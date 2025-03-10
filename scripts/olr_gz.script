@@ -339,7 +339,7 @@ function act_temp()
 		end
 	end
 
-	if level.rain_factor() > 0.1 or (db.actor:is_actor_outdoors() == false and not xr_conditions.is_day()) then
+	if level.rain_factor() > 0.1 or (db.actor:is_actor_outdoors() == false and has_alife_info("olr_traders_night")) then
 		if not has_norm_teploprot() and not olr.actor_in_lab() then
 			xvars.temperatura_actor = xvars.temperatura_actor - 0.009
 			--news_manager.send_tip(db.actor, game.translate_string("act_temp_1")) 
@@ -363,7 +363,7 @@ function act_temp()
 		end
 	end
 
-	if xr_conditions.is_day() then
+	if has_alife_info("olr_traders_day") then
 		if has_norm_teploprot() then
 			xvars.temperatura_actor = xvars.temperatura_actor + 0.001 
 			if xvars.temperatura_actor > 37.1 then
@@ -372,7 +372,7 @@ function act_temp()
 		end
 	end
 
-	if xvars.temperatura_actor < min_porog_temp and (level.rain_factor() > 0.5 or not xr_conditions.is_day()) then
+	if xvars.temperatura_actor < min_porog_temp and (level.rain_factor() > 0.5 or has_alife_info("olr_traders_night")) then
 		local pst = math.random(1,90) 
 		if pst == 1 then
 			if not has_alife_info("actor_has_prostuda") then

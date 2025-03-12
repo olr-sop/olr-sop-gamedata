@@ -55,14 +55,6 @@ function update()
 			else
 				level.remove_pp_effector(165236)
 			end
-
-			-- лучевая болезнь Усталость восстанавливается хуже
-			if db.actor.power > 0.7 and xvars.count_rad_weak > 0 then
-				db.actor.power = - xvars.count_rad_weak
-			end
-			if db.actor.health > 0.5 and xvars.count_rad_weak > 0 then
-				db.actor.health = - xvars.count_rad_weak * 0.5
-			end
 			if xvars.count_rad_weak > 0.0015 then
 				local radppe = xvars.count_rad_weak
 				level.add_pp_effector("contrast.ppe", 16516, true)
@@ -71,40 +63,7 @@ function update()
 			else
 				level.remove_pp_effector(16516)
 			end
-
-			-- Радиационное облучение,  Усталость восстанавливается хуже
-			if db.actor.power > 0.75 and db.actor.radiation > 0 then
-				db.actor.power = - db.actor.radiation / 35
-			end
-
-			this.act_temp()
-
-        	local iCurrPow = db.actor.power
-        	local iCurrPow5 = db.actor.power * 5
-        	local iCurrPowJump = db.actor.power
-			local a = get_actor_obj()
-			if a then 
-				if a.state.sprint then
-					db.actor.satiety = -0.0005
-				end
-
-				local cur_jumps = iCurrPowJump * 7 + jump_golmar_outfit() + jump_exo_outfit() - exo_check_jump()
-				if cur_jumps < 5 then
-					cur_jumps = 5.5
-				end
-				if iCurrPowJump < 0.1 then
-					cur_jumps = 2.5
-				end
-				a.jump_speed = cur_jumps
-				--log1(" "..iCurrPowJump.." --- "..cur_jumps.."")
-
-				if a.state.run then
-					return
-				end
-
-				a.walk_accel = 7 + iAllcond + iCurrPow5 + walk_exo_prm() - exo_check_walk()
 		--log1(""..a.walk_accel.."")
-			end 
 		end
 	end
 end
@@ -262,15 +221,6 @@ local function take_item(state, obj)
 	else
 		return nil
 	end
-
-	if ini:line_exist(obj:section(), "add_max_walk_weight") then
-		local val = ini:r_float(obj:section(), "add_max_walk_weight")
-		if state == true then
-			db.actor:set_actor_max_walk_weight(db.actor:get_actor_max_walk_weight() + val)
-		else
-			db.actor:set_actor_max_walk_weight(db.actor:get_actor_max_walk_weight() - val)
-		end
-	end
 end
 
 
@@ -312,80 +262,7 @@ function act_temp()
 
 	if level.name() == "lvl_mars" or level.name() == "lvl_nightmare" or level.name() == "lvl16_generators" then
 		return
-	end 
-
-	if db.actor and xvars.temperatura_actor then
-
-		if bind_anomaly.u_costra() == true or bind_coster.u_costra() == true then
-			xvars.temperatura_actor = xvars.temperatura_actor + 0.0090
-			--news_manager.send_tip(db.actor, game.translate_string("act_temp_0"))
-			if xvars.temperatura_actor > 38.1 then
-				xvars.temperatura_actor = xvars.temperatura_actor - 0.0095
-			end
-		end
-
-		if level.rain_factor() > 0.1 or (db.actor:is_actor_outdoors() == false and has_alife_info("olr_traders_night")) then
-			if not has_norm_teploprot() and not olr.actor_in_lab() then
-				xvars.temperatura_actor = xvars.temperatura_actor - 0.009
-				--news_manager.send_tip(db.actor, game.translate_string("act_temp_1")) 
-				local slp = math.random(1,180)
-				if slp == 1 then	
-					olr.sopli()
-					if math.random(1,10) == 1 then
-						olr.hud_tip("", game.translate_string("st_olr_gz_cold"), 3)
-						olr.sopli()
-					else
-						--olr.hud_tip("", "Нужно согреться...", 3)
-						olr.sopli()
-					end
-				end
-			end
-			if has_norm_teploprot() then
-				xvars.temperatura_actor = xvars.temperatura_actor + 0.001 
-				if xvars.temperatura_actor > 37.1 then
-					xvars.temperatura_actor = xvars.temperatura_actor - 0.0015
-				end	
-			end
-		end
-
-		if has_alife_info("olr_traders_day") then
-			if has_norm_teploprot() then
-				xvars.temperatura_actor = xvars.temperatura_actor + 0.001 
-				if xvars.temperatura_actor > 37.1 then
-					xvars.temperatura_actor = xvars.temperatura_actor - 0.0015 
-				end	
-			end
-		end
-
-		if xvars.temperatura_actor < min_porog_temp and (level.rain_factor() > 0.5 or has_alife_info("olr_traders_night")) then
-			local pst = math.random(1,90) 
-			if pst == 1 then
-				if not has_alife_info("actor_has_prostuda") then
-					olr.info("actor_has_prostuda")
-					news_manager.send_tip(db.actor, game.translate_string("act_temp_2"), 1, "act", 39000)
-					olr.sopli()
-				end
-			end
-		end
-
-		if xvars.temperatura_actor > max_porog_temp and has_alife_info("actor_has_prostuda") then
-			db.actor.health = -0.001
-			olr.sopli()
-			news_manager.send_tip(db.actor, game.translate_string("act_temp_3"))
-		end
-
-
-		if xvars.temperatura_actor < min_temp then
-			db.actor.health = -0.001
-			xvars.temperatura_actor = xvars.temperatura_actor + 0.0005
-		end
-
-		if xvars.temperatura_actor > max_temp then
-			db.actor.health = -0.001
-			xvars.temperatura_actor = xvars.temperatura_actor - 0.0005
-		end
 	end
-	--log1("cur_temp is "..xvars.temperatura_actor.."")
 end
 
 function has_norm_teploprot()

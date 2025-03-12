@@ -679,6 +679,13 @@ if time_global() > tup25000 then
     		if has_alife_info("start_olr_mod") then
 
 			amk.oau_reason="cn news_main time 2 st"
+
+			local func = loadstring("olr.check_time()")
+			if func then
+				pcall(func)
+			else
+				log1("!!! ERROR LUA olr.check_time() PCALL")
+			end
 			--olr.check_time()
 
 			amk.oau_reason="cn news_main time 3 st"
@@ -741,7 +748,17 @@ end
 end
 
 function check_time()
+	if xr_conditions.is_day() then
+		amk.oau_reason="cn olr_traders_day 1 st"
+     		db.actor:give_info_portion("olr_traders_day")
+		amk.oau_reason="cn olr_traders_day 1 end"
+       	elseif not xr_conditions.is_day() then
+		amk.oau_reason="cn olr_traders_night 1 st"
+        	db.actor:give_info_portion("olr_traders_night")
+		amk.oau_reason="cn olr_traders_night 1 end"
+	end
 end
+
 function on_night()
 	--get_console():execute("r2_tonemap 0")
 end

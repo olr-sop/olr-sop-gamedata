@@ -3005,24 +3005,6 @@ end
 
 
 
-function rad_to_hidden()
-	if nik_dialog.item_much("foto_radar_totem",1) and nik_dialog.item_much("foto_radar_totem_add",2) then
-		local point = patrol("waa_rad_walk")
-		local look = patrol("waa_rad_look")
-		db.actor:set_actor_position(point:point(0))
-		local dir = look:point(0):sub(point:point(0))
-		db.actor:set_actor_direction(-dir:getH())
-        	level.add_pp_effector("black.ppe", 201831, false)
-        	local song_start = xr_sound.get_safe_sound_object("affects\\heartbeat")
-		song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
-		olr.del_by_name("lvl10_radar_space_restrictor_0007")
-		nik_dialog.out_item_much("foto_radar_totem",1)
-		nik_dialog.out_item_much("foto_radar_totem_add",2)
-	end
-end
-
-
-
 function esc_prizrak_hitted()
 	if not has_alife_info("jaba_start_phanrom_spawen_agressive") then
 		xr_effects.kill_actor()
@@ -3177,28 +3159,6 @@ function del_horok_esc()
   if se_obj then
     alife():release(se_obj, true)
   end
-end
-
-
-
-function kill_tarel_cutscene()
-
-for i=1, 65534 do
-local car = level.object_by_id(i)
-if car then
-if car ~= nil and 
-car:name() == "lvl_mars_stalker" then
-
-local h = hit ()
-h.power = 100
-h.direction = vector():set (0, -1, 0)
-h.impulse = 0
-h.draftsman = car
-h.type = hit.strike
-car:hit (h)
-end
-end
-end
 end
 
 
@@ -4105,16 +4065,6 @@ function take_psyhead_yan()
         level.add_pp_effector("radar_wake.ppe", 20131, false)
 	db.actor:give_info_portion("take_psyhead_yan_have")
 	--nik_dialog.out_item_much("proto_psy_shap",1)
-	end
-end
-
-
-function head_feeling_scare()
-	if has_alife_info("spaven_karlics_mars") then
-		db.actor:set_actor_position(vector():set(db.actor:position().x + 0.3,db.actor:position().y + 2.8,db.actor:position().z + 0.3))
-		if not olr_timers.has_timer("ufo_fly_away") then
-			olr_timers.st_timer("ufo_fly_away", 2, "nick.ufo_fly_away()")
-		end
 	end
 end
 

@@ -27,7 +27,7 @@ vf_spot main (av v)
 	float 	dp	= calc_cyclic  (wave.w+dot(pos,(float3)wave));
 	float 	H 	= pos.y - base;			// height of vertex (scaled, rotated, etc.)
 	float 	frac 	= v.misc.z*consts.x;		// fractional (or rigidity)
-	float 	inten 	= H * dp;			// intensity качания копии 
+	float 	inten 	= H * dp;			// intensity
 	float2 	result	= calc_xz_wave	(wind.xz*inten, frac);
 	float4 	f_pos 	= float4(pos.x+result.x, pos.y, pos.z+result.y, 1);
 	float3 	f_N 	= normalize 	(mul (m_xform,  unpack_normal(v.nc)));

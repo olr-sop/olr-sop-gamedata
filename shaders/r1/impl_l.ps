@@ -14,26 +14,10 @@ half4 	main_ps_1_1	( v2p I )	: COLOR
 	half4	t_base 	= tex2D		(s_base,I.tc0);
 	half4	t_lmap 	= tex2D		(s_lmap,I.tc1);
 
-#if R1_FUCKUP_LEVEL == 1
-	// lighting
-	half3 	l_base 	= t_lmap.rgb;			// base light-map
-	half3	l_vertex= I.c0;				// just ambient
-	half3	l_hemi 	= t_base.a * L_hemi_color;	// hemi is implicitly inside texture
-	half 	l_sun 	= t_lmap.a;			// sun occlusion
-	half3	light	= l_base+l_vertex+l_hemi;
-#elif R1_FUCKUP_LEVEL == 2
-	// lighting
-	half3	l_vertex= I.c0;					// just ambient
-	half3	l_hemi 	= (t_lmap.rgb+t_base.a) * L_hemi_color;	// hemi + RGB
-	half 	l_sun 	= t_lmap.a;				// sun occlusion
-	half3	light	= l_vertex+l_hemi;
-#else
 	// lighting
 	half3 	l_base 	= t_lmap.rgb;			// base light-map
 	half3	l_hemi 	= I.c0 * t_base.a;		// hemi is implicitly inside texture
 	half 	l_sun 	= t_lmap.a;			// sun color
 	half3	light	= L_ambient + l_base + l_hemi	;
-#endif
-
 	return  half4	(light,l_sun);
 }

@@ -3,9 +3,6 @@
 
 #include "shared\common.h"
 
-uniform sampler2D       s_position;             //
-
-
 uniform half4		L_dynamic_props;	// per object, xyz=sun,w=hemi
 uniform half4		L_dynamic_color;	// dynamic light color (rgb1)	- spot/point
 uniform half4		L_dynamic_pos;		// dynamic light pos+1/range(w) - spot/point
@@ -56,21 +53,21 @@ float4 	calc_model_lmap 	(float3 pos_w)	{
 
 struct 	v_lmap
 {
-	float4 	P	: POSITION;	// (float,float,float,1)
-	float4	N	: NORMAL;	// (nx,ny,nz,hemi occlusion)
+	float4 	P	: POSITION;			// (float,float,float,1)
+	float4	N	: NORMAL;			// (nx,ny,nz,hemi occlusion)
 	float4 	T	: TANGENT;
 	float4 	B	: BINORMAL;
-	float2 	uv0	: TEXCOORD0;	// (base)
-	float2	uv1	: TEXCOORD1;	// (lmap/compressed)
+	float2 	uv0	: TEXCOORD0;		// (base)
+	float2	uv1	: TEXCOORD1;		// (lmap/compressed)
 };
 struct	v_vert
 {
-	float4 	P	: POSITION;	// (float,float,float,1)
-	float4	N	: NORMAL;	// (nx,ny,nz,hemi occlusion)
-	float4 	T	: TANGENT;
-	float4 	B	: BINORMAL;
-	float4	color	: COLOR0;	// (r,g,b,dir-occlusion)
-	float2 	uv	: TEXCOORD0;	// (u0,v0)
+	float4 	P		: POSITION;		// (float,float,float,1)
+	float4	N		: NORMAL;		// (nx,ny,nz,hemi occlusion)
+	float4 	T		: TANGENT;
+	float4 	B		: BINORMAL;
+	float4	color	: COLOR0;		// (r,g,b,dir-occlusion)
+	float2 	uv		: TEXCOORD0;	// (u0,v0)
 };
 struct 	v_model
 {
@@ -114,35 +111,10 @@ uniform sampler2D 	s_detail;
 
 #define def_distort	half(0.05f)	// we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
 
-
-
-
-
-//упрощенна€ формула hemi (билд 2232-“„)
-//float3	v_hemi 		(float3 n)		{	return L_hemi_color/* *(.5f + .5f*n.y) */; 		}
-//float3	v_hemi_wrap	(float3 n, float w)	{	return L_hemi_color/* *(w + (1-w)*n.y) */; 		}
-
-
-//усложненна€ формула hemi (немного затемн€ет, особенно деревь€)
-//float3	v_hemi 		(float3 n)		{	return L_hemi_color *(.95f + .2f*n.y); 		}
-//float3	v_hemi_wrap	(float3 n, float w)	{	return L_hemi_color *(w + (1-w)*n.y); 		}
-
-
-//усложненна€ формула hemi осветленный вариант
-float3	v_hemi 		(float3 n)		{	return L_hemi_color *(.98f + .2f*n.y); 		}
-float3	v_hemi_wrap	(float3 n, float w)	{	return L_hemi_color *(w + (1-w)*n.y); 		}
-
-
-
-
-
-
-float3 	v_sun_wrap_flyer	(float3 n, float w)	{	return L_sun_color*max(0,dot(n,-L_sun_dir_w));	}
+float3	v_hemi 		(float3 n)		{	return L_hemi_color/* *(.5f + .5f*n.y) */; 		}
+float3	v_hemi_wrap	(float3 n, float w)	{	return L_hemi_color/* *(w + (1-w)*n.y) */; 		}
+float3 	v_sun 		(float3 n)		{	return L_sun_color*max(0,dot(n,-L_sun_dir_w));		}
 float3 	v_sun_wrap	(float3 n, float w)	{	return L_sun_color*(w+(1-w)*dot(n,-L_sun_dir_w));	}
-
-float3 	v_sun 		(float3 n)		{	return L_sun_color*max(0.3,dot(n,-L_sun_dir_w));}
-
-
 half3	p_hemi		(float2 tc) 	{
 	half3	t_lmh 	= tex2D		(s_hemi, tc);
 	return  dot	(t_lmh,1.h/3.h);

@@ -5,13 +5,12 @@ struct vf
 	float4 hpos	: POSITION;
 	float4 C	: COLOR0;
 	float2 tc	: TEXCOORD0;
-	float  fog	: FOG;
 };
 
-	uniform float4 		consts; // {1/quant,1/quant,diffusescale,ambient}
-	uniform float4 		wave; 	// cx,cy,cz,tm
-	uniform float4 		dir2D; 
-	uniform float4 		array	[200] : register(c10);
+uniform float4 		consts; // {1/quant,1/quant,diffusescale,ambient}
+uniform float4 		wave; 	// cx,cy,cz,tm
+uniform float4 		dir2D; 
+uniform float4 		array	[200] : register(c10);
 
 vf main (v_detail v)
 {
@@ -40,8 +39,6 @@ vf main (v_detail v)
 	float2 	result	= calc_xz_wave	(dir2D.xz*inten,frac);
 	pos		= float4(pos.x+result.x, pos.y, pos.z+result.y, 1);
 	o.hpos		= mul	(m_WVP,pos);
-
-	o.fog 		= calc_fogging(pos);
 
 	// Fake lighting
 	float 	dpc 	= max 	(0.f, dp);

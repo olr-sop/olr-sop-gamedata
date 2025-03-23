@@ -5,7 +5,7 @@
 //waterdistortion
 //waterdistortion2
 
-#define W_POSITION_SHIFT_HEIGHT (1.f/30.f)	//(1.f/100.f)	//amplitude /50 - small, /10 - large
+#define W_POSITION_SHIFT_HEIGHT (1.f/60.f)	//(1.f/100.f)	//amplitude /50 - small, /10 - large
 #define W_POSITION_SHIFT_SPEED	(25.f)		//(25.0f)
 #define W_DISTORT_BASE_TILE_0	(1.0f)		//(1.0f)
 #define W_DISTORT_BASE_TILE_1	(1.1f)		//(1.1f)

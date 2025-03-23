@@ -19,25 +19,11 @@ half4 	main_ps_1_1	( v2p I )	: COLOR
 	half4	t_lmap 	= tex2D		(s_lmap,I.tc1);
 	half4	t_env 	= texCUBE	(s_env,	I.tc3);
 
-#if R1_FUCKUP_LEVEL == 1
-	// lighting
-	half3 	l_base 	= t_lmap.rgb;			// base light-map
-	half3	l_vertex= I.c0;					// hemi + ambient
-	half3 	l_sun 	= I.c1*t_lmap.a;		// sun color
-	half3	light	= l_base + l_vertex + l_sun;
-#elif R1_FUCKUP_LEVEL == 2
-	half3	t_hemi	= tex2D		(s_hemi,I.tc2);
-	// lighting
-	half3 	l_base 	= (t_lmap.rgb+t_hemi)*L_hemi_color;	// base light-map + hemi
-	half3 	l_sun 	= I.c1*t_lmap.a;					// sun color
-	half3	light	= l_base + L_ambient + l_sun;
-#else
 	// lighting
 	half3 	l_base 	= t_lmap.rgb;				// base light-map
 	half3	l_hemi 	= I.c0*p_hemi(I.tc2);			// hemi
 	half3 	l_sun 	= I.c1*t_lmap.a;			// sun color
-	half3	light	= L_ambient/1.5 + l_base + l_sun + l_hemi	;
-#endif
+	half3	light	= L_ambient + l_base + l_sun + l_hemi	;
 
 	// final-color
 	half3 	base 	= lerp		(t_env,t_base,t_base.a);

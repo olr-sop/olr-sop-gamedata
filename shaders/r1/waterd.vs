@@ -1,17 +1,6 @@
-//uniform float4x4 	m_texgen;
 #include "common.h"
 #include "shared\waterconfig.h"
 #include "shared\watermove.h"
-
-struct	v_verx
-{
-	float4 	P	: POSITION;	// (float,float,float,1)
-	float4	N	: NORMAL;	// (nx,ny,nz,hemi occlusion)
-	float4 	T	: TANGENT;
-	float4 	B	: BINORMAL;
-	float4	color	: COLOR0;	// (r,g,b,dir-occlusion)
-	float2 	uv	: TEXCOORD0;	// (u0,v0)
-};
 
 struct vf
 {
@@ -19,10 +8,9 @@ struct vf
 	float2 tbase	: TEXCOORD0	;
 	float2 tdist0	: TEXCOORD1	;
 	float2 tdist1	: TEXCOORD2	;
-
 };
 
-vf main (v_verx v)
+vf main (v_vert v)
 {
 	vf 		o;
 
@@ -34,8 +22,6 @@ vf main (v_verx v)
 	o.tdist0	= watermove_tc 		(o.tbase*W_DISTORT_BASE_TILE_0, P.xz, W_DISTORT_AMP_0);
 	o.tdist1	= watermove_tc 		(o.tbase*W_DISTORT_BASE_TILE_1, P.xz, W_DISTORT_AMP_1);
 	o.hpos 		= mul			(m_VP, P);			// xform, input in world coords
-
-//	Igor: for additional depth dest
 
 	return o;
 }

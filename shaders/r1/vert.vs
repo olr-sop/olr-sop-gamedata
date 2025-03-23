@@ -17,23 +17,10 @@ vf main (v_vert v)
 	o.tc0		= unpack_tc_base	(v.uv,v.T.w,v.B.w);		// copy tc
 //	o.tc0		= unpack_tc_base	(v.tc);				// copy tc
 
-#if R1_FUCKUP_LEVEL == 1
-	float3 	L_rgb 	= v.color.xyz;						// precalculated RGB lighting
-	float3 	L_hemi 	= L_hemi_color*v.N.w;					// hemisphere
-	float 	L_dir 	= max(0,dot(N,-L_sun_dir_w));				// directional lighting
-	float3 	L_sun 	= L_sun_color*v.color.w*L_dir;				// sun
-	float3 	L_final	= L_rgb + L_hemi + L_sun + L_ambient;
-#elif R1_FUCKUP_LEVEL == 2
-	float3 	L_hemi 	= L_hemi_color*(v.N.www+v.color.xyz);			// hemisphere + RGB
-	float 	L_dir 	= max(0,dot(N,-L_sun_dir_w));				// directional lighting
-	float3 	L_sun 	= L_sun_color*v.color.w*L_dir;				// sun
-	float3 	L_final	= L_hemi + L_sun + L_ambient;
-#else
 	float3 	L_rgb 	= v.color.xyz;						// precalculated RGB lighting
 	float3 	L_hemi 	= v_hemi(N)*v.N.w;					// hemisphere
 	float3 	L_sun 	= v_sun(N)*v.color.w;					// sun
 	float3 	L_final	= L_rgb + L_hemi + L_sun + L_ambient;
-#endif
 
 	o.c0		= L_final;
 	o.fog 		= calc_fogging 		(v.P);			// fog, input in world coords

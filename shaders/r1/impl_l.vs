@@ -16,12 +16,7 @@ vf main (v_lmap v)
 	o.hpos 		= mul			(m_VP, v.P);	// xform, input in world coords
 	o.tc0		= unpack_tc_base	(v.uv0,v.T.w,v.B.w);		// copy tc
 	o.tc1		= o.tc0;				// copy tc 
-
-#if R1_FUCKUP_LEVEL == 1 || R1_FUCKUP_LEVEL == 2
-	o.c0		= L_ambient;				// just ambient
-#else
 	o.c0		= v_hemi(unpack_normal(v.N));		// just ambient
-#endif
 
 	return o;
 }

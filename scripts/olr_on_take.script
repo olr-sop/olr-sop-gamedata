@@ -26,12 +26,17 @@ function on_take(obj)
 	if obj:section()=="yad" then alife():release(alife():object(obj:id())) end -- !! ai_medic
 
 	if obj:section()=="device_pda" then
-		if device().precache_frame >1 then return end
+		if device().precache_frame >1 then
+			return
+		end
+		if obj:original_owner_id() == db.actor:id() then
+			return
+		end
 		olr.del(obj)
 		local cond = obj:condition()
-                local bobj3445 = alife():create('item_pda_dead_taken', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-                level.client_spawn_manager():add(bobj3445.id, 0, function(id,obj) obj:set_condition(cond) end)
-                --log1("item_pda_dead fix")
+		local bobj3445 = alife():create('item_pda_dead_taken', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		level.client_spawn_manager():add(bobj3445.id, 0, function(id,obj) obj:set_condition(cond) end)
+		--log1("item_pda_dead fix")
 		local yaz_var = math.random(1,15)
 		if yaz_var == 1 then
 			olr_treasure.create_treasure()

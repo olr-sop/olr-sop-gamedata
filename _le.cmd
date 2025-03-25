@@ -1,0 +1,1 @@
+start bin\Editors\LevelEditor.exe -editor

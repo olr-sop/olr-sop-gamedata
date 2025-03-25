@@ -1,0 +1,1 @@
+@start bin\xr_3da.exe

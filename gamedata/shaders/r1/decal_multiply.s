@@ -1,5 +1,5 @@
 function normal(shader, t_base, t_second, t_detail)
-	shader:begin("wmark","vert")
+	shader:begin("wmark","simple")
 			: sorting	(2, false)
 			: blend		(true,blend.destcolor,blend.zero)
 			: aref 		(false,0)

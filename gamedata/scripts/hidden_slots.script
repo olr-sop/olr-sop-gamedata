@@ -32,17 +32,16 @@ function BkgrWnd:InitControls()
 	end
 	local ctrl
 	local xml = CScriptXmlInit()
-	xml:ParseFile("ui_olr_mod.xml")
+	if xml:is_16_9_mode() then
+		xml:ParseFile("flyer\\ui_olr_mod_16.xml")
+	else
+		xml:ParseFile("flyer\\ui_olr_mod.xml")
+	end
 	-- кнопка сброса
 	ctrl = xml:Init3tButton("btn_drop_item",self.stat)
 	self:Register(ctrl,"btn_drop_item")
 	self:AddCallback("btn_drop_item",ui_events.BUTTON_CLICKED,self.DropItem,self)
 	-- кнопка сна
-	ctrl = xml:Init3tButton("btn_sleep",self.stat)
-	if device().width/device().height==5/4 then ctrl:SetTextX(-2)
-	elseif device().width/device().height==16/10 or device().width/device().height==16/9 then ctrl:SetTextX(15) end
-	self:Register(ctrl,"btn_sleep")
-	self:AddCallback("btn_sleep",ui_events.BUTTON_CLICKED,self.ClickBtnSleep,self)
     initial = true
 end
 

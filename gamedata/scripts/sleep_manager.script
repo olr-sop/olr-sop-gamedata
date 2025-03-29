@@ -1,0 +1,70 @@
+--'  DreamMod v0.2 by Ab@dDon '--
+---' revision and adaptation for NS_2013 lsclon 29.12.12 '---
+
+function main(scale)
+	local actor = db.actor
+	local sleep_ltx = g_ini_file("scripts\\actorsleep.ltx")
+	amk_mod.reduce_need_sleep(scale)
+	schemes["ar_sleep"] = "ar_sleep"
+	ar_sleep.set_scheme(actor,sleep_ltx,"ar_sleep",logic)
+	actor:stop_talk()
+	level.disable_input()
+	sleep_manager.hp_corrector(scale)
+	sleep_manager.starter(scale)
+end
+
+function starter(scale)
+	local factor = scale * 2650
+	game.start_tutorial("time_scaling")
+	level.add_pp_effector("teleport.ppe",2006,false)
+	level.set_time_factor(factor)
+end
+
+function dreamer()
+	level.set_time_factor(getIniValueFloatSimple("alife","time_factor"))
+	if sleep_manager.is_sleep_active() then
+		sleep_manager.hp_corrector(0)
+		local dream = dream.sleep_video_name_callback()
+		if dream ~= "" then
+			game.start_tutorial(dream)
+		else
+			game.start_tutorial("without_dream")
+		end
+	end
+end
+
+function stopper()
+	if not is_sleep_active() then
+		return
+	end
+	local actor = db.actor
+	level.set_time_factor(getIniValueFloatSimple("alife","time_factor"))
+	ar_sleep.disable_scheme()
+	if actor:alive() then
+		level.add_cam_effector("camera_effects\\prison_1.anm",25,false,"")
+		level.add_pp_effector("yantar_underground_psi.ppe",2007,false)
+		level.add_pp_effector("total_recall.ppe",2008,false)
+		local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\human_01\stalker\states\breath\breath_2]])
+		snd_obj:play_no_feedback(db.actor,sound_object.s2d,0,vector(),15.0)
+	end
+	level.enable_input()
+end
+
+function hp_corrector(fr)
+	if fr ~= 0 then
+		hp = fr/6 + db.actor.health
+		if hp > 1 then
+			hp = 1
+		end
+		return
+	elseif db.actor.health > hp then 
+		db.actor.health = hp - db.actor.health
+	end
+end
+
+function is_sleep_active()
+	if db.storage[db.actor:id()].active_scheme == "ar_sleep" then
+		return true
+	end
+	return false
+end

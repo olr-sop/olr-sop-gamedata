@@ -18,7 +18,7 @@ function r1_lspot	(shader, t_base, vs, aref)
 			: clamp		()
 			: f_linear 	()
 			: project   	(true)
-	shader:sampler	("s_att")    	:texture	("fx\\light_grad")
+	shader:sampler	("s_att")    	:texture	("fx\\light\\light_grad")
 			: clamp		()
 			: f_linear	()
 end

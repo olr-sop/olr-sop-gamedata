@@ -8,6 +8,7 @@
 class "load_item" (CUIListItemEx)
 
 function load_item:__init() super()
+	self.xml = CScriptXmlInit()
 	self.file_name		= "filename"
 	self:SetWndRect		(0,0,430,22)
 	
@@ -35,7 +36,11 @@ function load_item:__init() super()
 	self.flevel				= CUIStatic	()
 	self.flevel:SetAutoDelete	(true)
 	self:AttachChild		(self.flevel)
-	self.flevel:SetWndRect	(340,0,150,22)
+	if self.xml:is_16_9_mode() then
+		self.flevel:SetWndRect	(340,0,150,22)
+	else
+		self.flevel:SetWndRect	(380,0,150,22)
+	end
 	self.flevel:SetText		("fileage")
 	self.flevel:SetFont		(GetFontLetterica16Russian())
 	self.flevel:SetTextColor(ca,cr,cg,cb)

@@ -4455,101 +4455,6 @@ condition = 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-[4643]
-
-; cse_abstract properties
-section_name = helicopter
-name = lvl1_escape_helicopter
-position = -55.1233596801758, 101.708511352539, -140.395721435547
-direction = 0, 0, 0
-id = 65535
-version = 118
-script_version = 6
-spawn_id = 251
-
-; cse_alife_object properties
-game_vertex_id = 0
-level_vertex_id = 276646
-object_flags = 0xffffffb2
-custom_data = <<END
-[logic]
-active = heli_move@patrolling
-on_hit = hit
-
-[hit]
-on_info = %+esc_vetruha_atack%
-
-[heli_move@patrolling]
-path_move = hhuiq							
-;combat_enemy        = actor
-combat_use_rocket   = true
-combat_use_mgun     = false
-on_signal = fly_end| heli_move@pause				
-on_info = {!is_day} heli_move@night
-on_info2 = {+esc_vetruha_atack} heli_move@fly1						
-;on_info2 = {+blowout_started} heli_move@blow
-;on_info3 = {+esc_blockpost_alarm}  %=heli_set_enemy_actor%
-;on_actor_dist_le_nvis = 67 | %+esc_heli_direct%		
-combat_safe_altitude = -50	
-						
-[heli_move@pause]
-path_move = heli_idle_move							
-combat_use_rocket   = false
-on_timer = 1 | heli_move@patrolling					
-on_info = {!is_day} heli_move@night					
-;on_info2 = {+blowout_started} heli_move@blow
-;on_info3 = {+esc_blockpost_alarm}  %=heli_set_enemy_actor%
-combat_safe_altitude = -50							
-
-[heli_move@night]
-path_move = heli_sleep								
-combat_use_rocket   = false
-on_signal = heli_sig| heli_move@night2				
-combat_safe_altitude = -50							
-invulnerable = true									
-mute = true											
-combat_ignore = true								
-
-[heli_move@night2]
-path_move = heli_sleep2								
-combat_use_rocket   = false
-engine_sound = false									
-combat_safe_altitude = -50							
-combat_ignore = true								
-on_info = {=is_day} heli_move@patrolling
-
-[heli_move@fly1]
-path_move = dog_bite
-;engine_sound = true
-combat_enemy = actor
-combat_use_rocket = true
-combat_use_mgun = true
-rocket_delay = 6000
-combat_safe_altitude = -80
-invulnerable = true
-on_timer = 263000 | heli_move@patrolling
-
-		
-
-
-
-END
-
-; cse_visual properties
-visual_name = physics\vehicles\mi24\veh_mi24_u_01
-
-; cse_motion properties
-motion_name = helicopter\vert_path.anm
-
-; cse_ph_skeleton properties
-skeleton_name = idle
-
-; cse_alife_helicopter properties
-cse_alife_helicopter__unk1_sz = idle
-engine_sound = device\vehicle\helicopter
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 [4644]
 
 ; cse_abstract properties
@@ -37292,16 +37197,13 @@ custom_data = <<END
 active    = sr_idle1 
  
 [sr_idle1]
-on_info   = {+esc_tutorial_start} sr_idle22
+on_info   = {+esc_tutorial_start} sr_idle2
 
-[sr_idle22]
-on_timer  = 100 | sr_idle2 %=disable_ui =run_postprocess(deadcity_wake) =start_aah_shii%
- 
 [sr_idle2]
-on_timer  = 3000 | sr_idle3 %=run_cam_effector(punch_effector)%
+on_timer  = 100 | sr_idle3 %=start_aah_shii%
  
 [sr_idle3]
-on_timer  = 8000 | sr_idle4 %=enable_ui =start_aah_shii_mesto_znak%
+on_timer  = 8000 | sr_idle4 %=start_aah_shii_mesto_znak%
 
 [sr_idle4]
 on_timer  = 8000 |  %=start_aah_shii_mesto_znak2% nil  

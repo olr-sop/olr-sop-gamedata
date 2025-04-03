@@ -15,9 +15,7 @@ local excluded_npcs={
 
 mk_types={
 	[1]="medkit",
-	[2]="medkit_army",
-	[3]="medkit_scientic",
-	[4]="bandage"
+	[2]="bandage"
 }
 
 wounded = {}
@@ -63,7 +61,7 @@ function evaluator_medic:evaluate()
 		if (self.next_check_time or 0) > time_global() then return false end
 		self.next_check_time = time_global() + 5000
 		
-		if not npc:object("medkit") and not npc:object("medkit_army") and not npc:object("medkit_scientic") then return false end
+		if not npc:object("medkit") then return false end
 		
 		local wounded_guy
 		for k,v in pairs(wounded) do
@@ -111,7 +109,7 @@ function evaluator_self_medic:evaluate()
 	if wounded[npc:id()] or has_medic[npc:id()] or excluded_npcs[npc:name()] then return false end
 	if self.check_time<time_global() then
 		self.check_time = time_global() + math.random(3000,10000)
-		if not npc:object("medkit") and not npc:object("medkit_army") and not npc:object("medkit_scientic") and not npc:object("bandage") then return false end
+		if not npc:object("medkit") and not npc:object("bandage") then return false end
 		if npc.health<0.5 then 
 			self.a.self_healing=true
 			return true 
@@ -157,12 +155,6 @@ function action_medic:execute()
 			if npc:object("medkit") ~= nil then
 				npc:transfer_item(npc:object("medkit"), wounded_npc)
 				self.medsec="medkit"
-			elseif npc:object("medkit_army") ~= nil then
-				npc:transfer_item(npc:object("medkit_army"), wounded_npc)
-				self.medsec="medkit_army"
-			elseif npc:object("medkit_scientic") ~= nil then
-				npc:transfer_item(npc:object("medkit_scientic"), wounded_npc)
-				self.medsec="medkit_scientic"
 			end
 		end
 		if self.step1 and not self.step2 and self.step1<time_global() then
@@ -201,7 +193,7 @@ end
 function action_self_medic:initialize()
 	action_base.initialize(self)
 	local npc=self.object
-	if npc.health >= 1 or not npc:object("medkit") and not npc:object("medkit_army") and not npc:object("medkit_scientic") and not npc:object("bandage") then
+	if npc.health >= 1 or not npc:object("medkit") and not npc:object("bandage") then
 		self.a.self_healing=false
 		return
 	end
@@ -222,7 +214,7 @@ end
 function action_self_medic:execute()
 	action_base.execute (self)
 	local npc=self.object
-	if not self.allow_empty and not npc:object("medkit") and not npc:object("medkit_army") and not npc:object("medkit_scientic") and not npc:object("bandage") then
+	if not self.allow_empty and not npc:object("medkit") and not npc:object("bandage") then
 		self.a.self_healing=false
 		return
 	end
@@ -260,10 +252,6 @@ function action_self_medic:execute()
 	if self.end_time and self.end_time<time_global() then
 		if npc:object("medkit") ~= nil then
 			self.medsec="medkit"
-		elseif npc:object("medkit_army") ~= nil then
-			self.medsec="medkit_army"
-		elseif npc:object("medkit_scientic") ~= nil then
-			self.medsec="medkit_scientic"
 		elseif npc:object("bandage") ~= nil then
 			self.medsec="bandage"
 		end
@@ -424,7 +412,7 @@ function npc_update(binder)
 		  npc:character_community()=="arena_enemy" or npc:name()=="mil_stalker0012" or npc:name()=="lvl5_bar_stalker_0038" or npc:name()=="lvl8_swamp_stalker_0014" or
 		  npc:name()=="yantar_ecolog_general" then return end
 	if time_global()>binder.medkit_update_time then
-		if not npc:object("medkit") and not npc:object("medkit_army") and not npc:object("medkit_scientic") then
+		if not npc:object("medkit") then
 			local sobj = alife():object(npc:id())
 			if sobj and sobj.rank and sobj:rank()~=0 then
 				if math.random()>0.2 then alife():create(mk_types[3%math.ceil(sobj:rank()/1000)+1],npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id()) end

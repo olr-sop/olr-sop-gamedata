@@ -131,29 +131,6 @@ local section = item_in_hands:section()
 	end
 	
 	
-	
-	if section == "medkit_army" then 
-			db.actor:give_info_portion("eat_medkit_tmr")
-			db.actor:give_info_portion("actor_healing_medkit")
-			olr_timers.st_timer("eat_medkit_tmr_timer", 25, "nick.eat_medkit_tmr_timer()")
-			--log1("eat medkit_army")
-			alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	end
-	
-	
-	if section == "medkit_scientic" then 
-			db.actor:give_info_portion("eat_medkit_tmr")
-			db.actor:give_info_portion("actor_healing_medkit")
-			olr_timers.st_timer("eat_medkit_tmr_timer", 30, "nick.eat_medkit_tmr_timer()")
-			--log1("eat medkit_scientic")
-			local par_var = math.random(1,3)
-			if par_var == 1 then
-				alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-				alife():create('bandage', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-			end
-	end
-	
-	
 	if section == "sigaret" then 
 			db.actor.psy_health = db.actor.psy_health + 0.1
 			db.actor.alcohol = db.actor.alcohol + 0.01
@@ -554,39 +531,7 @@ function on_quick_medkit()
 
 		db.actor:move_to_slot(medkit_one, true)
 		db.actor:activate_slot(4)
-		olr.snd([[weapons\generic_draw]])
-		return
-		--get_actor_obj():press_action(28)
-
-	end
-
-	local medkit_two = db.actor:object("medkit_army")
-		if medkit_two ~= nil then
-
-		local item_in_hands = db.actor:item_in_slot(4)
-		if item_in_hands then
-			db.actor:move_to_ruck(item_in_hands)
-		end
-
-		db.actor:move_to_slot(medkit_two, true)
-		db.actor:activate_slot(4)
-		olr.snd([[weapons\generic_draw]])
-		return
-		--get_actor_obj():press_action(28)
-
-	end
-
-	local medkit_tri = db.actor:object("medkit_scientic")
-		if medkit_tri ~= nil then
-
-		local item_in_hands = db.actor:item_in_slot(4)
-		if item_in_hands then
-			db.actor:move_to_ruck(item_in_hands)
-		end
-
-		db.actor:move_to_slot(medkit_tri, true)
-		db.actor:activate_slot(4)
-		olr.snd([[weapons\generic_draw]])
+		olr.snd([[weapons\general\draw]])
 		return
 		--get_actor_obj():press_action(28)
 

@@ -125,9 +125,7 @@ function is_not_wounded(first_speaker, second_speaker)
 	return not this.is_wounded(first_speaker, second_speaker)
 end
 function actor_have_medkit(first_speaker, second_speaker)
-	return first_speaker:object("medkit") ~= nil or
-		   first_speaker:object("medkit_army") ~= nil or
-		   first_speaker:object("medkit_scientic") ~= nil
+	return first_speaker:object("medkit") ~= nil
 end
 function actor_have_bandage(first_speaker, second_speaker)
 	return first_speaker:object("bandage") ~= nil
@@ -150,46 +148,6 @@ function transfer_medkit(first_speaker, second_speaker)
 		end
 		first_speaker:change_character_reputation(20)
         	if second_speaker:character_rank() <= first_speaker:character_rank()  then
-			olr_treasure.create_treasure()
-		end
-		return
-        end
-
-	if first_speaker:object("medkit_army") ~= nil then
-		dialogs.relocate_item_section(second_speaker, "medkit_army", "out")
-		--local mon_var = math.random(10,230)
-		--db.actor:give_money(mon_var)
-		--game_stats.money_quest_update(mon_var)
-		--news_manager.send_tip(db.actor, "Получены деньги: "..mon_var.." RU", nil, "default", 3000)
-		--' Тут надо анлочить аптечку для использования.
-		xr_wounded.unlock_medkit(second_speaker)	
-		if second_speaker:relation(first_speaker) ~= game_object.enemy then
-			second_speaker:set_relation(game_object.friend, first_speaker)
-			second_speaker:enable_trade()
-			first_speaker:enable_trade()
-		end
-		first_speaker:change_character_reputation(25)
-	 	if second_speaker:character_rank() <= first_speaker:character_rank()  then
-			olr_treasure.create_treasure()
-		end
-		return
-        end
-
-	if first_speaker:object("medkit_scientic") ~= nil then
-		dialogs.relocate_item_section(second_speaker, "medkit_scientic", "out")
-		--local mon_var = math.random(10,230)
-		--db.actor:give_money(mon_var)
-		--game_stats.money_quest_update(mon_var)
-		--news_manager.send_tip(db.actor, "Получены деньги: "..mon_var.." RU", nil, "default", 3000)
-		--' Тут надо анлочить аптечку для использования.
-		xr_wounded.unlock_medkit(second_speaker)	
-		if second_speaker:relation(first_speaker) ~= game_object.enemy then
-			second_speaker:set_relation(game_object.friend, first_speaker)
-			second_speaker:enable_trade()
-			first_speaker:enable_trade()
-		end
-		first_speaker:change_character_reputation(30)
-		if second_speaker:character_rank() <= first_speaker:character_rank()  then
 			olr_treasure.create_treasure()
 		end
 		return

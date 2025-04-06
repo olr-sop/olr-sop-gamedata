@@ -4,7 +4,6 @@ local time=time_global()
 convert_npc={}
 
 is_debug = false
-ver = "0"
 oau_watchdog=0
 oau_reason=""
 
@@ -143,7 +142,7 @@ end
 --записываем переменную
 function save_variable(variable_name, value)
   if value==nil then
-    amk.mylog("saving nil into "..variable_name)
+    mylog("saving nil into "..variable_name)
     del_variable(variable_name)
   else
     local vn=compress_name(variable_name)
@@ -709,11 +708,11 @@ function read_stalker_params(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local tbl=amk.parse_stalker_packet({},stpk,uppk,size)
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return tbl
 end
 
@@ -737,7 +736,7 @@ function write_stalker_params(tbl,sobj,noconvert)
   amk.fill_stalker_packet(tbl,stpk,uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -756,7 +755,7 @@ function write_monster_params(tbl,sobj)
   amk.fill_se_monster_packet(tbl,stpk,uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -971,14 +970,14 @@ function get_breakable_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
 	amk.parse_object_packet(t,stpk,uppk,size)
   amk.parse_visual_packet(t,stpk,uppk,size)
   amk.parse_object_physic_packet(t,stpk,uppk,size)
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -992,7 +991,7 @@ function set_breakable_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -1006,7 +1005,7 @@ function get_spawner_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
@@ -1015,7 +1014,7 @@ function get_spawner_data(sobj)
 	
 	t.restrictor_type = stpk:r_u8()
 	t.spawned_obj_count = stpk:r_u8()
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -1030,7 +1029,7 @@ function set_spawner_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -1139,7 +1138,7 @@ function get_restrictor_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
@@ -1147,7 +1146,7 @@ function get_restrictor_data(sobj)
   amk.parse_shape_packet(t,stpk,uppk,size)
 	
 	t.restrictor_type = stpk:r_u8()
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -1161,7 +1160,7 @@ function set_restrictor_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -1175,14 +1174,14 @@ function get_trader_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
 	amk.parse_object_packet(t,stpk,uppk,size)
   amk.parse_visual_packet(t,stpk,uppk,size)
   amk.parse_trader_packet(t,stpk,uppk,size)
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -1196,7 +1195,7 @@ function set_trader_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -1210,13 +1209,13 @@ function get_invbox_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
 	amk.parse_object_packet(t,stpk,uppk,size)
   amk.parse_visual_packet(t,stpk,uppk,size)
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -1229,7 +1228,7 @@ function set_invbox_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -1338,7 +1337,7 @@ function get_destroyable_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
@@ -1346,7 +1345,7 @@ function get_destroyable_data(sobj)
   amk.parse_visual_packet(t,stpk,uppk,size)
   amk.parse_skeleton_packet(t,stpk,uppk,size)
   amk.parse_object_physic_packet(t,stpk,uppk,size)
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -1361,7 +1360,7 @@ function set_destroyable_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)
@@ -1376,7 +1375,7 @@ function get_weapon_data(sobj)
   sobj:UPDATE_Write(uppk)
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("rsp "..size.." "..size1)
+  -- mylog("rsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   local t={}
@@ -1384,7 +1383,7 @@ function get_weapon_data(sobj)
   amk.parse_visual_packet(t,stpk,uppk,size)
   amk.parse_item_packet(t,stpk,uppk,size)
   amk.parse_item_weapon_packet(t,stpk,uppk,size)
-  -- amk.mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
+  -- mylog("rsp "..size.." "..size1.." "..stpk:r_tell())
   return t
 end
 
@@ -1399,7 +1398,7 @@ function set_weapon_data(t,sobj)
 	
   local size=stpk:w_tell()
   local size1=uppk:w_tell()
-  -- amk.mylog("wsp "..size.." "..size1)
+  -- mylog("wsp "..size.." "..size1)
   stpk:r_seek(0)
   uppk:r_seek(0)
   sobj:STATE_Read(stpk,size)

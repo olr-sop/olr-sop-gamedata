@@ -2420,7 +2420,7 @@ dialogs.relocate_money(first_speaker, 2650, "in")
 if level.name() == "lvl5_bar" then
 	news_manager.send_tip(db.actor, game.translate_string("st_nick_snake_taken_down"), 1, "barman", 19000)
 olr.give_item("medkit")
-	olr.give_item("wpn_spas12")
+	olr.give_item("wpn_wincheaster1300")
 	olr.give_item("wpn_desert_eagle")
 end
 end
@@ -3242,7 +3242,7 @@ function chaes_1_sms()
 
 	local bsobj = alife():object("lvl16_generators_staler_undead_olr") 
 	if bsobj then
-		alife():create("wpn_sv17", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id)
+		alife():create("wpn_gauss", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id)
 		alife():create_ammo("ammo_gauss", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 10)
 	end
 
@@ -3416,7 +3416,7 @@ function vodka_otdal_milyan()
 		alife():create("karlik", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 		alife():create("karlik", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 		alife():create("karlik", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
-		alife():create("wpn_spas12", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
+		alife():create("wpn_wincheaster1300", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 		alife():create("af_kolco", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 		alife():teleport_object(se_obj.id, jaba_place.m_game_vertex_id, jaba_place.m_level_vertex_id, jaba_place.position)
  	end
@@ -3515,7 +3515,7 @@ function morak_talk_two_done()
 end
 
 function morak_talk_one_done()
-	olr.give_item("wpn_tiss")
+	olr.give_item("wpn_ak74")
 	olr.give_item("grenade_rgd5_anom")
 	olr_timers.st_timer("morak_zombvoen", 143, "nick.morak_zombvoen()")
 	olr.spawn_on_obj("zombie_strong", "lvl9_military_zone_radioactive_killing_0016")
@@ -3984,7 +3984,7 @@ end
 
 function nagrada_escape_dolg()
 	olr.give_item("wpn_aps_sk1")
-	olr.give_item("wpn_tiss")
+	olr.give_item("wpn_ak74")
 	olr_timers.st_timer("barmmntchse", 8, "nick.barman_gotodolkick()")
 	if not has_alife_info("dolina_killer_dolg_escape_done_krav_have") then
 		news_manager.send_tip(db.actor,  game.translate_string("nagrada_escape_dolg_0"), nil, "dolg_mask1", 25000)
@@ -4958,7 +4958,7 @@ function gauss_door_boss_fight_open()
 	olr.info("gen_pojarnn_dveri_open")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\siren_gen]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	olr.spawn_on_obj("wpn_sv17", "lvl16_generators_stalker_0034")
+	olr.spawn_on_obj("wpn_gauss", "lvl16_generators_stalker_0034")
 	local bsobj = alife():object("lvl16_generators_stalker_0034") 
 	if bsobj then
 		alife():create_ammo("ammo_gauss", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 10)
@@ -6554,8 +6554,7 @@ function boss_talk_one_done()
 			local sect = obj:section_name()
 			if
 				sect == "wpn_gauss" or
-				sect == "wpn_pistol_future" or
-				sect == "wpn_sv17" 
+				sect == "wpn_pistol_future"
 			then 
 				sim:release(obj)					
 			end
@@ -7580,7 +7579,7 @@ function pes_zapas_triday()
 	local obj = olr.give_item("detector_simple")
 	level.client_spawn_manager():add(obj.id, 0, function(id,obj) obj:set_condition((math.random(95,99)/100)) end)
 	olr.give_item("wpn_addon_scope_susat")
-	olr.give_item("wpn_l85")
+	olr.give_item("wpn_lr300")
 	olr.give_item("af_banka_s_holodcom")
 	olr.give_item("battery_change")
 	olr.give_item("medkit")
@@ -7957,12 +7956,6 @@ function daem_anom_knife()
 	nik_dialog.out_item_much("af_gold_fish",1)
 end
 
-function daem_gravidrobbar()
-	olr.give_item("wpn_shotgra")
-	nik_dialog.out_item_much("wpn_spas12",1)
-	nik_dialog.out_item_much("af_gold_fish",1)
-end
-
 function daem_anom_ammo_svd()
 	alife():create_ammo("ammo_7.62x54_7h14_anom", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id(),10)
 	nik_dialog.out_item_much("af_gravi",1)
@@ -7992,12 +7985,6 @@ end
 function has_anom_rgd()
      return nik_dialog.item_much("grenade_rgd5",1) ~= false and nik_dialog.item_much("af_gravi",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi")
 end
-
-
-function has_anom_drob()
-     return nik_dialog.item_much("wpn_spas12",1) ~= false and nik_dialog.item_much("af_gold_fish",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gold-fish")
-end
-
 
 function has_exp_paras_all()
 	return nik_dialog.item_much("pers_card_eco",3) ~= false and has_alife_info("paras_zaraz_dead") and has_alife_info("pribor_paras_mg_have") and nik_dialog.item_much("pribor_paras_spory_mg",1) ~= false
@@ -12752,7 +12739,7 @@ function otdaem_emulator_shapka(first_speaker, second_speaker)
 	olr.del_by_name("lvlmili_space_restrictor_phantasm")
 	olr.del_by_name("lvlradar_space_restrictor_phantasm")
 nik_dialog.out_item_much("psy_shapka_mg",1)
-olr.give_item("wpn_spas12")
+olr.give_item("wpn_wincheaster1300")
 db.actor:change_actor_sleep(-1)
 olr.kill_mon_in_radius(db.actor:position(), 150)
 olr.blow_add(200)
@@ -13643,7 +13630,7 @@ end
 
 
 function daem_nagradu_kulon(first_speaker, second_speaker)  
- dialogs.relocate_item_section(second_speaker, "wpn_l85","in")
+ dialogs.relocate_item_section(second_speaker, "wpn_lr300","in")
  dialogs.relocate_item_section(second_speaker, "ammo_5.56x45_ap","in")
  dialogs.relocate_item_section(second_speaker, "ammo_5.56x45_ap","in")
  	olr.del_by_name("lvl7_yantar_space_restrictor_0054")
@@ -14636,7 +14623,7 @@ end
 function dolg_voliny_barter(first_speaker, second_speaker)
 	local reward = math.random(1,3)  
 	if reward == 1 then  
-                dialogs.relocate_item_section(second_speaker, "wpn_spas12","in")
+                dialogs.relocate_item_section(second_speaker, "wpn_wincheaster1300","in")
 	end
  	if reward == 2 then  
                 dialogs.relocate_item_section(second_speaker, "wpn_rpk74","in")
@@ -15567,18 +15554,6 @@ end
 
 function otdaem_stbrony()
 nik_dialog.out_item_much("stalker_outfit",1)
-end
-
-
-function precond_kalasha_u()
-     return nik_dialog.item_much("wpn_ak74u",1) ~= false    
-end
-
-
-function otdaem_kalasha_u()
-nik_dialog.out_item_much("wpn_ak74u",1)
-db.actor:change_character_reputation(20)
-news_manager.send_tip(db.actor, game.translate_string("otdaem_kalasha_u_0"), 55, "default", 19000)
 end
 
 

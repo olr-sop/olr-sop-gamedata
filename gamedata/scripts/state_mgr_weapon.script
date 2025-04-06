@@ -14,7 +14,7 @@ function eva_state_mgr_weapon:evaluate()
 	if (weapon == nil) then
 		return true
 	end
-	local bestweapon = (rx_wmgr and rx_wmgr.get_wm(self.object):get_weapon()) or self.object:best_weapon()
+	local bestweapon = self.object:best_weapon()
 	if not isWeapon(bestweapon) then
 --		printf("isWeapon = false")
 		return true
@@ -75,7 +75,7 @@ class "eva_state_mgr_weapon_strapped_now" (property_evaluator)
 function eva_state_mgr_weapon_strapped_now:__init(name) super (nil, name)
 end
 function eva_state_mgr_weapon_strapped_now:evaluate()
-	local wpn = (rx_wmgr and rx_wmgr.get_wm(self.object):get_weapon()) or self.object:best_weapon()
+	local wpn = self.object:best_weapon()
 	if not isWeapon(wpn) then
 		return true
 	end
@@ -98,7 +98,7 @@ class "eva_state_mgr_weapon_unstrapped_now" (property_evaluator)
 function eva_state_mgr_weapon_unstrapped_now:__init(name) super (nil, name)
 end
 function eva_state_mgr_weapon_unstrapped_now:evaluate()
-	local wpn = (rx_wmgr and rx_wmgr.get_wm(self.object):get_weapon()) or self.object:best_weapon()
+	local wpn = self.object:best_weapon()
 	return 	self.object:weapon_unstrapped() and		
 			self.object:active_item() ~= nil and		
 			wpn ~= nil and
@@ -227,7 +227,7 @@ end
 
 function get_weapon(obj, target_state)
 	if state_lib.states[target_state].weapon_slot == nil then
-		return (rx_wmgr and rx_wmgr.get_wm(obj):get_weapon()) or obj:best_weapon()
+		return obj:best_weapon()
 	else
 		return obj:item_in_slot(state_lib.states[target_state].weapon_slot)
 	end

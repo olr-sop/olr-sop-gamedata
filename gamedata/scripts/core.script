@@ -25,7 +25,7 @@ function core_init()
 				local registerable = _G[dep_module] and _G[dep_module].init
 				can_register = can_register and registerable
 				if not registerable then 
-					nc.mylog("core error: can't init dependenced module '"..dep_module.."', there is no such module OR it has no 'init()' function")			
+					mylog("core error: can't init dependenced module '"..dep_module.."', there is no such module OR it has no 'init()' function")			
 				end
 			end
 			if can_register then
@@ -36,7 +36,7 @@ function core_init()
 					end
 				end
 			else
-				nc.mylog("core error: can't init some dependenced modules, look info above")
+				mylog("core error: can't init some dependenced modules, look info above")
 			end
 		else
 			if _G[module] and _G[module].init then
@@ -45,7 +45,7 @@ function core_init()
 					registered_modules[module]=true
 				end
 			else
-				nc.mylog("core error: can't init module '"..module.."', there is no such module OR it has no 'init()' function")
+				mylog("core error: can't init module '"..module.."', there is no such module OR it has no 'init()' function")
 			end
 		end
 	end
@@ -59,7 +59,7 @@ function ac(callback_name,funct)
 		end
 		table.insert(callbacks_recipients[callback_name],funct)
 	else
-		nc.mylog("core error: can't add callback with empty name OR invalid function was passed to registrator")
+		mylog("core error: can't add callback with empty name OR invalid function was passed to registrator")
 	end
 end
 
@@ -72,7 +72,7 @@ function tc(callback_name,...)
 			end
 		end
 	else
-		nc.mylog("core error: trying shot calback with empty name ")
+		mylog("core error: trying shot calback with empty name ")
 	end
 end
 
@@ -84,7 +84,7 @@ function proxy(nspace,funct,...)
 
 	if stack_deep > max_deep then
 		stack_deep = 0
-		nc.mylog("core error: too many recursions via proxy - module '"..nspace.."', function '"..funct.."'")
+		mylog("core error: too many recursions via proxy - module '"..nspace.."', function '"..funct.."'")
 	end
 	--prevent of core's functions
 	if nspace == "core" then return end
@@ -92,7 +92,7 @@ function proxy(nspace,funct,...)
 		stack_deep = stack_deep + 1
 		return _G[nspace][funct](...)
 	end
-	nc.mylog("core error: called function '"..funct.."' does not exists in module'"..nspace.."'")
+	mylog("core error: called function '"..funct.."' does not exists in module'"..nspace.."'")
 end
 
 -- safely get var, if not exist returns defval or nil

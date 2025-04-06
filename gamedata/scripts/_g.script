@@ -18,17 +18,22 @@ end
 
 ----------------------------------------------------------------------
 
+SIMPLE_LUA_DEBUG = false
+
+if string.find(command_line(), "-simple_lua_debug") then
+	SIMPLE_LUA_DEBUG = true
+end
+
 function prints(fmt,...)
-	log1(string.format(fmt,...))
+	if SIMPLE_LUA_DEBUG then
+		log1(string.format(fmt,...))
+	end
 end
 
 function printf(fmt,...)
-	--log1(string.format(fmt,...))
-end
-
-
-function dgblog(fmt, ...) 
-	printf(fmt, ...)
+	if SIMPLE_LUA_DEBUG then
+		log1(string.format(fmt,...))
+	end
 end
 
 function assert(cond, msg, ...)
@@ -39,30 +44,28 @@ end
 
 
 function mylog(msg)
---[[
-  if msg==nil then
-    return 
-  end
-  if db and db.actor then
-    if bufferedmessages then
-      for k,v in ipairs(bufferedmessages) do
-        db.actor:give_game_news(v, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
-      end
-      bufferedmessages=nil
-    end
-  db.actor:give_game_news(msg, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
-  else
-    if bufferedmessages then
-      table.insert(bufferedmessages,msg)
-    end
-  end
-  if get_console() then
-    get_console():execute("load "..msg)
-    get_console():execute("flush")
-  end
-]]
+if SIMPLE_LUA_DEBUG then
+	if msg==nil then
+		return 
+	end
+	if db and db.actor then
+		if bufferedmessages then
+			for k,v in ipairs(bufferedmessages) do
+				db.actor:give_game_news(v, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
+			end
+			bufferedmessages=nil
+		end
+	db.actor:give_game_news(msg, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
+	else
+		if bufferedmessages then
+			table.insert(bufferedmessages,msg)
+		end
+	end
+	printf(msg)
+end
 end
 
+----------------------------------------------------------------------
 
 function usero_name()
 	return "olr"                         

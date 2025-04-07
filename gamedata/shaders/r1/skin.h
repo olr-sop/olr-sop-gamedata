@@ -32,7 +32,8 @@ struct 	v_model_skinned_2		// 28 bytes
 float3 	u_normal	(float3 v)	{ return 2.f*v-1.f;				}
 
 //////////////////////////////////////////////////////////////////////////////////////////
-uniform float4 	sbones_array	[256-22] : register(vs,c22);
+//	Igor: some shaders in r1 need more free constant registers
+uniform float4 	sbones_array	[255-22-3] : register(vs,c22); // из ЗП, чтоб наш ретро мод мог влезеть по кол-ву регистров в шейдерах со скиннингом
 float3 	skinning_dir 	(float3 dir, float3 m0, float3 m1, float3 m2)
 {
 	float3 	U 	= u_normal	(dir);
@@ -91,6 +92,7 @@ v_model skinning_1 	(v_model_skinned_1	v)
 }
 v_model skinning_2 	(v_model_skinned_2	v)
 {
+	
 	// matrices
 	int 	id_0 	= v.tc.z;
 	float4  m0_0 	= sbones_array[id_0+0];

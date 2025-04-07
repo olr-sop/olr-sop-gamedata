@@ -120,4 +120,33 @@ half3	p_hemi		(float2 tc) 	{
 	return  dot	(t_lmh,1.h/3.h);
 }
 
+//#define RETRO_MODE // Для отладки
+
+#ifdef RETRO_MODE
+
+// PS1/PSX Model (https://godotshaders.com/shader/ps1-psx-model/)
+// Автор: Grau
+// Порт на хрей: theysani
+// TODO: Когда будут биндеры в рендере вывести всё это сюда чтоб править из консоли
+
+uniform float4 c_retromode_params; // не используется (пока)
+
+float4 snap_to_position(float4 base_position)
+{
+	float jitter = 0.25; // from 0.01 to 0.99
+	float2 resolution = float2(640, 480); //Progressive: 256×224 to 640×240 pixels. Interlaced: 256×448 to 640×480 pixels.	
+	
+	float4 snapped_position = base_position;
+	snapped_position.xyz = base_position.xyz / base_position.w;
+	
+	float2 snap_resulotion = floor(float2(resolution) * (1.0 - jitter));
+	snapped_position.x = floor(snap_resulotion.x * snapped_position.x) / snap_resulotion.x;
+	snapped_position.y = floor(snap_resulotion.y * snapped_position.y) / snap_resulotion.y;
+	
+	snapped_position.xyz *= base_position.w;
+	return snapped_position;
+}
+
+#endif
+
 #endif // COMMON_H

@@ -30,7 +30,6 @@ vf main (v_detail v)
  	pos.z 		= dot	(m2, v.pos);
 	pos.w 		= 1;
 
-	// 
 	float 	base 	= m1.w;
 	float 	dp	= calc_cyclic   (dot(pos,wave));
 	float 	H 	= pos.y - base;			// height of vertex (scaled)

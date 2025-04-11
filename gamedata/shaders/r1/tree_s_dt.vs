@@ -54,16 +54,14 @@ vf main (av v)
 	float3 	L_rgb 	= L_unpack.xyz;								// precalculated RGB lighting
 	float3 	L_hemi 	= v_hemi_wrap(N,.75f)* L_unpack.w;			// hemisphere
 	float3 	L_sun 	= v_sun (N)* (L_base*c_sun.x+c_sun.y);			// sun
-	//float3 	L_sun 	= v_sun_wrap (N,.25f)* (L_base*c_sun.x+c_sun.y);			// sun
-	//float3 	L_sun 	= L_sun_color*(.25f+.75f*dot(N,-L_sun_dir_w))*(L_base*c_sun.x+c_sun.y);
 	float3 	L_final	= L_rgb + L_hemi + L_sun;
 
 	// final xform, color, tc
 	o.TEX0.xy		= (v.misc * consts).xy;
 	o.tc1			= o.TEX0*dt_params;						// dt tc
-	float2	dt 		= calc_detail		(f_pos);			// 
-	o.COL0			= float4 		(L_final,dt.x);			//
-	o.c1			= dt.y;							//
+	float2	dt 		= calc_detail		(f_pos);
+	o.COL0			= float4 		(L_final,dt.x);
+	o.c1			= dt.y;
 
 	return 	o	;
 }

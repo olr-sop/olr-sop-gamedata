@@ -17,7 +17,6 @@ vf main (v_vert v)
 	float3 	N 	= unpack_normal		(v.N);
 	o.hpos 		= mul			(m_VP, v.P);			// xform, input in world coords
 	o.tc0		= unpack_tc_base	(v.uv,v.T.w,v.B.w);		// copy tc
-//	o.tc0		= unpack_tc_base	(v.tc);				// copy tc
 	o.tc1		= o.tc0*dt_params;					// dt tc
 
 	float3 	L_rgb 	= v.color.xyz;						// precalculated RGB lighting

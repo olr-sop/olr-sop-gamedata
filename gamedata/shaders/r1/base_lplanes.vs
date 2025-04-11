@@ -13,7 +13,6 @@ vf main (v_vert v)
 
 	o.hpos 		= mul			(m_WVP, v.P);		// xform, input in world coords
 	o.tc0		= unpack_tc_base	(v.uv,v.T.w,v.B.w);	// copy tc
-//	o.tc0		= unpack_tc_base	(v.tc);			// copy tc
 
 	// calculate fade
 	float3  dir_v 	= normalize		(mul(m_WV,v.P));

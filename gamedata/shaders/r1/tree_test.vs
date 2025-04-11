@@ -37,7 +37,7 @@ vf main (av v)
 	float 	frac 	= v.misc.z*consts.x;		// fractional (or rigidity)
 	float 	inten 	= H * dp;			// intensity
 	float2 	result	= calc_xz_wave	(wind.xz*inten, frac);
-	float4 	f_pos 	= float4(pos,1);		//float4(pos.x+result.x, pos.y, pos.z+result.y, 1);
+	float4 	f_pos 	= float4(pos,1);
 
 	// Calc fog
 	o.fog 		= calc_fogging 	(f_pos);
@@ -53,7 +53,7 @@ vf main (av v)
 	float3 	L_hemi 	= v_hemi_wrap(N,.75f)* L_unpack.w;					// hemisphere
 	float3 	L_sun 	= v_sun_wrap (N,.25f)* (L_base*c_sun.x+c_sun.y);			// sun
 	float3 	L_final	= L_rgb + L_hemi + L_sun + L_ambient;
-	o.COL0		= L_final;	//,1);
+	o.COL0		= L_final;
 
 	// final xform, color, tc
 	o.TEX0.xy	= (v.misc * consts).xy;

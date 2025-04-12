@@ -179,17 +179,6 @@ function actor_net_spawn()
     	function() olr.addtorch() end
   	)
 	get_console():execute("snd_restart")
-
-	olr.check_binder()
-end
-
-function check_binder()
-	local wait_time = 0
-  	wait_time = time_global() + 1500
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() olr.check_zavis() end
-  	)
 end
 
 function warning_sms()
@@ -199,14 +188,6 @@ function warning_sms()
 	xr_effects.kill_actor()
 	news_manager.send_tip(db.actor, game.translate_string("st_olr_save_corruption_warn_1")..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
 	log1(game.translate_string("st_olr_save_corruption_warn_2")..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
-end
-
-function check_zavis()
-
-	if olr_timers.cnt_st == 0 then
-		log1("!!!ВНИМАНИЕ try netspawn check_zavis")
-		olr.warning_sms()
-	end
 end
 
 function addtorch()
@@ -607,7 +588,7 @@ function upd10000()
 			db.actor.radiation = xvars.count_rad_weak
 			--news_manager.send_tip(db.actor, "rad hit лучевая болезнь "..db.actor.radiation.."", nil, "default", 39000)
 		end
-		olr.check_binder()
+
 		db.actor:iterate_inventory( function(_, obj)
 			if obj then
 				--news_manager.send_tip(db.actor, game.translate_string("upd10000_0"), nil, "default", 39000)

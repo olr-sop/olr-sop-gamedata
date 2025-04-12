@@ -224,16 +224,6 @@ function addtorch()
 	end)
 end
 
-function fix_minigun()
-	local exo = db.actor:item_in_slot(6) and db.actor:item_in_slot(6):section() == "exo_outfit"
-	if not exo then
-		local obj = db.actor:object("wpn_m134")
-		if obj and db.actor:is_in_slot(obj) then
-			db.actor:move_to_ruck(obj)
-		end
-	end
-end
-
 function change_level()
 	if not alife() then
 		return
@@ -354,14 +344,6 @@ function to_slot(obj)
 	olr_gz.take_item_on_slot(obj)
  	if obj and obj:is_outfit() then
 		olr_hud_ruk.on_slot(obj)
-	end
-	if obj and obj:section()=="wpn_m134" then
-		local wait_time = 0
-  		wait_time = time_global() + 100
-  		level.add_call(
-    		function() return time_global() > wait_time end,
-    		function() olr.fix_minigun() end
-  		)
 	end
 	if obj and xvars.goodcondweaps and xvars.goodcondweaps[obj:name()] == true then
 		local wpn_ak = engine_object(obj:id())

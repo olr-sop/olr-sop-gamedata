@@ -11,7 +11,12 @@ vf main (float4	P:POSITION)
 {
 	vf 		o;
 
-	o.hpos 		= mul			(m_WVP, P);			// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, P));
+#else	
+	o.hpos = mul(m_WVP, P); // xform, input in world coords
+#endif
+	
 	o.C 		= tfactor;
 
 	return o;

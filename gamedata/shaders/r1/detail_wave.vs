@@ -37,7 +37,12 @@ vf main (v_detail v)
 	float 	inten 	= H * dp;
 	float2 	result	= calc_xz_wave	(dir2D.xz*inten,frac);
 	pos		= float4(pos.x+result.x, pos.y, pos.z+result.y, 1);
-	o.hpos		= mul	(m_WVP,pos);
+	
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_VP, pos)); // mul(m_WVP,pos);
+#else	
+	o.hpos = mul(m_VP, pos); // mul(m_WVP,pos); // xform, input in world coords
+#endif	
 
 	// Fake lighting
 	float 	dpc 	= max 	(0.f, dp);

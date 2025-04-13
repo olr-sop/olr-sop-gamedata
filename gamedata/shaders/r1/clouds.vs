@@ -20,7 +20,12 @@ vf main (vi v)
 {
 	vf 		o;
 
-	o.hpos 		= mul		(m_WVP, v.p);	// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, v.p));
+#else	
+	o.hpos = mul(m_WVP, v.p); // xform, input in world coords
+#endif	
+	
 	o.color		= v.color;			// copy color
 	
 	o.color.w	*= pow		(v.p.y,25);

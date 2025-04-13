@@ -29,7 +29,12 @@ vf main (v_detail v)
 	pos.w 		= 1;
 
 	// Final out
-	o.hpos		= mul	(m_WVP,pos);
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, pos));
+#else	
+	o.hpos = mul(m_WVP, pos); // xform, input in world coords
+#endif
+	
 	o.C		= c0;
 	o.tc.xy		= (v.misc * consts).xy;
 

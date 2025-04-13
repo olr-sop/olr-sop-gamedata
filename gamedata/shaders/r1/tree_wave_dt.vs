@@ -45,7 +45,11 @@ vf main (av v)
 	o.fog 		= calc_fogging 	(f_pos);
 
 	// Final xform
-	o.HPOS		= mul		(m_VP, f_pos);
+#ifdef RETRO_MODE
+	o.HPOS = snap_to_position(mul(m_VP, f_pos));
+#else	
+	o.HPOS = mul(m_VP, f_pos); // xform, input in world coords
+#endif
 
 	// Lighting
 	float3 	N 	= normalize 	(mul (m_xform,  unpack_normal(v.nc)));

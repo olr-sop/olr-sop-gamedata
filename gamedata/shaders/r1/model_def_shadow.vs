@@ -11,7 +11,12 @@ vf 	_main 	(v_model v)
 {
 	vf 		o;
 
-	o.hpos 		= mul	(m_WVP, v.pos);	// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, v.pos));
+#else	
+	o.hpos = mul(m_WVP, v.pos); // xform, input in world coords
+#endif
+
 	o.c0 		= 0;
 	return o;
 }

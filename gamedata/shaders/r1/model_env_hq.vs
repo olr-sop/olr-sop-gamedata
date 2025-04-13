@@ -23,7 +23,12 @@ vf 	_main (v_model v)
 	float4  pos_w4 	= float4		(pos_w,1);
 	float3 	norm_w 	= normalize 		(mul(m_W,v.norm));
 
-	o.hpos 		= mul			(m_WVP, pos);		// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, pos));
+#else	
+	o.hpos = mul(m_WVP, pos); // xform, input in world coords
+#endif
+
 	o.tc0		= v.tc.xy;					// copy tc
 	o.tc1		= calc_reflection	(pos_w, norm_w);
 	o.tc2		= calc_model_lmap	(pos_w);		// 

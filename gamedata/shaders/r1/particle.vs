@@ -18,7 +18,12 @@ vf main (vv v)
 {
 	vf 		o;
 
-	o.hpos 		= mul	(m_WVP, v.P);		// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, v.P));
+#else	
+	o.hpos = mul(m_WVP, v.P); // xform, input in world coords
+#endif
+	
 	o.tc		= v.tc;				// copy tc
 	o.c		= v.c;				// copy color
 	o.fog 		= calc_fogging (v.P);		// fog, input in world coords

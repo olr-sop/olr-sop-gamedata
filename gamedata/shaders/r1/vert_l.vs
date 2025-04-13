@@ -16,7 +16,12 @@ vf main (v_vert v)
 	float 	L_sun 	= v.color.w;						// sun occl only
 	float3 	L_final	= L_rgb + L_hemi + L_ambient;
 
-	o.hpos 		= mul			(m_VP, v.P);			// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_VP, v.P));
+#else	
+	o.hpos = mul(m_VP, v.P); // xform, input in world coords
+#endif
+
 	o.c0 		= float4 		(L_final.x,L_final.y,L_final.z,L_sun);
 	return o;
 }

@@ -33,7 +33,12 @@ vf main (v_vert v)
 	float3 	L_sun 	= v_sun(N)*v.color.w;					// sun
 	float3 	L_final	= L_rgb + L_hemi + L_sun + L_ambient;
 
-	o.hpos 		= mul			(m_VP, P);			// xform, input in world coords
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_VP, P));
+#else	
+	o.hpos = mul(m_VP, P); // xform, input in world coords
+#endif	
+	
 	o.c0		= float4		(L_final,amount);
 	o.fog 		= calc_fogging 		(P);				// fog, input in world coords
 

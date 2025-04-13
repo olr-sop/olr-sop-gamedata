@@ -33,7 +33,11 @@ vf_spot main (av v)
 	float3 	f_N 	= normalize 	(mul (m_xform,  unpack_normal(v.nc)));
 
 	// Final xform
-	o.hpos		= mul		(m_VP, f_pos);
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_VP, f_pos));
+#else	
+	o.hpos = mul(m_VP, f_pos); // xform, input in world coords
+#endif
 	o.tc0		= (v.misc * consts).xy;
 	o.color		= calc_spot 	(o.tc1,o.tc2,f_pos,f_N);
 

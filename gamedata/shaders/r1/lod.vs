@@ -33,7 +33,12 @@ vf main (vv v)
 	// lerp pos
 	float 	factor 	= v.sun_af.w	;
 	float4 	pos 	= float4	(lerp(v.pos0,v.pos1,factor),1);
-	o.hpos 		= mul		(m_VP, pos);				// xform, input in world coords
+
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_VP, pos));
+#else	
+	o.hpos = mul(m_VP, pos); // xform, input in world coords
+#endif
 
 	// replicate TCs
 	o.tc0		= v.tc0;						

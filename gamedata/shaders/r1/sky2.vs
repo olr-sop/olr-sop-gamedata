@@ -21,8 +21,15 @@ vf main (vi v)
 	vf 		o;
 
 	float4 tpos = mul(1000, v.p);
- 	o.hpos = mul(m_WVP, tpos);		// xform, input in world coords, 1000 - magic number
- 	o.hpos.z = o.hpos.w;
+	
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_WVP, tpos));
+	o.hpos.z = o.hpos.w;
+#else	
+	o.hpos = mul(m_WVP, tpos); // xform, input in world coords
+	o.hpos.z = o.hpos.w;
+#endif	
+	
 	o.c		= v.c;				// copy color
 	o.tc0		= v.tc0;			// copy tc
 	o.tc1		= v.tc1;			// copy tc

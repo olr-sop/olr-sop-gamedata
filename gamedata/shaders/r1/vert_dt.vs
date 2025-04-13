@@ -15,7 +15,13 @@ vf main (v_vert v)
 	vf 		o;
 
 	float3 	N 	= unpack_normal		(v.N);
-	o.hpos 		= mul			(m_VP, v.P);			// xform, input in world coords
+	
+#ifdef RETRO_MODE
+	o.hpos = snap_to_position(mul(m_VP, v.P));
+#else	
+	o.hpos = mul(m_VP, v.P); // xform, input in world coords
+#endif
+
 	o.tc0		= unpack_tc_base	(v.uv,v.T.w,v.B.w);		// copy tc
 	o.tc1		= o.tc0*dt_params;					// dt tc
 

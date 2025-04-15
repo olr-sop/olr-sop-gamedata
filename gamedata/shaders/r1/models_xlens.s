@@ -15,7 +15,7 @@ function l_special  (shader, t_base, t_second, t_detail)
       : zb        (true,false)
       : fog       (false)
       : distort   (true)
-  shader:sampler  ("s_base")      :texture  ("ui\\menu\\lens") //(t_base)
+  shader:sampler  ("s_base")      :texture  ("ui\\mainmenu\\lens") //(t_base)
   shader:sampler  ("s_distort")   :texture  ("fx\\distort\\lens")
 end
 

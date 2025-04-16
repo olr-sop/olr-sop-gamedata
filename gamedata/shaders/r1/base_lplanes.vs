@@ -12,7 +12,9 @@ vf main (v_vert v)
 	vf 		o;
 	
 #ifdef RETRO_MODE
-	o.hpos = snap_to_position(mul(m_WVP, v.P));
+		o.hpos = snap_to_position(mul(m_WVP, v.P));
+		if (affine_mapping)	
+			o.hpos /= abs(o.hpos.w);
 #else	
 	o.hpos = mul(m_WVP, v.P); // xform, input in world coords
 #endif

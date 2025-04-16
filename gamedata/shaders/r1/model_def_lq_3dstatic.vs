@@ -18,7 +18,9 @@ vf 	_main (v_model v)
 	float3 	norm_w 	= normalize 		(mul(m_W,v.norm));
 
 #ifdef RETRO_MODE
-	o.hpos = snap_to_position(mul(m_WVP, pos));
+		o.hpos = snap_to_position(mul(m_WVP, pos));
+	if (affine_mapping)	
+		o.hpos /= abs(o.hpos.w);
 #else	
 	o.hpos = mul(m_WVP, pos); // xform, input in world coords
 #endif

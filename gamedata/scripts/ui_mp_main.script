@@ -194,11 +194,11 @@ function mp_main:OnTabChange()
 	self.btn_join:Enable(false)
 	self.btn_create:Enable(false)
 
-	local i = self.tab:GetActiveIndex()
-	if i == 0 then
+	local i = self.tab:GetActiveId()
+	if i == "client" then
 		self.dlg_join:Show(true)
 		self.btn_join:Enable(true)
-	elseif i == 2 then
+	elseif i == "options" then
 		self.dlg_options:Show(true)
 	else
 		self.dlg_server:Show(true)
@@ -207,10 +207,10 @@ function mp_main:OnTabChange()
 end
 
 function mp_main:OnRadio_NetChanged()
-	local i = self.radio_net_connection:GetActiveIndex()
-	self.server_list:NetRadioChanged(i~=0)
+	local i = self.radio_net_connection:GetActiveId()
+	self.server_list:NetRadioChanged(i~="internet")
 	
-	if i == 0 then
+	if i == "internet" then
 		self.server_list:RefreshList(false)
 	else
 		self.server_list:RefreshList(true)

@@ -219,10 +219,10 @@ function evaluator_crazy_grenadier:evaluate()
 			local timeout = time_global() + self.a.grenades[get_grenade(self.a.grenade):section()].explode_time
 			self.a.test_grenades={}
 			local t
-			t = alife():create(get_grenade(self.a.grenade):section().."_test", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			t = alife():create(get_grenade(self.a.grenade):section().."_fake", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			test_grenades[t.id]=timeout+5000
 			self.a.test_grenades.hi=t.id
-			t = alife():create(get_grenade(self.a.grenade):section().."_test", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			t = alife():create(get_grenade(self.a.grenade):section().."_fake", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			test_grenades[t.id]=timeout+5000
 			self.a.test_grenades.lo=t.id
 			self.a.test_grenades_sect = get_grenade(self.a.grenade):section()
@@ -723,7 +723,7 @@ function net_spawn()
 		local sobj = alife():object(a)
 		if sobj then
 			for k,v in pairs(gr_types) do
-				if sobj:section_name()==v.."_test" or sobj:section_name()==v.."_fake" then
+				if sobj:section_name()==v.."_fake" then
 					alife():release(sobj)
 					break
 				end
@@ -735,7 +735,7 @@ end
 function fake_pickup(obj)
 	--level.map_remove_object_spot(obj:id(), "grenade_location")
 	for k,v in pairs(gr_types) do
-		if obj:section()==v.."_test" or obj:section()==v.."_fake" then
+		if obj:section()==v.."_fake" then
 			alife():release(alife():object(obj:id()))
 			return
 		end

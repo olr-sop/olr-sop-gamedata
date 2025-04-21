@@ -130,7 +130,6 @@ half3	p_hemi		(float2 tc) 	{
 // TODO: Когда будут биндеры в рендере вывести всё это сюда чтоб править из консоли
 
 uniform float4 c_retromode_params; // Не используется (пока)
-uniform bool affine_mapping = false; // TODO: Вывести под консоль
 
 float4 snap_to_position(float4 base_position)
 {

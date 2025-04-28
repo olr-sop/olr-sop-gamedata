@@ -38,7 +38,9 @@ end
 
 function action_water:update( delta )
 	local actor = db.actor
-
+	if self.object == nil then
+		return
+	end
 	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
 		return
 	end	
@@ -57,58 +59,51 @@ function action_water:update( delta )
 	
 	if self.state == state_inside then
 
-	if underwater then
-		bind_stalker.hide_weapon()
-		level.add_pp_effector("underwater_olr.ppe", 1138, true)
-		level.set_pp_effector_factor(1138, breath)
-		--news_manager.send_tip(db.actor, game.translate_string("action_waterupdate_0"), nil, "default", 39000)
-		get_console():execute("ph_timefactor 0.2")
+		if underwater then
+			bind_stalker.hide_weapon()
+			level.add_pp_effector("underwater_olr.ppe", 1138, true)
+			level.set_pp_effector_factor(1138, breath)
+			--news_manager.send_tip(db.actor, game.translate_string("action_waterupdate_0"), nil, "default", 39000)
+			get_console():execute("ph_timefactor 0.2")
 
-	if has_alife_info("ui_inventory") then 
-		local inv_window = level.main_input_receiver()
-		if inv_window and inv_window:IsShown() then
-			level.start_stop_menu(inv_window,true)
-		end
-	end
+			if has_alife_info("ui_inventory") then 
+				local inv_window = level.main_input_receiver()
+				if inv_window and inv_window:IsShown() then
+					level.start_stop_menu(inv_window,true)
+				end
+			end
 
-	local actor_pos = db.actor:position()
-	if time_global() > time_apdeyta_wat then
+			local actor_pos = db.actor:position()
+			if time_global() > time_apdeyta_wat then
 
-		time_apdeyta_wat = time_global() + timerupwat
-		--if not bubles_particle:playing() and underwater then 
-		bubles_particle:play_at_pos(vector():set(actor_pos.x, actor_pos.y+0.1, actor_pos.z))
-        --end
+				time_apdeyta_wat = time_global() + timerupwat
+				--if not bubles_particle:playing() and underwater then 
+				bubles_particle:play_at_pos(vector():set(actor_pos.x, actor_pos.y+0.1, actor_pos.z))
+				--end
 
-	if not snd_underwater:playing() then 
-		snd_underwater:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
-	end
+				if not snd_underwater:playing() then 
+					snd_underwater:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+				end
 
-	breath = breath - math.random(1,4)
-
-	if breath < 15 then
-		db.actor.health = -0.01
-	end
-
-	if breath < 5 then
-		breath = 0
-	end
-
-	if underwater then
-		hud:AddCustomStatic("cs_oxigen", true)
-		hud:GetCustomStatic("cs_oxigen"):wnd():SetTextST(tostring(game.translate_string("st_sr_water_air")..breath.." %"))    
-	else
-		hud:RemoveCustomStatic("cs_oxigen")
-	end
-
-	end
-
-
-
-
-	end
-
+				breath = breath - math.random(1,4)
 	
-end	 
+				if breath < 15 then
+					db.actor.health = -0.01
+				end
+
+				if breath < 5 then
+					breath = 0
+				end
+
+				if underwater then
+					hud:AddCustomStatic("cs_oxigen", true)
+					hud:GetCustomStatic("cs_oxigen"):wnd():SetTextST(tostring(game.translate_string("st_sr_water_air")..breath.." %"))    
+				else
+					hud:RemoveCustomStatic("cs_oxigen")
+				end
+			end
+		end
+	end	 
 end
 
 
@@ -171,14 +166,4 @@ end
 function set_scheme(npc, ini, scheme, section, gulag_name)
 	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
-end
-
-
-
----------------------------------------------------------------------------------------------------------------------
-
-
-
-		
-	
-	
+end	

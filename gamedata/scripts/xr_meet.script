@@ -30,10 +30,7 @@ function evaluator_contact:evaluate()
     if self.mgr == nil then
       self.mgr = self.object:motivation_action_manager()
     end
-    if self.mgr:evaluator(stalker_ids.property_enemy):evaluate() then 
-      if not (actor_need_help and actor_need_help.obj_id_in_team(self.object:id())) then
-        self.object:disable_talk()
-      end
+    if self.mgr:evaluator(stalker_ids.property_enemy):evaluate() then
       self.begtime=nil
       return false
     end
@@ -252,10 +249,8 @@ end
 function Cmeet_manager:process_meet()
   local key
   local is_talking = self.npc:is_talking()
-  local in_actor_team=actor_need_help and actor_need_help.obj_id_in_team(self.npc:id())
-  if isWeapon(db.actor:active_item()) and
-       self.npc:relation(db.actor) ~= game_object.friend and
-       (not in_actor_team)
+	if isWeapon(db.actor:active_item())	and
+       self.npc:relation(db.actor) ~= game_object.friend
     then
     key = self:get_key_from_distance(self.a.meet_state_wpn)
     if key ~= nil then
@@ -361,14 +356,12 @@ function Cmeet_manager:process_use()
 
   if t == "true" then
     self.npc:enable_talk()
-  elseif t == "false" then
-    if not (actor_need_help and actor_need_help.obj_id_in_team(self.npc:id())) then
-      self.npc:disable_talk()
-      if is_talking then
-        self.npc:stop_talk()
-      end
-    end
-  elseif t == "self" then
+	elseif t == "false" then
+		self.npc:disable_talk()
+		if is_talking then
+			self.npc:stop_talk()
+		end
+	elseif t == "self" then
     if not is_talking then
 --      printf("MM3 %s start talk", self.npc:name())
       db.actor:run_talk_dialog(self.npc)
@@ -404,12 +397,6 @@ function add_to_binder(object, char_ini, scheme, section, st)
   action:add_precondition   (world_property(properties["contact"],    true))
   action:add_precondition   (world_property(properties["wounded"],    false))
   action:add_precondition   (world_property(properties["abuse"],    false))
-
-	if ogsm_hideout then
-		action:add_precondition(world_property(ogsm_hideout.property_blowout, false))
-		action:add_precondition(world_property(ogsm_hideout.property_hideout_lost, false))
-		action:add_precondition(world_property(ogsm_hideout.property_inhide, false))
-	end
 
   action:add_effect (world_property(properties["contact"],      false))
   manager:add_action (operators["contact"], action)

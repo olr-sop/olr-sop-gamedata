@@ -13719,92 +13719,6 @@ end
 end
 
 
-
-
-function spawn_random_stuff_onlok()
-if db.actor then
-if not has_alife_info("kvest_esc_1_dialog_start") then
-return
-end
-if has_alife_info("rand_shit_timer_now") then
-return
-end
-db.actor:give_info_portion("rand_shit_timer_now")
-olr_timers.st_timer("rand_shit_timer_start", 2500, "nick.disable_rand_stuff()")
---news_manager.send_tip(db.actor, game.translate_string("spawn_random_stuff_onlok_0"), nil, "freedom", 9000)
-local sectionsa = 
-{ 
-"wpn_pm",
-"wpn_knife_old_rotten",
-"bandage",
-"medkit",
-"grenade_f1",
---"ammo_5.45x39_ap",
-"vodka",
-"energy_drink",
-"ph_banka_kraski_1",
-"antirad",
-"ph_box_wood_01",
-
-"item_pda_dead",
-"item_razradnik",
-"af_studen",
-"grenade_rgd5",
-"ph_item_rukzak",
-"ph_gasmask1",
-"ph_gasmask2",
-"ph_gasmask3",
-
-"ph_food_vater",
-
-"korobok_spichek",
-"ph_item_krovosos_jaw",
-"ph_item_zombie_hand",
-
-"dead_body_skelet4",
-"dead_body_skelet2",
-"dead_body_skelet3",
-
-"dead_body_skelet",
-"dead_body_skelet2",
-"dead_body_skelet3",
-"dead_body_skelet4",
-"ph_food_conserv1",
-"ph_food_conserv2",
-"ph_food_konserva_sardina",
-"ph_food_konserva_sardina_open",
-"ph_food_konserva_tushenka",
-"ph_food_konserva_yantar",
-"ph_shifer_03",
-"vodka_used_empty",
-"ph_item_gasmask1"
-
-}
-
-local count = math.random(10,20) 
-for ind = 1, count do
-
-local lname = level.name()
-local lvtab = GetLevelVertexes( lname )
-local lvx = math.max(unpack(lvtab))
-local lv  = math.random(1,lvx)
-
-local gvtab  = GetGameVertexes(lname)
-local gv_min = math.min( unpack(gvtab))
-local gv_max = math.max( unpack(gvtab))
-
-
-local section = sectionsa[math.random(table.getn(sectionsa))] 
-local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
---olr.add_spot_on_map( obj.id,"green_location",obj:name() )
-xvars.rand_shit_timer_cnt = xvars.rand_shit_timer_cnt + 1
-end
-end
-end
-
-
-
-
 function yan_multicutscene_one()
 	nick.yan_zaval_onlin()
 	xr_effects.disable_ui(db.actor, nil)
@@ -14761,7 +14675,7 @@ end
  
 function daem_norm_ppm_esc_diger(first_speaker, second_speaker)  
   	olr.give_item("conserva")
-  	olr.give_item("korobok_spichek")
+  	olr.give_item("battery_change")
   	olr.give_item("wpn_pm")
 end
 
@@ -15091,7 +15005,6 @@ function del_food_drugs_rnd_start()
                                         sect == "af_dummy_glassbeads" or
                                         sect == "grenade_rgd5" or
                                         sect == "grenade_f1" or
-					sect == "korobok_spichek" or
 					sect == "box_rukzak_treasure" or
 					sect == "antirad" 
 
@@ -15361,8 +15274,8 @@ end
 function otdaem_yan_oborud_quest()
 nik_dialog.out_item_much("yan_oborud_quest",1)
 local jan_profesor = alife():object("lvl7_yantar_arts_box_profa")
-alife():create("korobok_spichek", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
-alife():create("korobok_spichek", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+alife():create("battery_change", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+alife():create("battery_change", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 alife():create("kolbasa", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 alife():create("vodka", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 alife():create("device_torch", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
@@ -15410,7 +15323,7 @@ end
 function daem_ammo_voya(first_speaker, second_speaker) 
  olr.info("tips_esc_and_voyaks_done_vase") 
  dialogs.relocate_item_section(second_speaker, "wpn_addon_scope","in")
- dialogs.relocate_item_section(second_speaker, "korobok_spichek","in")
+ dialogs.relocate_item_section(second_speaker, "battery_change","in")
  dialogs.relocate_money(first_speaker, 350, "in")
  db.actor:change_character_reputation(30) 
 end

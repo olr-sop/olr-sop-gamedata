@@ -1,5 +1,5 @@
 local tex_base                = "water\\water_ryaska1"
-local tex_env                = "sky\\sky_5_cube"
+local tex_env                = "sky\\sky_01_cube"
 local tex_dist                = "water\\water_dudv"
 local tex_dist2                = "water\\water_dudv"
 

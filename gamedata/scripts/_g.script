@@ -18,7 +18,22 @@ end
 
 ----------------------------------------------------------------------
 
-SIMPLE_LUA_DEBUG = false
+SIMPLE_LUA_DEBUG = true -- подрубает использование printf и кучи производных. Не трогает log1
+WRITE_SCRIPT_NAME_TO_LOG = true -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
+WRITE_PRINTF_LOG_TO_FILE = true -- пишет printf в отдельный txt файл, тяжелая функция, использует трейсбэк
+FATAL_ABORT = true -- при abort игра закрывается принудительно
+
+function lua_traceback(caption, depth)
+ return ( debug.traceback(caption, depth or 2 + 1) or 'nil' )
+end
+
+function get_script_name()
+ local tb = lua_traceback('', 4)
+ for sub,v in string.gmatch(tb, "([^\\]+)\.script:") do
+  return sub
+ end
+ return "????"
+end
 
 if string.find(command_line(), "-simple_script_lua_debug") then
 	SIMPLE_LUA_DEBUG = true
@@ -30,10 +45,54 @@ function prints(fmt,...)
 	end
 end
 
-function printf(fmt,...)
+function printf(msg,...)
 	if SIMPLE_LUA_DEBUG then
-		log1(string.format(fmt,...))
+		if WRITE_SCRIPT_NAME_TO_LOG then
+			log1("printf was called from: "..get_script_name())	
+		end
+		if not (msg) then return end
+		local fmt = tostring(msg)
+
+		if (select('#',...) >= 1) then
+			local i = 0
+			local p = {...}
+			local function sr(a)
+				i = i + 1
+				if (type(p[i]) == 'userdata') then
+					return 'userdata'
+				end
+				return tostring(p[i])
+			end
+			fmt = string.gsub(fmt,"%%s",sr)
+		end
+		log1(fmt)
+		if WRITE_PRINTF_LOG_TO_FILE then
+			debug_write(fmt,true)
+		end
 	end
+end
+
+local debug_file
+function debug_write(output,trace)
+
+	if (trace and debug and type(debug.traceback) == 'function') then
+		output = output .. debug.traceback('\n', 2)
+	end
+
+	if (last_ouput == output) then
+		return
+	end
+	last_ouput = output
+
+	if not (debug_file) then
+		debug_file = io.open("olr_debug_log.txt","w+")
+		debug_file:write(output.."\n")
+		debug_file:close()
+		debug_file = io.open("olr_debug_log.txt","a+")
+	else
+		debug_file:write(output.."\n")
+	end
+
 end
 
 function assert(cond, msg, ...)
@@ -44,25 +103,46 @@ end
 
 
 function mylog(msg)
-if SIMPLE_LUA_DEBUG then
-	if msg==nil then
-		return 
-	end
-	if db and db.actor then
-		if bufferedmessages then
-			for k,v in ipairs(bufferedmessages) do
-				db.actor:give_game_news(v, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
+	if SIMPLE_LUA_DEBUG then
+		if msg==nil then
+			return 
+		end
+		if db and db.actor then
+			if bufferedmessages then
+				for k,v in ipairs(bufferedmessages) do
+					db.actor:give_game_news(v, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
+				end
+				bufferedmessages=nil
 			end
-			bufferedmessages=nil
+		db.actor:give_game_news(msg, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
+		else
+			if bufferedmessages then
+				table.insert(bufferedmessages,msg)
+			end
 		end
-	db.actor:give_game_news(msg, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
-	else
-		if bufferedmessages then
-			table.insert(bufferedmessages,msg)
-		end
+		printf(msg)
 	end
-	printf(msg)
 end
+
+-- Крешнуть игру (после вывода сообщения об ошибке в лог)
+function abort(fmt, ...) 
+local reason = (...==nil and fmt) or string.format(fmt, ...) 
+--[[
+	-- крешим игру а не просим начать с более раннего сейва
+	if db and db.actor then 
+	local msg = "!!!КРИТИЧЕСКАЯ ОШИБКА!!!\r\n ПРИЧИНА: "..reason..
+	olr.hud_tip("", msg, 5)
+	end
+--]]
+	log1(" !!! ABORT CALLED !!! ")
+	log1(" !!! REASON !!! ")
+	log1(reason)
+	log1(" !!! REASON !!! ")
+	log1(" !!! SEND LOG !!! ")
+	get_console():execute("flush")
+	if FATAL_ABORT then
+		get_console():execute("exit")
+	end
 end
 
 ----------------------------------------------------------------------
@@ -1653,18 +1733,6 @@ function id_by_sid( sid )
 	end
 
 	return nil
-end
-
--- Крешнуть игру (после вывода сообщения об ошибке в лог) 
-function abort(fmt, ...) 
- local reason = (...==nil and fmt) or string.format(fmt, ...) 
- if db and db.actor then 
- 	local msg = "!!!КРИТИЧЕСКАЯ ОШИБКА!!!\r\n ПРИЧИНА: "..reason.."\r\n !ВНИМАНИЕ! ПЕРЕИГРАЙТЕ С БОЛЕЕ РАННЕГО СЕЙВА!" 
- 	--db.actor:give_game_news(msg, "ui\\ui_iconsTotal", Frect():set(83,47,83,47), 0, 15000)
-	olr.hud_tip("", msg, 5) 
- end 
- log1(" !!! ABORT !!! "..reason)
- --olr.beep() 
 end
 
 function set_postprocess(name_ini_file)

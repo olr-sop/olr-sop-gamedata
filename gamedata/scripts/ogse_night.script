@@ -6,21 +6,6 @@ local laststate={}
 local warn_timer = time_global()
 local warn_check_timer = {}
 
--- как вы€снилось, озвучка "reactions" в папке "human_01" есть не у всех коммунити - при попытке выбрать еЄ будет вылет
--- кроме того, она у всех коммунити одинакова€ абсолютно, поэтому выбирать по коммунити еЄ бессмысленно... 
-
-local nothing_there = {
-
-[1] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_1]],
-[2] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_2]],
-[3] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_3]],
-[4] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_4]],
-[5] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_5]],
-[6] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_6]],
-[7] = [[characters_voice\human_01\dolg\reactions\nothing\nothing_7]]
-
-}
-
 --уровни, где Ќѕ—и круглосуточно вид€т одинаково (отключаем скрипт, где нет €вной ночи)
 function blind_level()
 	if level.name() == "lvl12_radar_bunker" or
@@ -64,45 +49,37 @@ function check_night(obj)
 					if range and range > 80 then
 						if npc_rank == "novice" then 
 							npc:set_range(30)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "experienced" then 
 							npc:set_range(35)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "veteran" then
 							npc:set_range(40)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "master" then
 							npc:set_range(45)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						end				
 					end
 					if fov and fov > 120 then
 						if npc_rank == "novice" then 
 							npc:set_fov(90)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "experienced" then 
 							npc:set_fov(95)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "veteran" then
 							npc:set_fov(100)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "master" then
 							npc:set_fov(110)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						end					
 					end
 					if laststate[nid] == true and not npc:best_danger() and not npc:best_enemy() then
 						if npc then
 							warn_check_timer[npc:id()] = time_global()
 							if warn_check_timer[npc:id()] > warn_timer then  
-								local snd_name = nothing_there[math.random(1,7)]
-								if snd_name then
-									local snd_obj = xr_sound.get_safe_sound_object(snd_name)
-									if snd_obj and not snd_obj:playing() then
-										snd_obj:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 1.0)
-										--log1("snd nothing here")
-									end
-								end
 								warn_timer = warn_check_timer[npc:id()] + math.random(15000, 25000) 
 							end
 						end
@@ -115,16 +92,16 @@ function check_night(obj)
 					if range and range > 80 then
 						if npc_rank == "novice" then 
 							npc:set_range(70)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "experienced" then 
 							npc:set_range(75)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "veteran" then
 							npc:set_range(77)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						elseif npc_rank == "master" then
 							npc:set_range(80)
-                                                        --log1(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 						end				
 					end
 				else
@@ -156,11 +133,11 @@ function check_night(obj)
 				local fov = npc:fov()
 				if range and range < 90 then
 					npc:set_range(90)
-                                        --logf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 				end				
 				if fov and fov < 138 then
 					npc:set_fov(138)
-                                        --logf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
+                                        --printf(tostring(obj:name()).." fov "..tostring(fov).." range "..tostring(range))
 				end
 				laststate[nid] = false
 			end
@@ -168,30 +145,11 @@ function check_night(obj)
 	end
 end
 
-
 function npc_update(npc)
 	if npc and npc:alive() then
 		check_night(npc)
 	end
 end
-
-local logf_console = nil
-
-function logf( fmt, ... )
-	logf_console = get_console()
-	logf = logf_main
-	logf_main( fmt, ... )
-end
-
-function logf_main( fmt, ... )
-    local c = select( "#", ... )
-    if c <= 0 then -- nothing to format
-        logf_console:execute( ":" .. string.gsub( fmt, " ", "\160" ) )
-    else
-        logf_console:execute( ":" .. string.gsub( string.format( fmt, ... ), " ", "\160" ) )
-    end
-end
-
 
 -- ухудшение зрени€ неписей ночью -- учитывает опыт непис€ - подразумева€ наличи ѕЌ¬ --
 --------------------------- Copyright 2009 KamikaZze дл€ OGSE -------------------------

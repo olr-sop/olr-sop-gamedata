@@ -25,7 +25,9 @@ end
 function on_save()
 	local con = get_console()
 	if alife() then
-		if not xvars.quicksave_cnt then return end
+		if not xvars.quicksave_cnt or not db.actor:is_game_saving_available() then
+			return
+		end
 		xvars.quicksave_cnt=xvars.quicksave_cnt+1
 		if xvars.quicksave_cnt > max_saves then
 			xvars.quicksave_cnt = 0

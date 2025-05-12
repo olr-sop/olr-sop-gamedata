@@ -162,6 +162,13 @@ function generic_object_binder:update(delta)
 	local sec 	= self.object:section()
   	local act   	= db.actor
 	local dist_to_actor = act:position():distance_to(spos)
+	
+	local npc_test_name = self.object:name()
+	local npc_test_section = self.object:section()
+	local npc_test_id = self.object:id()
+
+	--log1("check bind_monster: clsid = "..tostring(cls)..", npc name = "..tostring(npc_test_name)..", section = "..tostring(npc_test_section)..", id = "..tostring(npc_test_id).."") -- для теста
+
 
 
         -- фикс физики
@@ -233,6 +240,8 @@ function generic_object_binder:update(delta)
         		end
 		end
 
+-- чтоб жаба не выебывался, мутант куёв
+if cls ~= clsid.script_trader then
 		-- паника от костров или когда ГГ в авто, чтобы не кусались
                 if bind_anomaly.u_costra() == true or bind_coster.u_costra() == true or bind_car.act_in_car_now() == true then
                         	local npc = self.object:get_enemy()
@@ -514,7 +523,7 @@ function generic_object_binder:update(delta)
        end
 
 
-
+end
 ---------------------------------------------------------__hi_flyer__end__-------------------------------------------------------------
 
 

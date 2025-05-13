@@ -229,36 +229,22 @@ function change_level()
 end
 
 function on_key(dik)
-        if device().precache_frame >1 then return end
-	if db.actor then
-	if dik == 5 then 
-	--if key == DIK_keys.DIK_5 then
-        	local item_in_hands = db.actor:item_in_slot(11)
-        	if item_in_hands ~= nil then
-			--if db.actor:active_item() and db.actor:active_slot()==11 then
-			--	db.actor:move_to_slot(item_in_hands, true)
-			--	return
-			--end 
-        		db.actor:move_to_ruck(item_in_hands)
-        		db.actor:move_to_slot(item_in_hands, true)
-				if device().precache_frame > 1 then
-					return
-				end
-        		db.actor:activate_slot(11)
-		end
+	if device().precache_frame > 1 then
+		return
 	end
-	if dik == 15 then -- TAB (заряд ПДА)
-		if has_alife_info("ui_pda") then
-			local inv_window = level.main_input_receiver()
-			if inv_window and inv_window:IsShown() then
-				level.start_stop_menu(inv_window,true)
-			end 
-	   		local pdaitm = db.actor:object("device_pda") 
-   			local namecond = pdaitm:condition() * 100
-    		local nameconddel = game.translate_string("ui_pda_charge") .. " " .. string.format("%1.2f", namecond) .. "%"
-    		news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
-		end
-	end 
+	if db.actor then
+		if dik == 15 then -- TAB (заряд ПДА)
+			if has_alife_info("ui_pda") then
+				local inv_window = level.main_input_receiver()
+				if inv_window and inv_window:IsShown() then
+					level.start_stop_menu(inv_window,true)
+				end
+				local pdaitm = db.actor:object("device_pda") 
+				local namecond = pdaitm:condition() * 100
+				local nameconddel = game.translate_string("ui_pda_charge") .. " " .. string.format("%1.2f", namecond) .. "%"
+				news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
+			end
+		end 
 	end 
 end
 

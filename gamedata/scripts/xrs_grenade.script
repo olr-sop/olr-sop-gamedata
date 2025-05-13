@@ -219,10 +219,10 @@ function evaluator_crazy_grenadier:evaluate()
 			local timeout = time_global() + self.a.grenades[get_grenade(self.a.grenade):section()].explode_time
 			self.a.test_grenades={}
 			local t
-			t = alife():create(get_grenade(self.a.grenade):section().."_fake", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			t = alife():create(get_grenade(self.a.grenade):section().."_test", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			test_grenades[t.id]=timeout+5000
 			self.a.test_grenades.hi=t.id
-			t = alife():create(get_grenade(self.a.grenade):section().."_fake", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			t = alife():create(get_grenade(self.a.grenade):section().."_test", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			test_grenades[t.id]=timeout+5000
 			self.a.test_grenades.lo=t.id
 			self.a.test_grenades_sect = get_grenade(self.a.grenade):section()
@@ -234,6 +234,7 @@ function evaluator_crazy_grenadier:evaluate()
 	--log1(testing)
 	return false
 end
+
 function evaluator_crazy_grenadier:check_grenade(section)
 	local npc = self.object
 	local be = npc:best_enemy()
@@ -346,12 +347,16 @@ function action_fire_in_the_hole:execute()
 			local r = self.a.grenades[get_grenade(self.a.grenade):section()].radius
 			for a=0,65535 do
 				local obj = level.object_by_id(a)
-				if obj and obj.clsid and obj:alive() then
+				if obj and obj.clsid then
 					local od=self.a.target_point:distance_to(obj:position())
 					if od<r then
-						if obj:clsid() == clsid.actor or obj:clsid() == clsid.script_stalker or obj:clsid() == clsid.stalker then
+						if (obj:clsid() == clsid.actor or obj:clsid() == clsid.script_stalker or obj:clsid() == clsid.stalker) and obj:alive() then
 							if npc:relation(obj) == game_object.enemy then
-								if not obj:critically_wounded() and not obj:wounded() then
+								if obj:clsid() == clsid.stalker then
+									if not obj:wounded() then
+										en_inj=true
+									end
+								else
 									en_inj=true
 								end
 							else
@@ -689,7 +694,7 @@ function npc_update(binder)
 					if prb>0.9 then prb=0.9 end
 					if prb<0.01 then prb=0.01 end
 					if v=="grenade_f1" then prb=prb/2 end
-					if math.random()<prb then 
+					if math.random()<prb then
 						alife():create(v,npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id()) 
 						--log1("create grn -- "..v.."")
 					end
@@ -723,7 +728,7 @@ function net_spawn()
 		local sobj = alife():object(a)
 		if sobj then
 			for k,v in pairs(gr_types) do
-				if sobj:section_name()==v.."_fake" then
+				if sobj:section_name()==v.."_test" or sobj:section_name()==v.."_fake" then
 					alife():release(sobj)
 					break
 				end
@@ -735,7 +740,7 @@ end
 function fake_pickup(obj)
 	--level.map_remove_object_spot(obj:id(), "grenade_location")
 	for k,v in pairs(gr_types) do
-		if obj:section()==v.."_fake" then
+		if obj:section()==v.."_test" or obj:section()==v.."_fake" then
 			alife():release(alife():object(obj:id()))
 			return
 		end

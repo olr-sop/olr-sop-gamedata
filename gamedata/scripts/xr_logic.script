@@ -257,6 +257,8 @@ function enable_generic_schemes(ini, npc, stype, section)
 		local combat_section = utils.cfg_get_string(ini, section, "on_combat", npc, false, "")
 		xr_combat.set_combat_checker(npc, ini, "combat", combat_section)
 
+		stalker_generic.reset_invulnerability(npc, ini, section)
+
 		local use_section = utils.cfg_get_string(ini, section, "on_use", npc, false, "")
 		if use_section then
 			xr_use.set_use_checker(npc, ini, "use", use_section)
@@ -290,6 +292,8 @@ function enable_generic_schemes(ini, npc, stype, section)
 
 		local death_section = utils.cfg_get_string (ini, section, "on_death", npc, false, "")
 		xr_death.set_death (npc, ini, "death", death_section)
+
+		stalker_generic.reset_invulnerability(npc, ini, section)
 
 		local heli_hunter_section = utils.cfg_get_string(ini, section, "heli_hunter", npc, false, "")
 		xr_heli_hunter.set_scheme(npc, ini, "heli_hunter", heli_hunter_section)
@@ -436,6 +440,7 @@ function reset_generic_schemes_on_scheme_switch(npc, scheme, section)
 		xr_death.reset_death(npc, scheme, st, section)
 		xr_danger.reset_danger(npc, scheme, st, section)
 		stalker_generic.reset_threshold(npc, scheme, st, section)
+		stalker_generic.reset_invulnerability(npc, st.ini, section)
 		stalker_generic.reset_show_spot(npc, scheme, st, section)
 
 	elseif st.stype == modules.stype_mobile then
@@ -454,6 +459,7 @@ function reset_generic_schemes_on_scheme_switch(npc, scheme, section)
 		end
 
 		mob_panic.reset_panic(npc, scheme, st, section)
+		stalker_generic.reset_invulnerability(npc, st.ini, section)
 
 	elseif st.stype == modules.stype_item then
 		npc:set_callback(callback.use_object, nil)

@@ -101,3 +101,19 @@ function reset_show_spot(npc, scheme, st, section)
 	end
 end
 
+--'--------------------------------------------------------------------------------------------------------------------
+--' INVULNERABILITY
+--'--------------------------------------------------------------------------------------------------------------------
+--' Вызывается на переключении на новую секцию. Производит вычитывание настроек из текущей секции.
+function reset_invulnerability(npc, ini, section)
+	local invulnerability = utils.cfg_get_bool(ini, section, "invulnerable", npc, false, false)
+	printf("RESET INVULNERABILITY. npc[%s] = [%s]", npc:name(), tostring(invulnerability))
+
+	if npc:invulnerable() ~= invulnerability then
+		npc:invulnerable(invulnerability)
+	end
+end
+function disable_invulnerability(npc)
+	printf("DISABLE INVULNERABILITY. npc[%s] = [false]", npc:name())
+	npc:invulnerable(false)
+end

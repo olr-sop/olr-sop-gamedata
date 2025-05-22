@@ -171,14 +171,8 @@ function actor_net_spawn()
 		log1("!create new actor pstor!")
     		db.storage[db.actor:id()].pstor = {}
   	end
-
-	local wait_time = 0
-  	wait_time = time_global() + 200
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() olr.addtorch() end
-  	)
-	get_console():execute("snd_restart")
+	
+	get_console():execute("snd_restart") -- what????
 end
 
 function warning_sms()
@@ -188,21 +182,6 @@ function warning_sms()
 	xr_effects.kill_actor()
 	news_manager.send_tip(db.actor, game.translate_string("st_olr_save_corruption_warn_1")..amk.oau_watchdog.." --- "..amk.oau_reason.."]", nil, "sos", 30000)
 	log1(game.translate_string("st_olr_save_corruption_warn_2")..amk.oau_watchdog.." --- "..amk.oau_reason.."]")
-end
-
-function addtorch()
-        db.actor:iterate_inventory(
-	function(actor, obj) 
-		if obj and db.actor:item_in_slot(9) then
-			db.actor:drop_item(obj)
-			local wait_time = 0
-  			wait_time = time_global() + 200
-  			level.add_call(
-    			function() return time_global() > wait_time end,
-    			function() db.actor:transfer_item(obj,db.actor) end
-  			)
-		end
-	end)
 end
 
 function change_level()

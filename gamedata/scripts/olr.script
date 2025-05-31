@@ -281,14 +281,11 @@ end
 function on_use(obj)
 	olr_capsule.use(obj)
 	olr_items_use.use(obj)
-	artefact_merger.on_game_load(obj)
+	artefact_merger.on_game_load(obj)	
 end
 
 function to_slot(obj)
 	olr_gz.take_item_on_slot(obj)
- 	if obj and obj:is_outfit() then
-		olr_hud_ruk.on_slot(obj)
-	end
 	if obj and xvars.goodcondweaps and xvars.goodcondweaps[obj:name()] == true then
 		local wpn_ak = engine_object(obj:id())
 		if wpn_ak then
@@ -296,12 +293,6 @@ function to_slot(obj)
 			--log1("hq set")
 		end
 	end
-	if db.actor and obj:section()=="battery_change_headlamp" then
-		if db.actor:item_in_slot(9) then
-			db.actor:item_in_slot(9):get_torch():enable(false)
-		end
-	end
-	
 end
 
 function to_belt(obj)

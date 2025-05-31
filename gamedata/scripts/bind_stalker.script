@@ -278,8 +278,7 @@ end
 
 
 function actor_binder:mouse_press()
-	--olr_items_inv_click.hide_params_carbody()
-	--olr_items_inv_click.hide_params_trade()	
+
 end
 
 function actor_binder:on_select_item(obj)
@@ -295,18 +294,12 @@ end
 
 function actor_binder:obj_to_ruck(obj)
 	olr_gz.take_item_on_ruck(obj)
-	
-	if obj:is_outfit() then
-		olr_hud_ruk.on_ruck(obj)
-	end
-	
 	olr_ruck_limit.obj_to_ruck(obj)
 end
 
 function actor_binder:obj_to_slot(obj)
         core.tc("on_item_slot", obj)
 	olr.to_slot(obj)
-	olr_items_efs.on_slot(obj)
 	olr_ruck_limit.take_item_on_slot(obj)
 end
 
@@ -444,7 +437,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_item_take (obj)
 
-    	level_tasks.proceed(self.object)
+    level_tasks.proceed(self.object)
 
 	olr_ruck_limit.take_item(obj)
 
@@ -489,15 +482,11 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_item_drop (obj)
 
-    	level_tasks.proceed(self.object)
+    level_tasks.proceed(self.object)
 
 	olr_items_drop.drop_item(obj)
 
 	olr_gz.drop_item_on_inv(obj)
-
-	if obj:is_outfit() then
-		olr_hud_ruk.on_drop(obj)
-	end
 
 	olr_ruck_limit.drop_item_on_inv(obj)
 
@@ -511,13 +500,12 @@ function actor_binder:on_item_drop (obj)
 
 end
 ----------------------------------------------------------------------------------------------------------------------
-function actor_binder:use_obj(obj)  
+function actor_binder:use_obj(obj) 
 	olr.on_use(obj)
 	core.tc("on_item_use", obj)
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_actor_shoot() 
-	--log1("sshot")
 	olr_on_shoot.actor_shoot()
 end
 ----------------------------------------------------------------------------------------------------------------------

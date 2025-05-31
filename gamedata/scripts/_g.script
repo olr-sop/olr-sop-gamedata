@@ -19,8 +19,9 @@ end
 ----------------------------------------------------------------------
 
 SIMPLE_LUA_DEBUG = false -- подрубает использование printf и кучи производных. Не трогает log1
-WRITE_SCRIPT_NAME_TO_LOG = true -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
-WRITE_PRINTF_LOG_TO_FILE = true -- пишет printf в отдельный txt файл, тяжелая функция, использует трейсбэк
+WRITE_SCRIPT_NAME_TO_LOG = false -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
+WRITE_PRINTF_LOG_TO_FILE = true -- пишет printf в отдельный txt файл
+WRITE_PRINTF_LOG_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл использовать функцию traceback
 FATAL_ABORT = true -- при abort игра закрывается принудительно
 
 function lua_traceback(caption, depth)
@@ -67,7 +68,7 @@ function printf(msg,...)
 		end
 		log1(fmt)
 		if WRITE_PRINTF_LOG_TO_FILE then
-			debug_write(fmt,true)
+			debug_write(fmt,WRITE_PRINTF_LOG_TO_FILE_USE_TRACEBACK)
 		end
 	end
 end

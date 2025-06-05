@@ -1,20 +1,39 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "root_folder=Y:\sources\Objects\dynamics"
-set "output_file=Y:\result.log"
+set "scan_root=Y:\sources\Objects\dynamics"
+set "out=Y:\batch_all.ltx"
+set "omf=%scan_root%\anims"
 
-if exist "%output_file%" del "%output_file%"
+if exist "%out%" del "%out%"
 
-set "temp_file=%temp%\temp_sort.log"
-if exist "%temp_file%" del "%temp_file%"
+set "filebuffer=%temp%\temp.log"
+if exist "%filebuffer%_omf" del "%filebuffer%_omf"
+if exist "%filebuffer%_ogf" del "%filebuffer%_ogf"
 
-for /r "%root_folder%" %%f in (*) do (
-	set "full_path=%%f"
-	set "relative_path=!full_path:%root_folder%\=!"
-	set "relative_path=!relative_path:~0,-7!"
-	echo dynamics\!relative_path! = !relative_path! >> "%temp_file%"
+for /r "%scan_root%" %%f in (*.object) do (
+	set "initial=%%f"
+	set "fn=!initial:%scan_root%\=!"
+	set "fn=!fn:~0,-7!"
+
+	echo !initial! | find /i "%omf%" >nul
+	if !errorlevel!==0 (
+		set "fn_omf=!fn:anims\=!"
+		echo dynamics\!fn! = !fn_omf!>> "%filebuffer%_omf"
+	) else (
+		echo dynamics\!fn! = !fn!>> "%filebuffer%_ogf"
+	)
 )
 
-sort "%temp_file%" > "%output_file%"
-del "%temp_file%"
+echo [omf]>> "%out%"
+if exist "%filebuffer%_omf" (
+	sort "%filebuffer%_omf" >> "%out%"
+	del "%filebuffer%_omf"
+)
+
+echo. >> "%out%"
+echo [ogf]>> "%out%"
+if exist "%filebuffer%_ogf" (
+	sort "%filebuffer%_ogf" >> "%out%"
+	del "%filebuffer%_ogf"
+)

@@ -73,18 +73,15 @@ function CInventoryBoxBinder:on_inv_box_item_drop(obj)
 end
 
 function CInventoryBoxBinder:update(delta)
-	--for i = 0, self.object:inv_box_count() - 1 do
-	--	local obj = self.object:object_from_inv_box(i)
-	--	log1("box - "..self.object:name().." has item - "..obj:name().."")
-	--end
-
 	if db.actor == nil then
 		return
 	end
 	if db.actor:has_info("ui_car_body") and repaintnow == false then
+		local loked_obj = bind_stalker.loked_obj_state()
+		local loked_obj_name = bind_stalker.loked_obj_name_state()
 		vol_obem = self.inv_mass
 		vol_obem_max = self.max_inv_mass
-		if ui.get_car_body_wnd() and not att and bind_stalker.loked_obj ~= nil and bind_stalker.loked_obj_name == self.object:name() then
+		if ui.get_car_body_wnd() and not att and loked_obj ~= nil and loked_obj_name == self.object:name() then
 			ptatt = ui.get_car_body_wnd()
 			att = bind_inventory_box.ui_trade()
 			ptatt:AttachChild(att)
@@ -100,7 +97,6 @@ function CInventoryBoxBinder:update(delta)
 			ptatt = nil
 		end
 	end
-
 end
 
 function CInventoryBoxBinder:net_spawn(data)

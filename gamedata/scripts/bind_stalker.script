@@ -19,6 +19,10 @@ lasttime	= 0
 post_process = 0
 actor_in_sleep = false
 local weapon_hide = false
+
+local loked_obj = nil
+local loked_obj_name = ""
+
 ----------------------------------------------------------------------------------------------------------------------
 class "actor_binder" (object_binder)
 ----------------------------------------------------------------------------------------------------------------------
@@ -88,58 +92,50 @@ function actor_binder:net_spawn(data)
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:net_destroy()
+    if (actor_stats.remove_from_ranking ~= nil) then
+        actor_stats.remove_from_ranking(self.object:id())
+    end
 
-	if (actor_stats.remove_from_ranking~=nil) then
-		actor_stats.remove_from_ranking(self.object:id())
-	end
+    db.del_actor(self.object)
 
-	db.del_actor(self.object)
+    sr_light.clean_up()
 
-    	sr_light.clean_up ()
+    self.object:set_callback(callback.inventory_info, nil)
+    self.object:set_callback(callback.article_info, nil)
+    self.object:set_callback(callback.on_item_take, nil)
+    self.object:set_callback(callback.on_item_drop, nil)
+    self.object:set_callback(callback.task_state, nil)
+    self.object:set_callback(callback.level_border_enter, nil)
+    self.object:set_callback(callback.level_border_exit, nil)
+    self.object:set_callback(callback.take_item_from_box, nil)
+    self.object:set_callback(callback.use_object, nil)
+    self.object:set_callback(callback.on_item_belt, nil)
+    self.object:set_callback(callback.on_item_slot, nil)
+    self.object:set_callback(callback.on_item_ruck, nil)
+    self.object:set_callback(callback.on_inv_item_select, nil)
+    self.object:set_callback(callback.on_actor_weapon_fire, nil)
+    self.object:set_callback(callback.on_eat_hud_object, nil)
+    self.object:set_callback(callback.on_trade_btn_click, nil)
+    self.object:set_callback(callback.on_actor_landed, nil)
+    self.object:set_callback(callback.on_obj_look, nil)
+    self.object:set_callback(callback.on_key_press, nil)
+    self.object:set_callback(callback.on_mouse_press, nil)
+    self.object:set_callback(callback.on_level_map_click, nil)
 
-	self.object:set_callback(callback.inventory_info, nil)
-	self.object:set_callback(callback.article_info, nil)
-	self.object:set_callback(callback.on_item_take, nil)
-	self.object:set_callback(callback.on_item_drop, nil)
-	self.object:set_callback(callback.task_state, nil)
-	self.object:set_callback(callback.level_border_enter, nil)
-	self.object:set_callback(callback.level_border_exit, nil)
-	self.object:set_callback(callback.take_item_from_box, nil)
-        self.object:set_callback(callback.use_object, nil)
+    ---self.object:set_callback(callback.on_actor_death, nil)
 
-        self.object:set_callback(callback.on_item_belt, nil) 		
-	self.object:set_callback(callback.on_item_slot, nil) 
-        self.object:set_callback(callback.on_item_ruck, nil)
-	self.object:set_callback(callback.on_inv_item_select, nil) 
+    if sr_psy_antenna.psy_antenna then
+        sr_psy_antenna.psy_antenna:destroy()
+        sr_psy_antenna.psy_antenna = false
+    end
 
-        self.object:set_callback(callback.on_actor_weapon_fire, nil)
-        self.object:set_callback(callback.on_key_press, nil) 
+    xr_sound.stop_all_sound_object()
 
-        self.object:set_callback(callback.on_eat_hud_object, nil) 
-        self.object:set_callback(callback.on_trade_btn_click, nil) 
-        self.object:set_callback(callback.on_actor_landed, nil)
-        self.object:set_callback(callback.on_obj_look, nil)  
+    bind_car.net_destroy(self.object)
 
-        self.object:set_callback(callback.on_mouse_press, nil) 
+    olr_pda.net_destroy(self.object)
 
-        self.object:set_callback(callback.on_level_map_click, nil)
-
-
-        ---self.object:set_callback(callback.on_actor_death, nil)
-
-	if sr_psy_antenna.psy_antenna then
-		sr_psy_antenna.psy_antenna:destroy()
-		sr_psy_antenna.psy_antenna = false
-	end
-
-	xr_sound.stop_all_sound_object()
-
-        bind_car.net_destroy(self.object)
-
-        olr_pda.net_destroy(self.object)
-
-	object_binder.net_destroy(self)
-
+    object_binder.net_destroy(self)
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:reinit()
@@ -166,33 +162,25 @@ function actor_binder:reinit()
 	self.object:set_callback(callback.level_border_enter, self.level_border_enter, self)
 	self.object:set_callback(callback.level_border_exit, self.level_border_exit, self)
 	self.object:set_callback(callback.take_item_from_box, self.take_item_from_box, self)
-        self.object:set_callback(callback.hit, self.on_hit, self)
-        self.object:set_callback(callback.use_object, self.use_obj, self)
-
-        self.object:set_callback(callback.on_item_belt, self.obj_to_belt, self)       
+    self.object:set_callback(callback.hit, self.on_hit, self)
+    self.object:set_callback(callback.use_object, self.use_obj, self)
+    self.object:set_callback(callback.on_item_belt, self.obj_to_belt, self)       
 	self.object:set_callback(callback.on_item_ruck, self.obj_to_ruck, self)
 	self.object:set_callback(callback.on_inv_item_select, self.on_select_item, self)
-        self.object:set_callback(callback.on_item_slot, self.obj_to_slot, self) 
+    self.object:set_callback(callback.on_item_slot, self.obj_to_slot, self) 
+    self.object:set_callback(callback.on_eat_hud_object, self.OnEatHudObj, self)
+    self.object:set_callback(callback.on_trade_btn_click, self.OnTrdBtnClick, self)
+    self.object:set_callback(callback.on_actor_landed, self.actor_landed, self)
+    self.object:set_callback(callback.on_actor_weapon_fire, self.on_actor_shoot, self)
+	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
+    self.object:set_callback(callback.on_key_press, self.OnKey, self)
+    self.object:set_callback(callback.on_mouse_press, self.mouse_press, self)
+	self.object:set_callback(callback.on_level_map_click, self.on_map_click, self)
+	
+    --self.object:set_callback(callback.on_actor_death, self.OnActorDeath, self)
 
-        self.object:set_callback(callback.on_eat_hud_object, self.OnEatHudObj, self)
-        self.object:set_callback(callback.on_trade_btn_click, self.OnTrdBtnClick, self)
-        self.object:set_callback(callback.on_actor_landed, self.actor_landed, self)
-
-        self.object:set_callback(callback.on_actor_weapon_fire, self.on_actor_shoot, self)
-        self.object:set_callback(callback.on_key_press, self.OnKey, self)
-
-        self.object:set_callback(callback.on_mouse_press, self.mouse_press, self)
-
-        self.object:set_callback(callback.on_obj_look, self.on_look, self) 
-
-        self.object:set_callback(callback.on_level_map_click, self.on_map_click, self) 
-
-
-        ---self.object:set_callback(callback.on_actor_death, self.OnActorDeath, self)
-
-        olr_pda.reinit(self.object)
-        bind_car.reinit(self.object)
-         
+    olr_pda.reinit(self.object)
+    bind_car.reinit(self.object)
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:take_item_from_box(box, item)
@@ -214,8 +202,6 @@ end
 
 -- hi_flyer 21/04/17
 local prev_id = -1
-loked_obj = nil
-loked_obj_name = ""
 function actor_binder:on_look(obj)
 	olr_on_look.look_item(obj)
 	if obj then
@@ -234,6 +220,13 @@ function actor_binder:on_look(obj)
 	end
 end
 
+function loked_obj_state()
+	return loked_obj
+end
+
+function loked_obj_name_state()
+	return loked_obj_name
+end
 
 local timej = 0
 local ftup = math.random(500,600)

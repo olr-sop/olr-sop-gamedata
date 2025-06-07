@@ -339,7 +339,7 @@ function se_smart_terrain:read_params()
 
 	gp.respawn     = r_str ( ini, sect, "respawn" )
 
-	--prints( "gp.stay_min=%d, gp.stay_max=%d", gp.stay_min * h2ms, gp.stay_max * h2ms )
+	--printf( "gp.stay_min=%d, gp.stay_max=%d", gp.stay_min * h2ms, gp.stay_max * h2ms )
 
 	gp.cond        = r_str( ini, sect, "cond" )
 	if gp.cond then
@@ -616,7 +616,7 @@ end
 -- вытолкнуть из этого smart terrain с подходящей работы объект, который попал в него не эксклюзивно.
 function se_smart_terrain:register_npc( obj )
 
-	--prints( "[smart_terrain %s] register called obj=%s gulag_type=%s on_level=%s", self:name(), obj:name(), self.gparams.type, obj.level_name )
+	--printf( "[smart_terrain %s] register called obj=%s gulag_type=%s on_level=%s", self:name(), obj:name(), self.gparams.type, obj.level_name )
 	--olr.add_spot_on_map( obj.id,"red_location", " "..obj:name().." go to "..self:name().." " )
 
 	local npc_info = {
@@ -636,8 +636,8 @@ function se_smart_terrain:register_npc( obj )
 --	   ( self.gulag:get_population() == self.gulag.capacity or
 	   not self.gulag:is_there_any_suitable_job( npc_info, false ) --)
 	then
-		--prints( "get_population=%d capacity=%d", self.gulag:get_population(), self.gulag.capacity )
-		--prints( "is_there_any_suitable_job=%s", tostring(self.gulag:is_there_any_suitable_job(npc_info, false)) )
+		--printf( "get_population=%d capacity=%d", self.gulag:get_population(), self.gulag.capacity )
+		--printf( "is_there_any_suitable_job=%s", tostring(self.gulag:is_there_any_suitable_job(npc_info, false)) )
 		print_table( self.npc_info )
 		self:kick_someone_non_exclusive( npc_info )
 	end
@@ -666,7 +666,7 @@ function se_smart_terrain:register_npc( obj )
 	self.gulag:update()
 
 
-	--prints( "[smart_terrain %s] added %s to gulag type=%s on_level=%s", self:name(), obj:name(), self.gparams.type, obj.level_name )
+	--printf( "[smart_terrain %s] added %s to gulag type=%s on_level=%s", self:name(), obj:name(), self.gparams.type, obj.level_name )
 end
 
 -- отпустить npc
@@ -720,7 +720,7 @@ function se_smart_terrain:unregister_npc( obj )
 --'		level.map_change_spot_hint(obj.id, spot, str)		
 --'	end
 
-	--prints( "[smart_terrain %s] removed %s from gulag type=%s, strn_id=%s", self:name(), obj:name() or "<<<nil>>>", self.gparams.type, obj:smart_terrain_id())
+	--printf( "[smart_terrain %s] removed %s from gulag type=%s, strn_id=%s", self:name(), obj:name() or "<<<nil>>>", self.gparams.type, obj:smart_terrain_id())
 end
 
 -- изменть ранг сталкера при регистрации в смарт
@@ -732,7 +732,7 @@ function se_smart_terrain:update_obj_rank( obj )
 
 		obj:set_rank( old_rank + math.random( self.rank_inc_min, self.rank_inc_max ) )
 
-		--prints( "[smart_terrain update_obj_rank %s] obj=%s rank %d -> %d", self:name(), obj:name(), old_rank, obj:rank() )
+		--printf( "[smart_terrain update_obj_rank %s] obj=%s rank %d -> %d", self:name(), obj:name(), old_rank, obj:rank() )
 	end
 end
 
@@ -742,7 +742,7 @@ end
 function se_smart_terrain:kick_someone_non_exclusive( new_npc_info )
 	for obj_id, npc_info in pairs( self.npc_info ) do
 		if not npc_info.exclusive and self.gulag:obj1_job_suits_obj2( obj_id, new_npc_info ) then
-			--prints("[smart_terrain %s] kicking %s", self:name(), npc_info.name)
+			--printf("[smart_terrain %s] kicking %s", self:name(), npc_info.name)
 			self:unregister_npc( npc_info.se_obj )
 			return
 		end
@@ -764,7 +764,7 @@ function se_smart_terrain:task( obj )
 
 	local path_name = self.gulag:get_obj_job_path_name( obj.id )
 	if not path_name then
-		prints("[smart_terrain %s] task: obj=%s job_path=nil, CLEARING", self:name(), obj:name() )
+		printf("[smart_terrain %s] task: obj=%s job_path=nil, CLEARING", self:name(), obj:name() )
 		self:unregister_npc(obj) --'Затычка против вылета.
 		return CALifeSmartTerrainTask("bar_mons_home_22")
 	end
@@ -858,7 +858,7 @@ function se_smart_terrain:remove_gulag( disable )
 		return
 	end
 
-	--prints( "[smart_terrain %s] removed gulag type=%s", self:name(), self.gparams.type )
+	--printf( "[smart_terrain %s] removed gulag type=%s", self:name(), self.gparams.type )
 
 	-- освободить всех персонажей
 	for id, npc_info in pairs( self.npc_info ) do
@@ -1008,7 +1008,7 @@ end
 function se_smart_terrain:on_unregister()
 	cse_alife_smart_zone.on_unregister( self )
 
-	--prints( "[smart_terrain %s] on_unregister called", self:name() )
+	--printf( "[smart_terrain %s] on_unregister called", self:name() )
 
 	local lvl_smarts = smart_terrains[self:get_level_name()]
 
@@ -1092,7 +1092,7 @@ function se_smart_terrain:stat()
 	printf( s )
 
 	--for id, npc_info in pairs( self.npc_info ) do
-	--	prints( "    %s", npc_info.name )
+	--	printf( "    %s", npc_info.name )
 	--end
 
 	return avail, pop, cap
@@ -1119,7 +1119,7 @@ function se_smart_terrain:update()
 			--' проверять, не собрался ли кто-то к этому времени уже уходить
 			for id, npc_info in pairs( self.npc_info ) do
 				if npc_info.cond and xr_logic.pick_section_from_condlist( db.actor_proxy, npc_info.se_obj, npc_info.cond ) == nil then
-					prints("[smart_terrain %s] leaving %s", self:name(), npc_info.name)
+					printf("[smart_terrain %s] leaving %s", self:name(), npc_info.name)
 					self:unregister_npc( npc_info.se_obj )
 				end
 			end
@@ -1197,7 +1197,7 @@ end
 --------------------
 -- Вывод статистики по всем смартам в симуляции
 function stat()
-	prints( "--------------- Smart terrains statistics START ----------------------" )
+	printf( "--------------- Smart terrains statistics START ----------------------" )
 
 	local jobs, jobs_in_avail, occupied
 	local level_stats = {}
@@ -1226,23 +1226,23 @@ function stat()
 
 	jobs, jobs_in_avail, occupied = 0, 0, 0
 
-	prints("")
+	printf("")
 
 	for level_name, l in pairs( level_stats ) do
-		prints( "Level %s :", level_name )
-		prints( "    Jobs in all smart terrains : %d",       l.jobs )
-		prints( "    Jobs in available smart terrains : %d", l.jobs_in_avail )
-		prints( "    Occupied jobs : %d",                    l.occupied )
+		printf( "Level %s :", level_name )
+		printf( "    Jobs in all smart terrains : %d",       l.jobs )
+		printf( "    Jobs in available smart terrains : %d", l.jobs_in_avail )
+		printf( "    Occupied jobs : %d",                    l.occupied )
 
 		jobs          = jobs          + l.jobs
 		jobs_in_avail = jobs_in_avail + l.jobs_in_avail
 		occupied      = occupied      + l.occupied
 	end
 
-	prints( "All levels:" )
-	prints( "    Jobs in all smart terrains : %d",       jobs )
-	prints( "    Jobs in available smart terrains : %d", jobs_in_avail )
-	prints( "    Occupied jobs : %d",                    occupied )
+	printf( "All levels:" )
+	printf( "    Jobs in all smart terrains : %d",       jobs )
+	printf( "    Jobs in available smart terrains : %d", jobs_in_avail )
+	printf( "    Occupied jobs : %d",                    occupied )
 
-	prints( "--------------- Smart terrains statistics END ------------------------" )
+	printf( "--------------- Smart terrains statistics END ------------------------" )
 end

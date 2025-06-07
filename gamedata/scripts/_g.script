@@ -20,16 +20,24 @@ end
 
 SIMPLE_LUA_DEBUG = false -- подрубает использование printf и кучи производных. Не трогает log1
 WRITE_SCRIPT_NAME_TO_LOG = false -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
-WRITE_PRINTF_LOG_TO_FILE = true -- пишет printf в отдельный txt файл
-WRITE_PRINTF_LOG_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл использовать функцию traceback
+WIRTE_PRINTF_TO_LOG = false -- пишет printf в лог (медленно)
+WRITE_PRINTF_TO_FILE = true -- пишет printf в отдельный txt файл olr_debug_log.txt находящийся в папке с игрой
+WRITE_PRINTF_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл использовать функцию traceback для большей отладки
 FATAL_ABORT = true -- при abort игра закрывается принудительно
+
+-- TODO
+-- Сделать по другому, пока на отъебись
+-- Данные переменные работают только если SIMPLE_LUA_DEBUG равен true, либо тут либо через ключ -simple_script_lua_debug
+LOGGING_ONLY_SCRIPTNAME = false -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
+LOGGING_ONLY_XRLOGIC = true -- логгирует printf только из скрипта xr_logic
+LOGGING_ONLY_XRREMARK = false -- логгирует printf только из скрипта xr_remark
 
 function lua_traceback(caption, depth)
  return ( debug.traceback(caption, depth or 2 + 1) or 'nil' )
 end
 
-function get_script_name()
- local tb = lua_traceback('', 4)
+function get_script_name(depth)
+ local tb = lua_traceback('', depth)
  for sub,v in string.gmatch(tb, "([^\\]+)\.script:") do
   return sub
  end
@@ -40,16 +48,23 @@ if string.find(command_line(), "-simple_script_lua_debug") then
 	SIMPLE_LUA_DEBUG = true
 end
 
-function prints(fmt,...)
-	if SIMPLE_LUA_DEBUG then
-		log1(string.format(fmt,...))
+function logging_script_by_name()
+	if not LOGGING_ONLY_SCRIPTNAME then return true end
+	local scriptname = get_script_name(5)
+	if LOGGING_ONLY_XRLOGIC and scriptname == "xr_logic" then
+			return true
 	end
+	if LOGGING_ONLY_XRREMARK and scriptname == "xr_remark" then
+			return true
+	end
+	return false
 end
 
 function printf(msg,...)
-	if SIMPLE_LUA_DEBUG then
+	local log_only_script = logging_script_by_name()
+	if SIMPLE_LUA_DEBUG and log_only_script then
 		if WRITE_SCRIPT_NAME_TO_LOG then
-			log1("printf was called from: "..get_script_name())	
+			log1("printf was called from: "..get_script_name(4))	
 		end
 		if not (msg) then return end
 		local fmt = tostring(msg)
@@ -66,14 +81,17 @@ function printf(msg,...)
 			end
 			fmt = string.gsub(fmt,"%%s",sr)
 		end
-		log1(fmt)
-		if WRITE_PRINTF_LOG_TO_FILE then
-			debug_write(fmt,WRITE_PRINTF_LOG_TO_FILE_USE_TRACEBACK)
+		if WIRTE_PRINTF_TO_LOG then
+			log1(fmt)
+		end
+		if WRITE_PRINTF_TO_FILE then
+			debug_write(fmt,WRITE_PRINTF_TO_FILE_USE_TRACEBACK)
 		end
 	end
 end
 
 local debug_file
+local last_ouput
 function debug_write(output,trace)
 
 	if (trace and debug and type(debug.traceback) == 'function') then
@@ -99,29 +117,6 @@ end
 function assert(cond, msg, ...)
 	if not cond then
 		abort(msg, ...)
-	end
-end
-
-
-function mylog(msg)
-	if SIMPLE_LUA_DEBUG then
-		if msg==nil then
-			return 
-		end
-		if db and db.actor then
-			if bufferedmessages then
-				for k,v in ipairs(bufferedmessages) do
-					db.actor:give_game_news(v, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
-				end
-				bufferedmessages=nil
-			end
-		db.actor:give_game_news(msg, "ui\\ui_iconsTotal", Frect():set(0,0,200,200), 0, 15000)
-		else
-			if bufferedmessages then
-				table.insert(bufferedmessages,msg)
-			end
-		end
-		printf(msg)
 	end
 end
 

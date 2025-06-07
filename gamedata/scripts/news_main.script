@@ -165,39 +165,6 @@ function init()
 	end
 end
 
-function dbglog(fmt)
-	if _debug == true then
-	    local msg = fmt
-		local msg_no_ws = string.gsub(msg, "%s", "_")
-		log1("dbglog:" ..msg_no_ws..".")		
-	end
-end
-
-function mylog(text)
-	dbglog("==> "..text)
-end
-
-function trace(fmt)
-	local msg = fmt
-	local msg_no_ws = string.gsub(msg, "%s", "_")
-	--log1("load ~~~ "..msg_no_ws)		
-end
-
-function flushlog()
-	get_console():execute("flush")		
-end
-
-function do_debug(title, text)
-	if _debug == true then
-		local m_title = ""
-		local m_text = ""
-		if title then m_title = title end
-		if text then m_text = text end
-		do_news(m_text, m_title, nil, 15, "gen_info")
-	end
-	mylog(title..": "..text)
-end
-
 function on_spawn_group(community, level, position, count, o_type)
 	if (community and level and position and count and o_type and o_type > 0) then
 		local name, sname = news_main.get_strings()
@@ -244,7 +211,7 @@ function on_spawn_group(community, level, position, count, o_type)
 						m_who = game.translate_string(news_data.community_name[zz][4])
 					end
 				else
-					trace("on_spawn_group - empty community_name for "..zz)
+					printf("on_spawn_group - empty community_name for "..zz)
 				end
 				if (m_who == "") then return end
 				if (count == 1) then
@@ -566,7 +533,7 @@ function get_npc_community(obj)
 		m_s_c = ""
 	end
 	if (obj and obj.name and m_s_c == "") then
-		trace("get_npc_community returns '' for "..obj:name())
+		printf("get_npc_community returns '' for "..obj:name())
 	end
 	return m_s_c
 end
@@ -670,7 +637,7 @@ function get_weapon_type(weapon)
 			return 8 --"Нож "..m_act:section()
 		end
 
-		trace("Unknown weapon type ["..id.."] "..weapon:name())
+		printf("Unknown weapon type ["..id.."] "..weapon:name())
 	end
 	return 0
 end
@@ -732,13 +699,13 @@ function get_monster_name(obj, index)
 		if m_clsid then
 			m_comm = news_data.monster_classes[m_clsid]
 			if m_comm == nil then
-				trace("Unknown monster class_id: "..m_clsid.." for "..obj:name())
+				printf("Unknown monster class_id: "..m_clsid.." for "..obj:name())
 				m_n = ""
 			else
 				if (news_data.monster_classes[m_clsid][index] ~= nil) then
 					m_n = game.translate_string(news_data.monster_classes[m_clsid][index])
 				else
-					trace("Unknown monster name for class_id: "..m_clsid.." index="..index)
+					printf("Unknown monster name for class_id: "..m_clsid.." index="..index)
 				end
 			end
 		end
@@ -857,7 +824,7 @@ end
 function do_news(text, from, timeout, showtime, section, author_id, priority)
 	if (text == nil) then text = "nil" end
 	if (from == nil) then from = "nil" end
-	dbglog("add_news ==> "..text..": "..from)
+	if _debug then printf("add_news ==> "..text..": "..from) end
 	if (timeout == nil) then timeout = 0 end
 	if (priority == nil) then priority = 0 end
 	add_news(text, from, 1, timeout, showtime, section, author_id, priority)
@@ -2127,7 +2094,7 @@ function on_offline_stalker_death(victim_, killer_, weapon_)
 		else
 			m_killer_str = game.translate_string("st_news_main_death_reason_unknown")
 			m_killer = ""
-			--mylog("On offline stalker death - unknown killer. "..killer:name().." clsid="..get_clsid(killer))				
+			--printf("On offline stalker death - unknown killer. "..killer:name().." clsid="..get_clsid(killer))				
 		end
 	end
 	if (m_killer_str==nil or m_killer_str=="") then m_killer_str = game.translate_string("st_news_main_death_reason_unknown") end

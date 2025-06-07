@@ -377,7 +377,7 @@ function build_tables()
 	
 	tables_ready = true
 	--pt:stop()
-	--prints("работало (amk_offline_alife build_tables) "..pt:time().." ms")
+	--printf("работало (amk_offline_alife build_tables) "..pt:time().." ms")
 end
 
 function update_npc_tables()
@@ -402,7 +402,7 @@ function update_trade()
 		return
 	end
 	for a=1,65534 do
-		obj = alife():object(a)
+		local obj = alife():object(a)
 		if obj then
 			this.process_trade(obj)
 		end
@@ -633,7 +633,7 @@ function offline_alife(lvl)
 						break
 					else
 						--log1(" CRASH fr offline_alife 14")
-						--mylog("__")
+						--printf("__")
 					end
 				end
 			end
@@ -823,7 +823,7 @@ function collect_info(victim,map)
 	end
 
 	--pt:stop()
-	--prints("работало (amk_offline_alife collect_info) "..pt:time().." ms")
+	--printf("работало (amk_offline_alife collect_info) "..pt:time().." ms")
 
 	return vdata
 end
@@ -1886,7 +1886,7 @@ function on_inv_boxes_found(victim, vdata)
 							if (itA and itA:name()==v_itA.name and itA.parent_id == v_obj.id) then
 								--news_manager.send_tip("on_inv_boxes_found 3 - found "..itA:section_name().." in "..object:name())
 								---news_manager.send_tip(db.actor, " try to check box 3 has item in box - "..itA:name().."  --- "..itA.level_name.." ", nil, "default", 9000)
-								news_main.trace("on_inv_boxes_found - found "..itA:section_name().." in "..object:name())
+								printf("on_inv_boxes_found - found "..itA:section_name().." in "..object:name())
 								-- –ешим, подбираем или нет?
 								local bTake = is_valuable(itA)
 								if bTake then
@@ -2307,18 +2307,18 @@ function process_trade(npc)
 			if obj and obj:name()==ov.name then
 				if always_keep_item[obj:section_name()] or sell_table[obj:section_name()] == nil then
 					-- Ёто нам не надо.
-					--news_main.trace("Process_trade: "..npc:name().." ["..m_comm.."] filtered "..obj:section_name().." ["..obj:name().."]")
+					--printf("Process_trade: "..npc:name().." ["..m_comm.."] filtered "..obj:section_name().." ["..obj:name().."]")
 					--log1("Process_trade: "..npc:name().." ["..m_comm.."] filtered "..obj:section_name().." ["..obj:name().."]")
 				else
 					table.insert(item_list, obj)
 					--item_list[v.id] = obj
-					--news_main.trace("Process_trade: "..npc:name().." ["..m_comm.."] have "..obj:section_name().." ["..obj:name().."]")
+					--printf("Process_trade: "..npc:name().." ["..m_comm.."] have "..obj:section_name().." ["..obj:name().."]")
 					--log1("Process_trade: "..npc:name().." ["..m_comm.."] have "..obj:section_name().." ["..obj:name().."]")
 				end
 			end
 		end
 		if item_list and table.getn(item_list)>0 then
-			--news_main.trace("Process_trade: "..npc:name().." ["..m_comm.."] have "..tostring(table.getn(item_list)).." items.")
+			--printf("Process_trade: "..npc:name().." ["..m_comm.."] have "..tostring(table.getn(item_list)).." items.")
 			--log1("Process_trade: "..npc:name().." ["..m_comm.."] have "..tostring(table.getn(item_list)).." items.")
 			table.sort(item_list, function(a,b) return get_item_cost(a) > get_item_cost(b) end)		
 			-- ¬ыберем, что за оружие оставит себе NPC.
@@ -2346,7 +2346,7 @@ function process_trade(npc)
 			local ammo = {}
 			for k,v in pairs(item_list) do			
 				local sect = v:section_name()
-				--news_main.trace("Process_trade: first pass - "..npc:name().." ["..m_comm.."] have "..sect.." ["..v:name().."]")
+				--printf("Process_trade: first pass - "..npc:name().." ["..m_comm.."] have "..sect.." ["..v:name().."]")
 				--log1("Process_trade: first pass - "..npc:name().." ["..m_comm.."] have "..sect.." ["..v:name().."]")
 				if isWeapon(v) and not (sect == "grenade_f1" or sect == "grenade_rgd5" or sect == "wpn_knife") then
 					local bOk = false
@@ -2510,7 +2510,7 @@ function process_trade(npc)
 						table.insert(sell_list, v)
 					end
 				else
-					news_main.trace("Process trade - unknown - "..sect.." "..v:name())
+					printf("Process trade - unknown - "..sect.." "..v:name())
 				end			
 			end
 			table.sort(weapons, function(a,b) return get_weapon_firepower(a.obj) > get_weapon_firepower(b.obj) end)
@@ -2520,7 +2520,7 @@ function process_trade(npc)
 			local b_best = false
 			local s_self = ""
 			for k, v in pairs(weapons) do
-				--news_main.trace("Process_trade: second pass - "..npc:name().." ["..m_comm.."] weapons "..v.obj:section_name().." ["..v.obj:name().."] "..get_weapon_firepower(v.obj))
+				--printf("Process_trade: second pass - "..npc:name().." ["..m_comm.."] weapons "..v.obj:section_name().." ["..v.obj:name().."] "..get_weapon_firepower(v.obj))
 				local b_ammo = false
 				local vac = v.ammo
 				if vac and table.getn(vac)>0 then
@@ -2533,21 +2533,21 @@ function process_trade(npc)
 				end
 				if b_self == false and b_ammo == true then
 					b_self = true
-					--news_main.trace("Process_trade: second pass - "..npc:name().." ["..m_comm.."] SELF weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
+					--printf("Process_trade: second pass - "..npc:name().." ["..m_comm.."] SELF weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
 					--log1("Process_trade: second pass - "..npc:name().." ["..m_comm.."] SELF weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
 					s_self = v.obj:section_name()
 				elseif b_best == false then
 					if s_self ~= "" then
 						if v.obj:section_name() ~= s_self then
 							b_best = true
-							--news_main.trace("Process_trade: second pass - "..npc:name().." ["..m_comm.."] BEST weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
+							--printf("Process_trade: second pass - "..npc:name().." ["..m_comm.."] BEST weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
 							--log1("Process_trade: second pass - "..npc:name().." ["..m_comm.."] BEST weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
 						else
 							table.insert(sell_list, v.obj)
 						end
 					else
 						b_best = true
-						--news_main.trace("Process_trade: second pass - "..npc:name().." ["..m_comm.."] BEST weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
+						--printf("Process_trade: second pass - "..npc:name().." ["..m_comm.."] BEST weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
 						--log1("Process_trade: second pass - "..npc:name().." ["..m_comm.."] BEST weapon is  "..v.obj:section_name().." ["..v.obj:name().."]")
 					end
 				else

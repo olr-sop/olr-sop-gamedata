@@ -707,12 +707,12 @@ function check_memory()
         if device().precache_frame >1 then return end
 	local MEMORY_WARNING_AFTER = 50000 
 	local memuse = collectgarbage("count")
-	prints("##LUA MEMORY USAGE: [%d KB]", memuse)
+	printf("##LUA MEMORY USAGE: [%d KB]", memuse)
 	if memuse > MEMORY_WARNING_AFTER then
 		collectgarbage("collect")
 		memuse = collectgarbage("count")
 		if memuse > MEMORY_WARNING_AFTER then
-			--prints("!![%s] MEMORY LEAK FOUND! MEMORY USAGE: [%d KB]", script_name():upper(), memuse)
+			printf("!![%s] MEMORY LEAK FOUND! MEMORY USAGE: [%d KB]", script_name():upper(), memuse)
 			if olr.olrdbg == true then
 				news_manager.send_tip(db.actor, game.translate_string("st_olr_memory_leak_warning")..memuse.." MB ", nil, "sos", 59000)
 			end

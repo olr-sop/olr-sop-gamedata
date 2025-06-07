@@ -811,22 +811,7 @@ none = true
 cond = {+bun_mosk_start_quest_go_done}
 
 [logic]
-active = mob_walker
-
-[mob_walker]
-path_walk = radar_idl_walk
-path_look = radar_idl_look
-actor_friendly = true
-npc_friendly = true
-braindead = true
-on_info = {+bun_mosk_go_radar} mob_walker3
-
-[mob_walker3]
-path_walk = radar_mosk_gen_rush
-path_look = radar_mosk_gen_lookd
-actor_friendly = true
-npc_friendly = true
-braindead = true
+cfg = scripts\radar\rad_brain.ltx
 END
 
 ; cse_visual properties
@@ -1866,16 +1851,7 @@ none = true
 cond = {+radar_pseudohuman_gigant_ubil}
 
 [logic]
-active = mob_walker
-
-[mob_walker]
-path_walk = plot_talkigradar_walk
-path_look = plot_talkigradar_look
-actor_friendly = true
-npc_friendly = true
- 
-[dialogs]
-start_dialog = radar_plot_dialog
+cfg = scripts\radar\rad_flesh.ltx
 END
 
 ; cse_visual properties
@@ -1928,16 +1904,7 @@ none = true
 cond = {+radar_pseudohuman_dialog_talked}
 
 [logic]
-active = mob_home
-on_death = mob_death@vo_ded
-
-[mob_home]
-path_home = gigant_radar_home
-home_min_radius = 2
-home_max_radius = 5
- 
-[mob_death@vo_ded]
-on_info = %+radar_pseudohuman_gigant_ubil%
+cfg = scripts\radar\rad_pseudogiant.ltx
 END
 
 ; cse_visual properties
@@ -2134,37 +2101,7 @@ level_vertex_id = 329900
 object_flags = 0xffffffb2
 custom_data = <<END
 [logic]
-active = heli_move@idle
-
-[heli_move@idle]
-path_move = heli_radar_idle_move_olr
-engine_sound = false
-on_info = {+rad_car_start} heli_move@fly
-combat_safe_altitude = -50
-
-[heli_move@fly]
-path_move = mr_zalupasa
-engine_sound = true
-combat_enemy = actor
-combat_use_rocket = true
-combat_use_mgun = false
-rocket_delay = 3000
-combat_safe_altitude = -70
-on_timer = 120000 | heli_move@retreat
-
-[heli_move@retreat]
-path_move = heli_radar_idle_move_olr
-engine_sound = true
-combat_use_rocket = false
-combat_use_mgun = false
-combat_safe_altitude = -50
-on_timer = 120000 | heli_move@stop
-
-[heli_move@stop]
-path_move = heli_radar_idle_move_olr
-engine_sound = false
-
-
+cfg = scripts\radar\rad_helicopter.ltx
 END
 
 ; cse_visual properties
@@ -2584,16 +2521,8 @@ custom_data = <<END
 [spawner]
 cond = {+aes_antenna_off}
 
-[logic]
-no_bind = true
-active = ph_car@start
-
-[ph_car@start]
-target=actor        
-fire_range=180       
-fire_repeat=50
-auto_fire=true      
-track_target=true   
+[logic]  
+cfg = scripts\radar\rad_btr.ltx
 END
 
 ; cse_visual properties
@@ -2624,18 +2553,7 @@ custom_data = <<END
 cond = {+stan_first}
 
 [logic]
-active = ph_car@wait
-
-[ph_car@wait]
-on_actor_dist_le_nvis = 70 |ph_car@start
-
-[ph_car@start]
-path_walk = radar_stan_first_btr2_walk
-target= actor
-fire_range=30
-fire_repeat=3000
-auto_fire=true      
-track_target=true
+cfg = scripts\radar\rad_btr_stan.ltx
 END
 
 ; cse_visual properties
@@ -2666,18 +2584,7 @@ custom_data = <<END
 cond = {+monolit_na_kordone}
 
 [logic]
-active = ph_car@wait
-
-[ph_car@wait]
-on_actor_dist_le_nvis = 70 |ph_car@start
-
-[ph_car@start]
-path_walk = radar_gate_btr2_walk
-target= actor
-fire_range=30
-fire_repeat=3000
-auto_fire=true      
-track_target=true
+cfg = scripts\radar\rad_btr_after_monolith_on_escape.ltx
 END
 
 ; cse_visual properties
@@ -2705,15 +2612,7 @@ level_vertex_id = 329900
 object_flags = 0xffffffba
 custom_data = <<END
 [logic]
-no_bind = true
-active = ph_car@start
-
-[ph_car@start]
-target=actor        
-fire_range=80       
-fire_repeat=50
-auto_fire=true      
-track_target=true   
+cfg = scripts\radar\rad_btr.ltx 
 END
 
 ; cse_visual properties
@@ -2741,15 +2640,7 @@ level_vertex_id = 329900
 object_flags = 0xffffffba
 custom_data = <<END
 [logic]
-no_bind = true
-active = ph_car@start
-
-[ph_car@start]
-target=actor        
-fire_range=80       
-fire_repeat=50
-auto_fire=true      
-track_target=true   
+cfg = scripts\radar\rad_btr.ltx
 END
 
 ; cse_visual properties
@@ -2776,16 +2667,8 @@ game_vertex_id = 2344
 level_vertex_id = 329900
 object_flags = 0xffffffba
 custom_data = <<END
-[logic]
-no_bind = true
-active = ph_car@start
-
-[ph_car@start]
-target=actor        
-fire_range=80       
-fire_repeat=50
-auto_fire=true      
-track_target=true   
+[logic]  
+cfg = scripts\radar\rad_btr.ltx
 END
 
 ; cse_visual properties
@@ -2817,21 +2700,7 @@ custom_data = <<END
 none = true
 
 [logic]
-active = mob_walker
-on_hit = on_hit@agr_factory_hold_fake
-
-[mob_walker]
-anim = stand_idle_0
-path_walk = ps_hum_lead_walk
-path_look = ps_hum_lead_look
-actor_friendly = true
-npc_friendly = true
-
-[on_hit@agr_factory_hold_fake]
-on_info = {=hit_by_actor} %=kill_actor_psy%
-
-[dialogs]
-start_dialog = radar_pseudohuman_dialog
+cfg = scripts\radar\rad_pseudohuman.ltx
 END
 
 ; cse_visual properties
@@ -10005,17 +9874,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_door@locked
-
-[ph_door@locked]
-locked = false
-closed = true
-on_use = ph_door@unlocked
-
-[ph_door@unlocked]
-locked = false
-closed = false
-on_use = ph_door@locked
+cfg = scripts\radar\rad_door.ltx
 END
 
 ; cse_visual properties
@@ -10216,17 +10075,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_door@locked
-
-[ph_door@locked]
-locked = false
-closed = true
-on_use = ph_door@unlocked
-
-[ph_door@unlocked]
-locked = false
-closed = false
-on_use = ph_door@locked
+cfg = scripts\radar\rad_door.ltx
 END
 
 ; cse_visual properties
@@ -11124,18 +10973,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +95
-hit_intensity = +1000
-play_visual = true
-on_info = {+phantsam_boloto_ubil} sr_psy_antenna@off
-
-[sr_psy_antenna@off]
-eff_intensity = 0
-hit_intensity = 0
-play_visual = false
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_phantasm.ltx
 END
 
 ; cse_shape properties
@@ -11167,13 +11005,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_particle
-
-[sr_particle]
-name = anomaly2\psi_antenna
-path = rad_particle_kvadrat_ant
-mode = 2				
-looped = true
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_particle_1.ltx
 END
 
 ; cse_shape properties
@@ -11205,13 +11037,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_particle
-
-[sr_particle]
-name = anomaly2\psi_antenna
-path = rad_particle_kvadrat_ant2
-mode = 2				
-looped = true
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_particle_2.ltx
 END
 
 ; cse_shape properties
@@ -11243,13 +11069,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_particle
-
-[sr_particle]
-name = anomaly2\psi_antenna
-path = rad_particle_kvadrat_ant3
-mode = 2				
-looped = true
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_particle_3.ltx
 END
 
 ; cse_shape properties
@@ -11281,12 +11101,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +10
-hit_intensity = +10
-play_visual = true
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_8.ltx
 END
 
 ; cse_shape properties
@@ -11340,12 +11155,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +10
-hit_intensity = +10
-play_visual = true
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_7.ltx
 END
 
 ; cse_shape properties
@@ -11399,10 +11209,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+spawn_doks_radar} %+spawn_doks_radar_now%
+cfg = scripts\radar\rad_space_restrictor_killer_squad.ltx
 END
 
 ; cse_shape properties
@@ -11434,10 +11241,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle@1
-
-[sr_idle@1]
-on_actor_inside = %+zam_jab_start_most_kill_actor%
+cfg = scripts\radar\rad_space_restrictor_kill_actor.ltx
 END
 
 ; cse_shape properties
@@ -11469,10 +11273,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+bun_mosk_go_radar} %=del_mosk_radar_all%
+cfg = scripts\radar\rad_space_restrictor_psy_off.ltx
 END
 
 ; cse_shape properties
@@ -11504,10 +11305,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=rad_psdhym_telep%
+cfg = scripts\radar\rad_space_restrictor_stun_actor.ltx
 END
 
 ; cse_shape properties
@@ -11539,10 +11337,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=kill_actor_psy%
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_6.ltx
 END
 
 ; cse_shape properties
@@ -11574,11 +11369,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +5
-hit_intensity = +5
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_5.ltx
 END
 
 ; cse_shape properties
@@ -11610,12 +11401,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna@good_helmet
- 
-[sr_psy_antenna@good_helmet]
-eff_intensity = -10
-hit_intensity = 0
-phantom_prob = 45
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_4.ltx
 END
 
 ; cse_shape properties
@@ -11647,18 +11433,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +100
-hit_intensity = +1000
-play_visual = true
-on_info = {+bun_antenna_off} sr_psy_antenna@off
-
-[sr_psy_antenna@off]
-eff_intensity = 0
-hit_intensity = 0
-play_visual = false
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_3.ltx
 END
 
 ; cse_shape properties
@@ -11690,18 +11465,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +1
-hit_intensity = +1
-play_visual = true
-on_info = {+bun_antenna_off} sr_psy_antenna@off
-
-[sr_psy_antenna@off]
-eff_intensity = 0
-hit_intensity = 0
-play_visual = false
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_2.ltx
 END
 
 ; cse_shape properties
@@ -11804,18 +11568,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = sr_tip
-
-[sr_tip]
-name = tips_jaba_bigcity
-type = tips
-sender = trader
-single = true
-showtime = 30000
-on_actor_inside = nil
+cfg = scripts\radar\rad_space_restrictor_toad_sms_3.ltx
 END
 
 ; cse_shape properties
@@ -11847,19 +11600,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = sr_tip
-
-[sr_tip]
-name = tips_jaba_no_go_lvl12
-cond = {-aes_antenna_off_jaba_sms} 
-type = tips
-sender = trader
-single = true
-showtime = 30000
-on_actor_inside = nil
+cfg = scripts\radar\rad_space_restrictor_toad_sms_1.ltx
 END
 
 ; cse_shape properties
@@ -11891,10 +11632,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+jurn_sudb_done} %+rad_car_start%
+cfg = scripts\radar\rad_space_restrictor_helicopter.ltx
 END
 
 ; cse_shape properties
@@ -11928,10 +11666,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+aes_antenna_off} %+aes_antenna_off_jaba_sms%
+cfg = scripts\radar\rad_space_restrictor_toad_sms_2.ltx
 END
 
 ; cse_shape properties
@@ -11965,12 +11700,7 @@ level_vertex_id = 329900
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +10
-hit_intensity = +10
-play_visual = true
+cfg = scripts\radar\rad_space_restrictor_psy_antenna_1.ltx
 END
 
 ; cse_shape properties
@@ -12077,34 +11807,7 @@ none = true
 cond = {+talk_s_barmeno_radar_have}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
- 
-[remark]
-anim = wait
-combat_ignore_cond = always
-on_info = {+go_rush_radar_posoni} walker2
- 
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[walker2]
-path_walk = radar_lider_gruppy_walk
-def_state_moving1 = raid
-def_state_moving2 = raid
-def_state_moving3 = raid
-on_signal = priseldoko34dfdsneo | %+radar_na_tochke_govlab% remark2
-
-[remark2]
-anim = search
-no_move = true
-no_rotate = true
-meet = no_meet
+cfg = scripts\radar\rad_duty_scout.ltx
 END
 
 ; cse_visual properties
@@ -12332,10 +12035,7 @@ custom_data = <<END
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = rad_raid
+cfg = scripts\radar\rad_killer_2.ltx
 END
 
 ; cse_visual properties
@@ -12392,10 +12092,7 @@ custom_data = <<END
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = rad_sniper_walk
+cfg = scripts\radar\rad_killer_1.ltx
 END
 
 ; cse_visual properties
@@ -12679,10 +12376,7 @@ custom_data = <<END
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = rad_sniper_walk
+cfg = scripts\radar\rad_killer_1.ltx
 END
 
 ; cse_visual properties
@@ -12738,10 +12432,7 @@ custom_data = <<END
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = rad_sniper_walk
+cfg = scripts\radar\rad_killer_1.ltx
 END
 
 ; cse_visual properties
@@ -12911,10 +12602,7 @@ custom_data = <<END
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = rad_sniper_walk
+cfg = scripts\radar\rad_killer_1.ltx
 END
 
 ; cse_visual properties
@@ -14003,26 +13691,7 @@ none = true
 cond = {+talk_s_barmeno_radar_have}
 
 [logic]
-active = remark
-danger = danger_condition
- 
-[remark]
-anim = threat
-combat_ignore_cond = always
-on_info = {+go_rush_radar_posoni} walker2
- 
- 
-[danger_condition]
-ignore_distance = 10
-ignore_distance_corpse = 0
-
-[walker2]
-path_walk = radar_gruppa_dwa_walk
-def_state_moving1 = run
-def_state_moving2 = run
-def_state_moving3 = run
-combat_ignore_cond = always
-meet = no_meet
+cfg = scripts\radar\rad_duty_squad_stalker_5.ltx
 END
 
 ; cse_visual properties
@@ -14082,25 +13751,7 @@ none = true
 cond = {+talk_s_barmeno_radar_have}
 
 [logic]
-active = remark
-danger = danger_condition
- 
-[remark]
-anim = search
-combat_ignore_cond = always
-on_info = {+go_rush_radar_posoni} walker2
- 
-[danger_condition]
-ignore_distance = 10
-ignore_distance_corpse = 0
-
-[walker2]
-path_walk = radar_gruppa_dwa_walk
-def_state_moving1 = raid
-def_state_moving2 = raid
-def_state_moving3 = raid
-combat_ignore_cond = always
-meet = no_meet
+cfg = scripts\radar\rad_duty_squad_stalker_4.ltx
 END
 
 ; cse_visual properties
@@ -14217,25 +13868,7 @@ none = true
 cond = {+talk_s_barmeno_radar_have}
 
 [logic]
-active = remark
-danger = danger_condition
- 
-[remark]
-anim = caution
-combat_ignore_cond = always
-on_info = {+go_rush_radar_posoni} walker2
-
-[danger_condition]
-ignore_distance = 10
-ignore_distance_corpse = 0
-
-[walker2]
-path_walk = radar_gruppa_tri_walk
-def_state_moving1 = run
-def_state_moving2 = run
-def_state_moving3 = run
-combat_ignore_cond = always
-meet = no_meet
+cfg = scripts\radar\rad_duty_squad_stalker_3.ltx
 END
 
 ; cse_visual properties
@@ -14352,26 +13985,7 @@ none = true
 cond = {+talk_s_barmeno_radar_have}
 
 [logic]
-active = remark
-danger = danger_condition
- 
-[remark]
-anim = guard
-combat_ignore_cond = always
-on_info = {+go_rush_radar_posoni} walker2
- 
-[danger_condition]
-ignore_distance = 10
-ignore_distance_corpse = 0
-
-[walker2]
-def_state_moving1 = raid
-def_state_moving2 = raid
-def_state_moving3 = raid
-combat_ignore_cond = always
-path_walk = radar_lider_gruppy_walk
-meet = no_meet
-
+cfg = scripts\radar\rad_duty_squad_stalker_2.ltx
 END
 
 ; cse_visual properties
@@ -14430,25 +14044,7 @@ none = true
 cond = {+talk_s_barmeno_radar_have}
 
 [logic]
-active = remark
-danger = danger_condition
- 
-[remark]
-anim = wait
-combat_ignore_cond = always
-on_info = {+go_rush_radar_posoni} walker2
- 
-[combat_ignore]
-combat_ignore_cond = always
-
-[walker2]
-def_state_moving1 = run
-def_state_moving2 = run
-def_state_moving3 = run
-combat_ignore_cond = always
-path_walk = radar_lider_gruppy_walk
-meet = no_meet
-
+cfg = scripts\radar\rad_duty_squad_stalker_1.ltx
 END
 
 ; cse_visual properties
@@ -14619,11 +14215,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -14683,11 +14275,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -14747,11 +14335,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -14811,11 +14395,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -14875,11 +14455,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -14939,11 +14515,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15003,11 +14575,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15067,11 +14635,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15131,11 +14695,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15195,11 +14755,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15259,11 +14815,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15323,11 +14875,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15387,11 +14935,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15451,11 +14995,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15515,11 +15055,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15579,11 +15115,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15643,11 +15175,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15707,11 +15235,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15771,11 +15295,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15835,11 +15355,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15899,11 +15415,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -15963,11 +15475,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -16027,11 +15535,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -16091,11 +15595,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -16155,11 +15655,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties
@@ -16219,11 +15715,7 @@ none = true
 cond = {+go_rush_radar_posoni}
 
 [logic]
-active = nil
-on_combat = combat
- 
-[combat]
-combat_type = zombied
+cfg = scripts\zombied_customdata.ltx
 END
 
 ; cse_visual properties

@@ -17,55 +17,97 @@ function load_scheme(filename, scheme, stype)
 end
 
 ----------------------------------------------------------------------
+-- Отладочный код
+----------------------------------------------------------------------
 
 SIMPLE_LUA_DEBUG = false -- подрубает использование printf и кучи производных. Не трогает log1
-WRITE_SCRIPT_NAME_TO_LOG = false -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
+WRITE_SCRIPT_NAME_TO_LOG = true -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
 WIRTE_PRINTF_TO_LOG = false -- пишет printf в лог (медленно)
 WRITE_PRINTF_TO_FILE = true -- пишет printf в отдельный txt файл olr_debug_log.txt находящийся в папке с игрой
 WRITE_PRINTF_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл использовать функцию traceback для большей отладки
-FATAL_ABORT = true -- при abort игра закрывается принудительно
+FATAL_ABORT = false -- при abort игра закрывается принудительно
 
--- TODO
--- Сделать по другому, пока на отъебись
 -- Данные переменные работают только если SIMPLE_LUA_DEBUG равен true, либо тут либо через ключ -simple_script_lua_debug
-LOGGING_ONLY_SCRIPTNAME = false -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
-LOGGING_ONLY_XRLOGIC = true -- логгирует printf только из скрипта xr_logic
-LOGGING_ONLY_XRREMARK = false -- логгирует printf только из скрипта xr_remark
+LOGGING_ONLY_SCRIPTNAME_ENABLE = true -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
+LOGGING_ONLY_SCRIPTNAME = "xr_*" -- список скриптов через запятую
+LOGGING_ONLY_SCRIPTNAME_EXCLUSION = "xr_logic" -- исключения через запятую (игнорируются всегда)
 
 function lua_traceback(caption, depth)
  return ( debug.traceback(caption, depth or 2 + 1) or 'nil' )
 end
 
+-- Получение имени скрипта из трассировки
 function get_script_name(depth)
- local tb = lua_traceback('', depth)
- for sub,v in string.gmatch(tb, "([^\\]+)\.script:") do
-  return sub
- end
- return "????"
+    local tb = lua_traceback('', depth or 4)  -- 4 = текущая функция + get_script_name + lua_traceback + вызывающий код
+    for sub in string.gmatch(tb, "([^\\]+)%.script:") do
+        if sub ~= "_g" then  -- Исключаем _g.script
+            return sub
+        end
+    end
+    return "????"
 end
 
 if string.find(command_line(), "-simple_script_lua_debug") then
 	SIMPLE_LUA_DEBUG = true
 end
 
+-- Проверяет, соответствует ли строка шаблону
+local function match_pattern(str, pattern)
+    str = str:lower() -- приводим к нижнему регистру
+    pattern = pattern:lower()
+    
+    if pattern:sub(-1) == "*" then -- шаблон с * в конце
+        local prefix = pattern:sub(1, -2)
+        return str:sub(1, #prefix) == prefix
+    else -- точное совпадение
+        return str == pattern
+    end
+end
+
 function logging_script_by_name()
-	if not LOGGING_ONLY_SCRIPTNAME then return true end
-	local scriptname = get_script_name(5)
-	if LOGGING_ONLY_XRLOGIC and scriptname == "xr_logic" then
-			return true
-	end
-	if LOGGING_ONLY_XRREMARK and scriptname == "xr_remark" then
-			return true
-	end
-	return false
+    if not LOGGING_ONLY_SCRIPTNAME_ENABLE then 
+        return true -- если фильтрация выключена, пропускаем всё
+    end
+    
+    local scriptname = get_script_name(5) -- получаем имя текущего скрипта
+    
+    -- 1. Проверяем ИСКЛЮЧЕНИЯ (если скрипт в чёрном списке — сразу false)
+    for exclusion_pattern in string.gmatch(LOGGING_ONLY_SCRIPTNAME_EXCLUSION, "([^,]+)") do
+        exclusion_pattern = exclusion_pattern:match("^%s*(.-)%s*$") -- убираем пробелы
+        if match_pattern(scriptname, exclusion_pattern) then
+            return false -- совпало с исключением > false
+        end
+    end
+    
+    -- 2. Проверяем РАЗРЕШЁННЫЕ скрипты (если скрипт в белом списке > true)
+    for allowed_pattern in string.gmatch(LOGGING_ONLY_SCRIPTNAME, "([^,]+)") do
+        allowed_pattern = allowed_pattern:match("^%s*(.-)%s*$") -- убираем пробелы
+        if match_pattern(scriptname, allowed_pattern) then
+            return true -- совпало с разрешённым > true
+        end
+    end
+    
+    -- 3. Если скрипт не в белом списке > false
+    return false
 end
 
 function printf(msg,...)
 	local log_only_script = logging_script_by_name()
 	if SIMPLE_LUA_DEBUG and log_only_script then
-		if WRITE_SCRIPT_NAME_TO_LOG then
-			log1("printf was called from: "..get_script_name(4))	
-		end
+        local current_script_name = get_script_name(4)
+        
+        if WRITE_SCRIPT_NAME_TO_LOG and current_script_name ~= last_script_name then
+            local separator = string.rep("-", 40)
+            local script_info = separator.."\n".."printf was called from: "..current_script_name.."\n"..separator
+            if WIRTE_PRINTF_TO_LOG then
+                log1(script_info)
+            end
+            if WRITE_PRINTF_TO_FILE then
+                debug_write(script_info, false)
+            end
+            last_script_name = current_script_name
+        end
+		
 		if not (msg) then return end
 		local fmt = tostring(msg)
 
@@ -92,26 +134,55 @@ end
 
 local debug_file
 local last_ouput
-function debug_write(output,trace)
 
-	if (trace and debug and type(debug.traceback) == 'function') then
-		output = output .. debug.traceback('\n', 2)
-	end
+-- Функция для переименования старого файла, если он существует и не пуст
+local function rename_old_log()
+    local log_file = "olr_current_script_log.txt"
+    local f = io.open(log_file, "r")
+    if f then
+        local content = f:read("*a")
+        f:close()
+        if #content > 0 then
+            local timestamp = os.date("%H-%M-%S_%d-%m-%Y")
+            local new_name = "olr_old_script_log_" .. timestamp .. ".txt"
+            os.rename(log_file, new_name)
+        end
+    end
+end
 
-	if (last_ouput == output) then
-		return
-	end
-	last_ouput = output
+function debug_write(output, trace)
+    if (trace and debug and type(debug.traceback) == 'function') then
+        output = output .. debug.traceback('\n', 2)
+    end
 
-	if not (debug_file) then
-		debug_file = io.open("olr_debug_log.txt","w+")
-		debug_file:write(output.."\n")
-		debug_file:close()
-		debug_file = io.open("olr_debug_log.txt","a+")
-	else
-		debug_file:write(output.."\n")
-	end
+    if (last_ouput == output) then
+        return
+    end
+    last_ouput = output
 
+    if not debug_file then
+        -- Переименовываем старый файл при первом вызове
+        rename_old_log()
+        
+        -- Открываем новый файл для записи
+        debug_file = io.open("olr_current_script_log.txt", "w+")
+        
+        -- Записываем разделитель и дату/время
+        local timestamp = os.date("%H:%M:%S %d.%m.%Y", os.time())
+        local separator = string.rep("-", 40)
+        debug_file:write(separator .. "\n")
+        debug_file:write("-- Начало логгирования " .. timestamp .. " --\n")
+        debug_file:write(separator .. "\n\n")
+        
+        -- Записываем первый вывод
+        debug_file:write(output .. "\n")
+        debug_file:close()
+        
+        -- Открываем файл в режиме добавления для последующих записей
+        debug_file = io.open("olr_current_script_log.txt", "a+")
+    else
+        debug_file:write(output .. "\n")
+    end
 end
 
 function assert(cond, msg, ...)

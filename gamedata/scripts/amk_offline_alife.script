@@ -339,15 +339,18 @@ function build_tables()
 	end
 	
 	sell_table = {}
+	local cfg_sell = ""
 	local sini = ini_file("misc\\trade_generic.ltx")
-	local cfg_sell = utils.cfg_get_string(sini, "trader", "sell_condition", npc, false, false, "")
-	if sini and sini:section_exist(cfg_sell) then
-		local result, id, value = nil, nil, nil
-		for a=0,sini:line_count(cfg_sell)-1 do
-			result, id, value = sini:r_line(cfg_sell,a,"","")
-			if id~=nil and amk.trim(id)~="" and amk.trim(id)~=nil and amk.trim(value)~="" and amk.trim(value)~=nil then
-				-- ƒобавим в таблицу, что можно продавать.
-				sell_table[id] = true
+	if sini and sini:line_exist("trader", "sell_condition") then
+		cfg_sell = sini:r_string("trader", "sell_condition")
+		if sini:section_exist(cfg_sell) then
+			local result, id, value = nil, nil, nil
+			for a=0,sini:line_count(cfg_sell)-1 do
+				result, id, value = sini:r_line(cfg_sell,a,"","")
+				if id~=nil and amk.trim(id)~="" and amk.trim(id)~=nil and amk.trim(value)~="" and amk.trim(value)~=nil then
+					-- ƒобавим в таблицу, что можно продавать.
+					sell_table[id] = true
+				end
 			end
 		end
 	end

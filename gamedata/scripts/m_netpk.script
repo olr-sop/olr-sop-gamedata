@@ -31,14 +31,6 @@ local shape_type = {
 --/ -----------------------------------------------------------------
 local sModule = script_name() --/ string name of this file module
 --/ -----------------------------------------------------------------
---/ for output of the debug information
-local log = function(fmt,...)
-	_G.log(sModule..":"..tostring(fmt),...)
-end
-if to_log and type(string.exformat) == 'function' then
-	log = function(fmt,...) to_log(sModule..":"..string.exformat(fmt,...)) end
-end
---/ -----------------------------------------------------------------
 local net_stub = net_dummy --/ for dummy class (can use in helpers)
 --/ convert object to server_object
 local convert_obj = function(obj)
@@ -64,9 +56,9 @@ get = function(obj, part_flags, packet)
 		local mode = bits_mode[part_flags or 3]
 		if bits_mode[mode] == 0 then --/ for 'abstract' part
 			return this.net_cse_abstract(sobj, part_flags, packet, net_class) --/> out: packet_manager for 'abstract' part
-		elseif net_class then  --log("get:Obj=[%s],clsid=[%s]", sobj:name(), script_clsid, "") --/#~#
+		elseif net_class then  --printf("get:Obj=[%s],clsid=[%s]", sobj:name(), script_clsid, "") --/#~#
 			return net_class(sobj, mode) --/> out: packet_manager 'state'|'update'|'full' part(s)
-		end  --log("get:Obj=[%s],clsid=[%s]~unknown:<%s>", sobj:name(), script_clsid, "Warning!") --/#~#
+		end  --printf("get:Obj=[%s],clsid=[%s]~unknown:<%s>", sobj:name(), script_clsid, "Warning!") --/#~#
 	end
 	return net_stub --/> (net_dummy class or stub)
 end
@@ -626,7 +618,7 @@ _r_bCTime = function(pk,ver)
 		if not pk:r_eof() then
 			return _r_uCTime(pk,ver) --/>
 		end
-		--log("_r_bCTime:flg=[%s]~wrong:<%s>", iFlg, "Warning!") --/#~#
+		--printf("_r_bCTime:flg=[%s]~wrong:<%s>", iFlg, "Warning!") --/#~#
 	end
 	return iFlg --/> #?#
 end
@@ -1107,17 +1099,17 @@ function net_base:__init(obj, mode, can, name)
 	self._can_up = bit_and(can  or 3, 2) ~= 0 --/ boolean-flag 'update' part of subpacket
 	self.dbg     = bit_and(mode or 3, 4) ~= 0 --/ boolean-flag for debug
 	self.name    = name                       --/ for desctiption (and for debug)
-	if self.dbg then log("net_base:init:(%s):mode=[%s/%s],can=[%s],props=[%s/%s]:obj=[%s]", name, mode, self._mode, can, self._can_st, self._can_up, self.obj and self.obj:name(), "") end --/#~#
+	if self.dbg then printf("net_base:init:(%s):mode=[%s/%s],can=[%s],props=[%s/%s]:obj=[%s]", name, mode, self._mode, can, self._can_st, self._can_up, self.obj and self.obj:name(), "") end --/#~#
 end
 --/ read ----------
 function net_base:_read(ret,stpk,uppk)
-	if self.dbg then log("net_base:_read:(%s)~>sub_class=[%s]:mode=[%s]:st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self.bases[1] and self.bases[1].name, self._mode, self._can_st, type(stpk), self._can_up, type(uppk), ">") end --/#~#
+	if self.dbg then printf("net_base:_read:(%s)~>sub_class=[%s]:mode=[%s]:st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self.bases[1] and self.bases[1].name, self._mode, self._can_st, type(stpk), self._can_up, type(uppk), ">") end --/#~#
 	if next(self.bases) then
 		self:_read_bases(ret,stpk,uppk)
 	end
 	if self._mode == 0 then --/ 'abstract' part
 		if self.co_props and next(self.co_props) then
-			if self.dbg then log("net_base:_read:(%s)~>co_props:[%s]", ">") end --/#~#
+			if self.dbg then printf("net_base:_read:(%s)~>co_props:[%s]", ">") end --/#~#
 			self:_read_co_props(ret,stpk)
 		end
 	else --/ 'state'/'update' part(s)
@@ -1128,7 +1120,7 @@ function net_base:_read(ret,stpk,uppk)
 			self:_read_up_props(ret,uppk)
 		end
 	end
-	if self.dbg then log("net_base:_read:(%s):%s]", self.name, "<") end --/#~#
+	if self.dbg then printf("net_base:_read:(%s):%s]", self.name, "<") end --/#~#
 end
 function net_base:_read_bases(ret,stpk,uppk)
 	for _,sub_class in ipairs(self.bases) do
@@ -1158,7 +1150,7 @@ function net_base:_read_up_props(ret,pk)
 end
 --/ write ---------
 function net_base:_write(data,stpk,uppk)
-	if self.dbg then log("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type(stpk), self._can_up, type(uppk), ">") end --/#~#
+	if self.dbg then printf("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type(stpk), self._can_up, type(uppk), ">") end --/#~#
 	if next(self.bases) then
 		self:_write_bases(data,stpk,uppk)
 	end
@@ -1174,7 +1166,7 @@ function net_base:_write(data,stpk,uppk)
 			self:_write_up_props(data,uppk)
 		end
 	end
-	if self.dbg then log("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type(stpk), self._can_up, type(uppk), "<") end --/#~#
+	if self.dbg then printf("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type(stpk), self._can_up, type(uppk), "<") end --/#~#
 end
 function net_base:_write_bases(data,stpk,uppk)
 	for _,sub_class in ipairs(self.bases) do
@@ -1227,16 +1219,16 @@ function net_base:get()
 		t.upd = {} --/ sub-table for update-propeties
 	end
 	--/ read
-	if self.dbg then log("net_base:get:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, ">") end --/#~#
+	if self.dbg then printf("net_base:get:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, ">") end --/#~#
 	self:_read(t, stpk, uppk)
-	if self.dbg then log("net_base:get:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, "<") end --/#~#
+	if self.dbg then printf("net_base:get:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, "<") end --/#~#
 	--/ check state size and tail
 	if stpk ~= nil then
 		self.size = stpk:r_tell() - stsz
 		if not stpk:r_eof() then --/ exist left?
 			t.__tail = tail_data():peekFrom(stpk)
 			t.__tail_size = t.__tail.pk:w_tell() - t.__tail.pk:r_tell()
-			if self.dbg then log("net_base:get:obj=[%s]:(%s):mode=[%s]:tail(st)=[%s]:<%s>", self.obj:name(), self.name, self._mode, t.__tail_size, "Info!") end --/#~#
+			if self.dbg then printf("net_base:get:obj=[%s]:(%s):mode=[%s]:tail(st)=[%s]:<%s>", self.obj:name(), self.name, self._mode, t.__tail_size, "Info!") end --/#~#
 		end
 	end
 	--/ check update size and tail
@@ -1245,18 +1237,18 @@ function net_base:get()
 		if not uppk:r_eof() then --/ exist left?
 			t.upd.__tail = tail_data():peekFrom(uppk)
 			t.upd.__tail_size = t.upd.__tail.pk:w_tell() - t.upd.__tail.pk:r_tell()
-			if self.dbg then log("net_base:get:obj=[%s]:(%s):mode=[%s]:tail(up)=[%s]:<%s>", self.obj:name(), self.name, self._mode, t.upd.__tail_size, "Info!") end --/#~#
+			if self.dbg then printf("net_base:get:obj=[%s]:(%s):mode=[%s]:tail(up)=[%s]:<%s>", self.obj:name(), self.name, self._mode, t.upd.__tail_size, "Info!") end --/#~#
 		end
 	end
 	if (stpk and stpk:r_elapsed()~=0) or (uppk and uppk:r_elapsed()~=0) then
-		if self.dbg then log(string.format("%s elapsed std: %i upd:%i",self.obj:name(),stpk:r_elapsed(),uppk:r_elapsed())) end --/#~#
+		if self.dbg then printf(string.format("%s elapsed std: %i upd:%i",self.obj:name(),stpk:r_elapsed(),uppk:r_elapsed())) end --/#~#
 	end
 	return t --/>
 end
 --/ Set -----------
 function net_base:set(data)
 	if not (self.obj and data) and self._mode == 0 then
-		if self.dbg then log("net_base:set:(%s):obj=[%s]:data=[%s]:mode=[%s]:<%s>", self.obj and self.obj:name(), self.name, self._mode, type(data), "Warning!") end --/#~#
+		if self.dbg then printf("net_base:set:(%s):obj=[%s]:data=[%s]:mode=[%s]:<%s>", self.obj and self.obj:name(), self.name, self._mode, type(data), "Warning!") end --/#~#
 		return false --/>
 	end
 	--/ preparation
@@ -1273,9 +1265,9 @@ function net_base:set(data)
 		if not data.upd then data.upd = {} end --/ sub-table for update-propeties
 	end
 	--/ writing
-	if self.dbg then log("net_base:set:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, ">") end --/#~#
+	if self.dbg then printf("net_base:set:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, ">") end --/#~#
 	self:_write(data,stpk,uppk) --/ write data
-	if self.dbg then log("net_base:set:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, "<") end --/#~#
+	if self.dbg then printf("net_base:set:(%s):(%s):m(%s)/st(%s)/up(%s):[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, "<") end --/#~#
 	--/ state
 	if stpk and stpk:r_elapsed() > 2 then
 		if data.__tail ~= nil then
@@ -1294,7 +1286,7 @@ function net_base:set(data)
 		self.size_upd = uppk:w_tell()
 		self.obj:UPDATE_Read(uppk)
 	end
-	if self.dbg then log("net_base:set:(%s):(%s):m(%s)/st(%s)/up(%s):size=[%s/%s]:[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, self.size, self.size_upd, "<<<") end --/#~#
+	if self.dbg then printf("net_base:set:(%s):(%s):m(%s)/st(%s)/up(%s):size=[%s/%s]:[%s]", self.obj:name(), self.name, self._mode, self._can_st, self._can_up, self.size, self.size_upd, "<<<") end --/#~#
 	return true --/>
 end
 --/ ---------------
@@ -1476,7 +1468,7 @@ local execute_switchings = function()
 				end
 			end
 			if not can_switch or v.cnt > 48 then --/ if limit is exceeded -> clear:
-				if v and v.cnt > 32 then log("execute_switchings:obj=[%s/%s]:cnt(%s):flag(%s)=>online(%s):<%s>", sobj and sobj:name(), id, v.cnt, v.off, sobj and sobj.online, "Warning!") end --/#~#
+				if v and v.cnt > 32 then printf("execute_switchings:obj=[%s/%s]:cnt(%s):flag(%s)=>online(%s):<%s>", sobj and sobj:name(), id, v.cnt, v.off, sobj and sobj.online, "Warning!") end --/#~#
 				tbl_switchings[id] = nil
 			end
 		end
@@ -1538,7 +1530,7 @@ function net_cse_abstract:__init(obj, mode, packet, net_class)
 	}
 	self.pk = packet --/< 'abstract' packet
 	self.dbg = bit_and(mode or 0, 4) ~= 0 --/ boolean-flag for debug
---	log("net_cse_abstract:init:Obj=[%s],mode=[%s]~>(%s)%s", obj:name(), mode, self.dbg, "") --/#~#
+--	printf("net_cse_abstract:init:Obj=[%s],mode=[%s]~>(%s)%s", obj:name(), mode, self.dbg, "") --/#~#
 end
 
 function net_cse_abstract:isOk()
@@ -1548,7 +1540,7 @@ end
 function net_cse_abstract:get(packet)
 	if packet then self.pk = packet end
 	if not (self.obj and self.pk) then
-		log("net_cse_abstract:get:obj=["..type(self.obj).."],packet=["..type(self.pk).."]:<Warning!>")
+		printf("net_cse_abstract:get:obj=["..type(self.obj).."],packet=["..type(self.pk).."]:<Warning!>")
 		return self._data or {} --/> ошибка вызова/инициализации
 	end
 	local r_pos, w_pos = self.pk:r_tell(), self.pk:w_tell() --/ begin&end of reading
@@ -1598,13 +1590,13 @@ function net_cse_abstract:_read_data()
 				if size == 0 then
 					t[prop.name] = prop.default --/< zero-table
 				else
-					if self.dbg then log("net_cse_abstract:_read_data:Obj=[%s/%s]:cid=[%s/%s]:cobj_size=[%s]", self.obj:name(), self.obj.id, self.obj:clsid(), self.bases[1] and self.bases[1].name, size, "") end --/#~#
+					if self.dbg then printf("net_cse_abstract:_read_data:Obj=[%s/%s]:cid=[%s/%s]:cobj_size=[%s]", self.obj:name(), self.obj.id, self.obj:clsid(), self.bases[1] and self.bases[1].name, size, "") end --/#~#
 					local tbl,first_pos = {}, pk:r_tell() --/ create table 'cobj_data'
 					tbl.ph_shell_state = pk:r_u8() --/ читаем общий параметр (CPhysicsShellHolder)
 					self:_read(tbl,pk) --/ read cobj params
 					--/ read dynamic data
 					local first_dyn = pk:r_tell() - first_pos +1
-					if first_dyn <= size then  --log("net_cse_abstract:get:Obj=[%s/%s]:cobj_size=[%s],first_pos=[%s],first_dyn=[%s]", self.obj:name(), self.obj.id, size, first_pos, first_dyn, "") --/#~#
+					if first_dyn <= size then  --printf("net_cse_abstract:get:Obj=[%s/%s]:cobj_size=[%s],first_pos=[%s],first_dyn=[%s]", self.obj:name(), self.obj.id, size, first_pos, first_dyn, "") --/#~#
 						if not self.dbg then
 							tbl.__dyn_data = tail_data():peekPartFrom(pk, first_pos + size) --/ read rests
 						else --/ for debug (with key-value)
@@ -1635,7 +1627,7 @@ function net_cse_abstract:_write_data()
 				if not size then
 					pk:w_u16(0) --/< write zero count bytes
 				else
-					if self.dbg then log("net_cse_abstract:_write_data:Obj=[%s/%s]:cobj_size=[%s]:cid=[%s/%s]", self.obj:name(), self.obj.id, size, self.obj:clsid(), self.bases[1] and self.bases[1].name, "") end --/#~#
+					if self.dbg then printf("net_cse_abstract:_write_data:Obj=[%s/%s]:cobj_size=[%s]:cid=[%s/%s]", self.obj:name(), self.obj.id, size, self.obj:clsid(), self.bases[1] and self.bases[1].name, "") end --/#~#
 					pk:w_u16(size) --/< write count bytes
 					local tbl = data[prop.name] --/ table 'cobj_data'
 					pk:w_u8(tbl.ph_shell_state or 0) --/ пишем общий параметр (CPhysicsShellHolder)
@@ -1689,13 +1681,13 @@ function net_cse_abstract:get_cobj(reader)
 	pk:r_seek(0) --/ installation of the beginning of reading
 	local size = pk:r_elapsed() --/ count bytes
 	if size == 0 then return {} end --/> zero-table
-	if self.dbg then log("net_cse_abstract:get_cobj:Obj=[%s/%s]:cid=[%s/%s]:cobj_size=[%s]", self.obj:name(), self.obj.id, self.obj:clsid(), self.bases[1] and self.bases[1].name, size, "") end --/#~#
+	if self.dbg then printf("net_cse_abstract:get_cobj:Obj=[%s/%s]:cid=[%s/%s]:cobj_size=[%s]", self.obj:name(), self.obj.id, self.obj:clsid(), self.bases[1] and self.bases[1].name, size, "") end --/#~#
 	--/ читаем 'клиентские' данные ('cobj_data')
 	local t = {} --/ create table 'cobj_data'
 	t.ph_shell_state = pk:r_u8() --/ читаем общий параметр (CPhysicsShellHolder)
 	self:_read(t,pk) --/ read cobj params
 	--/ read dynamic data
-	if not pk:r_eof() then  --log("net_cse_abstract:get_cobj:Obj=[%s/%s]:cobj_size=[%s],first_pos=[%s],first_dyn=[%s]", self.obj:name(), self.obj.id, size, r_pos, pk:r_tell(), "") --/#~#
+	if not pk:r_eof() then  --printf("net_cse_abstract:get_cobj:Obj=[%s/%s]:cobj_size=[%s],first_pos=[%s],first_dyn=[%s]", self.obj:name(), self.obj.id, size, r_pos, pk:r_tell(), "") --/#~#
 		if not self.dbg then
 			t.__dyn_data = tail_data():peekPartFrom(pk,size) --/ read rests
 		else --/ for debug (with key-value)
@@ -3241,10 +3233,10 @@ local function initialize()
 						str_clsid2class[scr_clsid] = t
 					elseif sini:section_exist(scr_clsid) then --/ for any mods
 						if sini:line_exist(scr_clsid,"class") and t[2] then
-							if db.is_dbg1 then log("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:(%s)", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Info") end --/#~#
+							if db.is_dbg1 then printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:(%s)", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Info") end --/#~#
 							if sini:r_string(scr_clsid,"class") == t[2] or t[2] == 'unknown' then --/ not use(!): 'r_clsid'
 								str_clsid2class[scr_clsid] = t
-							else log("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:<%s>", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Warning!") --/#~#
+							else printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:<%s>", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Warning!") --/#~#
 							end
 						end
 					elseif t[3] then --/ for debug and mixed-mode
@@ -3293,7 +3285,7 @@ function get_net_class(script_clsid)
 	if net_class == nil then
 		for k,v in pairs(str_clsid2class) do
 			local scr_clsid = clsid[k]
-			if not scr_clsid then  --log("get_net_class: clsid=["..k.."] => X") --/#~#
+			if not scr_clsid then  --printf("get_net_class: clsid=["..k.."] => X") --/#~#
 				str_clsid2class[k] = nil --/ clear
 			elseif scr_clsid == script_clsid then
 				net_class = this["net_"..(v[1] or "unknown")] or false

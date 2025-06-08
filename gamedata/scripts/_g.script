@@ -28,9 +28,9 @@ WRITE_PRINTF_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл исполь
 FATAL_ABORT = false -- при abort игра закрывается принудительно
 
 -- Данные переменные работают только если SIMPLE_LUA_DEBUG равен true, либо тут либо через ключ -simple_script_lua_debug
-LOGGING_ONLY_SCRIPTNAME_ENABLE = true -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
-LOGGING_ONLY_SCRIPTNAME = "xr_*" -- список скриптов через запятую
-LOGGING_ONLY_SCRIPTNAME_EXCLUSION = "xr_logic" -- исключения через запятую (игнорируются всегда)
+LOGGING_ONLY_SCRIPTNAME_ENABLE = false -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
+LOGGING_ONLY_SCRIPTNAME = "xr_*, game_stats" -- список скриптов через запятую
+LOGGING_ONLY_SCRIPTNAME_EXCLUSION = "xr_logic, xr_spawner" -- исключения через запятую (игнорируются всегда)
 
 function lua_traceback(caption, depth)
  return ( debug.traceback(caption, depth or 2 + 1) or 'nil' )
@@ -91,11 +91,13 @@ function logging_script_by_name()
     return false
 end
 
+local last_script_name = "" -- забыл объявить
+
 function printf(msg,...)
 	local log_only_script = logging_script_by_name()
 	if SIMPLE_LUA_DEBUG and log_only_script then
         local current_script_name = get_script_name(4)
-        
+
         if WRITE_SCRIPT_NAME_TO_LOG and current_script_name ~= last_script_name then
             local separator = string.rep("-", 40)
             local script_info = separator.."\n".."printf was called from: "..current_script_name.."\n"..separator
@@ -109,20 +111,8 @@ function printf(msg,...)
         end
 		
 		if not (msg) then return end
-		local fmt = tostring(msg)
-
-		if (select('#',...) >= 1) then
-			local i = 0
-			local p = {...}
-			local function sr(a)
-				i = i + 1
-				if (type(p[i]) == 'userdata') then
-					return 'userdata'
-				end
-				return tostring(p[i])
-			end
-			fmt = string.gsub(fmt,"%%s",sr)
-		end
+		
+		local fmt = format_to_string(msg,...) or "<nil>"
 		if WIRTE_PRINTF_TO_LOG then
 			log1(fmt)
 		end
@@ -185,31 +175,76 @@ function debug_write(output, trace)
     end
 end
 
-function assert(cond, msg, ...)
-	if not cond then
-		abort(msg, ...)
+-- Крешнуть игру (после вывода сообщения об ошибке в лог)
+
+function abort(fmt, ...)
+	local console = get_console()
+	local reason = format_to_string(fmt,...) or "<nil>"
+	local msg_crit_error = "ВНИМАНИЕ! Игра принудительно прерывается! Строка ниже является информацией об ошибке!\n".."ОШИБКА: "..reason..""
+	log1(msg_crit_error)
+	if level.present() then if db and (db.actor ~= nil) then olr.hud_tip("", msg_crit_error, 5) end end
+	if not FATAL_ABORT then
+		log1("FATAL_ABORT отключён!")
+		local msg_saves_corrupted = "Продолженная игра может привести к проблемам в игре и <битым> сохранениям!"
+		log1(msg_saves_corrupted)
+		if level.present() then if db and (db.actor ~= nil) then olr.hud_tip("", msg_saves_corrupted, 5) end end
+		console:execute("flush")
+	else
+		log1("FATAL_ABORT включён!")
+		console:execute("flush")
+		assert(msg_crit_error)
 	end
 end
 
--- Крешнуть игру (после вывода сообщения об ошибке в лог)
-function abort(fmt, ...) 
-local reason = (...==nil and fmt) or string.format(fmt, ...) 
---[[
-	-- крешим игру а не просим начать с более раннего сейва
-	if db and db.actor then 
-	local msg = "!!!КРИТИЧЕСКАЯ ОШИБКА!!!\r\n ПРИЧИНА: "..reason..
-	olr.hud_tip("", msg, 5)
-	end
---]]
-	log1(" !!! ABORT CALLED !!! ")
-	log1(" !!! REASON !!! ")
-	log1(reason)
-	log1(" !!! REASON !!! ")
-	log1(" !!! SEND LOG !!! ")
-	get_console():execute("flush")
-	if FATAL_ABORT then
-		get_console():execute("exit")
-	end
+function format_to_string(fmt, ...)
+    if fmt == nil then return "" end
+    
+    local args = {...}
+    local result = tostring(fmt)
+    
+    -- Сначала попробуем стандартный string.format
+    local success, formatted = pcall(string.format, fmt, unpack(args))
+    if success then
+        return formatted
+    end
+    
+    -- Если не получилось, реализуем свою логику
+    local i = 1
+    for spec in result:gmatch("%%[.0-9]*[dfi]") do
+        if args[i] then
+            if type(args[i]) == "number" then
+                local num_format = spec:gsub("%%([.0-9]*)([dfi])", "%%%1f")
+                local num_str = string.format(num_format, args[i])
+                result = result:gsub(spec, num_str, 1)
+            else
+                result = result:gsub(spec, tostring(args[i]), 1)
+            end
+            i = i + 1
+        end
+    end
+    
+    -- Обрабатываем оставшиеся %s
+    for _, arg in ipairs(args) do
+        result = result:gsub("%%s", tostring(arg), 1)
+    end
+    
+    -- Заменяем оставшиеся спецификаторы
+    result = result:gsub("%%[.0-9]*[dfis]", "<Warning!><~NOT_arg!")
+    
+    return result
+end
+
+function to_str(v)
+    local type_v = type(v)
+    if type_v == "string" then return v end
+    if type_v == "number" then return tostring(v) end
+    if type_v == "boolean" then
+        return v and "<true>" or "<false>"
+    end
+    if type_v == "userdata" then
+        return "userdata"
+    end
+    return "<"..type_v..">"
 end
 
 ----------------------------------------------------------------------

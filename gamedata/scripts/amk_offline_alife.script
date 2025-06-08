@@ -1150,10 +1150,6 @@ function on_enemies_found(victim, vdata)
 								this.process_trade(attacker.player)
 							end
 						end
-						local snd_obj = xr_sound.get_safe_sound_object([[ambient\outdoor\rnd_m-16_4]])
-						if not snd_obj:playing() then 
-							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.6)
-						end
 						--log1(attacker.player:name().." [team_A] попал в "..defender.player:name().." [team_B] ("..defender.health..")")
 					else
 						--log1(attacker.player:name().." [team_A] промазал в "..defender.player:name().." [team_B] ("..defender.health..")")
@@ -1224,10 +1220,6 @@ function on_enemies_found(victim, vdata)
 								end
 							end
 							--log1(attacker.player:name().." [team_B] попал в "..defender.player:name().." [team_A] ("..defender.health..")")
-							local snd_obj = xr_sound.get_safe_sound_object([[ambient\random\rnd_m-16_3]])
-							if not snd_obj:playing() then 
-								snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.6)
-							end
 						else
 							--log1(attacker.player:name().." [team_B] промазал в "..defender.player:name().." [team_A] ("..defender.health..")")
 						end
@@ -1267,10 +1259,6 @@ function on_enemies_found(victim, vdata)
 		end		
 	end
 	--log1("Бой закончен. Команда А - было "..size_A.." осталось "..size_A-died_A..". Команда Б - было "..size_B.." осталось "..size_B-died_B..".")
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\gunfire]])
-	if not snd_obj:playing() then 
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-	end
 end
 
 -- Вокруг монстры! Что же делать..
@@ -1541,10 +1529,6 @@ function on_monsters_found(victim, vdata)
 	end	
   	amk.oau_reason="on_monsters_found end"
 	--log1("Бой с монстрами закончен. Команда А - было "..size_A.." осталось "..size_A-died_A..". Команда Б - было "..size_B.." осталось "..size_B-died_B..".")
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_deep_barking]])
-	if not snd_obj:playing() then 
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-	end
 end
 
 -- О, трупик. Щас шмонать будем.
@@ -1684,10 +1668,6 @@ function on_anoms_found(victim, vdata)
 						--log1("cталкер ТЕЛЕП В АНОМАЛИЮ "..victim:name().." умер в аномалии "..object:name().." на уровне "..object.level_name.."")
 						--olr.add_spot_on_map( victim.id,"esc_stalker_fox_location",victim:name() )
 						alife():teleport_object(victim.id, object.m_game_vertex_id, object.m_level_vertex_id, object.position)
-						local snd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_fallscream]])
-						if not snd_obj:playing() then 
-							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.6)
-						end
 					end
 					--log1("cталкер "..victim:name().." умер в аномалии "..object:name().." на уровне "..object.level_name.."")
 					--olr.add_spot_on_map( victim.id,"esc_stalker_fox_location",victim:name() )
@@ -2092,76 +2072,19 @@ end
 
 function set_npc_health(obj, health)
 	if (obj and health >=0 and health <=2) then
-
-
 		local pk = xs_netpk.monster(obj)
 		if not pk:isOk() then
 			pk = xs_netpk.stalker(obj)
 		end
-		
 		local data = pk:get()
 		data.health = health
 		data.updhealth = health
 		pk:set(data)
-
-		local flgs = 0
-		local flgm = 0
-
 		if health == 0 then
 			this.on_death(obj.id)
 			xvars.dead_in_offline[obj:name()] = true
 			--news_manager.send_tip(db.actor, "offline sim death - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
 			obj.offline_dead = 1
-			if IsStalker(obj) then
-				if obj.level_name == level.name() then
-					local snd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_scr_7]])
-					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.3)
-					--news_manager.send_tip(db.actor, " !SND! offline sim death ON THIS LEVEL  - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
-				else
-					if flgs == 0 then
-					flgs = 1
-					local rnd = math.random(1,5)
-					if rnd == 1 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_scr_2]])
-					elseif rnd == 2 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_scr_3]])
-					elseif rnd == 3 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_scr_8]])
-					elseif rnd == 4 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_scr_9]])
-					elseif rnd == 5 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_scr_5]])
-					end
-					ssnd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.1)
-					--news_manager.send_tip(db.actor, " !SND! offline sim death ON ANOTER LEVEL  - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
-					end
-				end
-			end
-			if IsMonster(obj) and not string.find(obj:name(),"^m_rat_") then
-				if obj.level_name == level.name() then
-					local snd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_ratchant]])
-					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.3)
-					--news_manager.send_tip(db.actor, " !SND! offline sim death MONSTER ON THIS LEVEL  - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
-				else
-					if flgm == 0 then
-					flgm = 1
-					local rnd = math.random(1,5)
-					if rnd == 1 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_fallscream]])
-					elseif rnd == 2 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_disgusting]])
-					elseif rnd == 3 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_moan_1]])
-					elseif rnd == 4 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_moan_2]])
-					elseif rnd == 5 then
-						ssnd_obj = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_moan_3]])
-					end
-					ssnd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.1)
-					--news_manager.send_tip(db.actor, " !SND! offline sim death MONSTER ON ANOTER LEVEL  - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
-					end
-				end
-			end
 		end
 	end
 end

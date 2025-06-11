@@ -16,6 +16,7 @@ local enabled_debug        = false --/ включен режим отладки ...
 local str_clsid2class = {} --/ массив (строковый) соответствия 'script_clsid' <=> 'server_object_class'
 local clsid2net       = {} --/ массив соответствий 'script_clsid' <=> 'net-class'
 local sim = alife() --/ cache function 'alife'
+local shit_dbg = false -- заглушка
 --/ ----------------------------------------------
 local bits_mode = { --/ table of admissible flags
 	[0] = 0, --/ change 'abstract' properties of packet
@@ -3215,7 +3216,7 @@ local function initialize()
 			--bits_mode[1]=5 bits_mode[2]=6 bits_mode[3]=7 --/ for global debug
 			bits_mode[4]=0 bits_mode[5]=5 bits_mode[6]=6 bits_mode[7]=7 --/ for 'manual' debug
 		end
-		local iBitMode = (self.dbg and bit_ver) or 15 --/ for debug
+		local iBitMode = (shit_dbg and bit_ver) or 15 --/ for debug
 		--/ читаем секцию общих соответствий 'script_clsid <==> cse_server_object_class' (строки!)
 		for i=0, ltx:line_count("clsid_to_class")-1 do
 			local result,idx,value = ltx:r_line("clsid_to_class",i,"","")
@@ -3233,7 +3234,7 @@ local function initialize()
 						str_clsid2class[scr_clsid] = t
 					elseif sini:section_exist(scr_clsid) then --/ for any mods
 						if sini:line_exist(scr_clsid,"class") and t[2] then
-							if self.dbg then printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:(%s)", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Info") end --/#~#
+							if shit_dbg then printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:(%s)", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Info") end --/#~#
 							if sini:r_string(scr_clsid,"class") == t[2] or t[2] == 'unknown' then --/ not use(!): 'r_clsid'
 								str_clsid2class[scr_clsid] = t
 							else printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:<%s>", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Warning!") --/#~#

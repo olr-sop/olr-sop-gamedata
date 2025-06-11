@@ -1,102 +1,249 @@
-
-
-
-local radio_otvet = {
-
-[1] = [[characters_voice\scenario\escape\radio\radio_voice_1]],
-[2] = [[characters_voice\scenario\escape\radio\radio_voice_2]],
-[3] = [[characters_voice\scenario\escape\radio\radio_voice_3]]
-
+-- Конфигурация звуков
+local SOUND_CONFIG = {
+    RADIO_ANSWERS = {
+        paths = {
+            [1] = [[characters_voice\scenario\escape\radio\radio_voice_1]],
+            [2] = [[characters_voice\scenario\escape\radio\radio_voice_2]],
+            [3] = [[characters_voice\scenario\escape\radio\radio_voice_3]]
+        }
+    },
+    TURN_ON = [[characters_voice\scenario\escape\radio\radio_turn_on_1]],
+    TURN_OFF = [[characters_voice\scenario\escape\radio\radio_turn_off_1]],
+    NOISE = [[characters_voice\scenario\escape\radio\radio_noise_1]],
+    
+    -- Настройки вероятности и времени
+    CHECK_INTERVAL = 30000, -- Проверка каждые 30 сек, нех слишком часто, возможно надо будет увеличить до минуты или более
+    MAIN_TRIGGER_CHANCE = 0.1, -- 10% шанс срабатывания основного триггера
+    NOISE_CHANCE = 0.1, -- 10% шанс шума (если выбран этот вариант)
+    MIN_DELAY = 5000, -- Минимальная задержка между звуками у одного NPC
+	LOG_ENABLE = false -- Включение логгирования
+    LOG_INTERVAL = 2000, -- Логирование каждые 2 секунды
+    NOISE_MIN_DELAY = 120000 -- Минимальная задержка между шумами у одного NPC
 }
 
+-- Таблица звуковых объектов
+local sound_objects = {
+    radio_answers = {},
+    turn_on = nil,
+    turn_off = nil,
+    noise = nil
+}
 
-function radio_snd_check(obj)
-	local rnd = math.random(1,5)
-	if rnd ~= 1 then return end
-	if not obj:alive() then return end
-	if xr_wounded.is_wounded(obj) then return end
-
-	if obj:character_community()=="military" or obj:character_community()=="voenstals" or obj:character_community()=="dolg" or obj:character_community()=="freedom" then
-
-		local be = obj:best_enemy()
-		if not be then
-			local rndidl = math.random(1,2)
-			if rndidl == 1 then
-				this.military_idle_peregovor(obj)
-			else
-				this.radio_noise(obj)
-			end
-		end
-
-	end
-
+-- Инициализация звуков с проверкой
+local function init_sounds()
+    sound_objects.turn_on = xr_sound.get_safe_sound_object(SOUND_CONFIG.TURN_ON) or false
+    sound_objects.turn_off = xr_sound.get_safe_sound_object(SOUND_CONFIG.TURN_OFF) or false
+    sound_objects.noise = xr_sound.get_safe_sound_object(SOUND_CONFIG.NOISE) or false
+    
+    for i, path in pairs(SOUND_CONFIG.RADIO_ANSWERS.paths) do
+        sound_objects.radio_answers[i] = xr_sound.get_safe_sound_object(path) or false
+    end
 end
 
+init_sounds()
 
-function radio_turn_on(npc)
-	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\escape\radio\radio_turn_on_1]])
-	snd_obj:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+-- Таблица состояний NPC
+local npc_states = {}
+local last_log_time = 0
+
+-- Функция для безопасного получения длины звука
+local function get_sound_length(sound_obj)
+    return sound_obj and type(sound_obj.length) == "function" and sound_obj:length() or 0
 end
 
-function radio_turn_off(npc)
-	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\escape\radio\radio_turn_off_1]])
-	snd_obj:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+-- Улучшенное логгирование с защитой от ошибок
+local function log_active_sounds()
+	if not LOG_ENABLE then return end
+    local current_time = time_global()
+    if not current_time or (current_time - (last_log_time or 0)) < SOUND_CONFIG.LOG_INTERVAL then 
+        return 
+    end
+    
+    last_log_time = current_time
+    
+    local active_count = 0
+    local log_msg = "===== Active Radio Sounds =====\n"
+    
+    for npc_id, state in pairs(npc_states or {}) do
+        if state and state.active_sound then
+            local npc = level.object_by_id(npc_id)
+            if npc then
+                local sound_type = state.active_sound.type or "unknown"
+                local sound_obj = state.active_sound.object
+                local npc_name = npc:name() or "unnamed"
+                local pos = npc:position() or vector()
+                local pos_str = string.format("(%.1f, %.1f, %.1f)", pos.x or 0, pos.y or 0, pos.z or 0)
+                local status = (sound_obj and sound_obj:playing()) and "PLAYING" or "STOPPED"
+                local end_time = state.active_sound.end_time or 0
+                local time_left = math.max(end_time - current_time, 0)
+                
+                log_msg = log_msg .. string.format(
+                    "[%d] %-15s | %-12s | %-6s | pos: %s | time left: %.1fs\n",
+                    npc_id,
+                    npc_name,
+                    sound_type,
+                    status,
+                    pos_str,
+                    time_left
+                )
+                
+                active_count = active_count + 1
+            end
+        end
+    end
+    
+    if active_count > 0 then
+        log1(log_msg)
+    else
+        log1("No active radio sounds at this time")
+    end
 end
 
-function radio_otv(npc)
-	local snd_name = radio_otvet[math.random(1,3)]
-	if snd_name then
-		local snd_obj = xr_sound.get_safe_sound_object(snd_name)
-		if snd_obj and not snd_obj:playing() then
-			snd_obj:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
-		end
-	end
+-- Основная функция проверки
+function radio_snd_check(npc)
+    if not npc or not npc.alive or not npc:alive() or (xr_wounded and xr_wounded.is_wounded(npc)) then 
+        return 
+    end
+    
+    local npc_id = npc:id()
+    if not npc_id then return end
+    
+    local current_time = time_global()
+    if not current_time then return end
+    
+    -- Инициализация состояния NPC
+    if not npc_states[npc_id] then
+        npc_states[npc_id] = {
+            last_play_time = 0,
+            last_noise_time = 0,
+            active_sound = nil
+        }
+    end
+    
+    local state = npc_states[npc_id]
+    if not state then return end
+    
+    -- Проверка активного звука
+    if state.active_sound then
+        local sound_obj = state.active_sound.object
+        
+        -- Обновляем позицию звука
+        if sound_obj and sound_obj.playing and sound_obj:playing() then
+            sound_obj:set_position(npc:position())
+            return -- Звук ещё играет, ничего не делаем
+        else
+            -- Звук завершился, очищаем состояние
+            state.active_sound = nil
+        end
+    end
+    
+    -- Проверяем возможность воспроизведения нового звука
+    if current_time - (state.last_play_time or 0) < SOUND_CONFIG.MIN_DELAY then 
+        return 
+    end
+    
+    -- Проверяем фракцию NPC
+    local community = npc:character_community()
+    if not community or not (community == "military" or community == "voenstals" or 
+           community == "dolg" or community == "freedom") then
+        return
+    end
+    
+    -- Проверяем наличие врагов
+    if npc.best_enemy and npc:best_enemy() then return end
+    
+    -- Проверяем случайное срабатывание основного триггера
+    if math.random() > SOUND_CONFIG.MAIN_TRIGGER_CHANCE then return end
+    
+    -- Выбираем тип звука
+    local sound_type, sound_obj
+    
+    if math.random(1, 2) == 1 then
+        -- Полная последовательность: включение -> ответ -> выключение
+        sound_type = "turn_on"
+        sound_obj = sound_objects.turn_on
+        
+        -- Запланируем следующие звуки
+        if sound_obj then
+            local on_length = get_sound_length(sound_obj)
+            
+            level.add_call(
+                function() 
+                    local t = time_global()
+                    return t and t > (current_time + on_length) 
+                end,
+                function()
+                    if npc and npc.alive and npc:alive() then
+                        -- Воспроизводим ответ
+                        local answer_index = math.random(1, #SOUND_CONFIG.RADIO_ANSWERS.paths)
+                        local answer_sound = sound_objects.radio_answers[answer_index]
+                        
+                        if answer_sound then
+                            npc_states[npc_id] = {
+                                last_play_time = time_global(),
+                                last_noise_time = time_global(),
+                                active_sound = {
+                                    type = "answer_"..answer_index,
+                                    object = answer_sound,
+                                    end_time = time_global() + get_sound_length(answer_sound)
+                                }
+                            }
+                            answer_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+                            
+                            -- Запланируем выключение
+                            level.add_call(
+                                function() 
+                                    local t = time_global()
+                                    return t and npc_states[npc_id] and 
+                                           npc_states[npc_id].active_sound and 
+                                           t > npc_states[npc_id].active_sound.end_time 
+                                end,
+                                function()
+                                    if npc and npc.alive and npc:alive() then
+                                        local off_sound = sound_objects.turn_off
+                                        if off_sound then
+                                            npc_states[npc_id] = {
+                                                last_play_time = time_global(),
+                                                last_noise_time = time_global(),
+                                                active_sound = {
+                                                    type = "turn_off",
+                                                    object = off_sound,
+                                                    end_time = time_global() + get_sound_length(off_sound)
+                                                }
+                                            }
+                                            off_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+                                        end
+                                    end
+                                end
+                            )
+                        end
+                    end
+                end
+            )
+        end
+    else
+        -- Шум радио (только с 10% шансом и если прошло достаточно времени)
+        if math.random() <= SOUND_CONFIG.NOISE_CHANCE and 
+           current_time - (state.last_noise_time or 0) >= SOUND_CONFIG.NOISE_MIN_DELAY then
+            sound_type = "noise"
+            sound_obj = sound_objects.noise
+            state.last_noise_time = current_time
+        else
+            return -- Не воспроизводим шум на этом проходе
+        end
+    end
+    
+    -- Воспроизводим выбранный звук
+    if sound_obj then
+        state.active_sound = {
+            type = sound_type,
+            object = sound_obj,
+            end_time = current_time + get_sound_length(sound_obj)
+        }
+        state.last_play_time = current_time
+        sound_obj:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+    end
+    
+    -- Логгирование
+    log_active_sounds()
 end
-
-function radio_noise(npc)
-	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\escape\radio\radio_noise_1]])
-	snd_obj:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
-end
-
-
-function military_idle_peregovor(obj)
-
-	this.radio_turn_on(obj)
-
-	local wait_time = 0
-  	wait_time = time_global() + 1200
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() this.radio_otv(obj) end
-  	)
-
-	local wait_time = 0
-  	wait_time = time_global() + 11200
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() this.radio_turn_off(obj) end
-  	)
-
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

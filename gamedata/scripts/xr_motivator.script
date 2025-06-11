@@ -417,53 +417,54 @@ function motivator_binder:use_callback(obj, who)
 end
 
 function motivator_binder:update(delta)
-
-   if amk.oau_watchdog ~=0 then
-	olr.is_crush = true
-	log1("Watchdog "..amk.oau_watchdog..".Reason "..amk.oau_reason)
-	abort("Watchdog "..amk.oau_watchdog..".Reason "..amk.oau_reason)
-   end
+    if amk.oau_watchdog ~= 0 then
+        olr.is_crush = true
+        log1("Watchdog " .. amk.oau_watchdog .. ".Reason " .. amk.oau_reason)
+        abort("Watchdog " .. amk.oau_watchdog .. ".Reason " .. amk.oau_reason)
+    end
 
     object_binder.update(self, delta)
 
     -- первый апдейт старт
     if self.first_update == false then
         if self.object:alive() == false then
+            -- фикс физики умерших в оффлайне
+            if xvars and xvars.dead_in_offline[self.object:name()] == true then
+                local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
+                if shelbone then
+                    shelbone:apply_force(0, 0.1, 0)
+                    local wait_time = 0
+                    wait_time = time_global() + 1200
+                    level.add_call(
+                        function()
+                            return time_global() > wait_time
+                        end,
+                        function()
+                            shelbone:apply_force(0, 0.2, 0)
+                        end
+                    )
+                --log1("fix dead stalker body offline dead - "..self.object:name().."")
+                end
+                local impulse = device().cam_dir:mul(self.object:mass() * 2)
+                local ps = self.object:get_physics_shell()
+                if ps then
+                    ps:apply_force(impulse.x, impulse.y, impulse.z)
+                    self.object:set_const_force(vector():set(0, 1, 0), self.object:mass() * 2, 100)
+                end
+            end
 
-		-- фикс физики умерших в оффлайне
-		if xvars and xvars.dead_in_offline[self.object:name()] == true then
-			local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
-			if shelbone then
-				shelbone:apply_force(0,0.1,0)
-				local wait_time = 0
-  				wait_time = time_global() + 1200
-  				level.add_call(
-    				function() return time_global() > wait_time end,
-    				function() shelbone:apply_force(0,0.2,0) end
-  				)
-				--log1("fix dead stalker body offline dead - "..self.object:name().."")
-			end
-			local impulse = device().cam_dir:mul(self.object:mass()*2)
-			local ps = self.object:get_physics_shell()
-			if ps then
-				ps:apply_force(impulse.x, impulse.y, impulse.z)
-				self.object:set_const_force(vector():set(0,1,0), self.object:mass()*2,  100)
-			end
-		end
+            death_manager.drop_manager(self.object):create_release_item()
 
-		death_manager.drop_manager(self.object):create_release_item()
+            -- уборщик пустых и обысканных трупов
+            olr_corpses.del_corpse(self.object)
+        end
 
-		-- уборщик пустых и обысканных трупов
-		olr_corpses.del_corpse(self.object)
-		
-        end  
+        olr_npc_first_upd.on_update(self.object)
 
-		olr_npc_first_upd.on_update(self.object)
- 
-		--self.object:kill(self.object)
-		--olr.to_offline(tostring(self.object:name()))
-		--log1(self.object:name())
-     
+        --self.object:kill(self.object)
+        --olr.to_offline(tostring(self.object:name()))
+        --log1(self.object:name())
+
         self.first_update = true
     end
     -- первый апдейт end
@@ -471,201 +472,216 @@ function motivator_binder:update(delta)
     ogse_anomaly_evader.update_norm(self.object)
 
     if time_global() - self.last_update > 1500 then
-
-	--if db.actor and db.actor:has_info("olr_blowout_phase_2") then
-	--	if olr_protected.is_no_offline_alife_obj(self.object:name()) then return end
-	--	if self.object:is_obj_outdoors() == false then return end
-	--	if not self.object:alive() then return end
-		--local h = hit ()
-		--h.power = 0.04
-		--h.direction = vector():set (0, 1, 0)
-		--h.impulse = 0.2
-		--h.draftsman = self.object
-		--h.type = hit.strike
-		--self.object:hit(h)
-		--news_manager.send_tip(db.actor, "npc blowout hit - ["..self.object:name().."] ", nil, "freedom", 9000)
-	--end
-
+        --if db.actor and db.actor:has_info("olr_blowout_phase_2") then
+        --	if olr_protected.is_no_offline_alife_obj(self.object:name()) then return end
+        --	if self.object:is_obj_outdoors() == false then return end
+        --	if not self.object:alive() then return end
+        --local h = hit ()
+        --h.power = 0.04
+        --h.direction = vector():set (0, 1, 0)
+        --h.impulse = 0.2
+        --h.draftsman = self.object
+        --h.type = hit.strike
+        --self.object:hit(h)
+        --news_manager.send_tip(db.actor, "npc blowout hit - ["..self.object:name().."] ", nil, "freedom", 9000)
+        --end
 
         sr_light.check_light(self.object)
 
-	if not xr_wounded.is_wounded(self.object) and level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 1 then
-		level.map_remove_object_spot(self.object:id(), "tutorial_wounded_location")
-	end
-
-	if not self.object:alive() then
-		if level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 1 then
-			level.map_remove_object_spot(self.object:id(), "tutorial_wounded_location")
-		end
-		if level.map_has_object_spot(self.object:id(), "find_item_location") == 1 then
-			level.map_remove_object_spot(self.object:id(), "find_item_location")
-		end
-	end
-
-	ogse_night.npc_update(self.object,self.st)
-	ogse_mental_fix.check_mental(self.object)
-
-	olr_npc_eqp.upd(self.object)
-
-	if not self.object:alive() then
-		if level.main_input_receiver() and xvars.npc_actor_use[self.object:name()] == true and self.object:position():distance_to(db.actor:position()) >= 20 then
-			if self.object:ruck_count() > 40 then
-				self.object:iterate_inventory( function(_, item)
-				if item then
-					self.object:drop_item(item)
-				end
-				end )
-			end
-		end
-	end
-
-        if self.object:character_community() == "trader" then
-        	if has_alife_info("olr_traders_night") then
-       			self.object:disable_trade()
-        	elseif has_alife_info("olr_traders_day") then
-        		self.object:enable_trade()
-        	end
+        if
+            not xr_wounded.is_wounded(self.object) and
+                level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 1
+         then
+            level.map_remove_object_spot(self.object:id(), "tutorial_wounded_location")
         end
 
+        if not self.object:alive() then
+            if level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 1 then
+                level.map_remove_object_spot(self.object:id(), "tutorial_wounded_location")
+            end
+            if level.map_has_object_spot(self.object:id(), "find_item_location") == 1 then
+                level.map_remove_object_spot(self.object:id(), "find_item_location")
+            end
+        end
 
-	-- патроны с пояса
-	local best_enemy = self.object:best_enemy()
-	if self.object:alive() and best_enemy and not self.object:active_item() then
-		if xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
-			return
-		end
-		if xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
-			return
-		end
-		local selfob = self.object
-		selfob:iterate_inventory(
-		function(selfob, obj)
-			if obj and obj:is_weapon() then
-				if self.ammo_create == false then
-					local wname = utils.cfg_get_string(system_ini(), obj:section(), "ammo_class", item, false, "", "")
-					local sectamm = amk.str_explode(",",wname)
-					local sectammo = sectamm[1]
-					local strammo = game.translate_string(sectammo)
-					se_respawn.create_ammo(strammo, self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id(), 10)
-					--log1("create ammo - "..strammo.." for "..selfob:name().." ")
-					--news_manager.send_tip(db.actor, "npc create panic ammo - ["..self.object:name().."] ", nil, "freedom", 9000)
-					if device().precache_frame < 1 and self.object:character_community() ~= "zombied" then
-						local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\shortage_ammo]])
-						if snd_obj and not snd_obj:playing() then
-							snd_obj:play_no_feedback(selfob, sound_object.s3d, 0, selfob:position(), 1.0)
-						end
-					end
-					self.ammo_create = true
-				end
-			end
-		end
-		, selfob)	
-	end
-	
+        ogse_night.npc_update(self.object, self.st)
+        ogse_mental_fix.check_mental(self.object)
 
-	if time_global() - self.last_update_slow > 3500 then
+        olr_npc_eqp.upd(self.object)
 
-		--лечение
-		if self.object:alive() and not best_enemy and self.object.health <= 0.6 then
-		--news_manager.send_tip(db.actor, "ранены пытаемся лечится - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
+        if not self.object:alive() then
+            if
+                level.main_input_receiver() and xvars.npc_actor_use[self.object:name()] == true and
+                    self.object:position():distance_to(db.actor:position()) >= 20
+             then
+                if self.object:ruck_count() > 40 then
+                    self.object:iterate_inventory(
+                        function(_, item)
+                            if item then
+                                self.object:drop_item(item)
+                            end
+                        end
+                    )
+                end
+            end
+        end
 
-		if not xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
+        if self.object:character_community() == "trader" then
+            if has_alife_info("olr_traders_night") then
+                self.object:disable_trade()
+            elseif has_alife_info("olr_traders_day") then
+                self.object:enable_trade()
+            end
+        end
 
-			--news_manager.send_tip(db.actor, "лечится ПОПЫТКА 1 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
+        -- патроны с пояса
+        local best_enemy = self.object:best_enemy()
+        if self.object:alive() and best_enemy and not self.object:active_item() then
+            if xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
+                return
+            end
+            if xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
+                return
+            end
+            local selfob = self.object
+            selfob:iterate_inventory(
+                function(selfob, obj)
+                    if obj and obj:is_weapon() then
+                        if self.ammo_create == false then
+                            local wname =
+                                utils.cfg_get_string(system_ini(), obj:section(), "ammo_class", item, false, "", "")
+                            local sectamm = amk.str_explode(",", wname)
+                            local sectammo = sectamm[1]
+                            local strammo = game.translate_string(sectammo)
+                            se_respawn.create_ammo(
+                                strammo,
+                                self.object:position(),
+                                self.object:level_vertex_id(),
+                                self.object:game_vertex_id(),
+                                self.object:id(),
+                                10
+                            )
+                            --log1("create ammo - "..strammo.." for "..selfob:name().." ")
+                            --news_manager.send_tip(db.actor, "npc create panic ammo - ["..self.object:name().."] ", nil, "freedom", 9000)
+                            if device().precache_frame < 1 and self.object:character_community() ~= "zombied" then
+                                local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\shortage_ammo]])
+                                if snd_obj and not snd_obj:playing() then
+                                    snd_obj:play_no_feedback(selfob, sound_object.s3d, 0, selfob:position(), 1.0)
+                                end
+                            end
+                            self.ammo_create = true
+                        end
+                    end
+                end,
+                selfob
+            )
+        end
 
-		if not xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
+        if time_global() - self.last_update_slow > 3500 then
+            --лечение
+            if self.object:alive() and not best_enemy and self.object.health <= 0.6 then
+                --news_manager.send_tip(db.actor, "ранены пытаемся лечится - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
 
-			--news_manager.send_tip(db.actor, "лечится ПОПЫТКА 2 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
+                if not xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
+                    --news_manager.send_tip(db.actor, "лечится ПОПЫТКА 1 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
 
-		if self.object:relation(db.actor) == game_object.neutral or self.object:relation(db.actor) == game_object.friend then
+                    if not xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
+                        --news_manager.send_tip(db.actor, "лечится ПОПЫТКА 2 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
 
-			--news_manager.send_tip(db.actor, "лечится ПОПЫТКА 3 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
+                        if
+                            self.object:relation(db.actor) == game_object.neutral or
+                                self.object:relation(db.actor) == game_object.friend
+                         then
+                            --news_manager.send_tip(db.actor, "лечится ПОПЫТКА 3 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
 
-		local npc = self.object
-		local yad = npc:object("yad")
-		if not yad then
-			alife():create("yad", self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id())
-			--news_manager.send_tip(db.actor, "create YAD - ["..self.object:name().."]  ", nil, "freedom", 9000)	
-		end
-		if self.object:object("medkit") ~= nil then
-			if yad then
-				yad:enable_attachable_item(true)
-				log1("enable yad")
-				local wait_time = 0
-  				wait_time = time_global() + 5000
-  				level.add_call(
-    				function() return time_global() > wait_time end,
-    				function() yad:enable_attachable_item(false) end
-  				)
-			end
-			olr.npc_healing_sms(self.object:character_name())
-			self.object:eat(self.object:object("medkit"))
-			self.object.health = 1
-			--level.map_add_object_spot(self.object:id(), "green_location", "вылечился съел аптечку")
-			--news_manager.send_tip(db.actor, "ранены ВЫЛЕЧИЛИСЬ medkit - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
-		else
-			--news_manager.send_tip(db.actor, "NO MEDKIT (аптечку братцы, я без аптечки + флаг) !!! - ["..self.object:name().."]  ", nil, "freedom", 9000)
-		end
-		end
-		end
-		end
-		end
+                            local npc = self.object
+                            local yad = npc:object("yad")
+                            if not yad then
+                                alife():create(
+                                    "yad",
+                                    self.object:position(),
+                                    self.object:level_vertex_id(),
+                                    self.object:game_vertex_id(),
+                                    self.object:id()
+                                )
+                            --news_manager.send_tip(db.actor, "create YAD - ["..self.object:name().."]  ", nil, "freedom", 9000)
+                            end
+                            if self.object:object("medkit") ~= nil then
+                                --level.map_add_object_spot(self.object:id(), "green_location", "вылечился съел аптечку")
+                                --news_manager.send_tip(db.actor, "ранены ВЫЛЕЧИЛИСЬ medkit - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
+                                if yad then
+                                    yad:enable_attachable_item(true)
+                                    log1("enable yad")
+                                    local wait_time = 0
+                                    wait_time = time_global() + 5000
+                                    level.add_call(
+                                        function()
+                                            return time_global() > wait_time
+                                        end,
+                                        function()
+                                            yad:enable_attachable_item(false)
+                                        end
+                                    )
+                                end
+                                olr.npc_healing_sms(self.object:character_name())
+                                self.object:eat(self.object:object("medkit"))
+                                self.object.health = 1
+                            else
+                                --news_manager.send_tip(db.actor, "NO MEDKIT (аптечку братцы, я без аптечки + флаг) !!! - ["..self.object:name().."]  ", nil, "freedom", 9000)
+                            end
+                        end
+                    end
+                end
+            end
 
-		olr_military_snd.radio_snd_check(self.object)
+            self.last_update_slow = time_global()
+        end
 
-        	self.last_update_slow = time_global()
+        --news_manager.send_tip(db.actor, " ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
 
-	end
-	
-	--news_manager.send_tip(db.actor, " ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
-
-       self.last_update = time_global()
-
+        self.last_update = time_global()
     end
 
+    --' Апдейт менеджера состояний тела
+    if self.st.state_mgr then
+        if self.object:alive() then
+            self.st.state_mgr:update()
+            -- Апдейт торговли
+            if self.st.state_mgr.combat == false and self.st.state_mgr.alife == false then
+                trade_manager.update(self.object)
+            end
+        else
+            self.st.state_mgr = nil
+        end
+    end
 
-	--' Апдейт менеджера состояний тела
-	if self.st.state_mgr then
-		if self.object:alive() then
-			self.st.state_mgr:update()
-			-- Апдейт торговли
-			if self.st.state_mgr.combat == false and
-			   self.st.state_mgr.alife == false
-			then
-				trade_manager.update(self.object)
-			end			
-		else
-			self.st.state_mgr = nil
-		end
-	end
-	
-	if self.object:alive() then
-		xr_sound.update(self.object)
-	end
-	if self.object:alive() then
-		if self.object:is_talk_enabled() then
-			self.object:set_tip_text("character_use")
-		else
-			self.object:set_tip_text("")
-		end
-	else
-		self.object:set_tip_text_default()
-	end
+    if self.object:alive() then
+        xr_sound.update(self.object)
+		olr_military_snd.radio_snd_check(self.object)
+    end
+    if self.object:alive() then
+        if self.object:is_talk_enabled() then
+            self.object:set_tip_text("character_use")
+        else
+            self.object:set_tip_text("")
+        end
+    else
+        self.object:set_tip_text_default()
+    end
 
-	self.object:info_clear()
+    self.object:info_clear()
 
-	local best_enemy = self.object:best_enemy()
-	if best_enemy then
-		self.object:info_add('enemy -- ' .. best_enemy:name())
-	end
-	local active_section = db.storage[self.object:id()].active_section
-	if active_section then
-		self.object:info_add('section -- ' .. active_section)
-	end
-	self.object:info_add('name -- ' .. self.object:name())
+    local best_enemy = self.object:best_enemy()
+    if best_enemy then
+        self.object:info_add("enemy -- " .. best_enemy:name())
+    end
+    local active_section = db.storage[self.object:id()].active_section
+    if active_section then
+        self.object:info_add("section -- " .. active_section)
+    end
+    self.object:info_add("name -- " .. self.object:name())
 
-	core.tc("stalker_update", self, delta)
-
+    core.tc("stalker_update", self, delta)
 end
 
 function motivator_binder:reload(section)

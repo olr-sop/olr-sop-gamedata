@@ -1,0 +1,90 @@
+[logic]
+active = walker
+on_death = death
+
+[death]
+on_info = %+freedom_podriv_now_gou_now_spawen_timer_boom%
+
+[walker]
+path_walk = freedom_podriv_walk
+path_look = freedom_podriv_look
+def_state_standing = search
+danger = danger_condition@scout
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+meet = no_meet
+on_info = {+freedom_podriv_now_gou_now} walker2
+
+[walker2]
+path_walk = freedom_podriv_long
+danger = danger_condition@scout
+meet = no_meet
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+on_signal = prisehgpodriv | remark2
+
+[remark2]
+anim = search
+no_move = true
+no_rotate = true
+meet = no_meet
+danger = danger_condition@scout
+on_signal = action_end | %+freedom_podriv_now_gou_now_spawen% remark3
+
+[remark3]
+anim = dynamite
+no_move = true
+no_rotate = true
+meet = no_meet
+target = 5481
+danger = danger_condition@scout
+on_signal = action_end | %+freedom_podriv_now_gou_now_spawen_timer% walker@walk3
+
+[walker@walk3]
+path_walk = freedom_podriv2_walk
+path_look = freedom_podriv2_look
+def_state_moving1 = sprint
+def_state_moving2 = sprint
+def_state_moving3 = sprint
+def_state_standing = search
+danger = danger_condition@scout
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+meet = no_meet
+on_info = {+freedom_podriv_now_gou_now_spawen_timer_boom} walker5
+
+[walker5]
+path_walk = freedom_podriv2_long
+danger = danger_condition@scout
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+meet = no_meet
+on_signal = prisehgpodrivsdf | remark6
+
+[remark6]
+anim = search
+no_move = true
+no_rotate = true
+meet = no_meet
+danger = danger_condition@scout
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+on_signal = action_end | %+freedom_podriv_now_gou_now_go_base% walker7
+
+[walker7]
+path_walk = freedom_podriv3_long_walk
+path_look = freedom_podriv3_long_look
+def_state_standing = sit_ass
+danger = danger_condition@scout
+meet = no_meet
+
+
+[danger_condition@scout]
+ignore_distance       = 1
+ignore_distance_grenade = 1
+ignore_distance_corpse  = 0
+ignore_distance_danger_hit     = 2
+ignore_distance_sound   = 0 

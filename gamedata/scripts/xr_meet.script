@@ -8,49 +8,53 @@
 --Evaluators
 ----------------------------------------------------------------------------------------------------------------------
 --' Возвращает есть ли у нас контакт с другим сталкером
-class "evaluator_contact" (property_evaluator)
-function evaluator_contact:__init(name, storage) super (nil, name)
-  self.a = storage
+class "evaluator_contact"(property_evaluator)
+function evaluator_contact:__init(name, storage) super(nil, name)
+    self.a = storage
 end
 function evaluator_contact:evaluate()
-  if self.a.meet_set ~= true then return false end
-  
-  if db.actor then
-    if not db.actor:alive() then
-      return false
-    end
-  
-    if xr_wounded.is_wounded(self.object) then
-      self.begtime=nil
-      return false
+    if self.a.meet_set ~= true then
+        return false
     end
 
-    self.a.meet_manager:update()
+    if db.actor then
+        if not db.actor:alive() then
+            return false
+        end
 
-    if self.mgr == nil then
-      self.mgr = self.object:motivation_action_manager()
-    end
-    if self.mgr:evaluator(stalker_ids.property_enemy):evaluate() then
-      self.begtime=nil
-      return false
-    end
-    -- Чтобы не стояли и не пялились часами
-    local tken=(self.a.meet_manager.state~="nil")
-    local istk=self.object:is_talking()
-    if self.begtime==nil and tken then
-      self.begtime=time_global()
-    elseif not tken then
-      self.begtime=nil
-    elseif self.begtime+10000<time_global() and (not istk) then
-    -- 10 секунд посмотрели на меченного и хватит
-      return false
-    end
+        if xr_wounded.is_wounded(self.object) then
+            self.begtime = nil
+            return false
+        end
 
-    return self.a.meet_manager.state~="nil"
-  else
-    return false
-  end
+        self.a.meet_manager:update()
+
+        if self.mgr == nil then
+            self.mgr = self.object:motivation_action_manager()
+        end
+        if self.mgr:evaluator(stalker_ids.property_enemy):evaluate() then
+            self.object:disable_talk()
+            self.begtime = nil
+            return false
+        end
+        -- Чтобы не стояли и не пялились часами
+        local tken = (self.a.meet_manager.state ~= "nil")
+        local istk = self.object:is_talking()
+        if self.begtime == nil and tken then
+            self.begtime = time_global()
+        elseif not tken then
+            self.begtime = nil
+        elseif self.begtime + 10000 < time_global() and (not istk) then
+            -- 10 секунд посмотрели на меченного и хватит
+            return false
+        end
+
+        return self.a.meet_manager.state ~= "nil"
+    else
+        return false
+    end
 end
+
 
 ----------------------------------------------------------------------------------------------------------------------
 --Actions

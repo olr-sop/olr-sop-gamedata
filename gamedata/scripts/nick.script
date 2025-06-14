@@ -26,11 +26,7 @@ function holmi_uch_spas_fail()
 end
 
 function has_radweaknow()
-	if xvars.count_rad_weak > 0.0020 then
-		return true
-	else
-		return false
-	end
+	return false
 end
 
 function esc_polter_dead_st()
@@ -5551,7 +5547,6 @@ end
 
 
 function dolgmed_about_radwealech_otdaem()
-	xvars.count_rad_weak = 0
 	db.actor:give_money(-500)
 	game_stats.money_quest_update(-500)
 	level.add_pp_effector("black.ppe", 20131, false)
@@ -5655,36 +5650,12 @@ end
 --------------------------------------------------------------------------------------------------------------
 
 function bolezn_ratcrazy_timer()
-        if db.actor:has_info("bolezn_ratcrazy_info") then
-        	soundtrack.achit1()
-		db.actor.health = -0.22
-        	db.actor.power = -0.12
-        	olr_timers.st_timer("bolezn_ratcrazy_timer_m", 2500, "nick.bolezn_ratcrazy_timer_m()")
-		db.actor:give_info_portion("bolezn_ratcrazy_info_m")
-		local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
-		if not snd_obj:playing() then 
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-		end
-	end
 end
 
 function bolezn_ratcrazy_timer_m()
-        if db.actor:has_info("bolezn_ratcrazy_info") then
-        soundtrack.achit1()
-        news_manager.send_tip(db.actor, game.translate_string("bolezn_ratcrazy_timer_m_0"))
-	db.actor.health = -0.2
-        db.actor.power = -0.22
-        olr_timers.st_timer("bolezn_ratcrazy_timer_d", 7000, "nick.bolezn_ratcrazy_timer_d()")
-    end
 end
 
 function bolezn_ratcrazy_timer_d()
-        if db.actor:has_info("bolezn_ratcrazy_info") then
-        soundtrack.achit1()
-        news_manager.send_tip(db.actor, game.translate_string("bolezn_ratcrazy_timer_d_0"))
-	db.actor.health = -1
-        db.actor.power = -1
-    end
 end
 
 function mani_min_pisot()
@@ -5699,10 +5670,6 @@ function clear_ratcrazy_bolezn()
 	game_stats.money_quest_update(-500)
 	level.add_pp_effector("black.ppe", 20131, false)
 	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
-	if not snd_obj:playing() then 
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	end
 	db.actor:disable_info_portion("bolezn_ratcrazy_info")
 	db.actor:disable_info_portion("bolezn_ratcrazy_info_m")
 	if olr_timers.has_timer("bolezn_ratcrazy_timer") then

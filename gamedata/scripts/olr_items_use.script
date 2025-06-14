@@ -113,13 +113,6 @@ function use(obj)
     if section == "antirad" then
         db.actor:give_info_portion("actor_healing_antirad")
         olr_timers.st_timer("eat_radiation_tmr_timer", 20, "nick.eat_radiation_tmr_timer()")
-        if xvars.count_rad_weak > 0 then
-            xvars.count_rad_weak = xvars.count_rad_weak - 0.0015
-            if xvars.count_rad_weak < 0 then
-                xvars.count_rad_weak = 0
-            end
-            --news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-        end
     end
 
     if section == "vodka" then
@@ -160,13 +153,6 @@ function use(obj)
         if has_alife_info("eat_medkit_tmr") then
             db.actor:change_actor_sleep(-1)
         end
-        if xvars.count_rad_weak > 0 then
-            xvars.count_rad_weak = xvars.count_rad_weak - 0.001
-            if xvars.count_rad_weak < 0 then
-                xvars.count_rad_weak = 0
-            end
-            --news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-        end
     end
 
     if section == "medkit" then
@@ -186,31 +172,11 @@ function use(obj)
         db.actor.power = 0.05
         --log1("eat sigaret")
         nick.sigaret_smoke()
-        if xvars.count_rad_weak > 0 then
-            xvars.count_rad_weak = xvars.count_rad_weak - 0.0001
-            if xvars.count_rad_weak < 0 then
-                xvars.count_rad_weak = 0
-            end
-            --news_manager.send_tip(db.actor, "сняли радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-        end
     end
 
     if section == "crow_food" then
         --log1("eat crow_food")
-        xvars.count_rad_weak = xvars.count_rad_weak + 0.0015
         db.actor.radiation = 0.02315
-    end
-
-    if section == "rat_food" then
-        local par_var = math.random(1,5)
-        if par_var == 1 then
-            if not has_alife_info("bolezn_ratcrazy_info") then
-                olr_timers.st_timer("bolezn_ratcrazy_timer", 2150, "nick.bolezn_ratcrazy_timer()")
-                db.actor:give_info_portion("bolezn_ratcrazy_info")
-                --news_manager.send_tip(db.actor, game.translate_string("use_hud_item_5"))
-            end
-            --log1("eat rat_food")
-        end
     end
 	
     if section == "conserva" then
@@ -241,8 +207,6 @@ function use(obj)
     local cond = obj:condition()
     if section == "bread" or section == "kolbasa" or section == "conserva" or section == "rat_food" or section == "crow_food" then
         if xvars.foods[obj:name()] == true then
-            --news_manager.send_tip(db.actor, "сожрали облучённую еду - накопили радиации в организме "..xvars.count_rad_weak.."", nil, "default", 39000)
-            xvars.count_rad_weak = xvars.count_rad_weak + 0.00086
             xvars.foods[obj:name()] = nil
             --log1("del food variable")
         end
@@ -291,7 +255,6 @@ function use(obj)
     end
 
     if section == "antirad_medpribor" then
-        xvars.count_rad_weak = 0
         db.actor:give_info_portion("anti_glob_rad")
         olr_timers.st_timer("anti_glob_rad_timer", 250, "nick.anti_glob_rad_timer()")
         olr_timers.st_timer("anti_glob_rad_timer", 265, "nick.anti_glob_rad_timer()")
@@ -349,14 +312,12 @@ function injector_info:InitControls()
     self.Static9 = xml:InitStatic("frame3:frame4:Static9", self.frame4)
     self.Static10 = xml:InitStatic("frame3:frame4:Static10", self.frame4)
     self.Static11 = xml:InitStatic("frame3:frame4:Static11", self.frame4)
-    self.Static12 = xml:InitStatic("frame3:frame4:Static12", self.frame4)
     self.Static15 = xml:InitStatic("frame3:frame4:Static15", self.frame4)
     self.Static17 = xml:InitStatic("frame3:frame4:Static17", self.frame4)
 
     self.temperatura = xvars.temperatura_actor
     self.paras = get_paras()
     self.beshenstv = get_besh()
-    self.luchevaya = xvars.count_rad_weak
     self.ratbezum = get_ratbezum()
     self.sibyazva = get_sibyazva()
     self.zombied = get_zombied()
@@ -364,7 +325,6 @@ function injector_info:InitControls()
     self.Static11:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_temp"), self.temperatura))
     self.Static7:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_parasite"), self.paras))
     self.Static9:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_rabies"), self.beshenstv))
-    self.Static12:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_radpoison"), self.luchevaya))
     self.Static10:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_rat_rabies"), self.ratbezum))
     self.Static15:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_anthrax"), self.sibyazva))
     self.Static17:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_zombification"), self.sibyazva))

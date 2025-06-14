@@ -117,11 +117,21 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.on_eat_hud_object, nil)
     self.object:set_callback(callback.on_trade_btn_click, nil)
     self.object:set_callback(callback.on_actor_landed, nil)
-    self.object:set_callback(callback.on_obj_look, nil)
     self.object:set_callback(callback.on_key_press, nil)
     self.object:set_callback(callback.on_mouse_press, nil)
     self.object:set_callback(callback.on_level_map_click, nil)
+	
+	--theysani added
+--	self.object:set_callback(callback.on_cell_item_mouse, nil)
+--	self.object:set_callback(callback.on_cell_item_focus, nil)
+--	self.object:set_callback(callback.on_cell_item_focus_lost, nil)
+--	self.object:set_callback(callback.on_group_items, nil)
+	
+	self.object:set_callback(callback.on_drop_item_on_item, nil)
 
+	self.object:set_callback(callback.on_obj_look, nil)	
+	self.object:set_callback(callback.on_obj_not_look, nil) 
+	
     ---self.object:set_callback(callback.on_actor_death, nil)
 
     if sr_psy_antenna.psy_antenna then
@@ -172,16 +182,47 @@ function actor_binder:reinit()
     self.object:set_callback(callback.on_trade_btn_click, self.OnTrdBtnClick, self)
     self.object:set_callback(callback.on_actor_landed, self.actor_landed, self)
     self.object:set_callback(callback.on_actor_weapon_fire, self.on_actor_shoot, self)
-	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
     self.object:set_callback(callback.on_key_press, self.OnKey, self)
     self.object:set_callback(callback.on_mouse_press, self.mouse_press, self)
 	self.object:set_callback(callback.on_level_map_click, self.on_map_click, self)
+	
+	--theysani added
+--	self.object:set_callback(callback.on_cell_item_mouse, self.on_cell_item_mouse, self)
+--	self.object:set_callback(callback.on_cell_item_focus, self.on_cell_item_focus, self)
+--	self.object:set_callback(callback.on_cell_item_focus_lost, self.on_cell_item_focus_lost, self)
+--	self.object:set_callback(callback.on_group_items, self.on_group_items, self)
+	
+	self.object:set_callback(callback.on_drop_item_on_item, self.on_drop_item_on_item, self)
+	
+	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
+	self.object:set_callback(callback.on_obj_not_look, self.on_not_look, self) 
 	
     --self.object:set_callback(callback.on_actor_death, self.OnActorDeath, self)
 
     olr_pda.reinit(self.object)
     bind_car.reinit(self.object)
 end
+
+function actor_binder:on_cell_item_mouse(item,x,y,action)
+	--log1("on_cell_item_mouse: item = "..item:name()..", action = "..tostring(action).."")
+end
+
+function actor_binder:on_cell_item_focus(item)
+	--log1("on_cell_item_focus: item = "..item:name().."")
+end
+
+function actor_binder:on_cell_item_focus_lost(item)
+	--log1("on_cell_item_focus_lost: item = "..item:name().."")
+end
+
+function actor_binder:on_group_items(item1, item2)
+	--log1("on_group_items: item1 = "..item1:name()..", item 2 = "..item2:name().."")
+end
+
+function actor_binder:on_drop_item_on_item(item1, item2)
+	--log1("on_drop_item_on_item: item1 = "..item1:name()..", item 2 = "..item2:name().."")
+end
+
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:take_item_from_box(box, item)
 	local story_id = box:story_id()
@@ -203,20 +244,24 @@ end
 -- hi_flyer 21/04/17
 local prev_id = -1
 function actor_binder:on_look(obj)
-	olr_on_look.look_item(obj)
-	if obj then
-		if obj:id() ~= prev_id then
-			prev_id = obj:id()
-			loked_obj = obj
-			loked_obj_name = obj:name() -- for debug
-			olr_on_look.look_change(obj)
-			if olr.olrdbg == true then
-				log1(" DBG callback look "..obj:name().."")
-			end
-			--news_manager.send_tip(db.actor, "callback актор смотрит на новый объект "..obj:name().."", nil, "freedom", 9000)	
-		else
-			loked_obj = nil
-		end
+    if obj then
+		olr_on_look.look_item(obj)
+        if obj:id() ~= prev_id then
+            prev_id = obj:id()
+            loked_obj = obj
+            --log1("loked_obj is "..loked_obj:name().."")
+            loked_obj_name = obj:name() -- for debug
+            olr_on_look.look_change(obj)
+        end
+    end
+end
+
+function actor_binder:on_not_look()
+	if loked_obj ~= nil then 
+		prev_id = -1
+		loked_obj = nil
+		loked_obj_name = nil
+		--log1("loked_obj is nil")
 	end
 end
 

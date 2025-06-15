@@ -28,9 +28,9 @@ WRITE_PRINTF_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл исполь
 FATAL_ABORT = false -- при abort игра закрывается принудительно
 
 -- Данные переменные работают только если SIMPLE_LUA_DEBUG равен true, либо тут либо через ключ -simple_script_lua_debug
-LOGGING_ONLY_SCRIPTNAME_ENABLE = false -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
-LOGGING_ONLY_SCRIPTNAME = "xr_*, game_stats" -- список скриптов через запятую
-LOGGING_ONLY_SCRIPTNAME_EXCLUSION = "xr_logic, xr_spawner" -- исключения через запятую (игнорируются всегда)
+LOGGING_ONLY_SCRIPTNAME_ENABLE = true -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
+LOGGING_ONLY_SCRIPTNAME = "" -- список скриптов через запятую
+LOGGING_ONLY_SCRIPTNAME_EXCLUSION = "" -- исключения через запятую (игнорируются всегда)
 
 function lua_traceback(caption, depth)
  return ( debug.traceback(caption, depth or 2 + 1) or 'nil' )
@@ -44,7 +44,7 @@ function get_script_name(depth)
             return sub
         end
     end
-    return "????"
+    return "???? or _G"
 end
 
 if string.find(command_line(), "-simple_script_lua_debug") then
@@ -122,57 +122,31 @@ function printf(msg,...)
 	end
 end
 
-local debug_file
-local last_ouput
-
--- Функция для переименования старого файла, если он существует и не пуст
-local function rename_old_log()
-    local log_file = "olr_current_script_log.txt"
-    local f = io.open(log_file, "r")
-    if f then
-        local content = f:read("*a")
-        f:close()
-        if #content > 0 then
-            local timestamp = os.date("%H-%M-%S_%d-%m-%Y")
-            local new_name = "olr_old_script_log_" .. timestamp .. ".txt"
-            os.rename(log_file, new_name)
-        end
-    end
-end
+local need_paste_timedate = true
 
 function debug_write(output, trace)
+
     if (trace and debug and type(debug.traceback) == 'function') then
         output = output .. debug.traceback('\n', 2)
     end
 
-    if (last_ouput == output) then
-        return
-    end
-    last_ouput = output
-
-    if not debug_file then
-        -- Переименовываем старый файл при первом вызове
-        rename_old_log()
-        
-        -- Открываем новый файл для записи
-        debug_file = io.open("olr_current_script_log.txt", "w+")
-        
-        -- Записываем разделитель и дату/время
+    -- Всегда открываем файл в режиме добавления
+    local file = io.open("olr_script_log.txt", "a+")
+    
+    if need_paste_timedate then
         local timestamp = os.date("%H:%M:%S %d.%m.%Y", os.time())
         local separator = string.rep("-", 40)
-        debug_file:write(separator .. "\n")
-        debug_file:write("-- Начало логгирования " .. timestamp .. " --\n")
-        debug_file:write(separator .. "\n\n")
-        
-        -- Записываем первый вывод
-        debug_file:write(output .. "\n")
-        debug_file:close()
-        
-        -- Открываем файл в режиме добавления для последующих записей
-        debug_file = io.open("olr_current_script_log.txt", "a+")
-    else
-        debug_file:write(output .. "\n")
+		file:write("\n")
+        file:write(separator .. "\n")
+		file:write("-- Особо внимания не обращайте если эта хуйня будет слишком часто, после каждой перезагрузки и т.д --\n")
+        file:write("-- Реальное время создания : " .. timestamp .. " --\n")
+        file:write(separator .. "\n")
+		need_paste_timedate = false
     end
+    
+    -- Записываем вывод
+    file:write(output .. "\n")
+    file:close()
 end
 
 -- Крешнуть игру (после вывода сообщения об ошибке в лог)
@@ -1735,7 +1709,7 @@ function point_with_bit_id(patrol_path, bit, old_point)        -- old_point - Ё­
     end
 end
 
---‚®§ўа й Ґв Ё­¤ҐЄб б ¬®© Ў«Ё¦­Ґ© в®зЄЁ ЇгвЁ б § ¤ ­л¬ ЎЁв®¬, ®в вҐЄгйҐ© в®зЄЁ
+--Возвращает индекс самой ближней точки пути с заданым битом, от текущей точки
 function near_point_with_bit(point, patrol_path, bit)
     local new_point = nil
     local index     = nil
@@ -1744,7 +1718,7 @@ function near_point_with_bit(point, patrol_path, bit)
     for i = 0, patrol_path:count()-1 do
         if( patrol_path:flag(i, bit) ) then
             if(new_point == nil or patrol_path:point(i):distance_to(point) < dist) then
-                --…б«Ё нв  в®зЄ  ЇҐаў п Ё§ ­ иҐ¤иЁебп, «ЁЎ® ®в ­ҐҐ Їгвм Ў«Ё¦Ґ, в® § Ї®¬Ё­ Ґ¬ ҐҐ
+                --Если эта точка первая из нашедшихся, либо от нее путь ближе, то запоминаем ее
                 new_point   = patrol_path:point(i)
                 index       = i
                 dist        = new_point:distance_to(point)
@@ -1755,36 +1729,44 @@ function near_point_with_bit(point, patrol_path, bit)
     return index
 end
 
--- ђҐЄгабЁў­ п а бЇҐз вЄ  в Ў«Ёжл
+-- Рекурсивная распечатка таблицы
 function print_table(table, subs)
-  local sub
-  if subs ~= nil then
-    sub = subs
-  else
-    sub = ""
-  end
-  for k,v in pairs(table) do
-    if type(v) == "table" then
-      printf(sub.."%s:", tostring(k))
-      print_table(v, sub.."    ")
-    elseif type(v) == "function" then
-      printf(sub.."%s:function", tostring(k))
-    elseif type(v) == "userdata" then
-      printf(sub.."%s:userdata", tostring(k))
-    elseif type(v) == "boolean" then
-	if v == true then
-		printf(sub.."%s:true", tostring(k))
+	local sub
+	if subs ~= nil then
+		sub = subs
 	else
-		printf(sub.."%s:false", tostring(k))
+		sub = ""
 	end
-    else
-      if v ~= nil then
-        printf(sub.."%s:%s", tostring(k),v)
-      else
-        printf(sub.."%s:nil", tostring(k),v)
-      end
-    end
-  end
+	for k,v in pairs(table) do
+		if type(v) == "table" then
+			printf(sub.."%s:", tostring(k))
+			print_table(v, sub.."    ")
+		elseif type(v) == "function" then
+			printf(sub.."%s:function", tostring(k))
+		elseif type(v) == "userdata" then
+			printf(sub.."%s:userdata", tostring(k))
+		elseif type(v) == "boolean" then
+			if v == true then
+				if type(k)~="userdata" then
+					printf(sub.."%s:true", tostring(k))
+				else
+					printf(sub.."userdata:true")
+				end
+			else
+				if type(k)~="userdata" then
+					printf(sub.."%s:false", tostring(k))
+				else
+					printf(sub.."userdata:false")
+				end
+			end
+		else
+			if v ~= nil then
+				printf(sub.."%s:%s", tostring(k),v)
+			else
+				printf(sub.."%s:nil", tostring(k),v)
+			end
+		end
+	end  
 end
 
 -------------------------------------------------------------------------------------------

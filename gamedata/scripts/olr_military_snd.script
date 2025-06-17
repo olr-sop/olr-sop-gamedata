@@ -12,11 +12,11 @@ local SOUND_CONFIG = {
     NOISE = [[characters_voice\scenario\escape\radio\radio_noise_1]],
     
     -- Настройки вероятности и времени
-    CHECK_INTERVAL = 30000, -- Проверка каждые 30 сек, нех слишком часто, возможно надо будет увеличить до минуты или более
+    CHECK_INTERVAL = 30000, -- Проверка каждые 30 сек
     MAIN_TRIGGER_CHANCE = 0.1, -- 10% шанс срабатывания основного триггера
     NOISE_CHANCE = 0.1, -- 10% шанс шума (если выбран этот вариант)
     MIN_DELAY = 5000, -- Минимальная задержка между звуками у одного NPC
-	LOG_ENABLE = false, -- Включение логгирования
+    LOG_ENABLE = false, -- Включение логгирования
     LOG_INTERVAL = 2000, -- Логирование каждые 2 секунды
     NOISE_MIN_DELAY = 120000 -- Минимальная задержка между шумами у одного NPC
 }
@@ -51,9 +51,41 @@ local function get_sound_length(sound_obj)
     return sound_obj and type(sound_obj.length) == "function" and sound_obj:length() or 0
 end
 
+-- Остановка всех звуков для NPC
+local function stop_all_sounds_for_npc(npc_id)
+    if not npc_id then return end
+    
+    local state = npc_states[npc_id]
+    if not state then return end
+    
+    -- Останавливаем активный звук
+    if state.active_sound and state.active_sound.object then
+        local sound_obj = state.active_sound.object
+        if sound_obj and sound_obj.stop and type(sound_obj.stop) == "function" then
+            sound_obj:stop()
+        end
+        state.active_sound = nil
+    end
+    
+    -- Очищаем состояние
+    npc_states[npc_id] = nil
+end
+
+-- Проверка состояния NPC и остановка звуков если нужно
+local function check_npc_alive(npc)
+    if not npc or not npc:id() then return false end
+    
+    local is_alive = npc:alive() and not (xr_wounded and xr_wounded.is_wounded(npc))
+    if not is_alive then
+        stop_all_sounds_for_npc(npc:id())
+    end
+    
+    return is_alive
+end
+
 -- Улучшенное логгирование с защитой от ошибок
 local function log_active_sounds()
-	if not SOUND_CONFIG.LOG_ENABLE then return end
+    if not SOUND_CONFIG.LOG_ENABLE then return end
     local current_time = time_global()
     if not current_time or (current_time - (last_log_time or 0)) < SOUND_CONFIG.LOG_INTERVAL then 
         return 
@@ -68,24 +100,34 @@ local function log_active_sounds()
         if state and state.active_sound then
             local npc = level.object_by_id(npc_id)
             if npc then
-                local sound_type = state.active_sound.type or "unknown"
-                local sound_obj = state.active_sound.object
-                local npc_name = npc:name() or "unnamed"
-                local pos = npc:position() or vector()
-                local pos_str = string.format("(%.1f, %.1f, %.1f)", pos.x or 0, pos.y or 0, pos.z or 0)
-                local status = (sound_obj and sound_obj:playing()) and "PLAYING" or "STOPPED"
-                local end_time = state.active_sound.end_time or 0
-                local time_left = math.max(end_time - current_time, 0)
-                
-                log_msg = log_msg .. string.format(
-                    "[%d] %-15s | %-12s | %-6s | pos: %s | time left: %.1fs\n",
-                    npc_id,
-                    npc_name,
-                    sound_type,
-                    status,
-                    pos_str,
-                    time_left
-                )
+                -- Проверяем, жив ли еще NPC
+                if not check_npc_alive(npc) then
+                    -- NPC мертв, звуки уже должны были остановиться
+                    log_msg = log_msg .. string.format(
+                        "[%d] %-15s | NPC IS DEAD - SOUNDS STOPPED\n",
+                        npc_id,
+                        npc:name() or "unnamed"
+                    )
+                else
+                    local sound_type = state.active_sound.type or "unknown"
+                    local sound_obj = state.active_sound.object
+                    local npc_name = npc:name() or "unnamed"
+                    local pos = npc:position() or vector()
+                    local pos_str = string.format("(%.1f, %.1f, %.1f)", pos.x or 0, pos.y or 0, pos.z or 0)
+                    local status = (sound_obj and sound_obj:playing()) and "PLAYING" or "STOPPED"
+                    local end_time = state.active_sound.end_time or 0
+                    local time_left = math.max(end_time - current_time, 0)
+                    
+                    log_msg = log_msg .. string.format(
+                        "[%d] %-15s | %-12s | %-6s | pos: %s | time left: %.1fs\n",
+                        npc_id,
+                        npc_name,
+                        sound_type,
+                        status,
+                        pos_str,
+                        time_left
+                    )
+                end
                 
                 active_count = active_count + 1
             end
@@ -101,7 +143,12 @@ end
 
 -- Основная функция проверки
 function radio_snd_check(npc)
-    if not npc or not npc.alive or not npc:alive() or (xr_wounded and xr_wounded.is_wounded(npc)) then 
+	
+	if not IsStalker(npc) then return end
+	
+    -- Проверяем, жив ли NPC
+    if not check_npc_alive(npc) then 
+        stop_all_sounds_for_npc(npc:id())
         return 
     end
     
@@ -126,6 +173,11 @@ function radio_snd_check(npc)
     -- Проверка активного звука
     if state.active_sound then
         local sound_obj = state.active_sound.object
+        
+        -- Проверяем, жив ли еще NPC
+        if not check_npc_alive(npc) then
+            return
+        end
         
         -- Обновляем позицию звука
         if sound_obj and sound_obj.playing and sound_obj:playing() then
@@ -173,50 +225,60 @@ function radio_snd_check(npc)
                     return t and t > (current_time + on_length) 
                 end,
                 function()
-                    if npc and npc.alive and npc:alive() then
-                        -- Воспроизводим ответ
-                        local answer_index = math.random(1, #SOUND_CONFIG.RADIO_ANSWERS.paths)
-                        local answer_sound = sound_objects.radio_answers[answer_index]
-                        
-                        if answer_sound then
-                            npc_states[npc_id] = {
-                                last_play_time = time_global(),
-                                last_noise_time = time_global(),
-                                active_sound = {
-                                    type = "answer_"..answer_index,
-                                    object = answer_sound,
-                                    end_time = time_global() + get_sound_length(answer_sound)
-                                }
+                    -- Проверяем, жив ли еще NPC
+                    local npc = level.object_by_id(npc_id)
+                    if not check_npc_alive(npc) then
+                        stop_all_sounds_for_npc(npc_id)
+                        return
+                    end
+                    
+                    -- Воспроизводим ответ
+                    local answer_index = math.random(1, #SOUND_CONFIG.RADIO_ANSWERS.paths)
+                    local answer_sound = sound_objects.radio_answers[answer_index]
+                    
+                    if answer_sound then
+                        npc_states[npc_id] = {
+                            last_play_time = time_global(),
+                            last_noise_time = time_global(),
+                            active_sound = {
+                                type = "answer_"..answer_index,
+                                object = answer_sound,
+                                end_time = time_global() + get_sound_length(answer_sound)
                             }
-                            answer_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
-                            
-                            -- Запланируем выключение
-                            level.add_call(
-                                function() 
-                                    local t = time_global()
-                                    return t and npc_states[npc_id] and 
-                                           npc_states[npc_id].active_sound and 
-                                           t > npc_states[npc_id].active_sound.end_time 
-                                end,
-                                function()
-                                    if npc and npc.alive and npc:alive() then
-                                        local off_sound = sound_objects.turn_off
-                                        if off_sound then
-                                            npc_states[npc_id] = {
-                                                last_play_time = time_global(),
-                                                last_noise_time = time_global(),
-                                                active_sound = {
-                                                    type = "turn_off",
-                                                    object = off_sound,
-                                                    end_time = time_global() + get_sound_length(off_sound)
-                                                }
-                                            }
-                                            off_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
-                                        end
-                                    end
+                        }
+                        answer_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+                        
+                        -- Запланируем выключение
+                        level.add_call(
+                            function() 
+                                local t = time_global()
+                                return t and npc_states[npc_id] and 
+                                       npc_states[npc_id].active_sound and 
+                                       t > npc_states[npc_id].active_sound.end_time 
+                            end,
+                            function()
+                                -- Проверяем, жив ли еще NPC
+                                local npc = level.object_by_id(npc_id)
+                                if not check_npc_alive(npc) then
+                                    stop_all_sounds_for_npc(npc_id)
+                                    return
                                 end
-                            )
-                        end
+                                
+                                local off_sound = sound_objects.turn_off
+                                if off_sound then
+                                    npc_states[npc_id] = {
+                                        last_play_time = time_global(),
+                                        last_noise_time = time_global(),
+                                        active_sound = {
+                                            type = "turn_off",
+                                            object = off_sound,
+                                            end_time = time_global() + get_sound_length(off_sound)
+                                        }
+                                    }
+                                    off_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
+                                end
+                            end
+                        )
                     end
                 end
             )

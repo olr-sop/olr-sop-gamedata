@@ -1,63 +1,54 @@
+;----------- Аномалия кислотный туман -----------------------
 [zone_acid_fog]
-GroupControlSection	= spawn_group_zone
-$spawn 			= "zones\zone_acid_fog"
-$prefetch 		= 16
-class			= Z_ACIDF		; ZS_FOG - olr   Z_ACIDF -- orig
-hit_impulse_scale	= .01
-
-effective_radius	= 1.00 ;размер радиуса в процентах от оригинального, где действует зона
-
-postprocess		= postprocess_new
-
-throw_impulse		= 0.1
-
-script_binding  		= bind_anomaly.Init
-
+GroupControlSection		= spawn_group_zone
+$spawn					= "zones\zone_acid_fog"
+$prefetch				= 16
+class					= Z_ACIDF	; ZS_FOG - olr	 Z_ACIDF -- orig
 ef_anomaly_type			= 3
 ef_weapon_type			= 15
+script_binding			= bind_anomaly.Init
 
-artefacts		= af_blood,0.7, af_mincer_meat, 0.25,af_soul, 0.05
-BirthProbability = 0.9
+hit_type				= burn
+hit_impulse_scale		= .01
+effective_radius		= 1.00	;размер радиуса в процентах от оригинального, где действует зона
+postprocess				= postprocess_new
+throw_impulse			= 0.1
 
-idle_sound			= ambient\weather\fx2; ambient\weather\fx2		;постоянный звук
-blowout_sound		= anomaly\mosquito_bald_blowout; mosquito_bald_blowout01	;во время выброса(удара) в центре аномалии	
-hit_sound			= anomaly\mosquito_bald_hit								;на персонаже, когда тот получает хит
-entrance_sound		= anomaly\mosquito_bald_hit								;при попадании объекта в аномалию
+artefacts				= af_blood,0.7, af_mincer_meat, 0.25,af_soul, 0.05
+BirthProbability		= 0.9
 
-idle_particles		= anomaly\galantine_old00
-blowout_particles	= anomaly\marevo2
+;----------- Anomaly settings -----------------------
+min_start_power			= 0.99
+max_start_power			= 1.00
+attenuation				= 0.1
+period					= 1
+min_artefact_count		= 0
+max_artefact_count		= 0
 
-min_start_power		= 0.99
-max_start_power		= 1.00
-attenuation			= 0.1
-period				= 1
-min_artefact_count	= 0
-max_artefact_count	= 0
+idle_sound				= ambient\weather\fx2;				;постоянный звук
+blowout_sound			= anomaly\mosquito_bald_blowout;	;во время выброса(удара) в центре аномалии	
+hit_sound				= anomaly\mosquito_bald_hit			;на персонаже, когда тот получает хит
+entrance_sound			= anomaly\mosquito_bald_hit			;при попадании объекта в аномалию
 
-disable_time		= -1	;время игнорирования неживого объекта в зоне (-1 если не нужно)
-disable_time_small	= -1		;время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
-disable_idle_time	= -1	;время отключения idle партиклов
+idle_particles			= anomaly_new\acid_fog\idle
+blowout_particles		= anomaly_new\acid_fog\blow
 
-hit_type		= burn
+disable_time			= 5000	;время игнорирования неживого объекта в зоне (-1 если не нужно)
+disable_time_small		= -1	;время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
+disable_idle_time		= 10000	;время отключения idle партиклов
 
-disable_time		= 5000	;время игнорирования неживого объекта в зоне (-1 если не нужно)
-disable_idle_time	= 10000	;время отключения idle партиклов
+awaking_time			= 1000
+blowout_time			= 300
+accamulate_time			= 1000
 
-awaking_time		= 1000
-blowout_time		= 300	
-accamulate_time		= 1000
+ignore_nonalive			= false
+ignore_small			= true
+ignore_artefacts		= true
 
-ignore_nonalive		= false
-ignore_small		= true
-ignore_artefacts	= true
+blowout_light			= off
+idle_light				= off
+blowout_wind			= off
+visible_by_detector		= on
 
-blowout_light		= off
-idle_light			= off
-
-visible_by_detector = on
-
-blowout_wind		= off
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;рождение артефактов во время срабатывания
-spawn_blowout_artefacts = off
+spawn_blowout_artefacts	= off

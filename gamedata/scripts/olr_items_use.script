@@ -11,24 +11,36 @@ function use(obj)
     end	
 	
 	if section == "battery_change_headlamp" then
-	local has_torch = db.actor:item_in_slot(9)
+		local has_torch = db.actor:item_in_slot(9)
 		if has_torch == nil then
-			olr.del(obj)
 			alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-			news_manager.send_tip(db.actor, game.translate_string("torch_check_0"), nil, "default", 6000)
+			news_manager.send_tip(db.actor, game.translate_string("torch_check_0"), nil, "default", 3000)
 		else
-			db.actor:item_in_slot(9):get_torch():enable(false)
-			has_torch:set_condition(1)
+			if has_torch:condition() < 1 then
+				db.actor:item_in_slot(9):get_torch():enable(false)
+				has_torch:set_condition(1)
+				local message = game.translate_string("st_olr_item_efs_charge").." ["..has_torch:get_name().."] - 100%"
+				news_manager.send_tip(db.actor, message, nil, "default", 3000)				
+			else
+				alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())			
+				local message = game.translate_string("st_olr_item_efs_charge").." ["..has_torch:get_name().."] - 100%"
+				news_manager.send_tip(db.actor, message, nil, "default", 3000)
+			end
 		end
 	end
 	
 	if section == "battery_change" then
 		local pdaitm = db.actor:object("device_pda")
-		local namecond = pdaitm:condition() * 100
-		local nameconddel = game.translate_string("st_olr_item_efs_pda_charge")..string.format("%1.0f", namecond).."%"
-		news_manager.send_tip(db.actor, ""..nameconddel.."", nil, "default", 6000)
-		nick.enable_senf()
-		olr.show_minimap(true)
+		if pdaitm:condition() == 1 then
+			alife():create("battery_change", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())		
+			local message = game.translate_string("st_olr_item_efs_charge").." ["..pdaitm:get_name().."] - 100%"
+            news_manager.send_tip(db.actor, message, nil, "default", 3000)
+		else
+			local message = game.translate_string("st_olr_item_efs_charge").." ["..pdaitm:get_name().."] - 100%"
+			news_manager.send_tip(db.actor, message, nil, "default", 3000)
+			nick.enable_senf()
+			olr.show_minimap(true)
+		end
 	end	
 	
     if section == "diplomat_code_viska" then

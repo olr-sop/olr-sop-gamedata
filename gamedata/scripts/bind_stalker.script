@@ -220,7 +220,89 @@ function actor_binder:on_group_items(item1, item2)
 end
 
 function actor_binder:on_drop_item_on_item(item1, item2)
-	--log1("on_drop_item_on_item: item1 = "..item1:name()..", item 2 = "..item2:name().."")
+    --log1("on_drop_item_on_item: item1 = "..item1:name()..", item 2 = "..item2:name().."")
+    
+    -- Если предметы одинаковые - выходим
+    if item1:name() == item2:name() then return end
+    
+    local section1 = item1:section()
+    local section2 = item2:section()
+
+    -- Функции проверки типов предметов
+    local function is_detector(section)
+        return section == "detector_simple" or 
+               section == "detector_advances" or 
+               section == "detector_elite"
+    end
+
+    local function is_torch(section)
+        return section == "device_torch"
+    end
+
+    local function is_torch_battery(section)
+        return section == "battery_change_headlamp"
+    end
+
+    local function is_detector_battery(section)
+        return section == "battery_change"
+    end
+
+    local function is_medical_combo(s1, s2)
+        return (s1 == "med_injector_empty" and s2 == "med_injector_capsule") or
+               (s1 == "med_injector_capsule" and s2 == "med_injector_empty")
+    end
+
+    -- 1. Обработка медицинских предметов (высший приоритет)
+    if is_medical_combo(section1, section2) then
+        olr.del(item1)
+        olr.del(item2)
+        amk.spawn_item_in_inv("med_injector")
+        olr.snd([[interface\inv_slot]])
+        return
+    end
+
+    -- 2. Зарядка ФОНАРИКА (только battery_change_headlamp)
+    if (is_torch(section1) and is_torch_battery(section2)) or
+       (is_torch_battery(section1) and is_torch(section2)) then
+        
+        local torch = is_torch(section1) and item1 or item2
+        local battery = is_torch_battery(section1) and item1 or item2
+		
+        if torch:condition() < 1 then
+			torch:set_condition(1)
+			olr.del(battery)
+			
+			local message = game.translate_string("st_olr_item_efs_charge").." ["..torch:get_name().."] - 100%"
+			news_manager.send_tip(db.actor, message, nil, "default", 3000)
+			olr.snd([[interface\inv_slot]])
+		end
+        return
+    end
+
+    -- 3. Зарядка ДЕТЕКТОРА (только battery_change)
+    if (is_detector(section1) and is_detector_battery(section2)) or
+       (is_detector_battery(section1) and is_detector(section2)) then
+        
+        local detector = is_detector(section1) and item1 or item2
+        local battery = is_detector_battery(section1) and item1 or item2
+        
+        if detector:condition() < 1 then
+            detector:set_condition(1)
+            olr.del(battery)
+            
+            local message = game.translate_string("st_olr_item_efs_charge").." ["..detector:get_name().."] - 100%"
+            news_manager.send_tip(db.actor, message, nil, "default", 3000)
+            olr.snd([[interface\inv_slot]])
+        end
+        return
+    end
+
+    -- 4. Блокировка всех нежелательных комбинаций
+    if (is_torch(section1) or is_detector(section1) or
+        is_torch(section2) or is_detector(section2)) then
+        -- Если один из предметов - устройство, а второй не батарейка - игнорируем
+        return
+    end
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -390,7 +472,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:info_callback(npc, info_id)
 	printf("*INFO*: npc='%s' id='%s'", npc:name(), info_id)
-	--' Сюжет
+	-- Сюжет
 	level_tasks.proceed(self.object)
 
 	inf_last = info_id -- для дебага
@@ -398,7 +480,6 @@ function actor_binder:info_callback(npc, info_id)
 	-- Отметки на карте
 	level_tasks.process_info_portion(info_id)
     --olr_inv_actor_desc.on_info(info_id)
-	--log1("take info    "..info_id.." ")
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_trade (item, sell_bye, money)
@@ -504,19 +585,17 @@ function actor_binder:on_item_take (obj)
 
 	------ Обработчик выдачи поршня с конфига
 	if obj then
-	if device().precache_frame < 1 then
-	if system_ini():line_exist(obj:section(), "take_info") then
-	local known_inf = system_ini():r_string(obj:section(), "take_info") or ""
-	local known_inf_desc = game.translate_string(known_inf)
-	if not has_alife_info(known_inf_desc) then
-	self.object:give_info_portion(known_inf_desc)
-	log1("give info from item - "..known_inf_desc.."")
+		if device().precache_frame < 1 then
+			if system_ini():line_exist(obj:section(), "take_info") then
+				local known_inf = system_ini():r_string(obj:section(), "take_info") or ""
+				local known_inf_desc = game.translate_string(known_inf)
+				if not has_alife_info(known_inf_desc) then
+					--log1("give info from item - " .. known_inf_desc .. "")
+					self.object:give_info_portion(known_inf_desc)
+				end
+			end
+		end
 	end
-	end
-	end
-	end
-
-
 end
 
 ----------------------------------------------------------------------------------------------------------------------

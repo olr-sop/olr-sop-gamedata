@@ -3,7 +3,7 @@
 
 local opt_sound = false --звук при открытии дверей.
 
-update_doors = false
+local update_doors = false
 local snd_open = sound_object([[device\vehicle\car_door_open]])
 local snd_close = sound_object([[device\vehicle\car_door_close]])
 local hud = get_hud()
@@ -588,14 +588,19 @@ function del_box(id)
 end
 
 
-function onKeyPress(dik) 
+function onKeyPress(dik)
+
+	update_doors = (dik == DIK_keys.DIK_F and level.get_target_obj() and level.get_target_obj():get_car() ~= nil)
+	
 	if dik == DIK_keys.DIK_T then
 		if bind_car.act_in_car_now() == true then
 			local snd_obj = xr_sound.get_safe_sound_object([[device\car\klaxon]])
 			snd_obj:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d)
 		end
 	end
+	
 	local loked_obj = bind_stalker.loked_obj_state()
+	
 	if dik == DIK_keys.DIK_N and loked_obj ~= nil then
 		local obj_for_reload = loked_obj
 		if obj_for_reload and obj_for_reload:get_car() ~= nil then

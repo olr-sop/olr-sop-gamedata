@@ -1141,13 +1141,21 @@ function on_death( obj_id )
 
 	local sim = alife()
 
-	if sim then
-		local obj     = sim:object( obj_id )
-		local strn_id = obj:smart_terrain_id()
-
-		if strn_id ~= 65535 then
-			sim:object( strn_id ).gulag:clear_dead(obj_id)
-		end
+	if not sim then
+		return
+	end
+	
+	local obj = sim:object(obj_id)
+	
+	if not obj then
+		printf("! WARN: Can't find object in simulation to unregister in gulag")
+		return
+	end
+	
+	local strn_id = obj:smart_terrain_id()
+	
+	if strn_id ~= 65535 then
+		sim:object( strn_id ).gulag:clear_dead(obj_id)
 	end
 end
 

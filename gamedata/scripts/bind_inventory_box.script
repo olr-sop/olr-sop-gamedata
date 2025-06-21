@@ -1,14 +1,3 @@
-local max_mass_by_sect = {
-        bagaznik_big = 200,
-        bagaznik_avto = 140,
-        bagaznik_mal = 80,
-        big_safe_box = 250,
-        box_rukzak = 20,
-	box_rukzak_treasure = 20,
-        big_container = 300,
-	box_capsule = 135,
-	other = 30
-}
 
 local repaintnow = false
 
@@ -22,8 +11,6 @@ end
 
 class "CInventoryBoxBinder" (object_binder)
 function CInventoryBoxBinder:__init(obj) super(obj)
-	self.inv_mass = 0
-	self.max_inv_mass = max_mass_by_sect[obj:section()] or max_mass_by_sect.other
 end 
 
 function CInventoryBoxBinder:reload(section)
@@ -40,34 +27,18 @@ end
 
 function CInventoryBoxBinder:on_inv_box_item_take(obj)
 
-	if not obj or obj == nil then return end
-
-	olr_ruck_limit.on_to_box(obj)	
-	
-	self.inv_mass = self.inv_mass + obj:weight()
-	if db.actor and self.inv_mass > self.max_inv_mass then
-		  --log1("noplase  -- "..obj:name().."  -- "..self.object:name().."") 
-		  if has_alife_info("ui_car_body") then 
-                  self.object:transfer_item(obj, db.actor)
-                  local wnd = ui.get_car_body_wnd()
-                  level.start_stop_menu(wnd, true)
-		  if device().precache_frame < 1 then 
-                  	news_manager.send_tip(db.actor, game.translate_string("CInventoryBoxBinderon_inv_box_item_take_0"))
-		  end
-		  end
+	if not obj or obj == nil then
+		return
 	end
-	--log1("cur mass  -- "..self.inv_mass.."  max -- "..self.max_inv_mass.."") 
+
+	olr_ruck_limit.on_to_box(obj)
+	end
 	bind_inventory_box.repaint()
 	bind_inventory_box.repaint()
 end
 
 
 function CInventoryBoxBinder:on_inv_box_item_drop(obj)
-	self.inv_mass = self.inv_mass - obj:weight()
-	if self.inv_mass < 0 then
-		self.inv_mass = 0
-	end
-	--log1("cur mass out  -- "..self.inv_mass.."  max -- "..self.max_inv_mass.."")
 	bind_inventory_box.repaint()
 	bind_inventory_box.repaint()
 end
@@ -79,8 +50,6 @@ function CInventoryBoxBinder:update(delta)
 	if db.actor:has_info("ui_car_body") and repaintnow == false then
 		local loked_obj = bind_stalker.loked_obj_state()
 		local loked_obj_name = bind_stalker.loked_obj_name_state()
-		vol_obem = self.inv_mass
-		vol_obem_max = self.max_inv_mass
 		if ui.get_car_body_wnd() and not att and loked_obj ~= nil and loked_obj_name == self.object:name() then
 			ptatt = ui.get_car_body_wnd()
 			att = bind_inventory_box.ui_trade()
@@ -136,8 +105,6 @@ class "ui_trade" (CUIScriptWnd)
 
 function ui_trade:__init(owner) super()
 	self.owner = owner
-        self.inv_vol = vol_obem 
-	self.inv_vol_max = vol_obem_max
 	self:InitControls()
 	--log1("show true 0")
 end
@@ -146,26 +113,6 @@ function ui_trade:__finalize() end
 
 function ui_trade:InitControls()
 	self:Init(0,0,1024,768)
-
-    	self.back = CUIStatic()
-    	self.back:Init(0,0,0,0)
-    	self.back:InitTexture("ui\\flyer\\ui_verst_list2")
-    	self.back:SetOriginalRect(0,0,0,0)
-	self:AttachChild(self.back)
-		
-	-- 
-    	self.vo = CUIStatic()
-    	self.vo:Init(785,280,133,25)
-	if self.inv_vol < 0 then
-		self.inv_vol=0
-	end
-	local vol_cur = string.format("%1.0f", self.inv_vol)
-	local vol_cur_max = string.format("%1.0f", self.inv_vol_max)
-        self.vo:SetTextST(string.format(game.translate_string("st_bind_inventory_box_weight")..vol_cur_max.."",  vol_cur))
-	self.vo:SetFont(GetFontGraffiti22Russian())
-	self.vo:SetTextColor(255,255,255,255)
-	self.back:AttachChild(self.vo)
-
 	--log1("show true 1")
 
 end

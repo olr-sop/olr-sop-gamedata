@@ -64,10 +64,8 @@ function evaluator_trading:evaluate()
 	end
 	if npc:character_community() == "military" 
 		or npc:character_community() == "trader" 
+		or npc:character_community() == "monolith" 
 		or npc:character_community() == "neutral" 
-		--or npc:character_community() == "dolg"
-		--or npc:character_community() == "ecolog"
-		--or npc:character_community() == "freedom"  
 		or npc:character_community() == "bandit"
 		or npc:character_community() == "voenstals"
 		or npc:character_community() == "sin"  then
@@ -153,6 +151,8 @@ function action_go_trade:initialize()
 	self.trade_point_barman_look = look_barman:level_vertex_id(0)
 
 	self.walkstate = math.random(1,2)
+	
+	self.finalized = false
 
 	self.trade_tmr = 0
 	self.sms_lalk = 0  -- если ГГ влезает в торговлю
@@ -164,198 +164,200 @@ end
 
 -- execute of action
 function action_go_trade:execute()
-	action_base.execute(self)
-	local npc = self.object
+    action_base.execute(self)
+	
+	if self.finalized then return end
+	
+    local npc = self.object
 
+    -- у жабы
+    if level.name() == "lvl1_escape" then
+        -- идём на точку жабы
+        if self.walkstate == 1 then
+            state_mgr.set_state(self.object, "walk")
+        else
+            state_mgr.set_state(self.object, "run")
+        end
+        self.object:set_path_type(game_object.level_path)
+        self.object:set_dest_level_vertex_id(self.trade_point_jaba)
 
-	-- у жабы
-	if level.name() == "lvl1_escape" then
-	-- идём на точку жабы
-	if self.walkstate == 1 then
-		state_mgr.set_state(self.object, "walk")
-	else
-		state_mgr.set_state(self.object, "run")
-	end
-	self.object:set_path_type(game_object.level_path)
-	self.object:set_dest_level_vertex_id(self.trade_point_jaba)
+        -- пришли к жабе, смотрим на него
+        if npc:level_vertex_id() == self.trade_point_jaba then
+            local look_point = level.vertex_position(self.trade_point_jaba_look)
+            state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point})
+            self.trade_tmr = self.trade_tmr + 1
+            if self.trade_tmr == 3 then
+                xr_sound.set_sound_play(self.object, "talk_hello")
+            end
+            if self.trade_tmr == 50 then
+                local rnd = math.random(1, 3)
+                if rnd == 1 then
+                    xr_sound.set_sound_play(self.object, "talk_accept")
+                elseif rnd == 2 then
+                    xr_sound.set_sound_play(self.object, "talk_reject")
+                else
+                    xr_sound.set_sound_play(self.object, "talk_abuse")
+                end
+            end
+            if self.trade_tmr == 100 then
+                if self.walkstate == 1 then
+                    xr_sound.set_sound_play(self.object, "trade_yes")
+                else
+                    xr_sound.set_sound_play(self.object, "trade_no")
+                end
+            end
+            --news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] ПРИШЛИ ТОРГУЕМ", nil, "freedom", 3000)
+            if npc:position():distance_to(db.actor:position()) <= 3 and self.sms_lalk == 0 then
+                self.sms_lalk = 1
+                news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000)
+            end
+        end
 
-	-- пришли к жабе, смотрим на него
-	if npc:level_vertex_id() == self.trade_point_jaba then
-		local look_point = level.vertex_position(self.trade_point_jaba_look)	
-		state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point })
-		self.trade_tmr = self.trade_tmr + 1
-		if self.trade_tmr == 3 then
-			xr_sound.set_sound_play(self.object, "talk_hello")
-		end
-		if self.trade_tmr == 50 then
-			local rnd = math.random(1,3)
-			if rnd == 1 then
-				xr_sound.set_sound_play(self.object, "talk_accept")
-			elseif rnd == 2 then
-				xr_sound.set_sound_play(self.object, "talk_reject")
-			else
-				xr_sound.set_sound_play(self.object, "talk_abuse")
-			end
-		end
-		if self.trade_tmr == 100 then
-			if self.walkstate == 1 then
-				xr_sound.set_sound_play(self.object, "trade_yes")
-			else
-				xr_sound.set_sound_play(self.object, "trade_no")
-			end
-		end
-		--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] ПРИШЛИ ТОРГУЕМ", nil, "freedom", 3000)
-		if npc:position():distance_to(db.actor:position()) <= 3 and self.sms_lalk == 0 then
-			self.sms_lalk = 1
-			news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000)
-		end 
-	end
+        if self.trade_tmr > 120 then
+            if npc:money() > 0 then
+                local pre_money = npc:money()
+                --dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
+                npc:give_money(-npc:money())
+                npc:give_money(math.random(4, 30))
+                self.sms_lalk = 0
+                xr_sound.set_sound_play(self.object, "talk_bye")
+                --news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
+                --log1("спавним покупки в НПС escape на сумму - ["..pre_money.."]")
+                celling_habar_svoi_escape(npc)
+                create_trading_escape(npc, pre_money)
+                check_leave_zone_money(npc)
+				self.finalized = true
+            end
+        end
+    end
 
-	if self.trade_tmr > 120 then
-		if npc:money() > 0 then
-			local pre_money = npc:money()
-			--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
-			npc:give_money(-npc:money())
-			npc:give_money(math.random(4,30))
-			self.sms_lalk = 0
-			xr_sound.set_sound_play(self.object, "talk_bye")
-			--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
-			--log1("спавним покупки в НПС escape на сумму - ["..pre_money.."]")
-			celling_habar_svoi_escape(npc)
-			create_trading_escape(npc, pre_money)
-			check_leave_zone_money(npc)
-		end
-	end
-	end
+    -- у жабы MILITARY
+    if level.name() == "lvl9_military" then
+        -- идём на точку жабы
+        --log1("walkstate - ["..self.walkstate.."]")
+        if self.walkstate == 1 then
+            state_mgr.set_state(self.object, "walk")
+        else
+            state_mgr.set_state(self.object, "run")
+        end
+        self.object:set_path_type(game_object.level_path)
+        self.object:set_dest_level_vertex_id(self.trade_point_jaba_mil)
 
+        -- пришли к жабе, смотрим на него
+        if npc:level_vertex_id() == self.trade_point_jaba_mil then
+            local look_point = level.vertex_position(self.trade_point_jaba_look_mil)
+            if self.walkstate == 1 then
+                state_mgr.set_state(self.object, "search", nil, nil, {look_position = look_point})
+            else
+                state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point})
+            end
+            self.trade_tmr = self.trade_tmr + 1
+            if self.trade_tmr == 3 then
+                xr_sound.set_sound_play(self.object, "talk_hello")
+            end
+            if self.trade_tmr == 50 then
+                local rnd = math.random(1, 3)
+                if rnd == 1 then
+                    xr_sound.set_sound_play(self.object, "talk_accept")
+                elseif rnd == 2 then
+                    xr_sound.set_sound_play(self.object, "talk_reject")
+                else
+                    xr_sound.set_sound_play(self.object, "talk_abuse")
+                end
+            end
+            if self.trade_tmr == 100 then
+                if self.walkstate == 1 then
+                    xr_sound.set_sound_play(self.object, "trade_yes")
+                else
+                    xr_sound.set_sound_play(self.object, "trade_no")
+                end
+            end
+            --news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] ПРИШЛИ ТОРГУЕМ", nil, "freedom", 3000)
+            if npc:position():distance_to(db.actor:position()) <= 6 and self.sms_lalk == 0 then
+                self.sms_lalk = 1
+                news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000)
+            end
+        end
 
-	-- у жабы MILITARY
-	if level.name() == "lvl9_military" then
-	-- идём на точку жабы
-	--log1("walkstate - ["..self.walkstate.."]")
-	if self.walkstate == 1 then
-		state_mgr.set_state(self.object, "walk")
-	else
-		state_mgr.set_state(self.object, "run")
-	end
-	self.object:set_path_type(game_object.level_path)
-	self.object:set_dest_level_vertex_id(self.trade_point_jaba_mil)
+        if self.trade_tmr > 120 then
+            if npc:money() > 0 then
+                local pre_money = npc:money()
+                --dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
+                npc:give_money(-npc:money())
+                npc:give_money(math.random(4, 30))
+                self.sms_lalk = 0
+                xr_sound.set_sound_play(self.object, "talk_bye")
+                --news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
+                --log1("спавним покупки в НПС escape на сумму - ["..pre_money.."]")
+                celling_habar_svoi_military(npc)
+                create_trading_escape(npc, pre_money)
+                check_leave_zone_money(npc)
+				self.finalized = true
+            end
+        end
+    end
 
-	-- пришли к жабе, смотрим на него
-	if npc:level_vertex_id() == self.trade_point_jaba_mil then
-		local look_point = level.vertex_position(self.trade_point_jaba_look_mil)	
-		if self.walkstate == 1 then
-			state_mgr.set_state(self.object, "search", nil, nil, {look_position = look_point })
-		else
-			state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point })
-		end
-		self.trade_tmr = self.trade_tmr + 1
-		if self.trade_tmr == 3 then
-			xr_sound.set_sound_play(self.object, "talk_hello")
-		end
-		if self.trade_tmr == 50 then
-			local rnd = math.random(1,3)
-			if rnd == 1 then
-				xr_sound.set_sound_play(self.object, "talk_accept")
-			elseif rnd == 2 then
-				xr_sound.set_sound_play(self.object, "talk_reject")
-			else
-				xr_sound.set_sound_play(self.object, "talk_abuse")
-			end
-		end
-		if self.trade_tmr == 100 then
-			if self.walkstate == 1 then
-				xr_sound.set_sound_play(self.object, "trade_yes")
-			else
-				xr_sound.set_sound_play(self.object, "trade_no")
-			end
-		end
-		--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] ПРИШЛИ ТОРГУЕМ", nil, "freedom", 3000)
-		if npc:position():distance_to(db.actor:position()) <= 6 and self.sms_lalk == 0 then
-			self.sms_lalk = 1
-			news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000)
-		end 
-	end
+    -- у бармена
+    if level.name() == "lvl5_bar" then
+        -- идём на точку бармена
+        if self.walkstate == 1 then
+            state_mgr.set_state(self.object, "walk")
+        else
+            state_mgr.set_state(self.object, "run")
+        end
+        self.object:set_path_type(game_object.level_path)
+        self.object:set_dest_level_vertex_id(self.trade_point_barman)
+        --level.map_add_object_spot(self.object:id(), "green_location", 1)
 
-	if self.trade_tmr > 120 then
-		if npc:money() > 0 then
-			local pre_money = npc:money()
-			--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
-			npc:give_money(-npc:money())
-			npc:give_money(math.random(4,30))
-			self.sms_lalk = 0
-			xr_sound.set_sound_play(self.object, "talk_bye")
-			--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
-			--log1("спавним покупки в НПС escape на сумму - ["..pre_money.."]")
-			celling_habar_svoi_military(npc)
-			create_trading_escape(npc, pre_money)
-			check_leave_zone_money(npc)
-		end
-	end
-	end
+        -- пришли к бармену, смотрим на него
+        if npc:level_vertex_id() == self.trade_point_barman then
+            local look_point = level.vertex_position(self.trade_point_barman_look)
+            state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point})
+            self.trade_tmr = self.trade_tmr + 1
+            if self.trade_tmr == 3 then
+                xr_sound.set_sound_play(self.object, "talk_hello")
+            end
+            if self.trade_tmr == 50 then
+                local rnd = math.random(1, 3)
+                if rnd == 1 then
+                    xr_sound.set_sound_play(self.object, "talk_accept")
+                elseif rnd == 2 then
+                    xr_sound.set_sound_play(self.object, "talk_reject")
+                else
+                    xr_sound.set_sound_play(self.object, "talk_abuse")
+                end
+            end
+            if self.trade_tmr == 100 then
+                if self.walkstate == 1 then
+                    xr_sound.set_sound_play(self.object, "trade_yes")
+                else
+                    xr_sound.set_sound_play(self.object, "trade_no")
+                end
+            end
+            --news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done", nil, "freedom", 3000)
+            if npc:position():distance_to(db.actor:position()) <= 2.5 and self.sms_lalk == 0 then
+                self.sms_lalk = 1
+                news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "barman", 10000)
+            end
+        end
 
-
-	-- у бармена
-	if level.name() == "lvl5_bar" then
-	-- идём на точку бармена
-	if self.walkstate == 1 then
-		state_mgr.set_state(self.object, "walk")
-	else
-		state_mgr.set_state(self.object, "run")
-	end
-	self.object:set_path_type(game_object.level_path)
-	self.object:set_dest_level_vertex_id(self.trade_point_barman)
-	--level.map_add_object_spot(self.object:id(), "green_location", 1)
-
-	-- пришли к бармену, смотрим на него
-	if npc:level_vertex_id() == self.trade_point_barman then
-		local look_point = level.vertex_position(self.trade_point_barman_look)	
-		state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point })
-		self.trade_tmr = self.trade_tmr + 1
-		if self.trade_tmr == 3 then
-			xr_sound.set_sound_play(self.object, "talk_hello")
-		end
-		if self.trade_tmr == 50 then
-			local rnd = math.random(1,3)
-			if rnd == 1 then
-				xr_sound.set_sound_play(self.object, "talk_accept")
-			elseif rnd == 2 then
-				xr_sound.set_sound_play(self.object, "talk_reject")
-			else
-				xr_sound.set_sound_play(self.object, "talk_abuse")
-			end
-		end
-		if self.trade_tmr == 100 then
-			if self.walkstate == 1 then
-				xr_sound.set_sound_play(self.object, "trade_yes")
-			else
-				xr_sound.set_sound_play(self.object, "trade_no")
-			end
-		end
-		--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done", nil, "freedom", 3000)
-		if npc:position():distance_to(db.actor:position()) <= 2.5 and self.sms_lalk == 0 then
-			self.sms_lalk = 1
-			news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "barman", 10000)
-		end 
-	end
-
-	if self.trade_tmr > 120 then
-		if npc:money() > 0 then
-			local pre_money = npc:money()
-			--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
-			npc:give_money(-npc:money())
-			npc:give_money(math.random(4,40))
-			self.sms_lalk = 0
-			xr_sound.set_sound_play(self.object, "talk_bye")
-			--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
-			--log1("спавним покупки в НПС bar на сумму - ["..pre_money.."]")
-			celling_habar_svoi_bar(npc)
-			create_trading_barman(npc, pre_money)
-			check_leave_zone_money(npc)
-		end
-	end	
-	end
-
+        if self.trade_tmr > 120 then
+            if npc:money() > 0 then
+                local pre_money = npc:money()
+                --dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
+                npc:give_money(-npc:money())
+                npc:give_money(math.random(4, 40))
+                self.sms_lalk = 0
+                xr_sound.set_sound_play(self.object, "talk_bye")
+                --news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
+                --log1("спавним покупки в НПС bar на сумму - ["..pre_money.."]")
+                celling_habar_svoi_bar(npc)
+                create_trading_barman(npc, pre_money)
+                check_leave_zone_money(npc)
+				self.finalized = true
+            end
+        end
+    end
 end
 
 -- finalize

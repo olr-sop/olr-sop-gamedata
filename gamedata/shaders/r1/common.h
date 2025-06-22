@@ -3,21 +3,21 @@
 
 #include "shared\common.h"
 
-uniform half4		L_dynamic_props;	// per object, xyz=sun,w=hemi
-uniform half4		L_dynamic_color;	// dynamic light color (rgb1)	- spot/point
-uniform half4		L_dynamic_pos;		// dynamic light pos+1/range(w) - spot/point
+uniform float4		L_dynamic_props;	// per object, xyz=sun,w=hemi
+uniform float4		L_dynamic_color;	// dynamic light color (rgb1)	- spot/point
+uniform float4		L_dynamic_pos;		// dynamic light pos+1/range(w) - spot/point
 uniform float4x4 	L_dynamic_xform;
 
 uniform float4x4	m_plmap_xform;
 uniform float4 		m_plmap_clamp	[2];	// 0.w = factor
 
-half  	calc_fogging 	(half4 w_pos)	{ return dot(w_pos,fog_plane); 	}
-half2 	calc_detail 	(half3 w_pos)	{ 
+float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
+float2 	calc_detail 	(float3 w_pos)	{ 
 	float  	dtl	= distance(w_pos,eye_position)*dt_params.w;
 		dtl	= min(dtl*dtl, 1);
-	half  	dt_mul	= 1  - dtl;	// dt*  [1 ..  0 ]
-	half  	dt_add	= .5 * dtl;	// dt+	[0 .. 0.5]
-	return	half2	(dt_mul,dt_add);
+	float  	dt_mul	= 1  - dtl;	// dt*  [1 ..  0 ]
+	float  	dt_add	= .5 * dtl;	// dt+	[0 .. 0.5]
+	return	float2	(dt_mul,dt_add);
 }
 float3 	calc_reflection	(float3 pos_w, float3 norm_w)
 {
@@ -109,14 +109,14 @@ uniform sampler2D 	s_hemi;
 uniform sampler2D 	s_att;
 uniform sampler2D 	s_detail;
 
-#define def_distort	half(0.05f)	// we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
+#define def_distort	float(0.05f)	// we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
 
 float3	v_hemi 		(float3 n)		{	return L_hemi_color/* *(.5f + .5f*n.y) */; 		}
 float3	v_hemi_wrap	(float3 n, float w)	{	return L_hemi_color/* *(w + (1-w)*n.y) */; 		}
 float3 	v_sun 		(float3 n)		{	return L_sun_color*max(0,dot(n,-L_sun_dir_w));		}
 float3 	v_sun_wrap	(float3 n, float w)	{	return L_sun_color*(w+(1-w)*dot(n,-L_sun_dir_w));	}
-half3	p_hemi		(float2 tc) 	{
-	half3	t_lmh 	= tex2D		(s_hemi, tc);
+float3	p_hemi		(float2 tc) 	{
+	float3	t_lmh 	= tex2D		(s_hemi, tc);
 	return  dot	(t_lmh,1.h/3.h);
 }
 

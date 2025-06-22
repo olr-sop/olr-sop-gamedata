@@ -104,14 +104,17 @@ function get_money_then_leave(first_speaker, second_speaker)
 	db.storage[first_speaker:id()].robber.enabled = true
 end
 
-function is_wounded(first_speaker, second_speaker)
-    if db.storage[first_speaker:id()].wounded ~= nil and
-       db.storage[first_speaker:id()].wounded.wound_manager.can_use_medkit == true
-    then
-        return false
-    end
+function who_is_npc(first_speaker, second_speaker)
+	local npc = second_speaker
+	if db.actor:id() == npc:id() then
+		npc	= first_speaker
+	end
+	return npc
+end
 
-	return xr_wounded.is_wounded(first_speaker)
+function is_wounded(first_speaker, second_speaker)
+	local npc = who_is_npc(first_speaker, second_speaker)
+	return xr_wounded.is_wounded(npc)
 end
 function is_opp_wounded(first_speaker, second_speaker, dialog_id)
     if db.storage[second_speaker:id()].wounded ~= nil and
@@ -132,28 +135,23 @@ function actor_have_bandage(first_speaker, second_speaker)
 end
 
 function transfer_medkit(first_speaker, second_speaker)
-
 	if first_speaker:object("medkit") ~= nil then
 		dialogs.relocate_item_section(second_speaker, "medkit", "out")
-		--local mon_var = math.random(10,230)
-		--db.actor:give_money(mon_var)
-		--game_stats.money_quest_update(mon_var)
-		--news_manager.send_tip(db.actor, "Получены деньги: "..mon_var.." RU", nil, "default", 3000)
-		--' Тут надо анлочить аптечку для использования.
-		xr_wounded.unlock_medkit(second_speaker)	
+		-- Тут надо анлочить аптечку для использования.
+		xr_wounded.unlock_medkit(second_speaker)
 		if second_speaker:relation(first_speaker) ~= game_object.enemy then
 			second_speaker:set_relation(game_object.friend, first_speaker)
 			second_speaker:enable_trade()
 			first_speaker:enable_trade()
 		end
 		first_speaker:change_character_reputation(20)
-        	if second_speaker:character_rank() <= first_speaker:character_rank()  then
+		if second_speaker:character_rank() <= first_speaker:character_rank() then
 			olr_treasure.create_treasure()
 		end
 		return
-        end
-
+	end
 end
+
 
 function set_enemy_npc(first_speaker, second_speaker)
 	second_speaker:set_relation(game_object.enemy, first_speaker)

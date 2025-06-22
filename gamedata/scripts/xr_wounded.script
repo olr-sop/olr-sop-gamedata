@@ -433,11 +433,9 @@ function reset_wounded(npc, scheme, st, section)
 end
 -- Функция чтения настроек. В нее передается секция, откуда их нужно читать.
 local wounded_by_state = {
-	[0] = "wounded",
+	[0] = "wounded_heavy",
 	[1] = "wounded_heavy_2",
-	[2] = "wounded_heavy_2",
-	[3] = "wounded_heavy_3",
-	[4] = "wounded_heavy_monster"
+	[2] = "wounded_heavy_3"
 }
 
 function init_wounded(npc, ini, section, st, scheme)
@@ -455,8 +453,8 @@ function init_wounded(npc, ini, section, st, scheme)
 	local npc_community = npc:character_community()
 	if npc_community == "monolith" then
 		local state = wounded_by_state[math.mod(npc:id(), 3)]
-		def.hp_state			= "10|"..state.."@help_heavy"
-		def.hp_state_see		= "10|"..state.."@help_heavy"
+		def.hp_state			= "10|"..state.."@nil"
+		def.hp_state_see		= "10|"..state.."@nil"
 		def.psy_state			= ""
 		def.hp_victim			= "10|nil"
 		def.hp_cover			= "10|false"
@@ -467,8 +465,8 @@ function init_wounded(npc, ini, section, st, scheme)
 		def.use_medkit			= false
 		
 	elseif npc_community == "zombied" then
-		def.hp_state			= "40|wounded_zombie@help_heavy"
-		def.hp_state_see		= "40|wounded_zombie@help_heavy"
+		def.hp_state			= "40|wounded_zombie@nil"
+		def.hp_state_see		= "40|wounded_zombie@nil"
 		def.psy_state			= ""
 		def.hp_victim			= "40|nil"
 		def.hp_cover			= "40|false"
@@ -532,20 +530,25 @@ end
 
 
 function is_wounded(npc)
-	if npc and db.storage[npc:id()].wounded ~= nil then	
+	local npc_storage = db.storage[npc:id()]
+	if npc_storage == nil then
+		return false
+	end
+
+	if npc_storage.wounded ~= nil then
 --'		if npc:object("medkit") ~= nil and
---'		   db.storage[npc:id()].wounded.wound_manager.can_use_medkit == true
+--'		   npc_storage.wounded.wound_manager.can_use_medkit == true
 --'		then
 --'			return false
 --'		end
 
-		return tostring(db.storage[npc:id()].wounded.wound_manager.state) ~= "nil"
+		return tostring(npc_storage.wounded.wound_manager.state) ~= "nil"
 	end
 	return false
 end
 
-function hit_callback(npc_id)
-	if npc_id and db.storage[npc_id].wounded ~= nil then
+function hit_callback(npc_id) -- Тут может не быть стораджа.
+	if db.storage[npc_id].wounded ~= nil then
 		db.storage[npc_id].wounded.wound_manager:hit_callback()
 	end
 end

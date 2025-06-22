@@ -1,1 +1,1 @@
-@start bin\xr_3da.exe
+@start bin\xr_3da.exe -ltx user_%USERNAME%.ltx

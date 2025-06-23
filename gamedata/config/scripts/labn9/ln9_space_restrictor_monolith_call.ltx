@@ -1,0 +1,16 @@
+[logic]
+active = sr_idle@stop
+ 
+[sr_idle@stop]
+on_info = {+pre_bun_antenna_off} sr_idle@sleep1 %=run_cam_effector(radar_stop:2506:false)%
+
+[sr_idle@sleep1]
+on_timer  = 500| sr_idle@sleep %=run_postprocess(agr_u_fade)%  
+ 
+
+[sr_idle@sleep]
+on_info  = {+bun_antenna_off} sr_sound_act@monolith_call %=run_cam_effector(prison_1:2506:false)%
+
+[sr_sound_act@monolith_call]
+snd = characters_voice\scenario\sarcofag\monolith\monolith_call_1
+on_signal = sound_end|nil

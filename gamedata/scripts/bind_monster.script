@@ -4,16 +4,16 @@ local insect_particle = particles_object("ghoul\\fly_lihgters")
 local mozg_particle = particles_object("monsters\\pseudo_phantom_death_00")
 local mozg_light = alife():object("mozg_for_light_object")
 local mozg_light_flag = false
-actor_close_mozg = false
+local actor_close_mozg = false
 local take_flag = 0
 
 local parasits = {
-["zombie_plague"] = true,
-["zombie_plague_strong"] = true,
-["pseudodog_w_namordnike"] = true,
-["pseudodog_w_namordnike_ghost"] = true,
-["pseudodog_w_namordnike_ghost2"] = true,
-["pseudodog_w_namordnike_medpribor"] = true
+	["zombie_plague"] = true,
+	["zombie_plague_strong"] = true,
+	["pseudodog_w_namordnike"] = true,
+	["pseudodog_w_namordnike_ghost"] = true,
+	["pseudodog_w_namordnike_ghost2"] = true,
+	["pseudodog_w_namordnike_medpribor"] = true
 }
 
 function bind(obj)
@@ -74,12 +74,16 @@ end
 
 function generic_object_binder:use_callback(obj, who)
 
+	local is_rat_variant = {
+		["m_rat_e"] = true,
+		["m_rat_e2"] = true,
+		["m_rat_e3"] = true,
+		["m_rat_e4"] = true,
+		["m_rat_new"] = true
+	}
+
 	if not self.object:alive() then
-        if self.object:section() ~= "m_rat_e" or self.object:section() ~= "m_rat_e2" or
-			self.object:section() ~= "m_rat_e3" or
-			self.object:section() ~= "m_rat_e4" or
-			self.object:section() ~= "m_rat_new"
-		then
+		if not is_rat_variant[self.object:section()] then
             if system_ini():line_exist(self.object:section(), "known_info") then
                 local known_inf = system_ini():r_string(self.object:section(), "known_info") or ""
                 local known_inf_desc = game.translate_string(known_inf)
@@ -92,20 +96,9 @@ function generic_object_binder:use_callback(obj, who)
                 self.object:iterate_inventory(
                     function(_, item)
                         if item then
-                            --else
-                            --log1(" non has part ")
-                            --end
-                            --log1("hass item")
-                            --if has_alife_info(known_inf_desc) then
-                            --log1("hasss part !!!!")
                             local sec_item = tostring(item:section())
                             alife():create(sec_item, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
                             olr.del(item)
-                            -- olr.snd([[ol3\koan\KnifeStow1-m]])
-                            --log1("hasss part - ")
-                            --self.object:drop_item(item)  -- тут вылет dBodyStateValide(b)
-                            --self.object:transfer_item(item, db.actor)
-                            --log1("has part - "..item:name().."")
                             olr.hud_tip("", game.translate_string("st_bind_monster_received_items") .. item:get_name() .. "", 2)
                             take_flag = 1
                             local wait_time = 0
@@ -151,11 +144,7 @@ function generic_object_binder:use_callback(obj, who)
     end
 
     if not self.object:alive() then
-        if self.object:section() == "m_rat_e" or self.object:section() == "m_rat_e2" or
-			self.object:section() == "m_rat_e3" or
-			self.object:section() == "m_rat_e4" or
-			self.object:section() == "m_rat_new"
-		then
+        if is_rat_variant[self.object:section()] then
             local bol_var = math.random(1, 2)
             if bol_var == 1 then
                 local objj = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
@@ -176,9 +165,6 @@ end
 
 function generic_object_binder:update(delta)
 	object_binder.update(self, delta)
-
-	--local pt = profile_timer()
-	--pt:start()
 
 	local cls = self.object:clsid()
 	local spos = self.object:position()
@@ -201,15 +187,13 @@ function generic_object_binder:update(delta)
 				local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
 				if shelbone then
 					shelbone:apply_force(0, 0.1, 0)
-				--log1("FIX PH MONSTER dead in offline - "..self.object:name().." ")
-				--xvars.dead_in_offline[self.object:name()] == nil
 				end
 			end
 		end
 	end
 
 	if self.object:alive() then
-		----------------------------------------------------------------------------------------------------------------------
+
 		core.tc("monster_update", self, delta)
 
 		if self.object:is_talk_enabled() then
@@ -341,19 +325,9 @@ function generic_object_binder:update(delta)
 					end
 					if self.object and mozg_light then
 						if mozg_light_flag == false then
-							alife():teleport_object(
-								mozg_light.id,
-								self.object:game_vertex_id(),
-								self.object:level_vertex_id(),
-								self.object:position()
-							)
+							--alife():teleport_object(mozg_light.id, self.object:game_vertex_id(), self.object:level_vertex_id(), self.object:position()) -- зачем то дублируется
 							mozg_light_flag = true
-							alife():teleport_object(
-								mozg_light.id,
-								self.object:game_vertex_id(),
-								self.object:level_vertex_id(),
-								self.object:position()
-							)
+							alife():teleport_object(mozg_light.id, self.object:game_vertex_id(), self.object:level_vertex_id(), self.object:position())
 						end
 						local lcobj = level.object_by_id(mozg_light.id)
 						if lcobj then
@@ -361,24 +335,12 @@ function generic_object_binder:update(delta)
 							if lamp then
 								local brg_var = math.random(45, 55) / 200
 								lamp:set_brightness(brg_var)
-								lamp:set_position(
-									vector():set(
-										self.object:position().x,
-										self.object:position().y + 0.2,
-										self.object:position().z
-									)
-								)
+								lamp:set_position(vector():set(self.object:position().x, self.object:position().y + 0.2, self.object:position().z))
 							end
 						end
 					end
 					if not mozg_particle:playing() then
-						mozg_particle:play_at_pos(
-							vector():set(
-								self.object:position().x,
-								self.object:position().y + 0.2,
-								self.object:position().z
-							)
-						)
+						mozg_particle:play_at_pos(vector():set(self.object:position().x, self.object:position().y + 0.2, self.object:position().z))
 						local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\xforce2]])
 						snd_obj:play_no_feedback(self.object, sound_object.s2d, 0, vector(), 0.25)
 					end
@@ -439,7 +401,7 @@ function generic_object_binder:update(delta)
 					db.actor.health = -0.00085
 					local par_varb = math.random(1, 22)
 					if par_varb == 1 then
-						zarazjenie_parazitom()
+						--zarazjenie_parazitom() -- пока уберём обработку заражения паразитом вообще
 					end
 					local par_var = math.random(1, 35)
 					if par_var == 1 then
@@ -607,6 +569,7 @@ function generic_object_binder:extrapolate_callback()
 	elseif patrol(patr):flags(cur_pt):get() == 0 then
 		return true
 	end
+	
 	return false
 end
 
@@ -623,7 +586,7 @@ function generic_object_binder:death_callback(victim, who)
 
 	if who:id() == db.actor:id() then
 		if victim:clsid() == clsid.zombie or victim:clsid() == clsid.zombie_s then
-				bb_mod.npcondeath(victim, who)
+			bb_mod.npcondeath(victim, who)
 		end
 		local sobj = game.translate_string(xvars.quest_two_target_yan)
 		if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken_yan") then
@@ -668,6 +631,7 @@ end
 
 
 function generic_object_binder:net_spawn(sobject)
+
     if not object_binder.net_spawn(self, sobject) then
         return false
     end
@@ -692,27 +656,22 @@ function generic_object_binder:net_spawn(sobject)
     return true
 end
 
-
-
-
-
-function generic_object_binder:reload(section)
-	object_binder.reload(self, section)
-end
-
 function generic_object_binder:net_save_relevant()
 	return true
 end
 
 function generic_object_binder:save(packet)
+
 	object_binder.save(self, packet)
 	xr_logic.save_obj(self.object, packet)
 	if self.object:clsid() == clsid.script_trader then
 		trade_manager.save(self.object, packet)
 	end
+	
 end
 
 function generic_object_binder:load(reader)
+
 	self.loaded = true
 
 	printf("generic_object_binder:load(): self.object:name()='%s'", self.object:name())
@@ -726,6 +685,7 @@ function generic_object_binder:load(reader)
 	if self.object:clsid() == clsid.script_trader then
 		trade_manager.load(self.object, reader)
 	end
+	
 end
 
 -----------------------------------------------------------------------------------------------------------------------

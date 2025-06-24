@@ -3829,17 +3829,23 @@ end
 
 
 function use_drink_mg()
-            local ustalost = db.actor:get_actor_thirst()
-            if ustalost>0.80 then
-            news_manager.send_tip(db.actor, game.translate_string("use_drink_mg_0"), nil, "default", 9000)
-            return 
-            end
-	    db.actor:change_actor_thirst(1)
-	    if not has_alife_info("bolezn_parazity_info") then
-            olr_timers.st_timer("bolezn_parasite_timer", 2250, "nick.bolezn_parasite_timer()")
-	    --news_manager.send_tip(db.actor, game.translate_string("use_drink_mg_1"))
-	    db.actor:give_info_portion("bolezn_parazity_info")
-	    end
+
+	local ustalost = db.actor:get_actor_thirst()
+	
+	if ustalost>0.80 then
+		news_manager.send_tip(db.actor, game.translate_string("use_drink_mg_0"), nil, "default", 9000)
+		return 
+	end
+	
+	db.actor:change_actor_thirst(1)
+	return
+	--[[
+	if not has_alife_info("bolezn_parazity_info") then
+		olr_timers.st_timer("bolezn_parasite_timer", 2250, "nick.bolezn_parasite_timer()")
+		db.actor:give_info_portion("bolezn_parazity_info")
+		return
+	end
+	--]]
 end
 
 

@@ -1,1 +1,1 @@
-@start bin\xr_3da.exe -ltx user_%USERNAME%.ltx
+@start bin\xr_3da.exe -ltx user_%USERNAME%.ltx -simple_script_lua_debug -simple_lua_debug

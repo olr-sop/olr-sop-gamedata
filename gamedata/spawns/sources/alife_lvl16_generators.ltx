@@ -2558,15 +2558,7 @@ none = true
 cond = {+oso_spawn_contr}
 
 [logic]
-active = mob_walker
-on_death = mob_death@o_ded
- 
-[mob_walker]
-path_walk = gen_zaza_walk
-path_look = gen_zaza_look
- 
-[mob_death@o_ded]
-on_info = %=gen_contr_dead_zal%
+cfg = scripts\generators\gen_controller_2.ltx
 END
 
 ; cse_visual properties
@@ -2619,22 +2611,7 @@ cond = {+posthuman_cutscene_start}
 none = true
 
 [logic]
-active = mob_walker
-
-[mob_walker]
-path_walk = posthuman_contr_cutscene_walk
-actor_friendly = true
-npc_friendly = true
-on_timer   = 10000 | mob_remark@hold
-
-[mob_remark@hold]
-anim = _stand_idle_0
-time = 50000
-on_timer   = 10000 | mob_remark@hold2
-
-[mob_remark@hold2]
-anim = z_sit_idle_to_sleep_0
-time = 50000
+cfg = scripts\generators\gen_controller_1.ltx
 END
 
 ; cse_visual properties
@@ -2965,27 +2942,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = mob_walker2
-on_death = mob_death@ded1
-
-[mob_walker2]
-path_walk = karlik_gen_rush_walk
-path_look = karlik_gen_rush_look
-actor_friendly = true
-npc_friendly = true
-braindead = true
-on_info = {+karlik_gen_rush_goinfo} mob_walker3
-
-[mob_walker3]
-path_walk = karlik2_gen_rush
-path_look = karlik2_gen_rushl
-actor_friendly = true
-npc_friendly = true
-braindead = true
-
-
-[dialogs]
-start_dialog = karlik_gen_rushtalk
+cfg = scripts\generators\gen_karlik.ltx
 END
 
 ; cse_visual properties
@@ -3204,7 +3161,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-info_enable = warlab_main_open_door
+cfg = scripts\generators\gen_projector.ltx
 END
 
 ; cse_visual properties
@@ -3291,7 +3248,7 @@ level_vertex_id = 328262
 object_flags = 0xfffffffa
 custom_data = <<END
 [logic]
-info_enable = olr_traders_day
+cfg = scripts\generators\gen_abajur.ltx
 END
 
 ; cse_visual properties
@@ -3656,41 +3613,6 @@ upd:timestamp = 0x6d0b
 upd:creature_flags = 0xc
 upd:position = 225.79150390625, 20.2110233306885, -101.071075439453
 upd:o_torso = -0.00329865794628859, 0.0983430147171021, 0
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-[2085]
-
-; cse_abstract properties
-section_name = m_car
-name = name_0024btrgen
-position = 139.000106811523, 31.9004726409912, -442.01318359375
-direction = -0.00616872496902943, -2.33078598976135, 0.0347153395414352
-id = 65535
-version = 118
-script_version = 6
-spawn_id = 24154
-
-; cse_alife_object properties
-game_vertex_id = 3426
-level_vertex_id = 328262
-object_flags = 0xffffffba
-custom_data = <<END
-[spawner]
-cond = {+oso_killed_actor_visel}
-
-[logic]
-active = ph_car1
- 
-[ph_car1]
-path_walk = gen_gate_btr_walk
-headlights = on
-END
-
-; cse_visual properties
-visual_name = vehicles\btr\btr_script
-
-; cse_ph_skeleton properties
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -4220,17 +4142,7 @@ cond = {+posthuman_cutscene_start}
 none = true
 
 [logic]
-active = mob_walker
-
-[mob_walker]
-path_walk = posthuman_cutscene_walk
-actor_friendly = true
-npc_friendly = true
-on_timer   = 11000 | mob_remark@hold
-
-[mob_remark@hold]
-anim = scared_0
-time = 50000
+cfg = scripts\generators\gen_posthuman_cutscene.ltx
 END
 
 ; cse_visual properties
@@ -5065,10 +4977,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_on_death
- 
-[ph_on_death]
-on_info = %+gen_bunker_destr_1%
+cfg = scripts\generators\gen_destroyable_generator_4.ltx
 END
 
 ; cse_visual properties
@@ -5101,10 +5010,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_on_death
- 
-[ph_on_death]
-on_info = %+gen_bunker_destr_2%
+cfg = scripts\generators\gen_destroyable_generator_3.ltx
 END
 
 ; cse_visual properties
@@ -5137,10 +5043,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_on_death
- 
-[ph_on_death]
-on_info = %+gen_bunker_destr_3%
+cfg = scripts\generators\gen_destroyable_generator_2.ltx
 END
 
 ; cse_visual properties
@@ -5173,10 +5076,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_on_death
- 
-[ph_on_death]
-on_info = %+gen_bunker_destr_4%
+cfg = scripts\generators\gen_destroyable_generator_1.ltx
 END
 
 ; cse_visual properties
@@ -5209,17 +5109,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_sound@humor
-
-[ph_sound@humor]
-snd = none_idle
-on_info = {+oso_killed} ph_idle@wait
-
-[ph_idle@wait]
-on_timer = 40000| ph_sound@epic
-
-[ph_sound@epic]
-snd = siren_gen
+cfg = scripts\generators\gen_rupor.ltx
 END
 
 ; cse_visual properties
@@ -5251,17 +5141,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_sound@humor
-
-[ph_sound@humor]
-snd = none_idle
-on_info = {+oso_killed} ph_idle@wait
-
-[ph_idle@wait]
-on_timer = 40000| ph_sound@epic
-
-[ph_sound@epic]
-snd = siren_gen
+cfg = scripts\generators\gen_rupor.ltx
 END
 
 ; cse_visual properties
@@ -5389,21 +5269,11 @@ game_vertex_id = 3426
 level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
-[logic]
-active = ph_button@control2
-
-[ph_button@control2]
-anim = disabled
-on_info = {+gen_bunker_destr_2} ph_button@control2_on
-on_press = ph_button@control2_on
-
-[ph_button@control2_on]
-anim = enabled
-on_info = {-gen_bunker_destr_2} ph_button@control2
-on_press = ph_button@control2
-
 [collide]
 ignore_static
+
+[logic]
+cfg = scripts\generators\gen_generator_3.ltx
 END
 
 ; cse_visual properties
@@ -5435,21 +5305,11 @@ game_vertex_id = 3426
 level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
-[logic]
-active = ph_button@control2
-
-[ph_button@control2]
-anim = disabled
-on_info = {+gen_bunker_destr_3} ph_button@control2_on
-on_press = ph_button@control2_on
-
-[ph_button@control2_on]
-anim = enabled
-on_info = {-gen_bunker_destr_3} ph_button@control2
-on_press = ph_button@control2
-
 [collide]
 ignore_static
+
+[logic]
+cfg = scripts\generators\gen_generator_3.ltx
 END
 
 ; cse_visual properties
@@ -5481,21 +5341,11 @@ game_vertex_id = 3426
 level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
-[logic]
-active = ph_button@control2
-
-[ph_button@control2]
-anim = disabled
-on_info = {+gen_bunker_destr_4} ph_button@control2_on
-on_press = ph_button@control2_on
-
-[ph_button@control2_on]
-anim = enabled
-on_info = {-gen_bunker_destr_4} ph_button@control2
-on_press = ph_button@control2
-
 [collide]
 ignore_static
+
+[logic]
+cfg = scripts\generators\gen_generator_2.ltx
 END
 
 ; cse_visual properties
@@ -5527,21 +5377,11 @@ game_vertex_id = 3426
 level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
-[logic]
-active = ph_button@control2
-
-[ph_button@control2]
-anim = disabled
-on_info = {+gen_bunker_destr_1} ph_button@control2_on
-on_press = ph_button@control2_on
-
-[ph_button@control2_on]
-anim = enabled
-on_info = {-gen_bunker_destr_1} ph_button@control2
-on_press = ph_button@control2
-
 [collide]
 ignore_static
+
+[logic]
+cfg = scripts\generators\gen_generator_1.ltx
 END
 
 ; cse_visual properties
@@ -10785,33 +10625,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_door@locked
- 
-[ph_door@locked]
-locked = true
-snd_open_start = trader_door_unlock
-on_info = {+warlab_main_open_door} ph_door@open
- 
-[ph_door@closed]
-closed = true
-locked = false
-on_use = ph_door@open 
-snd_open_start = trader_door_open_start
-snd_close_start = trader_door_close_start
-snd_close_stop = trader_door_close_stop
- 
-[ph_door@open]
-closed = false
-locked = false
-on_use = ph_door@closed
-on_info = {+gen_boss_firts_talk} ph_door@locked2
-snd_open_start = trader_door_open_start
-snd_close_start = trader_door_close_start
-snd_close_stop = trader_door_close_stop
-
-[ph_door@locked2]
-locked = true
-closed = true
+cfg = scripts\generators\gen_code_door_1.ltx
 END
 
 ; cse_visual properties
@@ -10909,17 +10723,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_idle
- 
-[ph_idle]
-on_info = {+on_lab_swithc_dok_3_done} ph_force 
- 
-[ph_force]
-force = 2000
-time = 500
-delay = 0
-point = dok_1_ph
-point_index = 0
+cfg = scripts\generators\gen_hologramma_force_5.ltx
 END
 
 ; cse_visual properties
@@ -10952,17 +10756,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_idle
- 
-[ph_idle]
-on_info = {+on_lab_swithc_dok_4_done} ph_force 
- 
-[ph_force]
-force = 2000
-time = 500
-delay = 0
-point = dok_1_ph
-point_index = 0
+cfg = scripts\generators\gen_hologramma_force_4.ltx
 END
 
 ; cse_visual properties
@@ -10995,17 +10789,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_idle
- 
-[ph_idle]
-on_info = {+on_lab_swithc_dok_1_done} ph_force 
- 
-[ph_force]
-force = 2000
-time = 500
-delay = 0
-point = dok_1_ph
-point_index = 0
+cfg = scripts\generators\gen_hologramma_force_3.ltx
 END
 
 ; cse_visual properties
@@ -11038,17 +10822,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_idle
- 
-[ph_idle]
-on_info = {+on_lab_swithc_dok_2_done} ph_force 
- 
-[ph_force]
-force = 2000
-time = 500
-delay = 0
-point = dok_1_ph
-point_index = 0
+cfg = scripts\generators\gen_hologramma_force_2.ltx
 END
 
 ; cse_visual properties
@@ -11352,17 +11126,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3a
 custom_data = <<END
 [logic]
-active = ph_idle
- 
-[ph_idle]
-on_info = {+on_lab_swithc_dok_fin_done} ph_force 
- 
-[ph_force]
-force = 1000
-time = 500
-delay = 0
-point = dok_fin_ph
-point_index = 0
+cfg = scripts\generators\gen_hologramma_force_1.ltx
 END
 
 ; cse_visual properties
@@ -12791,27 +12555,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_door@locked
- 
-[ph_door@locked]
-locked = true
-snd_open_start = trader_door_unlock
-on_info = {+oso_killed} ph_door@open 
- 
-[ph_door@closed]
-closed = true
-locked = false
-snd_open_start = trader_door_open_start
-snd_close_start = trader_door_close_start
-snd_close_stop = trader_door_close_stop
- 
-[ph_door@open]
-closed = false
-locked = false
-on_use = ph_door@closed
-snd_open_start = trader_door_open_start
-snd_close_start = trader_door_close_start
-snd_close_stop = trader_door_close_stop
+cfg = scripts\generators\gen_secret_door.ltx
 END
 
 ; cse_visual properties
@@ -14646,11 +14390,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_idle
-
-[ph_idle]
-tips = tip_use
-on_use = %=use_gen_klava%
+cfg = scripts\generators\gen_keyboard.ltx
 END
 
 ; cse_visual properties
@@ -15368,11 +15108,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_code
- 
-[ph_code]
-code = 667
-on_code = nil %+warlab_main_open_door%
+cfg = scripts\generators\gen_code_door_secret_code.ltx
 END
 
 ; cse_visual properties
@@ -15573,18 +15309,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_button@rad_on
- 
-[ph_button@rad_on]
-anim_blend  = true
-anim        = lab_primary_switcher_idle
-tooltip     = on_lab_swithc_dok_1
-on_press    = ph_button@rad_off %+on_lab_swithc_dok_1_done%
-
-[ph_button@rad_off]
-anim_blend = false
-anim = lab_primary_switcher_off
-tooltip     = oned_lab_swithc_dok_1
+cfg = scripts\generators\gen_switcher_life_system_4.ltx
 END
 
 ; cse_visual properties
@@ -15621,18 +15346,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_button@rad_on
- 
-[ph_button@rad_on]
-anim_blend  = true
-anim        = lab_primary_switcher_idle
-tooltip     = on_lab_swithc_dok_2
-on_press    = ph_button@rad_off %+on_lab_swithc_dok_2_done%
-
-[ph_button@rad_off]
-anim_blend = false
-anim = lab_primary_switcher_off
-tooltip     = oned_lab_swithc_dok_2
+cfg = scripts\generators\gen_switcher_life_system_3.ltx
 END
 
 ; cse_visual properties
@@ -15669,18 +15383,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_button@rad_on
- 
-[ph_button@rad_on]
-anim_blend  = true
-anim        = lab_primary_switcher_idle
-tooltip     = on_lab_swithc_dok_3
-on_press    = ph_button@rad_off %+on_lab_swithc_dok_3_done%
-
-[ph_button@rad_off]
-anim_blend = false
-anim = lab_primary_switcher_off
-tooltip     = oned_lab_swithc_dok_3
+cfg = scripts\generators\gen_switcher_life_system_2.ltx
 END
 
 ; cse_visual properties
@@ -15717,18 +15420,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_button@rad_on
- 
-[ph_button@rad_on]
-anim_blend  = true
-anim        = lab_primary_switcher_idle
-tooltip     = on_lab_swithc_dok_4
-on_press    = ph_button@rad_off %+on_lab_swithc_dok_4_done%
-
-[ph_button@rad_off]
-anim_blend = false
-anim = lab_primary_switcher_off
-tooltip     = oned_lab_swithc_dok_4
+cfg = scripts\generators\gen_switcher_life_system_1.ltx
 END
 
 ; cse_visual properties
@@ -15765,18 +15457,7 @@ custom_data = <<END
 ignore_static
 
 [logic]
-active = ph_button@rad_on
- 
-[ph_button@rad_on]
-anim_blend  = true
-anim        = lab_primary_switcher_idle
-tooltip     = on_lab_swithc_dok_fin
-on_press    = ph_button@rad_off %+on_lab_swithc_dok_fin_done%
-
-[ph_button@rad_off]
-anim_blend = false
-anim = lab_primary_switcher_off
-tooltip     = oned_lab_swithc_dok_fin
+cfg = scripts\generators\gen_switcher_c_consciousness.ltx
 END
 
 ; cse_visual properties
@@ -15817,11 +15498,7 @@ none = true
 cond = {+start_rat_ending}
 
 [logic]
-active = nil
-on_death = death
-
-[death]
-on_info = %=rat_ending_death_spawn%
+cfg = scripts\generators\gen_philosophical_rat.ltx
 END
 
 ; cse_visual properties
@@ -15898,16 +15575,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = sr_cutscene
-
-[sr_cutscene]
-point = war_cutscene_walk
-look = war_cutscene_look
-cam_effector = olr3_warlab_colba
-on_signal = cameff_end | nil
+cfg = scripts\generators\gen_space_restrictor_cutscene_3.ltx
 END
 
 ; cse_shape properties
@@ -15939,22 +15607,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active    = sr_idle1 
- 
-[sr_idle1]
-on_info   = {+fin_rush_from_sarco_to_warlab_acess} sr_idle22
-
-[sr_idle22]
-on_timer  = 100 | sr_idle2 %=disable_ui =run_postprocess(deadcity_wake) =spawn_genrozd%
- 
-[sr_idle2]
-on_timer  = 4000 | sr_idle3 %=run_cam_effector(punch_effector)%
- 
-[sr_idle3]
-on_timer  = 5000 | %=enable_ui =run_postprocess(deadcity_wake)% nil 
-
-
-
+cfg = scripts\generators\gen_space_restrictor_postprocess_2.ltx
 END
 
 ; cse_shape properties
@@ -15986,10 +15639,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+jaba_gen_dialog_talked} %=final_cutscene_start%
+cfg = scripts\generators\gen_space_restrictor_final_cutscene_start.ltx
 END
 
 ; cse_shape properties
@@ -16021,22 +15671,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active    = sr_idle1 
- 
-[sr_idle1]
-on_info   = {+gen_ecs_talkedd} sr_idle22
-
-[sr_idle22]
-on_timer  = 100 | sr_idle2 %=disable_ui =run_postprocess(deadcity_wake)%
- 
-[sr_idle2]
-on_timer  = 7000 | sr_idle3 %=run_cam_effector(punch_effector)%
- 
-[sr_idle3]
-on_timer  = 10000 | %=enable_ui =run_postprocess(deadcity_wake) =go_to_jaba_escgen% nil 
-
-
-
+cfg = scripts\generators\gen_space_restrictor_postprocess_1.ltx
 END
 
 ; cse_shape properties
@@ -16068,16 +15703,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_info = {+chhose_tri_way_gen} sr_particle
- 
-[sr_particle]
-name = anomaly2\plasma_generator   
-path = gener_golo_way                 
-mode = 2 				
-looped = false
+cfg = scripts\generators\gen_space_restrictor_particle_plasma_generator.ltx
 END
 
 ; cse_shape properties
@@ -16109,16 +15735,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_info = {+oso_start_goavay_visel} sr_particle
- 
-[sr_particle]
-name = nature\fog_foggy_mid  
-path = dym_golo_way                 
-mode = 2 				
-looped = false
+cfg = scripts\generators\gen_space_restrictor_particle_fog_1.ltx
 END
 
 ; cse_shape properties
@@ -16150,16 +15767,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_info = {+oso_start_goavay_visel} sr_particle
- 
-[sr_particle]
-name = nature\fog_foggy_mid  
-path = dym_golo_way2                 
-mode = 2 				
-looped = false
+cfg = scripts\generators\gen_space_restrictor_particle_fog_2.ltx
 END
 
 ; cse_shape properties
@@ -16191,16 +15799,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_info = {+oso_start_goavay_visel} sr_particle
- 
-[sr_particle]
-name = nature\fog_foggy_mid  
-path = dym_golo_way3                 
-mode = 2 				
-looped = false
+cfg = scripts\generators\gen_space_restrictor_particle_fog_3.ltx
 END
 
 ; cse_shape properties
@@ -16232,16 +15831,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_info = {+oso_start_goavay_visel} sr_particle
- 
-[sr_particle]
-name = nature\fog_foggy_mid  
-path = dym_golo_way4                
-mode = 2 				
-looped = false
+cfg = scripts\generators\gen_space_restrictor_particle_fog_4.ltx
 END
 
 ; cse_shape properties
@@ -16357,10 +15947,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+gen_last_boss_dead} %+hidden_final%
+cfg = scripts\generators\gen_space_restrictor_hidden_final.ltx
 END
 
 ; cse_shape properties
@@ -16420,18 +16007,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_psy_antenna
-
-[sr_psy_antenna]
-eff_intensity = +1111
-hit_intensity = +1111
-play_visual = true
-on_info = {+aes_antenna_off} sr_psy_antenna@off
-
-[sr_psy_antenna@off]
-eff_intensity = 0
-hit_intensity = 0
-play_visual = false
+cfg = scripts\generators\gen_space_restrictor_psy_antenna.ltx
 END
 
 ; cse_shape properties
@@ -16493,13 +16069,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16531,10 +16101,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = %+gen_find_exit_lab_start%
+cfg = scripts\generators\gen_space_restrictor_find_exit_lab_start.ltx
 END
 
 ; cse_shape properties
@@ -16568,16 +16135,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = sr_cutscene
- 
-[sr_cutscene]
-point = gen_cutscene_walk
-look = gen_cutscene_look
-cam_effector = generator_scene
-on_signal = cameff_end | nil
+cfg = scripts\generators\gen_space_restrictor_cutscene_2.ltx
 END
 
 ; cse_shape properties
@@ -16611,10 +16169,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = %+gen_find_exit_lab_done%
+cfg = scripts\generators\gen_space_restrictor_find_exit_lab_done.ltx
 END
 
 ; cse_shape properties
@@ -16648,13 +16203,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16686,13 +16235,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16724,13 +16267,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16762,13 +16299,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16800,13 +16331,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16838,13 +16363,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16876,13 +16395,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16914,13 +16427,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16952,13 +16459,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -16990,13 +16491,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17028,13 +16523,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17066,13 +16555,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17104,13 +16587,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17142,13 +16619,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17180,13 +16651,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17218,13 +16683,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17256,13 +16715,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17322,13 +16775,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17360,13 +16807,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_sound
-
-[sr_sound]
-type = floor_wooden
-rnd = 50
-idle = 120
-delay = 1
+cfg = scripts\sound_floor_wooden_zone.ltx
 END
 
 ; cse_shape properties
@@ -17398,11 +16839,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_outside = {+oso_killed} %+olr_ending_enemy_guys%
-
+cfg = scripts\generators\gen_space_restrictor_ending_kill_actor.ltx
 END
 
 ; cse_shape properties
@@ -17436,9 +16873,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_deadnight
- 
-[sr_deadnight]
+cfg = scripts\generators\gen_space_restrictor_deadnight.ltx
 END
 
 ; cse_shape properties
@@ -17472,12 +16907,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-
-active = sr_idle@1
-
-[sr_idle@1]
-
-on_actor_in_zone = lvl16_generators_space_restrictor_0025 | %+warlab_cutscene1_go% nil
+cfg = scripts\generators\gen_space_restrictor_cutscene_start.ltx
 END
 
 ; cse_shape properties
@@ -17511,13 +16941,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active    = sr_idle1 
- 
-[sr_idle1]
-on_info   = {+warlab_cutscene1_go} sr_idle33
- 
-[sr_idle33]
-on_timer  = 25380 | %+warlab_cutscene1_end% nil 
+cfg = scripts\generators\gen_space_restrictor_cutscene_end.ltx
 END
 
 ; cse_shape properties
@@ -17549,12 +16973,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-
-active = sr_idle@1
-
-[sr_idle@1]
-
-on_actor_inside = {+warlab_main_open_door} %+warlab_first_zahod%
+cfg = scripts\generators\gen_space_restrictor_first_entrance.ltx
 END
 
 ; cse_shape properties
@@ -17588,17 +17007,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = sr_tip
- 
-[sr_tip] 
-name = journalist_is_you
-type = tips
-sender = act
-on_actor_inside = nil
-showtime = 25000
+cfg = scripts\generators\gen_space_restrictor_dead_journalist.ltx
 END
 
 ; cse_shape properties
@@ -17632,9 +17041,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_deadnight
- 
-[sr_deadnight]
+cfg = scripts\generators\gen_space_restrictor_deadnight.ltx
 END
 
 ; cse_shape properties
@@ -17698,10 +17105,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+find_journalist_final_done_info} %+find_journalist_restore_wep%
+cfg = scripts\generators\gen_space_restrictor_restore_weapons_2.ltx
 END
 
 ; cse_shape properties
@@ -17735,10 +17139,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+find_journalist_restore_wep_done_info} %+find_journalist_restore_wep%
+cfg = scripts\generators\gen_space_restrictor_restore_weapons_1.ltx
 END
 
 ; cse_shape properties
@@ -17772,10 +17173,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+karlik_gen_rush_goinfo} %+karlik_gen_rush_goinfo_delkarlik%
+cfg = scripts\generators\gen_space_restrictor_delete_karliks.ltx
 END
 
 ; cse_shape properties
@@ -17977,10 +17375,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_labirint_telep%
+cfg = scripts\generators\gen_space_restrictor_labyrinth_teleport.ltx
 END
 
 ; cse_shape properties
@@ -18014,10 +17409,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_labirint_telep%
+cfg = scripts\generators\gen_space_restrictor_labyrinth_teleport.ltx
 END
 
 ; cse_shape properties
@@ -18051,10 +17443,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_labirint_telep%
+cfg = scripts\generators\gen_space_restrictor_labyrinth_teleport.ltx
 END
 
 ; cse_shape properties
@@ -18088,10 +17477,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %+chhose_tri_way_gen%
+cfg = scripts\generators\gen_space_restrictor_three_way.ltx
 END
 
 ; cse_shape properties
@@ -18125,10 +17511,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %+chhose_tri_way_gen_fin_room%
+cfg = scripts\generators\gen_space_restrictor_three_way_final_room.ltx
 END
 
 ; cse_shape properties
@@ -18162,9 +17545,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_deadnight
- 
-[sr_deadnight]
+cfg = scripts\generators\gen_space_restrictor_deadnight.ltx
 END
 
 ; cse_shape properties
@@ -18198,10 +17579,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+chhose_tri_way_gen} %+tri_way_gen_away_from_triway%
+cfg = scripts\generators\gen_space_restrictor_away_from_three_way.ltx
 END
 
 ; cse_shape properties
@@ -18235,10 +17613,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+oso_killed} %=gen_oso_killed_ecolgs%
+cfg = scripts\generators\gen_space_restrictor_ending_scientists.ltx
 END
 
 ; cse_shape properties
@@ -18305,9 +17680,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_deadnight
- 
-[sr_deadnight]
+cfg = scripts\generators\gen_space_restrictor_deadnight.ltx
 END
 
 ; cse_shape properties
@@ -18341,10 +17714,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=rat_labirint_telep%
+cfg = scripts\generators\gen_space_restrictor_rat_labirint.ltx
 END
 
 ; cse_shape properties
@@ -18393,10 +17763,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+start_kill_gen_link} %+gen_boss_firts_talk%
+cfg = scripts\generators\gen_space_restrictor_boss_first_talk_start.ltx
 END
 
 ; cse_shape properties
@@ -18430,10 +17797,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+on_lab_swithc_dok_fin_done} %+on_lab_swithc_dok_fin_spawn_two_talk%
+cfg = scripts\generators\gen_space_restrictor_boss_second_talk_start.ltx
 END
 
 ; cse_shape properties
@@ -18467,10 +17831,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+gen_two_door_open_spusk} %=gen_wtoroy_etaj_start%
+cfg = scripts\generators\gen_space_restrictor_second_floor_start.ltx
 END
 
 ; cse_shape properties
@@ -18504,10 +17865,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_zombi_bazooka%
+cfg = scripts\generators\gen_space_restrictor_spawn_zombies.ltx
 END
 
 ; cse_shape properties
@@ -18541,10 +17899,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+on_lab_swithc_dok_fin_spawn_two_talk} %+start_boss_podval_battle%
+cfg = scripts\generators\gen_space_restrictor_boss_battle_start.ltx
 END
 
 ; cse_shape properties
@@ -18578,10 +17933,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+oso_killed} %=actor_podosel_boss%
+cfg = scripts\generators\gen_space_restrictor_after_kill_go_to_corpse.ltx
 END
 
 ; cse_shape properties
@@ -18643,10 +17995,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_away_from_klava%
+cfg = scripts\generators\gen_space_restrictor_away_from_keyboard.ltx
 END
 
 ; cse_shape properties
@@ -18680,10 +18029,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_close_bosk%
+cfg = scripts\generators\gen_space_restrictor_brain_message.ltx
 END
 
 ; cse_shape properties
@@ -18717,10 +18063,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+oso_killed} %=start_oso_killed_shahta%
+cfg = scripts\generators\gen_space_restrictor_after_kill_elevator_mine.ltx
 END
 
 ; cse_shape properties
@@ -18754,10 +18097,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+oso_killed} %=start_oso_killed_shahta_exit%
+cfg = scripts\generators\gen_space_restrictor_after_kill_elevator_mine_exit.ltx
 END
 
 ; cse_shape properties
@@ -18791,16 +18131,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = sr_cutscene
-
-[sr_cutscene]
-point = gen_esc_pre_last_walk2
-look = gen_esc_pre_last_walk2
-cam_effector = start_olr
-on_signal = cameff_end | nil
+cfg = scripts\generators\gen_space_restrictor_cutscene_1.ltx
 END
 
 ; cse_shape properties
@@ -18832,10 +18163,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+gen_bunker_destr_alls} %+gen_bunker_destr_alls_cutscene%
+cfg = scripts\generators\gen_space_restrictor_talk_with_child.ltx
 END
 
 ; cse_shape properties
@@ -18899,10 +18227,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %+chhose_tri_way_gen_fin_city%
+cfg = scripts\generators\gen_space_restrictor_three_way_city_ending.ltx
 END
 
 ; cse_shape properties
@@ -19022,10 +18347,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = {+oso_killed} %=actor_usel_boss%
+cfg = scripts\generators\gen_space_restrictor_need_get_out_message.ltx
 END
 
 ; cse_shape properties
@@ -19059,10 +18381,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = %+start_kill_oso%
+cfg = scripts\generators\gen_space_restrictor_kill_c_consciousness_quest_start.ltx
 END
 
 ; cse_shape properties
@@ -19094,10 +18413,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_start_open_door_one%
+cfg = scripts\generators\gen_space_restrictor_need_open_door_message.ltx
 END
 story_id = 1306
 
@@ -19130,10 +18446,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
-
-[sr_idle]
-on_actor_inside = %+start_rat_ending%
+cfg = scripts\generators\gen_space_restrictor_three_way_rat_ending.ltx
 END
 
 ; cse_shape properties
@@ -19195,10 +18508,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_1%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_1.ltx
 END
 
 ; cse_shape properties
@@ -19232,10 +18542,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_2%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_2.ltx
 END
 
 ; cse_shape properties
@@ -19269,10 +18576,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_3%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_3.ltx
 END
 
 ; cse_shape properties
@@ -19306,10 +18610,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_4%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_4.ltx
 END
 
 ; cse_shape properties
@@ -19343,10 +18644,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_5%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_5.ltx
 END
 
 ; cse_shape properties
@@ -19380,10 +18678,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_6%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_6.ltx
 END
 
 ; cse_shape properties
@@ -19417,10 +18712,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_7%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_7.ltx
 END
 
 ; cse_shape properties
@@ -19454,10 +18746,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_8%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_8.ltx
 END
 
 ; cse_shape properties
@@ -19491,10 +18780,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-active = sr_idle
- 
-[sr_idle]
-on_actor_inside = %=gen_talk_9%
+cfg = scripts\generators\gen_space_restrictor_c_consciousness_talks_9.ltx
 END
 
 ; cse_shape properties
@@ -19558,12 +18844,7 @@ level_vertex_id = 328262
 object_flags = 0xffffff3e
 custom_data = <<END
 [logic]
-
-active = sr_idle@1
-
-[sr_idle@1]
-
-on_actor_in_zone = var_sms_1 | %+zapas_vihod% nil
+cfg = scripts\generators\gen_space_restrictor_new_contact_message.ltx
 END
 
 ; cse_shape properties
@@ -19606,38 +18887,7 @@ none = true
 cond = {+gen_find_exit_lab_start}
 
 [logic]
-active = walker@walk1
-
-[walker@walk1]
-path_walk = gen_find_exit_walk
-path_look = gen_find_exit_look
-def_state_standing = guard
-on_info = {+gener_fil_go_to_door} walker@walk2
-on_info2 = {=hit_by_actor} %=actro_hit_napgen%
-
-[walker@walk2]
-path_walk = osistentwalkgenrt
-def_state_moving1 = run
-def_state_moving2 = run
-def_state_moving3 = run
-meet = no_meet
-on_signal = priso| %+gen_prisli_kdveri% remark2
-on_info = {+chhose_tri_way_gen} remark3
-on_info2 = {=hit_by_actor} %=actro_hit_napgen%
-
-[remark2]
-anim = wait
-no_move = true
-no_rotate = true
-meet = no_meet
-on_info = {+chhose_tri_way_gen} remark3
-on_info2 = {=hit_by_actor} %=actro_hit_napgen%
-
-[remark3]
-anim = psy_pain
-no_move = true
-target = actor
-meet = no_meet
+cfg = scripts\generators\gen_companion.ltx
 END
 
 ; cse_visual properties
@@ -19698,17 +18948,7 @@ none = true
 cond = {+gen_boss_firts_talk}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-target = actor
-meet = no_meet
-
-[combat_ignore]
+cfg = scripts\generators\gen_last_boss_3.ltx
 END
 
 ; cse_visual properties
@@ -19768,32 +19008,7 @@ none = true
 cond = {+on_lab_swithc_dok_fin_spawn_two_talk}
 
 [logic]
-active = remark
-danger = danger_condition
-combat_ignore = combat_ignore
-
-[remark]
-anim = wait
-target = actor
-meet = no_meet
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-on_timer = 9900 | walker
-
-[walker]
-path_walk = boss_two_talkshit
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-meet = no_meet
-
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[combat_ignore]
-
-
-
+cfg = scripts\generators\gen_last_boss_2.ltx
 END
 
 ; cse_visual properties
@@ -19914,59 +19129,7 @@ cond = {+oso_killed}
 [dont_spawn_loot]
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-on_hit = on_hit@agr_factory_hold_fake
-
-[on_hit@agr_factory_hold_fake]
-on_info = {=hit_by_actor} %=ac_hit_gen_durik%
-
-[remark]
-anim = ragdol_anomaly_electra
-combat_ignore_keep_when_attacked = true
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-on_signal = action_end | %=boss_dance_boom_black1% remark2
-on_timer = 11600 | %=boss_dance_boom_black1% remark2
-meet = no_meet
-
-[remark2]
-anim = ragdol_anomaly_jarka
-combat_ignore_keep_when_attacked = true
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-on_signal = action_end | %=boss_dance_boom_black2% remark3
-on_timer = 10600 | %=boss_dance_boom_black2% remark3
-meet = no_meet
-
-[remark3]
-anim = ragdol_anomaly_puh
-combat_ignore_keep_when_attacked = true
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-on_signal = action_end | %=boss_dance_boom_black3% remark4
-on_timer = 12600 | %=boss_dance_boom_black3% remark4
-meet = no_meet
-
-[remark4]
-anim = ragdol_burst_front
-combat_ignore_keep_when_attacked = true
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-on_signal = action_end | %=boss_dance_boom_black4% remark5
-on_timer = 500 | %=boss_dance_boom_black4% remark5
-meet = no_meet
-
-[remark5]
-anim = konvulsii
-combat_ignore_keep_when_attacked = true
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-meet = no_meet
-
-[combat_ignore]
+cfg = scripts\generators\gen_last_boss_1.ltx
 END
 
 ; cse_visual properties
@@ -20026,16 +19189,7 @@ none = true
 cond = {+chhose_tri_way_gen_fin_city}
 
 [logic]
-active = walker
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[walker]
-path_walk = cirygen_rush_way
-meet = no_meet
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
+cfg = scripts\generators\gen_ending_three_way_hero_city.ltx
 END
 
 ; cse_visual properties
@@ -20094,17 +19248,7 @@ none = true
 cond = {+jaba_gen_dialog_talked}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = psy_pain
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[combat_ignore]
+cfg = scripts\generators\gen_ending_hero_after_toad_talking.ltx
 END
 
 ; cse_visual properties
@@ -20163,19 +19307,7 @@ none = true
 cond = {+gen_ecs_talkedd}
 
 [logic]
-active = walker
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[walker]
-path_walk = genjaba_ruh_way
-meet = no_meet
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-
-[combat_ignore]
+cfg = scripts\generators\gen_ending_hero_before_toad_talking.ltx
 END
 
 ; cse_visual properties
@@ -20235,17 +19367,7 @@ none = true
 cond = {+gen_two_door_open_spusk}
 
 [logic]
-active = remark
-combat_ignore_cond = always
-on_hit = on_hit@agr_factory_hold_fake
-
-[on_hit@agr_factory_hold_fake]
-on_info = {=hit_by_actor} %=kill_actor_psy%
-
-[remark]
-anim = wait
-no_move = true
-combat_ignore_cond = always
+cfg = scripts\generators\gen_hologramma.ltx
 END
 
 ; cse_visual properties
@@ -20305,21 +19427,7 @@ none = true
 cond = {+gen_posthum_strelok_spawn}
 
 [logic]
-active = walker@start
-combat_ignore = combat_ignore
-danger = danger_condition
-
-[walker@start]
-path_walk = gen_posthum_strelok_walk
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
+cfg = scripts\generators\gen_ending_posthuman_hero.ltx
 END
 
 ; cse_visual properties
@@ -20379,41 +19487,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = wait
-combat_ignore_cond = always
-meet = meet@assistant
- 
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-
-[meet@assistant]
-meet_state = 10|wait|2|hello
-meet_state_wpn = 10|wait
-victim 			= 5 | actor
-victim_wpn 		= 5 | actor
-meet_dialog = final_olr
-use			= true
-use_wpn		= true
-abuse       = true
-
+cfg = scripts\generators\gen_ending_scientist_assistant.ltx
 END
 
 ; cse_visual properties
@@ -20473,36 +19547,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = threat
-target = actor
-combat_ignore_cond = always
-meet = meet@assi
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[meet@assi]
-use			= false
-use_wpn		= false
-abuse       = false
-
+cfg = scripts\generators\gen_ending_stalker_exo.ltx
 END
 
 ; cse_visual properties
@@ -20562,36 +19607,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = threat
-target = actor
-combat_ignore_cond = always
-meet = meet@assi
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[meet@assi]
-use			= false
-use_wpn		= false
-abuse       = false
-
+cfg = scripts\generators\gen_ending_stalker_exo.ltx
 END
 
 ; cse_visual properties
@@ -20651,36 +19667,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = threat
-target = actor
-combat_ignore_cond = always
-meet = meet@assi
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[meet@assi]
-use			= false
-use_wpn		= false
-abuse       = false
-
+cfg = scripts\generators\gen_ending_stalker_exo.ltx
 END
 
 ; cse_visual properties
@@ -20740,36 +19727,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = threat
-target = actor
-combat_ignore_cond = always
-meet = meet@assi
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[meet@assi]
-use			= false
-use_wpn		= false
-abuse       = false
-
+cfg = scripts\generators\gen_ending_stalker_exo.ltx
 END
 
 ; cse_visual properties
@@ -20829,36 +19787,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = threat
-target = actor
-combat_ignore_cond = always
-meet = meet@assi
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[meet@assi]
-use			= false
-use_wpn		= false
-abuse       = false
-
+cfg = scripts\generators\gen_ending_stalker_exo.ltx
 END
 
 ; cse_visual properties
@@ -20918,36 +19847,7 @@ none = true
 cond = {+oso_killed_actor_visel}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-danger = danger_condition
-on_hit = hit
-on_death = death
-
-[hit]
-on_info = {=hit_by_actor} %+olr_ending_enemy_guys%
-
-[death]
-on_info = {=killed_by_actor} %+olr_ending_enemy_guys%
- 
-[remark]
-anim = threat
-target = actor
-combat_ignore_cond = always
-meet = meet@assi
-
-[combat_ignore]
-combat_ignore_cond = always
- 
-[danger_condition]
-ignore_distance = 0
-ignore_distance_corpse = 0
-
-[meet@assi]
-use			= false
-use_wpn		= false
-abuse       = false
-
+cfg = scripts\generators\gen_ending_stalker_exo.ltx
 END
 
 ; cse_visual properties
@@ -22467,39 +21367,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-
-[combat_ignore]
-
-[remark]
-anim = search
-target = actor
-no_move = true
-combat_ignore_cond = {!fighting_actor}
-on_info = {+warlab_dok_go_one} walker1
-
-[walker1]
-path_walk = gottha_board_way
-combat_ignore_cond = {!fighting_actor}
-meet = no_meet
-on_signal = priseldokone | %+go_na_proverku_warlab% remark2
-
-[remark2]
-anim = button
-no_move = true
-no_rotate = true
-combat_ignore_cond = {!fighting_actor}
-meet = no_meet
-on_signal = action_end | walker2
-
-[walker2]
-path_walk = gottha_board_away_way
-combat_ignore_cond = {!fighting_actor}
-meet = no_meet
-on_signal = priseldokonedva | remark2
-
-[dont_spawn_character_supplies]
+cfg = scripts\generators\gen_scientist_1.ltx
 END
 
 ; cse_visual properties
@@ -22555,43 +21423,11 @@ custom_data = <<END
 [smart_terrains] 
 none = true
 
-[dont_spawn_character_supplies]
-
 [spawner]
 cond = {+warlab_first_zahod}
 
 [logic]
-active = walker@walk1
-combat_ignore = combat_ignore
-
-[combat_ignore]
-
-[walker@walk1]
-path_walk = agr_ds_digger_walk
-path_look = agr_ds_digger_look
-def_state_standing = guard
-meet = no_meet
-combat_ignore_cond = {!fighting_actor}
-on_info = {+go_na_proverku_warlab} walker@walk2
-
-[walker@walk2]
-path_walk = osistentwalk
-meet = no_meet
-combat_ignore_cond = {!fighting_actor}
-on_signal = zalll| remark2
-
-[remark2]
-anim = button
-no_move = true
-no_rotate = true
-meet = no_meet
-combat_ignore_cond = {!fighting_actor}
-on_signal = action_end | walker@walk3
-
-[walker@walk3]
-path_walk = gottha_board_away_way
-meet = no_meet
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientist_assistant.ltx
 END
 
 ; cse_visual properties
@@ -25214,18 +24050,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-meet = no_meet
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientists.ltx
 END
 
 ; cse_visual properties
@@ -25281,24 +24106,11 @@ custom_data = <<END
 [smart_terrains] 
 none = true
 
-[dont_spawn_character_supplies]
-
 [spawner]
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-meet = no_meet
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientists.ltx
 END
 
 ; cse_visual properties
@@ -25360,18 +24172,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-meet = no_meet
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientists.ltx
 END
 
 ; cse_visual properties
@@ -25433,18 +24234,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-meet = no_meet
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientists.ltx
 END
 
 ; cse_visual properties
@@ -25506,18 +24296,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-meet = no_meet
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientists.ltx
 END
 
 ; cse_visual properties
@@ -25579,17 +24358,7 @@ none = true
 cond = {+warlab_first_zahod}
 
 [logic]
-active = remark
-combat_ignore = combat_ignore
-combat_ignore_cond = always
-combat_ignore_keep_when_attacked = true
-
-[remark]
-anim = ward
-meet = no_meet
-combat_ignore = combat_ignore
-combat_ignore_keep_when_attacked = true
-combat_ignore_cond = {!fighting_actor}
+cfg = scripts\generators\gen_scientists.ltx
 END
 
 ; cse_visual properties
@@ -25649,10 +24418,7 @@ cond = {+warlab_cutscene1_go}
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = walk1_wlab_walk
+cfg = scripts\generators\gen_zombied_2.ltx
 END
 
 ; cse_visual properties
@@ -25711,10 +24477,7 @@ cond = {+warlab_cutscene1_go}
 none = true
 
 [logic]
-active = walker
-
-[walker]
-path_walk = walk2_wlab_walk
+cfg = scripts\generators\gen_zombied_1.ltx
 END
 
 ; cse_visual properties

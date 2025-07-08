@@ -4941,16 +4941,40 @@ function gen_talk_9()
 	news_manager.send_tip(db.actor, game.translate_string("gen_talk_9_0"), nil, "unknown", 20000)
 end
 
+function enable_level_changer(actor, npc, p)
+	if(p[1]~=nil) then
+        local obj = level_object_by_sid(tonumber(p[1]))
+        if(obj) then
+			if db.storage[obj:id()] and db.storage[obj:id()].s_obj then
+	            db.storage[obj:id()].s_obj.enabled = true
+    	        db.storage[obj:id()].s_obj.hint = "level_changer_invitation"
+			else
+				return
+			end
+            obj:enable_level_changer(true)
+            level_tasks.add_lchanger_location()
+            obj:set_level_changer_invitation("level_changer_invitation")
+		end
+	end
+end
 
-
-
-
-
-
-
-
-
-
-
-
-
+function disable_level_changer(actor, npc, p)
+	if(p[1]~=nil) then
+        local obj = level_object_by_sid(tonumber(p[1]))
+        if(obj) then
+			if not(db.storage[obj:id()] and db.storage[obj:id()].s_obj) then
+				return
+			end
+            obj:enable_level_changer(false)
+            level_tasks.del_lchanger_mapspot(tonumber(p[1]))
+			db.storage[obj:id()].s_obj.enabled = false
+            if(p[2]==nil) then
+                obj:set_level_changer_invitation("level_changer_disabled")
+				db.storage[obj:id()].s_obj.hint = "level_changer_disabled"
+            else
+                obj:set_level_changer_invitation(p[2])
+				db.storage[obj:id()].s_obj.hint = p[2]
+            end
+        end
+	end
+end

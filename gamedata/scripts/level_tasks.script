@@ -72,7 +72,35 @@ function is_map_spot_present(sid, location)
 	end
 	return false
 end
-  
+
+function set_lchanger_mapspot(obj, hint)
+    if obj then
+		local spot = "level_changer" -- нам не нужны переходы со стрелочками как в ЧН, пока что
+		local obj_id = obj.id
+        local ce_obj = level.object_by_id(obj_id)
+        if ce_obj then
+			--if ce_obj:is_level_changer_enabled() then
+				if level.map_has_object_spot(obj_id, spot) == 0 then
+					level.map_add_object_spot(obj_id, spot, hint)
+				end
+			--end
+        else
+			if level.map_has_object_spot(obj_id, spot) == 0 then
+				level.map_add_object_spot(obj_id, spot, hint)
+			end
+        end
+    end
+end
+
+function del_lchanger_mapspot(sid)
+    local ce_obj = level_object_by_sid(sid)
+    if ce_obj then
+		local spot = "level_changer"
+		if level.map_has_object_spot(ce_obj:id(), spot) ~= 0 then
+            level.map_remove_object_spot(ce_obj:id(), spot)
+        end
+    end
+end
 
 function add_lchanger_location()
 	if not alife() then
@@ -84,228 +112,222 @@ function add_lchanger_location()
 		-- escape
 		local obj = sim:story_object(701)
 		if obj and has_alife_info("kv_4_done_go_timer") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl1_escape_level_changer")
+			set_lchanger_mapspot(obj, "lvl1_escape_level_changer")
 		end
 
 		-- garbage
 		obj = sim:story_object(193)
 		if obj and has_alife_info("gar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl2_garbage_level_changer")
+			set_lchanger_mapspot(obj, "lvl2_garbage_level_changer")
 		end
 		obj = sim:story_object(191)
 		if obj and has_alife_info("gar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl2_garbage_level_changer_0002")
+			set_lchanger_mapspot(obj, "lvl2_garbage_level_changer_0002")
 		end
 		obj = sim:story_object(192)
 		if obj and has_alife_info("gar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl2_garbage_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl2_garbage_level_changer_0000")
 		end
 		obj = sim:story_object(194)
 		if obj and has_alife_info("gar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl2_garbage_level_changer_0003")
+			set_lchanger_mapspot(obj, "lvl2_garbage_level_changer_0003")
 		end
 		obj = sim:story_object(196)
 		if obj and has_alife_info("gar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl2_garbage_level_changer_0004")
+			set_lchanger_mapspot(obj, "lvl2_garbage_level_changer_0004")
 		end
 		obj = sim:story_object(195)
 		if obj and has_alife_info("gar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl2_garbage_level_changer_0001")
+			set_lchanger_mapspot(obj, "lvl2_garbage_level_changer_0001")
 		end
 		
 		-- agroprom
 		obj = sim:story_object(391)
 		if obj and has_alife_info("agr_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl3_agroprom_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl3_agroprom_level_changer_0000")
 		end
 
 		obj = sim:story_object(392)
 		if obj and has_alife_info("agr_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl3_agroprom_level_changer")
+			set_lchanger_mapspot(obj, "lvl3_agroprom_level_changer")
 		end
 
 		obj = sim:story_object(5432)
 		if obj and has_alife_info("agr_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl3_agroprom_level_changer_0001")
+			set_lchanger_mapspot(obj, "lvl3_agroprom_level_changer_0001")
 		end
 
-                obj = sim:story_object(1007)
+		--radar
+		obj = sim:story_object(1007)
 		if obj and has_alife_info("rad_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl10_radar_level_changer_0001")
+			set_lchanger_mapspot(obj, "lvl10_radar_level_changer_0001")
 		end
 
 		obj = sim:story_object(1008)
 		if obj and has_alife_info("rad_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl10_radar_level_changer")
+			set_lchanger_mapspot(obj, "lvl10_radar_level_changer")
 		end
 
 		obj = sim:story_object(1090)
 		if obj and has_alife_info("rad_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl10_radar_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl10_radar_level_changer_0000")
 		end
 
 
-
-
-
-                obj = sim:story_object(833)
+		--pripyat
+		obj = sim:story_object(833)
 		if obj and has_alife_info("prp_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl13_prip_level_changer")
+			set_lchanger_mapspot(obj, "lvl13_prip_level_changer")
 		end
 
 		obj = sim:story_object(832)
 		if obj and has_alife_info("prp_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl13_prip_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl13_prip_level_changer_0000")
 		end
 
 
-
-                obj = sim:story_object(432)
+		--deadcity
+		obj = sim:story_object(432)
 		if obj and has_alife_info("dec_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl11_deadcity_level_changer_0001")  -- to mill
+			set_lchanger_mapspot(obj, "lvl11_deadcity_level_changer_0001")  -- to mill
 		end
 
 		obj = sim:story_object(433)
 		if obj and has_alife_info("dec_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl11_deadcity_level_changer") -- to yan
+			set_lchanger_mapspot(obj, "lvl11_deadcity_level_changer") -- to yan
 		end
 
 
-
-
-
-               	obj = sim:story_object(829)
+		--generators
+		obj = sim:story_object(829)
 		if obj and has_alife_info("stan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl16_generators_level_changer")
+			set_lchanger_mapspot(obj, "lvl16_generators_level_changer")
 		end
 
-                obj = sim:story_object(5480)
+		obj = sim:story_object(5480)
 		if obj and has_alife_info("stan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "level_prefix_level_changer_glue")
+			set_lchanger_mapspot(obj, "level_prefix_level_changer_glue")
 		end
 
-                obj = sim:story_object(5431)
+		-- yantar
+		obj = sim:story_object(925)
 		if obj and has_alife_info("yan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl7_yantar_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl7_yantar_level_changer")
+		end
+		obj = sim:story_object(18021)
+		if obj and has_alife_info("yan_first") then
+			set_lchanger_mapspot(obj, "lvl7_yantar_level_changer_0001")
+		end
+		obj = sim:story_object(5431)
+		if obj and has_alife_info("yan_first") then
+			set_lchanger_mapspot(obj, "lvl7_yantar_level_changer_0000")
 		end
 
 		obj = sim:story_object(5430)
 		if obj and has_alife_info("yan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl7_yantar_level_changer_0002")
+			set_lchanger_mapspot(obj, "lvl7_yantar_level_changer_0002")
 		end
 
+		--stancia
 		obj = sim:story_object(5479)
 		if obj and has_alife_info("stan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl14_stancia_level_changer_0001")
+			set_lchanger_mapspot(obj, "lvl14_stancia_level_changer_0001")
 		end
 
 		obj = sim:story_object(5478)
 		if obj and has_alife_info("stan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl14_stancia_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl14_stancia_level_changer_0000")
 		end
 
 		obj = sim:story_object(5477)
 		if obj and has_alife_info("stan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl14_stancia_level_changer")
+			set_lchanger_mapspot(obj, "lvl14_stancia_level_changer")
 		end
 
+		--darkvalley
 		obj = sim:story_object(415)
 		if obj and has_alife_info("dol_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl4_darkdolina_level_changer")
+			set_lchanger_mapspot(obj, "lvl4_darkdolina_level_changer")
 		end
 
 		obj = sim:story_object(416)
 		if obj and has_alife_info("dol_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl4_darkdolina_level_changer_0001")
+			set_lchanger_mapspot(obj, "lvl4_darkdolina_level_changer_0001")
 		end
 
 		obj = sim:story_object(417)
 		if obj and has_alife_info("dol_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl4_darkdolina_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl4_darkdolina_level_changer_0000")
 		end
 
+		--rostok
 		obj = sim:story_object(591)
 		if obj and has_alife_info("ros_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl6_rostok_level_changer")
+			set_lchanger_mapspot(obj, "lvl6_rostok_level_changer")
 		end
 
+		--bar
 		obj = sim:story_object(592)
 		if obj and has_alife_info("bar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl5_bar_level_changer_0001")
+			set_lchanger_mapspot(obj, "lvl5_bar_level_changer_0001")
 		end
 
 		obj = sim:story_object(593)
 		if obj then
-			level.map_add_object_spot(obj.id, "level_changer", "level_prefix_level_changer")
+			set_lchanger_mapspot(obj, "level_prefix_level_changer")
 		end
 
 		obj = sim:story_object(594)
 		if obj and has_alife_info("bar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl5_bar_level_changer")
+			set_lchanger_mapspot(obj, "lvl5_bar_level_changer")
 		end
                  
-               obj = sim:story_object(706)
+		obj = sim:story_object(706)
 		if obj and has_alife_info("bar_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl5_bar_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl5_bar_level_changer_0000")
 		end
 
-               obj = sim:story_object(3001)
+		--swamp
+		obj = sim:story_object(3001)
 		if obj and has_alife_info("dec_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "from_dc_to_swamp")
+			set_lchanger_mapspot(obj, "from_dc_to_swamp")
 		end
 
+		obj = sim:story_object(18023)
+		if obj and has_alife_info("swp_first") then
+			set_lchanger_mapspot(obj, "lvl8_swamp_level_changer")
+		end
+
+		obj = sim:story_object(18020)
+		if obj and has_alife_info("swp_first") then
+			set_lchanger_mapspot(obj, "lvl8_swamp_level_changer_0000")
+		end
+
+		obj = sim:story_object(18020)
+		if obj and has_alife_info("swp_first") then
+			set_lchanger_mapspot(obj, "lvl8_swamp_level_changer_0000")
+		end
+
+		--military
 		obj = sim:story_object(771)
 		if obj and has_alife_info("mil_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl10_military_level_changer")
+			set_lchanger_mapspot(obj, "lvl10_military_level_changer")
 		end
 		obj = sim:story_object(772)
 		if obj and has_alife_info("mil_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl9_military_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl9_military_level_changer_0000")
 			end
 		end
 		obj = sim:story_object(773)
 		if obj and has_alife_info("mil_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl9_military_level_changer")
-		end
-		
-		-- yantar
-		obj = sim:story_object(925)
-		if obj and has_alife_info("yan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl7_yantar_level_changer")
-		end
-		
-		-- с Янтаря на болота
-
-		obj = sim:story_object(18021)
-		if obj and has_alife_info("yan_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl7_yantar_level_changer_0001")
-		end
-
-		-- с болота на янтарь
-
-		obj = sim:story_object(18023)
-		if obj and has_alife_info("swp_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl8_swamp_level_changer")
-		end
-
-		-- с болота на МГ
-
-		obj = sim:story_object(18020)
-		if obj and has_alife_info("swp_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl8_swamp_level_changer_0000")
-		end
-
-
-		obj = sim:story_object(18020)
-		if obj and has_alife_info("swp_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "lvl8_swamp_level_changer_0000")
+			set_lchanger_mapspot(obj, "lvl9_military_level_changer")
 		end
 
  ------------------------------------------------------------------------------------------------------------------------------------------------ 
 
 		obj = sim:story_object(18032) --- to radar
 		if obj and has_alife_info("lvl12_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "level12_level_changer")
+			set_lchanger_mapspot(obj, "level12_level_changer")
 		end
 
 
@@ -313,18 +335,19 @@ function add_lchanger_location()
 
 		obj = sim:story_object(18033) --- to prip
 		if obj and has_alife_info("lvl12_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "level12_level_changer_0000")
+			set_lchanger_mapspot(obj, "level12_level_changer_0000")
 		end
 
  ----------------------------------------------
 
 		obj = sim:story_object(18034) --- to chaes
 		if obj and has_alife_info("lvl12_first") then
-			level.map_add_object_spot(obj.id, "level_changer", "level12_level_changer_0001")
+			set_lchanger_mapspot(obj, "level12_level_changer_0001")
 		end
 
 
  ------------------------------------------------------------------------------------------------------------------------------------------------
+end
 
 function set_task_state(id_state, id_task, id_subtask)
 	if db.actor then
@@ -333,5 +356,4 @@ function set_task_state(id_state, id_task, id_subtask)
 end
 
 function notify_new_task()
-end
 end

@@ -10,24 +10,19 @@ end
 
 
 function ui_best_stalkers:InitControls()
- self:Init(335,5,675,266)
+ self:Init(335,5,1024,768)
+	local xml = CScriptXmlInit()
+	if xml:is_16_9_mode() then
+		xml:ParseFile("flyer\\best_stalkers_16.xml")
+	else
+		xml:ParseFile("flyer\\best_stalkers.xml")
+	end
 
-    	-- фон
-    	self.back = CUIStatic()
-    	self.back:Init(0,0,675,266)
-    	self.back:InitTexture("ui\\ui_dg_inventory_tab")
-   	self.back:SetOriginalRect(0,0,675,768)
-	self:AttachChild(self.back)
+    self.back = xml:InitStatic("background", self)
 		
-	self.help_vopros = CUIStatic()
-	self.help_vopros:Init(5,5,200,10)
-        self.help_vopros:SetText(game.translate_string("st_ui_best_stalker_stalker_rating"))
-	self.help_vopros:SetFont(GetFontGraffiti22Russian())
-	self.help_vopros:SetTextAlign(CGameFont.alCenter)
-	self.help_vopros:SetTextColor(255,255,255,255)
-	self.back:AttachChild(self.help_vopros)
-	
-	local wth = 28
+	self.help_vopros = xml:InitStatic("help_vopros", self.back)
+    self.main = xml:InitScrollView("list_wnd", self)
+
 	local st_id = 0
 
 	local addItm = 35
@@ -66,23 +61,14 @@ function ui_best_stalkers:InitControls()
 				if pk:isOk() then
 					local data = pk:get()
 					local name = data.character_name
-					local fName = ""..name..""
+					local rank = data.rank
 
-    					self.no = CUIStatic()
-   					self.no:SetAutoDelete(true)
-    					self.no:Init(72,wth,133,25)
-					self.no:InitTexture("ui\\flyer\\ui_verst_list2")
-					self.no:SetOriginalRect(46,296,133,25)
-					self.no:SetStretchTexture(true)
-					self.no:SetText(string.format(fName))
-					self.no:SetFont(GetFontGraffiti22Russian())
-					self.no:SetTextColor(255,255,255,255)
-    					self:Register(self.no,"no")
-					self.back:AttachChild(self.no)
-    					self:AddCallback("no",ui_events.BUTTON_DOWN,self.n,self)
+    				self.no = xml:InitStatic("static_number", self.main)
+					self.no:SetText(string.format("%s  (%d)",name, rank))
+    				self:Register(self.no,"no")
+    				self:AddCallback("no",ui_events.BUTTON_DOWN,self.n,self)
 
 					st_id = st_id + 1
-					wth = wth + 12
 
 
 				end

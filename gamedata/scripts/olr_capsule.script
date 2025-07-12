@@ -48,6 +48,7 @@ class "ui_capsule" (CUIScriptWnd)
 function ui_capsule:__init(owner) super()
  	self.owner = owner
 	self:InitControls()
+	self:InitCallBacks()
 end
 
 function ui_capsule:InitControls()
@@ -59,6 +60,15 @@ function ui_capsule:InitControls()
 	self.back:InitTexture("ui\\flyer\\ui_dg_inventory_arc")
 	self.back:SetOriginalRect(0,0,675,768)
 	self:AttachChild(self.back)
+	
+    --  нопка выхода
+    self.exit_btn = CUI3tButton()
+    self.exit_btn:Init(600, 5, 70, 25)
+    self.exit_btn:SetText((game.translate_string("st_olr_capsule_exit"))
+    self.exit_btn:SetFont(GetFontGraffiti22Russian())
+    self.exit_btn:SetTextColor(255,255,255,255)
+    self:Register(self.exit_btn, "exit_button")
+    self.back:AttachChild(self.exit_btn)	
 		
 	self.inventory = CUIStatic()
 	self.inventory:Init(5,5,200,10)
@@ -79,6 +89,10 @@ function ui_capsule:InitControls()
 
 	self:try_add_inv_arts()
 	self:try_add_cap_arts()
+end
+
+function ui_capsule:InitCallBacks()
+    self:AddCallback("exit_button", ui_events.BUTTON_CLICKED, self.OnButton_exit_button, self)
 end
 
 function ui_capsule:try_add_inv_arts()
@@ -109,14 +123,15 @@ function ui_capsule:add_cap_arts()
 	if box then
 		for i = 0, box:inv_box_count() - 1 do
 			local obj = box:object_from_inv_box(i)
-			if obj and IsArtefact(obj) then
+			if obj and isArtefact(obj) then
 				--log1("box - "..box:name().." has item - "..obj:name().."")
 		
-				local fName = ""..obj:get_name()..""
+				local fName = ""
 				if system_ini():line_exist(obj:section(), "known_info") then
 					local known_inf = system_ini():r_string(obj:section(), "known_info")
-					if not has_alife_info(known_inf) then
-						fName = "ui_st_unknown_art_name"
+					local known_inf_desc = game.translate_string(known_inf)
+					if not has_alife_info(known_inf_desc) then
+						fName = game.translate_string("ui_st_unknown_art_name")
 					else
 						fName = ""..obj:get_name()..""
 					end
@@ -164,7 +179,7 @@ function ui_capsule:add_inv_arts()
 
 	-- перебор и заполнение инвентори
 	local calc = function(npc, obj)
-		if obj ~= nil and IsArtefact(obj) and db.actor:is_in_ruck(obj) then
+		if obj ~= nil and isArtefact(obj) and db.actor:is_in_ruck(obj) then
 			if obj:section() == "af_studen" or obj:section() == "af_ameba_slime" or obj:section() == "af_ameba_slug" or obj:section() == "af_electra_sparkler" or obj:section() == "af_electra_flash" then
 				--local cond = obj:condition() * 100 
 				--local condname = ""..string.format("%1.0f", cond).."%"
@@ -172,8 +187,9 @@ function ui_capsule:add_inv_arts()
 				local fName = ""..obj:get_name()..""
 				if system_ini():line_exist(obj:section(), "known_info") then
 					local known_inf = system_ini():r_string(obj:section(), "known_info")
-					if not has_alife_info(known_inf) then
-						fName = "ui_st_unknown_art_name"
+					local known_inf_desc = game.translate_string(known_inf)
+					if not has_alife_info(known_inf_desc) then
+						fName = game.translate_string("ui_st_unknown_art_name")
 					else
 						fName = ""..obj:get_name()..""
 					end
@@ -211,14 +227,19 @@ function ui_capsule:add_inv_arts()
 			end
 		end
 	end
-	if st_id > 0 then
-		db.actor:iterate_inventory(calc, db.actor)
-	end
+	db.actor:iterate_inventory(calc, db.actor)   
 end
 
 function ui_capsule:Hide()
 	self:GetHolder():start_stop_menu(self, true)
-	log1("close capsule")
+end
+
+function ui_capsule:OnButton_exit_button()
+	local inv_window = level.main_input_receiver()
+	if inv_window and inv_window:IsShown() then
+		level.start_stop_menu(inv_window,true)
+	end
+	hide_curent_capsule()
 end
 
 function ui_capsule:OnKeyboard(dik, keyboard_action)
@@ -264,7 +285,7 @@ function CButtonDataCap:OnPressCap()
 	self.back = CUIStatic()
 	self.wind:AttachChild(self.back)
 	self.back:Init(145,395,50,50)
-	self.back:InitTexture("ui\\ui_icon_equipment")
+	self.back:InitTexture("ui\\icons\\icons_equipment")
 	self.back:SetOriginalRect(x, y, 50, 50)
 	self.back:SetStretchTexture(true)
 	local wait_time = 0
@@ -321,7 +342,7 @@ function CButtonData:OnPress()
 	self.back = CUIStatic()
 	self.wind:AttachChild(self.back)
 	self.back:Init(145,395,50,50)
-	self.back:InitTexture("ui\\ui_icon_equipment")
+	self.back:InitTexture("ui\\icons\\icons_equipment")
 	self.back:SetOriginalRect(x, y, 50, 50)
 	self.back:SetStretchTexture(true)
 	local wait_time = 0
@@ -392,32 +413,3 @@ function GetInvPos(section)
 	local y = ini:r_s32(section, "inv_grid_y")*50
 	return x, y
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

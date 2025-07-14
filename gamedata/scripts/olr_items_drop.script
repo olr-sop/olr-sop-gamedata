@@ -2,17 +2,10 @@
 
 function drop_item(obj)
 
-	if obj and obj:section() == "capsule_rone" then
-		if has_alife_info("ui_car_body") or has_alife_info("ui_trade") then return end
-		--olr.add_spot_on_map( obj:id(),"crlc_mdl", "Îsdfdsf..." )
-		local pos = db.actor:position()
-		pos.y = pos.y + 1
-		--level.object_by_id(obj:id()):set_position(pos)
-		alife():teleport_object(obj:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), pos)
-	end
-
-        if obj:section() == "zameritel_vibrosa" then
-		if device().precache_frame >1 then return end 
+	if obj:section() == "zameritel_vibrosa" then
+		if device().precache_frame >1 then
+			return
+		end 
 		if db.actor:is_actor_outdoors() == false then
 			news_manager.send_tip(db.actor, game.translate_string("drop_item_0"), nil, "default", 39000)
 			return
@@ -25,41 +18,38 @@ function drop_item(obj)
 			news_manager.send_tip(db.actor, game.translate_string("drop_item_2"), nil, "default", 39000)
 			return
 		end
-                if not has_alife_info("zameritel_vibrosa_has_result") and has_alife_info("olr_blowout_phase_2") then
+				if not has_alife_info("zameritel_vibrosa_has_result") and has_alife_info("olr_blowout_phase_2") then
 			news_manager.send_tip(db.actor, game.translate_string("drop_item_3"), 5, "default", 39000)
 			local song_start = xr_sound.get_safe_sound_object([[anomaly\burning_fuzz_hit]])
 			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
-	        	olr.info("zameritel_vibrosa_has_result")
+				olr.info("zameritel_vibrosa_has_result")
 		end
 	end
 
-        if obj:section() == "give_yashik_kvest_1_item" then 
-                if has_alife_info("esc_olr_1_have_pre") then
-	        	olr.info("esc_olr_1_have")
+	if obj:section() == "give_yashik_kvest_1_item" then 
+		if has_alife_info("esc_olr_1_have_pre") then
+			olr.info("esc_olr_1_have")
 		end
 	end
 
- 	if obj:section() == "af_magnet_drop_q1" then 
+	if obj:section() == "af_magnet_drop_q1" then 
 		for i=1,65535 do
 			local anom = level.object_by_id(i)
-                          if anom ~= nil and anom:is_anomaly() and 
-                                  anom:clsid()==clsid.zone_mbald_s and
-                                  anom:position():distance_to(db.actor:position()) < 10 then
-                                  level.add_pp_effector("blink.ppe", 20131, false) 
-                                  olr.del(obj)
-				  alife():create("af_magnet_drop_q2", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-				  --alife():create("af_magnet_drop_q2", anom:position(), anom:level_vertex_id(), anom:game_vertex_id())
+			if anom ~= nil and anom:is_anomaly() and anom:clsid()==clsid.zone_mbald_s and anom:position():distance_to(db.actor:position()) < 10 then
+				level.add_pp_effector("blink.ppe", 20131, false) 
+				olr.del(obj)
+				alife():create("af_magnet_drop_q2", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+				--alife():create("af_magnet_drop_q2", anom:position(), anom:level_vertex_id(), anom:game_vertex_id())
 				break
 			elseif i == 65535 then
 				return
-								
 			end
 		end
 	end
 
-        if obj:section() == "pribor_primanka_mg" then 
-                if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0025"}))  then
-	        	olr.info("mg_spawen_raz_boloto")
+	if obj:section() == "pribor_primanka_mg" then 
+		if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0025"}))  then
+			olr.info("mg_spawen_raz_boloto")
 			alife():create("karlito_yellow", db.actor:position():add(db.actor:direction():mul(-5)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 			level.add_pp_effector("blink.ppe", 2560131, false)
 			nick.phantasms_zombies()

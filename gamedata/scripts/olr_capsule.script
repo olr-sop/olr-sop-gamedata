@@ -12,36 +12,6 @@ local curent_inv_box_id = -1
 
 
 function use(obj)
-	if obj and obj:section() == "capsule_rone" then
-		bind_stalker.hide_weapon()
-		snd_open_capsule()
-		local gv = db.actor:game_vertex_id()
-		local lv = db.actor:level_vertex_id()
-		local pos = db.actor:position()
-		local dir = db.actor:direction()
-		pos = pos:add(dir:mul(0.5))
-		pos.y = pos.y - 2 
-		if not xvars.capsules[obj:name()] then
-			local capsule = alife():create("box_capsule", pos, lv, gv)
-			xvars.capsules[obj:name()] = capsule.id
-			if capsule and capsule.id then
-				olr.hide_inv()
-				level.start_stop_menu(this.ui_capsule(),true)
-				curent_open_id = capsule.id
-				curent_inv_box_id = obj:id()
-			end
-		elseif xvars.capsules[obj:name()] then
-			local sobj = xvars.capsules[obj:name()]
-			local objid = alife():object(sobj)
-			alife():teleport_object(objid.id, gv, lv, pos)
-			if objid then
-				olr.hide_inv()
-				level.start_stop_menu(this.ui_capsule(),true)
-				curent_open_id = objid.id
-				curent_inv_box_id = obj:id()
-			end
-		end
-	end
 end
 
 class "ui_capsule" (CUIScriptWnd)

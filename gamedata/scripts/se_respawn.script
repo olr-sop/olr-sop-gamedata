@@ -99,7 +99,7 @@ end
 
 function r_spawns( spawn_ini, section, line, sectSpawnProps)
 	if spawn_ini:line_exist( section, line ) then
-		--' если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
+		-- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
 		local t = parse_names( spawn_ini:r_string( section, line ) )
 		local n = table.getn( t )
 		
@@ -223,10 +223,10 @@ function se_respawn:on_register()
 	then
 		abort("RESPAWN: [%s] min_count > max_count", self:name())
 	end
-	--' FOR DEBUG ONLY, please don't forget to delete
-	--'if self.max_count > 0 then
-	--'	self.min_count = self.max_count
-	--'end
+	-- FOR DEBUG ONLY, please don't forget to delete
+	--if self.max_count > 0 then
+	--	self.min_count = self.max_count
+	--end
 	
 	self.max_spawn = r_num(ini, section_name, "max_spawn", 1)
 	self.idle_spawn_min, self.idle_spawn_max = r_2nums(ini, section_name, "idle_spawn")
@@ -237,7 +237,7 @@ function se_respawn:on_register()
 		self.idle_spawn_max = self.idle_spawn_min
 	end
 
-	--' Вычитка пресетов
+	-- Вычитка пресетов
 	if idle_spawn_preset[self.idle_spawn_min] ~= nil then
 		self.idle_spawn_min = idle_spawn_preset[self.idle_spawn_min]
 	else
@@ -253,7 +253,7 @@ function se_respawn:on_register()
 	self.conditions = xr_logic.parse_condlist(self, section_name, "conditions", self.str_conditions)
 	self.respawn_radius = r_num(ini, section_name, "respawn_radius", -1)
 
-	--' Спешкейс, чтобы сохранить совместимость сейвов.
+	-- Спешкейс, чтобы сохранить совместимость сейвов.
 	if self:name() == "mil_freedom_barier_respawn_1" then
 		self.respawn_radius = -1
 	end
@@ -270,7 +270,7 @@ function se_respawn:on_register()
 		respawners_by_parent[self.parent] = self
 	end
 
-	--' Отметка респавнера мапспотом (для статистики)
+	-- Отметка респавнера мапспотом (для статистики)
 	sim_statistic.register_respawn(self)
 end
 -- Создаем объект
@@ -288,37 +288,37 @@ function se_respawn:create(prob)
 		-- Производим рандомную взвешенную выборку
 		-- с учетом уже заспавленного количества человек.
 		for k,v in pairs(self.respawn_section) do
---'			local tt = self.sectSpawnProps[v.section]
---'			local community_rank = tt.community.."_"..tt.rank
---'			local s_count = simMaxCount[community_rank]
---'			if s_count == nil then
---'				s_count = 0
---'			end
---'			if tt.check == false or
---'			   self.item_spawn == true or
---'			   sim_statistic.simNpcCount(tt.community, tt.rank) < s_count
---'			then	
+--			local tt = self.sectSpawnProps[v.section]
+--			local community_rank = tt.community.."_"..tt.rank
+--			local s_count = simMaxCount[community_rank]
+--			if s_count == nil then
+--				s_count = 0
+--			end
+--			if tt.check == false or
+--			   self.item_spawn == true or
+--			   sim_statistic.simNpcCount(tt.community, tt.rank) < s_count
+--			then	
 				sum = sum + v.prob
---'			end
+--			end
 		end
 		sum = math.random(0, sum)
 		for k,v in pairs(self.respawn_section) do
---'			local tt = self.sectSpawnProps[v.section]
---'			local community_rank = tt.community.."_"..tt.rank
---'			local s_count = simMaxCount[community_rank]
---'			if s_count == nil then
---'				s_count = 0
---'			end			
---'			if tt.check == false or
---'			   self.item_spawn == true or
---'			   sim_statistic.simNpcCount(tt.community, tt.rank) < s_count 
---'			then	
+--			local tt = self.sectSpawnProps[v.section]
+--			local community_rank = tt.community.."_"..tt.rank
+--			local s_count = simMaxCount[community_rank]
+--			if s_count == nil then
+--				s_count = 0
+--			end			
+--			if tt.check == false or
+--			   self.item_spawn == true or
+--			   sim_statistic.simNpcCount(tt.community, tt.rank) < s_count 
+--			then	
 				sum = sum - v.prob			
 				if sum <= 0 then
 					spawn_section = v.section
 					break
 				end
---'			end
+--			end
 		end
 		
 		if spawn_section == "" then
@@ -442,8 +442,8 @@ function se_respawn:spawn()
 		end
 	end		
 end
---' Удаляем уже заспавненный объект из списка заспавненных
---' Используется только  для ящиком со шмотками в смарттеррейнах
+-- Удаляем уже заспавненный объект из списка заспавненных
+-- Используется только  для ящиком со шмотками в смарттеррейнах
 function se_respawn:remove_spawned(id)
 	for k,v in pairs(self.spawned_obj) do
 		if id == v then
@@ -455,7 +455,7 @@ end
 function se_respawn:execute()
 --	printf("RESPAWN: [%s] se_respawn execute", tostring(self:name()))
 	
-	--' Выходим, если у нас установлен событийный спавн.
+	-- Выходим, если у нас установлен событийный спавн.
 	if self.idle_spawn_min == -1 then
 		return
 	end
@@ -478,13 +478,13 @@ end
 -- Обновление в офлайне
 function se_respawn:update()
 	cse_alife_smart_zone.update( self )
-	--'printf("RESPAWN: [%s] se_respawn update_offline", tostring(self:name()))
+	--printf("RESPAWN: [%s] se_respawn update_offline", tostring(self:name()))
 	self:execute()
 end
 -- Обновление в онлайне
 function se_respawn:update_online()
-	--'cse_alife_smart_zone.update( self )
-	--'printf("RESPAWN: [%s] se_respawn update_online", tostring(self:name()))
+	--cse_alife_smart_zone.update( self )
+	--printf("RESPAWN: [%s] se_respawn update_online", tostring(self:name()))
 	if self.respawn_radius == -1 then
 		sim_statistic.respawn_enabled(self, false)
 		return

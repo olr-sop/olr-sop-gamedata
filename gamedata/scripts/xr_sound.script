@@ -124,8 +124,8 @@ function update(npc)
 	local key = get_key(npc)
 	local npc_id = npc:id()
 	
-	--' Если задана тема, то нужно играть ее.
-	--' Если не задана, то нужно играть idle, при условии что у нас нет врагов и денжеров.
+	-- Если задана тема, то нужно играть ее.
+	-- Если не задана, то нужно играть idle, при условии что у нас нет врагов и денжеров.
 	if db.sound[npc_id] ~= nil and db.sound[npc_id].snd == nil then
 		return 
 	end	
@@ -269,12 +269,12 @@ function process_tutor_on_sound(theme)
 end
 
 
---' Actor sound player
+-- Actor sound player
 local actor_sound = {}
 function set_actor_sound(sound)
 	printf("*ACTOR SND* try to change SND to [%s]", tostring(sound))
 	if actor_sound.theme ~= sound then
-		--' Туточки надобно распарсить имена тем в их id
+		-- Туточки надобно распарсить имена тем в их id
 		if sound == nil then sound = "" end		
 		actor_sound.theme = sound
 		actor_sound.begin = nil
@@ -304,7 +304,7 @@ function update_actor()
 	then
 		actor_sound.begin = time_global()
 		
-		--' Тут надо отыграть звук
+		-- Тут надо отыграть звук
 		local sound = theme.sounds[math.random(table.getn(theme.sounds))]
 		if sound ~= nil then
 			sound:play(db.actor, 0, sound_object.s2d)
@@ -316,9 +316,9 @@ end
 
 
 
---' Таблица для хранения созданных саунд обжектов.
+-- Таблица для хранения созданных саунд обжектов.
 sound_object_by_theme = {}
---' type = [random|seq|looped]
+-- type = [random|seq|looped]
 function get_sound_object(theme, t_type, stereo)
 	if sound_theme.ph_snd_themes[theme] == nil then
 		abort("ph_snd_themes for theme %s", tostring(theme))
@@ -333,7 +333,7 @@ function get_sound_object(theme, t_type, stereo)
 		t_type = "random"
 	end
 
-	--' Выбор следующего айдишника
+	-- Выбор следующего айдишника
 	local play_id = -1
 	local table_size = table.getn(sound_theme.ph_snd_themes[theme])
 	if sound_object_by_theme[theme].last_id == nil then
@@ -370,7 +370,7 @@ function get_sound_object(theme, t_type, stereo)
 	if play_id == -1 then
 		return
 	end
-	--' Проверяем создан ли у нас соответствующий саунд обжект или его надо создать
+	-- Проверяем создан ли у нас соответствующий саунд обжект или его надо создать
 	if sound_object_by_theme[theme][play_id] == nil then
 		if type(sound_theme.ph_snd_themes[theme][play_id]) == "table" then
 			if stereo then
@@ -386,7 +386,7 @@ function get_sound_object(theme, t_type, stereo)
 
 	sound_object_by_theme[theme].last_id = play_id
 
-	--' Возвращаем саунд обжект
+	-- Возвращаем саунд обжект
 	if type(sound_theme.ph_snd_themes[theme][play_id]) == "table" then
 		if stereo then
 			return sound_object_by_theme[theme][play_id]
@@ -399,7 +399,7 @@ function get_sound_object(theme, t_type, stereo)
 end
 
 local sound_object_by_path = {}
---' Обертка вокруг функции, возвращающий звуковой объект.
+-- Обертка вокруг функции, возвращающий звуковой объект.
 function get_safe_sound_object(path)
 	if sound_object_by_path[path] == nil then
 		sound_object_by_path[path] = sound_object(path)

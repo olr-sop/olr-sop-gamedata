@@ -21,14 +21,13 @@ local tMyItems = nil
 local tNames   = {}
 local tClassId = {}
 local tInvName = {}
-local tCarName = {}
 local tComName = {}
 local iMaxRows = 10
 --/ -----------------------------------------------------------------
 --/ Process: Initialize Module
 --/ -----------------------------------------------------------------
 function init()
---	log("init:>") --/#~#
+--	printf("init:>") --/#~#
 	this.Build_Table()
 	bInit = true
 end
@@ -332,7 +331,7 @@ end
 --/ HELPERs
 --/ -----------------------------------------------------------------
 function get_ui_menu()
---	log("get_ui_menu:[>]") --/#~#
+--	printf("get_ui_menu:[>]") --/#~#
 	if not spawn_menu then
 		spawn_menu = UI_SpawnMenu()
 	end
@@ -376,7 +375,7 @@ function Get_ClassId(sSection)
 			if sini:line_exist(sSection,"class") then
 				tClassId[sSection] = sini:r_clsid(sSection,"class")
 			else
-				log("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!") --/#~#
+				printf("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!") --/#~#
 				tClassId[sSection] = false
 			end
 			tNames[sSection] = this.Get_Name(sSection)
@@ -392,7 +391,7 @@ function Get_ClassId(sSection)
 				end
 			end
 		else
---			log("Get_ClassId:Section=[%s]~Not_exist:<%s>", sSection, "Info!") --/#~#
+--			printf("Get_ClassId:Section=[%s]~Not_exist:<%s>", sSection, "Info!") --/#~#
 		end
 	end
 	return tClassId[sSection] --/>
@@ -415,17 +414,9 @@ function Get_InvName(sSection)
 		if sInvName then
 			local sInvNameShort = utils.cfg_get_string(system_ini(), sSection, "inv_name_short", nil, false, "", nil)
 			tInvName[sSection] = sInvNameShort or sInvName
-			return tInvName[sSection] or "" --/>
 		end
 	end
-	if not tCarName[sSection] then
-		local tCarName = utils.cfg_get_string(system_ini(), sSection, "car_name", nil, false, "", nil)
-		if tCarName then
-			tCarName[sSection] = tCarName
-			return tCarName[sSection] or "" --/>
-		end
-	end
-	return ""
+	return tInvName[sSection] or "" --/>
 end
 
 function Get_ComName(sSection)
@@ -455,7 +446,7 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 		local iClassId = this.Get_ClassId(sSection)
 		local soObj
 		if iClassId then
---			log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]:(%s)", sSection, iClassId, iDist, ">") --/#~#
+--			printf("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]:(%s)", sSection, iClassId, iDist, ">") --/#~#
 			local oActor = db.actor
 			local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
 			local vPosA,vDirA = oActor:position(), oActor:direction()
@@ -463,44 +454,44 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 			if bToActor then --/ spawn to actor
 				if iClassId == clsid.wpn_ammo then --/ ammo we spawn differently
 					soObj = this.Create_Ammo( sSection, vPosA, idLvA, idGvA, oActor:id() )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo").." "..sMsg end
 				elseif iClassId == clsid.wpn_knife_s then
 					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife").." "..sMsg end
 				elseif iClassId == clsid.wpn_akms_s or iClassId == clsid.wpn_automatic_shotgun_s or iClassId == clsid.wpn_lr300_s or iClassId == clsid.wpn_bm16_s or iClassId == clsid.wpn_groza_s or iClassId == clsid.wpn_svd_s or iClassId == clsid.wpn_hpsa_s or iClassId == clsid.wpn_pm_s or iClassId == clsid.wpn_rg6_s or iClassId == clsid.wpn_rpg7_s or iClassId == clsid.wpn_shotgun_s or iClassId == clsid.wpn_svu_s or iClassId == clsid.wpn_usp45_s or iClassId == clsid.wpn_val_s or iClassId == clsid.wpn_vintorez_s or iClassId == clsid.wpn_walther_s then
 					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon").." "..sMsg end
 				else
 					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned").." "..sMsg end
 				end
 			else
 				local vPos = vPosA:add(vDirA:mul(iDist or 1))
 				if iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter then --/ for teh need 'own' spawn
 					if iClassId == clsid.script_heli or iClassId == clsid.helicopter then vPos.y = vPos.y + 8 end
 					soObj = this.Create_Vehicle( sSection, vPos, idLvA, idGvA, iClassId )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_car")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_car").." "..sMsg end
 				elseif iClassId == clsid.wpn_ammo then --/ ammo we spawn differently
 					soObj = this.Create_Ammo( sSection, vPos, idLvA, idGvA )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo").." "..sMsg end
 				elseif iClassId == clsid.wpn_knife_s then
 					soObj = alife():create( sSection, vPos, idLvA, idGvA )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife").." "..sMsg end
 					soObj.squad = math.random(64)
 				elseif iClassId == clsid.wpn_akms_s or iClassId == clsid.wpn_automatic_shotgun_s or iClassId == clsid.wpn_lr300_s or iClassId == clsid.wpn_bm16_s or iClassId == clsid.wpn_groza_s or iClassId == clsid.wpn_svd_s or iClassId == clsid.wpn_hpsa_s or iClassId == clsid.wpn_pm_s or iClassId == clsid.wpn_rg6_s or iClassId == clsid.wpn_rpg7_s or iClassId == clsid.wpn_shotgun_s or iClassId == clsid.wpn_svu_s or iClassId == clsid.wpn_usp45_s or iClassId == clsid.wpn_val_s or iClassId == clsid.wpn_vintorez_s or iClassId == clsid.wpn_walther_s then
 					soObj = alife():create( sSection, vPos, idLvA, idGvA )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon").." "..sMsg end
 					soObj.squad = math.random(64)
 				else
 					soObj = alife():create( sSection, vPos, idLvA, idGvA )
-					if soObj then sMsg = game.translate_string("st_cheater_spawned")..sMsg end
+					if soObj then sMsg = game.translate_string("st_cheater_spawned").." "..sMsg end
 					soObj.squad = math.random(64)
 				end
 			end
-			--log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+") --/#~#
+			--printf("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+") --/#~#
 		else
-			log("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!") --/#~#
-			sMsg = "Warning!:NOT_found_spawn_section="..sMsg
+			printf("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!") --/#~#
+			sMsg = "Warning!:NOT_found_spawn_section=".." "..sMsg
 		end
 		if bNoMsg ~= false then
 			news_manager.send_tip(db.actor, sMsg, 0, "item", 0)
@@ -523,7 +514,7 @@ function Create_Vehicle(sSection, vPos, idLv, idGv, iClassId)
 	if iClassId and (iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter) then
 		local soObj = alife():create(sSection, vPos, idLv, idGv)
 		if type(get_netpk) == 'function' then
---			log("Create_Vehicle:=[%s]/[%s],ñid=[%s]:(%s)", soObj:name(), sSection, iClassId, ">") --/#~#
+--			printf("Create_Vehicle:=[%s]/[%s],ñid=[%s]:(%s)", soObj:name(), sSection, iClassId, ">") --/#~#
 			local pk = get_netpk(soObj,1) --/ net-packet request (only 'state')
 			if pk:isOk() then --/ did we get access to net-packet of object?
 				local data = pk:get()  --table.print( data, sModule..":NetPacket|"..soObj:name() ) --/#~#
@@ -623,7 +614,7 @@ function Build_Table()
 		else abort("%s:Build_Tables:Error while parsing at sections line=#%s", sModule, tostring(i+1) )
 		end
 	end
---	log("Build_Tables:#SpawnMenu=[%s]%s", table.size(tSpawnMenu), "") --/#~#
+--	printf("Build_Tables:#SpawnMenu=[%s]%s", table.size(tSpawnMenu), "") --/#~#
 	for k,v in pairs(tSpawnMenu) do
 		sSec = tostring(k)
 		if ltx:section_exist(sSec) then
@@ -683,7 +674,7 @@ function Debug_Spawn() --/ for tests and debug
 						--oActor:mark_item_dropped(oItem) --/#x# selecting from slot with 'personal' mark of item
 						oActor:drop_item(oItem) --/> throwing out from slot
 						soItem = this.Make_Spawn(v,0) --/ spawning to rucksack->slot
---					log("%s:Debug_Spawn:=[%s]:[%s]:[%s]", sModule, oItem:name(), Get_StrTimeOrDate("ms"), ">") --/#~#
+--					printf("%s:Debug_Spawn:=[%s]:[%s]:[%s]", sModule, oItem:name(), Get_StrTimeOrDate("ms"), ">") --/#~#
 						--start_quick_timer(0.1, this.Timer_TransferItem,{id=oItem:id()})
 					else
 						soItem = this.Make_Spawn(v,0)
@@ -712,11 +703,11 @@ function Debug_Spawn() --/ for tests and debug
 end
 
 function Timer_TransferItem(t)
---	log("%s:Timer_TransferItem:id=[%s]:[%s]", sModule, t.id, ">") --/#~#
+--	printf("%s:Timer_TransferItem:id=[%s]:[%s]", sModule, t.id, ">") --/#~#
 	local oItem = t.id and level.object_by_id(t.id)
 	if oItem then
 		local oParent = oItem:parent()
---		log("%s:Timer_TransferItem:Parent=[%s]:[%s]", sModule, oParent and oParent:name(), ">") --/#~#
+--		printf("%s:Timer_TransferItem:Parent=[%s]:[%s]", sModule, oParent and oParent:name(), ">") --/#~#
 		if oParent then --/ or db.actor:marked_dropped(oItem)
 			oParent:transfer_item(oItem, db.actor) --/< return to rucksack
 		else

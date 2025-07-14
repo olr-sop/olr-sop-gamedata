@@ -229,7 +229,7 @@ function body_state:__init(npc)
 	}
 	--print_table(self.animations)
 end
---' ѕровер€ет закончили ли мы изменение положени€ тела
+-- ѕровер€ет закончили ли мы изменение положени€ тела
 function body_state:finish_state()
 	if self.target_state == xr_state.stand and 
 	   self.npc:animation_count() == 0
@@ -301,7 +301,7 @@ function body_state:weapon_slot()
 	return 0
 end
 function body_state:anim_update(type)
-	--' ќпредел€ем - это у нас включение новой анимации или продолжение старой
+	-- ќпредел€ем - это у нас включение новой анимации или продолжение старой
 	if type ~= self.states.current_state then
 		if type ~= nil then
 			printf("ANIMS: |%s| for %s", type, self.npc:name())
@@ -309,13 +309,13 @@ function body_state:anim_update(type)
 			printf("ANIMS: |nil| for %s", self.npc:name())
 		end
 		
-		--' ѕроверка на существование темы
+		-- ѕроверка на существование темы
 		if type ~= nil and self.animations[type] == nil then
 			printf("ERROR: Non existen ANIM STATEd called: %s", type)
 			return
 		end
 		
-		--' завершение старой
+		-- завершение старой
 		self.npc:clear_animations()
 		if self.states.current_state ~= nil then		
 			if self.animations[self.states.current_state].out ~= nil then
@@ -323,9 +323,9 @@ function body_state:anim_update(type)
 			end
 		end
 		
-		--' простановка новой
+		-- простановка новой
 		if type ~= nil then
-			--' ѕроверка соответстви€ состо€ни€.
+			-- ѕроверка соответстви€ состо€ни€.
 			if self.current_state ~= self.animations[type].state_id then
 				self:set_state(self.animations[type].state_id)
 			end
@@ -345,13 +345,13 @@ function body_state:anim_update(type)
 		self.states.idle = nil
 	end
 
-	--' ќпредел€ем нужно ли добавл€ть анимацию или ждать
+	-- ќпредел€ем нужно ли добавл€ть анимацию или ждать
 	if (self.states.begin == nil or
 	   time_global() - self.states.begin > self.states.idle) and
 	   self.npc:animation_count() <= 1 and
 	   self.states.current_state ~= nil
 	then
-		--' ќпределение промежутков времени между анимаци€ми
+		-- ќпределение промежутков времени между анимаци€ми
 		self.states.begin = time_global()
 		self.states.idle = (math.random(self.animations[self.states.current_state].prop.maxidle) + 
 										self.animations[self.states.current_state].prop.sumidle) * 1000

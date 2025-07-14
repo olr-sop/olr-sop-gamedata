@@ -1,6 +1,6 @@
---' Диденко Руслан (Stohe), Чугай Александр (Chugai)
+-- Диденко Руслан (Stohe), Чугай Александр (Chugai)
 
---' в работах поле object хранит id объекта
+-- в работах поле object хранит id объекта
 
 level_gulags = {
 
@@ -31,7 +31,7 @@ level_groups = {lvl1_escape = 1, lvl2_garbage = 2, lvl3_agroprom = 3, l03u_agr_u
 local gulag_tasks_file_name  = "misc\\gulag_tasks.ltx"
 local gulag_tasks_ltx        = ini_file( gulag_tasks_file_name )
 
-local job_position_threshold = 120 --'50  -- расстояние до места работы при котором персонаж в онлайне считается достигшим места работы
+local job_position_threshold = 120 --50  -- расстояние до места работы при котором персонаж в онлайне считается достигшим места работы
 local job_idle_after_death   = 100 -- в течении такого периода времени после смерти персонажа его работа будет недоступна
 
 idle_nil  = nil
@@ -135,8 +135,8 @@ end
 
 -- подготовка гулага к работе
 function gulag:initialize()
-	self.ObjectJobPathName = {} --' по id. имя патрульного пути места работы персонажа
-	self.restrictors       = {} --' по id. назначенные гулагом рестрикторы для каждого персонажа
+	self.ObjectJobPathName = {} -- по id. имя патрульного пути места работы персонажа
+	self.restrictors       = {} -- по id. назначенные гулагом рестрикторы для каждого персонажа
 
 	self:prepare_jobs()
 
@@ -258,7 +258,7 @@ function gulag:get_job_path_name( job )
 		abort( "gulag: ltx=%s, there is no path in section %s", self.ltx_name, active_section )
 	end
 
-	if path_field == "center_point" then --' TODO убрать затык
+	if path_field == "center_point" then -- TODO убрать затык
 		local path_name = self.name .. "_" .. self.ltx:r_string( active_section, path_field )
 
 		if level.patrol_path_exists( path_name .. "_task" ) then
@@ -448,11 +448,11 @@ function gulag:update_objs()
 			self:object_setup_offline( obj_id )
 		end
 
-		--'obj = cl_obj or npc_info.se_obj
+		--obj = cl_obj or npc_info.se_obj
 	end
 end
 
---' Убирание мертвого чувака. Вызывается из смарттеррейна
+-- Убирание мертвого чувака. Вызывается из смарттеррейна
 function gulag:clear_dead(obj_id)
 	printf( "[smart_terrain %s] gulag: Clear_dead: obj=%s", self.name, self.npc_info[obj_id].name)
 
@@ -490,7 +490,7 @@ function gulag:can_obj_begin_job( obj_id, obj )
 	if jobN and not self.Object_begin_job[obj_id] then
 		local job = self.Job[jobN]
 		
-		--' Спешл кейс, проверка только по вертексам графа
+		-- Спешл кейс, проверка только по вертексам графа
 		if job.position_threshold == "graph" then
 			local obj_gv, obj_pos = self:get_obj_game_vertex_and_position( obj_id )
 			local job_gv          = game_graph():vertex( job.game_vertex_id )
@@ -606,7 +606,7 @@ function gulag:prepare_available_jobs()
 
 			table.insert( Job_avail, job )
 		else
-			--'printf( "job unavailable: %d %s", job.num, job.section )
+			--printf( "job unavailable: %d %s", job.num, job.section )
 		end
 	end
 
@@ -636,7 +636,7 @@ function gulag:distance_to_job_location( obj_id, job )
 	if obj_gv:level_id() == job_gv:level_id() then
 		return obj_pos:distance_to( job.position )
 	else
-		--'return obj_gv:game_point():distance_to( job_gv:game_point() )
+		--return obj_gv:game_point():distance_to( job_gv:game_point() )
 		return 10000
 	end
 end
@@ -884,7 +884,7 @@ function gulag:setup_squad_and_group( obj_id, job )
 		local squad = level_groups[level.name()]
 		if not obj:alive() then
 			printf("CHANGE TEAM [%s] to [%s][%s][%s]. Object is DEAD, clearing", obj:name(), npc_info.team, squad or npc_info.o_squad, job.group or npc_info.o_group)
-			self:clear_dead(obj_id) --'Затычка против вылета.
+			self:clear_dead(obj_id) --Затычка против вылета.
 			return
 		end
 
@@ -957,7 +957,7 @@ function gulag:beginJob( obj_id )
 		self.Object_didnt_begin_job[obj_id] = false
 	end
 	
-	self.population_comed = self.population_comed + 1 --' Увеличиваем счетчик пришедших персонажей
+	self.population_comed = self.population_comed + 1 -- Увеличиваем счетчик пришедших персонажей
 end
 
 -- установить серверному объекту персонажа упраление переключения онлайн/офлайн
@@ -974,10 +974,10 @@ end
 -- установить объекту рестрикторы в онлайне.
 -- obj - game_object
 function gulag:set_restrictions(obj, r_out, r_in, r_info)
---'	printf( "RESTR [%s] HAVE (IN)  : %s", obj:name(), obj:in_restrictions() )
---'	printf( "RESTR [%s] HAVE (OUT) : %s", obj:name(), obj:out_restrictions() )
---'	printf( "RESTR [%s] NEED (IN)  : %s", obj:name(), r_in )
---'	printf( "RESTR [%s] NEED (OUT) : %s", obj:name(), r_out )
+--	printf( "RESTR [%s] HAVE (IN)  : %s", obj:name(), obj:in_restrictions() )
+--	printf( "RESTR [%s] HAVE (OUT) : %s", obj:name(), obj:out_restrictions() )
+--	printf( "RESTR [%s] NEED (IN)  : %s", obj:name(), r_in )
+--	printf( "RESTR [%s] NEED (OUT) : %s", obj:name(), r_out )
 
 	-- узнать, какие рестрикторы уже были назначены этим гулагом
 	local restr = self.restrictors[obj:id()]
@@ -1021,17 +1021,17 @@ function gulag:set_restrictions(obj, r_out, r_in, r_info)
 	end
 
 	if change_r_in ~= "" or change_r_out ~= "" then
---'		printf( "RESTR [%s] SET: %s, %s", obj:name(), change_r_out, change_r_in)
+--		printf( "RESTR [%s] SET: %s, %s", obj:name(), change_r_out, change_r_in)
 		obj:add_restrictions( change_r_out, change_r_in )
 	end
 
---'	printf( "RESTR [%s] AFTER (IN) : %s", obj:name(), obj:in_restrictions()  )
---'	printf( "RESTR [%s] AFTER (OUT): %s", obj:name(), obj:out_restrictions() )
+--	printf( "RESTR [%s] AFTER (IN) : %s", obj:name(), obj:in_restrictions()  )
+--	printf( "RESTR [%s] AFTER (OUT): %s", obj:name(), obj:out_restrictions() )
 
 	-- информационный рестриктор
 	db.info_restr[obj:id()] = r_info
 
---'	printf( "INFO [%s] RESTR      : %s", obj:name(), utils.to_str( r_info ) )
+--	printf( "INFO [%s] RESTR      : %s", obj:name(), utils.to_str( r_info ) )
 end
 
 -- убрать записи о том, что смарт устанавливал объекту рестрикторы.
@@ -1263,7 +1263,7 @@ end
 function getGulagPopulation( name_or_sid )
 	local gulag = get_gulag( name_or_sid )
 
---'	return ( gulag and gulag:get_population() ) or 0
+--	return ( gulag and gulag:get_population() ) or 0
 	return ( gulag and gulag:get_population_comed() ) or 0
 end
 

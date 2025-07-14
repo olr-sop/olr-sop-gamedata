@@ -56,25 +56,25 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------
 function check_light(stalker)
-	--'printf("[check_light %s] start", stalker:name())
+	--printf("[check_light %s] start", stalker:name())
     if stalker == nil then 
        return 
     end
 
-	--'printf("[check_light %s] start_passed", stalker:name())
+	--printf("[check_light %s] start_passed", stalker:name())
     local torch = stalker:object("device_torch")
     if torch == nil then
        return
     end
 
 
-	--'printf("[check_light %s] torch_passed", stalker:name())
+	--printf("[check_light %s] torch_passed", stalker:name())
 	local light = false
 	local forced = false
 
 
-    --'printf("[check_light %s] alive_passed: light=%s, forced=%s", stalker:name(), tostring(light), tostring(forced))
-    --' Проверка по лайтзонам
+    --printf("[check_light %s] alive_passed: light=%s, forced=%s", stalker:name(), tostring(light), tostring(forced))
+    -- Проверка по лайтзонам
     if not forced then
 	    for k,v in pairs(light_zones) do
 			light, forced = v:check_stalker(stalker)
@@ -84,15 +84,15 @@ function check_light(stalker)
 	    end
     end
 
-	--'printf("[check_light %s] lightzone_passed: light=%s, forced=%s", stalker:name(), tostring(light), tostring(forced))
+	--printf("[check_light %s] lightzone_passed: light=%s, forced=%s", stalker:name(), tostring(light), tostring(forced))
 	if not forced then
-		--' Проверка по времени суток (ночью всегда включено)
+		-- Проверка по времени суток (ночью всегда включено)
 		local htime = level.get_time_hours()
 		if htime <= 4 or htime >= 22 then
 			light = true
 	end
 	
-	--' Проверка на индор-аутдор (внутри всегда включено)
+	-- Проверка на индор-аутдор (внутри всегда включено)
 	if light == false then
 			if indoor_levels[level.name()] == true then
 				light = true
@@ -100,10 +100,10 @@ function check_light(stalker)
 		end
 	end			
 
-	--'printf("[check_light %s] timezone_passed: light=%s, forced=%s", stalker:name(), tostring(light), tostring(forced))
-	--' Проверка по активному действию
+	--printf("[check_light %s] timezone_passed: light=%s, forced=%s", stalker:name(), tostring(light), tostring(forced))
+	-- Проверка по активному действию
 	if not forced and light == true then
-		--' Фонарики должны быть выключены у костра
+		-- Фонарики должны быть выключены у костра
 		local scheme = db.storage[stalker:id()].active_scheme
 		if scheme == "kamp" or
 		   scheme == "camper" 

@@ -1,5 +1,5 @@
 
---' Смотрим ли мы сейчас туда, куда нужно или нет?
+-- Смотрим ли мы сейчас туда, куда нужно или нет?
 class "eva_state_mgr_direction" (property_evaluator)
 function eva_state_mgr_direction:__init(name, st) super (nil, name)
 	self.st = st
@@ -48,7 +48,7 @@ function eva_state_mgr_direction:evaluate()
 		return false	
 	end
 		
-	--' Или если мы смотрели не так как надо
+	-- Или если мы смотрели не так как надо
     if sight_type.m_sight_type ~= look_position_type(self.object, self.st) then
         return false
     end
@@ -78,7 +78,7 @@ function eva_state_mgr_direction_search:evaluate()
 	return true
 end
 
---' Поворачиваемся ли мы сейчас
+-- Поворачиваемся ли мы сейчас
 class "eva_state_mgr_direction_turning" (property_evaluator)
 function eva_state_mgr_direction_turning:__init(name, st) super (nil, name)
 	self.st = st
@@ -89,7 +89,7 @@ end
 
 
 
---' Включаем поворот
+-- Включаем поворот
 class "act_state_mgr_direction_turn" (action_base)
 function act_state_mgr_direction_turn:__init(name, st) super (nil, name)
 	self.st = st
@@ -122,14 +122,14 @@ function act_state_mgr_direction_turn:turn()
 end
 
 
---' Включаем поворот в никуда
+-- Включаем поворот в никуда
 class "act_state_mgr_direction_search" (action_base)
 function act_state_mgr_direction_search:__init(name, st) super (nil, name)
 	self.st = st
 end
 function act_state_mgr_direction_search:initialize()
 	action_base.initialize(self)
---'    printf("set sight %s nil", self.object:name())
+--    printf("set sight %s nil", self.object:name())
     self.object:set_sight(look_position_type(self.object, self.st), nil, 0)
 end
 function act_state_mgr_direction_search:execute()
@@ -157,8 +157,8 @@ local look_direction_states = {
 	}
 
 function look_object_type(npc, st)	
-	--' Возвращает true  если нужно смотреть по направлению
-	--' false - нужно смотреть на объект
+	-- Возвращает true  если нужно смотреть по направлению
+	-- false - нужно смотреть на объект
 	if look_direction_states[st.target_state] == true then
 		return true
 	end
@@ -170,7 +170,7 @@ function look_position_type(npc, st)
         return look.path_dir
     end
 
-    --' Для движения
+    -- Для движения
 	if not st.planner:evaluator(st.properties["movement_stand"]):evaluate() then
         if st.look_position ~= nil then
             return look.direction
@@ -178,12 +178,12 @@ function look_position_type(npc, st)
         return look.path_dir       
     end
 
-    --' Смотрим в позицию
+    -- Смотрим в позицию
     if st.look_position ~= nil then
          return look.direction
     end
 
-    --' Никуда не смотрим
+    -- Никуда не смотрим
     if state_lib.states[st.target_state].direction then
 		return state_lib.states[st.target_state].direction
     end

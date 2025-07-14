@@ -13,9 +13,9 @@ function gen_phrase_id_str()
 	return tostring(intro_id)
 end
 
---' Необходимо сформировать набор предикатов  table[string_id] = predicate()
+-- Необходимо сформировать набор предикатов  table[string_id] = predicate()
 function fill_phrase_table()
-	--' Итерируемся по всем настройкам фраз
+	-- Итерируемся по всем настройкам фраз
 	if not phrase_ini:section_exist("list") then
 		abort("There is no section [list] in dialog_manager.ltx")
 	end
@@ -29,7 +29,7 @@ function fill_phrase_table()
 		if not phrase_ini:section_exist(id) then
 			abort("There is no section [%s] in dialog_manager.ltx", id)
 		end		
-		--' 2. Необходимо сформировать набор предикатов  table[string_id] = predicate()
+		-- 2. Необходимо сформировать набор предикатов  table[string_id] = predicate()
 		if not phrase_ini:line_exist(id, "category") then
 			abort("Dialog manager error: not categoried section [%s]", id)
 		end
@@ -90,8 +90,8 @@ function init_intro_dialog(dlg)
 		if phr then
 			local phrase_script = phr:GetPhraseScript()
 			phrase_script:AddPrecondition("dialog_manager.precondition_intro")
-			--' Этот экшн запоминает последнюю фразу, чтобы персонаж говорил одно и то же.
-			--' Для фразы просьбы о помощи его добавлять не надо.
+			-- Этот экшн запоминает последнюю фразу, чтобы персонаж говорил одно и то же.
+			-- Для фразы просьбы о помощи его добавлять не надо.
 			if v.wounded == "false" then
 				phrase_script:AddAction("dialog_manager.phrase_action_intro")		
 			end
@@ -224,7 +224,7 @@ end
 
 function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
 
-	--' Надо проверить доступна ли запомненная фраза
+	-- Надо проверить доступна ли запомненная фраза
 	if ( (sel_tbl ~= nil) and (sel_tbl[npc:id()] ~= nil) ) then
 		
 		local lll = sel_tbl[npc:id()]
@@ -253,20 +253,20 @@ function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
 		end
 		
 		local value, number = calculate_predicate(npc, ttt )
-		--' Если запомненная фраза недоступна - необходимо забыть ее
+		-- Если запомненная фраза недоступна - необходимо забыть ее
 		if value == false then
 			printf("*** restore memory phrase")
 			sel_tbl[npc:id()] = nil
 		end
 	end	
 
-	--' Получить фразу по номеру:
+	-- Получить фразу по номеру:
 	local phrase = tbl[p3]
 
 
-	--' Проверка на повторяемость фраз.
+	-- Проверка на повторяемость фраз.
 	if ( (sel_tbl ~= nil) and (sel_tbl[npc:id()] ~= nil) ) then
-		--' Если проверяется не запомненная фраза
+		-- Если проверяется не запомненная фраза
 		if (sel_tbl[npc:id()].phrase ~= phrase.phr_id) then
 			printf("*** not memory phrase [%s] ~= [%s]", sel_tbl[npc:id()].phrase, phrase.phr_id)
 			return false
@@ -276,7 +276,7 @@ function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
 		end
 	end	
 
-	--' Определяем доступна ли эта фраза:
+	-- Определяем доступна ли эта фраза:
 	local value, number = calculate_predicate(npc, phrase)
 	return value
 end
@@ -354,7 +354,7 @@ function calculate_predicate(npc, tbl, settings)
 end
 
 		
---' Прекондишн, можно ли разрешать диалоги с болтовней ("расскажи мне о" например)
+-- Прекондишн, можно ли разрешать диалоги с болтовней ("расскажи мне о" например)
 function precondition_info_global(actor, npc)
 	if xr_wounded.is_wounded(npc) or
 	   xr_wounded.is_heavy_wounded_by_id(npc:id()) or
@@ -366,7 +366,7 @@ function precondition_info_global(actor, npc)
 end
 
 	
---' Сохранение информации о выбранных фразах
+-- Сохранение информации о выбранных фразах
 function save(npc, p)
 	if selected_phrase_by_id.intro[npc:id()] == nil then
 		p:w_stringZ("-1")

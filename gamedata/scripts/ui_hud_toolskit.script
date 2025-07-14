@@ -1212,3 +1212,179 @@ function Get_BoxNames(bLog,bDrop)
 		end
 	end
 end
+
+--/ ------------------------------------------------------------------------------------------------
+--/ Some functions only for this script
+--/ ------------------------------------------------------------------------------------------------
+
+--/-------------------------------------------------------------------
+--/ Чтение секции из ltx-файла
+--/-------------------------------------------------------------------
+--/ [sMode] - режим создания (тип) таблицы (nil - tList)
+--/ [sType] - тип значений в таблице (nil - строки, "all2num"|"key2num"|"val2num" - перевод в число)
+--/ [sDiv]  - разделитель (nil - ',')
+--/ [sDiv2] - разделитель (не ',')
+function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
+	local ltx,bLtx = ini,nil
+	if ltx and type(ltx) == 'string' then
+		if ltx:match('(.+)%.(%w+)') then
+			ltx = ini_file(ltx)
+		end
+		bLtx = true
+	end
+	if not ltx then
+		ltx = sini
+		bLtx = true
+	end
+	local bType = nil
+	if type(sType) == 'string' then
+		if sType == "all2num" or sType == "val2num" then
+			bType = false --/ дополнительно перевод значений в числа
+		elseif sType == "key2num" and (sMode == nil or sMode == "list") then
+			bType = false --/ дополнительно перевод значений в числа
+		elseif sType == "true" or sType == "bool" then
+			bType = true  --/ дополнительно значения формируются в пары (val = true)
+		end
+	end
+	local tRet,iCnt = {},0
+	if ltx:section_exist(sSection) then
+		local result,idx,value,key
+		local n = ltx:line_count(sSection)
+		if n > 0 then
+			for i=0, n-1 do
+				result,idx,value = ltx:r_line(sSection,i,"","")
+				key = result and string.trim(idx)
+				if key and key ~= "" and value then
+					if sMode and sMode ~= "list" and type(sType) == 'string' and (sType == "key2num" or sType == "all2num") then
+						key = tonumber(key) --/ переводим ключ в число
+					end
+					if sMode == nil or sMode == "list" then --/ простая таблица-список: (из одиночных значений или таблиц с ними)
+						if sDiv and type(key) == 'string' then
+							table.insert(tRet, string.split(key,sDiv,bType)) --/> {{a11,a12,...,a1n}, {a21,a22,...,a2n}, ..., {an1,an2,...,ann}}
+						else
+							if bType == false then
+								key = tonumber(key) --/ переводим ключ в число
+							end
+							if key ~= nil then
+								table.insert(tRet, key) --/> {arg1, arg2, ..., argn}
+							end
+						end
+					elseif sMode == 'string' then --/ простая таблица:
+						tRet[key] = string.trim(value) --/> {[k1]=v1, [k2]=v2, ..., [kn]=vn} (key,val - строки)
+					elseif sMode == "number" then --/ таблица (val=>число):
+						tRet[key] = tonumber(string.trim(value)) --/> {[k1]=num1, [k2]=num2, ..., [kn]=numn}
+					elseif sMode == "bool" then --/ таблица с bool: {[k1]=boolean, [k2]=boollean, ..., [kn]=boollean}}
+						local val = string.trim(value)
+						if     (val == "true" or val == "1") and not (type(sType) == 'string' and sType == "false") then
+							tRet[key] = true
+						elseif val == "false" or val == "0" and not (type(sType) == 'string' and sType == "true") then
+							tRet[key] = false
+						end
+					elseif sMode == "true" then --/ таблица с 'true' (исключаем значения == false/0)
+						local val = string.trim(value)
+						if val ~= "false" and val ~= "0" then
+							tRet[key] = true --/> {[k1]=true, [k2]=true, ..., [kn]=true}} (val=>true)
+						end
+					elseif sMode == "matrix" then --/ матрица:
+						if not sDiv then --/ субтаблицы - простые таблицы-списки
+							if bType == false then value = tonumber(string.trim(value)) end
+							table.insert(tRet,{key, string.trim(value)}) --/> { {k1,v1}, {k2,v2}, ..., {kn,vn} }
+						elseif not (sDiv2 and sDiv2 ~= sDiv) then --/ разделяем 'value' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
+							local tValue = string.split(value,sDiv,bType)
+							tRet[key] = {}
+							table.insert( tRet[key], tValue ) --/> {k1={v11,v12,...,v1n}, k2={v21,v22,...,v2n}, ..., kn={vn1,vn2,...,vnn}}
+						else
+							local tValue = string.split(value,sDiv)
+							tRet[key] = {}
+							local sPattern = '%s*(.-)%s*'..sDiv2..'%s*(.*)'
+							local Key,Val,v
+							for _,v in pairs(tValue) do
+								Key,Val = v:match(sPattern)
+								if Key and Val then
+									if bType == false then Val = tonumber(Val) end
+									table.insert( tRet[key], {Key, Val} ) --/> {k1={k11,v11,...,kn,v1n}, k2={k21,v21,...,v2n}, ..., kn={kn1,vn1,...,knn,vnn}}
+								end
+							end
+						end
+					elseif sMode == 'table' then --/ таблица с субтаблицами:
+						if not sDiv then sDiv = "," end --/ если не задана - задаем маску разделителя
+						--/ разделяем 'value' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
+						if not (sDiv2 and sDiv2 ~= sDiv) then
+							local tValue = string.split(value,sDiv,bType)
+							tRet[key] = tValue --/> {[k1]={v11,v12,...,v1n}, [k2]={v21,v22,...,v2n}, ..., [kn]={vn1,vn2,...,vnn}}
+						else --/> {[k1][v11]=v12, [k2][v21]=v22, ..., [kn][vn1]=vn2}
+							local tValue = string.split(value,sDiv)
+							tRet[key] = {}
+							local sPattern = '%s*(.-)%s*'..sDiv2..'%s*(.*)'
+							local Key,Val,v
+							for _,v in pairs(tValue) do
+								Key,Val = v:match(sPattern)
+								if Key and Val then
+									if bType == false then Val = tonumber(Val) end
+									tRet[key][Key] = Val
+								end
+							end
+						end
+					end
+					iCnt = iCnt +1
+				end
+			end
+--			printf("fGet_IniSection:fname=[%s],Section=[%s],Type=[%s],Size=[%s]", ini, sSection, sMode, iCnt ) --/#~#
+		elseif (sType and sType == "<<Err!>>") or db.is_dbg2 then
+			printf("fGet_IniSection:=[%s],ini=[%s],Mode=[%s],Type=[%s]~NOT_found_Lines:<%s>", sSection, ini, sMode, sType, "Warning!")
+		end
+		if bLtx then ltx = nil end
+	elseif db.is_dbg1 then
+		callstack("fGet_IniSection:ini=["..type(ini).."],NOT_found_Section=["..tostring(sSection).."],Type=["..tostring(sMode).."]:<Error!>")
+	else
+		printf("fGet_IniSection:ini=[%s],NOT_found_Section=[%s],Type=[%s]:<%s>", ini, sSection, sMode, "Error!")
+	end
+	return tRet,iCnt --/>
+end
+
+function Get_ObjectCurentLevel(obj)
+	local idLevel = Get_ObjLevelId(obj)
+	
+	if idLevel then
+		return sim:level_name(idLevel)
+	end
+	
+	return nil
+end
+
+function Get_ObjLevelId(se_obj)
+	local idGv = nil
+
+	if se_obj then
+		idGv = se_obj.m_game_vertex_id
+		
+		if not idGv then
+			idGv = se_obj.game_vertex_id and se_obj:game_vertex_id()
+		end
+	end
+	
+	if idGv then
+		return Get_VertexLevelId(idGv) -- idLevel | idMap
+	end
+	
+	printf("Get_ObjLevelId:Obj=[%s/%s]:<%s>", type(se_obj), type(se_obj) == 'userdata' and se_obj:name(), "Warning!")
+	
+	return nil
+end
+
+function Get_VertexLevelId(idGv)
+	local gmg = game_graph()
+	
+	if idGv and gmg:valid_vertex_id(idGv) then
+		local oVertex = gmg:vertex(idGv)
+		
+		if oVertex then
+			return oVertex:level_id() -- idLevel | idMap
+		end
+	end
+	
+	callstack("Get_VertexLevelId: idGv=["..tostring(idGv).."]<~NOT_valid:<Warning!>")
+	printf("Get_VertexLevelId: idGv=[%s]<~NOT_valid:<%s>", idGv, "Warning!")
+	
+	return nil
+end

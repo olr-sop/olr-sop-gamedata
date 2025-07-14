@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------------------------------------------------
---'	Схема кемпер. Чудак с бальшой пушкой ходит и отстреливает живность.
---'	автор: Диденко Руслан (Stohe)
---'	TODO: 
+--	Схема кемпер. Чудак с бальшой пушкой ходит и отстреливает живность.
+--	автор: Диденко Руслан (Stohe)
+--	TODO: 
 ----------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 		return nil
 	end
 
---' Условие завершения скрипта
+-- Условие завершения скрипта
 class "evaluator_end" (property_evaluator)
 function evaluator_end:__init(name, storage) super (nil, name)
 	self.a = storage
@@ -26,7 +26,7 @@ function evaluator_end:evaluate()
 	return not xr_logic.is_active(self.object, self.a)
 end
 
---' Обычный комбат или кемперский
+-- Обычный комбат или кемперский
 class "evaluator_close_combat" (property_evaluator)
 function evaluator_close_combat:__init(name, storage) super (nil, name)
 	self.a = storage
@@ -83,7 +83,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 -- ACTIONS
 ----------------------------------------------------------------------------------------------------------------------
---' Патрулировать территорию по патрульному пути
+-- Патрулировать территорию по патрульному пути
 
 class "action_patrol" (action_base)
 function action_patrol:__init (npc,action_name,storage) super (nil,action_name)
@@ -168,7 +168,7 @@ function action_patrol:execute()
 	if self.enemy ~= nil then		
 		self.a.mem_enemy = self.object:memory_time(self.enemy)
 
-		--'Забывание врага по времени.		
+		--Забывание врага по времени.		
 		if self.a.mem_enemy == nil or
 		   time_global()- self.a.mem_enemy > self.a.idle
 		then
@@ -206,7 +206,7 @@ function action_patrol:execute()
 			xr_sound.set_sound(self.object, self.a.attack_sound)
 
 		else
-			--' Анализируем последнюю известную позицию врага.
+			-- Анализируем последнюю известную позицию врага.
 			local memory_position = self.object:memory_position(self.enemy)
 			if self.enemy_position == nil or
 			   self.enemy_position.x ~= memory_position.x or
@@ -214,7 +214,7 @@ function action_patrol:execute()
 			   self.enemy_position.z ~= memory_position.z
 			then
 				self.enemy_position = memory_position
-				--' Занести место поиска врага в scan_table
+				-- Занести место поиска врага в scan_table
 				if self.a.sniper == true then
 					self.position = self.object:position()
 

@@ -27,8 +27,8 @@ function PsyAntenna:__init				()
 	self.hit_intensity					= 0
 	self.sound_intensity				= 0
 	self.sound_intensity_base			= 0	-- базовая интенсивность. к ней стремится текущая со скоростью self.intensity_inertion	
-	self.postprocess_count				= 0  --'счетчик зарегистрированных постпроцессов
-	self.postprocess					= {} --'контейнер постпроцессов
+	self.postprocess_count				= 0  --счетчик зарегистрированных постпроцессов
+	self.postprocess					= {} --контейнер постпроцессов
 
 -- ----------------------------------------------------------------------------------------
 -- sound
@@ -39,7 +39,7 @@ function PsyAntenna:__init				()
 
 	self.sound_obj.volume				= self.sound_intensity
 	self.snd_volume						= level.get_snd_volume()
-	self.mute_sound_threshold			= 0 --' Предел до которого можно занижать звук уровня. 0 - можно заглушить полностью
+	self.mute_sound_threshold			= 0 -- Предел до которого можно занижать звук уровня. 0 - можно заглушить полностью
 	self.max_mumble_volume				= 10
 end
 function PsyAntenna:destroy				()
@@ -209,7 +209,7 @@ class "action_psy_antenna"
 function action_psy_antenna:__init( obj, storage )
 	self.object = obj
 	self.st     = storage
-	self.state  = state_void --' еще не ясно, в зоне он, или нет
+	self.state  = state_void -- еще не ясно, в зоне он, или нет
 end
 function action_psy_antenna:reset_scheme( loading )
 	if loading then
@@ -223,7 +223,7 @@ function action_psy_antenna:reset_scheme( loading )
 
 		self:switch_state(db.actor)
 	end
---'	printf("[psy_antenna] reset_scheme %s, inside %s", tostring(loading), tostring(self.state))
+--	printf("[psy_antenna] reset_scheme %s, inside %s", tostring(loading), tostring(self.state))
 end
 function action_psy_antenna:deactivate()
 	if self.state == state_inside then
@@ -252,7 +252,7 @@ function action_psy_antenna:switch_state( actor )
 	end
 end
 function action_psy_antenna:zone_enter()
---'	printf("[psy_antenna] zone_enter")
+--	printf("[psy_antenna] zone_enter")
 	self.state = state_inside
 
 	psy_antenna.sound_intensity_base = psy_antenna.sound_intensity_base + self.st.intensity
@@ -260,7 +260,7 @@ function action_psy_antenna:zone_enter()
 	psy_antenna.hit_intensity  = psy_antenna.hit_intensity  + self.st.hit_intensity
 	psy_antenna.phantom_spawn_probability = psy_antenna.phantom_spawn_probability + self.st.phantom_prob
 
---'	printf("[psy_antenna] zone_enter. hit_intensity=%s", tostring(psy_antenna.hit_intensity))
+--	printf("[psy_antenna] zone_enter. hit_intensity=%s", tostring(psy_antenna.hit_intensity))
 
 	if self.st.postprocess == "nil" then
 		return
@@ -275,7 +275,7 @@ function action_psy_antenna:zone_enter()
 	psy_antenna.postprocess[self.st.postprocess].intensity_base = psy_antenna.postprocess[self.st.postprocess].intensity_base + self.st.intensity		
 end
 function action_psy_antenna:zone_leave()
---'		printf("[psy_antenna] zone_leave. hit_intensity=%s", tostring(psy_antenna.hit_intensity))
+--		printf("[psy_antenna] zone_leave. hit_intensity=%s", tostring(psy_antenna.hit_intensity))
 	self.state = state_outside
 
 	psy_antenna.sound_intensity_base = psy_antenna.sound_intensity_base - self.st.intensity
@@ -284,7 +284,7 @@ function action_psy_antenna:zone_leave()
 
 	psy_antenna.phantom_spawn_probability = psy_antenna.phantom_spawn_probability - self.st.phantom_prob
 	
---'	printf("[psy_antenna] zone_leave. hit_intensity=%s, minus=%s", tostring(psy_antenna.hit_intensity), tostring(self.st.hit_intensity))
+--	printf("[psy_antenna] zone_leave. hit_intensity=%s, minus=%s", tostring(psy_antenna.hit_intensity), tostring(self.st.hit_intensity))
 
 	if self.st.postprocess == "nil" then
 		return

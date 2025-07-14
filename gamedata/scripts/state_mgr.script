@@ -8,8 +8,8 @@
 aim_ratio = 1000/50
 min_ratio = 1500
 
---' Эвалуатор, который синхронизирует менеджер.
---' Мы уже в безраличном состоянии idle или нет
+-- Эвалуатор, который синхронизирует менеджер.
+-- Мы уже в безраличном состоянии idle или нет
 class "evaluator_state_mgr_idle" (property_evaluator)
 function evaluator_state_mgr_idle:__init(name, state_manager) super (nil, name)
 	self.st = state_manager
@@ -59,7 +59,7 @@ end
 
 
 
---' Мы уже в безраличном состоянии idle или нет ()учет с проверкой alife
+-- Мы уже в безраличном состоянии idle или нет ()учет с проверкой alife
 class "evaluator_state_mgr_idle_alife" (property_evaluator)
 function evaluator_state_mgr_idle_alife:__init(name, state_manager) super (nil, name)
 	self.st = state_manager
@@ -110,14 +110,14 @@ function evaluator_state_mgr_idle_alife:evaluate()
 end
 
 
---' Переход в idle
+-- Переход в idle
 class "act_state_mgr_to_idle" (action_base)
 function act_state_mgr_to_idle:__init(name,state_manager) super (nil, name)	
 	self.st = state_manager
 end
 function act_state_mgr_to_idle:initialize()
 	action_base.initialize(self)
---'	self.object:movement_enabled(true)
+--	self.object:movement_enabled(true)
 	if self.object:best_enemy() then
 		self.st:set_state("idle", nil, nil, nil, {animation = true})
 		return
@@ -151,7 +151,7 @@ end
 
 
 
---' Переход в idle
+-- Переход в idle
 class "act_state_mgr_to_off" (action_base)
 function act_state_mgr_to_off:__init(name,state_manager) super (nil, name)	
 	self.st = state_manager
@@ -180,10 +180,10 @@ function act_state_mgr_to_off:finalize()
 end
 
 
---'-------------------------------------------------------------------------------------
---' Эвалуаторы и экшены менеджера
---'-------------------------------------------------------------------------------------
---' Закончил ли менеджер свою работу
+---------------------------------------------------------------------------------------
+-- Эвалуаторы и экшены менеджера
+---------------------------------------------------------------------------------------
+-- Закончил ли менеджер свою работу
 class "eva_state_mgr_end" (property_evaluator)
 function eva_state_mgr_end:__init(name, st) super (nil, name)
 	self.st = st
@@ -209,7 +209,7 @@ function eva_state_mgr_end:evaluate()
 	return false
 end
 
---' Залочен ли менеджер
+-- Залочен ли менеджер
 class "eva_state_mgr_locked" (property_evaluator)
 function eva_state_mgr_locked:__init(name, st) super (nil, name)
 	self.st = st
@@ -227,13 +227,13 @@ function eva_state_mgr_locked:evaluate()
 	end
 
 	return self.st.planner:initialized() and (
-		   --' self.st.planner:evaluator(self.st.properties["weapon_locked"]):evaluate() or
+		   -- self.st.planner:evaluator(self.st.properties["weapon_locked"]):evaluate() or
 		   self.st.planner:evaluator(self.st.properties["animstate_locked"]):evaluate() or
 		   self.st.planner:evaluator(self.st.properties["animation_locked"]):evaluate() or
 		   self.st.planner:evaluator(self.st.properties["direction_turning"]):evaluate())
 end
 
---' Идловый экшн менеджера
+-- Идловый экшн менеджера
 class "act_state_mgr_end" (action_base)
 function act_state_mgr_end:__init(name, st) super (nil, name)
 	self.st = st
@@ -310,7 +310,7 @@ function act_state_mgr_end:finalize()
 	action_base.finalize(self)
 end
 
---' Лок менеджера
+-- Лок менеджера
 class "act_state_mgr_locked" (action_base)
 function act_state_mgr_locked:__init(name, st) super (nil, name)
 	self.st = st
@@ -334,7 +334,7 @@ animation_reset_denied = {
 	wounded_zombie = true
 	}
 
---' Сам менеджер
+-- Сам менеджер
 class "state_manager"
 function state_manager:__init(npc)
 	state_mgr_goap.goap_graph(self, npc)
@@ -403,7 +403,7 @@ function state_manager:set_state(state_name, callback, timeout, target, emerg, s
 	local last_state = self.target_state
 	if self.target_state ~= state_name then
 
-		--' Если мы переключаемся из стреляющего состояния в нестреляющее - необходимо сразу же прекратить стрельбу
+		-- Если мы переключаемся из стреляющего состояния в нестреляющее - необходимо сразу же прекратить стрельбу
 		if (state_lib.states[self.target_state].weapon == "fire" or
 		   state_lib.states[self.target_state].weapon == "sniper_fire") and 
 		   (state_lib.states[state_name].weapon ~= "fire" and

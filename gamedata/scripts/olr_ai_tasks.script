@@ -212,7 +212,7 @@ function on_spawn_npc(obj)
 				xvars.npcs_tasks[obj:name()] = game.translate_string(rnd_quest)
 
 				if xvars.npcs_tasks[obj:name()] then
-					--log1("REG NEW npc task ["..obj:name().."] - main task - ["..rnd_quest.."] on level - ["..obj.level_name.."]")
+					--printf("REG NEW npc task ["..obj:name().."] - main task - ["..rnd_quest.."] on level - ["..obj.level_name.."]")
 					set_maintask_substates(obj, rnd_quest) -- установка подзадач дл€ основного квеста
 				end
 
@@ -298,12 +298,12 @@ function get_task_walk(obj)
 				if waycash then
 				local waycashname = game.translate_string(waycash)
 				if waycashname then
-					--log1("has tourism rnd way - "..waycashname.." ")
+					--printf("has tourism rnd way - "..waycashname.." ")
 					return waycashname
 				end
 			end
 		else
-			--log1("цель убита - тикаем из зоны")
+			--printf("цель убита - тикаем из зоны")
 			return "esc_garage_out_look"  -- тикаем из зоны на кордоне
 		end
 	end
@@ -313,7 +313,7 @@ function get_task_walk(obj)
 		if waycash then
 			local waycashname = game.translate_string(waycash)
 			if waycashname then
-				--log1("has cash rnd way - "..waycashname.." ")
+				--printf("has cash rnd way - "..waycashname.." ")
 				return waycashname
 			end
 		end
@@ -324,7 +324,7 @@ function get_task_walk(obj)
 		if waycash then
 			local waycashname = game.translate_string(waycash)
 			if waycashname then
-				--log1("has tourism rnd way - "..waycashname.." ")
+				--printf("has tourism rnd way - "..waycashname.." ")
 				return waycashname
 			end
 		end
@@ -336,7 +336,7 @@ function get_task_walk(obj)
 			if waycash then
 				local waycashname = game.translate_string(waycash)
 				if waycashname then
-					--log1("has find_himself rnd way - "..waycashname.." ")
+					--printf("has find_himself rnd way - "..waycashname.." ")
 					return waycashname
 				end
 			end
@@ -345,7 +345,7 @@ function get_task_walk(obj)
 		end
 	end
 
-	--log1(" !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().." set new ")
+	--printf(" !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().." set new ")
 	--news_manager.send_tip(db.actor, " !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().."  идЄт под смарт  "..obj.level_name.."  ", nil, "dolg", 36000)
 	--olr.add_spot_on_map( obj.id,"green_location",obj:name() )
 	--this.set_obj_rndway(obj)
@@ -495,7 +495,7 @@ function set_rnd_way_walk(obj)
 			local rndrank = math.random(10,60)
 			obj:set_rank(obj:rank() + rndrank)
 		else
-			--log1(" stalker идЄт "..tostring(obj.m_level_vertex_id).."  на "..tostring(rnd_path_vert).." ")
+			--printf(" stalker идЄт "..tostring(obj.m_level_vertex_id).."  на "..tostring(rnd_path_vert).." ")
 		end
 	end
 end
@@ -504,7 +504,7 @@ end
 function set_obj_rndway(obj)
 	local rndway = math.random(#global_task_rnd_way)
 	local rnd_task_way = global_task_rnd_way[rndway].name
-	--log1(" set_obj_rndway "..obj:name().." set rndway - "..rnd_task_way.." ")
+	--printf(" set_obj_rndway "..obj:name().." set rndway - "..rnd_task_way.." ")
 	xvars.npcs_tasks_rndway[obj:name()] = game.translate_string(rnd_task_way)
 	--olr.add_spot_on_map( obj.id,"red_location"," идЄт на новый путь  "..obj:name().." --- "..game.translate_string(rnd_task_way).." ")
 end
@@ -531,7 +531,7 @@ function away_from_zone_cash(obj)
 				smart_terrain.on_death(obj.id)
 				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_cashmoney")..name..game.translate_string("st_olr_ai_tasks_cashmoney_2"), 5, "default", 36000)
 			end
-			--log1("away from zone cash kill - "..obj:name().." ")	
+			--printf("away from zone cash kill - "..obj:name().." ")	
 		end	
 	end 
 end
@@ -557,7 +557,7 @@ function away_from_zone_tourism(obj)
 				smart_terrain.on_death(obj.id)
 				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_tourism")..name..game.translate_string("st_olr_ai_tasks_tourism_2"), 5, "default", 36000)
 			end
-			--log1("away from zone tourism kill - "..obj:name().." ")
+			--printf("away from zone tourism kill - "..obj:name().." ")
 		end	
 	end 
 end
@@ -633,7 +633,7 @@ function set_maintask_substates(obj, rnd_quest)
 	end
 	local rand_kill = places[math.random(#places)]
 	xvars.npcs_tasks_revenge_targets[obj:name()] = rand_kill:name()
-	--log1("revenge "..obj:name().." - set revenge target "..rand_kill:name().." ")
+	--printf("revenge "..obj:name().." - set revenge target "..rand_kill:name().." ")
 	end
 
 end
@@ -672,7 +672,7 @@ end
 function precondition_reason_zone(obj)
 	-- условие: если мы в симул€ции нашли какой нибудь документ
 	--if xvars.npcs_who_find_docs_id and xvars.npcs_who_find_docs_id[obj:name()] and xvars.npcs_who_find_docs_id[obj:name()] == obj.id then
-		--log1("we find docs and can walk to generators "..obj:name().."")
+		--printf("we find docs and can walk to generators "..obj:name().."")
 		if IsStalker(obj) and obj:rank() >= 200 and has_alife_info("bun_antenna_off") then 
 			return true
 		end
@@ -685,7 +685,7 @@ function precondition_revenge(obj)
 	if targetkill then
 		local se_obj = alife():object(targetkill)
 		if se_obj and se_obj:alive() then
-			--log1("цель мести "..se_obj:name().." жива  - ищем еЄ дл€ "..obj:name().."  ")
+			--printf("цель мести "..se_obj:name().." жива  - ищем еЄ дл€ "..obj:name().."  ")
 			return true
 		end
 		return false
@@ -718,18 +718,18 @@ function set_walkers_rndways()
 				--olr.add_spot_on_map( kill.id,"controller_spotmap",kill:name() )
 				local rndway = math.random(#global_task_rnd_way)
 				local rnd_task_way = global_task_rnd_way[rndway].name
-				--log1(" "..kill:name().." set rndway - "..rnd_task_way.." ")
+				--printf(" "..kill:name().." set rndway - "..rnd_task_way.." ")
 				xvars.npcs_tasks_rndway[kill:name()] = game.translate_string(rnd_task_way)
 				local rnd = math.random(1,2)
 				if rnd == 1 then
-					--log1(" SET no RND WAY "..kill:name().." go to base ")
+					--printf(" SET no RND WAY "..kill:name().." go to base ")
 					--olr.add_spot_on_map( kill.id,"red_location"," идЄт в лагерь  "..kill:name().."")
 					xvars.npcs_tasks_rndway[kill:name()] = nil
 				end				
 			end	
 		end
 	end
-	log1(cnt)
+	printf("olr_ai_tasks.set_walkers_rndways count = "..tostring(cnt).."")
 end
 
 

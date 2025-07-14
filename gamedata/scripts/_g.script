@@ -231,10 +231,10 @@ function IsAnomaly(obj)
 	return obj:clsid() > 167 and obj:clsid() < 180
 end
 
-function give_info (info)
+function give_info(info)
 	db.actor:give_info_portion(info)
 end
-function disable_info (info)
+function disable_info(info)
 	if has_alife_info(info) then
 		printf("*INFO*: disabled npc='single_player' id='%s'", info)
 		db.actor:disable_info_portion(info)
@@ -249,7 +249,9 @@ function clear_useful_for_ai(sobj)
   		pk:set( data )
 	end
 end
+
 ----------------------------------------------------------------------
+-- Используется в OLR
 
 function save_xvars(name, value)
   xvars.olr[name] = value
@@ -271,7 +273,6 @@ function del_xvars(name)
   xvars.olr[name] = nil
 end
 
-----------------------------------------------------------------------
 function GetLevelVertexes(level)
 	local lvtab ={}
 	if alife() then
@@ -307,6 +308,7 @@ function GetGameVertexes( level )
 	return gvtab[0]
 end
 ----------------------------------------------------------------------
+
 function insert_to_table(tbl, section)
 	if tbl[section] == nil then
 		tbl[section] = 1
@@ -420,8 +422,7 @@ function distance_between_safe(obj1, obj2)
 	return obj1:position():distance_to(obj2:position())
 end
 
-
---' Проверка на инфопоршны, даже если игрока не существует
+-- Проверка на инфопоршны, даже если игрока не существует
 function has_alife_info(info_id)
 	local aa = alife()
 	if aa == nil then
@@ -431,7 +432,7 @@ function has_alife_info(info_id)
 end
 
 --------------------------------------------------
--- іласс LUA реализуі   ий Finite State Machine
+-- Класс LUA реализующий Finite State Machine
 -- для управления персонажами
 --------------------------------------------------
 class 'FSM'
@@ -442,13 +443,13 @@ function FSM:__init(script_name, npc_obj)
     self.npc = npc_obj
     -- строка - имя скрипта, которvй запускает игру
     self.script_name = script_name
-    -- матрица, задаі   ая граф переходов состояний
+    -- матрица, задающая граф переходов состояний
     -- реализуется как двумерная таблица
     self.transition_matrix = {[0] = {}}
-    -- номер теку   его состояния
+    -- номер текущего состояния
     self.current_state = 0
 
-    -- флаг того, что машина вклічена
+    -- флаг того, что машина включена
     self.machine_running = true
 
     printf("inialization FSM for NPC %s", self.npc:name())
@@ -579,35 +580,26 @@ function script_object:update()
     end
 end
 
---
--- іередача персонажу информации
---
-
-function GiveInfoViaPda(obj_receiver, obj_sender, info_number)
-    obj_receiver:give_info_portion_via_pda(info_number, obj_sender)
-end
-
-
 --------------------------------------------------
 -- Functions and variables added by Zmey
 --------------------------------------------------
 
--- іонстанта, которуі использовать в местах, где нужно задать неограниченное время действия
+-- Константа, которую использовать в местах, где нужно задать неограниченное время действия
 time_infinite = 100000000
 
 -- =азвание скрипта, которvй в даннvй момент находится в отладке
 -- (в этом скрипте будут срабатvвать вvзовv функции debug_log)
 debug_script_name = ""
 
--- Tvводит в лог строчку, если script_name == debug_script_name
--- Lспользуется для отрадки сценариев
+-- Выводит в лог строчку, если script_name == debug_script_name
+-- Используется для отрадки сценариев
 function debug_log(script_name, fmt, ...)
 	if debug_script_name == script_name then
 		log(string.format(fmt, ...))
 	end
 end
 
--- +сли в даннvй момент вvполняется какое-то действие, прерvвает его и отклічает скриптовvй режим
+-- Если в данный момент вvполняется какое-то действие, прерывает его и отклачает скриптовый режим
 function interrupt_action(who, script_name)
   if who:get_script() then
     who:script(false, script_name)
@@ -856,7 +848,7 @@ function IsStalker (object, class_id)
     return false
 end
 
--- Їа®ўҐапҐв ®аг¦ЁҐ «Ё нв® (ЇҐаҐ¤ ў вм game_object)
+-- проверяет оружие ли это (передавать game_object)
 function isWeapon(object)
     local id = get_clsid(object)
     if id == nil then return false end
@@ -1047,8 +1039,8 @@ function random_number (min_value, max_value)
     end
 end
 
--- ‚аҐ¬п бгв®Є ў ¬б
--- —гЈ ©
+-- Время суток в мс
+-- Чугай
 local ms_per_day = 24 * 60 * 60 * 1000
 function day_time()
     return math.mod( game.time(), ms_per_day )
@@ -1059,8 +1051,8 @@ function local_hours()
     return math.floor( math.mod( game.time()/1000, 86400 )/ 3600 )
 end
 
--- Ї абЁв бва®Єг ўЁ¤  "   , ЎЎЎ, ўўў..." ў в Ў«Ёжг { "   ", "ЎЎЎ", "ўўў", ... }
--- —гЈ ©
+-- Парсит строку вида "ааа, ббб, ввв..." в таблицу { "ааа", "ббб", "ввв", ... }
+-- Чугай
 function parse_names( s )
     local t = {}
     for name in string.gfind( s, "([%w_\\]+)%p*" ) do
@@ -1070,7 +1062,6 @@ function parse_names( s )
 
     return t
 end
-
 
 function parse_key_value( s )
     local t = {}
@@ -1089,9 +1080,8 @@ function parse_key_value( s )
     return t
 end
 
-
--- Ї абЁв бва®Єг ўЁ¤  "n1, n2, n3..." ў в Ў«Ёжг { n1, n2, n3, ... } Ј¤Ґ n1, n2, n3... - жҐ«лҐ зЁб« 
--- —гЈ ©
+-- Парсит строку вида "n1, n2, n3..." в таблицу { n1, n2, n3, ... } где n1, n2, n3... - целые числа
+-- Чугай
 --[[function parse_nums( s )
     local t = {}
 
@@ -1102,7 +1092,7 @@ end
     return t
 end]]
 
--- Ї абЁв бва®Єг ўЁ¤  "n1, n2, n3..." ў в Ў«Ёжг { n1, n2, n3, ... } Ј¤Ґ n1, n2, n3... - ¤а®Ў­лҐ зЁб« 
+-- Парсит строку вида "n1, n2, n3..." в таблицу { n1, n2, n3, ... } где n1, n2, n3... - дробные числа
 function parse_nums( s )
 	local t = {}
 
@@ -1113,413 +1103,7 @@ function parse_nums( s )
 	return t
 end
 
-function Get_Cfg_2Params(ini, section, field, default_val, default_val2, mandatory)
-	local oIni = nil
-	
-	if type(ini) == "string" then
-		oIni = ini_file(ini)
-	else
-		oIni = ini
-	end
-
-	if oIni and oIni.section_exist and section then
-		if oIni:section_exist(section) and oIni:line_exist(section, field) then
-			local tT = Parse_Names(oIni:r_string(section, field))
-			local iCnt = #tT
-			
-			if iCnt == 2 then
-				return tT[1], tT[2]
-			elseif iCnt == 1 then
-				return tT[1], default_val2
-			end
-			
-			return default_val, default_val2
-		elseif mandatory then
-			printf("Get_Cfg_2Params:Section=[%s],Field=[%s]~attempt to read a non-existant numeric:<%s>", section, field, "Warning!")
-		end
-		
-		return default_val, default_val2
-	end
-	
-	abort("Get_Cfg_2Params:Reason=[%s],Section=[%s],Field=[%s]~attempt to read a non-existant:<%s>", mandatory, section, field, "Error!")
-end
-
-function Get_VertexLevelId(idGv)
-	local gmg = game_graph()
-	
-	if idGv and gmg:valid_vertex_id(idGv) then
-		local oVertex = gmg:vertex(idGv)
-		
-		if oVertex then
-			return oVertex:level_id() -- idLevel | idMap
-		end
-	end
-	
-	callstack("Get_VertexLevelId: idGv=["..tostring(idGv).."]<~NOT_valid:<Warning!>")
-	printf("Get_VertexLevelId: idGv=[%s]<~NOT_valid:<%s>", idGv, "Warning!")
-	
-	return nil
-end
-
-function Get_ObjLevelId(se_obj)
-	local idGv = nil
-
-	if se_obj then
-		idGv = se_obj.m_game_vertex_id
-		
-		if not idGv then
-			idGv = se_obj.game_vertex_id and se_obj:game_vertex_id()
-		end
-	end
-	
-	if idGv then
-		return Get_VertexLevelId(idGv) -- idLevel | idMap
-	end
-	
-	printf("Get_ObjLevelId:Obj=[%s/%s]:<%s>", type(se_obj), type(se_obj) == 'userdata' and se_obj:name(), "Warning!")
-	
-	return nil
-end
-
-function Get_VertexLevelName(idGv)
-	local idLevel = Get_VertexLevelId(idGv)
-	
-	if idLevel then
-		return sim:level_name(idLevel)
-	end
-	
-	return nil
-end
-
-function Get_ObjectCurentLevel(obj)
-	local idLevel = Get_ObjLevelId(obj)
-	
-	if idLevel then
-		return sim:level_name(idLevel)
-	end
-	
-	return nil
-end
-
---/-------------------------------------------------------------------
---/ Чтение секции из ltx-файла
---/-------------------------------------------------------------------
---/ [sMode] - режим создания (тип) таблицы (nil - tList)
---/ [sType] - тип значений в таблице (nil - строки, "all2num"|"key2num"|"val2num" - перевод в число)
---/ [sDiv]  - разделитель (nil - ',')
---/ [sDiv2] - разделитель (не ',')
-function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
-	local ltx,bLtx = ini,nil
-	if ltx and type(ltx) == 'string' then
-		if ltx:match('(.+)%.(%w+)') then
-			ltx = ini_file(ltx)
-		end
-		bLtx = true
-	end
-	if not ltx then
-		ltx = sini
-		bLtx = true
-	end
-	local bType = nil
-	if type(sType) == 'string' then
-		if sType == "all2num" or sType == "val2num" then
-			bType = false --/ дополнительно перевод значений в числа
-		elseif sType == "key2num" and (sMode == nil or sMode == "list") then
-			bType = false --/ дополнительно перевод значений в числа
-		elseif sType == "true" or sType == "bool" then
-			bType = true  --/ дополнительно значения формируются в пары (val = true)
-		end
-	end
-	local tRet,iCnt = {},0
-	if ltx:section_exist(sSection) then
-		local result,idx,value,key
-		local n = ltx:line_count(sSection)
-		if n > 0 then
-			for i=0, n-1 do
-				result,idx,value = ltx:r_line(sSection,i,"","")
-				key = result and string.trim(idx)
-				if key and key ~= "" and value then
-					if sMode and sMode ~= "list" and type(sType) == 'string' and (sType == "key2num" or sType == "all2num") then
-						key = tonumber(key) --/ переводим ключ в число
-					end
-					if sMode == nil or sMode == "list" then --/ простая таблица-список: (из одиночных значений или таблиц с ними)
-						if sDiv and type(key) == 'string' then
-							table.insert(tRet, string.split(key,sDiv,bType)) --/> {{a11,a12,...,a1n}, {a21,a22,...,a2n}, ..., {an1,an2,...,ann}}
-						else
-							if bType == false then
-								key = tonumber(key) --/ переводим ключ в число
-							end
-							if key ~= nil then
-								table.insert(tRet, key) --/> {arg1, arg2, ..., argn}
-							end
-						end
-					elseif sMode == 'string' then --/ простая таблица:
-						tRet[key] = string.trim(value) --/> {[k1]=v1, [k2]=v2, ..., [kn]=vn} (key,val - строки)
-					elseif sMode == "number" then --/ таблица (val=>число):
-						tRet[key] = tonumber(string.trim(value)) --/> {[k1]=num1, [k2]=num2, ..., [kn]=numn}
-					elseif sMode == "bool" then --/ таблица с bool: {[k1]=boolean, [k2]=boollean, ..., [kn]=boollean}}
-						local val = string.trim(value)
-						if     (val == "true" or val == "1") and not (type(sType) == 'string' and sType == "false") then
-							tRet[key] = true
-						elseif val == "false" or val == "0" and not (type(sType) == 'string' and sType == "true") then
-							tRet[key] = false
-						end
-					elseif sMode == "true" then --/ таблица с 'true' (исключаем значения == false/0)
-						local val = string.trim(value)
-						if val ~= "false" and val ~= "0" then
-							tRet[key] = true --/> {[k1]=true, [k2]=true, ..., [kn]=true}} (val=>true)
-						end
-					elseif sMode == "matrix" then --/ матрица:
-						if not sDiv then --/ субтаблицы - простые таблицы-списки
-							if bType == false then value = tonumber(string.trim(value)) end
-							table.insert(tRet,{key, string.trim(value)}) --/> { {k1,v1}, {k2,v2}, ..., {kn,vn} }
-						elseif not (sDiv2 and sDiv2 ~= sDiv) then --/ разделяем 'value' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
-							local tValue = string.split(value,sDiv,bType)
-							tRet[key] = {}
-							table.insert( tRet[key], tValue ) --/> {k1={v11,v12,...,v1n}, k2={v21,v22,...,v2n}, ..., kn={vn1,vn2,...,vnn}}
-						else
-							local tValue = string.split(value,sDiv)
-							tRet[key] = {}
-							local sPattern = '%s*(.-)%s*'..sDiv2..'%s*(.*)'
-							local Key,Val,v
-							for _,v in pairs(tValue) do
-								Key,Val = v:match(sPattern)
-								if Key and Val then
-									if bType == false then Val = tonumber(Val) end
-									table.insert( tRet[key], {Key, Val} ) --/> {k1={k11,v11,...,kn,v1n}, k2={k21,v21,...,v2n}, ..., kn={kn1,vn1,...,knn,vnn}}
-								end
-							end
-						end
-					elseif sMode == 'table' then --/ таблица с субтаблицами:
-						if not sDiv then sDiv = "," end --/ если не задана - задаем маску разделителя
-						--/ разделяем 'value' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
-						if not (sDiv2 and sDiv2 ~= sDiv) then
-							local tValue = string.split(value,sDiv,bType)
-							tRet[key] = tValue --/> {[k1]={v11,v12,...,v1n}, [k2]={v21,v22,...,v2n}, ..., [kn]={vn1,vn2,...,vnn}}
-						else --/> {[k1][v11]=v12, [k2][v21]=v22, ..., [kn][vn1]=vn2}
-							local tValue = string.split(value,sDiv)
-							tRet[key] = {}
-							local sPattern = '%s*(.-)%s*'..sDiv2..'%s*(.*)'
-							local Key,Val,v
-							for _,v in pairs(tValue) do
-								Key,Val = v:match(sPattern)
-								if Key and Val then
-									if bType == false then Val = tonumber(Val) end
-									tRet[key][Key] = Val
-								end
-							end
-						end
-					end
-					iCnt = iCnt +1
-				end
-			end
---			printf("fGet_IniSection:fname=[%s],Section=[%s],Type=[%s],Size=[%s]", ini, sSection, sMode, iCnt ) --/#~#
-		elseif (sType and sType == "<<Err!>>") or db.is_dbg2 then
-			printf("fGet_IniSection:=[%s],ini=[%s],Mode=[%s],Type=[%s]~NOT_found_Lines:<%s>", sSection, ini, sMode, sType, "Warning!")
-		end
-		if bLtx then ltx = nil end
-	elseif db.is_dbg1 then
-		callstack("fGet_IniSection:ini=["..type(ini).."],NOT_found_Section=["..tostring(sSection).."],Type=["..tostring(sMode).."]:<Error!>")
-	else
-		printf("fGet_IniSection:ini=[%s],NOT_found_Section=[%s],Type=[%s]:<%s>", ini, sSection, sMode, "Error!")
-	end
-	return tRet,iCnt --/>
-end
-
---/ Чтение нескольких секций из ltx-файла
-function Get_IniSections(ini, tSections, sType)
-	local ltx,bLtx = ini,nil
-	
-	if ltx and type(ltx) == 'string' then
-		if ltx:match('(.+)%.(%w+)') then
-			ltx = ini_file(ltx)
-		else
-			ltx = ini_file("lost_alpha\\"..ltx..".ltx")
-		end
-		
-		bLtx = true
-	end
-	
-	if not ltx then
-		ltx = sini
-		bLtx = true
-	end
-	
-	local tRet,tCnt = {},{}
-	local n,result,idx,value
-	
-	for k,v in ipairs(tSections) do
-		if ltx:section_exist(v) then
-			n = ltx:line_count(v)
-			if n > 0 then
-				for i=0,n-1 do
-					result,idx,value = ltx:r_line(v,i,"","")
-					if result and string.trim_w(idx) ~= "" and string.trim(value) then
-						idx = string.trim_w(idx)
-						if sType == nil and tRet[idx] == nil then
-							tRet[idx] = string.trim(value)
-						elseif sType == "number" and tRet[idx] == nil then
-							tRet[idx] = tonumber(value)
-						elseif sType == "numbers" and tRet[tonumber(idx)] == nil then
-							tRet[tonumber(idx)] = tonumber(value)
-						end
-					end
-				end
-			end
-			tCnt[k] = n
-		else
-			tCnt[k] = 0
-		end
-	end
-	
-	if bLtx then ltx = nil end
-	
-	return tRet,tCnt
-end
-
---/-------------------------------------------------------------------
---/ Чтение строки из секции ltx-файла
---/-------------------------------------------------------------------
---/ чтение строки из секции файла
---/ [sMode] - режим создания (тип) таблицы (nil - числа)
---/ [Flag] - false - перевод в числа, true -> {val = true}
-function ReadFromIni(ini, sSection, sField, DefValue, sMode, sDiv, Flag)
-	local ltx,bLtx = ini,nil
-	if ltx and type(ltx) == 'string' then
-		if ltx:match('(.+)%.(%w+)') then
-			ltx = ini_file(ltx)
-		else
-			ltx = ini_file("lost_alpha\\"..ltx..".ltx")
-		end
-		bLtx = true
-	end
-	if not ltx then
-		ltx = sini
-		bLtx = true
-	end
-	if not sMode then
-		sMode = DefValue and type(DefValue)
-		if sMode == "boolean" then sMode = "bool" end
---		log("fReadFromIni:Section=[%s],Field=[%s],DefVal=[%s],Mode=[%s]", sSection, sField, DefValue, sMode, "") --/#~#
-	end
-	local bFlag = Flag
-	if bFlag and type(bFlag) == 'string' then
-		if bFlag == "true" then
-			bFlag = true
-		elseif bFlag == "val2num" or bFlag == "all2num" then
-			bFlag = false
-		end
-	end
-	local ret
-	if ltx:section_exist(sSection) then
-		if ltx:line_exist(sSection,sField) then
-			if      not sMode or sMode == "number"    then ret = ltx:r_float    (sSection,sField) --/ number
-			elseif sMode == 0 or sMode == "bool"      then ret = ltx:r_bool     (sSection,sField) --/ bool
-			elseif sMode == 1 or sMode == 'string'    then ret = ltx:r_string   (sSection,sField) --/ string
-			elseif sMode == 2 or sMode == "string_wq" then ret = ltx:r_string_wq(sSection,sField) --/ full string (string1\\string2)
-			elseif sMode == 3 or sMode == 'table' or sMode == "table_wq" or sDiv then --/ table
-				if sMode == "table_wq" then
-					ret = ltx:r_string_wq(sSection,sField) --/ full string
-				else
-					ret = ltx:r_string(sSection,sField) --/ string
-				end
-				if ret and ret ~= "" then
-					--/ разделяем 'ret' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
-					if not sDiv or sDiv == "," then --/ если не задана - задаем маску разделителя => ","
-						--/ [k1]={v11,v12,...,v1n}, [k2]={v21,v22,...,v2n}, ..., [kn]={vn1,vn2,...,vnn}
-						--/ "true" ~> [k1]={v11=true,v12=true,...,v1n=true},
-						--/ "number" ~> [k1]={v11,v12,...,v1n}, [k2]={v21,v22,...,v2n}, ..., [kn]={vn1,vn2,...,vnn}
-						ret = string.split(ret,",",bFlag)
-					elseif sDiv and sDiv ~= "," then --/> {[k1][v11]=v12, [k2][v21]=v22, ..., [kn][vn1]=vn2}
-						local tValue = string.split(ret,",")
-						ret = {}
-						ret[sField] = {}
-						--local sPattern = '(.-)'..sDiv..'(.*)' --/ '%s*(.-)%s*'..sDiv..'%s*(%S*)'
-						local sPattern = '%s*(.-)%s*'..sDiv..'%s*(.*)'
-						local Key,Val,v
-						for _,v in pairs(tValue) do
-							Key,Val = v:match(sPattern)
-							if not (Key and Val) then
-								printf("fReadFromIni:Sec=[%s],Fld=[%s],DefVal=[%s],Mode=[%s],Div=[%s],ToNum=[%s],KeyVal=[%s/%s]:<%s>", sSection, sField, DefValue, sMode, sDiv, bFlag, Key, Val, "Warning!")
-							end
-							if bFlag == false then Val = tonumber(Val) end
-							ret[sField][Key] = Val
-						end --/> ret[sField] = {v11=v12, v21=v22, ..., vn1=vn2}
-					else
-						abort("%s:fReadFromIni:ini=[%s],Section=[%s],Field=[%s],DefVal=[%s],Mode=[%s]~Wrong_mode:<%s>", sModule, ini, sSection, sField, DefValue, sMode, sDiv, "Error!")
-						return --/>
-					end
-				else
-					if type(DefValue) == 'string' then
-						if DefValue == "<<Err!>>" then
-							abort("%s:fReadFromIni:ini=[%s],Section=[%s],Field=[%s]<~NoFound!,DefVal=[%s],Mode=[%s],Flg=[%s]:<%s>", sModule, ini, sSection, sField, DefValue, sMode, bFlag, "Error!")
-							return --/>
-						elseif DefValue == "<<Log!>>" then
-							printf("fReadFromIni:Section=[%s],Field=[%s]<~NoFound!,DefVal=[%s],Mode=[%s]:<%s>", sSection, sField, DefValue, sMode, "LogInfo")
-							DefValue = (sMode == 'table' and {}) or (sDiv and "") or nil
-						elseif DefValue == "<<Nil!>>" then
-							DefValue = (sMode == 'table' and {}) or (sDiv and "") or nil
-						else
-							printf("fReadFromIni:Sec=[%s],Field=[%s]~?,DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s]:<%s>", sSection, sField, DefValue, sMode, sDiv, bFlag, "?") --/#~#
-						end
-					elseif type(DefValue) ~= 'table' then
-						printf("fReadFromIni:ini=[%s],Sec=[%s],Field=[%s]~?,DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s]:<%s>", ini, sSection, sField, DefValue, sMode, sDiv, bFlag, "???") --/#~#
-					end
-					ret = DefValue
-				end
-			else
-				abort("%s:fReadFromIni:ini=[%s],Section=[%s],Field=[%s],Mode=[%s],Div=[%s]~Wrong_div,Flg=[%s]:<%s>", sModule, ini, sSection, sField, sMode, bFlag, "Error!")
-				return --/>
-			end
-		else
-			if DefValue then
-				if type(DefValue) == 'string' then
-					if DefValue == "<<Err!>>" then
-						abort("%s:fReadFromIni:ini=[%s],Section=[%s],Field=[%s]<~NoFound!,Mode=[%s]:<%s>", sModule, ini, sSection, sField, sMode, "Error!")
-						return --/>
-					elseif DefValue == "<<Log!>>" then
-						printf("fReadFromIni:Section=[%s],Field=[%s]<~NoFound!,Mode=[%s]:<%s>", sSection, sField, sMode, "LogInfo")
-						DefValue = (sMode == "bool" and nil) or (sMode == 'table' and {}) or (sDiv and "") or nil
-					elseif DefValue == "<<Nil!>>" then
-						DefValue = (sMode == "bool" and nil) or (sMode == 'table' and {}) or (sDiv and "") or nil
-					else
-						printf("fReadFromIni:Sec=[%s],Field=[%s]~?,DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s]:<%s>", sSection, sField, DefValue, sMode, sDiv, bFlag, "?") --/#~#
-					end
-				elseif not (type(DefValue) == "number" or type(DefValue) == "boolean" or type(DefValue) == 'table') then
-					printf("fReadFromIni:ini=[%s],Sec=[%s],Field=[%s]~?,DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s]:<%s>", ini, sSection, sField, DefValue, sMode, sDiv, bFlag, "???") --/#~#
-				end
-			end
-			ret = DefValue
-		end
-	else
-		if DefValue and type(DefValue) == 'string' then
-			if DefValue == "<<Err!>>" then
-				abort("%s:fReadFromIni:NotValue_in_Section=[%s],Field=[%s],Mode=[%s]:<%s>", sModule, sSection, sField, sMode, "Error!")
-				return --/>
-			elseif DefValue == "<<Log!>>" then
-				printf("fReadFromIni:Section=[%s]<~NoFound!,Field=[%s],Mode=[%s]:<%s>", sSection, sField, sMode, "LogInfo")
-				DefValue = (sMode == 'table' and {}) or (sDiv and "") or nil
-			elseif DefValue == "<<Nil!>>" then
-				DefValue = (sMode == 'table' and {}) or (sDiv and "") or nil
-			else
-				printf("fReadFromIni:Section=[%s]~?,Fld=[%s],DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s]:<%s>", sSection, sField, DefValue, sMode, sDiv, bFlag, "?") --/#~#
-			end
-		else
-			printf("fReadFromIni:Section=[%s]~?,Fld=[%s],DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s]:<%s>", sSection, sField, DefValue, sMode, sDiv, bFlag, "???") --/#~#
-		end
-		ret = DefValue
-	end
-	if sDiv and type(ret) == 'string' and ret ~= "" then
-		if DefValue ~= "<<Nil!>>" then
-			printf("fReadFromIni:Section=[%s]~?,Fld=[%s],DefVal=[%s],Mode=[%s],Div=[%s],Flg=[%s],ret=[%s]:<%s>", sSection, sField, DefValue, sMode, sDiv, bFlag, ret, "Info!") --/#~#
-		end
-		ret = string.split(ret,sDiv,bFlag) --/> разделяем по маске
-	end
-	if bLtx then ltx = nil end
-	return ret --/>
-end
-
--- Їа®ўҐапҐв, Ґбвм «Ё ®ЎкҐЄв ў ®­« ©­Ґ
+-- Проверяет, есть ли объект в онлайне
 function is_object_online(obj_id)
 	return level.object_by_id(obj_id) ~= nil
 end
@@ -1553,7 +1137,6 @@ function vector_cross (v1, v2)
 end
 
 -- Вращает вектор вокруг оси y против часовой стрелки
-
 function vector_rotate_y (v, angle)
     angle = angle * 0.017453292519943295769236907684886
     local c = math.cos (angle)
@@ -1568,9 +1151,9 @@ function clear_table (t)
     end
 end
 
---€бЇ®«м§гҐв ¤«п ¬®­бва®ў. ‚лЎ®а в®зЄЁ, Єг¤  Ё¤вЁ ў ­ҐЄ®в®а®¬ а ¤ЁгбҐ Ё зв®Ў в®зЄ  Ўл«  ¤ «миҐ ­  а ббв®п­ЁЁ
--- min_radius ®в вҐЄгйҐ© Ї®§ЁжЁЁ(Ґб«Ё нв® Ї®«гзЁвбп). center_id - жҐ­ва Ї®§ЁжЁЁ, ў®ЄагЈ Є®в®а®© ¦ЁўҐ¬,
--- position_id - вгЄгй п Ї®§ЁжЁп, radius - ў Є Є®¬ а ¤ЁгбҐ ўлЎЁа вм в®зЄг, min_radius - ¬Ё­Ё¬ «м­®Ґ а ббв®п­ЁҐ, ®в вҐЄгйҐ© Ї®§ЁжЁЁ ¤® ­®ў®© в®зЄЁ.
+-- Использует для монстров. Выбор точки, куда идти в некотором радиусе и чтоб точка была дальше на расстоянии
+-- min_radius от текущей позиции(если это получится). center_id - центр позиции, вокруг которой живем,
+-- position_id - тукущая позиция, radius - в каком радиусе выбирать точку, min_radius - минимальное расстояние, от текущей позиции до новой точки.
 function new_point(center_id, position_id,radius, min_radius)
     local dir = vector():set(math.random(-1000, 1000)/1000.0, 0.0001, math.random(-1000, 1000)/1000.0)
     local pos = level.vertex_in_direction(center_id, dir, radius)
@@ -1665,14 +1248,14 @@ function is_object_monster(obj)
 	return false
 end
 
---ў®§ўа й Ґв Їа®Ё§ў®«м­го в®зЄг ЇгвЁ г Є®в®а®© гбв ­®ў«Ґ­ ЎЁв
-function point_with_bit(patrol_path, bit, old_point)      -- old_point - Ё­¤ҐЄб в®зЄЁ, Є®в®аго ­Ґ ­ ¤® ўлЎЁа вм,
-  local points = {}                                       -- Ї а ¬Ґва ­Ґ ®Ўп§ вҐ«м­л©( ­ ЇаЁ¬Ґа вҐЄгйҐ© в®зЄЁ )
+-- Возвращает произвольную точку пути у которой установлен бит
+function point_with_bit(patrol_path, bit, old_point)      -- old_point - индекс точки, которую не надо выбирать,
+  local points = {}                                       -- параметр не обязательный( например текущей точки )
 
     for i = 0, patrol_path:count()-1 do
-      --„®Ў®ў«пҐ¬ ў в Ў«Ёжг в®зЄЁ б ­г¦­л¬ ЎЁв®¬
+      -- Добавляем в таблицу точки с нужным битом
       if( patrol_path:flag(i, bit)) then
-            --„®Ў ў«пҐ¬ в®зЄг Ґб«Ё old_point == nil Ё«Ё ­®ў п в®зЄ  ­Ґ б®ўЇ ¤ Ґв б old_point
+            -- Добавляем точку если old_point == nil или новая точка не совпадает с old_point
             if(old_point == nil) then
                 table.insert(points, patrol_path:point(i))
             elseif(old_point ~= i) then
@@ -1692,14 +1275,14 @@ function point_with_bit(patrol_path, bit, old_point)      -- old_point - Ё­¤ҐЄб 
     end
 end
 
---ў®§ўа й Ґв Їа®Ё§ў®«м­го в®зЄг ЇгвЁ г Є®в®а®© гбв ­®ў«Ґ­ ЎЁв
-function point_with_bit_id(patrol_path, bit, old_point)        -- old_point - Ё­¤ҐЄб в®зЄЁ, Є®в®аго ­Ґ ­ ¤® ўлЎЁа вм,
-    local points = {}                                          -- Ї а ¬Ґва ­Ґ ®Ўп§ вҐ«м­л©( ­ ЇаЁ¬Ґа вҐЄгйҐ© в®зЄЁ )
+-- Возвращает произвольную точку пути у которой установлен бит
+function point_with_bit_id(patrol_path, bit, old_point)        -- old_point - индекс точки, которую не надо выбирать,
+    local points = {}                                          -- параметр не обязательный( например текущей точки )
 
     for i = 0, patrol_path:count()-1 do
-      --„®Ў®ў«пҐ¬ ў в Ў«Ёжг в®зЄЁ б ­г¦­л¬ ЎЁв®¬
+      -- Добавляем в таблицу точки с нужным битом
       if( patrol_path:flag(i, bit)) then
-            --„®Ў ў«пҐ¬ в®зЄг Ґб«Ё old_point == nil Ё«Ё ­®ў п в®зЄ  ­Ґ б®ўЇ ¤ Ґв б old_point
+            -- Добавляем точку если old_point == nil или новая точка не совпадает с old_point
             if(old_point == nil) then
                 table.insert(points, i)
             elseif(old_point ~= i) then
@@ -1719,7 +1302,7 @@ function point_with_bit_id(patrol_path, bit, old_point)        -- old_point - Ё­
     end
 end
 
---Возвращает индекс самой ближней точки пути с заданым битом, от текущей точки
+-- Возвращает индекс самой ближней точки пути с заданым битом, от текущей точки
 function near_point_with_bit(point, patrol_path, bit)
     local new_point = nil
     local index     = nil
@@ -1728,7 +1311,7 @@ function near_point_with_bit(point, patrol_path, bit)
     for i = 0, patrol_path:count()-1 do
         if( patrol_path:flag(i, bit) ) then
             if(new_point == nil or patrol_path:point(i):distance_to(point) < dist) then
-                --Если эта точка первая из нашедшихся, либо от нее путь ближе, то запоминаем ее
+                -- Если эта точка первая из нашедшихся, либо от нее путь ближе, то запоминаем ее
                 new_point   = patrol_path:point(i)
                 index       = i
                 dist        = new_point:distance_to(point)
@@ -1788,7 +1371,7 @@ function switch_online (id)
        sim:set_switch_offline (id, false)
     end
 end
--------------------------------------------------------------------------------------------
+
 function switch_offline (npc)
     if npc == nil or npc:alive () == false then return end
     local sim = alife ()
@@ -1854,7 +1437,7 @@ function odd( x )
 	return math.floor( x * 0.5 ) * 2 == math.floor( x )
 end
 
---' Усталость
+-- Усталость
 function on_actor_critical_power()
 	if has_alife_info("esc_trader_newbie") then
 		game.start_tutorial("part_11_weakness")
@@ -1867,7 +1450,7 @@ end
 function on_actor_critical_max_power()
 end
 
---' Кровотечение
+-- Кровотечение
 function on_actor_bleeding()
 	if has_alife_info("esc_trader_newbie") then
 		game.start_tutorial("part_8_wound")
@@ -1880,7 +1463,7 @@ end
 function on_actor_satiety()
 end
 
---' Радиация
+-- Радиация
 function on_actor_radiation()
 	if has_alife_info("esc_trader_newbie") then
 		game.start_tutorial("part_6_radiation")
@@ -1890,7 +1473,7 @@ function on_actor_radiation()
 	end
 end
 
---' Заклинило оружие
+-- Заклинило оружие
 function on_actor_weapon_jammed()
 	if has_alife_info("esc_trader_newbie") then
 		game.start_tutorial("part_9_weapon")
@@ -1900,7 +1483,7 @@ function on_actor_weapon_jammed()
 	end
 end
 
---' не может ходить изза веса
+-- не может ходить изза веса
 function on_actor_cant_walk_weight()
 	if has_alife_info("esc_trader_newbie") then
 		game.start_tutorial("part_14_overload")
@@ -1910,7 +1493,7 @@ function on_actor_cant_walk_weight()
 	end
 end
 
---' пси воздействие
+-- пси воздействие
 function on_actor_psy()
 end
 

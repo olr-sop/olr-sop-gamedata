@@ -62,7 +62,7 @@ function actor_binder:net_spawn(data)
 		actor_stats.add_to_ranking(self.object:id())
 	end
 
-	--' Загружаем настройки дропа
+	-- Загружаем настройки дропа
 	death_manager.init_drop_settings()
 
 	core.tc("actor_net_spawn")
@@ -646,7 +646,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:map_location_added_callback(spot_type_str, object_id)
 	if (false==app_ready()) or (device().precache_frame>1) then return end
-	--'news_manager.send_task(db.actor, "new")
+	--news_manager.send_task(db.actor, "new")
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:update(delta)
@@ -790,14 +790,14 @@ function actor_binder:save(packet)
 	printf("actor_binder:save(): self.object:name()='%s'", self.object:name())
 	object_binder.save(self, packet)
 
-	--' Сохраняем уровень сложности
+	-- Сохраняем уровень сложности
 	if save_treasure_manager == true then
 		packet:w_u8(level.get_game_difficulty() + 128)
 	else
 		packet:w_u8(level.get_game_difficulty())
 	end
 
-	--' Сохраняем данные об отключенном вводе
+	-- Сохраняем данные об отключенном вводе
 	if self.st.disable_input_time == nil then
 		packet:w_bool(false)
 	else
@@ -824,7 +824,7 @@ function actor_binder:load(reader)
 	object_binder.load(self, reader)
 	printf("actor_binder:object_binder.load(): self.object:name()='%s'", self.object:name())
 
-	--' Загружаем уровень сложности
+	-- Загружаем уровень сложности
 	local game_difficulty = reader:r_u8()
 	
 	local load_treasure_manager = false      
@@ -868,9 +868,11 @@ end
 
 -- Weapon functions
 function hide_weapon()
+	log1("! CALLED bind_stalker.hide_weapon")
 	weapon_hide = true
 end
 function restore_weapon()
+	log1("! CALLED bind_stalker.restore_weapon")
 	weapon_hide = false
 end
 

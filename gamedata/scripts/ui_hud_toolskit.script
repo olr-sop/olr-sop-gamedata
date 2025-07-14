@@ -21,7 +21,7 @@ local sModule  = script_name() --/ string name of file-module
 --/ Initialize Module
 --/ -----------------------------------------------------------------
 function init()
---	log(sModule..":init:>") --/#~#
+--	log1(string.format(sModule..":init:>")) --/#~#
 	if bInit then return end --/>
 	
 	if db.actor then
@@ -35,7 +35,7 @@ end
 --/ Process (functions)
 --/ -----------------------------------------------------------------
 function PreSets(e)
---	log(sModule..":PreSets:>") --/#~#
+--	log1(string.format(sModule..":PreSets:>")) --/#~#
 	if xr_logic.pstor_retrieve(db.actor, "dbg_lvch") then
 		this.Del_Teleport()
 		xr_logic.pstor_clear(db.actor, "dbg_lvch") --/ clear
@@ -251,7 +251,7 @@ function UI_Tool05:Update() end
 class "UI_TabController" ( CUIScriptWnd ) --/ main menu (shell)
 --/------------------------------------------------------------------------------------------------
 function UI_TabController:__init() super()
---	log("TC:_init:[>]") --/#~#
+--	log1(string.format("TC:_init:[>]")) --/#~#
 	if not bInit then init() end
 	self.wide = device().width/device().height > 1.333
 	self.active_idx = (this.Check_StartGame() and "btn1") or "btn1"
@@ -324,7 +324,7 @@ end
 
 function UI_TabController:OnTabChange()
 	self.active_idx = this.Check_StartGame() and self.tab:GetActiveId() or "btn1"
---	log("TC:OnTabChange: active_id=[%s]", self.active_idx, "") --/#~#
+--	log1(string.format("TC:OnTabChange: active_id=[%s]", self.active_idx, "")) --/#~#
 	for idx,wnd in pairs(self.wnds) do
 		if idx == self.active_idx then
 			wnd:Update()
@@ -346,7 +346,7 @@ function UI_TabController:OnBtnExit()
 end
 
 function UI_TabController:Quit()
---	log("TC:Quit:owner=[%s],holder=[%s]:(%s)", self.owner, self:GetHolder(), ">") --/#~#
+--	log1(string.format("TC:Quit:owner=[%s],holder=[%s]:(%s)", self.owner, self:GetHolder(), ">")) --/#~#
 	if self:GetHolder() then
 		if self.owner then
 			self.owner:StopWnd(self)
@@ -367,7 +367,7 @@ function UI_TabController:OnKeyboard(dik, keyboard_action)
 end
 
 function UI_TabController:Update()
---	log("TC:Update:[>]") --/#~#
+--	log1(string.format("TC:Update:[>]")) --/#~#
 	CUIScriptWnd.Update(self)
 	if self.active_idx == "btn1" and time_global() > (self.tm_upd or 0) and this.Check_StartGame() then
 		self.tm_upd = time_global() + 1000
@@ -383,7 +383,7 @@ end
 function UI_TabController:OnBtnCheck1()
 end
 function UI_TabController:OnBtnAction1()
---	log("OnBtnAction1:[>]") --/#~#
+--	log1(string.format("OnBtnAction1:[>]")) --/#~#
 	local sTxtPos, sTxtMap = this.Get_Position_Actor(true)
 	this.Get_SendTip(sTxtPos,"Actor_coords:",0,25)
 	this.Get_SendTip(sTxtMap,"Actor_pos:",0,25)
@@ -413,7 +413,7 @@ function UI_TabController:OnBtnCheck2()
 	self:OnBtnChange2()
 end
 function UI_TabController:OnBtnAction2()
---	log("OnBtnAction2:[>]") --/#~#
+--	log1(string.format("OnBtnAction2:[>]")) --/#~#
 	self.note2:SetText("")
 	local sStr = self.box2:GetText() or ""
 	sStr = sStr:match('(%S+)')
@@ -439,7 +439,7 @@ function UI_TabController:OnBtnAction2()
 					id = i
 					break
 				elseif ( sSection:match(sStr) or sName:match(sStr) ) then
---					log("OnBtnAction2:name=[%s],id=[%s]%s", soObj:name(), i, "") --/#~#
+--					log1(string.format("OnBtnAction2:name=[%s],id=[%s]%s", soObj:name(), i, "")) --/#~#
 					if not id then id = i end
 					local iDist = soObj.position:distance_to(vPosA)
 					table.insert(tFound, {id=i, dist=iDist})
@@ -455,7 +455,7 @@ function UI_TabController:OnBtnAction2()
 		soObj = sim:object(id)
 		local sMap = soObj and Get_ObjectCurentLevel(soObj)
 		if not sMap then
-			log("OnBtnAction2:Obj=[%s],Id=[%s],Map=[%s]~?:<%s>", soObj and soObj:name(), id, sMap, "Warning!")
+			log1(string.format("OnBtnAction2:Obj=[%s],Id=[%s],Map=[%s]~?:<%s>", soObj and soObj:name(), id, sMap, "Warning!"))
 			self.note2:SetText("Error! Object=["..sStr.."] not found or no on locations!")
 			return --/>
 		end
@@ -488,7 +488,7 @@ function UI_TabController:OnBtnAction2()
 				local sWhere = m_news.Get_WhereDesc(sMap, vPos) or ""
 				sTxt = string.format( "%s\\n%s", sTxt, string.gsub(sWhere, "%s+", "\160") )
 			end
---			log("OnBtnAction2:Obj=[%s],Map=[%s]%s", soObj and soObj:name(), sMap, "") --/#~#
+--			log1(string.format("OnBtnAction2:Obj=[%s],Map=[%s]%s", soObj and soObj:name(), sMap, "")) --/#~#
 		end
 		if bMapSpot then
 			if sCharName then
@@ -497,7 +497,7 @@ function UI_TabController:OnBtnAction2()
 				local sInvName = sObjSection
 				Add_MapSpot(id, "red_location", "Found_Obj: "..sInvName)
 			end
-			log("OnBtnAction2:Obj=[%s]:%s", soObj and soObj:name(), sTxt or "") --/#~#
+			log1(string.format("OnBtnAction2:Obj=[%s]:%s", soObj and soObj:name(), sTxt or "")) --/#~#
 		else
 			if level.map_has_object_spot(id, "debug_stalker") then
 				level.map_remove_object_spot(id, "debug_stalker")
@@ -506,7 +506,7 @@ function UI_TabController:OnBtnAction2()
 				level.map_remove_object_spot(id, "red_location")
 			end
 		end
---		log("OnBtnAction2:Spot=[%s],Txt=[%s]%s", bMapSpot, sTxt, "") --/#~#
+--		log1(string.format("OnBtnAction2:Spot=[%s],Txt=[%s]%s", bMapSpot, sTxt, "")) --/#~#
 		this.Get_SendTip(sTxt,"Object_found:",0,20)
 		self.box2:SetText("")
 		self.chk2:SetCheck(false)
@@ -534,7 +534,7 @@ function UI_TabController:OnBtnCheck3()
 	self:OnBtnChange3()
 end
 function UI_TabController:OnBtnAction3()
---	log("OnBtnAction3:[>]") --/#~#
+--	log1(string.format("OnBtnAction3:[>]")) --/#~#
 	self.note3:SetText("")
 	local sSection = self.box3:GetText() or ""
 	sSection = string.gsub(sSection, '%W+', "_")
@@ -560,7 +560,7 @@ function UI_TabController:OnBtnAction3()
 	else
 		if sSection == "money" then
 			oActor:give_money(iNum*1000)
-			log("OnBtnAction3:give_money=[%s]%s", iNum*1000, "") --/#~#
+			log1(string.format("OnBtnAction3:give_money=[%s]%s", iNum*1000, "")) --/#~#
 			self.box3:SetText("")
 			self.num3:SetText("1")
 			self.chk3:SetCheck(false)
@@ -603,7 +603,7 @@ function UI_TabController:OnBtnAction3()
 			if sSection and sSection ~= "" then
 				sTxt = string.format( "%s/[%s]", sTxt, sSection)
 			end
---			log("OnBtnAction3:Txt=[%s]%s", sTxt, "") --/#~#
+--			log1(string.format("OnBtnAction3:Txt=[%s]%s", sTxt, "")) --/#~#
 			this.Get_SendTip(sTxt,"Spawned:",0,10)
 			self.box3:SetText("")
 			self.num3:SetText("1")
@@ -621,7 +621,7 @@ end
 --/ Tool-4 "Infoportions management"
 --/------------------------------------------------------------------
 function UI_TabController:OnBtnChange4()
---	log("OnBtnChange4:[>]") --/#~#
+--	log1(string.format("OnBtnChange4:[>]")) --/#~#
 	local sInfo = self.box4:GetText() or ""
 	if sInfo:len() >= 3 then
 		local bAdd = self.chk4:GetCheck()
@@ -642,13 +642,13 @@ function UI_TabController:OnBtnCheck4()
 	self:OnBtnChange4()
 end
 function UI_TabController:OnBtnAction4()
---	log("OnBtnAction4:[>]") --/#~#
+--	log1(string.format("OnBtnAction4:[>]")) --/#~#
 	self.note4:SetText("")
 	local sInfo = self.box4:GetText() or ""
 	sInfo = sInfo:gsub('%W+', "_")
 	if sInfo ~= "" then
 		local bAdd = self.chk4:GetCheck()
-		log("OnBtnAction4: info=[%s] :(%s)", sInfo, bAdd and "+" or "-", "") --/#~#
+		log1(string.format("OnBtnAction4: info=[%s] :(%s)", sInfo, bAdd and "+" or "-", "")) --/#~#
 		if bAdd then
 			give_info(sInfo)
 			
@@ -696,7 +696,7 @@ function UI_TabController:OnBtnCheck5()
 	self:OnBtnChange5()
 end
 function UI_TabController:OnBtnAction5()
---	log("OnBtnAction5:[>]") --/#~#
+--	log1(string.format("OnBtnAction5:[>]")) --/#~#
 	self.note5:SetText("")
 	local sFileName = self.box5:GetText() or ""
 	sFileName = string.gsub(sFileName, "%s+", "_")
@@ -723,7 +723,7 @@ function UI_TabController:OnBtnAction5()
 		else
 			self.note5:SetText("Attention! PpeFile not active!")
 		end
-		log("OnBtnAction5:File=[%s]/(%s)%s", sFileName, bPlay, "") --/#~#
+		log1(string.format("OnBtnAction5:File=[%s]/(%s)%s", sFileName, bPlay, "")) --/#~#
 	else
 		self.note5:SetText("Error! String empty! Enter filename.")
 	end
@@ -742,7 +742,7 @@ end
 function UI_TabController:OnBtnCheck0()
 	--local btn_chk0 = self.chk0:GetCheck()
 	local btn_chk0 = self:GetCheckButton("btn_chk0")
-	log("OnBtnCheck0:Chk=[%s]%s", btn_chk0:GetCheck(), "") --/#~#
+	log1(string.format("OnBtnCheck0:Chk=[%s]%s", btn_chk0:GetCheck(), "")) --/#~#
 end
 
 --/ ----------------------------------------------
@@ -788,16 +788,13 @@ end
 --/------------------------------------------------------------------
 --/ Output message to game screen
 --/------------------------------------------------------------------
-function Get_SendTip(sText, sHeader, iTimeOut, iTimeShow, sSender)
-	if SendTip then
-		SendTip(sText, sHeader, iTimeOut, iTimeShow, sSender)
-	else
-		if not news_manager.tips_icons[sSender] then
-			sSender = "default"
-		end
+function Get_SendTip(sText, sHeader, iTimeOut, iTimeShow)
+	--if SendTip then
+	--	SendTip(sText, sHeader, iTimeOut, iTimeShow)
+	--else
 		sText = (sHeader or "").."› \\n"..sText
-		news_manager.send_tip(db.actor, sText, iTimeOut, sSender, iTimeShow*1000)
-	end
+		news_manager.send_tip(db.actor, sText, nil, "default", 2000)
+	--end
 end
 --/ ------------------------------------------------------------------------------------------------
 --/ Spawn items in debug-mode (only at game start and only for Actor!)
@@ -878,10 +875,10 @@ function Debug_Spawn(e) --/ for tests and debug
 		--[[
 		local sFaction = "stalker"
 		local iChkGoodwill = relation_registry.community_goodwill(sFaction, oActor:id())
-		log("Debug_Spawn:Faction=[%s],Goodwill=[%s]:[%s]", sFaction, iChkGoodwill, ">") --/#~#
+		log1(string.format("Debug_Spawn:Faction=[%s],Goodwill=[%s]:[%s]", sFaction, iChkGoodwill, ">")) --/#~#
 		iChkGoodwill = math.min(3000,math.max(0,iChkGoodwill +200))
 		relation_registry.set_community_goodwill (sFaction, oActor:id(), iChkGoodwill)
-		log("Debug_Spawn:Faction=[%s],Goodwill=[%s]:[%s]", sFaction, iChkGoodwill, "<") --/#~#
+		log1(string.format("Debug_Spawn:Faction=[%s],Goodwill=[%s]:[%s]", sFaction, iChkGoodwill, "<")) --/#~#
 		--]]
 	else
 		printf("Debug_Spawn:ltx=[%s],dbg1=[%s]:[%s]", ltx, db.is_dbg1, "Warning!")
@@ -890,7 +887,7 @@ end
 
 function Callback_OnNetSpawn(uo, idObj, oObj)
 	if uo and oObj and db.actor and not db.actor:item_in_slot(uo) then
-		log("Callback_OnNetSpawn:Item=[%s],idObj=[%s]:[%s]", uo, idObj, ">") --/#~#
+		log1(string.format("Callback_OnNetSpawn:Item=[%s],idObj=[%s]:[%s]", uo, idObj, ">")) --/#~#
 		--db.actor:move_to_ruck(oObj)
 		db.actor:move_to_slot(oObj, true)
 	end
@@ -905,7 +902,7 @@ function Get_ClassId(sSection)
 		end
 	end
 	if not iClassId then
-		log("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!")
+		log1(string.format("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!"))
 	end
 	return iClassId --/>
 end
@@ -916,7 +913,7 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 	local iClassId = this.Get_ClassId(sSection)
 	local soObj
 	if iClassId then
-		log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]:[%s]", sSection, tostring(iClassId), tostring(iDist), "?") --/#~#
+		log1(string.format("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]:[%s]", sSection, tostring(iClassId), tostring(iDist), "?")) --/#~#
 		local oActor = db.actor
 		local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
 		local vPosA,vDirA = oActor:position(), oActor:direction()
@@ -946,9 +943,9 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 				soObj.squad = math.random(64)
 			end
 		end
---		log("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+") --/#~#
+--		log1(string.format("Make_Spawn:=[%s],Cid=[%s],Dist=[%s]=>[%s]:[%s]", sSection, iClassId, iDist, soObj and soObj.name and soObj:name(), "+")) --/#~#
 	else
-		log("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!")
+		log1(string.format("Make_Spawn:NOT_found_spawn_section=[%s]:<%s>", sSection, "Warning!"))
 		sMsg = "Warning!:NOT_found_spawn_section="..sMsg
 	end
 	if bNoMsg ~= false then
@@ -969,7 +966,7 @@ end
 
 function Create_Vehicle(sSection, vPos, iLvid, iGvid, iClassId)
 	if iClassId and (iClassId == clsid.car_s or iClassId == clsid.script_heli or iClassId == clsid.helicopter) then
-		log("Create_Vehicle:section=[%s]:[%s]", sSection, ">") --/#~#
+		log1(string.format("Create_Vehicle:section=[%s]:[%s]", sSection, ">")) --/#~#
 		local soObj = alife():create(sSection, vPos, iLvid, iGvid)
 		if type(get_netpk) == 'function' then
 			local soObj = alife():create(sSection, vPos, iLvid, iGvid)
@@ -1033,7 +1030,7 @@ function Del_Teleport()
 	if idLvChg then
 		local soLvChg = alife():object(idLvChg)
 		if soLvChg then
-			log("Del_Teleport:idLvChg=[%s]~release:[%s]", idLvChg, "x") --/#~#
+			log1(string.format("Del_Teleport:idLvChg=[%s]~release:[%s]", idLvChg, "x")) --/#~#
 			if level.map_has_object_spot(idLvChg, "red_location") then
 				level.map_remove_object_spot(idLvChg, "red_location")
 			end
@@ -1050,7 +1047,7 @@ function Get_Teleport(tLC)
 	if lvch then this.Del_Teleport() end
 	local idMapTo,idGvTo,idLvTo = la_helper.Get_IdsByLevelName(tLC.map or "none")
 	if oActor and idGvTo and idLvTo and tLC.pos then
-		log("Get_Teleport:MapTo(%s)=>idMap=[%s],idGv=[%s],idLv=[%s]:[%s]", tLC.map, idMapTo, idGvTo, idLvTo, "?") --/#~#
+		log1(string.format("Get_Teleport:MapTo(%s)=>idMap=[%s],idGv=[%s],idLv=[%s]:[%s]", tLC.map, idMapTo, idGvTo, idLvTo, "?")) --/#~#
 		local soObj = alife():create("level_changer", oActor:position(), oActor:level_vertex_id(), oActor:game_vertex_id())
 		local pk = get_netpk(soObj,1)
 		if pk:isOk() then
@@ -1068,11 +1065,11 @@ function Get_Teleport(tLC)
 			xr_logic.pstor_store(oActor, "dbg_lvch", soObj.id)
 
 			--Add_MapSpot(soObj.id, "red_location", "LvChanger(dbg): "..soObj.id) --/#~# for debug
-			log("Get_Teleport:(%s):MapTo(%s)=[%s],idGvTo=[%s],idLvTo=[%s]:[%s]", soObj.id, idMapTo, tLC.map, idGvTo, idLvTo, "+") --/#~#
+			log1(string.format("Get_Teleport:(%s):MapTo(%s)=[%s],idGvTo=[%s],idLvTo=[%s]:[%s]", soObj.id, idMapTo, tLC.map, idGvTo, idLvTo, "+")) --/#~#
 			--table.print( pk:get(), sModule..":NetPacket|(2):"..soObj:name() ) --/#~# for debug
-		else log("Get_Teleport:LvChg=[%s]~?:<%s>", soObj:name(), "Error!")
+		else log1(string.format("Get_Teleport:LvChg=[%s]~?:<%s>", soObj:name(), "Error!"))
 		end
-	else log("Get_Teleport:MapTo(%s)=[%s],idGvTo=[%s],idLv=[%s],Pos=[%s]:<%s>", idMapTo, tLC.map, idGvTo, idLv, tLC.pos, "Error!")
+	else log1(string.format("Get_Teleport:MapTo(%s)=[%s],idGvTo=[%s],idLv=[%s],Pos=[%s]:<%s>", idMapTo, tLC.map, idGvTo, idLv, tLC.pos, "Error!"))
 	end
 end
 --/ ------------------------------------------------------------------------------------------------
@@ -1098,7 +1095,7 @@ function Get_RestrNames(bLog)
 			Add_MapSpot(id,"red_location",sTxt)
 			if bLog then
 				local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,ClassId=%d,Radius=%d,Type=%d,Restr=", p.x, p.y, p.z, idLv, idGv, iClassId, iRadius or -1, iRestType or -1, oObj:name() )
-				log("Get_RestrNames:%s", sText)
+				log1(string.format("Get_RestrNames:%s", sText))
 			end
 		end
 	end
@@ -1130,7 +1127,7 @@ function Get_SmartNames(bLog)
 					local sText = "x= "..tostring(p.x)..", y= "..tostring(p.y)..", z= "..tostring(p.z)
 					sText = sText..",   lvid= "..tostring(idLv)..", gvid= "..tostring(idGv)
 					sText = sText..";--/ "..game.translate_string("st_name_"..sName)
-					log("Smart:%s", sText)
+					log1(string.format("Smart:%s", sText))
 				end
 				--
 			else
@@ -1148,7 +1145,7 @@ function Get_SmartNames(bLog)
 				end
 				if bLog then
 					local sText = string.format("x:%d,y:%d,z:%d,idLv:%d,idGv:%d,Smrt:%s", p.x, p.y, p.z, idLv, idGv, sName )
-					log("Smart:%s", sText)
+					log1(string.format("Smart:%s", sText))
 				end
 			end
 		end
@@ -1178,7 +1175,7 @@ function Get_RespawnerNames(bLog)
 				Add_MapSpot(id,"red_location",sTxt)
 				if bLog then
 					local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,Radius=[%d],SpawnedObj=[%d],Respawner=[%s]", vPos.x, vPos.y, vPos.z, idLv, idGv, iRadius or -1, iCountObj or -1, sName )
-					log("Get_RespawnerNames:%s", sText)
+					log1(string.format("Get_RespawnerNames:%s", sText))
 				end
 			end
 		--end --/
@@ -1209,7 +1206,7 @@ function Get_BoxNames(bLog,bDrop)
 				Add_MapSpot(i,"treasure",sTxt)
 				if bLog then
 					local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,Sid=%s,InvBox=", p.x, p.y, p.z, idLv, idGv, sStoryId, sName )
-					log("Get_BoxNames:%s", sText)
+					log1(string.format("Get_BoxNames:%s", sText))
 				end
 			end
 		end

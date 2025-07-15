@@ -38,7 +38,6 @@ class "UI_SpawnMenu" (CUIScriptWnd)
 --/ -----------------------------------------------------------------------------------------------
 function UI_SpawnMenu:__init() super()
 	if not bInit then init() end
-	self.wide = device().width/device().height > 1.333
 	self:InitControls()
 	self:InitCallBacks()
 	this.UI_MySpawn(self) --/ add
@@ -51,6 +50,7 @@ function UI_SpawnMenu:InitControls()
 	self:Init(25,25,1024,1024)
 	self:SetAutoDelete(true)
 	
+	self.wide = (device().width/device().height) > ((768.0 / 1024.0) + 0.01)
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_wnd\\ui_spawn_menu.xml")
 	self.background = xml:InitStatic("background", self)
@@ -59,8 +59,9 @@ function UI_SpawnMenu:InitControls()
 	self.title = xml:InitStatic("title", self)
 	--/ picture (texture)
 	self.pic = xml:InitButton("get_equipment_btn", self)
+	local current_kx = (device().height / device().width) / (768.0 / 1024.0)
 	if self.wide then --/ selecting offset and width of pic
-		self.pic:SetWidth(124)
+		self.pic:SetWidth(self.pic:GetWidth() * current_kx)
 	end
 	self:Register(self.pic,"btn_pic")
 	--/ spawn-menu buttons
@@ -70,7 +71,7 @@ function UI_SpawnMenu:InitControls()
 		x = tP.x + 120*math.floor((i-1)/iMaxRows)
 		y = tP.y + 35*math.fmod((i-1), iMaxRows) -- здесь отступы между €чейками
 		btn = this.Get_Button(x,y,tP.w,tP.h)
-		btn:SetText(tSpawnMenu[i].title or "")
+		btn:SetTextST(tSpawnMenu[i].title or "")
 		self:AttachChild(btn)
 		self:Register(btn,"btn_"..i)
 	end
@@ -81,6 +82,12 @@ function UI_SpawnMenu:InitControls()
 	self.copyright = xml:InitStatic("great_modder_copyright", self)
 
 	self.name = xml:InitStatic("great_modder_nickname", self)
+	if self.wide then
+		self.copyright:SetWidth(self.copyright:GetWidth() / current_kx)
+	else
+		self.name:SetTextY(15)
+		self.name:SetWidth(self.copyright:GetWidth() * current_kx)
+	end
 
 end
 

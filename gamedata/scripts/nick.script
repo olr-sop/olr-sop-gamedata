@@ -11901,15 +11901,17 @@ end
 
 function daem_pochinenyy_item_rem()
 	local currep = xvars.cur_rest_wpn
-	local stng = game.translate_string(currep)
-	if tostring(stng) == tostring("FN HPSA") then
-		--log1("!!!!!!!!!! FIX "..stng.."")
-		stng = "wpn_hpsa"
+	log1("Get currep - "..currep.."")
+	if not system_ini():section_exist(currep) then
+		log1("! ERROR: daem_pochinenyy_item_rem have non existing section!")
+		olr.hud_tip("", "Произошла ошибка, секции записанной в xvars.cur_rest_wpn не существует.".."\\n".."Для исключения вылета используется эта заглушка!", 5)
+		return
 	end
-	local wpn = alife():create(stng, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	local wpn = alife():create(currep, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	local cwpn = level.object_by_id(wpn.id)
 	if wpn and cwpn and cwpn:is_weapon() then
 		cwpn:unload_magazine()
+		-- тут ладно, но в ремонт мы могли отдать так то заряженый ствол, но пусть тут пока будет так
 	end
 	xvars.cur_rest_wpn = ""
 	db.actor:disable_info_portion("ametist_repair_gotovo_done_info")

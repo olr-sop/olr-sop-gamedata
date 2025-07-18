@@ -1,4 +1,3 @@
-
 -- Ключем является группировка персонажа. Значением является таблица, содержашая имена секций предметов.
 local item_by_community = {}
 
@@ -17,348 +16,337 @@ local ammo_sections = {}
 
 local death_ini = ini_file("misc\\death_generic.ltx")
 
-
 function init_drop_settings()
-  local community_list = { "stalker", "trader", "dolg", "freedom", "bandit", "military", "zombied", "ecolog", "killer", "monolith", "arena_enemy", "actor_dolg", "sky", "sin", "sliznyaki", "lastday", "iskateli", "neutral", "deads", "actor_killer", "voenstals"}  
+	local community_list = {
+		"stalker",
+		"trader",
+		"dolg",
+		"freedom",
+		"bandit",
+		"military",
+		"zombied",
+		"ecolog",
+		"killer",
+		"monolith",
+		"arena_enemy",
+		"actor_dolg",
+		"sky",
+		"sin",
+		"sliznyaki",
+		"lastday",
+		"iskateli",
+		"neutral",
+		"deads",
+		"actor_killer",
+		"voenstals"
+	}
 
-    for k,v in pairs(community_list) do
-        -- Необходимо заполнить таблицу
-        item_by_community[v] = {}
-        if death_ini:section_exist(v) then
-        local n = death_ini:line_count(v)
-        local id, value = "", ""
-        for i=0,n-1 do
-          result, id, value = death_ini:r_line(v,i,"","")
-                item_by_community[v][id] = 100*tonumber(value)
-        end
-        end
-    end
+	for k, v in pairs(community_list) do
+		-- Необходимо заполнить таблицу
+		item_by_community[v] = {}
+		if death_ini:section_exist(v) then
+			local n = death_ini:line_count(v)
+			local id, value = "", ""
+			for i = 0, n - 1 do
+				result, id, value = death_ini:r_line(v, i, "", "")
+				item_by_community[v][id] = 100 * tonumber(value)
+			end
+		end
+	end
 
-    -- Заполняем таблицу зависимостей
-  local n = death_ini:line_count("item_dependence")
-  local id, value = "", ""
-  for i=0,n-1 do
-    result, id, value = death_ini:r_line("item_dependence",i,"","")
-    item_dependence[id] = {}
-    local vvv = parse_names(value)
-    for k,v in pairs(vvv) do
-      item_dependence[id][v] = true
-    end
-  end
+	-- Заполняем таблицу зависимостей
+	local n = death_ini:line_count("item_dependence")
+	local id, value = "", ""
+	for i = 0, n - 1 do
+		result, id, value = death_ini:r_line("item_dependence", i, "", "")
+		item_dependence[id] = {}
+		local vvv = parse_names(value)
+		for k, v in pairs(vvv) do
+			item_dependence[id][v] = true
+		end
+	end
 
-  -- Множители и минимаксы для выпадения вещей в зависимости от уровня
-    local level_name = level.name()
-  
-  if not death_ini:section_exist(level_name) then
-    level_name = "default"
-  end
+	-- Множители и минимаксы для выпадения вещей в зависимости от уровня
+	local level_name = level.name()
 
-    local n = death_ini:line_count(level_name)
-  local id, value = "", ""
-  for i=0,n-1 do
-    result, id, value = death_ini:r_line(level_name,i,"","")
-        mul_by_level[id] = tonumber(value)
-  end        
+	if not death_ini:section_exist(level_name) then
+		level_name = "default"
+	end
 
-    local item_count_section = "item_count_" .. level.get_game_difficulty()
-    local n = death_ini:line_count(item_count_section)
-  for i=0,n-1 do
-    result, id, value = death_ini:r_line(item_count_section,i,"","")
-        -- Нужно распарсить value в два значения
-        local t = parse_nums(value)
-    if t[1] == nil then
-            abort("Error on [death_ini] declaration. Section [%s], line [%s]", item_count_section, tostring(id))
-        end
-        local min = t[1]
-        local max = t[2]
-        if max == nil then
-            max = min
-        end
-        
-        if mul_by_level[id] == nil then
-            mul_by_level[id] = 0
-        end
+	local n = death_ini:line_count(level_name)
+	local id, value = "", ""
+	for i = 0, n - 1 do
+		result, id, value = death_ini:r_line(level_name, i, "", "")
+		mul_by_level[id] = tonumber(value)
+	end
 
-        min = tonumber(min) * mul_by_level[id]
-        max = tonumber(max) * mul_by_level[id]
+	local item_count_section = "item_count_" .. level.get_game_difficulty()
+	local n = death_ini:line_count(item_count_section)
+	for i = 0, n - 1 do
+		result, id, value = death_ini:r_line(item_count_section, i, "", "")
+		-- Нужно распарсить value в два значения
+		local t = parse_nums(value)
+		if t[1] == nil then
+			abort("Error on [death_ini] declaration. Section [%s], line [%s]", item_count_section, tostring(id))
+		end
+		local min = t[1]
+		local max = t[2]
+		if max == nil then
+			max = min
+		end
 
-        count_by_level[id] = {min = min, max = max}
-  end        
+		if mul_by_level[id] == nil then
+			mul_by_level[id] = 0
+		end
 
-  -- Предметы, которые нельзя удалять (квестовые например)
-    local n = death_ini:line_count("keep_items")
-  for i=0,n-1 do
-    result, id, value = death_ini:r_line("keep_items",i,"","")
-        if value == "true" then
-            always_keep_item[id] = true
-        end
-    end
+		min = tonumber(min) * mul_by_level[id]
+		max = tonumber(max) * mul_by_level[id]
 
-  -- Предметы, относящиеся к патронам. Их надо спаунить другим методом.
-    ammo_sections = {}
-    local n = death_ini:line_count("ammo_sections")
-  local id, value = "", ""
-  for i=0,n-1 do
-    result, id, value = death_ini:r_line("ammo_sections",i,"","")
-        ammo_sections[id] = true
-  end        
+		count_by_level[id] = {min = min, max = max}
+	end
+
+	-- Предметы, которые нельзя удалять (квестовые например)
+	local n = death_ini:line_count("keep_items")
+	for i = 0, n - 1 do
+		result, id, value = death_ini:r_line("keep_items", i, "", "")
+		if value == "true" then
+			always_keep_item[id] = true
+		end
+	end
+
+	-- Предметы, относящиеся к патронам. Их надо спаунить другим методом.
+	ammo_sections = {}
+	local n = death_ini:line_count("ammo_sections")
+	local id, value = "", ""
+	for i = 0, n - 1 do
+		result, id, value = death_ini:r_line("ammo_sections", i, "", "")
+		ammo_sections[id] = true
+	end
 end
-
-
 
 class "drop_manager"
 function drop_manager:__init(npc)
-  self.npc = npc
+	self.npc = npc
 end
+
 function drop_manager:create_release_item()
-  -- Спрашиваем у серверного объекта генерились ли предметы
-  local se_obj = alife():object(self.npc:id())
-  if se_obj.death_droped == true then
-    return
-  end
-  se_obj.death_droped = true
+	-- Спрашиваем у серверного объекта генерились ли предметы
+	local se_obj = alife():object(self.npc:id())
+	if se_obj.death_droped == true then
+		return
+	end
+	se_obj.death_droped = true
 
-    -- Запускаем итератор на удаление предметов
-    self.npc:iterate_inventory(keep_item, self.npc)
+	-- Запускаем итератор на удаление предметов
+	self.npc:iterate_inventory(keep_item, self.npc)
 
-    -- Проверка на отсутствие спауна лута
-    local ini = self.npc:spawn_ini()
+	-- Проверка на отсутствие спауна лута
+	local ini = self.npc:spawn_ini()
 
-    if ini and ini:section_exist("dont_spawn_loot") then
-        return
-    end
+	if ini and ini:section_exist("dont_spawn_loot") then
+		return
+	end
 
-    -- Доспавниваем необходимое количество итемов:
-    -- Необходимо составить список объектов которые могут быть заспавнены для персонажа
+	-- Доспавниваем необходимое количество итемов:
+	-- Необходимо составить список объектов которые могут быть заспавнены для персонажа
 
-    local spawn_items = item_by_community[self.npc:character_community()]    
-    for k,v in pairs(spawn_items) do
-        -- По каждому объекту необходимо получить зависимости    
-        if check_item_dependence(self.npc, k) == true then
-            -- По каждому объекту необходимо получить количество
-            local number = math.ceil(math.random(count_by_level[k].min, count_by_level[k].max))
-            -- Необходимо заспавнить нужное количество.
-            create_items(self.npc, k, number, v)
-        end
-    end
+	local spawn_items = item_by_community[self.npc:character_community()]
+	for k, v in pairs(spawn_items) do
+		-- По каждому объекту необходимо получить зависимости
+		if check_item_dependence(self.npc, k) == true then
+			-- По каждому объекту необходимо получить количество
+			local number = math.ceil(math.random(count_by_level[k].min, count_by_level[k].max))
+			-- Необходимо заспавнить нужное количество.
+			create_items(self.npc, k, number, v)
+		end
+	end
 end
-
 
 -- Функция вызывается для каждого предмета, если вернет false то предмет удалится.
 function keep_item(npc, item)
 	--log1(item:name())
-    local section = item:section()
+	local section = item:section()
 
-    if section == "device_torch" then
-	item:set_condition((math.random(25)+35)/100)
-	--log1("set cond torch")
-	local rndgood = math.random(1,40)
-	if rndgood == 1 then
-	      item:set_condition((math.random(75)+87)/100)
+	if section == "device_torch" then
+		item:set_condition((math.random(25) + 35) / 100)
+		--log1("set cond torch")
+		local rndgood = math.random(1, 40)
+		if rndgood == 1 then
+			item:set_condition((math.random(75) + 87) / 100)
 		--log1("rnd good torch cond "..item:name().." ")
-	end	
-    end
+		end
+	end
 
-    if section == "bolt" or section == "device_torch" then
-        return false
-    end
+	if section == "bolt" or section == "device_torch" then
+		return false
+	end
 
-    if always_keep_item[section] == true then
-        return true
-    end
+	if always_keep_item[section] == true then
+		return true
+	end
 
-   if item:is_weapon_magazined() then
-      item:unload_magazine()	
-   end
+	if item:is_weapon_magazined() then
+		item:unload_magazine()
+	end
 
-   if section == "detector_simple" then
-      item:set_condition((math.random(5)+25)/100) 
-   end
+	if section == "detector_simple" then
+		item:set_condition((math.random(5) + 25) / 100)
+	end
 
-   if item:is_outfit() then
-      item:set_condition((math.random(15)+35)/100)
-   end
+	if item:is_outfit() then
+		item:set_condition((math.random(15) + 35) / 100)
+	end
 
-   if section == "exo_outfit" then
-      item:set_condition((math.random(5)+15)/100)
-   end
+	if section == "exo_outfit" then
+		item:set_condition((math.random(5) + 15) / 100)
+	end
 
-    local item_id = item:id()
-    local item_in_slot = npc:item_in_slot(1)
-    if item_in_slot ~= nil and
-       item_in_slot:id() == item_id
-    then
-        item:unload_magazine()
-	item:set_condition((math.random(15)+35)/100)
-	set_rad_flag(item)
-        return true
-    end
+	local item_id = item:id()
+	local item_in_slot = npc:item_in_slot(1)
+	if item_in_slot ~= nil and item_in_slot:id() == item_id then
+		item:unload_magazine()
+		item:set_condition((math.random(15) + 35) / 100)
+		set_rad_flag(item)
+		return true
+	end
 
+	item_in_slot = npc:item_in_slot(2)
+	if item_in_slot ~= nil and item_in_slot:id() == item_id then
+		item:unload_magazine()
+		item:set_condition((math.random(15) + 35) / 100)
+		set_rad_flag(item)
+		return true
+	end
 
-    item_in_slot = npc:item_in_slot(2)
-    if item_in_slot ~= nil and
-       item_in_slot:id() == item_id
-    then
-        item:unload_magazine()
-	item:set_condition((math.random(15)+35)/100)
-	set_rad_flag(item)
-        return true
-    end
+	if item:is_weapon() then
+		item:set_condition((math.random(15) + 55) / 100)
+	end
 
-   if item:is_weapon() then
-      item:set_condition((math.random(15)+55)/100)
-   end
+	local ammornd = math.random(1, 4)
+	if item:is_ammo() and ammornd == 3 then
+		--log1("dell ammo - "..item:name().."")
+		olr.del(item)
+	end
 
-   local ammornd = math.random(1,4)
-   if item:is_ammo() and ammornd == 3 then
-	--log1("dell ammo - "..item:name().."")
-	olr.del(item)
-   end
-
-   if item:is_weapon() then
-     	local rndgood = math.random(1,50)
-	if rndgood == 1 then
-	      item:set_condition((math.random(75)+88)/100)
+	if item:is_weapon() then
+		local rndgood = math.random(1, 50)
+		if rndgood == 1 then
+			item:set_condition((math.random(75) + 88) / 100)
 		--log1("rnd good weap cond "..item:name().." ")
+		end
 	end
-   end
 
-   local obj = item and item:id() and alife():object(item:id())   
-   if obj then
-	if section == "device_pda" 
-	or section == "binocular_a" 
-	or section == "vodka_a" 
-	or section == "guitar_a" 
-	or section == "bread_a" 
-	or section == "yad" 
-	or section == "hand_radio" 
-	or section == "kolbasa_a" 
-	or section == "harmonica_a" 
-	or section == "kruglov_flash" then 
-       		alife():release(obj,true)
-	end 
-   end
-
-   local medrnd = math.random(1,10)
-   if item:is_medkit() and medrnd ~= 5 then
-	olr.del(item)
-   end
-
-   if item:is_ammo() then
-	local vog_ammo = 
-	{
-	["ammo_vog-25"] = true,
-	["ammo_vog-25p"] = true,
-	["ammo_m209"] = true,
-	["ammo_vgm93"] = true,
-	["ammo_og-7b"] = true
-	}
-	if item:get_ammo_box_curr() == item:get_ammo_box_size() then
-	        if not vog_ammo[item:section()] then 
-			item:set_ammo_box_curr(item:get_ammo_box_size() / math.random(8,12))
-			--log1("set rnd ammo full box")
-                else
-                	item:set_ammo_box_curr(1)
-        	end
+	local obj = item and item:id() and alife():object(item:id())
+	if obj then
+		if section == "device_pda" or section == "binocular_a" or section == "vodka_a" or section == "guitar_a" or section == "bread_a" or section == "yad" or section == "hand_radio" or section == "kolbasa_a" or section == "harmonica_a" or section == "kruglov_flash" then
+			alife():release(obj, true)
+		end
 	end
-   end
 
-  if npc:character_community() == "trader" then
-	olr.del(item)
-  end
+	local medrnd = math.random(1, 10)
+	if item:is_medkit() and medrnd ~= 5 then
+		olr.del(item)
+	end
 
-  local wait_time = 0
-  wait_time = time_global() + 400
-  level.add_call(
-  function() return time_global() > wait_time end,
-  function() if npc then xr_motivator.fix_ammo(npc) end end
-  )
+	if item:is_ammo() then
+		local vog_ammo = {
+			["ammo_vog-25"] = true,
+			["ammo_vog-25p"] = true,
+			["ammo_m209"] = true,
+			["ammo_vgm93"] = true,
+			["ammo_og-7b"] = true
+		}
+		if item:get_ammo_box_curr() == item:get_ammo_box_size() then
+			if not vog_ammo[item:section()] then
+				--log1("set rnd ammo full box")
+				item:set_ammo_box_curr(item:get_ammo_box_size() / math.random(8, 12))
+			else
+				item:set_ammo_box_curr(1)
+			end
+		end
+	end
+
+	if npc:character_community() == "trader" then
+		olr.del(item)
+	end
+
+	local wait_time = 0
+	wait_time = time_global() + 400
+	level.add_call(
+		function()
+			return time_global() > wait_time
+		end,
+		function()
+			if npc then
+				xr_motivator.fix_ammo(npc)
+			end
+		end
+	)
 
 	--log1(obj:name())
-
 end
-
 
 -- Функция спавнит необходимое число предметов
 function create_items(npc, section, number, rnd)
-    	if ammo_sections[section] == true then
-        if number > 0 then
-            se_respawn.create_ammo(section,npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id(),number)
-        end
-    	else
-        for i=1,number do
-            if math.random(100) <=  rnd then
-		alife():create(section,npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
-	    end
-        end
-    	end    
+	if ammo_sections[section] == true then
+		if number > 0 then
+			se_respawn.create_ammo(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), number)
+		end
+	else
+		for i = 1, number do
+			if math.random(100) <= rnd then
+				alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			end
+		end
+	end
 end
-
 
 -- Функция проверяет есть ли хоть один из зависимых объектов у персонажа
 function check_item_dependence(npc, section)
-  if item_dependence[section] == nil then
-    return true
-  end
+	if item_dependence[section] == nil then
+		return true
+	end
 
-    local d_flag = true
-    for k,v in pairs(item_dependence[section]) do
-        local obj = npc:object(k)
-        if obj ~= nil and npc:marked_dropped(obj) ~= true then
-            return true
-        end
-        d_flag = false
-    end
+	local d_flag = true
+	for k, v in pairs(item_dependence[section]) do
+		local obj = npc:object(k)
+		if obj ~= nil and npc:marked_dropped(obj) ~= true then
+			return true
+		end
+		d_flag = false
+	end
 
-    return d_flag
+	return d_flag
 end
 
 function set_rad_flag(obj)
+	if xvars then
+		if xvars.weapons then
+			if obj then
+				if obj:name() then
+					if xvars.weapons[obj:name()] ~= nil then
+						--log1("net spawn weapons  - "..obj:name().." УЖЕ ЗАРЕГАН")
+						return
+					end
 
-if xvars then
-	if xvars.weapons then
-	if obj then
-	if obj:name() then
-
-	if xvars.weapons[obj:name()] ~= nil then
-		--log1("net spawn weapons  - "..obj:name().." УЖЕ ЗАРЕГАН")
-		return
+					local rnd = math.random(1, 2)
+					if rnd == 1 then
+						--log1("net spawn weapons - "..obj:name().." raded = TRUE")
+						xvars.weapons[obj:name()] = true
+					else
+						--log1("net spawn weapons  - "..obj:name().." raded = FALSE")
+						xvars.weapons[obj:name()] = false
+					end
+				end
+			end
+		end
 	end
 
-	local rnd = math.random(1,2)
-	if rnd == 1 then
-		xvars.weapons[obj:name()] = true
-		--log1("net spawn weapons - "..obj:name().." raded = TRUE")
-	else
-		xvars.weapons[obj:name()] = false
-		--log1("net spawn weapons  - "..obj:name().." raded = FALSE")
-	end
-
-	end
-	end
-
-end
-end
-
-local iParent = obj:parent()
-if not iParent then
-	local sobj = alife():object(obj:name())
-	if sobj then
-		clear_useful_for_ai(sobj)
+	local iParent = obj:parent()
+	if not iParent then
+		local sobj = alife():object(obj:name())
+		if sobj then
+			clear_useful_for_ai(sobj)
+		end
 	end
 end
-
-end
-
-
-
-
-
-
-
-
-
-
-
-
-

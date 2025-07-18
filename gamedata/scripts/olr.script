@@ -277,7 +277,6 @@ function npc_hit(obj, amount, local_direction, who, bone_index)
 	end
 end
 
-
 function on_use(obj)
 	olr_capsule.use(obj)
 	olr_items_use.use(obj)
@@ -358,7 +357,7 @@ function start_game_vars()
 	xvars.npcs_who_find_docs_id = {} -- Таблица с id сталкеров кто нашел документы в симуляции
 	xvars.naparnik_name = "" 	-- Имя напарника на свалку
 	xvars.mosk_hits = 0 		-- Сколько раз пальнули по мозгу на lvl12
-	xvars.shoot_count = 0 		-- Сколько настрелял патронов ГГ
+	--xvars.shoot_count = 0 		-- Сколько настрелял патронов ГГ
 	xvars.killed_npcs = 0 		-- Сколько сталкеров убил ГГ
 	xvars.gentri_door_open = math.random(1,3) 	-- Случайная дверь на Генераторах
 	xvars.sim_deaths = {} 		-- Умершие мобы в симуляции
@@ -671,7 +670,6 @@ function partice_on_obj(obj_name,particle)
 	ps:play_at_pos(obj:position())
 end
 
-
 -- Отсрочить выброс на время time
 function blow_add(time)
 	local tec = olr_blowout.get_blow_timer()
@@ -884,7 +882,6 @@ local sobjpos = alife():object(objpos)
 	end
 end
 
-
 -- удалить объект по имени
 function del_by_name(name_to_del)
 	local se_obj = alife():object(name_to_del)
@@ -941,7 +938,6 @@ function del(obj)
   	return false
 end
 
-
 function cough()
 	local rnd = math.random(1,4)
 	if rnd == 1 then
@@ -955,7 +951,6 @@ function cough()
 	end	
 end
 
-
 function sopli()
 	local rnd = math.random(1,2)
 	if rnd == 1 then
@@ -964,7 +959,6 @@ function sopli()
 		olr.snd([[actor\sneeze_2]])
 	end	
 end
-
 
 -- вывести custom static сообщение на худ
 function hud_tip(sender, text, timeout)
@@ -984,7 +978,6 @@ function hud_tip(sender, text, timeout)
 	hud:GetCustomStatic("custom_sms_text"):wnd():SetTextST(tostring(text_all))
 	hud:GetCustomStatic("custom_sms_text").m_endTime = time_global()/1000 + timeout
 end
-
 
 -- добавить мапспот
 function add_spot(obj, spot, text)
@@ -1030,7 +1023,6 @@ function enable_walk()
 	get_actor_obj():unblock_action(key_bindings.kWPN_FIRE)
 end
 
-
 -- Выключить ходьбу ГГ
 function disable_walk()
 	get_actor_obj():block_action(key_bindings.kFWD)
@@ -1040,7 +1032,6 @@ function disable_walk()
 	get_actor_obj():block_action(key_bindings.kR_LOOKOUT)
 	get_actor_obj():block_action(key_bindings.kWPN_FIRE)
 end
-
 
 -- Выключить возможность сохраняться\загружаться
 function disable_save_load()
@@ -1124,7 +1115,6 @@ function kill_mon_in_radius(pos, radius)
 	end
 end
 
-
 -- Объект внутри рестриктора по имени
 function obj_in_zone(ob,zo)
 	local zsobj = alife():object(zo)
@@ -1138,7 +1128,6 @@ function obj_in_zone(ob,zo)
 	return zzone:inside(oobj:position())
 end 
 
-
 -- Рандомная камера 
 function rnd_camera_direction()
 	local cam = actor_camera(0)
@@ -1147,7 +1136,6 @@ function rnd_camera_direction()
       		cam.pitch = math.random(0.1,0.9)
     	end 
 end 
-
 
 function horror_snd()
 	local sound_obj_right = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_1]])
@@ -1180,8 +1168,6 @@ function horror_snd()
 	end
 end
 
-
-
 function is_monsters_around(radius)
 	if radius == nil then
 		radius = 50
@@ -1196,7 +1182,6 @@ function is_monsters_around(radius)
 	end
 end
 
-
 function npc_healing_sms(namenpc)
 	local name = tostring(namenpc)
 	if name then
@@ -1206,40 +1191,39 @@ function npc_healing_sms(namenpc)
 		game.translate_string("st_olr_need_healing_4"), 
 		game.translate_string("st_olr_need_healing_5")}
 		local news_text = "%c[255,255,255,255]"..namenpc.."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(250,0,50,50),1*1000, 15000)
+		news_manager.send_tip(db.actor, news_text, 1, "medkit", 15000, nil, nil, true)
 	end
 end
 
-
 function actor_in_lab()
-if ( xr_conditions.actor_in_zone(nil,nil,{"lvl4_darkdolina_space_restrictor_0012"}))  
-or ( xr_conditions.actor_in_zone(nil,nil,{"lvl6_rostok_space_restrictor_0034"}))
-or ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0053"}))
-or ( xr_conditions.actor_in_zone(nil,nil,{"lightbun_space_restrictor_0008"})) 
-or ( xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_0005"})) 
-then 
-return true
-end
+	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl4_darkdolina_space_restrictor_0012"}))  
+	or ( xr_conditions.actor_in_zone(nil,nil,{"lvl6_rostok_space_restrictor_0034"}))
+	or ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0053"}))
+	or ( xr_conditions.actor_in_zone(nil,nil,{"lightbun_space_restrictor_0008"})) 
+	or ( xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_0005"})) 
+	then 
+		return true
+	end
 end
 
 ----------------------------------------------
 function spawen_phantoms()
 	local cttt
-	local phantom_max 				= 28
-	local phantom_spawn_probability			= 0.8
-	local phantom_spawn_radius			= 100.0
-	local phantom_spawn_height			= 2.5
-	local phantom_fov					= 45
-        for cttt = 1, 5 do
-	  if math.random() < phantom_spawn_probability then
+	local phantom_max = 28
+	local phantom_spawn_probability = 0.8
+	local phantom_spawn_radius = 100.0
+	local phantom_spawn_height = 2.5
+	local phantom_fov = 45
+	for cttt = 1, 5 do
+		if math.random() < phantom_spawn_probability then
 			if phantom_manager:phantom_count() < phantom_max then
-				local radius = phantom_spawn_radius * ( math.random()/2.0+0.5 )
-				local ang    = phantom_fov * math.random() - phantom_fov * 0.5
-				local dir    = vector_rotate_y( db.actor:direction(), ang )
-				phantom_manager.spawn_phantom( db.actor:position():add( dir:mul(radius) ) )
+				local radius = phantom_spawn_radius * (math.random() / 2.0 + 0.5)
+				local ang = phantom_fov * math.random() - phantom_fov * 0.5
+				local dir = vector_rotate_y(db.actor:direction(), ang)
+				phantom_manager.spawn_phantom(db.actor:position():add(dir:mul(radius)))
 			end
-	  end
-    end
+		end
+	end
 end
 
 -- Спавн ворон
@@ -1257,96 +1241,92 @@ end
 
 -- Удалить всё халявное оружие
 function del_noparent_weapons()
-local montabl = 
-{
-	[clsid.wpn_vintorez_s] = true,
-	[clsid.wpn_akms_s] = true,
-	[clsid.wpn_akms] = true,
-	[clsid.wpn_binocular] = true,
-	[clsid.wpn_binocular_s] = true,
-	[clsid.wpn_lr300_s] = true,
-	[clsid.wpn_hpsa_s] = true,
-	[clsid.wpn_pm_s] = true,
-	[clsid.wpn_shotgun_s] = true,
-	[clsid.wpn_bm16_s] = true,
-	[clsid.wpn_bm16] = true,
-	[clsid.wpn_svd_s] = true,
-	[clsid.wpn_rpg7_s] = true,
-	[clsid.wpn_groza_s] = true,
-	[clsid.wpn_knife_s] = true,
-	--[clsid.wpn_grenade_launcher] = true,
-	--[clsid.wpn_grenade_f1] = true,
-	[clsid.wpn_grenade_rpg7] = true,
-	--[clsid.wpn_grenade_rgd5] = true,
-	[clsid.wpn_grenade_fake] = true,
-	[clsid.wpn_fort] = true,
-	[clsid.wpn_fn2000] = true,
-	[clsid.wpn_groza] = true,
-    [clsid.wpn_hpsa] = true,
-    [clsid.wpn_knife] = true,
-    [clsid.wpn_lr300] = true,
-    --[clsid.wpn_mounted] = true,
-    [clsid.wpn_pm] = true,
-    [clsid.obj_bolt] = true,
-    [clsid.wpn_rg6] = true,
-    [clsid.wpn_rg6_s] = true,
-    [clsid.wpn_rpg7] = true,
-    [clsid.wpn_shotgun] = true,
-    --[clsid.wpn_stat_mgun] = true,
-    [clsid.wpn_svd] = true,
-    [clsid.wpn_svd_s] = true,
-    [clsid.wpn_svu] = true,
-    [clsid.wpn_svu_s] = true,
-    [clsid.wpn_usp45] = true,
-    [clsid.wpn_usp45_s] = true,
-    [clsid.wpn_val] = true,
-    [clsid.wpn_val_s] = true,
-    [clsid.wpn_vintorez] = true,
-    [clsid.wpn_walther] = true,
-    [clsid.wpn_walther_s] = true,
-    [clsid.wpn_wmagaz] = true,
-    [clsid.wpn_wmaggl] = true
-}
+	local montabl = {
+		[clsid.wpn_vintorez_s] = true,
+		[clsid.wpn_akms_s] = true,
+		[clsid.wpn_akms] = true,
+		[clsid.wpn_binocular] = true,
+		[clsid.wpn_binocular_s] = true,
+		[clsid.wpn_lr300_s] = true,
+		[clsid.wpn_hpsa_s] = true,
+		[clsid.wpn_pm_s] = true,
+		[clsid.wpn_shotgun_s] = true,
+		[clsid.wpn_bm16_s] = true,
+		[clsid.wpn_bm16] = true,
+		[clsid.wpn_svd_s] = true,
+		[clsid.wpn_rpg7_s] = true,
+		[clsid.wpn_groza_s] = true,
+		[clsid.wpn_knife_s] = true,
+		--[clsid.wpn_grenade_launcher] = true,
+		--[clsid.wpn_grenade_f1] = true,
+		[clsid.wpn_grenade_rpg7] = true,
+		--[clsid.wpn_grenade_rgd5] = true,
+		[clsid.wpn_grenade_fake] = true,
+		[clsid.wpn_fort] = true,
+		[clsid.wpn_fn2000] = true,
+		[clsid.wpn_groza] = true,
+		[clsid.wpn_hpsa] = true,
+		[clsid.wpn_knife] = true,
+		[clsid.wpn_lr300] = true,
+		--[clsid.wpn_mounted] = true,
+		[clsid.wpn_pm] = true,
+		[clsid.obj_bolt] = true,
+		[clsid.wpn_rg6] = true,
+		[clsid.wpn_rg6_s] = true,
+		[clsid.wpn_rpg7] = true,
+		[clsid.wpn_shotgun] = true,
+		--[clsid.wpn_stat_mgun] = true,
+		[clsid.wpn_svd] = true,
+		[clsid.wpn_svd_s] = true,
+		[clsid.wpn_svu] = true,
+		[clsid.wpn_svu_s] = true,
+		[clsid.wpn_usp45] = true,
+		[clsid.wpn_usp45_s] = true,
+		[clsid.wpn_val] = true,
+		[clsid.wpn_val_s] = true,
+		[clsid.wpn_vintorez] = true,
+		[clsid.wpn_walther] = true,
+		[clsid.wpn_walther_s] = true,
+		[clsid.wpn_wmagaz] = true,
+		[clsid.wpn_wmaggl] = true
+	}
 
-local sim = alife()
-	for i=1, 65534 do
+	local sim = alife()
+	for i = 1, 65534 do
 		local kill = sim:object(i)
 		if kill then
-                if montabl[kill:clsid()]  then
-		if kill.parent_id == 65535  then
-		if olr.olrdbg == true then
-			log1("clear free weapon  "..kill:name().." --- "..kill.level_name.."")
+			if montabl[kill:clsid()] then
+				if kill.parent_id == 65535 then
+					if olr.olrdbg == true then
+						log1("clear free weapon	 " .. kill:name() .. " --- " .. kill.level_name .. "")
+					end
+					if xvars.weapons[kill:name()] ~= nil then
+						xvars.weapons[kill:name()] = nil
+					end
+					xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
+					alife():release(kill, true)
+				end
+			end
 		end
-		if xvars.weapons[kill:name()] ~= nil then
-			xvars.weapons[kill:name()] = nil
-		end
-		xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-   		alife():release(kill, true)
+	end
 end
-end       
-end
-end
-end
-
-
 
 function gta_actor_car()
 	--log1("!!!TRy GTA CAR")
 	local gta_car = nil
-	local montabl = 
-	{
-       		[clsid.car_s] = true
+	local montabl = {
+		[clsid.car_s] = true
 	}
 
 	local tabcars = {}
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill and montabl[kill:clsid()] then
 			if xvars.olr[kill.id] then
 				table.insert(tabcars, kill)
 				--log1("sasa")
-			end	
+			end
 		end
 	end
 
@@ -1354,83 +1334,64 @@ function gta_actor_car()
 		--log1("gta cars - has no cars in table")
 		return
 	end
-	
+
 	local gta_car = tabcars[math.random(#tabcars)]
-	
+
 	if gta_car.level_name ~= level.name() then
+		local stealer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 150, 0)
 
-	local stealer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 150, 0)
-	
-	if stealer then 
+		if stealer then
+			if has_alife_info("bar_car_protect_has") and gta_car.position:distance_to_xz(vector():set(-88, -93, -287)) < 120 and gta_car.level_name == "lvl5_bar" then
+				--log1("CAR IS UNDER BAR BROTECT")
+				return
+			end
 
-	if has_alife_info("bar_car_protect_has") and gta_car.position:distance_to_xz(vector():set( -88, -93, -287)) < 120 and gta_car.level_name == "lvl5_bar" then
-		--log1("CAR IS UNDER BAR BROTECT")
-		return
-	end
+			--log1("stealer is - "..stealer:name().."")
 
-	--log1("stealer is - "..stealer:name().."")
+			local rontabl = {
+				[clsid.respawn] = true
+			}
 
-	local rontabl = 
-	{
-       		[clsid.respawn] = true
-	}
+			local tab = {}
+			local sim = alife()
+			for id = 1, 65534 do
+				local obj = sim:object(id)
+				if obj then
+					if rontabl[obj:clsid()] then
+						table.insert(tab, obj)
+					end
+				end
+			end
+			local rand_obj = tab[math.random(#tab)]
+			if rand_obj and rand_obj.id then
+				local seer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 70, 0)
+				if seer then
+					seer_name = news_main.get_npc_name(seer)
+					if seer_name then
+						local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(gta_car.m_game_vertex_id):level_id()), vector():set(gta_car.position.x, gta_car.position.y, gta_car.position.z))
 
-	local tab = {}
-	local sim = alife()
-	for id=1, 65534 do
-		local obj = sim:object(id)
-		if obj then
-			if rontabl[obj:clsid()] then
-				table.insert(tab, obj)
-			end					
-		end
-	end
-	local rand_obj = tab[math.random(#tab)]
-	if rand_obj and rand_obj.id then
+						local text_phrase = {
+							game.translate_string("st_olr_grand_theft_auto_1"),
+							game.translate_string("st_olr_grand_theft_auto_2"),
+							game.translate_string("st_olr_grand_theft_auto_3"),
+							game.translate_string("st_olr_grand_theft_auto_4"),
+							game.translate_string("st_olr_grand_theft_auto_5")
+						}
+						local txt = text_phrase[math.random(#text_phrase)]
+						local full_text = "" .. seer_name .. ": " .. txt .. " " .. pos .. " "
 
-		local seer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 70, 0)
-		if seer then
-			seer_name = news_main.get_npc_name(seer)
-			if seer_name then
-				local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(gta_car.m_game_vertex_id):level_id()), vector():set(gta_car.position.x,gta_car.position.y,gta_car.position.z))
+						news_manager.send_tip(db.actor, "" .. full_text .. " ", 20, "default", 29000)
+						--olr_timers.st_timer("gta_theft_sms", 300, "nick.gta_theft_sms("..tostring(full_text)..")")
+					end
+				end
 
-				local text_phrase = {game.translate_string("st_olr_grand_theft_auto_1"), 
-				game.translate_string("st_olr_grand_theft_auto_2"), 
-				game.translate_string("st_olr_grand_theft_auto_3"), 
-				game.translate_string("st_olr_grand_theft_auto_4"), 
-				game.translate_string("st_olr_grand_theft_auto_5")}
-				local txt = text_phrase[math.random(#text_phrase)]
-				local full_text = ""..seer_name..": "..txt.." "..pos.." "
-
-				news_manager.send_tip(db.actor, ""..full_text.." ", 20, "default", 29000)
-				--olr_timers.st_timer("gta_theft_sms", 300, "nick.gta_theft_sms("..tostring(full_text)..")")	
-
+				alife():teleport_object(gta_car.id, rand_obj.m_game_vertex_id, rand_obj.m_level_vertex_id, rand_obj.position)
+			--olr.add_spot_on_map( gta_car.id,"controller_spotmap",gta_car:name() )
+			--log1(" steal actor car NOW from "..gta_car.level_name.."	")
 			end
 		end
-
-
-		alife():teleport_object(gta_car.id, rand_obj.m_game_vertex_id, rand_obj.m_level_vertex_id, rand_obj.position)
-		--olr.add_spot_on_map( gta_car.id,"controller_spotmap",gta_car:name() )
-		--log1(" steal actor car NOW from "..gta_car.level_name.."  ")
-	end
-
-
-	end
-
 	end
 end
-
-
-
-
-
-
-
-
-
-
-
-
 
 ---------------------------------------------------ХЛАМ---------------------------------------------------------------------
 function val_suicide_stalker_found(stalker, player)
@@ -1474,8 +1435,3 @@ function give_nagrada(first_speaker, second_speaker)
  dialogs.relocate_item_section(second_speaker, "ammo_9x18_fmj", "in") 
  dialogs.relocate_item_section(second_speaker, "ammo_5.45x39_fmj","in") 
 end
-
-
-
-
-  

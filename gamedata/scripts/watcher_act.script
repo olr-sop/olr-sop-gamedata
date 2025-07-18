@@ -332,7 +332,7 @@ if self.object:best_enemy() then return false end
               corrected_dist=5+(dist-5)/math.sqrt(value)
             end
 						if dist<max_dist and corrected_dist<min_dist and dist<dist_limit then
-              min_dist=corrected_dist
+							min_dist=corrected_dist
 							claimGObject(npc,self.st,obj)
 							res=true
 						end
@@ -635,16 +635,17 @@ function on_take(item,npc)
 	if item:is_weapon_magazined() then
 		--news_main.on_find_weapon(npc, item)
 	end
+	
 	if item:is_artefact() then
 		--news_main.on_find_artefact(npc, item)
 	end
 
-        if no_levels[level.name()] then
+	if no_levels[level.name()] then
 		return
 	end
 
-        if excluded_comms[npc:character_community()] then
-    		return
+	if excluded_comms[npc:character_community()] then
+		return
   	end
 
 	local rndd = math.random(1,5)
@@ -654,7 +655,7 @@ function on_take(item,npc)
 		game.translate_string("st_watcher_act_found_item_2").." "..item:get_name().."", 
 		game.translate_string("st_watcher_act_found_item_3").." "..item:get_name()..""}
 		local news_text = "%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(400,100,50,50),1*500, 15000)
+		news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, true)
 
 	elseif item:cost() > 550 and item:cost() < 1550 and math.random(1,5) == 1 then
 
@@ -662,7 +663,7 @@ function on_take(item,npc)
 		game.translate_string("st_watcher_act_found_item_good_2").." "..item:get_name().."", 
 		game.translate_string("st_watcher_act_found_item_good_3").." "..item:get_name()..""}
 		local news_text = "%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(400,100,50,50),1*500, 15000)
+		news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, true)
 		
 	elseif item:cost() > 1550 and item:cost() < 9550 and math.random(1,5) == 1 then
 	
@@ -670,7 +671,7 @@ function on_take(item,npc)
 		game.translate_string("st_watcher_act_found_item_great_2").." "..item:get_name().."", 
 		game.translate_string("st_watcher_act_found_item_great_3").." "..item:get_name()..""}
 		local news_text = "%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(400,100,50,50),1*500, 15000)
+		news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, true)
 
 	end
 	local cnt = 0
@@ -690,14 +691,11 @@ function on_take(item,npc)
 				npc:enable_trade()
 				local sobj = alife():object(npc:name())
 				local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-				--news_manager.send_tip(db.actor, ""..""..npc:character_name()..":".."\\n"..game.translate_string("st_watcher_act_trade_invite_1")..pos..". ".."".."\n", 8, "default", 30000)
-
 				local text_phrase = {game.translate_string("st_watcher_act_trade_invite_1").." "..pos.." ", 
 				game.translate_string("st_watcher_act_trade_invite_2").." "..pos.." ", 
 				game.translate_string("st_watcher_act_trade_invite_3").." "..pos.." "}
 				local news_text = "%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-				db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(400,100,50,50),4*1000, 15000)
-
+				news_manager.send_tip(db.actor, news_text, 4, "item", 15000, nil, nil, true)
 			end
 		end
 		xrs_trade.on_sms_trade_otvet(npc)
@@ -877,6 +875,6 @@ function add_to_binder(object, char_ini, scheme, section, st)
 end
 
 function set_scheme(npc, ini, scheme, section)
-  local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
-  st.ini=ini
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.ini=ini
 end

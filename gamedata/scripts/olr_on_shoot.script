@@ -8,14 +8,13 @@ function actor_shoot()
 	shoot_gravdrab()
 	shoot_vin_grav()
 	dolg_base_shoot()
-	xvars.shoot_count = xvars.shoot_count + 1
 end
 
 local active_item = db.actor:active_item()
 
-function shoot_vin_grav() 
+function shoot_vin_grav()
 	local active_item = db.actor:active_item()
-	if active_item and active_item:section()== "wpn_vintorez_gravi" then
+	if active_item and active_item:section() == "wpn_vintorez_gravi" then
 		xvars.sh_vingrav_count = xvars.sh_vingrav_count + 1
 		if xvars.sh_vingrav_count >= 200 and not has_alife_info("shoot_vin_grav_nastrelal_dostatochno") then
 			news_manager.send_tip(db.actor, game.translate_string("shoot_vin_grav_0"), 1, "act", 39000)
@@ -24,260 +23,219 @@ function shoot_vin_grav()
 	end
 end
 
-function shoot_gravdrab() 
+function shoot_gravdrab()
 	local active_item = db.actor:active_item()
-	if active_item and active_item:section()== "wpn_shotgra" then
-		level.add_cam_effector("shoot\\s5_e4_"..math.random(0,1)..".anm", 6346, false, "")
-		level.add_pp_effector("shoot\\blur_s"..math.random(1,5)..".ppe", 2531, false)
+	if active_item and active_item:section() == "wpn_shotgra" then
+		level.add_cam_effector("shoot\\s5_e4_" .. math.random(0, 1) .. ".anm", 6346, false, "")
+		level.add_pp_effector("shoot\\blur_s" .. math.random(1, 5) .. ".ppe", 2531, false)
 		local pos = db.actor:position()
 		local dir = db.actor:direction()
 		pos = pos:add(dir:mul(0.5))
-		pos.y = pos.y + 0.2     
+		pos.y = pos.y + 0.2
 		for i = 1, 6 do
 			local bobj2 = alife():create("shooting_bolts_objiect", pos, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-        		level.client_spawn_manager():add(bobj2.id, 0, 
-        		function(id,obj) 
-			if obj then
-        		local h = hit()
-			h.draftsman = obj
-			h.type = hit.strike
-			h.direction = vector():set(device().cam_dir)
-			h.power = 0.00001
-			h.impulse = 10000
-			obj:hit(h)
-        		end
-        		end)
+			level.client_spawn_manager():add(bobj2.id, 0,
+				function(id, obj)
+					if obj then
+						local h = hit()
+						h.draftsman = obj
+						h.type = hit.strike
+						h.direction = vector():set(device().cam_dir)
+						h.power = 0.00001
+						h.impulse = 10000
+						obj:hit(h)
+					end
+				end
+			)
 			--log1("bolts")
 		end
 	end
 end
 
 function dolg_base_shoot()
-        if level_name == "lvl5_bar" then
-      		if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0019"}))  then
-
-		--log1("shoot dolg basee")
-
-		if active_item and active_item:section()== "wpn_hands_gravity" then
-                	return
-                end
-
-                if has_alife_info("bar_dolg_zombie_attack") then
-                	return
-                end
-
-		if olr.is_monsters_around(10) == true then
-	        	return
-                end
-
-		xvars.dolg_base_shot = xvars.dolg_base_shot + 1
-
-		if xvars.dolg_base_shot > 2 and xvars.dolg_base_shot < 4 then
-			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_0"), nil, "dolg", 25000)
+	if level_name == "lvl5_bar" then
+		if (xr_conditions.actor_in_zone(nil, nil, {"lvl5_bar_space_restrictor_0019"})) then
+			--log1("shoot dolg basee")
+			if active_item and active_item:section() == "wpn_hands_gravity" then
+				return
+			end
+			if has_alife_info("bar_dolg_zombie_attack") then
+				return
+			end
+			if olr.is_monsters_around(10) == true then
+				return
+			end
+			xvars.dolg_base_shot = xvars.dolg_base_shot + 1
+			if xvars.dolg_base_shot > 2 and xvars.dolg_base_shot < 4 then
+				news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_0"), nil, "dolg", 25000)
+			end
+			if xvars.dolg_base_shot > 4 and xvars.dolg_base_shot < 6 then
+				news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_1"), nil, "dolg", 25000)
+				olr.info("dolg_bar_ohrenel_naezd")
+			end
 		end
-
-		if xvars.dolg_base_shot > 4 and xvars.dolg_base_shot < 6 then
-			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_1"), nil, "dolg", 25000)
-			olr.info("dolg_bar_ohrenel_naezd")
+		if (xr_conditions.actor_in_zone(nil, nil, {"lvl5_bar_space_restrictor_0003"})) then
+			--log1("shoot dolg basee")
+			if active_item and active_item:section() == "wpn_hands_gravity" then
+				return
+			end
+			if db.actor:has_info("bar_pre_radar_talk_done") then
+				return
+			end
+			if olr.is_monsters_around(10) == true then
+				return
+			end
+			xvars.bar_base_shot = xvars.bar_base_shot + 1
+			if xvars.bar_base_shot > 2 and xvars.bar_base_shot < 4 then
+				news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_2"), nil, "ohranik", 25000)
+			end
+			if xvars.bar_base_shot > 4 and xvars.bar_base_shot < 6 then
+				news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_3"), nil, "ohranik", 25000)
+				olr.info("dolg_bar_ohrenel_naezd")
+			end
 		end
-		end
-
-
-      		if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0003"}))  then
-
-		--log1("shoot dolg basee")
-
-		if active_item and active_item:section()== "wpn_hands_gravity" then
-                	return
-                end
-
-                if db.actor:has_info("bar_pre_radar_talk_done") then
-                	return
-                end
-
-		if olr.is_monsters_around(10) == true then
-	        	return
-                end
-
-		xvars.bar_base_shot = xvars.bar_base_shot + 1
-
-		if xvars.bar_base_shot > 2 and xvars.bar_base_shot < 4 then
-			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_2"), nil, "ohranik", 25000)
-		end
-
-		if xvars.bar_base_shot > 4 and xvars.bar_base_shot < 6 then
-			news_manager.send_tip(db.actor, game.translate_string("dolg_base_shoot_3"), nil, "ohranik", 25000)
-			olr.info("dolg_bar_ohrenel_naezd")
-		end
-		end
-
-
 	end
 end
 
 function jaba_esc_angry()
-
-                if level_name == "lvl1_escape" then
-                if db.actor:has_info("actor_in_jaba_zone") then
-
-		if active_item and active_item:section()== "wpn_hands_gravity" then
-                	return
-                end
-
-                if db.actor:has_info("kvest_bar_1_dialog_start") then
-                	return
-                end
-	
-		xvars.esc_jaba_close_shots = xvars.esc_jaba_close_shots + 1
-
-		if xvars.esc_jaba_close_shots > 10 and xvars.esc_jaba_close_shots < 12 then
-                	jaba_angry_shoot()
-			db.actor:give_info_portion("jaba_actor_shoot_close_bunker")
+	if level_name == "lvl1_escape" then
+		if db.actor:has_info("actor_in_jaba_zone") then
+			if active_item and active_item:section() == "wpn_hands_gravity" then
+				return
+			end
+			if db.actor:has_info("kvest_bar_1_dialog_start") then
+				return
+			end
+			xvars.esc_jaba_close_shots = xvars.esc_jaba_close_shots + 1
+			if xvars.esc_jaba_close_shots > 10 and xvars.esc_jaba_close_shots < 12 then
+				jaba_angry_shoot()
+				db.actor:give_info_portion("jaba_actor_shoot_close_bunker")
+			end
 		end
-end
-end
+	end
 end
 
 function sh_phantoms()
+	local shoot_var = math.random(1, 188)
+	local zombi_var = math.random(1, 138)
+	local contr_var = math.random(1, 150)
+	local zomm_var = math.random(1, 136)
 
-	local shoot_var = math.random(1,188)
-	local zombi_var = math.random(1,138)
-	local contr_var = math.random(1,150)
-	local zomm_var = math.random(1,136)
-
- 	        local level_name = level.name()
-		if level_name == "lvl10_radar" or level_name == "lvl14_stancia" or level_name == "lvl13_prip" then
-
+	local level_name = level.name()
+	if level_name == "lvl10_radar" or level_name == "lvl14_stancia" or level_name == "lvl13_prip" then
 		if shoot_var == 45 then
-                	olr.spawen_phantoms()
-                end
-
-                if zombi_var == 1 then
-                --spawen_zombi_mid()
-                end
-
-                --if zombi_var == 3 then
-                --spawen_zombi_master()
-                --end
-
-                if contr_var == 3 then
-                --spawen_contr()
-                end
-
-                if zomm_var == 1 then
-                --spawen_zombmon()
-                end
-
-                --if shoot_var == 1 then
-                --spawen_monolits()
-                --end
-
+			olr.spawen_phantoms()
 		end
+		if zombi_var == 1 then
+		--spawen_zombi_mid()
+		end
+		--if zombi_var == 3 then
+		--spawen_zombi_master()
+		--end
+		if contr_var == 3 then
+		--spawen_contr()
+		end
+		if zomm_var == 1 then
+		--spawen_zombmon()
+		end
+		--if shoot_var == 1 then
+		--spawen_monolits()
+		--end
+	end
 end
-
-
 
 function spawen_zombi_mid()
-local count = math.random(1,2) 
-for ind = 1, count do
+	local count = math.random(1, 2)
+	for ind = 1, count do
+		local lname = level.name()
+		local lvtab = GetLevelVertexes(lname)
+		local lvx = math.max(unpack(lvtab))
+		local lv = math.random(1, lvx)
 
-local lname = level.name()
-local lvtab = GetLevelVertexes( lname )
-local lvx = math.max(unpack(lvtab))
-local lv  = math.random(1,lvx)
-
-local gvtab  = GetGameVertexes(lname)
-local gv_min = math.min( unpack(gvtab))
-local gv_max = math.max( unpack(gvtab))
-local obj = alife():create("rad_zombied_respawn_2", level.vertex_position(lv), lv, gv_max)
-olr.add_spot_on_map( obj.id,"eliminate_lair_location",game.translate_string("st_olr_on_shoot_zombified_stalker"))
-olr.clear_restrictors(obj)
---olr.set_none_smart_terrain(obj)
-log1("spawen")
-end
+		local gvtab = GetGameVertexes(lname)
+		local gv_min = math.min(unpack(gvtab))
+		local gv_max = math.max(unpack(gvtab))
+		local obj = alife():create("rad_zombied_respawn_2", level.vertex_position(lv), lv, gv_max)
+		olr.add_spot_on_map(obj.id, "eliminate_lair_location", game.translate_string("st_olr_on_shoot_zombified_stalker"))
+		olr.clear_restrictors(obj)
+		--olr.set_none_smart_terrain(obj)
+		log1("spawen")
+	end
 end
 
 function spawen_zombi_master()
-local a = 0
-local count = math.random(1,2) 
-for ind = 1, count do
+	local a = 0
+	local count = math.random(1, 2)
+	for ind = 1, count do
+		local lname = level.name()
+		local lvtab = GetLevelVertexes(lname)
+		local lvx = math.max(unpack(lvtab))
+		local lv = math.random(1, lvx)
 
-local lname = level.name()
-local lvtab = GetLevelVertexes( lname )
-local lvx = math.max(unpack(lvtab))
-local lv  = math.random(1,lvx)
-
-local gvtab  = GetGameVertexes(lname)
-local gv_min = math.min( unpack(gvtab))
-local gv_max = math.max( unpack(gvtab))
-alife():create("rad_zombied_respawn_3", level.vertex_position(lv), lv, gv_max)
-a = a + 1
-log1(a)
+		local gvtab = GetGameVertexes(lname)
+		local gv_min = math.min(unpack(gvtab))
+		local gv_max = math.max(unpack(gvtab))
+		alife():create("rad_zombied_respawn_3", level.vertex_position(lv), lv, gv_max)
+		a = a + 1
+		log1(a)
+	end
 end
-end
-
-
 
 function spawen_contr()
-local count = math.random(1,2) 
-for ind = 1, count do
+	local count = math.random(1, 2)
+	for ind = 1, count do
+		local lname = level.name()
+		local lvtab = GetLevelVertexes(lname)
+		local lvx = math.max(unpack(lvtab))
+		local lv = math.random(1, lvx)
 
-local lname = level.name()
-local lvtab = GetLevelVertexes( lname )
-local lvx = math.max(unpack(lvtab))
-local lv  = math.random(1,lvx)
-
-local gvtab  = GetGameVertexes(lname)
-local gv_min = math.min( unpack(gvtab))
-local gv_max = math.max( unpack(gvtab))
-alife():create("m_controller_e", level.vertex_position(lv), lv, gv_max)
+		local gvtab = GetGameVertexes(lname)
+		local gv_min = math.min(unpack(gvtab))
+		local gv_max = math.max(unpack(gvtab))
+		alife():create("m_controller_e", level.vertex_position(lv), lv, gv_max)
+	end
 end
-end
-
 
 function spawen_zombmon()
-local count = math.random(1,6) 
-for ind = 1, count do
+	local count = math.random(1, 6)
+	for ind = 1, count do
+		local lname = level.name()
+		local lvtab = GetLevelVertexes(lname)
+		local lvx = math.max(unpack(lvtab))
+		local lv = math.random(1, lvx)
 
-local lname = level.name()
-local lvtab = GetLevelVertexes( lname )
-local lvx = math.max(unpack(lvtab))
-local lv  = math.random(1,lvx)
-
-local gvtab  = GetGameVertexes(lname)
-local gv_min = math.min( unpack(gvtab))
-local gv_max = math.max( unpack(gvtab))
-alife():create("zombie_normal", level.vertex_position(lv), lv, gv_max)
+		local gvtab = GetGameVertexes(lname)
+		local gv_min = math.min(unpack(gvtab))
+		local gv_max = math.max(unpack(gvtab))
+		alife():create("zombie_normal", level.vertex_position(lv), lv, gv_max)
+	end
 end
-end
-
-
 
 function spawen_monolits()
-local count = math.random(1,2) 
-for ind = 1, count do
+	local count = math.random(1, 2)
+	for ind = 1, count do
+		local lname = level.name()
+		local lvtab = GetLevelVertexes(lname)
+		local lvx = math.max(unpack(lvtab))
+		local lv = math.random(1, lvx)
 
-local lname = level.name()
-local lvtab = GetLevelVertexes( lname )
-local lvx = math.max(unpack(lvtab))
-local lv  = math.random(1,lvx)
-
-local gvtab  = GetGameVertexes(lname)
-local gv_min = math.min( unpack(gvtab))
-local gv_max = math.max( unpack(gvtab))
-alife():create("pri_monolith_respawn_1", level.vertex_position(lv), lv, gv_max)
-alife():create("pri_monolith_respawn_2", level.vertex_position(lv), lv, gv_max)
-alife():create("pri_monolith_respawn_3", level.vertex_position(lv), lv, gv_max)
+		local gvtab = GetGameVertexes(lname)
+		local gv_min = math.min(unpack(gvtab))
+		local gv_max = math.max(unpack(gvtab))
+		alife():create("pri_monolith_respawn_1", level.vertex_position(lv), lv, gv_max)
+		alife():create("pri_monolith_respawn_2", level.vertex_position(lv), lv, gv_max)
+		alife():create("pri_monolith_respawn_3", level.vertex_position(lv), lv, gv_max)
+	end
 end
-end
-
-
 
 function jaba_angry_shoot()
-if db.actor then
-	local text_phrase = {"st_olr_on_shoot_toad_bunker_1", "st_olr_on_shoot_toad_bunker_2", "st_olr_on_shoot_toad_bunker_3", "st_olr_on_shoot_toad_bunker_4"}
-	local sactor = alife():actor()
-	local cactor = level.object_by_id(sactor.id)
-	cactor:give_game_news(game.translate_string(text_phrase[math.random(#text_phrase)]), "ui\\icons\\icons_task",Frect():set(50,100,50,50),math.random(1000, 3000),15000)
-end
+	if db.actor then
+		local text_phrase = {
+			"st_olr_on_shoot_toad_bunker_1",
+			"st_olr_on_shoot_toad_bunker_2",
+			"st_olr_on_shoot_toad_bunker_3",
+			"st_olr_on_shoot_toad_bunker_4"
+		}
+		news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "jaba", 15000, nil, nil, true)
+	end
 end

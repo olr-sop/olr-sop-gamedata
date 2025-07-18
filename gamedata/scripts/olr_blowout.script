@@ -1349,57 +1349,44 @@ end
 -----------------------------------------------
 function blow_task_actor()
 	olr.snd([[ambient\special\swamp_intelligent_bog_death]])
-if not has_alife_info("olr_blowout_first_hideouts") then
-	db.actor:give_info_portion("olr_blowout_first_hideouts")
-	olr_timers.st_timer("olr_blowout_first_hideouts", 11, "nick.olr_blowout_first_hideouts()")
-end
-local text_phrase = {"st_olr_blowout_warning_1", "st_olr_blowout_warning_2", "st_olr_blowout_warning_3", "st_olr_blowout_warning_4"}
-local sactor = alife():actor()
-local cactor = level.object_by_id(sactor.id)
-cactor:give_game_news(game.translate_string(text_phrase[math.random(#text_phrase)]), "ui\\ui_iconsTotal",Frect():set(486,486,50,50),math.random(1000, 3000),15000)
-olr.beep()
+	if not has_alife_info("olr_blowout_first_hideouts") then
+		db.actor:give_info_portion("olr_blowout_first_hideouts")
+		olr_timers.st_timer("olr_blowout_first_hideouts", 11, "nick.olr_blowout_first_hideouts()")
+	end
+	local text_phrase = {"st_olr_blowout_warning_1", "st_olr_blowout_warning_2", "st_olr_blowout_warning_3", "st_olr_blowout_warning_4"}
+	olr.beep()
+	news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "new_task", 15000)
 end
 ---------------------------------------------
 function spawen_rtut_shars()
-local level_name = level.name()
-local noobposition = db.actor:position()
-local bol_var = math.random(1,22)
-local bol_var2 = math.random(1,22)
-
-if level_name == "lvl1_escape" then
-
-                        if bol_var == 1 then
-			local bloodbridge = vector():set( -73.76, 2.13, 82.00 )
-			alife():create("af_ameba_mica", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-
-                        if bol_var == 2 then
-			local bloodafterbridge = vector():set( 137.47, 2.00, 66.03 )
-			alife():create("af_ameba_mica", bloodafterbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-
-                        if bol_var == 3 then
-			local fracunderbridge = vector():set( 25.91, 2.00, 316.13 ) 
-			alife():create("af_ameba_mica", fracunderbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-end
-end
-end
-end
-
-
-if level_name == "lvl2_garbage" then
-
-                        if bol_var2 == 1 then
-			local bloodbridge1 = vector():set( 15.54, 19.13, -321.68 )
-			alife():create("af_ameba_mica", bloodbridge1, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-
-                        if bol_var2 == 2 then
-			local bloodafterbridg1e = vector():set( 8.55, 3.00, 368.84 )
-			alife():create("af_ameba_mica", bloodafterbridge1, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-
-
-
-end
-end
-end
+	local level_name = level.name()
+	local noobposition = db.actor:position()
+	local bol_var = math.random(1, 22)
+	local bol_var2 = math.random(1, 22)
+	if level_name == "lvl1_escape" then
+		if bol_var == 1 then
+			local bloodbridge = vector():set(-73.76, 2.13, 82.00)
+			alife():create("af_ameba_mica", bloodbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			if bol_var == 2 then
+				local bloodafterbridge = vector():set(137.47, 2.00, 66.03)
+				alife():create("af_ameba_mica", bloodafterbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+				if bol_var == 3 then
+					local fracunderbridge = vector():set(25.91, 2.00, 316.13)
+					alife():create("af_ameba_mica", fracunderbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+				end
+			end
+		end
+	end
+	if level_name == "lvl2_garbage" then
+		if bol_var2 == 1 then
+			local bloodbridge1 = vector():set(15.54, 19.13, -321.68)
+			alife():create("af_ameba_mica", bloodbridge1, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			if bol_var2 == 2 then
+				local bloodafterbridg1e = vector():set(8.55, 3.00, 368.84)
+				alife():create("af_ameba_mica", bloodafterbridge1, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			end
+		end
+	end
 end
 ----------------------------------------------
 
@@ -1408,7 +1395,6 @@ function spawen_rtut_shars_random()
         [clsid.zone_mincer] = true,
         [clsid.zone_mincer_s] = true
     }
-
     local count = 0
     local sim = alife()
     for id = 1, 65534 do
@@ -1614,32 +1600,30 @@ end
 ----------------------------------------------
 
 function ph_impulse_blow()
-	if level.name() == "lvl16_generators" or level.name() == "lvl7_yantar" or level.name() == "lvl12_radar_bunker" then
-		return
-	end
-	for id=1, 65534 do
-		local npc = level.object_by_id(id)
-		if npc and npc:is_obj_outdoors() == true and not npc:is_stalker() and npc:section() ~= "m_crow" then
-			if npc:position():distance_to(db.actor:position()) <= 50 then
-				--log1("kill is outdoor - "..npc:name().."")
+    if level.name() == "lvl16_generators" or level.name() == "lvl7_yantar" or level.name() == "lvl12_radar_bunker" then
+        return
+    end
+    for id = 1, 65534 do
+        local npc = level.object_by_id(id)
+        if npc and npc:is_obj_outdoors() == true and not npc:is_stalker() and npc:section() ~= "m_crow" then
+            if npc:position():distance_to(db.actor:position()) <= 50 then
+                --log1("kill is outdoor - "..npc:name().."")
 
-	   			local look_vec = vector():set(device().cam_dir):normalize()
-    				look_vec.x = look_vec.x + math.random(30, 30)
-    				look_vec.z = look_vec.z + math.random(30, 300)
-    				look_vec.y = look_vec.y + math.random(30, 50) 
+                local look_vec = vector():set(device().cam_dir):normalize()
+                look_vec.x = look_vec.x + math.random(30, 30)
+                look_vec.z = look_vec.z + math.random(30, 300)
+                look_vec.y = look_vec.y + math.random(30, 50)
 
-	   			local h = hit()
-	   			h.draftsman = db.actor
-	   			h.type = hit.explosion
-           			h.direction = vector():set(look_vec)
-	   			h.power = 0.00001
-	   			h.impulse = npc:mass() * math.random(5,10)
-	   			npc:hit(h)
-
-			end
-		end
-	end
-
+                local h = hit()
+                h.draftsman = db.actor
+                h.type = hit.explosion
+                h.direction = vector():set(look_vec)
+                h.power = 0.00001
+                h.impulse = npc:mass() * math.random(5, 10)
+                npc:hit(h)
+            end
+        end
+    end
 end
 
 ----------------------------------------------

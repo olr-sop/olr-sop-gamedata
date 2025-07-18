@@ -12,111 +12,147 @@ pda_tips = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])
 pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 
 tips_icons = {
-  default  = { 0, 658},
-  trader   = { 332, 893},
-  dolg     = { 0, 658},
-  freedom  = { 0, 658},
-  ecolog   = { 498, 0},
-  arena    = { 332, 141},
-  stalker  = { 0, 658},
-  krot     = { 332, 47},
-  barman   = { 332, 235},
-  wolf     = { 332, 940},
-  o_soznanie = { 498, 893},
-  monolith = { 0, 658},
-  saharov  = { 332, 470},
-  prizrak  = { 0, 658},
-  killer   = { 0, 658},
-  death     = { 0, 752},
-  gen_info  = { 0, 658},
-  trade     = { 0, 0},
-  uniq     =  {498, 47}   
+	-- общие типсы, нужны как для АМК так и в целом
+	act         	= { 100, 0},
+	ohranik         = { 450, 0},
+	default         = { 350, 150},
+	item        	= { 400, 100},
+	heli        	= { 150, 200},
+	dok        		= { 350, 200},
+	artefact        = { 50, 0},
+	unknown         = { 100, 200},
+	sos       		= { 100, 100},
+	zombied       	= { 250, 150},
+	flash       	= { 200, 100},
+	medkit       	= { 250, 0},
+	vagon       	= { 200, 0},
+	military       	= { 250, 50},
+	exo_neutral     = { 100, 150},
+	bandits       	= { 50, 50},
+	treasure       	= { 50, 200},
+	af_merger       = { 350, 0},
+	volna_plots     = { 400, 0},
+	novice			= { 400, 150},
+	trader			= { 50, 100},
+	dolg			= { 150, 0},
+	dolg_mask1		= { 150, 0},
+	dolg_prapor		= { 150, 0},
+	dolg_voronin	= { 150, 0},
+	freedom			= { 0, 150},
+	freedom_max		= { 150, 150},
+	freedom_cap		= { 0, 150},
+	freedom_lukash	= { 0, 150},
+	freedom_bydlo	= { 0, 150},
+	ecolog			= { 450, 100},
+	ecolog_red		= { 450, 100},
+	arena			= { 400, 150},
+	stalker			= { 400, 150},
+	krot			= { 200, 50},
+	hellcar			= { 0, 50},
+	barman			= { 400, 50},
+	wolf			= { 0, 50},
+	o_soznanie		= { 350, 50},
+	monolith		= { 300, 150},
+	saharov			= { 450, 150},
+	prizrak			= { 350, 50},
+	money			= { 450, 50},
+	fanat			= { 400, 150},
+	killer			= { 0, 200},
+	killer_volkodav	= { 0, 200},
+	new_task		= { 150, 100}, -- 486, 486 в фляроскриптах на старом атласе
+	jaba			= { 0, 100}, -- 332,950 в фляроскриптах на старом атласе (жаба в зелёной рамке щас)
+	-- для амк типсов
+	trade     = { 450, 50},
+	uniq     =  {498, 47}, -- не используется, похуй, в АМК это был "общий канал"
+	gen_info  = { 350, 150},
+	death     = { 250, 200},
 }
 
 --показываем типс (юзать только для новостей оффлайн алайфа)
 function send_tip(news_text, header, timeout, showtime, sender, sound)
-  if has_alife_info("monolit_na_kordone") and not has_alife_info("aes_antenna_off_jaba_sms") then
-  	return 
-  end
-  if level.name() == "lvl16_generators" then return end
-  if nick.is_pda_dead() then 
-  	--log1("try sms but pda dead - sms - ["..news_text.."]")
-  	return 
-  end
-  if news_text==nil then return end
-  if header==nil then header=game.translate_string("st_tip") end
-  if timeout == nil then timeout = 0 end
-  if showtime == nil then showtime = 5 end
-  
-  local player
-  if sound=="news" then
-    player=pda_news
-  elseif sound=="task" then
-    player=pda_task
-  else
-    player=pda_tips
-  end   
-  
-  if sound ~= nil then
-  	player:play(db.actor, timeout, sound_object.s2d)
-  end
-  
-  if sender == nil then
-    sender = "default"
-  end
-  local x = tips_icons[sender][1]
-  local y = tips_icons[sender][2]
-  
-  local news_text = "%c[255,255,255,255]"..header.."\\n".."%c[255,255,255,255]"..news_text
-  db.actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(x,y,83,47), timeout*1000, showtime*1000)
-  return true
-end
+	if has_alife_info("monolit_na_kordone") and not has_alife_info("aes_antenna_off_jaba_sms") then
+		return
+	end
+	if level.name() == "lvl16_generators" then
+		return
+	end
+	if nick.is_pda_dead() then
+		--log1("try sms but pda dead - sms - ["..news_text.."]")
+		return
+	end
+	if news_text == nil then
+		return
+	end
+	if header == nil then
+		header = game.translate_string("st_tip")
+	end
+	if timeout == nil then
+		timeout = 0
+	end
+	if showtime == nil then
+		showtime = 5
+	end
 
+	local player
+	if sound == "news" then
+		player = pda_news
+	elseif sound == "task" then
+		player = pda_task
+	else
+		player = pda_tips
+	end
+
+	if sound ~= nil then
+		player:play(db.actor, timeout, sound_object.s2d)
+	end
+
+	if sender == nil then
+		sender = "default"
+	end
+	
+	local x = tips_icons[sender][1]
+	local y = tips_icons[sender][2]
+
+	local news_text = "%c[255,255,255,255]" .. header .. "\\n" .. "%c[255,255,255,255]" .. news_text
+	db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
+	return true
+end
 
 --спавним объекты на карту
 function spawn_item(spawn_item, pos, gv,lv)
-  if gv==nil then gv=db.actor:game_vertex_id() end
-  if lv==nil then lv=db.actor:level_vertex_id() end
-  return alife():create(spawn_item, pos, lv, gv)
+	if gv==nil then gv=db.actor:game_vertex_id() end
+	if lv==nil then lv=db.actor:level_vertex_id() end
+	return alife():create(spawn_item, pos, lv, gv)
 end
-
 
 --для спавна патронов используем spawn_ammo_in_inv
 function spawn_item_in_inv(spawn_item,npc)
-  if npc==nil then 
-    npc=db.actor 
-  end
-  return alife():create(spawn_item, 
-      npc:position(),
-      npc:level_vertex_id(),  
-      npc:game_vertex_id(),
-      npc:id())
+	if npc==nil then 
+		npc=db.actor 
+	end
+	return alife():create(spawn_item, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 end
-
 
 -- удаляем объект из игры
 function remove_item(remove_item)
-  if remove_item~=nil then
-    --log1("amk del item - "..remove_item:name().."")
-    alife():release(alife():object(remove_item:id()), true)
-    return true
-  end
-  return false
+	if remove_item~=nil then
+		--log1("amk del item - "..remove_item:name().."")
+		alife():release(alife():object(remove_item:id()), true)
+		return true
+	end
+	return false
 end
-
 
 -- выставляем группировку непися, можно ГГ, только ОНЛАЙН
 function set_npc_community(npc,community_string)
-  --значения для community_string можно узнать в config\creatures\game_relations.ltx
-  return npc:set_character_community(community_string, 0, 0)
+	--значения для community_string можно узнать в config\creatures\game_relations.ltx
+	return npc:set_character_community(community_string, 0, 0)
 end
 
 -- Преобразует имя переменной в короткое
 function compress_name(name)
-  return name
+	return name
 end
-
-
 ---------------------------
 
 --проверка запущена ли игра
@@ -151,12 +187,7 @@ function del_variable(variable_name)
     db.storage[db.actor:id()].pstor[vn] = nil
   end
 end
-
-
 ----------------------------
-
-
-
 
 function _assign(tbl,key,val)
   local key0=string.match(key,'"(.*)"')
@@ -1429,40 +1460,3 @@ function fill_item_weapon_packet(ret,stpk,updpk)
 	updpk:w_u8(ret.updcurrent_fire_mode)
   return ret
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -2267,8 +2267,6 @@ function on_offline_trade(npc, item)
 	end
 end
 
-
-
 function on_find_artefact(npc, item)
 	if (npc and item) then
 		if string.find(item:section_name(),"^af_") then
@@ -2292,8 +2290,6 @@ function on_find_artefact(npc, item)
 end
 end
 
-
-
 function on_document_find(npc, item)
 	if (npc and item) then
 		local m_from = get_npc_name(npc)
@@ -2307,10 +2303,6 @@ function on_document_find(npc, item)
 		end
 		if (m_str ~= "") then
 			--log1(" чувак  "..npc:name().." нашёл документ "..item:name().."") 
-			--do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "gen_info", npc.id, 1)
-			--amk.send_tip(m_str, m_from, 1, 15, "gen_info", uniq, news)
-			--local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
-			--snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 			-- тут запомнить айди непися для диалогов итд
 			xvars.doc_message_text_m_str = m_str
 			xvars.doc_message_text_m_from = m_from
@@ -2325,9 +2317,7 @@ function do_document_timer()
 	m_str = tostring(xvars.doc_message_text_m_str)
 	m_from = tostring(xvars.doc_message_text_m_from)
 	if m_str ~= "" or m_from  ~= "" then
-		amk.send_tip(m_str, m_from, 1, 15, "gen_info", uniq, news)
-		local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+		amk.send_tip(m_str, m_from, 1, 15, "gen_info", task)
 	end
 	xvars.doc_message_text_m_str = ""
 	xvars.doc_message_text_m_from = ""

@@ -3071,24 +3071,32 @@ function use_spat_hata()
 end
 
 function use_spat_hata_esc()
-	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
-        	news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_0"))
-        	return
-	end
-	if not has_alife_info("olr_traders_day") then
-		this.go_sleep_place()
-		return
-	else
-		if db.actor:get_actor_sleep() > 0.3 then
-			news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_1"), nil, "act", 30000)
-		end
-	end
-	if db.actor:get_actor_sleep() < 0.3 then
-		this.go_sleep_place()
-		return
-	else
-		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_2"), nil, "act", 30000)
-	end
+	-- проверка на выброс
+    if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+        news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_0"))
+        return
+    end
+	-- проверка что на улице ночь
+    if not has_alife_info("olr_traders_day") then
+        this.go_sleep_place()
+        return
+    end
+	-- если день то проверяем нашу сониловость
+    local sleep_level = db.actor:get_actor_sleep()
+	-- при сонливости менее 0.3 идём спать, иначе не спать
+    if sleep_level < 0.3 then
+        this.go_sleep_place()
+        return
+    else
+        local random_num = math.random(2)
+        local message
+        if random_num == 1 then
+            message = "use_spat_hata_esc_1"
+        else
+            message = "use_spat_hata_esc_2"
+        end
+        news_manager.send_tip(db.actor, game.translate_string(message), nil, "act", 30000)
+    end
 end
 
 function go_sleep_place()

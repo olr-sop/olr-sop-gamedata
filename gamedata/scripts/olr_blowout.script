@@ -376,7 +376,7 @@ function all_blowend_funcs()
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
 	olr_timers.st_timer("mg_spawn_zombies", 36, "olr_blowout.mg_spawn_zombies()")
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
-	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") ----	 всех локацций
+	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- всех локацций
 	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()")
 	olr_timers.st_timer("create_mil_stk", 69, "olr_voenstals.create_mil_stk()")
 	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()")
@@ -529,31 +529,31 @@ end
 function clear_trash_wars()
 	-- TODO ещё раз проверить имена объектов как они записаны в xvars
 	for key, value in pairs(xvars.foods()) do
-		local wpn = alife():object(key)
-		if not wpn then
-			log1(" DELDETED food " .. key .. " = " .. tostring(value) .. "")
+		local food_object = alife():object(key)
+		if not food_object then
+			--log1(" DELDETED food " .. key .. " = " .. tostring(value) .. "")
 			xvars.foods[key] = nil
 			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "Место где проводили замеры учёные." )
 		end
 	end
 	for key, value in pairs(xvars.weapons()) do
-		local wpn = alife():object(key)
-		if not wpn then
-			log1(" DELDETED WPN " .. key .. " = " .. tostring(value) .. "")
+		local wpn_object = alife():object(key)
+		if not wpn_object then
+			--log1(" DELDETED WPN " .. key .. " = " .. tostring(value) .. "")
 			xvars.weapons[key] = nil
 			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "Место где проводили замеры учёные." )
 		end
 	end
 	for key, value in pairs(xvars.arts()) do
-		local wpn = alife():object(key)
-		if not wpn then -- если нет арта
+		local art_object = alife():object(key)
+		if not art_object then -- если нет арта
 			--if xvars.arts[key]~=nil then	-- но есть его запись  weight cost
 			--	xvars.arts[key]=nil
 			--end
-			if xvars.arts[key .. game.translate_string("weight")] ~= nil then -- но есть его запись	 weight cost
+			if xvars.arts[key .. game.translate_string("weight")] ~= nil then -- но есть его запись weight
 				xvars.arts[key .. game.translate_string("weight")] = nil
 			end
-			if xvars.arts[key .. game.translate_string("cost")] ~= nil then -- но есть его запись  weight cost
+			if xvars.arts[key .. game.translate_string("cost")] ~= nil then -- но есть его запись cost
 				xvars.arts[key .. game.translate_string("cost")] = nil
 			end
 		end

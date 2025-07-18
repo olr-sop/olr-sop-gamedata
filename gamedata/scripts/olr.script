@@ -357,7 +357,6 @@ function start_game_vars()
 	xvars.npcs_who_find_docs_id = {} -- Таблица с id сталкеров кто нашел документы в симуляции
 	xvars.naparnik_name = "" 	-- Имя напарника на свалку
 	xvars.mosk_hits = 0 		-- Сколько раз пальнули по мозгу на lvl12
-	--xvars.shoot_count = 0 		-- Сколько настрелял патронов ГГ
 	xvars.killed_npcs = 0 		-- Сколько сталкеров убил ГГ
 	xvars.gentri_door_open = math.random(1,3) 	-- Случайная дверь на Генераторах
 	xvars.sim_deaths = {} 		-- Умершие мобы в симуляции
@@ -509,143 +508,145 @@ end
 function upd10000()
 	if time_global() > tup10000 then
 		tup10000 = time_global() + tmerup10000
-		--log1(" t 10")
-		local srnd = math.random(1,2)
+
+		local srnd = math.random(1, 2)
 		if srnd == 1 then
 			olr_rnd_sounds.play_rnd_snd()
 		end
+
 		if db.actor:alive() and db.actor:get_actor_thirst() < 0.15 and srnd == 2 then
 			olr.hud_tip("", game.translate_string("st_olr_suffering_from_thirst"), 5)
 		end
+
 		if alife() and nick.is_pda_dead() then
 			olr.show_minimap(false)
 		end
+
 		ogse_mental_fix.check_freezers()
+
 		local outfit = db.actor:get_current_outfit()
 		if outfit then
 			local outcond = outfit:condition()
 			if outcond > 0.10 and (outfit:section() == "ecolog_outfit" or outfit:section() == "outfit_antirad" or outfit:section() == "scientific_outfit") then
-			if get_actor_obj().state.run then
-				outfit:set_condition(outfit:condition() - 0.00039)
-				--log1("actor scafandr cond - ["..outfit:condition().."]")
-			end
-			if get_actor_obj().state.walk then
-				outfit:set_condition(outfit:condition() - 0.00029)
-				--log1("actor scafandr cond - ["..outfit:condition().."]")
-			end
+				if get_actor_obj().state.run then
+					outfit:set_condition(outfit:condition() - 0.00039)
+					--log1("actor scafandr cond - ["..outfit:condition().."]")
+				end
+				if get_actor_obj().state.walk then
+					outfit:set_condition(outfit:condition() - 0.00029)
+					--log1("actor scafandr cond - ["..outfit:condition().."]")
+				end
 			end
 		end
 
-		db.actor:iterate_inventory( function(_, obj)
-			if obj then
-				--news_manager.send_tip(db.actor, game.translate_string("upd10000_0"), nil, "default", 39000)
-				--if obj:is_food_item() or obj:is_weapon() then
+		db.actor:iterate_inventory(
+			function(_, obj)
+				if obj then
+					--news_manager.send_tip(db.actor, game.translate_string("upd10000_0"), nil, "default", 39000)
 					if xvars.foods[obj:name()] == true then
-			  			db.actor.radiation = 0.0015
-			  			--news_manager.send_tip(db.actor, game.translate_string("upd10000_1"), nil, "default", 39000)
+						db.actor.radiation = 0.0015
+						--news_manager.send_tip(db.actor, game.translate_string("upd10000_1"), nil, "default", 39000)
 					end
 					if xvars.weapons[obj:name()] == true then
-			  			db.actor.radiation = 0.0025
-			  			--news_manager.send_tip(db.actor, game.translate_string("upd10000_2"), nil, "default", 39000)
+						db.actor.radiation = 0.0025
+					--news_manager.send_tip(db.actor, game.translate_string("upd10000_2"), nil, "default", 39000)
 					end
 					if db.actor.radiation > 0.2 then
 						if not has_alife_info("radiation_inv_podskazka_one") and has_alife_info("tutor_radiat_jornl") then
 							olr.info("radiation_inv_podskazka_one")
-							news_manager.send_tip(db.actor, game.translate_string("upd10000_3"), nil, "act", 99000)	
+							news_manager.send_tip(db.actor, game.translate_string("upd10000_3"), nil, "act", 99000)
 						end
-					end
-				--end
-			end
-		end ) 	
-	end	
-end
-
-function upd25000()
-if time_global() > tup25000 then
-	tup25000 = time_global() + tmerup25000
-	if db.actor and alife() then
-		nick.dead_naparnik_sms()
-		amk.oau_reason="cn news_main time 1 st"
-    		if has_alife_info("start_olr_mod") then
-
-			amk.oau_reason="cn news_main time 2 st"
-
-			local func = loadstring("olr.check_time()")
-			if func then
-				pcall(func)
-			else
-				log1("!!! ERROR LUA olr.check_time() PCALL")
-			end
-			--olr.check_time()
-
-			amk.oau_reason="cn news_main time 3 st"
-
-
-			local func = loadstring("news_main.check_news()")
-			if func then
-				pcall(func)
-			else
-				log1("!!! ERROR LUA news_main.check_news() PCALL")
-			end
-			--news_main.check_news()
-
-			amk.oau_reason="cn news_maincheck_news end"
-    		end
-		amk.oau_reason="cn news_maincheck_news between"
-		if db.actor then
-			amk.oau_reason="cn sleep 1 between"
-			if db.actor:alive() then
-				amk.oau_reason="cn sleep 2 between"
-				if db.actor:get_actor_sleep() < 0.15 then
-					amk.oau_reason="cn sleep 3 between"
-					local rnd = math.random(1,2)
-					amk.oau_reason="cn sleep 4 between"
-					if rnd == 1 then
-						amk.oau_reason="cn sleep 5 between"
-						level.add_pp_effector("total_recall.ppe", 231, false)
-						olr.hud_tip("", game.translate_string("st_olr_need_sleep"), 5)
 					end
 				end
 			end
-		end
-		amk.oau_reason="cn sleep rat"
-		if level.name() == "lvl_rat" then
-			olr_rats.upd()
-		end
-		amk.oau_reason="cn sleep mem st"
-		olr.check_memory()
-		amk.oau_reason="cn sleep mem end"
-		local rndgta = math.random(1,11)
-		if rndgta == 1 then
-			amk.oau_reason="cn gta st"
-			olr.gta_actor_car()
-			amk.oau_reason="cn gta end"
-		elseif rndgta == 5 then
-			amk.oau_reason="cn xrs_trade_olr st"
-
-			--xrs_trade.on_item_drop()
-			local func = loadstring("xrs_trade.on_item_drop()")
-			if func then
-				pcall(func)
-			else
-				log1("!!! ERROR LUA xrs_trade.on_item_drop() PCALL")
-			end
-
-			amk.oau_reason="cn xrs_trade_olr end"
-		end
+		)
 	end
 end
+
+function upd25000()
+	if time_global() > tup25000 then
+		tup25000 = time_global() + tmerup25000
+		if db.actor and alife() then
+			nick.dead_naparnik_sms()
+			amk.oau_reason = "cn news_main time 1 st"
+			if has_alife_info("start_olr_mod") then
+				amk.oau_reason = "cn news_main time 2 st"
+
+				local func = loadstring("olr.check_time()")
+				if func then
+					pcall(func)
+				else
+					log1("!!! ERROR LUA olr.check_time() PCALL")
+				end
+				--olr.check_time()
+
+				amk.oau_reason = "cn news_main time 3 st"
+
+				local func = loadstring("news_main.check_news()")
+				if func then
+					pcall(func)
+				else
+					log1("!!! ERROR LUA news_main.check_news() PCALL")
+				end
+				--news_main.check_news()
+
+				amk.oau_reason = "cn news_maincheck_news end"
+			end
+			amk.oau_reason = "cn news_maincheck_news between"
+			if db.actor then
+				amk.oau_reason = "cn sleep 1 between"
+				if db.actor:alive() then
+					amk.oau_reason = "cn sleep 2 between"
+					if db.actor:get_actor_sleep() < 0.15 then
+						amk.oau_reason = "cn sleep 3 between"
+						local rnd = math.random(1, 2)
+						amk.oau_reason = "cn sleep 4 between"
+						if rnd == 1 then
+							amk.oau_reason = "cn sleep 5 between"
+							level.add_pp_effector("total_recall.ppe", 231, false)
+							olr.hud_tip("", game.translate_string("st_olr_need_sleep"), 5)
+						end
+					end
+				end
+			end
+			amk.oau_reason = "cn sleep rat"
+			if level.name() == "lvl_rat" then
+				olr_rats.upd()
+			end
+			amk.oau_reason = "cn sleep mem st"
+			olr.check_memory()
+			amk.oau_reason = "cn sleep mem end"
+			local rndgta = math.random(1, 11)
+			if rndgta == 1 then
+				amk.oau_reason = "cn gta st"
+				olr.gta_actor_car()
+				amk.oau_reason = "cn gta end"
+			elseif rndgta == 5 then
+				amk.oau_reason = "cn xrs_trade_olr st"
+
+				--xrs_trade.on_item_drop()
+				local func = loadstring("xrs_trade.on_item_drop()")
+				if func then
+					pcall(func)
+				else
+					log1("!!! ERROR LUA xrs_trade.on_item_drop() PCALL")
+				end
+
+				amk.oau_reason = "cn xrs_trade_olr end"
+			end
+		end
+	end
 end
 
 function check_time()
 	if xr_conditions.is_day() then
-		amk.oau_reason="cn olr_traders_day 1 st"
-     		db.actor:give_info_portion("olr_traders_day")
-		amk.oau_reason="cn olr_traders_day 1 end"
-       	elseif not xr_conditions.is_day() then
-		amk.oau_reason="cn olr_traders_night 1 st"
-        	db.actor:give_info_portion("olr_traders_night")
-		amk.oau_reason="cn olr_traders_night 1 end"
+		amk.oau_reason = "cn olr_traders_day 1 st"
+		db.actor:give_info_portion("olr_traders_day")
+		amk.oau_reason = "cn olr_traders_day 1 end"
+	elseif not xr_conditions.is_day() then
+		amk.oau_reason = "cn olr_traders_night 1 st"
+		db.actor:give_info_portion("olr_traders_night")
+		amk.oau_reason = "cn olr_traders_night 1 end"
 	end
 end
 

@@ -11,7 +11,7 @@ local game_difficulty_by_num = {
 	[1] = "gd_stalker",
 	[2] = "gd_veteran",
 	[3] = "gd_master"
-	}
+}
 
 max_item_amount = 0
 lasthealth  = 0
@@ -30,7 +30,7 @@ function actor_binder:__init (obj) super(obj)
 	self.bCheckStart = false
 	self.weather_manager = level_weathers.WeatherManager()
 	self.actor_detector = xr_detector.actor_detector()
-        _G.xvars = get_stored_vars()
+	_G.xvars = get_stored_vars()
 	max_item_amount = system_ini():r_float("actor", "item_amount_base")
 end
 
@@ -74,17 +74,17 @@ function actor_binder:net_spawn(data)
 	if (amk_offline_alife) then
 		amk_offline_alife.init()
 	end
-        if (amk_offline_alife) then
+	if (amk_offline_alife) then
 		amk_offline_alife.update_npc_tables()
 	end
 	if (amk_offline_alife) then
 		  amk_offline_alife.update_trade()
 	end
 
-        if xvars.chang_lev ~= level.name() then
-        	xvars.chang_lev = level.name()
+	if xvars.chang_lev ~= level.name() then
+		xvars.chang_lev = level.name()
 		olr.change_level()
-        end
+	end
 		
 	olr_ruck_limit.on_netspawn()
 
@@ -432,7 +432,7 @@ end
 
 
 function actor_binder:OnTrdBtnClick(id)
-        olr_trade_manager.trading_start(id)
+	olr_trade_manager.trading_start(id)
 end
 
 
@@ -480,25 +480,19 @@ function actor_binder:info_callback(npc, info_id)
     --olr_inv_actor_desc.on_info(info_id)
 end
 ----------------------------------------------------------------------------------------------------------------------
-function actor_binder:on_trade (item, sell_bye, money)
-	    --log1(" trade startt")
-	    if sell_bye == true then
+function actor_binder:on_trade(item, sell_bye, money)
+	--log1(" trade startt")
+	if sell_bye == true then
 		--log1(" продаём  true")
-		olr_ruck_limit.on_to_box(item)	
-	       game_stats.money_trade_update (money)
-	    else       
+		olr_ruck_limit.on_to_box(item)
+		game_stats.money_trade_update(money)
+	else
 		--log1(" покупаем")
-	       game_stats.money_trade_update (-money) 
-	    end 
-	    if item:is_weapon_magazined() then
-	      item:unload_magazine()
-	    end
-	    --local trdrsel = bind_stalker.loked_obj
-	    --if trdrsel and olr_trade_manager.obj_istrader(trdrsel) then
-		--if item and item:is_food_item() then
-			
-		--end
-	    --end
+		game_stats.money_trade_update(-money)
+	end
+	if item:is_weapon_magazined() then
+		item:unload_magazine()
+	end
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:article_callback(npc, group, name)
@@ -612,7 +606,7 @@ function actor_binder:on_item_drop (obj)
 	--event("actor_item_drop"):trigger({obj = obj})
 	
 	if db.actor:has_info("ui_inventory") then
-       		db.actor:invalidate_inventory()
+		db.actor:invalidate_inventory()
 	end
 
 end
@@ -747,26 +741,7 @@ function actor_binder:update(delta)
 
 	amk.on_actor_upade()
 	olr_debug.upd()
-    	core.tc("actor_update", delta)
-
-    	--event("actor_update"):trigger({delta = delta})
-
-	--level.set_fog(-650)
-
---[[
-	local target_obj = level.get_target_obj()
-	if target_obj then
-		local bon = level.get_target_element()
-  		local vis = target_obj:get_interface():Visual()
-     		local kin = vis:dcast_PKinematics()     
-    		if kin then
-         		local bn = kin:LL_BoneName(bon)
-         		if bn ~= "" then
-				--news_manager.send_tip(db.actor, "obj - ["..target_obj:name().."] bone - ["..bon.."]  -- ["..bn.."] ", nil, "freedom", 9000)	
-			end
-		end
-	end
-]]
+	core.tc("actor_update", delta)
 
 end
 ------------------------------------------------------------------

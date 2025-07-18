@@ -1,23 +1,13 @@
---- модуль выброса 
---- hi_flyer 05/09/15 
+--- модуль выброса
+--- hi_flyer 05/09/15
 
 --[[
-
-TODO: Починить функции либо вырезать
-blow_flora_norm
-blow_flora_blowout
-blow_flora_middle
-
-На данный момент вызывают опустошение pstor'а актора так как коснольные команды ушли под дебаг дефайн (чиго?)
-Думаю лучше будет эти приколы с тряской деревьев вывести в конфиги погоды и накручивать уже там
 -- theysani
-
 --]]
-
 local time_apdeyta_hit = 0
-local time_apdeyta = 0  
+local time_apdeyta = 0
 local loaded = false
-local blow_max = 2000 -- макс знач. таймера выброса  !! Ќ≈ ћ≈Ќя“№ !!
+local blow_max = 2000 -- макс знач. таймера выброса	 !! Ќ≈ ћ≈Ќя“№ !!
 state_blow = 1
 local tmradd = 3000
 
@@ -32,7 +22,14 @@ no_blow_levels = {
 
 function blowout_snd_go()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout]])
-	if not snd_obj:playing() then 
+	if not snd_obj:playing() then
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+end
+
+function blowout_snd_pre()
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
+	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
 end
@@ -42,7 +39,7 @@ end
 function update()
 	if db.actor and level.present() then
 		update_val()
-        	update_hit()
+		update_hit()
 	end
 end
 
@@ -55,98 +52,100 @@ function update_val()
 	if time_global() > time_apdeyta then
 		time_apdeyta = time_global() + tmradd
 		xvars.blowout_timer = xvars.blowout_timer - 1
-        	--news_manager.send_tip(db.actor, "¬џЅ–ќ— равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
-		if xvars.blowout_timer > blow_max then xvars.blowout_timer = blow_max end
-        	if xvars.blowout_timer < 1 then 
-			xvars.blowout_timer = blow_max 
-			state_blow = 1 
-		end 
+		--news_manager.send_tip(db.actor, "¬џЅ–ќ— равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
+		if xvars.blowout_timer > blow_max then
+			xvars.blowout_timer = blow_max
+		end
+		if xvars.blowout_timer < 1 then
+			xvars.blowout_timer = blow_max
+			state_blow = 1
+		end
 		upd()
 	end
 end
 
 function upd()
-    if xvars.blowout_timer == 80 then
-        local iblocitm = db.actor:object("af_art460")
-        if iblocitm then
+	if xvars.blowout_timer == 80 then
+		local iblocitm = db.actor:object("af_art460")
+		if iblocitm then
 			--log1("upd ADD PP EFFECTOR 5831")
-            level.add_pp_effector("contrast.ppe", 5831, false)
-            local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]])
-            if not snd_obj:playing() then
-                snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-            end
-            news_manager.send_tip(db.actor, game.translate_string("upd_0"), 1, "act", 19000)
-            nik_dialog.out_item_much("af_art460", 1)
-        end
-    end
+			level.add_pp_effector("contrast.ppe", 5831, false)
+			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]])
+			if not snd_obj:playing() then
+				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			end
+			news_manager.send_tip(db.actor, game.translate_string("upd_0"), 1, "act", 19000)
+			nik_dialog.out_item_much("af_art460", 1)
+		end
+	end
 
-    if xvars.blowout_timer == 60 then
-        local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
-        if not snd_obj:playing() then
-            snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-        end
-    end
+	if xvars.blowout_timer == 60 then
+		local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
+		if not snd_obj:playing() then
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+		end
+	end
 
-    if xvars.blowout_timer == 65 then
-        local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\cold_wind]])
-        if not snd_obj:playing() then
-            snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-        end
-    end
+	if xvars.blowout_timer == 65 then
+		local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\cold_wind]])
+		if not snd_obj:playing() then
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+		end
+	end
 
-    if xvars.blowout_timer == 70 then
-        if not no_blow_levels[level.name()] and not has_alife_info("monolit_na_kordone") then
-            this.blow_task_actor()
-        end
-    end
+	if xvars.blowout_timer == 70 then
+		if not no_blow_levels[level.name()] and not has_alife_info("monolit_na_kordone") then
+			blow_task_actor()
+		end
+	end
 
-    if
-        xvars.blowout_timer >= 700 and has_alife_info("monolit_na_kordone") and
-            not has_alife_info("start_freeplay_olr_start")
-     then
-        olr_blowout.set_blow_timer(200)
-    end
+	if
+		xvars.blowout_timer >= 700 and has_alife_info("monolit_na_kordone") and
+			not has_alife_info("start_freeplay_olr_start")
+	 then
+		olr_blowout.set_blow_timer(200)
+	end
 
-    --news_manager.send_tip(db.actor, "xvars.blowout_timer равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
+	--news_manager.send_tip(db.actor, "xvars.blowout_timer равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
 
-    if xvars.blowout_timer < blow_max and xvars.blowout_timer >= 60 then
-        if no_blow_levels[level.name()] then
-            return
-        end
+	if xvars.blowout_timer < blow_max and xvars.blowout_timer >= 60 then
+		if no_blow_levels[level.name()] then
+			return
+		end
 
-        if has_alife_info("sr_cutscene_start_info") then
-            return
-        end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
 
-        state_blow = 1
+		state_blow = 1
 
-        if not has_alife_info("olr_blowout_phase_0") then
-            db.actor:give_info_portion("olr_blowout_phase_0")
+		if not has_alife_info("olr_blowout_phase_0") then
+			db.actor:give_info_portion("olr_blowout_phase_0")
 
-            if has_alife_info("olr_blowout_phase_0") then
-                --news_manager.send_tip(db.actor, game.translate_string("upd_1"))
+			if has_alife_info("olr_blowout_phase_0") then
+				--news_manager.send_tip(db.actor, game.translate_string("upd_1"))
 
-                local curwweth = game.translate_string(xvars.blow_cur_weather)
-                --log1("olr_blowout: get params from curwweth " .. tostring(curwweth) .. "")
-                if curwweth ~= nil then
-                    level.set_weather(curwweth, true)
-                    --log1("try set afterblow weather")
-                end
+				local curwweth = game.translate_string(xvars.blow_cur_weather)
+				--log1("olr_blowout: get params from curwweth " .. tostring(curwweth) .. "")
+				if curwweth ~= nil then
+					level.set_weather(curwweth, true)
+				--log1("try set afterblow weather")
+				end
 
-                if loaded == true then
-                    --log1("upd ENABLE TELEPORT.PPE")
+				if loaded == true then
+					--log1("upd ENABLE TELEPORT.PPE")
 					--log1("upd ADD PP EFFECTOR 2009")
-                    level.add_pp_effector("teleport.ppe", 2009, false)
-                end
-                --log1("upd TRY REMOVE CAM AND PP EFFECTORS")
+					level.add_pp_effector("teleport.ppe", 2009, false)
+				end
+				--log1("upd TRY REMOVE CAM AND PP EFFECTORS")
 				--log1("upd REMOVE CAM EFFECTOR 1974")
-                level.remove_cam_effector(1974)
+				level.remove_cam_effector(1974)
 				--log1("upd REMOVE CAM EFFECTOR 19744")
 				level.remove_cam_effector(19744)
 				--log1("upd REMOVE CAM EFFECTOR 1975")
-                level.remove_cam_effector(1975)
+				level.remove_cam_effector(1975)
 				--log1("upd REMOVE CAM EFFECTOR 1976")
-                level.remove_cam_effector(1976)
+				level.remove_cam_effector(1976)
 				--log1("upd REMOVE CAM EFFECTOR 2004")
 				level.remove_cam_effector(2004)
 				--log1("upd REMOVE CAM EFFECTOR 12002")
@@ -160,223 +159,211 @@ function upd()
 				--log1("upd REMOVE CAM EFFECTOR 52002")
 				level.remove_cam_effector(52002)
 				--log1("upd REMOVE PP EFFECTOR 1974")
-                level.remove_pp_effector(1974)
+				level.remove_pp_effector(1974)
 				--log1("upd REMOVE PP EFFECTOR 5831")
-                level.remove_pp_effector(5831)
+				level.remove_pp_effector(5831)
 				--log1("upd REMOVE PP EFFECTOR 2299")
-                level.remove_pp_effector(2299)
-                blow_flora_norm()
-            end
-        end
-    end
+				level.remove_pp_effector(2299)
+			end
+		end
+	end
 
-    ------------
+	------------
 
-    -- дл€ подземок дубль
-    if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
-        if not olr_timers.has_timer("blowout_ending_set_effs") then
-            olr_timers.st_timer("blowout_ending_set_effs", 230, "olr_blowout.blowout_ending_set()")
-            --news_manager.send_tip(db.actor, game.translate_string("upd_2"), nil, "freedom", 9000)
-        end
-    end
-    -- дл€ подземок
+	-- дл€ подземок дубль
+	if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
+		if not olr_timers.has_timer("blowout_ending_set_effs") then
+			olr_timers.st_timer("blowout_ending_set_effs", 230, "olr_blowout.blowout_ending_set()")
+		--news_manager.send_tip(db.actor, game.translate_string("upd_2"), nil, "freedom", 9000)
+		end
+	end
+	-- дл€ подземок
 
-    if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
-        state_blow = 2
+	if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
+		state_blow = 2
 
-        if no_blow_levels[level.name()] then
-            return
-        end
+		if no_blow_levels[level.name()] then
+			return
+		end
 
-        if has_alife_info("sr_cutscene_start_info") then
-            return
-        end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
 
-        if has_alife_info("olr_blowout_ended") then
-            return
-        end
+		if has_alife_info("olr_blowout_ended") then
+			return
+		end
 
-        if not has_alife_info("olr_blowout_phase_1") then
-            db.actor:give_info_portion("olr_blowout_phase_1")
+		if not has_alife_info("olr_blowout_phase_1") then
+			db.actor:give_info_portion("olr_blowout_phase_1")
 
-            if has_alife_info("olr_blowout_phase_1") then
-                local ini = ini_file("game.ltx")
-                local weather = utils.cfg_get_string(ini, level.name(), "weathers", db.actor, false, "", "default")
-                --log1("olr_blowout: get weather from config " .. tostring(weather) .. "")
-                xvars.blow_cur_weather = weather
+			if has_alife_info("olr_blowout_phase_1") then
+				local ini = ini_file("game.ltx")
+				local weather = utils.cfg_get_string(ini, level.name(), "weathers", db.actor, false, "", "default")
+				--log1("olr_blowout: get weather from config " .. tostring(weather) .. "")
+				xvars.blow_cur_weather = weather
 
-                level.set_weather_fx("surge")
+				level.set_weather_fx("surge")
 				--log1("upd ADD CAM EFFECTOR 1975")
-                level.add_cam_effector("camera_effects\\shell_shock.anm", 1975, false, "")
-                soundtrack.blowout_snd_pre()
+				level.add_cam_effector("camera_effects\\shell_shock.anm", 1975, false, "")
+				blowout_snd_pre()
 				--log1("upd ADD PP EFFECTOR 231")
-                level.add_pp_effector("vibros_p.ppe", 231, false)
-                blow_flora_middle()
-                blowout_particle_start2()
-                psy_gg()
-                if not olr_timers.has_timer("blowout_additional_timer") then
-                    olr_timers.st_timer("blowout_additional_timer", 23, "olr_blowout.blowout_additional_timer()")
-                end
-                if not olr_timers.has_timer("blowout_ending_set_effs") then
-                    olr_timers.st_timer("blowout_ending_set_effs", 230, "olr_blowout.blowout_ending_set()")
-                    --news_manager.send_tip(db.actor, game.translate_string("upd_3"), nil, "freedom", 9000)
-                end
-            end
-        end
-    end
+				level.add_pp_effector("vibros_p.ppe", 231, false)
+				blowout_particle_start2()
+				psy_gg()
+				if not olr_timers.has_timer("blowout_additional_timer") then
+					olr_timers.st_timer("blowout_additional_timer", 23, "olr_blowout.blowout_additional_timer()")
+				end
+				if not olr_timers.has_timer("blowout_ending_set_effs") then
+					olr_timers.st_timer("blowout_ending_set_effs", 230, "olr_blowout.blowout_ending_set()")
+				--news_manager.send_tip(db.actor, game.translate_string("upd_3"), nil, "freedom", 9000)
+				end
+			end
+		end
+	end
 
-    ------------
+	------------
 
-    if xvars.blowout_timer <= 40 and xvars.blowout_timer >= 20 then
-        --news_manager.send_tip(db.actor,"333blow_timer равно " .. xvars.blowout_timer .. " сейчас.",nil,"freedom",9000)
+	if xvars.blowout_timer <= 40 and xvars.blowout_timer >= 20 then
+		--news_manager.send_tip(db.actor,"333blow_timer равно " .. xvars.blowout_timer .. " сейчас.",nil,"freedom",9000)
 
-        state_blow = 3
+		state_blow = 3
 
-        if no_blow_levels[level.name()] then
-            return
-        end
+		if no_blow_levels[level.name()] then
+			return
+		end
 
-        if has_alife_info("sr_cutscene_start_info") then
-            return
-        end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
 
-        if has_alife_info("olr_blowout_ended") then
-            return
-        end
+		if has_alife_info("olr_blowout_ended") then
+			return
+		end
 
-        if not has_alife_info("olr_blowout_phase_2") then
-            db.actor:give_info_portion("olr_blowout_phase_2")
-
-            if has_alife_info("olr_blowout_phase_2") then
+		if not has_alife_info("olr_blowout_phase_2") then
+			db.actor:give_info_portion("olr_blowout_phase_2")
+			if has_alife_info("olr_blowout_phase_2") then
 				--log1("upd ADD CAM EFFECTOR 1974")
-                level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
+				level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
 				--log1("upd ADD PP EFFECTOR 231")
-                level.add_pp_effector("test.ppe", 231, false)
+				level.add_pp_effector("test.ppe", 231, false)
 				--log1("upd ADD PP EFFECTOR 1974")
-                level.add_pp_effector("vibros.ppe", 1974, true)
-                level.set_weather_fx("surge")
-                local rndsn = math.random(1, 2)
-                if rndsn == 1 then
-                    olr.horror_snd()
-                end
+				level.add_pp_effector("vibros.ppe", 1974, true)
+				level.set_weather_fx("surge")
+				local rndsn = math.random(1, 2)
+				if rndsn == 1 then
+					olr.horror_snd()
+				end
 				--log1("upd ADD PP EFFECTOR 2299")
-                level.add_pp_effector("yantar_underground_psi.ppe", 2299, true)
-                this.blowout_snd_go()
-                olr_timers.st_timer("blwsnd1", 31, "soundtrack.blowout_snd_go()")
-                olr_timers.st_timer("blwsnd2", 62, "soundtrack.blowout_snd_go()")
-                this.spaven_rats()
-                blow_flora_blowout()
-                blowout_particle_blow()
-                psy_gg()
+				level.add_pp_effector("yantar_underground_psi.ppe", 2299, true)
+				blowout_snd_go()
+				olr_timers.st_timer("blwsnd1", 31, "olr_blowout.blowout_snd_go()")
+				olr_timers.st_timer("blwsnd2", 62, "olr_blowout.blowout_snd_go()")
+				spaven_rats()
+				blowout_particle_blow()
+				psy_gg()
+				--news_manager.send_tip(db.actor, game.translate_string("upd_4"))
+			end
+		end
+	end
 
-                --news_manager.send_tip(db.actor, game.translate_string("upd_4"))
-            end
-        end
-    end
+	------------
 
-    ------------
+	if xvars.blowout_timer <= 20 then
+		state_blow = 4
 
-    if xvars.blowout_timer <= 20 then
-        state_blow = 4
+		if no_blow_levels[level.name()] then
+			return
+		end
 
-        if no_blow_levels[level.name()] then
-            return
-        end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
 
-        if has_alife_info("sr_cutscene_start_info") then
-            return
-        end
+		if has_alife_info("olr_blowout_ended") then
+			return
+		end
 
-        if has_alife_info("olr_blowout_ended") then
-            return
-        end
+		if not has_alife_info("olr_blowout_phase_3") then
+			db.actor:give_info_portion("olr_blowout_phase_3")
 
-        if not has_alife_info("olr_blowout_phase_3") then
-            db.actor:give_info_portion("olr_blowout_phase_3")
-
-            if has_alife_info("olr_blowout_phase_3") then
+			if has_alife_info("olr_blowout_phase_3") then
 				--log1("upd ADD PP EFFECTOR 2009")
-                level.add_pp_effector("teleport.ppe", 2009, false)
-                level.set_weather_fx("surge")
+				level.add_pp_effector("teleport.ppe", 2009, false)
+				level.set_weather_fx("surge")
 				--log1("upd ADD PP EFFECTOR 1974")
-                level.add_pp_effector("vibros.ppe", 1974, true)
-                loaded = true
+				level.add_pp_effector("vibros.ppe", 1974, true)
+				loaded = true
 
-                lomka_pda()
-                blowout_particle_norm()
-                golod_gg()
-                psy_gg()
+				lomka_pda()
+				blowout_particle_norm()
+				golod_gg()
+				psy_gg()
 
-                local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx1]])
-                if not snd_obj:playing() then
-                    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-                end
+				local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx1]])
+				if not snd_obj:playing() then
+					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+				end
 				--log1("upd ADD PP EFFECTOR 231")
-                level.add_pp_effector("test.ppe", 231, false)
+				level.add_pp_effector("test.ppe", 231, false)
 
-                db.actor:give_info_portion("olr_blowout_ended")
-                --news_manager.send_tip(db.actor, game.translate_string("upd_5"))
-            end
-        end
-    end
+				db.actor:give_info_portion("olr_blowout_ended")
+			--news_manager.send_tip(db.actor, game.translate_string("upd_5"))
+			end
+		end
+	end
 end
-
-
 
 --------------------------------------------------------------------------------------------------------------------------------
 
 function blowout_ending_info_end()
 	db.actor:disable_info_portion("olr_blowout_ended")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx1b]])
-	if not snd_obj:playing() then 
+	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
 	end
 end
 
-
 function blowout_ending_set()
-
-        if not no_blow_levels[level.name()] then
-		olr.spawn_crows(20,90)
+	if not no_blow_levels[level.name()] then
+		olr.spawn_crows(20, 90)
 	end
 
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx2]])
-	if not snd_obj:playing() then 
+	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
 	end
 
-        local bc = xvars.blow_count 
-        bc = bc + 1
-        xvars.blow_count = bc 
-        --news_manager.send_tip(db.actor, "ѕережито "..bc.." выбросов...", nil, "dolg", 6000)
+	local bc = xvars.blow_count
+	bc = bc + 1
+	xvars.blow_count = bc
+	--news_manager.send_tip(db.actor, "ѕережито "..bc.." выбросов...", nil, "dolg", 6000)
 
 	all_blowend_funcs()
 
 	db.actor:disable_info_portion("spawn_anoms_esc")
- 	db.actor:disable_info_portion("spawn_anoms_gar")
- 	db.actor:disable_info_portion("spawn_anoms_agr")
- 	db.actor:disable_info_portion("spawn_anoms_dol")
- 	db.actor:disable_info_portion("spawn_anoms_bar")
- 	db.actor:disable_info_portion("spawn_anoms_yan")
- 	db.actor:disable_info_portion("spawn_anoms_mil")
- 	db.actor:disable_info_portion("spawn_anoms_rad")
- 	db.actor:disable_info_portion("spawn_anoms_ded")
-
+	db.actor:disable_info_portion("spawn_anoms_gar")
+	db.actor:disable_info_portion("spawn_anoms_agr")
+	db.actor:disable_info_portion("spawn_anoms_dol")
+	db.actor:disable_info_portion("spawn_anoms_bar")
+	db.actor:disable_info_portion("spawn_anoms_yan")
+	db.actor:disable_info_portion("spawn_anoms_mil")
+	db.actor:disable_info_portion("spawn_anoms_rad")
+	db.actor:disable_info_portion("spawn_anoms_ded")
 end
 
 function all_blowend_funcs()
-
-	olr_timers.st_timer("blowout_ending_info_end", 355, "olr_blowout.blowout_ending_info_end()")  
+	olr_timers.st_timer("blowout_ending_info_end", 355, "olr_blowout.blowout_ending_info_end()")
 	-- на вс€кий случай
 
-        del_vidrosovie_arts()
-        blow_flora_norm()
-        blow_info_count()
-        set_arts_cond_after_blowout()
-        spawen_arts_random()
-        spawn_esc_mil_group()
+	del_vidrosovie_arts()
+	blow_info_count()
+	set_arts_cond_after_blowout()
+	spawen_arts_random()
+	spawn_esc_mil_group()
 	remove_off_anoms()
-        remove_onl_anoms()
+	remove_onl_anoms()
 	nick.ring_timer_1()
 
 	olr_timers.st_timer("clear_dead_monsters", 12, "olr_blowout.clear_dead_monsters()")
@@ -389,14 +376,11 @@ function all_blowend_funcs()
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
 	olr_timers.st_timer("mg_spawn_zombies", 36, "olr_blowout.mg_spawn_zombies()")
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
-	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()")   ----  всех локацций
+	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") ----	 всех локацций
 	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()")
 	olr_timers.st_timer("create_mil_stk", 69, "olr_voenstals.create_mil_stk()")
 	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()")
 	olr_timers.st_timer("set_walkers_rndways", 74, "olr_ai_tasks.set_walkers_rndways()")
-
-
-
 
 	if has_alife_info("rad_first") and not has_alife_info("gen_first") then
 		olr_blowout.spawen_endgame_zombies()
@@ -405,7 +389,7 @@ function all_blowend_funcs()
 		olr_timers.st_timer("spawen_endgame_zombies3", 39, "olr_blowout.spawen_endgame_zombies()")
 	end
 
-	if xvars.blow_count > 6 and not has_alife_info("gen_first") then 
+	if xvars.blow_count > 6 and not has_alife_info("gen_first") then
 		olr_timers.st_timer("rat_cat_spawn", 69, "olr_blowout.rat_cat_spawn()")
 		olr_timers.st_timer("respawn_now", 79, "olr_blowout.respawn_now()")
 	end
@@ -421,199 +405,170 @@ function all_blowend_funcs()
 		end
 	end
 
-	olr_timers.st_timer("blowout_ending_info_end", 375, "olr_blowout.blowout_ending_info_end()")  
+	olr_timers.st_timer("blowout_ending_info_end", 375, "olr_blowout.blowout_ending_info_end()")
 	-- на вс€кий случай
-
 end
 
 ---------------------------------------------
 
-
-
-
 function spawen_endgame_posthuman()
+	local montabl = {
+		[clsid.respawn] = true
+	}
 
-local montabl = 
-{
-       [clsid.respawn] = true
-}
+	local sectionsa = {
+		"m_posthuman_e",
+		"chimera_strong",
+		"chimera_weak",
+		--"rad_zombied_respawn_1",
+		"chimera_midl"
+	}
 
-
-local sectionsa = { 
-"m_posthuman_e",
-"chimera_strong",
-"chimera_weak",
---"rad_zombied_respawn_1",
-"chimera_midl"
-}
-
-
-local count = 0
-local sim = alife()
-	for id=1, 65534 do
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-                if montabl[kill:clsid()] then
-                 
-                local section = sectionsa[math.random(table.getn(sectionsa))] 
-
-		if game_graph():valid_vertex_id(kill.m_game_vertex_id) and math.random(1,15) == 1 then
-                local sobj = alife():create(section,kill.position,kill.m_level_vertex_id,kill.m_game_vertex_id)
-
-		--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-		
-                count = count + 1
-                --news_manager.send_tip(db.actor, "m_posthuman_e заспавнилось "..count.." нау ииии", nil, "freedom", 9000)
-
-
+			if montabl[kill:clsid()] then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				if game_graph():valid_vertex_id(kill.m_game_vertex_id) and math.random(1, 15) == 1 then
+					local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
+					count = count + 1
+					--news_manager.send_tip(db.actor, "m_posthuman_e заспавнилось "..count.." нау ииии", nil, "freedom", 9000)
+				end
+			end
 		end
+	end
 end
-end
-end
-
-end
-
-
-
-
-
-
 
 -------------------------------------------------
 
 function rat_cat_spawn()
-local montabl = 
-{
-       [clsid.cat_s] = true
-}
+	local montabl = {
+		[clsid.cat_s] = true
+	}
 
+	local sectionsa = {
+		"af_art_steklo",
+		"af_art_spiral",
+		"af_art_lenss",
+		"af_art_kub",
+		"af_lchernaya_busina",
+		"af_electra_moonlight",
+		"af_lichinka",
+		"af_art_3_step_anom_svetim",
+		"af_art460"
+	}
 
-local sectionsa = { 
-"af_art_steklo",
-"af_art_spiral",
-"af_art_lenss",
-"af_art_kub",
-"af_lchernaya_busina",
-"af_electra_moonlight",
-"af_lichinka",
-"af_art_3_step_anom_svetim",
-"af_art460"
-}
+	local sectionsamons = {
+		"gigant_strong",
+		"gigant_normal",
+		"controller_new",
+		"karlito",
+		"karlito_yellow",
+		"korpus",
+		"fracture_strong",
+		"fracture_midle",
+		"m_burer_green",
+		"m_chimera_e",
+		"chimera_strong",
+		"bloodsucker_strong",
+		"zombie_plague",
+		"chimera_strong",
+		"chimera_weak",
+		"iskatels",
+		"controller_new",
+		"slizen_reg",
+		--"rad_zombied_respawn_1",
+		"ros_bandit_respawn_4",
+		"ros_killer_respawn_4",
+		"val_soldier_respawn_1",
+		"val_bandit_respawn_4",
+		"cit_killer_respawn_3",
+		"bar_dolg_respawn_3",
+		"bar_stalker_respawn_4",
+		"yan_ecolog_respawn_1",
+		"rad_soldier_master",
+		"rad_monolith_respawn_3",
+		"rad_freedom_respawn_3",
+		"gar_dolg_respawn_2",
+		"chimera_midl"
+	}
 
-local sectionsamons = { 
-"gigant_strong",
-"gigant_normal",
-"controller_new",
-"karlito",
-"karlito_yellow",
-"korpus",
-"fracture_strong",
-"fracture_midle",
-"m_burer_green",
-"m_chimera_e",
-"chimera_strong",
-"bloodsucker_strong",
-"zombie_plague",
-"chimera_strong",
-"chimera_weak",
-"iskatels",
-"controller_new",
-"slizen_reg",
---"rad_zombied_respawn_1",
-"ros_bandit_respawn_4",
-"ros_killer_respawn_4",
-"val_soldier_respawn_1",
-"val_bandit_respawn_4",
-"cit_killer_respawn_3",
-"bar_dolg_respawn_3",
-"bar_stalker_respawn_4",
-"yan_ecolog_respawn_1",
-"rad_soldier_master",
-"rad_monolith_respawn_3",
-"rad_freedom_respawn_3",
-"gar_dolg_respawn_2",
-"chimera_midl"
-}
-
-
-local count = 0
-local sim = alife()
-	for id=1, 65534 do
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-                if montabl[kill:clsid()] and kill.level_name == "lvl_rat" then
-                 
-                local section = sectionsa[math.random(table.getn(sectionsa))] 
-                local section_mon = sectionsamons[math.random(table.getn(sectionsamons))]
-
-		local rndsp = math.random(1,45)
-		if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
-		if rndsp == 15 then
-               		local sobj = alife():create(section,kill.position,kill.m_level_vertex_id,kill.m_game_vertex_id)
-                	count = count + 1
-
-			--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-		
-			local rndcat = math.random(1,8) 
-			if rndcat == 4 then 
-				local obj = alife():create(section_mon,kill.position,kill.m_level_vertex_id,kill.m_game_vertex_id)
-				amk.on_REspawn(obj)
-                		count = count + 1
+			if montabl[kill:clsid()] and kill.level_name == "lvl_rat" then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local section_mon = sectionsamons[math.random(table.getn(sectionsamons))]
+				local rndsp = math.random(1, 45)
+				if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
+					if rndsp == 15 then
+						local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+						count = count + 1
+						--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
+						local rndcat = math.random(1, 8)
+						if rndcat == 4 then
+							local obj = alife():create( section_mon, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+							amk.on_REspawn(obj)
+							count = count + 1
+						end
+						if olr.olrdbg == true then
+							news_manager.send_tip(db.actor, "[DBG] rat_cat_spawn заспавнилось " .. count .. " -- " .. section_mon .. " ", nil, "freedom", 9000)
+						end
+					end
+				end
 			end
-			if olr.olrdbg == true then
-                		news_manager.send_tip(db.actor, "[DBG] rat_cat_spawn заспавнилось "..count.." -- "..section_mon.." ", nil, "freedom", 9000)
-			end
-
 		end
-		end
-end
-end
-end
-
+	end
 end
 
 function clear_trash_wars()
 	-- TODO ещЄ раз проверить имена объектов как они записаны в xvars
 	for key, value in pairs(xvars.foods()) do
-	local wpn = alife():object(key)
-	if not wpn then
-		log1(" DELDETED food "..key.." = "..tostring(value).."")
-		xvars.foods[key]=nil
-		--olr.add_spot_on_map( wpn.id,"crlc_mdl", "ћесто где проводили замеры учЄные." )
-	end
-
+		local wpn = alife():object(key)
+		if not wpn then
+			log1(" DELDETED food " .. key .. " = " .. tostring(value) .. "")
+			xvars.foods[key] = nil
+			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "ћесто где проводили замеры учЄные." )
+		end
 	end
 	for key, value in pairs(xvars.weapons()) do
-	local wpn = alife():object(key)
-	if not wpn then
-		log1(" DELDETED WPN "..key.." = "..tostring(value).."")
-		xvars.weapons[key]=nil
-		--olr.add_spot_on_map( wpn.id,"crlc_mdl", "ћесто где проводили замеры учЄные." )
-	end
+		local wpn = alife():object(key)
+		if not wpn then
+			log1(" DELDETED WPN " .. key .. " = " .. tostring(value) .. "")
+			xvars.weapons[key] = nil
+			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "ћесто где проводили замеры учЄные." )
+		end
 	end
 	for key, value in pairs(xvars.arts()) do
-	local wpn = alife():object(key)
-	if not wpn then -- если нет арта
-		--if xvars.arts[key]~=nil then	-- но есть его запись  weight cost
-		--	xvars.arts[key]=nil	
-		--end
-		if xvars.arts[key..game.translate_string("weight")]~=nil then	-- но есть его запись  weight cost
-			xvars.arts[key..game.translate_string("weight")]=nil
+		local wpn = alife():object(key)
+		if not wpn then -- если нет арта
+			--if xvars.arts[key]~=nil then	-- но есть его запись  weight cost
+			--	xvars.arts[key]=nil
+			--end
+			if xvars.arts[key .. game.translate_string("weight")] ~= nil then -- но есть его запись	 weight cost
+				xvars.arts[key .. game.translate_string("weight")] = nil
+			end
+			if xvars.arts[key .. game.translate_string("cost")] ~= nil then -- но есть его запись  weight cost
+				xvars.arts[key .. game.translate_string("cost")] = nil
+			end
 		end
-		if xvars.arts[key..game.translate_string("cost")]~=nil then	-- но есть его запись  weight cost
-			xvars.arts[key..game.translate_string("cost")]=nil
-		end
-	end
 	end
 	--log1("--clear wars end--")
 end
 
 function clear_bolts()
-	local rndb = math.random(1,2)
+	local rndb = math.random(1, 2)
 	if rndb == 1 then
 		olr.del_noparent_weapons()
 	end
-	if xvars.blow_count < 6 then return end
+	if xvars.blow_count < 6 then
+		return
+	end
 
 	olr_timers.st_timer("del_rnd_anoms", 5, "olr_blowout.del_rnd_anoms()")
 	olr_timers.st_timer("clear_deadinoffline_wars", 15, "olr_blowout.clear_deadinoffline_wars()")
@@ -621,10 +576,14 @@ function clear_bolts()
 	tab_hlam = {}
 
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local trs = sim:object(id)
 		if trs then
-			if trs:section_name() == "ph_food_conserv1" or trs:section_name() == "ph_food_conserv2" or trs:section_name() == "ph_food_vater" or trs:section_name() == "vodka_used_empty" then 
+			if
+				trs:section_name() == "ph_food_conserv1" or trs:section_name() == "ph_food_conserv2" or
+					trs:section_name() == "ph_food_vater" or
+					trs:section_name() == "vodka_used_empty"
+			 then
 				table.insert(tab_hlam, trs)
 				--log1("delhlam - add ph foods")
 				--alife():release(trs, true)
@@ -660,28 +619,28 @@ function clear_bolts()
 					--log1("delhlam - taken pdas")
 					--alife():release(trs, true)
 					table.insert(tab_hlam, trs)
-				end	
+				end
 			end
 			if trs:section_name() == "device_torch" then
 				--log1("delhlam - add torch HAS ")
 				local pobj = alife():object(trs.parent_id)
 				if not pobj then
-					--log1("delhlam - add torch HAS without parent")
-					--if trs.item_condition < 0.3 then
-					--	--alife():release(trs, true)
-					--	table.insert(tab_hlam, trs)
-					--	--log1("delhlam - add torch without parent and low battery")
-					--end
-				end
-				--if pobj and not pobj:alive() then
+				--log1("delhlam - add torch HAS without parent")
+				--if trs.item_condition < 0.3 then
 				--	--alife():release(trs, true)
 				--	table.insert(tab_hlam, trs)
-				--	log1("delhlam - add torch of dead parent")
+				--	--log1("delhlam - add torch without parent and low battery")
 				--end
+				end
+			--if pobj and not pobj:alive() then
+			--	--alife():release(trs, true)
+			--	table.insert(tab_hlam, trs)
+			--	log1("delhlam - add torch of dead parent")
+			--end
 			end
 		end
 	end
-	
+
 	--log1("lupa22")
 
 	--log1(" tab_hlam count - "..#tab_hlam.." ")
@@ -692,336 +651,307 @@ function clear_bolts()
 			alife():release(o)
 		end
 	end
-
-
 end
 
 function clear_deadinoffline_wars()
 	for key, value in pairs(xvars.dead_in_offline()) do
-	local wpn = alife():object(key)
-	if not wpn then
-		--log1(" DELDETED food "..key.." = "..tostring(value).."")
-		xvars.dead_in_offline[key]=nil
+		local wpn = alife():object(key)
+		if not wpn then
+			--log1(" DELDETED food "..key.." = "..tostring(value).."")
+			xvars.dead_in_offline[key] = nil
 		--olr.add_spot_on_map( wpn.id,"crlc_mdl", "ћесто где проводили замеры учЄные." )
-	end
+		end
 	end
 end
 
 function clear_dead_monsters()
 	local cnt = 0
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-                if IsMonster(kill) and not kill:alive() and not olr_protected.is_no_offline_alife_obj(kill:name()) then
-	
-		if not xvars.dead_in_offline[kill:name()] == true then
-
-		if kill.level_name ~= level.name() then
-		
-
-		cnt = cnt + 1
-		--log1("dell - "..kill:name().."   "..kill.level_name.."   ")
-		xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-		alife():release(kill, true) 
-
-		end
-
-
-		end
-
-
-		end
+			if IsMonster(kill) and not kill:alive() and not olr_protected.is_no_offline_alife_obj(kill:name()) then
+				if not xvars.dead_in_offline[kill:name()] == true then
+					if kill.level_name ~= level.name() then
+						cnt = cnt + 1
+						--log1("dell - "..kill:name().."   "..kill.level_name.."   ")
+						xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
+						alife():release(kill, true)
+					end
+				end
+			end
 		end
 	end
 	--log1(cnt)
 	xrs_trade.on_item_drop()
 end
 
-
 function respawn_now()
-	if not has_alife_info("bar_dolg_propusk_done") then return end
+	if not has_alife_info("bar_dolg_propusk_done") then
+		return
+	end
 
 	local cnt = 0
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local obj = sim:object(id)
 		if IsStalker(obj) and obj:alive() then
 			local strn_id = obj:smart_terrain_id()
 			if strn_id ~= 65535 then
-				cnt=cnt+1
+				cnt = cnt + 1
 			end
 		end
 	end
 	log1(cnt)
 
-	if cnt > 100 then 
+	if cnt > 100 then
 		--news_manager.send_tip(db.actor, " DBG respawn_now TOO MUCH ALIVE STALKERS - RESPAWN FALSE ["..cnt.."] сейчас.", nil, "freedom", 9000)
-		return 
+		return
 	end
 
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-                if kill:clsid() == clsid.respawn then
-
-		--log1("DBG respawn_now - "..kill:name().."   "..kill.level_name.."   ")
-		kill:spawn(100) 
-
-
-		end
+			if kill:clsid() == clsid.respawn then
+				--log1("DBG respawn_now - "..kill:name().."	  "..kill.level_name.."	  ")
+				kill:spawn(100)
+			end
 		end
 	end
 end
 
-
 function del_rnd_anoms()
-local montabl = 
-{
-      	["zone_radioactive"] = true,
-      	["zone_radioactive_weak"] = true,
+	local montabl = {
+		["zone_radioactive"] = true,
+		["zone_radioactive_weak"] = true,
 		["zone_black_needle"] = true,
-       	["zone_orange_tuman"] = true
-}
+		["zone_orange_tuman"] = true
+	}
 
 	local cnta = 0
-	for i=0,65534 do
+	for i = 0, 65534 do
 		local sobj = alife():object(i)
 		if sobj then
 			if IsAnomaly(sobj) and sobj.level_name ~= level.name() then
-				local rndan = math.random(1,2)
+				local rndan = math.random(1, 2)
 				if montabl[sobj:section_name()] and rndan == 1 then
-					cnta = cnta+1
+					cnta = cnta + 1
 					xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
-					--log1("удал€ем аномалию "..sobj:name().."  "..cnta.."  "..sobj.level_name.." ")
+					--log1("удал€ем аномалию "..sobj:name().."	"..cnta.."	"..sobj.level_name.." ")
 					xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-					alife():release(sobj, true) 
+					alife():release(sobj, true)
 				end
 			end
-		end 
+		end
 	end
 end
 
 ---------------------------------------------
 
 function mg_spawn_zombies()
-    if has_alife_info("sokolov_kvest_dialog_done") then
-        local montabl = {
-            [clsid.respawn] = true
-        }
+	if has_alife_info("sokolov_kvest_dialog_done") then
+		local montabl = {
+			[clsid.respawn] = true
+		}
 
-        local sectionsa = {
-            "korpus_gas",
-            "fracture_strong",
-            "fracture_midle",
-            "pseudodog_weak",
-            "pseudodog_strong",
-            "pseudodog_normal",
-            --"rad_zombied_respawn_1",
-            "bloodsucker_strong"
-        }
+		local sectionsa = {
+			"korpus_gas",
+			"fracture_strong",
+			"fracture_midle",
+			"pseudodog_weak",
+			"pseudodog_strong",
+			"pseudodog_normal",
+			--"rad_zombied_respawn_1",
+			"bloodsucker_strong"
+		}
 
-        local count = 0
-        local sim = alife()
-        for id = 1, 65534 do
-            local kill = sim:object(id)
-            if kill then
-                if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-                    local section = sectionsa[math.random(table.getn(sectionsa))]
-                    local rndz = math.random(1, 15)
+		local count = 0
+		local sim = alife()
+		for id = 1, 65534 do
+			local kill = sim:object(id)
+			if kill then
+				if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
+					local section = sectionsa[math.random(table.getn(sectionsa))]
+					local rndz = math.random(1, 15)
 
-                    if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndz == 1 then
-                        local sobj =
-                            alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                        amk.on_REspawn(sobj)
+					if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndz == 1 then
+						local sobj =
+							alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+						amk.on_REspawn(sobj)
 
-                        --olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
+						--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
 
-                        count = count + 1
-                        --news_manager.send_tip(db.actor,"bloodsucker_strong and korpus_gas заспавнилось " .. count .. " нау ииии",nil,"freedom",9000)
-                    end
-                end
-            end
-        end
-    end
+						count = count + 1
+					--news_manager.send_tip(db.actor,"bloodsucker_strong and korpus_gas заспавнилось " .. count .. " нау ииии",nil,"freedom",9000)
+					end
+				end
+			end
+		end
+	end
 
-    if xvars.blow_count == 4 then
-        olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
-        olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
-        olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
-        olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
-        olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
-        olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
-        news_manager.send_tip(db.actor, game.translate_string("mg_spawn_zombies_0"), nil, "unknown", 35000)
-        olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0024")
-        olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0024")
-        olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0024")
-        olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0027")
-        olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0027")
-        olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0027")
-        olr.spawn_on_obj("pseudodog_w_namordnike_medpribor", "lvl11_deadcity_zone_radioactive_weak_0027")
-        olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_smart_terrain_0014")
-        olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_smart_terrain_0014")
-        olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_smart_terrain_0014")
-        olr.spawn_on_obj("pseudodog_weak", "lvl11_deadcity_smart_terrain_0014")
-        olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0030")
-        olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0030")
-        olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0030")
-        olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0030")
-        olr.spawn_on_obj("pseudodog_w_namordnike_ghost2", "lvl11_deadcity_zone_radioactive_weak_0030")
-        olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0031")
-        olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0031")
-        olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0031")
-        olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0031")
-        olr.spawn_on_obj("pseudodog_w_namordnike_ghost", "lvl11_deadcity_zone_radioactive_weak_0031")
-        olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0034")
-        olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0034")
-        olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0034")
-        olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0034")
-        olr.spawn_on_obj("pseudodog_w_namordnike", "lvl11_deadcity_zone_radioactive_weak_0034")
-        olr.spawn_on_obj("m_pseudodog_e", "lvl11_deadcity_zone_radioactive_weak_0026")
-        olr.spawn_on_obj("pseudodog_w_namordnike_medpribor", "lvl11_deadcity_zone_radioactive_weak_0026")
-        olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
-        olr.spawn_on_obj("dog_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
-        olr.spawn_on_obj("dog_normal_2", "lvl11_deadcity_zone_radioactive_weak_0026")
-        olr.spawn_on_obj("pseudodog_w_namordnike", "lvl11_deadcity_zone_radioactive_weak_0025")
-        olr.spawn_on_obj("m_pseudodog_e", "lvl11_deadcity_zone_radioactive_weak_0025")
-        olr.spawn_on_obj("pseudodog_w_namordnike_ghost", "lvl11_deadcity_zone_radioactive_weak_0025")
-        olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0025")
-        olr.spawn_on_obj("dog_normal", "lvl11_deadcity_zone_radioactive_weak_0025")
-        olr.spawn_on_obj("dog_weak", "lvl11_deadcity_zone_radioactive_weak_0025")
-    end
+	if xvars.blow_count == 4 then
+		olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
+		olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
+		olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
+		olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
+		olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
+		olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
+		news_manager.send_tip(db.actor, game.translate_string("mg_spawn_zombies_0"), nil, "unknown", 35000)
+		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0024")
+		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0024")
+		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0024")
+		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0027")
+		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0027")
+		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0027")
+		olr.spawn_on_obj("pseudodog_w_namordnike_medpribor", "lvl11_deadcity_zone_radioactive_weak_0027")
+		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_smart_terrain_0014")
+		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_smart_terrain_0014")
+		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_smart_terrain_0014")
+		olr.spawn_on_obj("pseudodog_weak", "lvl11_deadcity_smart_terrain_0014")
+		olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0030")
+		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0030")
+		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0030")
+		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0030")
+		olr.spawn_on_obj("pseudodog_w_namordnike_ghost2", "lvl11_deadcity_zone_radioactive_weak_0030")
+		olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0031")
+		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0031")
+		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0031")
+		olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0031")
+		olr.spawn_on_obj("pseudodog_w_namordnike_ghost", "lvl11_deadcity_zone_radioactive_weak_0031")
+		olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0034")
+		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0034")
+		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0034")
+		olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0034")
+		olr.spawn_on_obj("pseudodog_w_namordnike", "lvl11_deadcity_zone_radioactive_weak_0034")
+		olr.spawn_on_obj("m_pseudodog_e", "lvl11_deadcity_zone_radioactive_weak_0026")
+		olr.spawn_on_obj("pseudodog_w_namordnike_medpribor", "lvl11_deadcity_zone_radioactive_weak_0026")
+		olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
+		olr.spawn_on_obj("dog_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
+		olr.spawn_on_obj("dog_normal_2", "lvl11_deadcity_zone_radioactive_weak_0026")
+		olr.spawn_on_obj("pseudodog_w_namordnike", "lvl11_deadcity_zone_radioactive_weak_0025")
+		olr.spawn_on_obj("m_pseudodog_e", "lvl11_deadcity_zone_radioactive_weak_0025")
+		olr.spawn_on_obj("pseudodog_w_namordnike_ghost", "lvl11_deadcity_zone_radioactive_weak_0025")
+		olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0025")
+		olr.spawn_on_obj("dog_normal", "lvl11_deadcity_zone_radioactive_weak_0025")
+		olr.spawn_on_obj("dog_weak", "lvl11_deadcity_zone_radioactive_weak_0025")
+	end
 
-    if xvars.blow_count < 8 then
-        return
-    end
+	if xvars.blow_count < 8 then
+		return
+	end
 
-    local montabl = {
-        [clsid.respawn] = true
-    }
+	local montabl = {
+		[clsid.respawn] = true
+	}
 
-    local sectionsa = {
-        "pseudodog_weak",
-        "dog_normal",
-        "dog_weak",
-        "m_pseudodog_e",
-        "pseudodog_w_namordnike_medpribor",
-        "pseudodog_w_namordnike_ghost",
-        "zombie_plague",
-        "zombie_plague_strong"
-    }
+	local sectionsa = {
+		"pseudodog_weak",
+		"dog_normal",
+		"dog_weak",
+		"m_pseudodog_e",
+		"pseudodog_w_namordnike_medpribor",
+		"pseudodog_w_namordnike_ghost",
+		"zombie_plague",
+		"zombie_plague_strong"
+	}
 
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill then
-            if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-                local section = sectionsa[math.random(table.getn(sectionsa))]
-                local rndzz = math.random(1, 35)
-
-                if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndzz == 1 then
-                    local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                    amk.on_REspawn(sobj)
-
-                    --olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-
-                    count = count + 1
-                end
-            end
-        end
-    end
-
-    --news_manager.send_tip(db.actor, "всего новых сталкеров заспавнилось " .. count .. " нау ииии", nil, "freedom", 9000)
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+			if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local rndzz = math.random(1, 35)
+				if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndzz == 1 then
+					local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					amk.on_REspawn(sobj)
+					--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
+					count = count + 1
+				end
+			end
+		end
+	end
+	--news_manager.send_tip(db.actor, "всего новых сталкеров заспавнилось " .. count .. " нау ииии", nil, "freedom", 9000)
 end
-
-
-
 
 ---------------------------------------------
 
-
 function fix_escape_restrs()
-	if xvars.blow_count < 2 then return end
+	if xvars.blow_count < 2 then
+		return
+	end
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-                	if IsStalker(kill) or IsMonster(kill)  then
-		  		local pk = get_netpk(kill,1)
-  				if pk:isOk() then
-    					local data = pk:get()
-    					if table.getn(data.dynamic_in_restrictions ) > 0 then
+			if IsStalker(kill) or IsMonster(kill) then
+				local pk = get_netpk(kill, 1)
+				if pk:isOk() then
+					local data = pk:get()
+					if table.getn(data.dynamic_in_restrictions) > 0 then
 						--log1("clear restrictor "..kill:name().." ")
-      						data.dynamic_in_restrictions = {}
-      						pk:set( data )
-    					end
+						data.dynamic_in_restrictions = {}
+						pk:set(data)
+					end
 				end
 			end
 		end
 	end
 end
 
-
-
 ---------------------------------------------
 
-
-
 function remove_off_anoms()
-local montabl = 
-{
-       [clsid.zone_mosquito_bald] = true,
-       [clsid.zone_acid_fog] = true,
-       [clsid.zone_bfuzz] = true,
-       --[clsid.zone_bfuzz_s] = true,
-       [clsid.zone_dead] = true,
-       --[clsid.zone_electra_s] = true,
-       [clsid.zone_galant_s] = true,
-       [clsid.zone_galantine] = true,
-       [clsid.zone_mbald_s] = true,
-       [clsid.zone_mincer] = true,
-       [clsid.zone_mincer_s] = true,
-       --[clsid.zone_zharka_s] = true,
-}
+	local montabl = {
+		[clsid.zone_mosquito_bald] = true,
+		[clsid.zone_acid_fog] = true,
+		[clsid.zone_bfuzz] = true,
+		--[clsid.zone_bfuzz_s] = true,
+		[clsid.zone_dead] = true,
+		--[clsid.zone_electra_s] = true,
+		[clsid.zone_galant_s] = true,
+		[clsid.zone_galantine] = true,
+		[clsid.zone_mbald_s] = true,
+		[clsid.zone_mincer] = true,
+		[clsid.zone_mincer_s] = true
+		--[clsid.zone_zharka_s] = true,
+	}
 
-	for i=0,65534 do
+	for i = 0, 65534 do
 		local sobj = alife():object(i)
-			if sobj then
-				if montabl[sobj:clsid()] then
-					bind_anomaly.set_anomaly_status_offline(sobj,"on")
-					--olr.add_spot_on_map( sobj.id,"green_location",sobj:name() )
-				end
+		if sobj then
+			if montabl[sobj:clsid()] then
+				bind_anomaly.set_anomaly_status_offline(sobj, "on")
+				--olr.add_spot_on_map( sobj.id,"green_location",sobj:name() )
 			end
-		end 
+		end
 	end
-
-
+end
 
 function remove_onl_anoms()
-local montabl = 
-{
-       [clsid.zone_mosquito_bald] = true,
-       [clsid.zone_acid_fog] = true,
-       [clsid.zone_bfuzz] = true,
-       --[clsid.zone_bfuzz_s] = true,
-       [clsid.zone_dead] = true,
-       --[clsid.zone_electra_s] = true,
-       [clsid.zone_galant_s] = true,
-       [clsid.zone_galantine] = true,
-       [clsid.zone_mbald_s] = true,
-       [clsid.zone_mincer] = true,
-       [clsid.zone_mincer_s] = true,
-       --[clsid.zone_zharka_s] = true,
-}
+	local montabl = {
+		[clsid.zone_mosquito_bald] = true,
+		[clsid.zone_acid_fog] = true,
+		[clsid.zone_bfuzz] = true,
+		--[clsid.zone_bfuzz_s] = true,
+		[clsid.zone_dead] = true,
+		--[clsid.zone_electra_s] = true,
+		[clsid.zone_galant_s] = true,
+		[clsid.zone_galantine] = true,
+		[clsid.zone_mbald_s] = true,
+		[clsid.zone_mincer] = true,
+		[clsid.zone_mincer_s] = true
+		--[clsid.zone_zharka_s] = true,
+	}
 
-	for i=0,65534 do
+	for i = 0, 65534 do
 		local obj = level.object_by_id(i)
 		local sobj = alife():object(i)
 		if sobj then
 			if montabl[sobj:clsid()] then
-				bind_anomaly.set_anomaly_status(obj,"on")
+				bind_anomaly.set_anomaly_status(obj, "on")
 			end
 		end
 		if obj then
@@ -1032,269 +962,208 @@ local montabl =
 	end
 end
 
-
-
 ---------------------------------------------
+
+	-- “аблица защитных зон дл€ быстрой проверки
+local safe_zones = {
+	["lvl10_radar_space_blow_savezone"] = true,
+	["lvl2_garbage_hide_restrictor_0001"] = true,
+	["lvl2_garbage_space_restrictor_0023"] = true,
+	["lvl4_darkdolina_space_restrictor_0009"] = true,
+	["lvl7_yantar_space_restrictor_0053"] = true,
+	["central_complex"] = true,
+	["lvl2_gar_blow_hide_restr_0000"] = true,
+	["krusinye_podzemelya"] = true,
+	["lvl5_bar_space_restrictor_0018"] = true,
+	["lvl5_bar_space_restrictor_0097"] = true,
+	["lvl1_rastok_blow_hide_restr_0001"] = true,
+	["lvl1_rastok_blow_hide_restr"] = true,
+	["lvl6_rostok_space_restrictor_0034"] = true,
+	["lvl3_agr_blow_hide_restr_0003"] = true,
+	["lvl3_agr_blow_hide_restr_0001"] = true,
+	["lvl3_agr_blow_hide_restr_0002"] = true,
+	["agr_polter_zone"] = true,
+	["lvl3_agr_blow_hide_restr"] = true,
+	["svoboda_bazar"] = true,
+	["poltery_zone"] = true,
+	["lvl11_deadcity_space_restrictor_0017"] = true,
+	["lvl11_deadcity_space_restrictor_0018"] = true,
+	["lvl11_deadcity_space_restrictor_0019"] = true,
+	["lvl11_deadcity_space_restrictor_0020"] = true,
+	["lvl11_deadcity_space_restrictor_dom_sosatela"] = true,
+	["lvl5_bar_space_restrictor_0111"] = true,
+	["lvl5_bar_space_restrictor_0011"] = true,
+	["lvl2_garbage_space_restrictor_0019"] = true,
+	["lvl2_garbage_space_restrictor_0020"] = true,
+	["lvl5_bar_space_restrictor_0112"] = true,
+	["lvl5_bar_space_restrictor_0113"] = true,
+	["lvl5_bar_space_restrictor_0114"] = true,
+	["lvl5_bar_space_restrictor_0115"] = true,
+	["lvl2_gar_blow_hide_restr_0004"] = true,
+	["lvl1_escape_blow_hide_restr_0007"] = true,
+	["lvl1_escape_blow_hide_restr_0008"] = true,
+	["lvl1_escape_space_restrictor_0100"] = true,
+	["lvl1_escape_space_restrictor_0101"] = true
+}
+
 function update_hit()
-
-if time_global() > time_apdeyta_hit then
-			time_apdeyta_hit = time_global() + math.random(1000,1500)
-
-	if db.actor:alive() then
-
-	if db.actor:has_info("olr_blowout_phase_2") then
-
-	if no_blow_levels[level.name()] then return end
-
-	if db.actor:is_actor_outdoors() == false then return end
-
-        local iblocitm = db.actor:object("pribor_antivibros")
-        if iblocitm then
-        	iblocitm:set_condition(iblocitm:condition() - 0.0039)
-		local cond = iblocitm:condition()
-        	if cond <= 0.01 then
-        		olr.del(iblocitm)
-        	end
+	local current_time = time_global()
+	if current_time <= time_apdeyta_hit then
 		return
-        end
-     	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl10_radar_space_blow_savezone"})) then
+	end
+	time_apdeyta_hit = current_time + math.random(1000, 1500)
+
+	local actor = db.actor
+	if not actor:alive() then
 		return
 	end
 
-     	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl2_garbage_hide_restrictor_0001"})) then
+	if not actor:has_info("olr_blowout_phase_2") then
 		return
 	end
-     	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl2_garbage_space_restrictor_0023"})) then
+
+	--  эшируем часто используемые значени€
+	local level_name = level.name()
+	if no_blow_levels[level_name] then
 		return
 	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl4_darkdolina_space_restrictor_0009"})) then
+
+	if not actor:is_actor_outdoors() then
 		return
 	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl7_yantar_space_restrictor_0053"})) then
+
+	-- ѕроверка наличи€ прибора
+	local iblocitm = actor:object("pribor_antivibros")
+	if iblocitm then
+		local new_cond = iblocitm:condition() - 0.0039
+		iblocitm:set_condition(new_cond)
+		if new_cond <= 0.01 then
+			olr.del(iblocitm)
+		end
 		return
 	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"central_complex"})) then
+
+	-- ѕроверка всех зон одним вызовом
+	if xr_conditions.actor_in_zone(nil, nil, safe_zones) then
 		return
 	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl2_gar_blow_hide_restr_0000"})) then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"krusinye_podzemelya"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0018"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0097"}))  then 
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_rastok_blow_hide_restr_0001"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_rastok_blow_hide_restr"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl6_rostok_space_restrictor_0034"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl3_agr_blow_hide_restr_0003"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl3_agr_blow_hide_restr_0001"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl3_agr_blow_hide_restr_0002"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"agr_polter_zone"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl3_agr_blow_hide_restr"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"svoboda_bazar"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"poltery_zone"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0017"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0018"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0019"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_0020"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl11_deadcity_space_restrictor_dom_sosatela"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0111"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0011"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl2_garbage_space_restrictor_0019"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl2_garbage_space_restrictor_0020"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0112"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0113"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0114"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl5_bar_space_restrictor_0115"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl2_gar_blow_hide_restr_0004"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_escape_blow_hide_restr_0007"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_escape_blow_hide_restr_0008"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_escape_space_restrictor_0100"}))  then
-		return
-	end
-      	if ( xr_conditions.actor_in_zone(nil,nil,{"lvl1_escape_space_restrictor_0101"}))  then
-		return
-	end
-      	db.actor.health = - 0.05
-      	db.actor.radiation = 0.065
-      	db.actor.psy_health = -0.105 
-      	--news_manager.send_tip(db.actor, game.translate_string("update_hit_0"))
-		--log1("update_hit ADD CAM EFFECTOR 1976")
-      	level.add_cam_effector("camera_effects\\shell_shock.anm", 1976, false, "")
-end
-end
-end
+
+	-- ѕрименение урона, если все проверки пройдены
+	actor.health = -0.05
+	actor.radiation = 0.065
+	actor.psy_health = -0.105
+	level.add_cam_effector("camera_effects\\shell_shock.anm", 1976, false, "")
 end
 
 ----------------------------------------------
 
 function del_vidrosovie_arts()
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local obj = sim:object(id)
-        if obj then
-            local sect = obj:section_name()
-            if sect == "af_ameba_mica" or sect == "af_ameba_slime" or sect == "af_night_star" or sect == "af_ameba_slug" then
-                local bol_var = math.random(1, 35)
-                if bol_var == 1 then
-                    xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-                    sim:release(obj)
-                    count = count + 1
-                end
-            end
-        end
-    end
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local obj = sim:object(id)
+		if obj then
+			local sect = obj:section_name()
+			if sect == "af_ameba_mica" or sect == "af_ameba_slime" or sect == "af_night_star" or sect == "af_ameba_slug" then
+				local bol_var = math.random(1, 35)
+				if bol_var == 1 then
+					xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
+					sim:release(obj)
+					count = count + 1
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"выброс удалено " .. count .. " выбросовых артов",nil,"freedom",9000)
 end
 
 ----------------------------------------------
 function blow_info_count()
- 	local level_1name = level.name()
+	local level_1name = level.name()
 	if level_1name == "lvl1_escape" then
-        	if not has_alife_info("olr_blowout_first") and has_alife_info("medyasik_2_done") then
-	   		db.actor:give_info_portion("olr_blowout_first")
+		if not has_alife_info("olr_blowout_first") and has_alife_info("medyasik_2_done") then
+			db.actor:give_info_portion("olr_blowout_first")
 		end
 	end
 end
-----------------------------------------------
-function blow_flora_norm()
-
-end
-
-function blow_flora_blowout()
-
-end
-
-function blow_flora_middle()
-
-end
-
 ----------------------------------------------------
 
 function lomka_pda()
-local slom_var = math.random(1,3)
-    	if slom_var == 1 then
-    		local STbron = db.actor:object("device_pda")
-    		if STbron then
-    			STbron:set_condition(0.02)
+	local slom_var = math.random(1, 3)
+	if slom_var == 1 then
+		local STbron = db.actor:object("device_pda")
+		if STbron then
+			STbron:set_condition(0.02)
 		end
 	end
 end
 
 function golod_gg()
-if db.actor:alive() then
-	db.actor.satiety = -db.actor.satiety/math.random(1,5)
-end
+	if db.actor:alive() then
+		db.actor.satiety = -db.actor.satiety / math.random(1, 5)
+	end
 end
 
 function psy_gg()
-if db.actor:alive() then
-	if db.actor:is_actor_outdoors() == false then return end
-	db.actor.psy_health = -db.actor.psy_health/math.random(1,5)
-end
+	if db.actor:alive() then
+		if db.actor:is_actor_outdoors() == false then
+			return
+		end
+		db.actor.psy_health = -db.actor.psy_health / math.random(1, 5)
+	end
 end
 ------------------------------------------------------
 function blowout_particle_start()
-	if db.actor:is_actor_outdoors() == false then return end
-			local pos = db.actor:position()
-			local x, y, z = pos.x, pos.y, pos.z
-			particles_object([[nature\vortex_01]]):play_at_pos(vector():set(x,y,z))
+	if db.actor:is_actor_outdoors() == false then
+		return
+	end
+	local pos = db.actor:position()
+	local x, y, z = pos.x, pos.y, pos.z
+	particles_object([[nature\vortex_01]]):play_at_pos(vector():set(x, y, z))
 end
 
 function blowout_particle_start2()
-	if db.actor:is_actor_outdoors() == false then return end
-			local pos = db.actor:position()
-			local x, y, z = pos.x, pos.y, pos.z
-			particles_object([[nature\fog_stormy_04]]):play_at_pos(vector():set(x,y,z))
+	if db.actor:is_actor_outdoors() == false then
+		return
+	end
+	local pos = db.actor:position()
+	local x, y, z = pos.x, pos.y, pos.z
+	particles_object([[nature\fog_stormy_04]]):play_at_pos(vector():set(x, y, z))
 end
 
 function blowout_particle_blow()
-	if db.actor:is_actor_outdoors() == false then return end
-			local pos = db.actor:position()
-			local x, y, z = pos.x, pos.y, pos.z
-			particles_object([[nature\fog_stormy_05]]):play_at_pos(vector():set(x,y,z))
+	if db.actor:is_actor_outdoors() == false then
+		return
+	end
+	local pos = db.actor:position()
+	local x, y, z = pos.x, pos.y, pos.z
+	particles_object([[nature\fog_stormy_05]]):play_at_pos(vector():set(x, y, z))
 end
 
 function blowout_particle_norm()
-	if db.actor:is_actor_outdoors() == false then return end
-			local pos = db.actor:position()
-			local x, y, z = pos.x, pos.y, pos.z
-			particles_object([[nature\tornado_01]]):play_at_pos(vector():set(x,y,z))
+	if db.actor:is_actor_outdoors() == false then
+		return
+	end
+	local pos = db.actor:position()
+	local x, y, z = pos.x, pos.y, pos.z
+	particles_object([[nature\tornado_01]]):play_at_pos(vector():set(x, y, z))
 end
 -----------------------------------------------------
 function Kill_Monsters(gulag1)
 	if gulag1 ~= nil then
-		for k, v in pairs(gulag1.Object) do 	
-			if level.object_by_id( k ) ~= nil then
-			obj = level.object_by_id( k )
+		for k, v in pairs(gulag1.Object) do
+			if level.object_by_id(k) ~= nil then
+				obj = level.object_by_id(k)
 				if obj:is_monster() then
 					obj:kill(obj)
 				end
 			end
-		end	
+		end
 	end
 end
 -----------------------------------------------------
 local no_rats_levels = {
-        ["lvl1_escape"] = true,
+	["lvl1_escape"] = true,
 	["lvl5_bar"] = true,
 	["lvl14_stancia"] = true,
 	["lvl15_sarcofag"] = true,
@@ -1302,50 +1171,52 @@ local no_rats_levels = {
 }
 
 function spaven_rats()
-if no_rats_levels[level.name()] then return end
- if db.actor:is_actor_outdoors() == false then return end
-   for i = 1, math.random(5,11) do
-  alife():create("m_rat_new", db.actor:position():add(db.actor:direction():mul(60)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
- end
+	if no_rats_levels[level.name()] then
+		return
+	end
+	if db.actor:is_actor_outdoors() == false then
+		return
+	end
+	for i = 1, math.random(5, 11) do
+		alife():create("m_rat_new", db.actor:position():add(db.actor:direction():mul(60)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	end
 end
 -----------------------------------------------
 function set_arts_cond_after_blowout()
-for i= 1, 65534 do
-local obj = level.object_by_id(i)
-if obj ~= nil then
-local section = obj:section()
-
-if section == "af_medusa" or 
-section == "af_electra_moonlight" or 
-section == "af_electra_sparkler" or 
-section == "af_soul" or 
-section == "af_mincer_meat" or 
-section == "af_blood" or 
-section == "af_cristall" or 
-section == "af_cristall_flower" or 
-section == "af_night_star" or 
-section == "af_fireball" or 
-section == "af_drops" or 
-section == "af_gold_fish" or 
-section == "af_vyvert" or 
-section == "af_gravi" then
-
-local par_var = math.random(1,2)
-if par_var == 1 then
-obj:set_condition(obj:condition() - deletor())
-local cond = obj:condition()
-if cond <= 0.01 then                            
-olr.del(obj)
-end
-end
-end
-end
-end
+	local valid_sections = {
+		af_medusa = true,
+		af_electra_moonlight = true,
+		af_electra_sparkler = true,
+		af_soul = true,
+		af_mincer_meat = true,
+		af_blood = true,
+		af_cristall = true,
+		af_cristall_flower = true,
+		af_night_star = true,
+		af_fireball = true,
+		af_drops = true,
+		af_gold_fish = true,
+		af_vyvert = true,
+		af_gravi = true
+	}
+	
+	for i = 1, 65534 do
+		local obj = level.object_by_id(i)
+		if obj ~= nil and valid_sections[obj:section()] then
+			local par_var = math.random(1, 2)
+			if par_var == 1 then
+				obj:set_condition(obj:condition() - deletor())
+				if obj:condition() <= 0.01 then
+					olr.del(obj)
+				end
+			end
+		end
+	end
 end
 
 function deletor()
-	return math.random(5,85)/100
-end	
+	return math.random(5, 85) / 100
+end
 -----------------------------------------------
 function blow_task_actor()
 	olr.snd([[ambient\special\swamp_intelligent_bog_death]])
@@ -1353,7 +1224,12 @@ function blow_task_actor()
 		db.actor:give_info_portion("olr_blowout_first_hideouts")
 		olr_timers.st_timer("olr_blowout_first_hideouts", 11, "nick.olr_blowout_first_hideouts()")
 	end
-	local text_phrase = {"st_olr_blowout_warning_1", "st_olr_blowout_warning_2", "st_olr_blowout_warning_3", "st_olr_blowout_warning_4"}
+	local text_phrase = {
+		"st_olr_blowout_warning_1",
+		"st_olr_blowout_warning_2",
+		"st_olr_blowout_warning_3",
+		"st_olr_blowout_warning_4"
+	}
 	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "new_task", 15000)
 end
@@ -1391,239 +1267,238 @@ end
 ----------------------------------------------
 
 function spawen_rtut_shars_random()
-    local montabl = {
-        [clsid.zone_mincer] = true,
-        [clsid.zone_mincer_s] = true
-    }
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill then
-            if montabl[kill:clsid()] then
-                local bol_var = math.random(1, 65)
-                if bol_var == 1 then
-                    alife():create("af_ameba_mica", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                    count = count + 1
-                end
-            end
-        end
-    end
+	local montabl = {
+		[clsid.zone_mincer] = true,
+		[clsid.zone_mincer_s] = true
+	}
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+			if montabl[kill:clsid()] then
+				local bol_var = math.random(1, 65)
+				if bol_var == 1 then
+					alife():create("af_ameba_mica", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					count = count + 1
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"всего ртутных шаров " .. count .. " нау ииии",nil,"freedom",9000)
 end
-
-
 
 ----------------------------------------------
 
 function spawen_aftervibros_stalkers()
-    local montabl = {
-        [clsid.respawn] = true
-    }
+	local montabl = {
+		[clsid.respawn] = true
+	}
 
-    local sectionsa = {
-        "agr_stalker_regular",
-        "agr_stalker_veteran",
-        "agr_bandit_respawn_1",
-        "agr_bandit_respawn_2",
-        "mil_freedom_respawn_1",
-        "mil_freedom_respawn_2",
-        "mil_freedom_respawn_sniper",
-        "mil_freedom_barier_respawn_1",
-        "pri_monolith_respawn_1",
-        "gar_stalker_respawn_1",
-        "gar_stalker_respawn_2",
-        "gar_dolg_respawn_1",
-        "gar_dolg_respawn_2",
-        "esc_soldier_respawn_specnaz",
-        "rad_soldier_master",
-        "esc_stalker_respawn_2",
-        "esc_soldier_respawn_1",
-        "yan_ecolog_respawn_1",
-        "bar_stalker_respawn_4",
-        "bar_dolg_respawn_3",
-        "cit_killer_respawn_1",
-        "ros_killer_respawn_4",
-        "bar_stalker_respawn_1",
-        "bar_stalker_respawn_2",
-        "bar_stalker_respawn_3",
-        "bar_stalker_respawn_4",
-        "slizen_reg",
-        "iskatels",
-        "ros_bandit_respawn_4"
-    }
+	local sectionsa = {
+		"agr_stalker_regular",
+		"agr_stalker_veteran",
+		"agr_bandit_respawn_1",
+		"agr_bandit_respawn_2",
+		"mil_freedom_respawn_1",
+		"mil_freedom_respawn_2",
+		"mil_freedom_respawn_sniper",
+		"mil_freedom_barier_respawn_1",
+		"pri_monolith_respawn_1",
+		"gar_stalker_respawn_1",
+		"gar_stalker_respawn_2",
+		"gar_dolg_respawn_1",
+		"gar_dolg_respawn_2",
+		"esc_soldier_respawn_specnaz",
+		"rad_soldier_master",
+		"esc_stalker_respawn_2",
+		"esc_soldier_respawn_1",
+		"yan_ecolog_respawn_1",
+		"bar_stalker_respawn_4",
+		"bar_dolg_respawn_3",
+		"cit_killer_respawn_1",
+		"ros_killer_respawn_4",
+		"bar_stalker_respawn_1",
+		"bar_stalker_respawn_2",
+		"bar_stalker_respawn_3",
+		"bar_stalker_respawn_4",
+		"slizen_reg",
+		"iskatels",
+		"ros_bandit_respawn_4"
+	}
 
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill then
-            if montabl[kill:clsid()] then
-                local section = sectionsa[math.random(table.getn(sectionsa))]
-                local bol_var = math.random(1, 15)
-                if bol_var == 1 then
-                    if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
-                        local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                        if sobj.level_name ~= level.name() then
-                            amk.on_REspawn(sobj)
-                            olr.clear_restrictors(sobj)
-                            if sobj and IsStalker(sobj) then
-                                table.insert(olr_offline_walk.tabst, sobj)
-                                olr_newnpc_eqp.on_spawn(sobj)
-                                olr_ai_tasks.on_spawn_npc(sobj)
-                                count = count + 1
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+			if montabl[kill:clsid()] then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local bol_var = math.random(1, 15)
+				if bol_var == 1 then
+					if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
+						local sobj =
+							alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+						if sobj.level_name ~= level.name() then
+							amk.on_REspawn(sobj)
+							olr.clear_restrictors(sobj)
+							if sobj and IsStalker(sobj) then
+								table.insert(olr_offline_walk.tabst, sobj)
+								olr_newnpc_eqp.on_spawn(sobj)
+								olr_ai_tasks.on_spawn_npc(sobj)
+								count = count + 1
+							end
+						end
+					end
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"spawen_aftervibros_stalkers заспавнилось " ..count .. " нау --- on " .. sobj.level_name .. " ",nil,"freedom",9000)
 end
 
 ----------------------------------------------
 
 function spawen_endgame_zombies()
-    local montabl = {
-        [clsid.respawn] = true
-    }
+	local montabl = {
+		[clsid.respawn] = true
+	}
 
-    local sectionsa = {
-        --"rad_zombied_respawn_1",
-        "m_zombie_e",
-        "zombie_weak",
-        "zombie_normal",
-        "zombie_strong",
-        "fracture_strong",
-        "fracture_midle",
-        "zombie_immortal",
-        "zombie_blue"
-    }
+	local sectionsa = {
+		--"rad_zombied_respawn_1",
+		"m_zombie_e",
+		"zombie_weak",
+		"zombie_normal",
+		"zombie_strong",
+		"fracture_strong",
+		"fracture_midle",
+		"zombie_immortal",
+		"zombie_blue"
+	}
 
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill and kill.level_name ~= "lvl5_bar" then
-            if montabl[kill:clsid()] then
-                local section = sectionsa[math.random(table.getn(sectionsa))]
-                local bol_var = math.random(1, 5)
-                if bol_var == 1 then
-                    if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
-                        local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                        amk.on_REspawn(sobj)
-                        olr.clear_restrictors(sobj)
-                        if sobj and IsStalker(sobj) then
-                            table.insert(olr_offline_walk.tabst, sobj)
-                        end
-                        count = count + 1
-                    end
-                end
-            end
-        end
-    end
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill and kill.level_name ~= "lvl5_bar" then
+			if montabl[kill:clsid()] then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local bol_var = math.random(1, 5)
+				if bol_var == 1 then
+					if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
+						local sobj =
+							alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+						amk.on_REspawn(sobj)
+						olr.clear_restrictors(sobj)
+						if sobj and IsStalker(sobj) then
+							table.insert(olr_offline_walk.tabst, sobj)
+						end
+						count = count + 1
+					end
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"всего новых spawen_endgame_zombies заспавнилось " .. count .. " ",nil,"freedom",9000)
 end
 
 ----------------------------------------------
 
 function spawen_radhlam_random()
-    local montabl = {
-        [clsid.zone_radioactive] = true,
-        [clsid.zone_dead] = true
-    }
+	local montabl = {
+		[clsid.zone_radioactive] = true,
+		[clsid.zone_dead] = true
+	}
 
-    local sectionsa = {
-        "af_ameba_slime",
-        "af_ameba_slug",
-        "af_art_steklo",
-        "af_art_lenss",
-        "af_night_star"
-    }
+	local sectionsa = {
+		"af_ameba_slime",
+		"af_ameba_slug",
+		"af_art_steklo",
+		"af_art_lenss",
+		"af_night_star"
+	}
 
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill then
-            if montabl[kill:clsid()] then
-                local section = sectionsa[math.random(table.getn(sectionsa))]
-                local bol_var = math.random(1, 60)
-                if bol_var == 1 then
-                    alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                    count = count + 1
-                end
-            end
-        end
-    end
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+			if montabl[kill:clsid()] then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local bol_var = math.random(1, 60)
+				if bol_var == 1 then
+					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					count = count + 1
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"всего радиоактивных обломков " .. count .. " нау ииии",nil,"freedom",9000)
 end
 
-
 function spawen_pseudohuman()
-    if xvars.blow_count < 7 then
-        return
-    end
+	if xvars.blow_count < 7 then
+		return
+	end
 
-    local montabl = {
-        [clsid.zone_radioactive] = true,
-        [clsid.zone_dead] = true
-    }
+	local montabl = {
+		[clsid.zone_radioactive] = true,
+		[clsid.zone_dead] = true
+	}
 
-    local sectionsa = {
-        "m_flesh_e",
-        "flesh_weak",
-        "flesh_normal",
-        "flesh_strong",
-        "m_pseudohuman_e"
-    }
+	local sectionsa = {
+		"m_flesh_e",
+		"flesh_weak",
+		"flesh_normal",
+		"flesh_strong",
+		"m_pseudohuman_e"
+	}
 
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill and kill.level_name ~= "lvl5_bar" then
-            if montabl[kill:clsid()] then
-                local section = sectionsa[math.random(table.getn(sectionsa))]
-                local bol_var = math.random(1, 580)
-                if bol_var == 1 then
-                    alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                    count = count + 1
-                end
-            end
-        end
-    end
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill and kill.level_name ~= "lvl5_bar" then
+			if montabl[kill:clsid()] then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local bol_var = math.random(1, 580)
+				if bol_var == 1 then
+					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					count = count + 1
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"всего радиоактивных обломков " .. count .. " нау ииии",nil,"freedom",9000)
 end
 
 ----------------------------------------------
 
 function ph_impulse_blow()
-    if level.name() == "lvl16_generators" or level.name() == "lvl7_yantar" or level.name() == "lvl12_radar_bunker" then
-        return
-    end
-    for id = 1, 65534 do
-        local npc = level.object_by_id(id)
-        if npc and npc:is_obj_outdoors() == true and not npc:is_stalker() and npc:section() ~= "m_crow" then
-            if npc:position():distance_to(db.actor:position()) <= 50 then
-                --log1("kill is outdoor - "..npc:name().."")
+	if level.name() == "lvl16_generators" or level.name() == "lvl7_yantar" or level.name() == "lvl12_radar_bunker" then
+		return
+	end
+	for id = 1, 65534 do
+		local npc = level.object_by_id(id)
+		if npc and npc:is_obj_outdoors() == true and not npc:is_stalker() and npc:section() ~= "m_crow" then
+			if npc:position():distance_to(db.actor:position()) <= 50 then
+				--log1("kill is outdoor - "..npc:name().."")
 
-                local look_vec = vector():set(device().cam_dir):normalize()
-                look_vec.x = look_vec.x + math.random(30, 30)
-                look_vec.z = look_vec.z + math.random(30, 300)
-                look_vec.y = look_vec.y + math.random(30, 50)
+				local look_vec = vector():set(device().cam_dir):normalize()
+				look_vec.x = look_vec.x + math.random(30, 30)
+				look_vec.z = look_vec.z + math.random(30, 300)
+				look_vec.y = look_vec.y + math.random(30, 50)
 
-                local h = hit()
-                h.draftsman = db.actor
-                h.type = hit.explosion
-                h.direction = vector():set(look_vec)
-                h.power = 0.00001
-                h.impulse = npc:mass() * math.random(5, 10)
-                npc:hit(h)
-            end
-        end
-    end
+				local h = hit()
+				h.draftsman = db.actor
+				h.type = hit.explosion
+				h.direction = vector():set(look_vec)
+				h.power = 0.00001
+				h.impulse = npc:mass() * math.random(5, 10)
+				npc:hit(h)
+			end
+		end
+	end
 end
 
 ----------------------------------------------
@@ -1631,249 +1506,238 @@ end
 function spawn_esc_mil_group()
 	if xvars.blow_count > 5 and xvars.blow_count < 8 then
 		olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
-		--olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
+	--olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
 	end
 	if xvars.blow_count > 12 and xvars.blow_count < 16 then
 		olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
-		--olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
+	--olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
 	end
 	if xvars.blow_count > 25 then
 		olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
-		--olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
+	--olr.spawn_on_obj("esc_military_scienific", "esc_blokpost")
 	end
 end
 
-
 function clear_afterblow_deadnpc()
-	if xvars.blow_count > 3 then 
-	local cnt = 0
-	local sim = alife()
-	for id=1, 65534 do
-		local kill = sim:object(id)
-		if kill and IsStalker(kill) then
-			if not kill:alive() then
-				if xvars.npc_actor_use[kill:name()] == true and not olr_protected.is_no_offline_alife_obj(kill:name()) then
-					cnt=cnt+1
-					--log1("deadmen "..kill:name().." for del - "..kill.level_name.." ")
-					xvars.npc_del_afterblow[kill:name()] = true
+	if xvars.blow_count > 3 then
+		local cnt = 0
+		local sim = alife()
+		for id = 1, 65534 do
+			local kill = sim:object(id)
+			if kill and IsStalker(kill) then
+				if not kill:alive() then
+					if
+						xvars.npc_actor_use[kill:name()] == true and
+							not olr_protected.is_no_offline_alife_obj(kill:name())
+					 then
+						cnt = cnt + 1
+						--log1("deadmen "..kill:name().." for del - "..kill.level_name.." ")
+						xvars.npc_del_afterblow[kill:name()] = true
+					end
 				end
-			end		
+			end
 		end
-	end
 	--log1(cnt)
 	end
 end
 
 ----------------------------------------------
 
-
-
 function spawen_arts_random()
-    olr_blowout.spawen_pseudohuman()
+	olr_blowout.spawen_pseudohuman()
 
-    local montabl = {
-        [clsid.nogravity_zone] = true,
-        [clsid.respawn] = true,
-        [clsid.smart_terrain] = true,
-        [clsid.zone_bfuzz] = true,
-        [clsid.zone_bfuzz_s] = true,
-        [clsid.zone_galant_s] = true,
-        [clsid.zone_galantine] = true,
-        [clsid.zone_mbald_s] = true,
-        [clsid.zone_mincer] = true,
-        [clsid.zone_mincer_s] = true,
-        [clsid.zone_mosquito_bald] = true,
-        [clsid.zone_rusty_hair] = true
-    }
+	local montabl = {
+		[clsid.nogravity_zone] = true,
+		[clsid.respawn] = true,
+		[clsid.smart_terrain] = true,
+		[clsid.zone_bfuzz] = true,
+		[clsid.zone_bfuzz_s] = true,
+		[clsid.zone_galant_s] = true,
+		[clsid.zone_galantine] = true,
+		[clsid.zone_mbald_s] = true,
+		[clsid.zone_mincer] = true,
+		[clsid.zone_mincer_s] = true,
+		[clsid.zone_mosquito_bald] = true,
+		[clsid.zone_rusty_hair] = true
+	}
 
-    local sectionsa = {
-        "af_medusa",
-        "af_cristall_flower",
-        "af_gravi",
-        "af_gold_fish",
-        "af_drops",
-        "af_fireball",
-        "af_cristall",
-        "af_blood",
-        "af_mincer_meat",
-        "af_soul",
-        "af_electra_sparkler",
-        "af_electra_flash",
-        "af_electra_moonlight",
-        "af_dummy_spring",
-        "af_dummy_dummy",
-        "af_dummy_battery",
-        "af_dummy_pellicle",
-        "af_dummy_glassbeads",
-        "af_rusty_thorn",
-        "af_rusty_kristall",
-        "af_rusty_sea-urchin",
-        "af_fuzz_kolobok",
-        "af_ameba_slime",
-        "af_ameba_slug",
-        "af_studen",
-        "af_kolco",
-        "af_bl_kristal",
-        "af_art460",
-        "af_art_3_step_anom_svetim",
-        "af_lichinka",
-        "af_bl_kristal",
-        "af_lchernaya_busina",
-        "af_art_kub",
-        "af_art_lenss",
-        "af_art_spiral",
-        "af_art_steklo"
-    }
+	local sectionsa = {
+		"af_medusa",
+		"af_cristall_flower",
+		"af_gravi",
+		"af_gold_fish",
+		"af_drops",
+		"af_fireball",
+		"af_cristall",
+		"af_blood",
+		"af_mincer_meat",
+		"af_soul",
+		"af_electra_sparkler",
+		"af_electra_flash",
+		"af_electra_moonlight",
+		"af_dummy_spring",
+		"af_dummy_dummy",
+		"af_dummy_battery",
+		"af_dummy_pellicle",
+		"af_dummy_glassbeads",
+		"af_rusty_thorn",
+		"af_rusty_kristall",
+		"af_rusty_sea-urchin",
+		"af_fuzz_kolobok",
+		"af_ameba_slime",
+		"af_ameba_slug",
+		"af_studen",
+		"af_kolco",
+		"af_bl_kristal",
+		"af_art460",
+		"af_art_3_step_anom_svetim",
+		"af_lichinka",
+		"af_bl_kristal",
+		"af_lchernaya_busina",
+		"af_art_kub",
+		"af_art_lenss",
+		"af_art_spiral",
+		"af_art_steklo"
+	}
 
-    local count = 0
-    local sim = alife()
-    for id = 1, 65534 do
-        local kill = sim:object(id)
-        if kill then
-            if montabl[kill:clsid()] then
-                local section = sectionsa[math.random(table.getn(sectionsa))]
-                local bol_var = math.random(1, 180)
-                if bol_var == 1 then
-                    alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                    count = count + 1
-                end
-            end
-        end
-    end
+	local count = 0
+	local sim = alife()
+	for id = 1, 65534 do
+		local kill = sim:object(id)
+		if kill then
+			if montabl[kill:clsid()] then
+				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local bol_var = math.random(1, 180)
+				if bol_var == 1 then
+					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					count = count + 1
+				end
+			end
+		end
+	end
 	--news_manager.send_tip(db.actor,"всего –јЌƒќћЌџ’ ѕќ—Ћ≈¬џЅ–ќ—Ќџ’ ј–“ќ¬ " .. count .. " нау ииии",nil,"freedom",9000)
 end
 
 ----------------------------------------------
 
 function bar_alcos()
+	if level.name() == "lvl5_bar" then
+		return
+	end
 
-if level.name() == "lvl5_bar" then
-	return
-end
+	local bars_alcos = {
+		"lvl5_bar_physic_object_1382",
+		"lvl5_bar_physic_object_1349",
+		"lvl5_bar_physic_object_0446",
+		"lvl5_bar_physic_object_1350",
+		"lvl5_bar_physic_object_1348",
+		"lvl5_bar_physic_object_1380",
+		"lvl5_bar_physic_object_0376",
+		"lvl5_bar_physic_object_1382",
+		"lvl5_bar_physic_object_1381"
+	}
 
-local bars_alcos = { 
-"lvl5_bar_physic_object_1382",
-"lvl5_bar_physic_object_1349",
-"lvl5_bar_physic_object_0446",
-"lvl5_bar_physic_object_1350",
-"lvl5_bar_physic_object_1348",
-"lvl5_bar_physic_object_1380",
-"lvl5_bar_physic_object_0376",
-"lvl5_bar_physic_object_1382",
-"lvl5_bar_physic_object_1381"
-}
-
-for _, val in ipairs(bars_alcos) do
-	local sobj = alife():object(val)
-	if sobj then
-		local id = sobj.id
-		alife():set_switch_offline (id, true)
-    		alife():set_switch_online (id, false)
-    		alife():set_interactive (id, false)
+	for _, val in ipairs(bars_alcos) do
+		local sobj = alife():object(val)
+		if sobj then
+			local id = sobj.id
+			alife():set_switch_offline(id, true)
+			alife():set_switch_online(id, false)
+			alife():set_interactive(id, false)
 		--log1("ofl")
+		end
 	end
-end
 
-
-for _, val in ipairs(bars_alcos) do
-	local sobj = alife():object(val)
-	if sobj then
-		local id = sobj.id
-		if math.random(1,2) == 1 then
-			alife():set_switch_offline (id, false)
-    			alife():set_switch_online (id, true)
-    			alife():set_interactive (id, true)
+	for _, val in ipairs(bars_alcos) do
+		local sobj = alife():object(val)
+		if sobj then
+			local id = sobj.id
+			if math.random(1, 2) == 1 then
+				alife():set_switch_offline(id, false)
+				alife():set_switch_online(id, true)
+				alife():set_interactive(id, true)
 			--log1("onl")
+			end
 		end
 	end
-end
 
+	local bars = {
+		--"lvl9_military_m_trader",
+		"bar_barman",
+		"bar_dolg_petrenko"
+	}
 
-local bars = { 
---"lvl9_military_m_trader",
-"bar_barman",
-"bar_dolg_petrenko"
-}
-
-for _, val in ipairs(bars) do
-	local sobj = alife():object(val)
-	if sobj then
-		local pk = get_netpk(sobj)
-        	if pk:isOk() then
-         		local data = pk:get()
-          		local sd   = data.money
-			data.money = sd + math.random(1000,4500)
-         		pk:set(data)
+	for _, val in ipairs(bars) do
+		local sobj = alife():object(val)
+		if sobj then
+			local pk = get_netpk(sobj)
+			if pk:isOk() then
+				local data = pk:get()
+				local sd = data.money
+				data.money = sd + math.random(1000, 4500)
+				pk:set(data)
 			--log1("barman money - "..sd.." --- "..data.money.."")
+			end
 		end
 	end
-end
-
-
-
 end
 
 ----------------------------------------------
 
 function blowout_additional_timer()
---log1("blowout_additional_timer ADD CAM EFFECTOR 2004")
-level.add_cam_effector("camera_effects\\shell_shock.anm", 2004, false, "")
-local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_1]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-olr_timers.st_timer("blowout_additional_timer", 23, "olr_blowout.blowout_additional_timer2()")
+	--log1("blowout_additional_timer ADD CAM EFFECTOR 2004")
+	level.add_cam_effector("camera_effects\\shell_shock.anm", 2004, false, "")
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_1]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr_timers.st_timer("blowout_additional_timer", 23, "olr_blowout.blowout_additional_timer2()")
 end
-
 
 function blowout_additional_timer2()
---log1("blowout_additional_timer2 ADD CAM EFFECTOR 22002")
-level.add_cam_effector("camera_effects\\earthquake.anm", 22002, true, "")
---log1("blowout_additional_timer2 ADD PP EFFECTOR 2001")
-level.add_pp_effector("vibros.ppe", 2001, true)
-local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_2]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-olr_timers.st_timer("blowout_additional_timer2", 13, "olr_blowout.blowout_additional_timer3()")
+	--log1("blowout_additional_timer2 ADD CAM EFFECTOR 22002")
+	level.add_cam_effector("camera_effects\\earthquake.anm", 22002, true, "")
+	--log1("blowout_additional_timer2 ADD PP EFFECTOR 2001")
+	level.add_pp_effector("vibros.ppe", 2001, true)
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_2]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr_timers.st_timer("blowout_additional_timer2", 13, "olr_blowout.blowout_additional_timer3()")
 end
-
 
 function blowout_additional_timer3()
---log1("blowout_additional_timer3 ADD CAM EFFECTOR 32002")
-level.add_cam_effector("camera_effects\\earthquake.anm", 32002, true, "")
---log1("blowout_additional_timer3 ADD PP EFFECTOR 2001")
-level.add_pp_effector("dead_zone.ppe", 2001, true)
-local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_3]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-olr_timers.st_timer("blowout_additional_timer3", 33, "olr_blowout.blowout_additional_timer4()")
-ph_impulse_blow()
+	--log1("blowout_additional_timer3 ADD CAM EFFECTOR 32002")
+	level.add_cam_effector("camera_effects\\earthquake.anm", 32002, true, "")
+	--log1("blowout_additional_timer3 ADD PP EFFECTOR 2001")
+	level.add_pp_effector("dead_zone.ppe", 2001, true)
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_3]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr_timers.st_timer("blowout_additional_timer3", 33, "olr_blowout.blowout_additional_timer4()")
+	ph_impulse_blow()
 end
-
 
 function blowout_additional_timer4()
---log1("blowout_additional_timer4 ADD CAM EFFECTOR 42002")
-level.add_cam_effector("camera_effects\\earthquake.anm", 42002, true, "")
---log1("blowout_additional_timer4 ADD PP EFFECTOR 2001")
-level.add_pp_effector("psy_antenna_indoor.ppe", 2001, true)
-local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_4]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-olr_timers.st_timer("blowout_additional_timer4", 13, "olr_blowout.blowout_additional_timer5()")
-ph_impulse_blow()
+	--log1("blowout_additional_timer4 ADD CAM EFFECTOR 42002")
+	level.add_cam_effector("camera_effects\\earthquake.anm", 42002, true, "")
+	--log1("blowout_additional_timer4 ADD PP EFFECTOR 2001")
+	level.add_pp_effector("psy_antenna_indoor.ppe", 2001, true)
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_4]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr_timers.st_timer("blowout_additional_timer4", 13, "olr_blowout.blowout_additional_timer5()")
+	ph_impulse_blow()
 end
-
 
 function blowout_additional_timer5()
---log1("blowout_additional_timer5 ADD CAM EFFECTOR 52002")
-level.add_cam_effector("camera_effects\\earthquake.anm", 52002, true, "")
---log1("blowout_additional_timer5 ADD PP EFFECTOR 2001")
-level.add_pp_effector("blink.ppe", 2001, true)
---log1("blowout_additional_timer5 ADD PP EFFECTOR 2003")
-level.add_pp_effector("monolith_off.ppe", 2003, false)
---log1("blowout_additional_timer5 ADD PP EFFECTOR 2001")
-level.add_pp_effector("psy_antenna_indoor.ppe", 2001, true)
-local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_1]])
-snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-olr_timers.st_timer("blowout_additional_timer5", 23, "olr_blowout.blowout_additional_timer6()")
-ph_impulse_blow()
+	--log1("blowout_additional_timer5 ADD CAM EFFECTOR 52002")
+	level.add_cam_effector("camera_effects\\earthquake.anm", 52002, true, "")
+	--log1("blowout_additional_timer5 ADD PP EFFECTOR 2001")
+	level.add_pp_effector("blink.ppe", 2001, true)
+	--log1("blowout_additional_timer5 ADD PP EFFECTOR 2003")
+	level.add_pp_effector("monolith_off.ppe", 2003, false)
+	--log1("blowout_additional_timer5 ADD PP EFFECTOR 2001")
+	level.add_pp_effector("psy_antenna_indoor.ppe", 2001, true)
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_1]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	olr_timers.st_timer("blowout_additional_timer5", 23, "olr_blowout.blowout_additional_timer6()")
+	ph_impulse_blow()
 end
-
 
 function blowout_additional_timer6()
 	--log1("blowout_additional_timer6 REMOVE CAM EFFECTOR 12002")
@@ -1893,7 +1757,7 @@ function blowout_additional_timer6()
 end
 ----------------------------------------------
 
-function get_blow_timer() 
+function get_blow_timer()
 	return xvars.blowout_timer
 end
 
@@ -1910,7 +1774,6 @@ function min_blow_timer(a)
 end
 ---------------------------------------------
 
-
 function set_blow_timer_agroblow()
 	if xvars.blowout_timer > 60 then
 		xvars.blowout_timer = 80
@@ -1920,19 +1783,19 @@ end
 -------------------------------------------------
 
 function on_game_load()
-    if xvars.blowout_timer then
-        if has_alife_info("olr_blowout_phase_0") then
+	if xvars.blowout_timer then
+		if has_alife_info("olr_blowout_phase_0") then
 			--log1("on_game_load REMOVE CAM EFFECTOR 1974")
-            level.remove_cam_effector(1974)
+			level.remove_cam_effector(1974)
 			level.remove_cam_effector(19744)
 			--log1("on_game_load REMOVE CAM EFFECTOR 1975")
-            level.remove_cam_effector(1975)
+			level.remove_cam_effector(1975)
 			--log1("on_game_load REMOVE CAM EFFECTOR 1976")
-            level.remove_cam_effector(1976)
+			level.remove_cam_effector(1976)
 			--log1("on_game_load REMOVE PP EFFECTOR 1974")
-            level.remove_pp_effector(1974)
+			level.remove_pp_effector(1974)
 			--log1("on_game_load REMOVE PP EFFECTOR 2299")
-            level.remove_pp_effector(2299)
+			level.remove_pp_effector(2299)
 			--log1("on_game_load REMOVE CAM EFFECTOR 12002")
 			level.remove_cam_effector(12002)
 			--log1("on_game_load REMOVE CAM EFFECTOR 22002")
@@ -1942,89 +1805,88 @@ function on_game_load()
 			--log1("on_game_load REMOVE CAM EFFECTOR 42002")
 			level.remove_cam_effector(42002)
 			--log1("on_game_load REMOVE CAM EFFECTOR 52002")
-			level.remove_cam_effector(52002)			
-            this.blow_flora_norm()
-            --news_manager.send_tip(db.actor, "афтер лоад 0", nil, "freedom", 9000)
-        end
+			level.remove_cam_effector(52002)
+		--news_manager.send_tip(db.actor, "афтер лоад 0", nil, "freedom", 9000)
+		end
 
-        ----------
+		----------
 
-        if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
-            if no_blow_levels[level.name()] then
-                return
-            end
+		if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
+			if no_blow_levels[level.name()] then
+				return
+			end
 
-            if has_alife_info("sr_cutscene_start_info") then
-                return
-            end
+			if has_alife_info("sr_cutscene_start_info") then
+				return
+			end
 
-            if has_alife_info("olr_blowout_ended") then
-                return
-            end
+			if has_alife_info("olr_blowout_ended") then
+				return
+			end
 
-            level.set_weather_fx("surge")
-            --log1("on_game_load ADD CAM EFFECTOR 1974")
-            level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
+			level.set_weather_fx("surge")
+			--log1("on_game_load ADD CAM EFFECTOR 1974")
+			level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
 			--log1("on_game_load ADD PP EFFECTOR 1974")
-            level.add_pp_effector("vibros.ppe", 1974, true)
-            this.blowout_snd_go()
+			level.add_pp_effector("vibros.ppe", 1974, true)
+			blowout_snd_go()
 
-            if level.get_weather() ~= "stancia" then
-                level.set_weather("stancia", true)
-                --news_manager.send_tip(db.actor, game.translate_string("on_game_load_1"), nil, "freedom", 9000)
-            end
-        end
-        ----------
+			if level.get_weather() ~= "stancia" then
+				level.set_weather("stancia", true)
+			--news_manager.send_tip(db.actor, game.translate_string("on_game_load_1"), nil, "freedom", 9000)
+			end
+		end
+		----------
 
-        if xvars.blowout_timer <= 40 and xvars.blowout_timer >= 20 then
-            if has_alife_info("sr_cutscene_start_info") then
-                return
-            end
+		if xvars.blowout_timer <= 40 and xvars.blowout_timer >= 20 then
+			if has_alife_info("sr_cutscene_start_info") then
+				return
+			end
 
-            if no_blow_levels[level.name()] then
-                return
-            end
+			if no_blow_levels[level.name()] then
+				return
+			end
 
-            if has_alife_info("olr_blowout_ended") then
-                return
-            end
+			if has_alife_info("olr_blowout_ended") then
+				return
+			end
 
-            level.set_weather_fx("surge")
-            --log1("on_game_load ADD CAM EFFECTOR 1974")
-            level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
+			level.set_weather_fx("surge")
+			--log1("on_game_load ADD CAM EFFECTOR 1974")
+			level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
 			--log1("on_game_load ADD PP EFFECTOR 1974")
-            level.add_pp_effector("vibros.ppe", 1974, true)
-            this.blowout_snd_go()
+			level.add_pp_effector("vibros.ppe", 1974, true)
+			blowout_snd_go()
 
-            if level.get_weather() ~= "stancia" then
-                level.set_weather("stancia", true)
-            end
-            level.set_weather_fx("surge")
-            --log1("on_game_load ADD CAM EFFECTOR 1974")
-            level.add_cam_effector("camera_effects\\earthquake.anm", 19744, true, "")
-            --news_manager.send_tip(db.actor, game.translate_string("on_game_load_2"), nil, "freedom", 9000)
-        end
-    end
-    ----------
+			if level.get_weather() ~= "stancia" then
+				level.set_weather("stancia", true)
+			end
+			level.set_weather_fx("surge")
+			--log1("on_game_load ADD CAM EFFECTOR 1974")
+			level.add_cam_effector("camera_effects\\earthquake.anm", 19744, true, "")
+			--news_manager.send_tip(db.actor, game.translate_string("on_game_load_2"), nil, "freedom", 9000)
+		end
+	end
+	----------
 
-    if xvars.blowout_timer and xvars.blowout_timer <= 20 then
-        if no_blow_levels[level.name()] then
-            return
-        end
+	if xvars.blowout_timer and xvars.blowout_timer <= 20 then
+		if no_blow_levels[level.name()] then
+			return
+		end
 
-        if has_alife_info("sr_cutscene_start_info") then
-            return
-        end
+		if has_alife_info("sr_cutscene_start_info") then
+			return
+		end
 
-        if has_alife_info("olr_blowout_ended") then
-            return
-        end
+		if has_alife_info("olr_blowout_ended") then
+			return
+		end
 
-        level.set_weather("stancia", true)
-        level.set_weather_fx("surge")
+		level.set_weather("stancia", true)
+		level.set_weather_fx("surge")
 		--log1("on_game_load ADD PP EFFECTOR 1974")
-        level.add_pp_effector("vibros.ppe", 1974, true)
-        this.blowout_snd_go()
-        --news_manager.send_tip(db.actor, game.translate_string("on_game_load_3"), nil, "freedom", 9000)
-    end
+		level.add_pp_effector("vibros.ppe", 1974, true)
+		blowout_snd_go()
+		--news_manager.send_tip(db.actor, game.translate_string("on_game_load_3"), nil, "freedom", 9000)
+	end
 end

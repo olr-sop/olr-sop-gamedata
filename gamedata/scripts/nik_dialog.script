@@ -42,6 +42,10 @@ end
 
 function out_items_count(actor, item)
     if item.section and item:section() == reloc_params.itm_section and reloc_params.itm_cnt_found < reloc_params.itm_cnt then
+        local item_slot = item:slot()
+        if item_slot > 0 and actor:item_in_slot(item_slot) then
+            actor:move_to_ruck(item)
+        end
         remove_item_from_inventory(item, actor)
         reloc_params.itm_cnt_found = reloc_params.itm_cnt_found + 1
     end

@@ -41,13 +41,6 @@ function CItemBinder:net_spawn(data)
 	if not object_binder.net_spawn(self, data) then
 		return false
 	end
-
-	local _sect_ = self.object:section()
-	local obj_class = self.object:clsid()
-	if not _sect_ == "battery_change" or not _sect_ == "battery_change_headlamp" or not obj_class == clsid.device_pda or not obj_class == clsid.device_torch or not obj_class == clsid.device_detector_simple then
-		set_radfood_flag(self.object)
-	end
-	
 	return true
 end
 
@@ -55,21 +48,49 @@ function CItemBinder:net_destroy()
 	object_binder.net_destroy(self)
 end
 
+local trader_sections = {
+	m_trader = true,
+	m_barman = true,
+	stalker_sakharov = true
+	-- добавить сюда все остальные секции торгашей
+}
+
+local food_sections = {
+    kolbasa = true,
+    bread = true,
+    conserva = true
+    -- остальные секции еды
+}
+
+local food_sections_neportit = {
+	conserva = true
+}
+
 function CItemBinder:update(delta)
 	object_binder.update(self, delta)
-
-	--local pt = profile_timer()
-	--pt:start()
-	local _sect_ = self.object:section()
-	local obj_class = self.object:clsid()
-	if _sect_ == "battery_change" or _sect_ == "battery_change_headlamp" or obj_class == clsid.device_pda or obj_class == clsid.device_torch or obj_class == clsid.device_detector_simple then
-		return -- нужно проверять на класс
+	
+	-- пор€док заражени€ итемов радиацией
+	-- провер€ем что xvars и xvars.foods есть и что им€ айтема у нас пуст, т.е nil
+	-- провер€ем какой класс родител€ у нас, если не clsid.script_trader то заражаем, иначе ставим флаг не заражЄнного (т.е у торгоша будет не заражена еда)
+	if xvars and xvars.foods and xvars.foods[self.object:name()] == nil then -- провер€ем xvars и то что айтема по id там нет, т.е nil
+		if self.object:parent() ~= nil and trader_sections[self.object:parent():section()] then
+			log1("! ≈да у торговца: name = "..self.object:name().." id = "..self.object:id().."")
+			xvars.foods[self.object:name()] = false -- прописываем еде торгоша что еда не заражена
+		else
+			log1("! ≈да не у торговца: name = "..self.object:name().." id = "..self.object:id().."")
+			set_radfood_flag(self.object) -- заражаем или нет
+		end
 	end
 	
+	-- переделать что бы у торгашей еда была всегда в норм состо€нии?
 	local cond = self.object:condition()
-	if cond == 1 then
-		if self.object:section() == "kolbasa" or self.object:section() == "bread" or self.object:section() == "conserva" then
-			self.object:set_condition((math.random(45, 95) / 100))
+	if cond == 1 and food_sections[self.object:section()] then
+		if self.object:parent() ~= nil and trader_sections[self.object:parent():section()] then
+			log1("! ћен€ем состо€ние еды у торговца: name = "..self.object:name().." id = "..self.object:id().."")
+			self.object:set_condition((math.random(90, 99) / 100)) -- у торговцев еда всегда почти идеальна
+		else
+			log1("! ћен€ем состо€ние еды не у торговца: name = "..self.object:name().." id = "..self.object:id().."")
+			self.object:set_condition((math.random(45, 95) / 100)) -- у не торгашей как повезЄт
 		end
 	end
 
@@ -77,12 +98,9 @@ function CItemBinder:update(delta)
 		time_apdeyta = time_global() + timerup
 		if ini:line_exist(self.object:section(), "cor_time") and cond > 0.01 then
 			self.object:set_condition(cond - self:TimeCondLost())
-			--log1("cond up food - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
+			--log1("cond up food - ["..self.object:id().."]  -- ["..self.object:condition().."] ")
 		end
 	end
-
-	--pt:stop()
-	--printf("работало (item binder) "..pt:time().." ms")
 end
 
 function CItemBinder:TimeCondLost()
@@ -94,22 +112,9 @@ function CItemBinder:TimeCondLost()
 end
 
 function set_radfood_flag(obj)
-	if xvars then
-		if xvars.foods then
-			if xvars.foods[obj:name()] == nil and obj:parent() then
-				--log1("net spawn food - "..obj:name().." parent - "..obj:parent().."")
-			end
-			if xvars.foods[obj:name()] ~= nil then
-				--log1("net spawn food - "..obj:name().." ”∆≈ «ј–≈√јЌј")
-				return
-			end
-			if math.random(1, 2) == 1 then
-				--log1("net spawn food - "..obj:name().." SET raded = TRUE")
-				xvars.foods[obj:name()] = true
-			else
-				--log1("net spawn food	- "..obj:name().." SET raded = FALSE")
-				xvars.foods[obj:name()] = false
-			end
-		end
+	if math.random(1, 2) == 1 then
+		xvars.foods[obj:name()] = true
+	else
+		xvars.foods[obj:name()] = false
 	end
 end

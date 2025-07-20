@@ -330,39 +330,6 @@ function motivator_binder:death_callback(victim, who)
 		end
 	end
 
-	--log1("npc death start 5")
-
-	local shelbone = self.object and self.object:get_physics_shell() and self.object:get_physics_shell():get_element_by_bone_id(0)
-	if shelbone then
-		local tmr = math.random(2000,6000)
-		local wait_time = 0
-  		wait_time = time_global() + tmr
-  		level.add_call(
-    		function() return time_global() > wait_time end,
-    		function() shelbone:apply_force(0,120,0) self.object:set_const_force(vector():set(0,1,0), self.object:mass()*11,  5000) end
-  		)
-		local bone = self.object:get_physics_shell()
-		if bone then
-			local rndb = bone:get_elements_number() - 1
-			local rndbn = math.random(0,rndb)
-			local b = bone:get_element_by_bone_id(rndbn)
-			if b then
-				local tmf = math.random(3000,7000)
-				local wait_time = 0
-  				wait_time = time_global() + tmf
-  				level.add_call(
-    				function() return time_global() > wait_time end,
-    				function() b:apply_force(0, 1111, 0) self.object:set_const_force(vector():set(0,1,0), self.object:mass()*7,  18000) end
-  				)
-			end
-		end           
-
-	end
-
-
-	--log1("npc death start 6")
-
-
 	if (news_main and news_main.on_death) then
 		news_main.on_death(victim, who)
 	end

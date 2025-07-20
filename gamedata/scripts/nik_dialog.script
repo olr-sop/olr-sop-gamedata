@@ -1,63 +1,41 @@
-local items_count = 0
-local itemin = nil
+-- технический скрипт
+-- автор theysani
+-- первая итерация скрипта hi_flyer
 
-function item_much(itm, need_namber)
-    local actor = db.actor
-    items_count = 0
-    itemin = itm
-    actor:iterate_inventory(cheking_item, actor)
-    if items_count >= need_namber then
-        return true
-    else
-        return false
-    end
+-- Проверяет, есть ли у игрока нужное количество предметов (с опциональной проверкой состояния)
+function item_much(item_section, need_number, min_condition)
+    local count = 0
+    db.actor:iterate_inventory(function(_, item)
+        if item:section() == item_section then
+            if min_condition == nil or item:condition() >= min_condition then
+                count = count + 1
+                -- Если уже нашли нужное количество, можно прервать поиск
+                if count >= need_number then return true end
+            end
+        end
+    end, db.actor)
+    return count >= need_number
 end
 
-function cheking_item(actor, item)
-    local items = item:section()
-    if items == itemin then
-        items_count = items_count + 1
+-- Удаляет указанное количество предметов из инвентаря (с опциональной проверкой состояния)
+function out_item_much(item_section, need_number, min_condition)
+    local removed = 0
+    db.actor:iterate_inventory(function(_, item)
+        if removed < need_number and item:section() == item_section then
+            if min_condition == nil or item:condition() >= min_condition then
+                if alife():release(alife():object(item:id()), true) then
+                    removed = removed + 1
+                    -- Проверка, не экипирован ли предмет
+                    local curr_outfit = db.actor:get_current_outfit()
+                    if curr_outfit and curr_outfit:name() == item:name() then
+                        olr_ruck_limit.forced_drop_outfit(item) -- костыль для экипировки
+                    end
+                end
+            end
+        end
+    end, db.actor)
+    
+    if removed > 0 then
+        news_manager.relocate_item(db.actor, "out", item_section)
     end
-end
-
-local reloc_params = {}
-function out_item_much(itm_section, need_number)
-    reloc_params.itm_section = itm_section
-    reloc_params.itm_cnt = need_number
-    reloc_params.itm_cnt_found = 0
-    db.actor:iterate_inventory(checkout_items_count, db.actor)
-    reloc_params.itm_cnt_found = 0
-    if reloc_params.itm_cnt_found <= reloc_params.itm_cnt then
-        db.actor:iterate_inventory(out_items_count, db.actor)
-    end
-    news_manager.relocate_item(db.actor, "out", itm_section)
-    reloc_params = {}
-end
-
-function checkout_items_count(actor, item)
-    if item.section and item:section() == reloc_params.itm_section then
-        reloc_params.itm_cnt_found = reloc_params.itm_cnt_found + 1
-    end
-end
-
-function out_items_count(actor, item)
-    if item.section and item:section() == reloc_params.itm_section and reloc_params.itm_cnt_found < reloc_params.itm_cnt then
-        remove_item_from_inventory(item, actor)
-        reloc_params.itm_cnt_found = reloc_params.itm_cnt_found + 1
-    end
-end
-
-function remove_item_from_inventory(remove_item, npc)
-    if npc == nil then
-        npc = db.actor
-    end
-    if remove_item ~= nil then
-        alife():release(alife():object(remove_item:id()), true)
-		local curr_outfit = db.actor:get_current_outfit()
-		if curr_outfit and curr_outfit:name() == remove_item:name() then
-			olr_ruck_limit.forced_drop_outfit(remove_item) -- костыль
-		end		
-        return true
-    end
-    return false
 end

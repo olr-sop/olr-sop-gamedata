@@ -6,26 +6,6 @@ function allow_break_dialog(first_speaker, second_speaker, id)
 	return true
 end
 
---function relocate_item_section_from_actor(first_speaker, second_speaker, section)
---	db.actor:transfer_item(db.actor:object(section), npc)
---end
-
-local reloc_params={}
-
-function relocate_item_section_from_actor(itm_section,need_number)
-	reloc_params.itm_section=itm_section
-	reloc_params.itm_cnt=need_number
-	reloc_params.itm_cnt_found=0
-	db.actor:iterate_inventory(checkout_items_count,db.actor)
-	reloc_params.itm_cnt_found=0
-	if reloc_params.itm_cnt_found<=reloc_params.itm_cnt then
-		db.actor:iterate_inventory(out_items_count,db.actor)
-	end
-	news_manager.relocate_item(db.actor, "out", itm_section)
-	reloc_params={}
-end
-
-
 function precond_pda_trade()
 	if olr_timers.has_timer("remove_timer_spot_wanan_trade") then
 		return false
@@ -33,7 +13,6 @@ function precond_pda_trade()
 		return true
 	end
 end
-
 
 function is_zakurit_prec(first_speaker, second_speaker, id)
         local stk_rank = first_speaker:character_rank() 
@@ -73,8 +52,8 @@ end
 function break_dialog(first_speaker, second_speaker, id)
 	first_speaker:stop_talk()
 	second_speaker:stop_talk()
-        olr_pda.break_dialog()
-        soundtrack.s_stop()
+	olr_pda.break_dialog()
+	soundtrack.s_stop()
 end
 
 function disable_talk_self(first_speaker, second_speaker)
@@ -116,6 +95,7 @@ function is_wounded(first_speaker, second_speaker)
 	local npc = who_is_npc(first_speaker, second_speaker)
 	return xr_wounded.is_wounded(npc)
 end
+
 function is_opp_wounded(first_speaker, second_speaker, dialog_id)
     if db.storage[second_speaker:id()].wounded ~= nil and
        db.storage[second_speaker:id()].wounded.wound_manager.can_use_medkit == true
@@ -124,12 +104,15 @@ function is_opp_wounded(first_speaker, second_speaker, dialog_id)
     end
 	return	xr_wounded.is_wounded(second_speaker)
 end
+
 function is_not_wounded(first_speaker, second_speaker)
 	return not this.is_wounded(first_speaker, second_speaker)
 end
+
 function actor_have_medkit(first_speaker, second_speaker)
 	return first_speaker:object("medkit") ~= nil
 end
+
 function actor_have_bandage(first_speaker, second_speaker)
 	return first_speaker:object("bandage") ~= nil
 end
@@ -152,7 +135,6 @@ function transfer_medkit(first_speaker, second_speaker)
 	end
 end
 
-
 function set_enemy_npc(first_speaker, second_speaker)
 	second_speaker:set_relation(game_object.enemy, first_speaker)
 	first_speaker:set_relation(game_object.enemy, second_speaker)
@@ -166,7 +148,6 @@ function kill_yourself(npc, actor)
 	npc:kill(actor)
 end
 
-
 -- Obsolete, do not use!!!
 function relocate_item(victim, obj, type)
 	if db.actor and victim then
@@ -178,6 +159,7 @@ function relocate_item(victim, obj, type)
 		--news_manager.relocate_item(db.actor, type, obj)
 	end
 end
+
 -- Use this function instead.
 function relocate_item_section(victim, section, type)
 	if db.actor and victim then
@@ -201,7 +183,6 @@ function relocate_item_section(victim, section, type)
 		news_manager.relocate_item(db.actor, type, section)
 	end
 end
-
 
 function relocate_money(victim, num, type)
 	if db.actor and victim then

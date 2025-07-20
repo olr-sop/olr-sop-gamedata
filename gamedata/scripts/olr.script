@@ -81,7 +81,7 @@ bad_items = {
 	["device_pda_jan_one"] = true,
 	["device_pda_jan_two"] = true,
 	["device_pda_jan_tri"] = true,
-        ["device_pda_lab_two"] = true,
+	["device_pda_lab_two"] = true,
 	["device_pda_lab_one"] = true,
 	["bar_golg_docs"] = true,
 	["radar_uchenyy_fleska"] = true,
@@ -89,7 +89,7 @@ bad_items = {
 	["give_yashik_kvest_1_item"] = true,
 	["olr_yan_obrazez_2"] = true,
 	["olr_yan_obrazez_1"] = true,
-        ["jornal_1"] = true,
+	["jornal_1"] = true,
 	["jornal_2"] = true,
 	["jornal_3"] = true,
 	["jornal_4"] = true,
@@ -97,21 +97,21 @@ bad_items = {
 	["jornal_6"] = true,
 	["jornal_7"] = true,
 	["olr_doc_lab_1"] = true,
-        ["olr_strelok_fleshka"] = true,
+	["olr_strelok_fleshka"] = true,
 	["agro_case_01"] = true,
 	["agro_case_02"] = true,
-        ["doki_agro_dyatel"] = true,
-        ["yan_oborud_quest"] = true,
-        ["anti_beshenstv_tabl"] = true,
-        ["psy_blocerator"] = true,
-        ["empty_butilka_arg_zam"] = true,
-        ["esc_dead_bochonok"] = true,
-        ["af_jabiy_glaz_garbage"] = true,
+	["doki_agro_dyatel"] = true,
+	["yan_oborud_quest"] = true,
+	["anti_beshenstv_tabl"] = true,
+	["psy_blocerator"] = true,
+	["empty_butilka_arg_zam"] = true,
+	["esc_dead_bochonok"] = true,
+	["af_jabiy_glaz_garbage"] = true,
 	["dnevnik_strelka"] = true
 }
 
 local tup10000 = 0
-local tmerup10000 = math.random(10000,20000)
+local tmerup10000 = math.random(10000,20000) -- это чё нахуй за приколы?
 local tup25000 = 0
 local tmerup25000 = math.random(25000,40000)
 local tup200 = 0
@@ -122,15 +122,17 @@ local tmerup200 = math.random(150,200)
 function on_actor_hit(obj, amount, local_direction, who, bone_index)
 	if db.actor:alive() and amount > 0.25 then
 		--log1(" amount -  "..amount.." ")
-		if who and who:clsid()==clsid.bloodsucker_s then
-			local bol_var = math.random(1,4)
+		if who and who:clsid() == clsid.bloodsucker_s then
+			local bol_var = math.random(1, 4)
 			if bol_var == 1 then
 				local aitem = db.actor:active_item()
-	            		if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end	
+				if aitem and (db.actor:active_slot() == 1 or db.actor:active_slot() == 2) then
+					db.actor:drop_item(aitem)
+				end
 			end
 		end
 		if bone_index < 5 or bone_index >= 5 and bone_index < 9 then
-			local legs_rnd = math.random(1,6)
+			local legs_rnd = math.random(1, 6)
 			if legs_rnd == 1 and not olr_timers.has_timer("enable_walk_hit") then
 				level.add_pp_effector("fire_hit_bullet.ppe", 1476, false)
 				--level.add_cam_effector("camera_effects\\punch_effector.anm", 3467, false, "")
@@ -140,15 +142,17 @@ function on_actor_hit(obj, amount, local_direction, who, bone_index)
 			end
 		end
 		if bone_index >= 18 and bone_index < 31 or bone_index >= 31 and bone_index < 40 then
-			local hands_rnd = math.random(1,6)
+			local hands_rnd = math.random(1, 6)
 			if hands_rnd == 1 then
 				local aitem = db.actor:active_item()
-	            		if aitem and (db.actor:active_slot()==1 or db.actor:active_slot()==2) then db.actor:drop_item(aitem) end
+				if aitem and (db.actor:active_slot() == 1 or db.actor:active_slot() == 2) then
+					db.actor:drop_item(aitem)
+				end
 				level.add_pp_effector("fire_hit.ppe", 9476, false)
 				level.add_cam_effector("camera_effects\\shell_shock.anm", 3167, false, "")
-				olr.hud_tip(game.translate_string("st_olr_damn"), game.translate_string("st_olr_heavy_arm_wound"), 3)		
+				olr.hud_tip(game.translate_string("st_olr_damn"), game.translate_string("st_olr_heavy_arm_wound"), 3)
 			end
-		end	
+		end
 	end
 end
 
@@ -169,7 +173,7 @@ function actor_net_spawn()
 
   	if db.storage[db.actor:id()].pstor == nil then
 		log1("!create new actor pstor!")
-    		db.storage[db.actor:id()].pstor = {}
+    	db.storage[db.actor:id()].pstor = {}
   	end
 	
 	get_console():execute("snd_restart") -- what????
@@ -248,7 +252,7 @@ function npc_hit(obj, amount, local_direction, who, bone_index)
 			if obj:character_community() == "sin" then
 				level.add_pp_effector("snd_shock.ppe", 203342431, false)
 				local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\tun_noise]])
-				if not snd_obj:playing() then 
+				if not snd_obj:playing() then
 					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 				end
 				level.add_pp_effector("black.ppe", 20131, false)
@@ -263,12 +267,12 @@ function npc_hit(obj, amount, local_direction, who, bone_index)
 			xr_effects.kill_actor()
 			news_manager.send_tip(db.actor, game.translate_string("npc_hit_0"), 3, "freedom", 19000)
 		end
-		if obj:alive() and obj:name() == "lvl16_generators_staler_undead_olr" then   -- напарник ген
+		if obj:alive() and obj:name() == "lvl16_generators_staler_undead_olr" then -- напарник ген
 			level.add_pp_effector("snd_shock.ppe", 203342431, false)
 			level.add_pp_effector("black.ppe", 20131, false)
 			xr_effects.kill_actor()
 		end
-		if obj:alive() and obj:name() == "lvl8_swamp_stalker_0000" then  -- доктор
+		if obj:alive() and obj:name() == "lvl8_swamp_stalker_0000" then -- доктор
 			level.add_pp_effector("snd_shock.ppe", 203342431, false)
 			local snd_obj = xr_sound.get_safe_sound_object([[weapons\vintorez\shoot]])
 			snd_obj:play_at_pos(db.actor, db.actor:position())
@@ -295,31 +299,36 @@ function to_slot(obj)
 end
 
 function to_belt(obj)
-	if db.actor and obj:section()=="af_art460" then
+	if db.actor and obj:section() == "af_art460" then
 		local tCount = 0
-		db.actor:iterate_inventory( function(_, item)
-		if item and item:section() == "af_art_3_step_anom_svetim" and db.actor:is_on_belt(item) then
-			level.add_pp_effector ("blink.ppe", 141, false)
-			local rnd = math.random(1,2)
-			if rnd == 1 then
-				db.actor.satiety = 1
-				db.actor.health = 1
-				db.actor.alcohol = 0
-				db.actor.radiation = -1
-			else
-				db.actor.health = -1
+		db.actor:iterate_inventory(
+			function(_, item)
+				if item and item:section() == "af_art_3_step_anom_svetim" and db.actor:is_on_belt(item) then
+					level.add_pp_effector("blink.ppe", 141, false)
+					local rnd = math.random(1, 2)
+					if rnd == 1 then
+						db.actor.satiety = 1
+						db.actor.health = 1
+						db.actor.alcohol = 0
+						db.actor.radiation = -1
+					else
+						db.actor.health = -1
+					end
+					local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_1]])
+					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+					local wait_time = 0
+					wait_time = time_global() + 50
+					level.add_call(
+						function()
+							return time_global() > wait_time
+						end,
+						function()
+							olr.del(obj)
+						end
+					)
+				end
 			end
-			local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_additional_timer_1]])	
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-			--alife():create("dead_body_skelet", db.actor:position():add(db.actor:direction():mul(0.3)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-			local wait_time = 0
-  			wait_time = time_global() + 50
-  			level.add_call(
-    			function() return time_global() > wait_time end,
-    			function() olr.del(obj) end
-  			)		
-		end
-	end )
+		)
 	end
 end
 
@@ -666,7 +675,9 @@ end
 
 function partice_on_obj(obj_name,particle)
 	local obj = level.object_by_name(obj_name)
-	if not obj then return end
+	if not obj then 
+		return 
+	end
 	local ps = particles_object(particle)
 	ps:play_at_pos(obj:position())
 end
@@ -684,21 +695,23 @@ end
 
 function on_ui()
 	olr.enable_walk()
-    	level.show_indicators()
-    	level.enable_input()
-    	db.actor:restore_weapon()
+	level.show_indicators()
+	level.enable_input()
+	db.actor:restore_weapon()
 end
 
 function off_ui()
-    	db.actor:hide_weapon()
-    	level.disable_input()
-    	level.hide_indicators()
-    	olr.disable_walk()
+	db.actor:hide_weapon()
+	level.disable_input()
+	level.hide_indicators()
+	olr.disable_walk()
 end
 
 function check_memory()
-        if device().precache_frame >1 then return end
-	local MEMORY_WARNING_AFTER = 50000 
+	if device().precache_frame > 1 then
+		return
+	end
+	local MEMORY_WARNING_AFTER = 50000
 	local memuse = collectgarbage("count")
 	printf("##LUA MEMORY USAGE: [%d KB]", memuse)
 	if memuse > MEMORY_WARNING_AFTER then
@@ -706,9 +719,7 @@ function check_memory()
 		memuse = collectgarbage("count")
 		if memuse > MEMORY_WARNING_AFTER then
 			printf("!![%s] MEMORY LEAK FOUND! MEMORY USAGE: [%d KB]", script_name():upper(), memuse)
-			if olr.olrdbg == true then
-				news_manager.send_tip(db.actor, game.translate_string("st_olr_memory_leak_warning")..memuse.." MB ", nil, "sos", 59000)
-			end
+			news_manager.send_tip(db.actor, game.translate_string("st_olr_memory_leak_warning") .. memuse .. " MB ", nil, "sos", 10000)
 		end
 	end
 end
@@ -736,9 +747,9 @@ function set_npc_noname(npc)
 	if sobj then 
 	local pk = get_netpk(sobj,1)
   		if pk:isOk() then
-    			local data = pk:get()
-          		data.character_name = ""
-      			pk:set( data )
+    		local data = pk:get()
+          	data.character_name = ""
+      		pk:set( data )
 		end	
 	end
 end
@@ -762,15 +773,17 @@ function give_item(obj)
 			news_manager.send_tip(db.actor, game.translate_string("st_olr_item_received_notification")..sname.."", nil, "item", 3000)
 		else
 			local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_thing")
-   			local news_text = "%c[255,255,255,255]"..game.translate_string("general_in_item").."\\n".."%c[255,255,255,255]"..game.translate_string(name)
-			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
+			local news_text = "%c[255,255,255,255]"..game.translate_string("general_in_item").."\\n".."%c[255,255,255,255]"..game.translate_string(name)
+			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
 		end
-		level.client_spawn_manager():add(item.id, 0, function(id,obj) 
-		if obj and obj:is_food_item() then
-			log1("set norm food olr")
-			xvars.foods[obj:name()] = false
-		end
-		end)
+		level.client_spawn_manager():add(item.id, 0,
+			function(id, obj)
+				if obj and obj:is_food_item() then
+					--log1("set norm food olr")
+					xvars.foods[obj:name()] = false
+				end
+			end
+		)
 		return item
 	end
 end
@@ -870,9 +883,13 @@ function spawn_on_obj(obj, objpos)
 	if not alife() then
 		return
 	end
-if not obj then return end
-if not objpos then return end
-local sobjpos = alife():object(objpos)
+	if not obj then
+		return
+	end
+	if not objpos then
+		return
+	end
+	local sobjpos = alife():object(objpos)
 	if sobjpos then
 		--log1("spawn_on_obj")
 		local base_dir = vector():set(sobjpos.position.x, sobjpos.position.y, sobjpos.position.z)
@@ -900,26 +917,26 @@ end
 -- объект в онлайн (по имени)
 function to_online(obj)
 	if obj then
-	local sobj = alife():object(obj)
-	if sobj then
-		local id = sobj.id
-		alife():set_switch_offline (id, false)
-    		alife():set_switch_online (id, true)
-    		alife():set_interactive (id, true)
-  	end
+		local sobj = alife():object(obj)
+		if sobj then
+			local id = sobj.id
+			alife():set_switch_offline (id, false)
+			alife():set_switch_online (id, true)
+			alife():set_interactive (id, true)
+		end
 	end
 end
 
 -- объект в офлайн (по имени)
 function to_offline(obj)
 	if obj then
-	local sobj = alife():object(obj)
-	if sobj then
-		local id = sobj.id
-		alife():set_switch_offline (id, true)
-    		alife():set_switch_online (id, false)
-    		alife():set_interactive (id, false)
-  	end
+		local sobj = alife():object(obj)
+		if sobj then
+			local id = sobj.id
+			alife():set_switch_offline(id, true)
+			alife():set_switch_online(id, false)
+			alife():set_interactive(id, false)
+		end
 	end
 end
 
@@ -929,14 +946,14 @@ function del(obj)
 		local sobj = alife():object(obj:id())
 		if sobj then
 			--if olr.olrdbg == true then
-    			--	log1(" ! olr del object - ["..obj:name().."]")
+			--	log1(" ! olr del object - ["..obj:name().."]")
 			--end
 			xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-    			alife():release(sobj, true)
-    			return true
-  		end
+			alife():release(sobj, true)
+			return true
+		end
 	end
-  	return false
+	return false
 end
 
 function cough()
@@ -991,7 +1008,7 @@ function add_spot(obj, spot, text)
     	if text == nil then 
 		text = obj:name()
 	end
-    	level.map_add_object_spot_ser(obj, spot, text)
+    level.map_add_object_spot_ser(obj, spot, text)
 end
 
 function beep()
@@ -1046,41 +1063,41 @@ function enable_save_load()
 	--get_actor_obj():unblock_action(key_bindings.kWPN_FIRE)
 end
 
--- физический импульс по ГГ вверх 
+-- физический импульс по ГГ вверх
 function ph_actor()
 	if db.actor and db.actor:alive() then
-           get_actor_obj():press_action(4)
-	   for id=1, 6 do    
-           	local h = hit()
-	   	h.draftsman = obj
-	   	h.type = hit.explosion
-           	h:bone("bip01_spine")
-           	h.direction = vector():set(math.random(1,4),math.random(10,250),math.random(1,4))
-	   	h.power = 0.00001
-	   	h.impulse = 90000000000
-	   	db.actor:hit(h)
-	   end
-           get_actor_obj():release_action(4) 
+		get_actor_obj():press_action(4)
+		for id = 1, 6 do
+			local h = hit()
+			h.draftsman = obj
+			h.type = hit.explosion
+			h:bone("bip01_spine")
+			h.direction = vector():set(math.random(1, 4), math.random(10, 250), math.random(1, 4))
+			h.power = 0.00001
+			h.impulse = 90000000000
+			db.actor:hit(h)
+		end
+		get_actor_obj():release_action(4)
 	end
 end
 
 -- Дамп текущих таймеров в лог
 function dump_timers()
 	for a = 1, 9000 do
-		tmp = load_xvars("xt"..a,nil)
+		tmp = load_xvars("xt" .. a, nil)
 		if tmp then
 			local time = game.time()
-			local timvar = load_xvars("xd"..a, nil)
+			local timvar = load_xvars("xd" .. a, nil)
 			log1("-----------------------------------")
 			local value_time = timvar - time
-			local hours = math.floor(value_time/3600000)
-			local minutes = math.floor(value_time/60000 - hours*60)
-			log1("таймер - ["..tmp.."] // часов - ["..hours.."] // минут - ["..minutes.."] // мсекунд - ["..value_time.."]")
+			local hours = math.floor(value_time / 3600000)
+			local minutes = math.floor(value_time / 60000 - hours * 60)
+			log1("таймер - [" ..tmp .."] // часов - [" ..hours .. "] // минут - [" .. minutes .. "] // мсекунд - [" .. value_time .. "]")
 			log1("-----------------------------------")
 		end
 	end
-			log1("timers count - "..xvars.timers_count.."")
-			log1("timers ended - "..xvars.timers_done.."")
+	log1("timers count - " .. xvars.timers_count .. "")
+	log1("timers ended - " .. xvars.timers_done .. "")
 end
 
 --
@@ -1117,70 +1134,78 @@ function kill_mon_in_radius(pos, radius)
 end
 
 -- Объект внутри рестриктора по имени
-function obj_in_zone(ob,zo)
+function obj_in_zone(ob, zo)
 	local zsobj = alife():object(zo)
-	if zsobj == nil then return false end
+	if zsobj == nil then
+		return false
+	end
 	local zzone = level.object_by_id(zsobj.id)
-	if zzone == nil then return false end
+	if zzone == nil then
+		return false
+	end
 	local osobj = alife():object(ob)
-	if osobj == nil then return false end
+	if osobj == nil then
+		return false
+	end
 	local oobj = level.object_by_id(osobj.id)
-	if oobj == nil then return false end
+	if oobj == nil then
+		return false
+	end
 	return zzone:inside(oobj:position())
-end 
+end
 
 -- Рандомная камера 
 function rnd_camera_direction()
 	local cam = actor_camera(0)
 	if cam then
-      		cam.yaw = math.random(0.1,0.9) 
-      		cam.pitch = math.random(0.1,0.9)
-    	end 
+      	cam.yaw = math.random(0.1,0.9) 
+      	cam.pitch = math.random(0.1,0.9)
+    end 
 end 
 
 function horror_snd()
 	local sound_obj_right = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_1]])
 	local sound_obj_left = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_1]])
-	if not sound_obj_left:playing() then 
-		local i=math.random(1,4)
-		if i==1 then 
+	if not sound_obj_left:playing() then
+		local i = math.random(1, 4)
+		if i == 1 then
 			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_1]])
-		elseif i==2 then
+		elseif i == 2 then
 			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_2]])
-		elseif i==3 then
+		elseif i == 3 then
 			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_3]])
-		elseif i==4 then
+		elseif i == 4 then
 			sound_obj_left = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_4]])
 		end
-		sound_obj_left:play_at_pos (db.actor, vector():set(1, 0, 1), 0, sound_object.s2d) 
+		sound_obj_left:play_at_pos(db.actor, vector():set(1, 0, 1), 0, sound_object.s2d)
 	end
-	if not sound_obj_right:playing() then 
-		local j=math.random(1,4)
-		if j==1 then 
+	if not sound_obj_right:playing() then
+		local j = math.random(1, 4)
+		if j == 1 then
 			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_1]])
-		elseif j==2 then
+		elseif j == 2 then
 			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_2]])
-		elseif j==3 then
+		elseif j == 3 then
 			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_3]])
-		elseif j==4 then
+		elseif j == 4 then
 			sound_obj_right = xr_sound.get_safe_sound_object([[ambient\rnd_outdoor\rnd_horror_4]])
 		end
-		sound_obj_right:play_at_pos (db.actor, vector():set(-1, 0, 1), 0, sound_object.s2d) 
+		sound_obj_right:play_at_pos(db.actor, vector():set(-1, 0, 1), 0, sound_object.s2d)
 	end
 end
 
 function is_monsters_around(radius)
-	if radius == nil then
-		radius = 50
-	end
-    	for k,v in pairs(db.storage) do
-        	local stalker = level.object_by_id(k)
-            	if stalker and stalker:is_monster() and stalker:alive() then
-				if stalker:position():distance_to(db.actor:position()) < radius then
-			    		return true
-				end
-		end
-	end
+    if radius == nil then
+        radius = 50
+    end
+    for k, v in pairs(db.storage) do
+        local stalker = level.object_by_id(k)
+        if stalker and stalker:is_monster() and stalker:alive() then
+            if stalker:position():distance_to(db.actor:position()) < radius then
+                return true
+            end
+        end
+    end
 end
 
 function npc_healing_sms(namenpc)
@@ -1315,6 +1340,7 @@ end
 function gta_actor_car()
 	--log1("!!!TRy GTA CAR")
 	local gta_car = nil
+	
 	local montabl = {
 		[clsid.car_s] = true
 	}
@@ -1340,7 +1366,6 @@ function gta_actor_car()
 
 	if gta_car.level_name ~= level.name() then
 		local stealer = news_main.get_nearest_stalker(gta_car.level_name, gta_car.position, 150, 0)
-
 		if stealer then
 			if has_alife_info("bar_car_protect_has") and gta_car.position:distance_to_xz(vector():set(-88, -93, -287)) < 120 and gta_car.level_name == "lvl5_bar" then
 				--log1("CAR IS UNDER BAR BROTECT")
@@ -1370,7 +1395,6 @@ function gta_actor_car()
 					seer_name = news_main.get_npc_name(seer)
 					if seer_name then
 						local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(gta_car.m_game_vertex_id):level_id()), vector():set(gta_car.position.x, gta_car.position.y, gta_car.position.z))
-
 						local text_phrase = {
 							game.translate_string("st_olr_grand_theft_auto_1"),
 							game.translate_string("st_olr_grand_theft_auto_2"),
@@ -1380,15 +1404,14 @@ function gta_actor_car()
 						}
 						local txt = text_phrase[math.random(#text_phrase)]
 						local full_text = "" .. seer_name .. ": " .. txt .. " " .. pos .. " "
-
 						news_manager.send_tip(db.actor, "" .. full_text .. " ", 20, "default", 29000)
 						--olr_timers.st_timer("gta_theft_sms", 300, "nick.gta_theft_sms("..tostring(full_text)..")")
 					end
 				end
 
 				alife():teleport_object(gta_car.id, rand_obj.m_game_vertex_id, rand_obj.m_level_vertex_id, rand_obj.position)
-			--olr.add_spot_on_map( gta_car.id,"controller_spotmap",gta_car:name() )
-			--log1(" steal actor car NOW from "..gta_car.level_name.."	")
+				--olr.add_spot_on_map( gta_car.id,"controller_spotmap",gta_car:name() )
+				--log1(" steal actor car NOW from "..gta_car.level_name.."	")
 			end
 		end
 	end
@@ -1432,7 +1455,7 @@ function have_a_vodka (stalker, player)
 end
 
 function give_nagrada(first_speaker, second_speaker) 
- dialogs.relocate_money(second_speaker, 200, "in") 
- dialogs.relocate_item_section(second_speaker, "ammo_9x18_fmj", "in") 
- dialogs.relocate_item_section(second_speaker, "ammo_5.45x39_fmj","in") 
+	dialogs.relocate_money(second_speaker, 200, "in") 
+	dialogs.relocate_item_section(second_speaker, "ammo_9x18_fmj", "in") 
+	dialogs.relocate_item_section(second_speaker, "ammo_5.45x39_fmj","in") 
 end

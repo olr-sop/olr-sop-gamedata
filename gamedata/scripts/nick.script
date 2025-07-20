@@ -2805,31 +2805,34 @@ end
 
 function flying_corpses()
 	olr.snd([[ambient\special\generators_flying_corpses]])
-	for k,v in pairs(db.storage) do
+	for k, v in pairs(db.storage) do
 		local stalker = level.object_by_id(k)
-				if stalker and (get_clsid(stalker)==clsid.script_stalker) and not stalker:alive() then
+		if stalker and (get_clsid(stalker) == clsid.script_stalker) and not stalker:alive() then
 			local bone = stalker:get_physics_shell()
 			if bone then
-				bone:disable_collision()	
+				bone:disable_collision()
 			end
-		for i = 0, bone:get_elements_number() - 1 do		
-			local e = bone:get_element_by_order(i)
-			if e then
-			bone:disable_collision()	
-			local b = bone:get_element_by_bone_id(math.random(0,2))
-			b:apply_force(0, math.random(10000,25000), 0) 
-			local wait_time = 0
-			wait_time = time_global() + 400
-			level.add_call(
-				function() return time_global() > wait_time end,
-				function() e:fix() end
-			)
-			end 
-			if bone then
-				bone:disable_collision()	
-			end				
-		end
-
+			for i = 0, bone:get_elements_number() - 1 do
+				local e = bone:get_element_by_order(i)
+				if e then
+					bone:disable_collision()
+					local b = bone:get_element_by_bone_id(math.random(0, 2))
+					b:apply_force(0, math.random(10000, 25000), 0)
+					local wait_time = 0
+					wait_time = time_global() + 400
+					level.add_call(
+						function()
+							return time_global() > wait_time
+						end,
+						function()
+							e:fix()
+						end
+					)
+				end
+				if bone then
+					bone:disable_collision()
+				end
+			end
 		end
 	end
 end
@@ -2877,15 +2880,15 @@ end
 
 function gen_del_accil_timer()
 	for i = 1, 100000 do
-			level.remove_pp_effector(i)
-			level.remove_cam_effector(i)
+		level.remove_pp_effector(i)
+		level.remove_cam_effector(i)
 	end
 	olr.del_by_name("lvl16_generators_space_restrictor_0023")
 	olr.del_by_name("genpart_sertr_0000")
 	olr.del_by_name("genpart_sertr_0001")
 	olr.del_by_name("genpart_sertr_0002")
 	olr.del_by_name("genpart_sertr_0003")
-		level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\generators_ecolog_talk]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("tojaba", 3, "nick.gen_ecologs_talkerd()")	
@@ -7049,18 +7052,18 @@ function bun_mosk_start_otkachka()
 	olr.del_by_name("lvl12_radar_bunker_physic_object_0028")
 	olr.del_by_name("lvl12_radar_bunker_space_restrictor_0018")
 
-local sobj = alife():object("l10u_radar_bunker_physic_object_0008") 
-if sobj then 
-olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_generator")) 
-end
-local sobj = alife():object("l10u_radar_bunker_physic_object_0007") 
-if sobj then 
-olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_generator")) 
-end
-local sobj = alife():object("lvl12_radar_bunker_physic_object_0033") 
-if sobj then 
-olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_pump_power_supply")) 
-end
+	local sobj = alife():object("l10u_radar_bunker_physic_object_0008") 
+	if sobj then 
+		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_generator")) 
+	end
+	local sobj = alife():object("l10u_radar_bunker_physic_object_0007") 
+	if sobj then 
+		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_generator")) 
+	end
+	local sobj = alife():object("lvl12_radar_bunker_physic_object_0033") 
+	if sobj then 
+		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_pump_power_supply")) 
+	end
 
 end
 
@@ -7098,14 +7101,14 @@ function rad_bun_to_mosk_prip()
 	db.actor:give_info_portion("prip_mosk_start_quest_spawn")
 	news_manager.send_tip(db.actor, game.translate_string("rad_bun_to_mosk_prip_0"), 2, "default", 60000)
 	olr_timers.st_timer("del_bun_to_mosk_alert", 6, "nick.rad_bun_to_mosk_prip_go_kontrs()")
-local sobj = alife():object("l10u_radar_bunker_physic_object_0075") 
-if sobj then 
-olr.del(sobj)
-end
-local sobj = alife():object("lvl12_radar_bunker_physic_object_0020") 
-if sobj then 
-olr.del(sobj)
-end
+	local sobj = alife():object("l10u_radar_bunker_physic_object_0075") 
+	if sobj then 
+		olr.del(sobj)
+	end
+	local sobj = alife():object("lvl12_radar_bunker_physic_object_0020") 
+	if sobj then 
+		olr.del(sobj)
+	end
 end
 
 function rad_bun_to_mosk_prip_go_kontrs()
@@ -11809,7 +11812,6 @@ function camlook_dol_lampa_first()
 				local pos = lokobj:bone_position("link")
 				local vDir = pos:sub(db.actor:position())
 				db.actor:set_actor_direction(-vDir:getH())
-
 				olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
 			end
 		end
@@ -12158,7 +12160,7 @@ function killlll_max_ros()
 		npc = level.object_by_id(i)
 		if npc and npc:name() == "lvl6_rostok_stalker_0021" then 
 			obj = alife():object(npc:id())
-		npc:kill(npc)	
+			npc:kill(npc)	
 		end
 	end
 end
@@ -12256,14 +12258,14 @@ function arts_zakaz1_sred_precond()
 end
 
 function spaven_pmka_escape()
-		local bobj445 = alife():create("wpn_pm", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-		level.client_spawn_manager():add(bobj445.id, 0,
-			function(id, obj)
-				obj:set_condition((math.random(22, 85) / 100))
-				news_manager.send_tip(db.actor, game.translate_string("spaven_pmka_escape_0"), nil, "default", 9000)
-			end
-		)
-		alife():create("ammo_9x18_fmj", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	local bobj445 = alife():create( "wpn_pm", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	level.client_spawn_manager():add(bobj445.id, 0,
+		function(id, obj)
+			obj:set_condition((math.random(22, 85) / 100))
+			news_manager.send_tip(db.actor, game.translate_string("spaven_pmka_escape_0"), nil, "default", 9000)
+		end
+	)
+	alife():create("ammo_9x18_fmj", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 end
 
 function enaple_pda()
@@ -12479,14 +12481,6 @@ function arts_zakaz1_vse_daem_nag(first_speaker, second_speaker)
 	dialogs.relocate_item_section(second_speaker, "ammo_12x70_buck","in")
 end
 
--- стартовые параметры ПЕРВОЙ ПМКИ
-function set_cond_pmka()
-	local STbronp = db.actor:item_in_slot(2)
-	if STbronp then
-		STbronp:set_condition(math.random(15,55)/100)
-	end
-end
-
 function mertv_prines_banki()
 	return nik_dialog.item_much("af_banka_s_holodcom",5) ~= false 
 end
@@ -12674,7 +12668,6 @@ end
 
 function del_food_drugs_rnd_start()
 	local sim = alife()
-	local count = 0
 	local items_to_remove = {
 		item_razradnik = true,
 		bread = true,
@@ -12713,7 +12706,6 @@ function del_food_drugs_rnd_start()
 			local sect = obj:section_name()
 			if items_to_remove[sect] and math.random(2) == 1 then
 				sim:release(obj)
-				count = count + 1
 			end
 		end
 	end
@@ -12812,39 +12804,6 @@ end
 
 function kstymy_naparnyky_precond(actor,npc)
 	return has_alife_info("esc_novic_go_nii_start_find_st_outfit") or has_alife_info("esc_digger_go_nii_start_find_st_outfit")
-end
-
-function get_food_cond_start()
-	if db.actor then
-		local foods = {}
-		for i= 1, 65534 do
-			local obj = level.object_by_id(i)
-			if obj ~= nil then
-				local section = obj:section()
-				if section == "conserva" or section == "bread" or section == "kolbasa" then
-					table.insert(foods, obj)
-				end
-			end
-		end
-		for i, obj in ipairs(foods) do
-			obj:set_condition(math.random(5,45)/100)
-		end
-	end
-end
-
-function set_food_cond_glob() 
---	local sim = alife()
---	for i=1, 65534 do
---		local objq = sim:object(i)
---		if objq then
---		local sect = objq:section_name()
---		if sect == "bread" or sect == "kolbasa" or sect == "conserva" then
---
---
---		--news_manager.send_tip(db.actor, game.translate_string("set_food_cond_glob_0"), nil, "freedom", 9000)
---end					
---end
---end
 end
 
 function naparnik_blackened() 
@@ -13326,7 +13285,7 @@ end
 function otdaem_graviart()
 	local se_obj = alife():object("dolin_to_escape_physic_object")
 	if se_obj then
-			olr.add_spot_on_map( se_obj.id,"level_changer",game.translate_string("st_spot_to_catacombs"))
+		olr.add_spot_on_map( se_obj.id,"level_changer",game.translate_string("st_spot_to_catacombs"))
 	end
 	nik_dialog.out_item_much("wpn_hands_gravity",1)
 end
@@ -14426,9 +14385,9 @@ function lete_escape_jaba_sms()
 	olr.del_by_name("lvl9_military_physic_object_0423")
 	local se_obj = alife():story_object(1209)
 	if se_obj then
-	alife():set_switch_offline (se_obj.id, false)
-	alife():set_switch_online (se_obj.id, true)
-	alife():set_interactive (se_obj.id, true)
+		alife():set_switch_offline (se_obj.id, false)
+		alife():set_switch_online (se_obj.id, true)
+		alife():set_interactive (se_obj.id, true)
 	end
 end
 
@@ -14627,7 +14586,7 @@ function progulka_prisli_plos_lead2()
 	olr.blow_add(245)
 	local se_obj = alife():object("lvl6_rostok_level_changer_0000")
 	if se_obj then
-			olr.add_spot_on_map( se_obj.id,"level_changer",game.translate_string("st_spot_to_bar"))
+		olr.add_spot_on_map( se_obj.id,"level_changer",game.translate_string("st_spot_to_bar"))
 	end
 	olr.del_by_name("lvl5_bar_physic_object_1465")
 	olr.del_by_name("bar_bar_lisiy_0000")
@@ -14800,9 +14759,9 @@ function dofhodi_kvestpat()
 	local sobj = alife():object("lvl2_garbage_af_jabiy_glaz_garbage") 
 	if sobj then 
 	local id = sobj.id
-			alife():set_switch_offline (id, false)
-			alife():set_switch_online (id, true)
-			alife():set_interactive (id, true)
+		alife():set_switch_offline (id, false)
+		alife():set_switch_online (id, true)
+		alife():set_interactive (id, true)
 	end
 end
 
@@ -15046,14 +15005,16 @@ function prof_boloto_spawn_bandosov_smss5()
 end
 
 function rnd_zombies_spawn()
+
+	local sectionsa = {
+		"m_zombie_e",
+		"zombie_normal",
+		"zombie_strong",
+		"zombie_blue",
+		"zombie_plague"
+	}
+
 	for id = 1, math.random(4, 8) do
-		local sectionsa = {
-			"m_zombie_e",
-			"zombie_normal",
-			"zombie_strong",
-			"zombie_blue",
-			"zombie_plague"
-		}
 		local section = sectionsa[math.random(table.getn(sectionsa))]
 		alife():create(section, db.actor:position():add(db.actor:direction():mul(-19)), db.actor:level_vertex_id(), db.actor:game_vertex_id() )
 	end
@@ -15074,12 +15035,22 @@ end
 
 function rnd_ppe_eff()
 	local ppe = {
-	"alcohol.ppe", "controller_hit.ppe", "fire_hit.ppe",
-	"psy_antenna.ppe", "psy_antenna_indoor.ppe", "radar_psi.ppe", "radar_stop.ppe", "radar_wake.ppe",
-	"radiation.ppe", "teleport.ppe", "vibros.ppe", "blink.ppe", "dead_zone.ppe"
+		"alcohol.ppe",
+		"controller_hit.ppe",
+		"fire_hit.ppe",
+		"psy_antenna.ppe",
+		"psy_antenna_indoor.ppe",
+		"radar_psi.ppe",
+		"radar_stop.ppe",
+		"radar_wake.ppe",
+		"radiation.ppe",
+		"teleport.ppe",
+		"vibros.ppe",
+		"blink.ppe",
+		"dead_zone.ppe"
 	}
-	local col = math.random(1,10)
-	for i=1,col do
+	local col = math.random(1, 10)
+	for i = 1, col do
 		level.add_pp_effector(ppe[math.random(#ppe)], 2001, false)
 	end
 end
@@ -15396,7 +15367,7 @@ function edel_arrabar_territory_palba()
 end
 
 function dolg_arrabar_territory_palba()
-	if ( xr_conditions.actor_in_zone(nil,nil,{"bar_bunker_online_restrictor"})) then
+	if xr_conditions.actor_in_zone(nil,nil,{"bar_bunker_online_restrictor"}) then
 		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("dolg_arrabar_territory_palba"), nil, "dolg", 30000, nil, "pda_tip", false)
 	end
@@ -15436,7 +15407,7 @@ function radar_ant_off_sms()
 	olr.del_by_name("lvl5_bar_physic_object_1382")
 	olr.del_by_name("lvl5_bar_physic_object_1381")
 
-delete_netspawn_objects({ "lvl5_bar_physic_object_1123", "lvl5_bar_space_restrictor_0089", "lvl5_bar_space_restrictor_0090", "lvl5_bar_m_car_0004", "bar_bar_guard_2", "bar_prefix_lights_hanging_lamp_0010", "bar_barman", "lvl5_bar_physic_object_1109", "lvl5_bar_physic_object_1111", "lvl5_bar_physic_object_1110", "bar_bar_guard", "bar_radio", "lvl5_bar_stalker_0038", "lvl5_bar_physic_object_1067", "lvl5_bar_physic_object_0008", "lvl5_bar_lights_hanging_lamp", "bar_tv_01", "lvl5_bar_physic_object_1065", "bar_ventilyator_01", "lvl5_bar_physic_object_1064", "lvl5_bar_physic_object_0087", "lvl5_bar_physic_object_0393", "lvl5_bar_physic_object_1086", "lvl5_bar_physic_object_1416", "lvl5_bar_physic_object_0519", "lvl5_bar_physic_object_0520" })
+	delete_netspawn_objects({ "lvl5_bar_physic_object_1123", "lvl5_bar_space_restrictor_0089", "lvl5_bar_space_restrictor_0090", "lvl5_bar_m_car_0004", "bar_bar_guard_2", "bar_prefix_lights_hanging_lamp_0010", "bar_barman", "lvl5_bar_physic_object_1109", "lvl5_bar_physic_object_1111", "lvl5_bar_physic_object_1110", "bar_bar_guard", "bar_radio", "lvl5_bar_stalker_0038", "lvl5_bar_physic_object_1067", "lvl5_bar_physic_object_0008", "lvl5_bar_lights_hanging_lamp", "bar_tv_01", "lvl5_bar_physic_object_1065", "bar_ventilyator_01", "lvl5_bar_physic_object_1064", "lvl5_bar_physic_object_0087", "lvl5_bar_physic_object_0393", "lvl5_bar_physic_object_1086", "lvl5_bar_physic_object_1416", "lvl5_bar_physic_object_0519", "lvl5_bar_physic_object_0520" })
 end
 
 function kol()
@@ -15474,16 +15445,16 @@ function tele()
 	local bobj2 = alife():object("lvl1_escape_big_safe_box")
 	local bobj3 = alife():object("lvl5_bar_inventory_box")
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill and bobj and bobj2 and bobj3 then
-				if kill.parent_id == bobj.id or kill.parent_id == bobj2.id or kill.parent_id == bobj3.id then
-			local rnd = math.random(1,2)
-			if rnd == 1 then
-				alife():release(kill, true) 
-			end	
+			if kill.parent_id == bobj.id or kill.parent_id == bobj2.id or kill.parent_id == bobj3.id then
+				local rnd = math.random(1, 2)
+				if rnd == 1 then
+					alife():release(kill, true)
+				end
+			end
 		end
-	end
 	end
 	local jaba_place = alife():object("lvl1_escape_stalker_0023")
 	if jaba_place then
@@ -15497,16 +15468,16 @@ function tele()
 	olr.del_by_name("lvl1_escape_stalker_0001")
 	olr.del_by_name("lvl1_escape_flesh_weak")
 	local sim = alife()
-	for id=1, 65534 do
+	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill and not olr_protected.is_no_offline_alife_obj(kill:name()) then
-				if IsStalker(kill) and not kill:alive() then
-			if kill:name() ~= "lvl1_escape_stalker_0023" or kill:name() ~= "lvl16_generators_stalker_0035" then 
-			if kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl5_bar" or kill.level_name == "lvl7_yantar" or kill.level_name == "lvl11_deadcity" then 
-			alife():release(kill, true)		
-			--log1("delllll")			
-			end
-			end
+			if IsStalker(kill) and not kill:alive() then
+				if kill:name() ~= "lvl1_escape_stalker_0023" or kill:name() ~= "lvl16_generators_stalker_0035" then
+					if kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl5_bar" or kill.level_name == "lvl7_yantar" or kill.level_name == "lvl11_deadcity" then
+						alife():release(kill, true)
+						--log1("delllll")
+					end
+				end
 			end
 		end
 	end
@@ -15539,37 +15510,34 @@ function jurnl()
 end
 
 function chaes_add_spawn_doki_seven()
-local sectionsa = 
-{ 
-"karlito",
-"m_bloodsucker_e",
-"bloodsucker_strong",
-"m_zombie_e",
-"zombie_blue",
-"m_gigant_e",	
-"m_burer_green"
-}
+	local sectionsa = {
+		"karlito",
+		"m_bloodsucker_e",
+		"bloodsucker_strong",
+		"m_zombie_e",
+		"zombie_blue",
+		"m_gigant_e",
+		"m_burer_green"
+	}
 
-local count = 30
-for ind = 1, count do
+	local count = 30
+	for ind = 1, count do
+		local lname = level.name()
 
-	local lname = level.name()
+		local lvtab = GetLevelVertexes(lname)
+		local lvx = math.max(unpack(lvtab))
+		local lv = math.random(1, lvx)
 
-	local lvtab = GetLevelVertexes( lname )
-	local lvx = math.max(unpack(lvtab))
-	local lv	= math.random(1,lvx)
+		local gvtab = GetGameVertexes(lname)
+		local gv_min = math.min(unpack(gvtab))
+		local gv_max = math.max(unpack(gvtab))
 
-	local gvtab	= GetGameVertexes(lname)
-	local gv_min = math.min( unpack(gvtab))
-	local gv_max = math.max( unpack(gvtab))
-
-	local section = sectionsa[math.random(table.getn(sectionsa))] 
-	local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
-	if obj and obj.position:distance_to_xz(db.actor:position()) < 50 then	--- ваяки
-		alife():release(obj, true) 
+		local section = sectionsa[math.random(table.getn(sectionsa))]
+		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
+		if obj and obj.position:distance_to_xz(db.actor:position()) < 50 then --- ваяки
+			alife():release(obj, true)
+		end
 	end
-
-end
 end
 
 function spasipo_freed()

@@ -60,11 +60,15 @@ function start_actor_params()
 	local STbron = db.actor:object("stalker_outfit")
 	if STbron then
 		STbron:set_condition(math.random(2,8)/100)
+--[[ morrazzzz to all: Нельзя использовать в add_call всякие операции с объектами, он выполняет их на кадр позже(вроде).
+     Но мы не знаем, что будет с объектом на кадр позже. Может быть, он удалится? По этому выполним сразу перемещение, а не в add_call
+]]
+		db.actor:move_to_slot(STbron)
 		local wait_time = 0
 		wait_time = time_global() + 1500
 		level.add_call(
 			function() return time_global() > wait_time end,
-			function() db.actor:move_to_slot(STbron) olr_ruck_limit.recheck_limit() end
+			function() olr_ruck_limit.recheck_limit() end
 		)
 	end
 end

@@ -1257,7 +1257,7 @@ function post_suka_blyat()
 	olr.hide_inv()
 	level.add_pp_effector("black.ppe", 20131, false)
 	level.add_cam_effector2("camera_effects\\gen_posthuman_1.anm", 90, false, "nick.posthuman_ending_2")
-	level.set_weather("1865",true)
+--	level.set_weather("1865",true)
 end
 
 function posthuman_ending_2()
@@ -3290,7 +3290,7 @@ function chaes_city_ending()
 	news_manager.send_tip(db.actor, game.translate_string("chaes_city_ending_1"), 15, "act", 9000)
 	news_manager.send_tip(db.actor, game.translate_string("chaes_city_ending_2"), 25, "act", 9000)
 	news_manager.send_tip(db.actor, game.translate_string("chaes_city_ending_3"), 35, "act", 9000)
-	level.set_weather("1865",true)
+--	level.set_weather("1865",true)
 end
 
 function radar_plot_dialog_talked()
@@ -8009,7 +8009,7 @@ function go_to_treeway()
 	olr.snd([[ambient\special\generators_go_to_treeway_1]])
 	level.add_pp_effector("snd_shock.ppe", 203342431, false)
 	level.add_pp_effector("proba_gray.ppe", 2032431, false)
-	level.set_weather("indoor",true)
+--	level.set_weather("indoor",true)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("go_to_treeway", 15, "nick.triway_spawn_zombie()")
@@ -9249,7 +9249,6 @@ function selfdestruck_lab_start_explode()
 		level.add_cam_effector("camera_effects\\earthquake.anm", 1488228, false)
 		level.add_pp_effector("blink.ppe", 20131, false)
 		xr_effects.kill_actor()
-		get_console():execute("sv_setweather dark")
 		for i = 1, 65535 do
 			local lokobj = level.object_by_id(i)
 			if lokobj then
@@ -9316,7 +9315,6 @@ function tihonow_cool_generators()
 end
 
 function down_light_svatoy()
-	get_console():execute("sv_setweather dark")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\electric_crash]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	for i = 1, 65535 do
@@ -11808,7 +11806,7 @@ end
 
 function yan_multicutscene_two()
 	level.add_cam_effector2("camera_effects\\yan_mozg_off_2.anm", 30, false, "nick.enable_newui")
-	level.set_weather("1865")
+--	level.set_weather("1865")
 	local point = patrol("kostil_ay_walk")
 	local look = patrol("kostil_ay_look")
 	db.actor:set_actor_position(point:point(0))
@@ -15078,8 +15076,7 @@ end
 
 function coolweather_nap()
 	olr.blow_add(150)
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
-	get_console():execute("sv_setweather garbage")
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", true)
 	for k,v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
 		if npc and npc:is_monster() and npc:position():distance_to(db.actor:position()) < 100 then

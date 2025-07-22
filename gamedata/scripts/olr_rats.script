@@ -46,13 +46,13 @@ function set_aggersive(obj)
 	if math.random(1,2) == 1 and db.actor and obj then
 		local rat = level.object_by_id(obj.id)
 		if rat then
-    		local h = hit()
-		h.power = 100
-		h.direction = vector():set (0, -1, 0)
-		h.impulse = 1
-		h.draftsman = db.actor
-		h.type = hit.strike
-		rat:hit (h)
+			local h = hit()
+			h.power = 100
+			h.direction = vector():set (0, -1, 0)
+			h.impulse = 1
+			h.draftsman = db.actor
+			h.type = hit.strike
+			rat:hit (h)
 		end
 	end
 end
@@ -61,8 +61,8 @@ function check_deads()
 	for k,v in pairs(db.storage) do
 		local rat = level.object_by_id(k)
 		if rat and rat:is_monster() and rat:position():distance_to(db.actor:position()) > 20 and not rat:alive() then
-			xvars.rats_count = xvars.rats_count - 1  
-    			--log1("  del dead rat  ---- ["..rat:name().."]  rats_count  ---- ["..xvars.rats_count.."]  ")
+			xvars.rats_count = xvars.rats_count - 1	 
+			--log1("  del dead rat	---- ["..rat:name().."]	 rats_count	 ---- ["..xvars.rats_count.."]	")
 			if xvars.rats_count < 0 then
 				xvars.rats_count = 0
 			end
@@ -81,31 +81,16 @@ function set_rat_home(obj)
 end
 
 function ratlab_inside()
-      	if not ( xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_ratlab"}))  then
-		return
-	end
+	if not xr_conditions.actor_in_zone(nil,nil,{"lvl_rat_space_restrictor_ratlab"}) then return end
+	
 	if math.random(1,2) == 1 then return end
+	
 	level.add_pp_effector("poltergeist_scan.ppe", 20131, false)
 	db.actor.radiation = 0.025
-      	db.actor.psy_health = -0.15
+	db.actor.psy_health = -0.15
+	
 	local rnd = math.random(1,5)
-	if rnd == 1 then
-
-	elseif rnd == 2 then
+	if rnd == 2 then
 		olr.switch_torch(false)
 	end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-

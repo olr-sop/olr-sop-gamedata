@@ -1389,27 +1389,6 @@ function oso_no()
 	)
 end
 
-function major_start_kk_spaven()
-	news_manager.send_tip(db.actor, game.translate_string("major_start_kk_spaven_0"), nil, "unknown", 19000)
-	local bsobj = alife():object("lvl_rat_stalker_0013") 
-	if bsobj then 
-		alife():create("wpn_groza", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id)
-		alife():create_ammo("ammo_9x39_ap", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 10)
-		local car = level.object_by_id(bsobj.id)
-		if car then
-			car:set_character_community("voenstals", 0, 0)
-			car:set_relation(game_object.enemy, db.actor)	
-		end
-	end
-
-	olr.del_by_name("lvl_rat_stalker_0003")
-	olr.del_by_name("lvl_rat_space_restrictor_0002")
-
-	olr_timers.st_timer("set_enem_maior_kk", 3, "nick.set_enem_maior_kk()")
-	olr_timers.st_timer("set_enem_maior_kk", 5, "nick.set_enem_maior_kk()")
-	olr_timers.st_timer("set_enem_maior_kk", 7, "nick.set_enem_maior_kk()")
-end
-
 function set_enem_maior_kk()
 
 	local bsobj = alife():object("lvl_rat_stalker_0013") 
@@ -2328,32 +2307,6 @@ function has_ratlab_doki()
 	return nik_dialog.item_much("ratlab_doki_jaba",1) ~= false and has_alife_info("ratlab_door_open")
 end
 
-function ratlab_strt_done()
-	local sobj = alife():object("lvl2_garbage_physic_object_0118") 
-	if sobj then	
-		level.map_remove_object_spot(sobj.id, "crlc_mdl")
-	end
-	nik_dialog.out_item_much("ratlab_doki_jaba",1)
-	nik_dialog.out_item_much("radlab_key_door",1)
-	news_manager.send_tip(db.actor, game.translate_string("ratlab_strt_done_0"), nil, "money", 39000)
-	db.actor:give_money(1200)
-	game_stats.money_quest_update(1200)
-end
-
-function ratlab_strt_onln()
-	olr.to_online("lvl2_garbage_box_rukzak_treasure_0004")
-	local sp1_place = alife():object("lvl2_garbage_physic_object_0118")
-	if sp1_place then
-		olr.add_spot_on_map( sp1_place.id,"crlc_mdl", game.translate_string("ratlab_strt_onln"))
-	end
-	news_manager.send_tip(db.actor, game.translate_string("ratlab_strt_onln_0"), 15, "trader", 29000)
-end
-
-function jaba_rat_lowlevels() -- старт квеста на нижние уровни
-	news_manager.send_tip(db.actor, game.translate_string("jaba_rat_lowlevels_0"), nil, "trader", 29000)
-	olr.info("ratlab_strt")
-end
-
 function has_biolab_start_money()
 	if xvars.meat_money > 0 then
 		return true
@@ -2441,29 +2394,6 @@ function dialog_parasite_actor()
 	end
 	--]]
 	return false
-end
-
-function ratcat_digger_cheked()
-	olr.del_by_name("lvl_rat_staler_undead_olr_0000")
-	news_manager.send_tip(db.actor, game.translate_string("ratcat_digger_cheked_0"), nil, "act", 39000)
-end
-
-function clear_zavar_gar_rat()
-	olr.del_by_name("lvl_rat_staler_undead_olr_0000") 
-	olr.del_by_name("ratnew_zaval_ph")
-	olr.del_by_name("ratnew_zaval_ph_0000")
-	olr.del_by_name("ratnew_zaval_ph_0001")
-	olr.del_by_name("ratnew_zaval_ph_0002")
-	olr.del_by_name("ratnew_zaval_ph_0003")
-	olr.del_by_name("ratnew_zaval_ph_0004")
-	olr.del_by_name("ratnew_zaval_ph_0005")
-	olr.del_by_name("ratnew_zaval_ph_0006")
-	olr.del_by_name("ratnew_zaval_ph_0007") 
-	olr.del_by_name("lvl_rat_psy_to_new")
-	if has_alife_info("dialog_ratcat_digger_jaba_done") then
-		olr_timers.st_timer("jaba_zavali_off", 455, "nick.jaba_zavali_off()")
-	end
-	olr_timers.st_timer("jaba_rat_lowlevels", 1473, "nick.jaba_rat_lowlevels()") 
 end
 
 function create_detector_esc_zavod()
@@ -2674,13 +2604,11 @@ function podzem_sosatel_deadd()
 		function() snd_obj2:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0) end
 	)
 	olr.off_ui()
-	olr_timers.st_timer("jaba_rat_lowlevels", 9, "olr.on_ui()") 
 end
 
 function plosadka_sosatel_deadd()
 	olr.del_by_name("lvl5_bar_physic_object_0603")
 	db.actor:set_actor_position(vector():set(-13,-40,-72))
-	olr_timers.st_timer("jaba_rat_lowlevels", 36, "olr.on_ui()") 
 	local snd_obj = xr_sound.get_safe_sound_object([[monsters\bloodsucker\idle_0]])
 	local snd_obj2 = xr_sound.get_safe_sound_object([[monsters\bloodsucker\idle_0]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -9907,17 +9835,6 @@ function set_jrat_jaba()
 	news_manager.send_tip(db.actor, game.translate_string("set_jrat_jaba_0"), nil, "money", 39000)
 end
 
-function kk_create_lchanger_first()
-	local se_obj = alife():object("lvl1_escape_physic_object_0509")
-	if se_obj then
-		olr.add_spot_on_map( se_obj.id,"level_changer", game.translate_string("to_catacombs"))
-	end
-	local se_obj = alife():object("lvl_rat_level_changer")
-	if se_obj then
-		olr.add_spot_on_map( se_obj.id,"level_changer", game.translate_string("to_escape"))
-	end
-end
-
 function swp_first_scr()
 	level.add_pp_effector("black.ppe", 20131, false)
 end
@@ -11357,55 +11274,6 @@ function hey_del_balon_kk()
 	end
 	news_manager.send_tip(db.actor, game.translate_string("hey_del_balon_kk"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)
 	delete_netspawn_objects({ "lvl_rat_balloon", "lvl_rat_physic_object_0005", "lvl_rat_physic_destroyable_object_0002", "lvl_rat_physic_destroyable_object_0000" })
-end
-
-function kk_gotcha_actor_kick()
-	db.actor.health = 0.1
-	local point = patrol("awwwshiit_kk_walk")
-	local look = patrol("awwwshiit_kk_walk")
-	db.actor:set_actor_position(point:point(0))
-	local dir = look:point(0):sub(point:point(0))
-	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_cam_effector("camera_effects\\hit_back.anm", 1, false)
-	level.add_pp_effector("black.ppe", 201831, false)
-	soundtrack.ros_shoot_max()
-	news_manager.send_tip(db.actor, game.translate_string("kk_gotcha_actor_kick"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)
-	olr.kill_mon_in_radius(db.actor:position(), 200)
-end
-
-function start_kk_plen_quest()
-	olr_timers.st_timer("start_kk_plen_quest_now", 150, "nick.start_kk_plen_quest_go()")
-end
-
-function start_kk_plen_quest_go()
-	news_manager.send_tip(db.actor, game.translate_string("start_kk_plen_quest_go_0"), nil, "trader", 29000)
-	db.actor:give_info_portion("start_kk_plen_quest_now_info")
-	local sobj = alife():object("lvl_rat_stalker_0003") 
-	if sobj then 
-		olr.add_spot( sobj.id,"esc_bridge_stalkers_location", game.translate_string("start_kk_plen_quest_go_map"))
-	end
-end
-
-function daem_nagrada_rat_cat(first_speaker, second_speaker)	
-	dialogs.relocate_money(first_speaker, 450, "in")
-	dialogs.relocate_item_section(second_speaker, "vodka","in")
-	dialogs.relocate_item_section(second_speaker, "sigaret","in")
-	dialogs.relocate_item_section(second_speaker, "water","in")
-end
-
-function otdaem_blackbox_rat()
-	olr.del_by_name("lvl_rat_physic_object_0080")
-	nik_dialog.out_item_much("rat_black_box",1)
-	db.actor:change_character_reputation(10)
-	local se_obj = alife():object("lvl_rat_level_changer_0000")
-	if se_obj then
-		olr.add_spot_on_map( se_obj.id,"level_changer", game.translate_string("to_escape"))
-	end
-	local se_obj = alife():object("lvl_rat_level_changer_0001")
-	if se_obj then
-		olr.add_spot_on_map( se_obj.id,"level_changer", game.translate_string("to_escape"))
-	end
 end
 
 function jaba_zavali_off()
@@ -15705,22 +15573,7 @@ function zaba_art_garb()
 		local sobj = alife():create("kanistra_benz", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 	end
 	news_manager.send_tip(db.actor, game.translate_string("zaba_art_garb"), nil, "trader", 40000, nil, "pda_objective", false)
-	olr_timers.st_timer("zaba_gar_rat_go", 95, "nick.zaba_gar_rat_go()")
 	olr.to_online("lvl2_garbage_af_compas")
-end
-
-function zaba_gar_rat_go()
-	olr.beep()
-	local se_obj = alife():object("lvl_rat_level_changer_0002")
-	if se_obj then
-			olr.add_spot_on_map( se_obj.id,"level_changer", game.translate_string("to_garbage"))
-	end
-	local sobj = alife():object("lvl2_garbage_physic_object_0042") 
-	if sobj then	
-		olr.add_spot_on_map( sobj.id,"level_changer", game.translate_string("to_catacombs"))
-	end
-	olr.info("zaba_gar_rat_go_now")
-	news_manager.send_tip(db.actor, check_gar_rat_cache, nil, "trader", 40000, nil, true)
 end
 
 -- даём бабло 

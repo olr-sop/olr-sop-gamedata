@@ -12,7 +12,6 @@ state_blow = 1
 local tmradd = 3000
 
 no_blow_levels = {
-	["lvl_rat"] = true,
 	["lvl_level12"] = true,
 	["lvl12_radar_bunker"] = true,
 	["lvl14_stancia"] = true,
@@ -387,7 +386,6 @@ function all_blowend_funcs()
 	end
 
 	if xvars.blow_count > 6 and not has_alife_info("gen_first") then
-		olr_timers.st_timer("rat_cat_spawn", 69, "olr_blowout.rat_cat_spawn()")
 		olr_timers.st_timer("respawn_now", 79, "olr_blowout.respawn_now()")
 	end
 
@@ -440,88 +438,6 @@ function spawen_endgame_posthuman()
 end
 
 -------------------------------------------------
-
-function rat_cat_spawn()
-	local montabl = {
-		[clsid.cat_s] = true
-	}
-
-	local sectionsa = {
-		"af_art_steklo",
-		"af_art_spiral",
-		"af_art_lenss",
-		"af_art_kub",
-		"af_lchernaya_busina",
-		"af_electra_moonlight",
-		"af_lichinka",
-		"af_art_3_step_anom_svetim",
-		"af_art460"
-	}
-
-	local sectionsamons = {
-		"gigant_strong",
-		"gigant_normal",
-		"controller_new",
-		"karlito",
-		"karlito_yellow",
-		"korpus",
-		"fracture_strong",
-		"fracture_midle",
-		"m_burer_green",
-		"m_chimera_e",
-		"chimera_strong",
-		"bloodsucker_strong",
-		"zombie_plague",
-		"chimera_strong",
-		"chimera_weak",
-		"iskatels",
-		"controller_new",
-		"slizen_reg",
-		--"rad_zombied_respawn_1",
-		"ros_bandit_respawn_4",
-		"ros_killer_respawn_4",
-		"val_soldier_respawn_1",
-		"val_bandit_respawn_4",
-		"cit_killer_respawn_3",
-		"bar_dolg_respawn_3",
-		"bar_stalker_respawn_4",
-		"yan_ecolog_respawn_1",
-		"rad_soldier_master",
-		"rad_monolith_respawn_3",
-		"rad_freedom_respawn_3",
-		"gar_dolg_respawn_2",
-		"chimera_midl"
-	}
-
-	local count = 0
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if montabl[kill:clsid()] and kill.level_name == "lvl_rat" then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
-				local section_mon = sectionsamons[math.random(table.getn(sectionsamons))]
-				local rndsp = math.random(1, 45)
-				if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
-					if rndsp == 15 then
-						local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-						count = count + 1
-						--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-						local rndcat = math.random(1, 8)
-						if rndcat == 4 then
-							local obj = alife():create( section_mon, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-							amk.on_REspawn(obj)
-							count = count + 1
-						end
-						if olr.olrdbg == true then
-							news_manager.send_tip(db.actor, "[DBG] rat_cat_spawn заспавнилось " .. count .. " -- " .. section_mon .. " ", nil, "freedom", 9000)
-						end
-					end
-				end
-			end
-		end
-	end
-end
 
 function clear_trash_wars()
 	-- TODO ещё раз проверить имена объектов как они записаны в xvars

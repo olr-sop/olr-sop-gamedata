@@ -16,9 +16,15 @@ function load_scheme(filename, scheme, stype)
 	stypes[scheme] = stype
 end
 
+-- если компилируете компилятором который огрызок ебучий
+-- то ставить true
+local compilyatar = false
+
 ----------------------------------------------------------------------
 -- Отладочный код
 ----------------------------------------------------------------------
+
+if not compilyatar then
 
 SIMPLE_LUA_DEBUG = false -- подрубает использование printf и кучи производных. Не трогает log1
 WRITE_SCRIPT_NAME_TO_LOG = true -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
@@ -219,6 +225,13 @@ function to_str(v)
         return "userdata"
     end
     return "<"..type_v..">"
+end
+
+else
+
+function printf(fmt,...)
+end
+
 end
 
 ----------------------------------------------------------------------

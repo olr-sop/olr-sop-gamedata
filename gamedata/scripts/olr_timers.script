@@ -121,3 +121,36 @@ function del_timer(name)
 		end
 	end
 end
+
+function dump_timers()
+    if not xvars or not xvars.timers_count then
+        log1("No timers found or timers not initialized")
+        return
+    end
+    
+    log1("===== TIMERS DUMP START =====")
+    log1("Total timers count: " .. tostring(xvars.timers_count))
+    log1("Timers started: " .. tostring(xvars.timers_started))
+    log1("Timers done: " .. tostring(xvars.timers_done))
+    
+    local current_time = game.time()
+    local active_count = 0
+    
+    for i = 1, xvars.timers_count do
+        local name = load_xvars("xt"..i, nil)
+        if name then
+            active_count = active_count + 1
+            local end_time = load_xvars("xd"..i, 0)
+            local time_left = tostring((end_time - current_time) / 1000)
+            local action = tostring(load_xvars("xp"..i, ""))
+            
+            log1("Timer #" .. tostring(i))
+            log1("  Name: " .. tostring(name))
+            log1("  Time left (sec): " .. time_left)
+            log1("  Action: " .. action)
+        end
+    end
+    
+    log1("Active timers: " .. tostring(active_count))
+    log1("===== TIMERS DUMP END =====")
+end

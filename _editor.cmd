@@ -1,1 +1,0 @@
-@start bin\xr_3da.exe -ltx user_%USERNAME%_editor.ltx -editor

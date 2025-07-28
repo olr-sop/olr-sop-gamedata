@@ -69,7 +69,7 @@ tips_icons = {
 }
 
 --показываем типс (юзать только для новостей оффлайн алайфа)
-function send_tip(news_text, header, timeout, showtime, sender, sound)
+function send_tip(news_text, header, timeout, showtime, sender, sound, need_talking)
 	if has_alife_info("monolit_na_kordone") and not has_alife_info("aes_antenna_off_jaba_sms") then
 		return
 	end
@@ -98,6 +98,8 @@ function send_tip(news_text, header, timeout, showtime, sender, sound)
 		player = pda_news
 	elseif sound == "task" then
 		player = pda_task
+	elseif sound == "tips" then
+		player = pda_tips
 	else
 		player = pda_tips
 	end
@@ -114,7 +116,14 @@ function send_tip(news_text, header, timeout, showtime, sender, sound)
 	local y = tips_icons[sender][2]
 
 	local news_text = "%c[255,160,181,169]"..header..":".. "\\n" .. "%c[255,245,240,218]" .. news_text
-	db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
+	--db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
+	
+	if db.actor:is_talking() and need_talking then	
+		db.actor:give_talk_message(news_text, "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), "iconed_answer_item")
+	else
+		db.actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
+	end		
+	
 	return true
 end
 

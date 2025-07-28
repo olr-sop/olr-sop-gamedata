@@ -474,10 +474,7 @@ function motivator_binder:update(delta)
         olr_npc_eqp.upd(self.object)
 
         if not self.object:alive() then
-            if
-                level.main_input_receiver() and xvars.npc_actor_use[self.object:name()] == true and
-                    self.object:position():distance_to(db.actor:position()) >= 20
-             then
+            if level.main_input_receiver() and xvars.npc_actor_use[self.object:name()] == true and self.object:position():distance_to(db.actor:position()) >= 20 then
                 if self.object:ruck_count() > 40 then
                     self.object:iterate_inventory(
                         function(_, item)
@@ -516,14 +513,7 @@ function motivator_binder:update(delta)
                             local sectamm = amk.str_explode(",", wname)
                             local sectammo = sectamm[1]
                             local strammo = game.translate_string(sectammo)
-                            se_respawn.create_ammo(
-                                strammo,
-                                self.object:position(),
-                                self.object:level_vertex_id(),
-                                self.object:game_vertex_id(),
-                                self.object:id(),
-                                10
-                            )
+                            se_respawn.create_ammo(strammo, self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id(), 10)
                             --log1("create ammo - "..strammo.." for "..selfob:name().." ")
                             --news_manager.send_tip(db.actor, "npc create panic ammo - ["..self.object:name().."] ", nil, "freedom", 9000)
                             if device().precache_frame < 1 and self.object:character_community() ~= "zombied" then
@@ -537,7 +527,7 @@ function motivator_binder:update(delta)
                     end
                 end,
                 selfob
-            )
+			)
         end
 
         if time_global() - self.last_update_slow > 3500 then
@@ -557,13 +547,7 @@ function motivator_binder:update(delta)
                             local npc = self.object
                             local yad = npc:object("yad")
                             if not yad then
-                                alife():create(
-                                    "yad",
-                                    self.object:position(),
-                                    self.object:level_vertex_id(),
-                                    self.object:game_vertex_id(),
-                                    self.object:id()
-                                )
+                                alife():create("yad", self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id())
                             --news_manager.send_tip(db.actor, "create YAD - ["..self.object:name().."]  ", nil, "freedom", 9000)
                             end
                             if self.object:object("medkit") ~= nil then
@@ -571,7 +555,7 @@ function motivator_binder:update(delta)
                                 --news_manager.send_tip(db.actor, "ðàíåíû ÂÛËÅ×ÈËÈÑÜ medkit - ["..self.object:name().."] -- ÕÏ ["..self.object.health.."] ", nil, "freedom", 9000)
                                 if yad then
                                     yad:enable_attachable_item(true)
-                                    log1("enable yad")
+                                    --log1("enable yad")
                                     local wait_time = 0
                                     wait_time = time_global() + 5000
                                     level.add_call(

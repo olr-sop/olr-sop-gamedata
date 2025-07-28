@@ -1,305 +1,282 @@
 -- hi_flyer
 
-local items_prob = 
-{			
-"wpn_akms",		
-"wpn_fort",
-"wpn_bm16",
-"wpn_lr300",
-"wpn_colt1911",
-"wpn_mp5",
-"wpn_pm",
-"wpn_sig220",
-"novice_outfit",
-"stalker_outfit",
-"killer_outfit",
-"battery_change",
-"item_razradnik",
-"vodka",
-"antirad",
-"medkit",
-"kanistra_benz",
-"wpn_binoc",
-"wpn_knife",
-"energy_drink",
-"detector_simple",
-"wpn_fort",
-"wpn_pb",
-"grenade_rgd5",
-"grenade_f1",
-
---"capsule_rone",
-"conserva",
-"anti_beshenstvo_dog_caps",
-"psy_stabilizator",
-"snotvornoe",
-"device_torch",
-"detector_advances",
-"detector_elite",
---"water",
-"battery_change_headlamp",
-"med_injector_capsule",
-"wpn_aps",
-"wpn_fn2000",
-"wpn_svd",
-"wpn_vintorez",
-"wpn_wincheaster1300",
-"wpn_addon_scope",
-"wpn_addon_grenade_launcher_m203",
---"wpn_addon_grenade_launcher_aks_old",
-"wpn_addon_silencer",
-
-"af_medusa",
-"af_cristall_flower",
-"af_night_star",
-"af_vyvert",
-"af_gravi",
-"af_gold_fish",
-"af_cristall",
-"af_blood",
-"af_mincer_meat",
-"af_soul",
-"af_electra_sparkler",
-"af_electra_flash",
-"af_electra_moonlight",
-"af_art_steklo",
-"af_art_spiral",
-"af_art_lenss",
-"af_art_kub",
-"af_lchernaya_busina",
-"af_lichinka",
---"af_studen",
-"af_fuzz_kolobok",
-"af_rusty_thorn",
-"af_dummy_glassbeads",
-"af_dummy_pellicle",
-"af_dummy_battery",
-
-
-"wpn_walther"}
-
+local items_prob = {
+    "wpn_akms",
+    "wpn_fort",
+    "wpn_bm16",
+    "wpn_lr300",
+    "wpn_colt1911",
+    "wpn_mp5",
+    "wpn_pm",
+    "wpn_sig220",
+    "wpn_walther",
+    "novice_outfit",
+    "stalker_outfit",
+    "killer_outfit",
+    "battery_change",
+    "item_razradnik",
+    "vodka",
+    "antirad",
+    "medkit",
+    "kanistra_benz",
+    "wpn_binoc",
+    "wpn_knife",
+    "energy_drink",
+    "detector_simple",
+    "wpn_fort",
+    "wpn_pb",
+    "grenade_rgd5",
+    "grenade_f1",
+    "conserva",
+    "anti_beshenstvo_dog_caps",
+    "psy_stabilizator",
+    "snotvornoe",
+    "device_torch",
+    "detector_advances",
+    "detector_elite",
+    "battery_change_headlamp",
+    "med_injector_capsule",
+    "wpn_aps",
+    "wpn_fn2000",
+    "wpn_svd",
+    "wpn_vintorez",
+    "wpn_wincheaster1300",
+    "wpn_addon_scope",
+    "wpn_addon_grenade_launcher_m203",
+    "wpn_addon_silencer",
+    "af_medusa",
+    "af_cristall_flower",
+    "af_night_star",
+    "af_vyvert",
+    "af_gravi",
+    "af_gold_fish",
+    "af_cristall",
+    "af_blood",
+    "af_mincer_meat",
+    "af_soul",
+    "af_electra_sparkler",
+    "af_electra_flash",
+    "af_electra_moonlight",
+    "af_art_steklo",
+    "af_art_spiral",
+    "af_art_lenss",
+    "af_art_kub",
+    "af_lchernaya_busina",
+    "af_lichinka",
+    "af_fuzz_kolobok",
+    "af_rusty_thorn",
+    "af_dummy_glassbeads",
+    "af_dummy_pellicle",
+    "af_dummy_battery"
+}
 
 function job_desctiption()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		--log1("talker is - "..npc:name().."")
-		if xvars.npc_jobs_foractor_status[npc:name()] == "ready" then 
-			local text_phrase = {"job_try_give_1", "job_try_give_2"}
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        --log1("talker is - "..npc:name().."")
+        if xvars.npc_jobs_foractor_status[npc:name()] == "ready" then
+            local text_phrase = {"job_try_give_1", "job_try_give_2"}
 
-			local target = xvars.npc_jobs_foractor_target[npc:name()]
-			--log1(" 1 "..target.."")
-			--local text_find_obj = game.translate_string(target)
-			--log1("2 "..text_find_obj.."")
-			local known_inf = system_ini():r_string(target, "inv_name")
-			--log1("3 "..known_inf.."")
-			local obj_inf_desc = game.translate_string(known_inf)
-			--log1("4 "..obj_inf_desc.."")
-			local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
+            local target = xvars.npc_jobs_foractor_target[npc:name()]
+            --log1(" 1 "..target.."")
+            --local text_find_obj = game.translate_string(target)
+            --log1("2 "..text_find_obj.."")
+            local known_inf = system_ini():r_string(target, "inv_name")
+            --log1("3 "..known_inf.."")
+            local obj_inf_desc = game.translate_string(known_inf)
+            --log1("4 "..obj_inf_desc.."")
+            local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
 
-			local lm_where = ""..text_find.." "..obj_inf_desc..""
-			db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0,0,10,10), "simple_answer_item")
-			local _s = CUIStatic()
-			local bos = level.object_by_id(level.get_second_talker():id())
-			_s:InitTexture(bos:character_icon())
-			local str = lm_where
-			local who = bos:character_name()		
-			db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
-		end
-	end
+            local lm_where = ""..text_find.." "..obj_inf_desc..""
+            db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
+            local _s = CUIStatic()
+            local bos = level.object_by_id(level.get_second_talker():id())
+            _s:InitTexture(bos:character_icon())
+            local str = lm_where
+            local who = bos:character_name()
+            db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
+        end
+    end
 end
-
 
 function job_desctiption_in_progress()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then 
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+            local text_phrase = {"job_try_has_1", "job_try_has_2"}
 
-			local text_phrase = {"job_try_has_1", "job_try_has_2"}
+            local target = xvars.npc_jobs_foractor_target[npc:name()]
+            local known_inf = system_ini():r_string(target, "inv_name")
+            local obj_inf_desc = game.translate_string(known_inf)
+            local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
 
-			local target = xvars.npc_jobs_foractor_target[npc:name()]
-			local known_inf = system_ini():r_string(target, "inv_name")
-			local obj_inf_desc = game.translate_string(known_inf)
-			local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
-
-			local lm_where = ""..text_find.." "..obj_inf_desc..""
-			db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0,0,10,10), "simple_answer_item")
-			local _s = CUIStatic()
-			local bos = level.object_by_id(level.get_second_talker():id())
-			_s:InitTexture(bos:character_icon())
-			local str = lm_where
-			local who = bos:character_name()		
-			db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
-		end
-	end
+            local lm_where = ""..text_find.." "..obj_inf_desc..""
+            db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
+            local _s = CUIStatic()
+            local bos = level.object_by_id(level.get_second_talker():id())
+            _s:InitTexture(bos:character_icon())
+            local str = lm_where
+            local who = bos:character_name()
+            db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
+        end
+    end
 end
-
 
 -- стартовое задания
 function add_new_job_for_npc(obj)
-	--local sobj = alife():object(obj:name())
-	--local strn_id = sobj:smart_terrain_id()
-	--if strn_id ~= 65535 then
-		if obj:character_community()=="stalker" or obj:character_community()=="dolg" or obj:character_community()=="freedom" or obj:character_community()=="ecolog" then
-			xvars.npc_jobs_foractor_status[obj:name()] = "ready"
-			xvars.npc_jobs_foractor_target[obj:name()] = items_prob[math.random(table.getn(items_prob))]
-			--log1(" CREATE NEW JOB npc ["..obj:name().."]  - status ["..xvars.npc_jobs_foractor_status[obj:name()].."] - target ["..xvars.npc_jobs_foractor_target[obj:name()].."] ")
-		end
-	--end
+    --local sobj = alife():object(obj:name())
+    --local strn_id = sobj:smart_terrain_id()
+    --if strn_id ~= 65535 then
+    if obj:character_community() == "stalker" or obj:character_community() == "dolg" or obj:character_community() == "freedom" or obj:character_community() == "ecolog" then
+        xvars.npc_jobs_foractor_status[obj:name()] = "ready"
+        xvars.npc_jobs_foractor_target[obj:name()] = items_prob[math.random(table.getn(items_prob))]
+		--log1(" CREATE NEW JOB npc ["..obj:name().."]  - status ["..xvars.npc_jobs_foractor_status[obj:name()].."] - target ["..xvars.npc_jobs_foractor_target[obj:name()].."] ")
+    end
+    --end
 end
 
-
 function take_quest()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		local sobj = alife():object(npc:name())
-		xvars.npc_jobs_foractor_status[npc:name()] = "in_progress"
-		local prosba_text = game.translate_string("job_try_give_sms")
-		local prosba_textfind = game.translate_string("job_try_give_sms_find")
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        local sobj = alife():object(npc:name())
+        xvars.npc_jobs_foractor_status[npc:name()] = "in_progress"
+        local prosba_text = game.translate_string("job_try_give_sms")
+        local prosba_textfind = game.translate_string("job_try_give_sms_find")
 
-		local target = xvars.npc_jobs_foractor_target[npc:name()]
-		--local text_find_obj = game.translate_string(target)
-		local known_inf = system_ini():r_string(target, "inv_name")
-		local obj_inf_desc = game.translate_string(known_inf)
+        local target = xvars.npc_jobs_foractor_target[npc:name()]
+        --local text_find_obj = game.translate_string(target)
+        local inv_name = system_ini():r_string(target, "inv_name")
+        local inv_known_info = system_ini():r_string(target, "known_info")
+        local obj_inf_name = game.translate_string(inv_name)
 
-		local fulltext = ""..prosba_text.." "..npc:character_name().." "..prosba_textfind.." "..obj_inf_desc..""
-		news_manager.send_tip(db.actor, ""..fulltext.."" , 1, "item", 10000)
-		olr.add_spot_on_map( sobj.id, "find_item_location", fulltext )
-		local tmr = math.random(1200,3000)
-		olr_timers.st_timer("npc_job_fail"..tostring(npc:name()).."", tmr, "olr_npc_jobs.quest_timer_fail("..tostring(npc:id())..")")	
-	end
+        local fulltext = ""..prosba_text.." "..npc:character_name().." "..prosba_textfind.." "..obj_inf_name..""
+        amk.send_tip(""..fulltext.."", nil, nil, 10, "item", "tips", true)
+
+        olr.add_spot_on_map(sobj.id, "find_item_location", fulltext)
+        local tmr = math.random(1200, 3000)
+        olr_timers.st_timer("npc_job_fail"..tostring(npc:name()).."", tmr, "olr_npc_jobs.quest_timer_fail("..tostring(npc:id())..")")
+    end
 end
 
 function precond_quest()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		if xvars.npc_jobs_foractor_status[npc:name()] == "ready" and xvars.npc_jobs_foractor_target[npc:name()] ~= nil then 
-			return true
-		end
-	end
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        if xvars.npc_jobs_foractor_status[npc:name()] == "ready" and xvars.npc_jobs_foractor_target[npc:name()] ~= nil then
+            return true
+        end
+    end
 end
-
 
 function precond_quest_done()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-		local notart = db.actor:object(obj_targ)
-		if notart and not notart:is_artefact() then
-		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and nik_dialog.item_much(obj_targ,1) ~= false then 
-			return true
-		end
-		end
-	end
-	return false
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+        local notart = db.actor:object(obj_targ)
+        if notart and not notart:is_artefact() then
+            if
+                xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and
+                    nik_dialog.item_much(obj_targ, 1) ~= false
+             then
+                return true
+            end
+        end
+    end
+    return false
 end
-
 
 function precond_quest_done_art()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-			local art = db.actor:object(obj_targ) 
-			if art and art:is_artefact() then
-				local ini = system_ini()
-				local known_inf = ini:r_string(obj_targ, "known_info")
-				local known_inf_desc = game.translate_string(known_inf)
-     				return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf_desc)
-			end
-		end
-	end
-	return false
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+        if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+            local art = db.actor:object(obj_targ)
+            if art and art:is_artefact() then
+                local ini = system_ini()
+                return nik_dialog.item_much(obj_targ, 1) ~= false
+            end
+        end
+    end
+    return false
 end
-
-
 
 function precond_quest_done_has_pre()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then 
-			return true
-		end
-	end
+    local npc = level.object_by_id(level.get_second_talker():id())
+    if npc then
+        if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+            return true
+        end
+    end
 end
 
-
 function take_reward()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-	local objinv = db.actor:object(obj_targ)
-	db.actor:transfer_item(objinv, npc)
-	xr_sound.set_sound_play(npc, "trade_yes")
+    local npc = level.object_by_id(level.get_second_talker():id())
+    local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+    local objinv = db.actor:object(obj_targ)
+    db.actor:transfer_item(objinv, npc)
+    xr_sound.set_sound_play(npc, "trade_yes")
 
-	--local bw = npc:best_weapon()
-	--if bw then
-	--	log1(" bw -  "..bw:name().." ")
-	--	--npc:move_to_ruck(bw)
-	--	--npc:drop_item(bw)
-	--	npc:transfer_item(bw, npc)
-	--end
+    --local bw = npc:best_weapon()
+    --if bw then
+    --	log1(" bw -  "..bw:name().." ")
+    --	--npc:move_to_ruck(bw)
+    --	--npc:drop_item(bw)
+    --	npc:transfer_item(bw, npc)
+    --end
 
-	if objinv:is_weapon_magazined() then
-		local wait_time = 0
-  		wait_time = time_global() + 1500
-  		level.add_call(
-    		function() return time_global() > wait_time end,
-    		function() npc:move_to_slot(objinv) end
-		--function() npc:set_item(object.idle,objinv) end
-  		)
-	end
+    if objinv:is_weapon_magazined() then
+        local wait_time = 0
+        wait_time = time_global() + 1500
+        level.add_call(
+            function()
+                return time_global() > wait_time
+            end,
+            function()
+                npc:move_to_slot(objinv)
+            end
+            --function() npc:set_item(object.idle,objinv) end
+        )
+    end
 
+    local flg = false
+    npc:iterate_inventory(
+        function(_, item)
+            if item then
+                if item:is_ammo() and flg == false and item:get_ammo_box_curr() ~= item:get_ammo_box_size() then
+                    flg = true
+                    npc:transfer_item(item, db.actor)
+                    news_manager.send_tip(db.actor, ""..game.translate_string("item_taken_text").." "..item:get_name().." - x"..item:get_ammo_box_curr()..".", 1, "item", 9000)
+					--log1(item:name())
+                end
+            end
+        end
+    )
 
-	local flg = false
-	npc:iterate_inventory( function(_, item)
-	if item then
-		if item:is_ammo() and flg == false and item:get_ammo_box_curr() ~= item:get_ammo_box_size() then
-			flg = true
-			npc:transfer_item(item, db.actor)
-			news_manager.send_tip(db.actor, ""..game.translate_string("item_taken_text").." "..item:get_name().." - x"..item:get_ammo_box_curr()..".", 1, "item", 9000)
-			--log1(item:name())
-		end
-	end
-	end )
+    db.actor:change_character_reputation(5)
 
-	db.actor:change_character_reputation(5)
-	
-	local target = xvars.npc_jobs_foractor_target[npc:name()]
-	--local text_find_obj = game.translate_string(target)
-	local known_inf = system_ini():r_float(target, "cost")
-	local to_give = known_inf + math.random(1, known_inf / 3)
+    local target = xvars.npc_jobs_foractor_target[npc:name()]
+    --local text_find_obj = game.translate_string(target)
+    local known_inf = system_ini():r_float(target, "cost")
+    local to_give = known_inf + math.random(1, known_inf / 3)
 
-	news_manager.send_tip(db.actor, ""..game.translate_string("money_in_text").." "..to_give..".", 1, "money", 9000)
-	db.actor:give_money(to_give)
-	game_stats.money_quest_update(to_give)
-	xvars.npc_jobs_foractor_status[npc:name()] = "done"
-	xvars.npc_jobs_foractor_target[npc:name()] = "donenonetarget"
-	level.map_remove_object_spot(npc:id(), "find_item_location")
+    news_manager.relocate_money(db.actor, "in", to_give)
+    db.actor:give_money(to_give)
+    game_stats.money_quest_update(to_give)
+    xvars.npc_jobs_foractor_status[npc:name()] = "done"
+    xvars.npc_jobs_foractor_target[npc:name()] = "donenonetarget"
+    level.map_remove_object_spot(npc:id(), "find_item_location")
 
-	if olr_timers.has_timer("npc_job_fail"..tostring(npc:name()).."") then
-		olr_timers.del_timer("npc_job_fail"..tostring(npc:name()).."")
-	end
-
+    if olr_timers.has_timer("npc_job_fail" .. tostring(npc:name()) .. "") then
+        olr_timers.del_timer("npc_job_fail" .. tostring(npc:name()) .. "")
+    end
 end
 
 function quest_timer_fail(id)
-	local sobj = alife():object(id)
-  	if sobj then
-		xvars.npc_jobs_foractor_status[sobj:name()] = "done"
-		xvars.npc_jobs_foractor_target[sobj:name()] = "donenonetarget"
-		level.map_remove_object_spot(sobj.id, "find_item_location")
-		db.actor:change_character_reputation(-15)	
+    local sobj = alife():object(id)
+    if sobj then
+        xvars.npc_jobs_foractor_status[sobj:name()] = "done"
+        xvars.npc_jobs_foractor_target[sobj:name()] = "donenonetarget"
+        level.map_remove_object_spot(sobj.id, "find_item_location")
+        db.actor:change_character_reputation(-15)
 		--log1("npc quest fail")
-	end
+    end
 end
-
-
-
-
-
-
-
-
-
-
-
-

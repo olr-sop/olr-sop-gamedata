@@ -55,32 +55,6 @@ function assign_story_id_for_quest()
 	alife():assign_story_id(alife():object("lvl5_bar_staler_undead_olr_0010").id, story_ids.bar_major_kravcov)
 end
 
--- стартовые параметры ГГ
-function start_actor_params()
-	local STbron = db.actor:object("stalker_outfit")
-	if STbron then
-		STbron:set_condition(math.random(2,8)/100)
---[[ morrazzzz to all: Нельзя использовать в add_call всякие операции с объектами, он выполняет их на кадр позже(вроде).
-     Но мы не знаем, что будет с объектом на кадр позже. Может быть, он удалится? По этому выполним сразу перемещение, а не в add_call
-]]
-		db.actor:move_to_slot(STbron)
-		local wait_time = 0
-		wait_time = time_global() + 1500
-		level.add_call(
-			function() return time_global() > wait_time end,
-			function() olr_ruck_limit.recheck_limit() end
-		)
-	end
-end
-
-function start_actor_params_food()
-	if db.actor then
-		db.actor.satiety = -0.11
-		local bobj445 = alife():create("device_torch", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-		level.client_spawn_manager():add(bobj445.id, 0, function(id,obj) obj:set_condition((math.random(15,45)/100)) end)	
-	end
-end
-
 function bar_zombu_prisel_zombu()
 	news_manager.send_tip(db.actor, game.translate_string("bar_zombu_prisel_zombu_0"), 1, "act", 11000)
 	news_manager.send_tip(db.actor, game.translate_string("bar_zombu_prisel_zombu_1"), 5, "default", 5000)	
@@ -4194,9 +4168,7 @@ function enemys_sms_pda_escape_mon()
 	end
 	--log1(cnt)
 
-	nick.delete_start_ammo_free()
 	news_manager.send_tip(db.actor, game.translate_string("enemys_sms_pda_escape_mon_0"), nil, "heli", 25000)
-	nick.delete_start_ammo_free()
 
 	local sobj = alife():object("l10u_radar_bunker_physic_object_0075")
 	if sobj then
@@ -11440,36 +11412,6 @@ function enable_newui()
 	db.actor:set_actor_direction(-dir:getH())
 end
 
-function set_startgame_random_money()
-	if db.actor then
-		local montabl = {
-			[clsid.script_stalker] = true
-		}
-		local sim = alife()
-		for id = 1, 65534 do
-			local kill = sim:object(id)
-			if kill then
-				if montabl[kill:clsid()] then
-					if not kill.online then
-						if kill:alive() then
-							if kill:community() ~= "trader" then
-								local coeff = math.random(30, 450)
-								local tbl = amk.read_stalker_params(kill)
-								local old_money = tbl.money
-								if (old_money == nil) then
-									old_money = 0
-								end
-								tbl.money = coeff
-								amk.write_stalker_params(tbl, kill)
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
 function gg_prec_midle_beshenstvo()
 	--return olr_timers.has_timer("bolezn_beshenstvo_timer_d") ~= false 
 	return false
@@ -12002,7 +11944,7 @@ function spaven_pmka_escape()
 	level.client_spawn_manager():add(bobj445.id, 0,
 		function(id, obj)
 			obj:set_condition((math.random(22, 85) / 100))
-			news_manager.send_tip(db.actor, game.translate_string("spaven_pmka_escape_0"), nil, "default", 9000)
+			news_manager.relocate_item(db.actor, "in", "wpn_pm")
 		end
 	)
 	alife():create("ammo_9x18_fmj", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
@@ -12360,11 +12302,6 @@ function kill_actor_svd_esc()
 	xr_effects.kill_actor()
 end
 
-function set_ustalost_start()	---- установка усталости, жажды, времени выброса при старте игры
-	olr_blowout.set_blow_timer(999) -- 0.99
-	--olr_blowout.on_game_save()
-end
-
 function precond_pottishok_pit(actor,npc)
 	return actor:money() >= 50
 end
@@ -12373,82 +12310,6 @@ function set_thirst_jaba()
 	db.actor:change_actor_thirst(1)
 	db.actor:give_money(-50)
 	game_stats.money_quest_update(-50)
-end
-
-function del_arts_start()
-	local sim = alife()
-	local game_graph = game_graph()
-	local art_sections = {
-		af_fireball = true,
-		af_gold_fish = true,
-		af_gravi = true,
-		af_electra_moonlight = true,
-		af_vyvert = true
-	}
-	local excluded_levels = {
-		[4] = true,
-		[6] = true,
-		[10] = true,
-		[12] = true
-	}
-	for id = 1, 65534 do
-		local obj = sim:object(id)
-		if obj then
-			local sect = obj:section_name()
-			if art_sections[sect] then
-				local gvid = obj.m_game_vertex_id
-				local l_id = game_graph:vertex(gvid):level_id()
-				if l_id < 14 and not excluded_levels[l_id] then
-					sim:release(obj)
-				end
-			end
-		end
-	end
-end
-
-function del_food_drugs_rnd_start()
-	local sim = alife()
-	local items_to_remove = {
-		item_razradnik = true,
-		bread = true,
-		kolbasa = true,
-		conserva = true,
-		vodka = true,
-		water = true,
-		medkit = true,
-		energy_drink = true,
-		bandage = true,
-		antirad = true,
-		novice_outfit = true,
-		killer_outfit = true,
-		stalker_outfit = true,
-		scientific_outfit = true,
-		exo_outfit = true,
-		ecolog_outfit = true,
-		kanistra_benz = true,
-		af_rusty_thorn = true,
-		af_rusty_kristall = true,
-		detector_simple = true,
-		detector_advances = true,
-		detector_elite = true,
-		af_electra_flash = true,
-		af_ameba_slug = true,
-		af_ameba_mica = true,
-		af_dummy_spring = true,
-		af_dummy_glassbeads = true,
-		grenade_rgd5 = true,
-		grenade_f1 = true,
-		box_rukzak_treasure = true
-	}
-	for id = 1, 65534 do
-		local obj = sim:object(id)
-		if obj then
-			local sect = obj:section_name()
-			if items_to_remove[sect] and math.random(2) == 1 then
-				sim:release(obj)
-			end
-		end
-	end
 end
 
 function mecheny_swamp_attackeds2121() 

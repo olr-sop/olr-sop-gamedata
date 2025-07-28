@@ -158,11 +158,15 @@ function take_quest()
 
 		local target = xvars.npc_jobs_foractor_target[npc:name()]
 		--local text_find_obj = game.translate_string(target)
-		local known_inf = system_ini():r_string(target, "inv_name")
-		local obj_inf_desc = game.translate_string(known_inf)
+		local inv_name = system_ini():r_string(target, "inv_name")
+		local inv_known_info = system_ini():r_string(target, "known_info")
+		local obj_inf_name = game.translate_string(inv_name)
 
-		local fulltext = ""..prosba_text.." "..npc:character_name().." "..prosba_textfind.." "..obj_inf_desc..""
-		news_manager.send_tip(db.actor, ""..fulltext.."" , 1, "item", 10000)
+		local fulltext = ""..prosba_text.." "..npc:character_name().." "..prosba_textfind.." "..obj_inf_name..""
+		amk.send_tip(""..fulltext.."", nil, nil, 10, "item", "tips", true)
+		
+		if inv_known_info and not db.actor:has_info(tostring(game.translate_string(inv_known_info))) then db.actor:give_info_portion(tostring(game.translate_string(inv_known_info))) end
+		
 		olr.add_spot_on_map( sobj.id, "find_item_location", fulltext )
 		local tmr = math.random(1200,3000)
 		olr_timers.st_timer("npc_job_fail"..tostring(npc:name()).."", tmr, "olr_npc_jobs.quest_timer_fail("..tostring(npc:id())..")")	
@@ -268,7 +272,7 @@ function take_reward()
 	local known_inf = system_ini():r_float(target, "cost")
 	local to_give = known_inf + math.random(1, known_inf / 3)
 
-	news_amanger.relocate_money(db.actor, "in", to_give)
+	news_manager.relocate_money(db.actor, "in", to_give)
 	db.actor:give_money(to_give)
 	game_stats.money_quest_update(to_give)
 	xvars.npc_jobs_foractor_status[npc:name()] = "done"

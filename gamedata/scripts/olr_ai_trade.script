@@ -8,8 +8,6 @@ base_id_trade = 21860
 ev_trade_now = base_id_trade + 1
 ac_trade = base_id_trade + 1
 
-local zanyato_nahui = false
-
 -- init module
 function init()
 	core.ac("load_scheme", xrs_load_scheme)
@@ -35,8 +33,6 @@ function evaluator_trading:evaluate()
 
 	local npc = self.object
 	local best_enemy = self.object:best_enemy()
-	
-	if zanyato_nahui then return false end -- сразу нахуй если занято
 
 	if best_enemy then
 		return false
@@ -155,8 +151,6 @@ function action_go_trade:initialize()
 	self.trade_point_barman_look = look_barman:level_vertex_id(0)
 
 	self.walkstate = math.random(1,2)
-	
-	self.finalized = false
 
 	self.trade_tmr = 0
 	self.sms_lalk = 0  -- если ГГ влезает в торговлю
@@ -169,8 +163,6 @@ end
 -- execute of action
 function action_go_trade:execute()
     action_base.execute(self)
-	zanyato_nahui = true
-	if self.finalized then return end
 	
     local npc = self.object
 
@@ -230,7 +222,6 @@ function action_go_trade:execute()
                 celling_habar_svoi_escape(npc)
                 create_trading_escape(npc, pre_money)
                 check_leave_zone_money(npc)
-				self.finalized = true
             end
         end
     end
@@ -296,7 +287,6 @@ function action_go_trade:execute()
                 celling_habar_svoi_military(npc)
                 create_trading_escape(npc, pre_money)
                 check_leave_zone_money(npc)
-				self.finalized = true
             end
         end
     end
@@ -358,7 +348,6 @@ function action_go_trade:execute()
                 celling_habar_svoi_bar(npc)
                 create_trading_barman(npc, pre_money)
                 check_leave_zone_money(npc)
-				self.finalized = true
             end
         end
     end
@@ -370,7 +359,6 @@ function action_go_trade:finalize()
 	local npc = self.object
 	npc:clear_animations()
 	self.sms_lalk = 0
-	zanyato_nahui = false
 	--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] finalize", nil, "freedom", 3000)
 end
 

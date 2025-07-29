@@ -107,11 +107,11 @@ bad_items = {
 }
 
 local tup10000 = 0
-local tmerup10000 = math.random(10000,20000) -- это чё нахуй за приколы?
+local tmerup10000 = 10000
 local tup25000 = 0
-local tmerup25000 = math.random(25000,40000)
+local tmerup25000 = 25000
 local tup200 = 0
-local tmerup200 = math.random(150,200)
+local tmerup200 = 200
 
 --/ Actor callbacks start-----------------------------------------------------------
 
@@ -701,20 +701,27 @@ function off_ui()
 end
 
 function check_memory()
-	if device().precache_frame > 1 then
-		return
-	end
-	local MEMORY_WARNING_AFTER = 50000
-	local memuse = collectgarbage("count")
-	printf("##LUA MEMORY USAGE: [%d KB]", memuse)
-	if memuse > MEMORY_WARNING_AFTER then
-		collectgarbage("collect")
-		memuse = collectgarbage("count")
-		if memuse > MEMORY_WARNING_AFTER then
-			printf("!![%s] MEMORY LEAK FOUND! MEMORY USAGE: [%d KB]", script_name():upper(), memuse)
-			news_manager.send_tip(db.actor, game.translate_string("st_olr_memory_leak_warning") .. memuse .. " MB ", nil, "sos", 10000)
-		end
-	end
+    if device().precache_frame > 1 then
+        return
+    end
+    
+    local MEMORY_WARNING_KB = 50000  -- 50 MB (но в KB)
+    local MEMORY_CRITICAL_KB = 60000 -- 60 MB (но в KB)
+    
+    local memuse_kb = collectgarbage("count")
+    printf("##LUA MEMORY USAGE: [%d KB] (%.2f MB)", memuse_kb, memuse_kb / 1024)
+    
+    if memuse_kb > MEMORY_WARNING_KB then
+        -- Выполняем полный цикл сборки мусора
+        collectgarbage("collect")
+        memuse_kb = collectgarbage("count")
+        
+        if memuse_kb > MEMORY_CRITICAL_KB then
+            local memuse_mb = memuse_kb / 1024
+            printf("!![%s] POSSIBLE MEMORY LEAK! MEMORY USAGE: [%.2f MB]", script_name():upper(), memuse_mb)
+            news_manager.send_tip(db.actor, "AHTUNG MEMORY LEAK!!! "..string.format("%.2f", memuse_mb).." MB", nil, "sos", 10000)
+        end
+    end
 end
 
 -- скрыть или показать миникарту

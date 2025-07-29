@@ -7,18 +7,18 @@ local dist = 10
 function on_use() 
 	for i=1,65535 do
 		local anom = level.object_by_id(i)
-                if anom ~= nil and anom:is_anomaly() and 
-                        anom:section() ~= "zone_flame_small" and 
-                        anom:section() ~= "zone_no_gravity" and
-                        anom:section() ~= "zone_rusty_hair" and
-                        anom:section() ~= "zone_burning_fuzz1" and
-                        anom:section() ~= "zone_burning_fuzz" and
-                        anom:section() ~= "zone_burning_fuzz_weak" and
-                        anom:section() ~= "zone_burning_fuzz_average" and
-                        anom:section() ~= "zone_burning_fuzz_strong" and
-                        anom:position():distance_to(db.actor:position()) < dist then
-
-			table.insert(tab_anoms, anom)					
+                if anom ~= nil and anom:is_anomaly() then
+					if anom:section() ~= "zone_flame_small" and anom:section() ~= "zone_no_gravity"
+					 and anom:section() ~= "zone_rusty_hair" and anom:section() ~= "zone_burning_fuzz1"
+					 and anom:section() ~= "zone_burning_fuzz" and anom:section() ~= "zone_burning_fuzz_weak"
+					 and anom:section() ~= "zone_burning_fuzz_average" and anom:section() ~= "zone_burning_fuzz_strong"
+					 and anom:position():distance_to(db.actor:position()) < dist then
+						table.insert(tab_anoms, anom)					
+					end
+					if anom:name() == "lvl1_escape_zone_gravi_zone_weak_noart_0043" and db.actor:has_info("esc_trader_about_anomalies_razradit") then
+						db.actor:give_info_portion("esc_trader_about_anomalies_razradit_disable")
+					end
+						
 		end
 	end
 

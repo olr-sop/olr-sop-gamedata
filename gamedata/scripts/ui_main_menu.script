@@ -274,122 +274,120 @@ function main_menu:OnButton_show_spawn_menu() --/#+# (debug spawn)
 	end
 end
 
-function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
-	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
-	local bind = dik_to_bind(dik)
-	local console = get_console()
-	
-	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-		if level.present() and (db.actor ~= nil) and db.actor:alive() then
-			if dik == DIK_keys.DIK_ESCAPE then
-				self:OnButton_return_game()
-			elseif dik == DIK_keys.DIK_F2 then
-				self:OnButton_show_toolskit_menu()
-			elseif dik == DIK_keys.DIK_F3 then
-				self:OnButton_show_spawn_menu()
-			end
-		end
+function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
+    CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+    local bind = dik_to_bind(dik)
+    local console = get_console()
 
-		if dik == DIK_keys.DIK_Q then
-			self:OnMessageQuitWin()
-		end
+    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+        if level.present() and (db.actor ~= nil) and db.actor:alive() then
+            if dik == DIK_keys.DIK_ESCAPE then
+                self:OnButton_return_game()
+            elseif dik == DIK_keys.DIK_F2 then
+                self:OnButton_show_toolskit_menu()
+            elseif dik == DIK_keys.DIK_F3 then
+                self:OnButton_show_spawn_menu()
+            end
+        end
 
-		if olr.olrdbg == true then
+        if dik == DIK_keys.DIK_Q then
+            self:OnMessageQuitWin()
+        end
 
-	if dik == DIK_keys.DIK_F then
-		get_console():execute("demo_record 1")
-		get_console():execute("main_menu off")
-	end
+        if olr.olrdbg == true then
+            if dik == DIK_keys.DIK_F then
+                get_console():execute("demo_record 1")
+                get_console():execute("main_menu off")
+            end
 
-	if dik == DIK_keys.DIK_S and alife() == nil then
-		self:OnButton_load_spawn()
-	end
+            if dik == DIK_keys.DIK_S and alife() == nil then
+                self:OnButton_load_spawn()
+            end
 
-if dik == DIK_keys.DIK_D then
-	if olr_timers.has_timer("zombies_task_select_timer") then
-		log1(" zombies_task_select_timer HAS")
-	end
-	if olr_timers.has_timer("dogs_task_select_timer") then
-		log1(" dogs_task_select_timer HAS")
-	end
-	if olr_timers.has_timer("artefact_merger_timer") then
-		log1(" artefact_merger_timer HAS")
-	end
-	if olr_timers.has_timer("oms3") then
-		log1(" oms3 HAS")
-	end
-	olr.dump_timers()
-	get_console():execute("main_menu off") 
-end
+            if dik == DIK_keys.DIK_D then
+                if olr_timers.has_timer("zombies_task_select_timer") then
+                    log1(" zombies_task_select_timer HAS")
+                end
+                if olr_timers.has_timer("dogs_task_select_timer") then
+                    log1(" dogs_task_select_timer HAS")
+                end
+                if olr_timers.has_timer("artefact_merger_timer") then
+                    log1(" artefact_merger_timer HAS")
+                end
+                if olr_timers.has_timer("oms3") then
+                    log1(" oms3 HAS")
+                end
+                olr_timers.dump_timers()
+                get_console():execute("main_menu off")
+            end
 
-if dik == DIK_keys.DIK_S then
-	for key, value in pairs(xvars()) do
-		log1(" "..key.." = "..tostring(value).."")
-		get_console():execute("main_menu off")
-	end
-	--for key, value in pairs(xvars.dead_in_offline()) do
-	--	log1(" dead_in_offline table -  "..key.." = "..tostring(value).."")
-	--	get_console():execute("main_menu off")
-	--end
-end
+            if dik == DIK_keys.DIK_S then
+                for key, value in pairs(xvars()) do
+                    log1(" " .. key .. " = " .. tostring(value) .. "")
+                    get_console():execute("main_menu off")
+                end
+            --for key, value in pairs(xvars.dead_in_offline()) do
+            --	log1(" dead_in_offline table -  "..key.." = "..tostring(value).."")
+            --	get_console():execute("main_menu off")
+            --end
+            end
 
-if dik == DIK_keys.DIK_R then
-	_G.nnnn = nil
-	get_console():execute("main_menu off")
-	log1("nnnn script reloaded")
-end
+            if dik == DIK_keys.DIK_R then
+                _G.nnnn = nil
+                get_console():execute("main_menu off")
+                log1("nnnn script reloaded")
+            end
 
-if dik == DIK_keys.DIK_T then
-	smart_terrain.stat()
-	get_console():execute("main_menu off")
-end
+            if dik == DIK_keys.DIK_T then
+                smart_terrain.stat()
+                get_console():execute("main_menu off")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD1 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl1_escape")
-end
+            if dik == DIK_keys.DIK_NUMPAD1 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl1_escape")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD5 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl5_bar")
-end
+            if dik == DIK_keys.DIK_NUMPAD5 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl5_bar")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD2 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl2_garbage")
-end
+            if dik == DIK_keys.DIK_NUMPAD2 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl2_garbage")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD3 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl3_agroprom")
-end
+            if dik == DIK_keys.DIK_NUMPAD3 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl3_agroprom")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD4 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl4_darkdolina")
-end
+            if dik == DIK_keys.DIK_NUMPAD4 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl4_darkdolina")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD5 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl5_bar")
-end
+            if dik == DIK_keys.DIK_NUMPAD5 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl5_bar")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD6 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl6_rostok")
-end
+            if dik == DIK_keys.DIK_NUMPAD6 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl6_rostok")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD7 then
-get_console():execute("main_menu off")
-get_console():execute("jump_to_level lvl7_yantar")
-end
+            if dik == DIK_keys.DIK_NUMPAD7 then
+                get_console():execute("main_menu off")
+                get_console():execute("jump_to_level lvl7_yantar")
+            end
 
-if dik == DIK_keys.DIK_NUMPAD8 then
-game.start_tutorial("credits_seq")
---game.start_tutorial("mov_blokpost_endgame")
-end
-		end
-	end
-   
-	return true
+            if dik == DIK_keys.DIK_NUMPAD8 then
+                game.start_tutorial("credits_seq")
+            end
+        end
+    end
+
+    return true
 end

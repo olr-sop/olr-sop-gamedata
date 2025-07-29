@@ -1081,25 +1081,6 @@ function ph_actor()
 	end
 end
 
--- Дамп текущих таймеров в лог
-function dump_timers()
-	for a = 1, 9000 do
-		tmp = load_xvars("xt" .. a, nil)
-		if tmp then
-			local time = game.time()
-			local timvar = load_xvars("xd" .. a, nil)
-			log1("-----------------------------------")
-			local value_time = timvar - time
-			local hours = math.floor(value_time / 3600000)
-			local minutes = math.floor(value_time / 60000 - hours * 60)
-			log1("таймер - [" ..tmp .."] // часов - [" ..hours .. "] // минут - [" .. minutes .. "] // мсекунд - [" .. value_time .. "]")
-			log1("-----------------------------------")
-		end
-	end
-	log1("timers count - " .. xvars.timers_count .. "")
-	log1("timers ended - " .. xvars.timers_done .. "")
-end
-
 --
 function can_save()
 	return not (db.actor:is_talking() or has_alife_info("ui_car_body") or has_alife_info("ui_inventory") or has_alife_info("ui_pda"))

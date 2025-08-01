@@ -1081,7 +1081,8 @@ function upd_cond_foods_serv()
                 
                 -- Проверяем, находится ли еда у торговца
                 local is_trader_item = false
-                if obj:parent() ~= nil and trader_sections[obj:parent():section()] then
+				local p_obj = alife():object(obj.parent_id)
+                if p_obj ~= nil and trader_sections[p_obj:section_name()] then
                     is_trader_item = true
                     cond_loss_multiplier = cond_loss_multiplier * 0.25 -- у торговцев портится в 4 раза медленнее
                 end
@@ -5449,26 +5450,23 @@ function script_boss_kill_timer()
 end
 
 function hit_boss_atack()
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl16_generators_staler_undead_olr_0002" then
-				local h = hit()
-				h.power = 0.1
-				h.direction = vector():set(0, 100, 0)
-				h.impulse = 20
-				h.draftsman = db.actor
-				h.type = hit.strike
-				car:hit(h)
-				local pos = car:position()
-				local x, y, z = pos.x, pos.y, pos.z
-				particles_object([[anomaly\a-03-flash-sparks_old00]]):play_at_pos(vector():set(x, y, z))
-				particles_object([[anomaly\a-03-expl-sparks_00]]):play_at_pos(vector():set(x, y, z))
-				particles_object([[anomaly2\monolith_golo_death_olr]]):play_at_pos(vector():set(x, y, z))
-				local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\sob]])
-				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-			end
-		end
+	local car = alife():object("lvl16_generators_staler_undead_olr_0002")
+	if car then
+		local h = hit()
+		h.power = 0.1
+		h.direction = vector():set(0, 100, 0)
+		h.impulse = 20
+		h.draftsman = db.actor
+		h.type = hit.strike
+		car:hit(h)
+		
+		local pos = car:position()
+		particles_object([[anomaly\a-03-flash-sparks_old00]]):play_at_pos(pos)
+		particles_object([[anomaly\a-03-expl-sparks_00]]):play_at_pos(pos)
+		particles_object([[anomaly2\monolith_golo_death_olr]]):play_at_pos(pos)
+		
+		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\sob]])
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
 end
 
@@ -5477,13 +5475,7 @@ function kill_zombies_around()
 		local npc = level.object_by_id(k)
 		if npc and npc:is_stalker() and npc:position():distance_to(db.actor:position()) < 195 then
 			if npc:character_community() == "zombied" then
-				local h = hit()
-				h.power = 1114
-				h.direction = vector():set(0, 10, 0)
-				h.impulse = 1
-				h.draftsman = db.actor
-				h.type = hit.strike
-				npc:hit(h)
+				npc:kill(npc) -- нафига тут было наносить хит если можно через kill убивать? Тем более в онлайне
 			end
 		end
 	end
@@ -5707,10 +5699,7 @@ function boss_talk_one_done()
 		local obj = sim:object(id)
 		if obj then
 			local sect = obj:section_name()
-			if
-				sect == "wpn_gauss" or
-				sect == "wpn_pistol_future"
-			then 
+			if sect == "wpn_gauss" or sect == "wpn_pistol_future" then 
 				sim:release(obj)					
 			end
 		end
@@ -5718,10 +5707,10 @@ function boss_talk_one_done()
 
 	local sobj = alife():object("ph_warlab_zaval_podval_0004") 
 	if sobj then 
-	local id = sobj.id
-			alife():set_switch_offline (id, true)
-			alife():set_switch_online (id, false)
-			alife():set_interactive (id, false)
+		local id = sobj.id
+		alife():set_switch_offline (id, true)
+		alife():set_switch_online (id, false)
+		alife():set_interactive (id, false)
 		--log1(" box id"..id.."")
 	end
 	--log1("what")
@@ -6011,7 +6000,8 @@ function start_greh_prisoning_rush_spawn()
 end
 
 function set_rand_grehs()
-	local scientiscts = {
+
+	local grehs = {
 		["lvl9_military_stalker"] = true,
 		["lvl9_military_stalker_0000"] = true,
 		["lvl9_military_stalker_0001"] = true,
@@ -6032,24 +6022,17 @@ function set_rand_grehs()
 		[[actors\dark_stalker\dark_stalker_3]]
 	}
 
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if IsStalker(kill) then
-				local gvid = kill.m_game_vertex_id
-				if game_graph():valid_vertex_id(gvid) then
-					if alife():level_name(game_graph():vertex(gvid):level_id()) == "lvl9_military" then
-						if scientiscts[kill:name()] then
-							local pk = get_netpk(kill, 1)
-							if pk:isOk() then
-								local data = pk:get()
-								data.visual_name = visuals[math.random(#visuals)]
-								data.character_name = ""
-								pk:set(data)
-							end
-						end
-					end
+	for section, _ in pairs(grehs) do
+		local kill = alife():object(section)
+		if kill and IsStalker(kill) then
+			local gvid = kill.m_game_vertex_id
+			if game_graph():valid_vertex_id(gvid) and alife():level_name(game_graph():vertex(gvid):level_id()) == "lvl9_military" then
+				local pk = get_netpk(kill, 1)
+				if pk:isOk() then
+					local data = pk:get()
+					data.visual_name = visuals[math.random(#visuals)]
+					data.character_name = ""
+					pk:set(data)
 				end
 			end
 		end
@@ -6105,27 +6088,21 @@ function agr_yas_offl()
 end
 
 function punck_mosk_up()
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvlobhod_nofeet_rad" then
-				local h = hit()
-				h.power = 5230.1
-				h.direction = vector():set(0, 100, 0)
-				h.impulse = 2230
-				h.draftsman = db.actor
-				h.type = hit.strike
-				car:hit(h)
-				local pos = car:position()
-				local x, y, z = pos.x, pos.y, pos.z
-				particles_object([[anomaly\a-03-flash-sparks_old00]]):play_at_pos(vector():set(x, y, z))
-				particles_object([[anomaly\a-03-expl-sparks_00]]):play_at_pos(vector():set(x, y, z))
-				particles_object([[anomaly2\monolith_golo_death_olr]]):play_at_pos(vector():set(x, y, z))
-				--log1("hit fucker")
-				local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\sob]])
-				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-			end
-		end
+	local obj = alife():object("lvlobhod_nofeet_rad")
+	if obj then
+		local h = hit()
+		h.power = 5230.1
+		h.direction = vector():set(0, 100, 0)
+		h.impulse = 2230
+		h.draftsman = db.actor
+		h.type = hit.strike
+		obj:hit(h)
+		local pos = obj:position()
+		particles_object([[anomaly\a-03-flash-sparks_old00]]):play_at_pos(pos)
+		particles_object([[anomaly\a-03-expl-sparks_00]]):play_at_pos(pos)
+		particles_object([[anomaly2\monolith_golo_death_olr]]):play_at_pos(pos)
+		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\sob]])
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
 end
 
@@ -6161,20 +6138,15 @@ function start_shvatka_mosk_tmrst()
 end
 
 function tlpmoskfight3()
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvlobhod_nofeet_rad" then
-				local h = hit()
-				h.power = 0.1
-				h.direction = vector():set(0, -1, 0)
-				h.impulse = 0
-				h.draftsman = db.actor
-				h.type = hit.strike
-				car:hit(h)
-				--log1("hit fucker")
-			end
-		end
+	local obj = alife():object("lvlobhod_nofeet_rad")
+	if obj then
+		local h = hit()
+		h.power = 0.1
+		h.direction = vector():set(0, -1, 0)
+		h.impulse = 0
+		h.draftsman = db.actor
+		h.type = hit.strike
+		obj:hit(h)
 	end
 end
 
@@ -6200,13 +6172,9 @@ function tlpmoskfight2()
 end
 
 function kill_mosk_strahovka()
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvlobhod_nofeet_rad" then
-				car:kill(car)
-			end
-		end
+    local obj = alife():object("lvlobhod_nofeet_rad")
+    if obj then
+        obj:kill(obj)
 	end
 end
 
@@ -6224,73 +6192,30 @@ function tlpmoskfight()
 end
 
 function set_prip_mons()
-	local sobj = alife():object("lvl16_generators_staler_undead_olr_0004")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			local vis = [[actors\hero\hero_stalker]]
-			data.visual_name = vis
-			data.character_name = ""
-			pk:set(data)
-		end
-	end
-	local sobj = alife():object("lvl13_prip_staler_undead_olr")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			local vis = [[actors\monolith\monolith_hood_balon_antigas]]
-			data.visual_name = vis
-			data.character_name = ""
-			pk:set(data)
-		end
-	end
-	local sobj = alife():object("lvl16_generators_staler_undead_olr_0001")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			local vis = [[actors\hero\hero_stalker]]
-			data.visual_name = vis
-			data.character_name = ""
-			pk:set(data)
-		end
-	end
-	local sobj = alife():object("lvl16_generators_staler_undead_olr_0002")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			data.character_name = ""
-			pk:set(data)
-		end
-	end
-	local sobj = alife():object("lvl16_generators_staler_undead_olr_0003")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			data.character_name = ""
-			pk:set(data)
-		end
-	end
-	local sobj = alife():object("lvl16_generators_stalker_0033")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			data.character_name = ""
-			pk:set(data)
-		end
-	end
-	local sobj = alife():object("lvl16_generators_stalker_0032")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			data.character_name = ""
-			pk:set(data)
+	-- Врядли будет сильно быстрее, скорее всего разницы не будет, либо на уровне погрешности, тут чисто для читаемости
+	-- Таблица объектов и их визуалов (nil означает, что visual_name не меняется)
+	local objects_to_update = {
+		["lvl16_generators_staler_undead_olr_0004"] = [[actors\hero\hero_stalker]],
+		["lvl13_prip_staler_undead_olr"] = [[actors\monolith\monolith_hood_balon_antigas]],
+		["lvl16_generators_staler_undead_olr_0001"] = [[actors\hero\hero_stalker]],
+		["lvl16_generators_staler_undead_olr_0002"] = nil,
+		["lvl16_generators_staler_undead_olr_0003"] = nil,
+		["lvl16_generators_stalker_0033"] = nil,
+		["lvl16_generators_stalker_0032"] = nil
+	}
+
+	for section_name, visual_path in pairs(objects_to_update) do
+		local sobj = alife():object(section_name)
+		if sobj then
+			local pk = get_netpk(sobj, 1)
+			if pk:isOk() then
+				local data = pk:get()
+				data.character_name = ""	-- Очищаем character_name для всех объектов
+				if visual_path then			-- Обновляем visual_name если указан
+					data.visual_name = visual_path
+				end
+				pk:set(data)
+			end
 		end
 	end
 end
@@ -6310,14 +6235,8 @@ function spawn_barman_prip_now()
 	olr.del_by_name("lvl13_prip_space_restrictor_0009")
 	olr.spawn_on_obj("exo_outfit", "lvl13_prip_physic_object_0341")
 	--olr.spawn_on_obj("exo_acum_ob", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("antirad", "lvl13_prip_physic_object_0341")
-	olr.spawn_on_obj("antirad", "lvl13_prip_physic_object_0341")
+	olr.spawn_on_obj("sigaret", "lvl13_prip_physic_object_0341", 6)
+	olr.spawn_on_obj("antirad", "lvl13_prip_physic_object_0341", 2)
 	olr.kill_mon_in_radius(db.actor:position(), 55)
 end
 
@@ -6397,21 +6316,16 @@ function kill_krisa_deagle()
 end
 
 function kill_krisa_scr_prp()
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl13_prip_stalker_0089" then
-				local h = hit()
-				h.power = 0.1
-				h.direction = vector():set(0, -1, 0)
-				h.impulse = 0
-				h.draftsman = db.actor
-				h.type = hit.strike
-				car:hit(h)
-				--log1("hit fucker")
-			end
-		end
-	end
+    local obj = alife():object("lvl13_prip_stalker_0089")
+    if obj then
+        local h = hit()
+        h.power = 0.1
+        h.direction = vector():set(0, -1, 0)
+        h.impulse = 0
+        h.draftsman = db.actor
+        h.type = hit.strike
+        obj:hit(h)
+    end
 end
 
 function kill_krisa_pri()
@@ -6526,21 +6440,10 @@ function kill_barman_pr()
 	level.enable_input() -- как завалим
 	olr.enable_walk()
 	olr.del_by_name("lvl13_prip_space_restrictor_0018")
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl13_prip_stalker_0089" then
-				local h = hit()
-				h.power = 100000
-				h.direction = vector():set(0, -1, 0)
-				h.impulse = 0
-				h.draftsman = car
-				h.type = hit.strike
-				car:hit(h)
-			--log1("kill fucker")
-			end
-		end
-	end
+    local npc = alife():object("lvl13_prip_stalker_0089")
+    if npc then
+        npc:kill(npc)  -- зачем делать хит, тупо килл и всё
+    end
 end
 
 function pr_molols_1()
@@ -6575,23 +6478,19 @@ function del_mon_prfriend()
 end
 
 function rad_bun_to_mosk_sms()
-local sobj = alife():object("l10u_radar_bunker_physic_object_0075") 
-if sobj then 
-olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_part")) 
-end
-local sobj = alife():object("lvl12_radar_bunker_physic_object_0020") 
-if sobj then 
-olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_part")) 
-end
+	local sobj = alife():object("l10u_radar_bunker_physic_object_0075") 
+	if sobj then 
+		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_part")) 
+	end
+	local sobj = alife():object("lvl12_radar_bunker_physic_object_0020") 
+	if sobj then 
+		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_part")) 
+	end
 	news_manager.send_tip(db.actor, game.translate_string("rad_bun_to_mosk_sms_0"), nil, "unknown", 49000)
-	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0003")
+	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0003", 3)
 	olr.spawn_on_obj("m_burer_green", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("karlito", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("karlito", "lvl12_radar_bunker_zone_radioactive_killing_0003")
+	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
+	olr.spawn_on_obj("karlito", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
 	olr.spawen_phantoms()
 	olr_timers.st_timer("spawen_phantoms", 15, "olr.spawen_phantoms()")
 	olr_timers.st_timer("spawen_phantoms", 35, "olr.spawen_phantoms()")
@@ -6602,19 +6501,6 @@ end
 
 function bun_on_nasos()
 	olr.del_by_name("lvl12_radar_bunker_space_restrictor_0017")
-	olr.del_by_name("lvl_test_physic_object_0005")
-	olr.del_by_name("lvl_test_physic_object_0004")
-	olr.del_by_name("lvl_test_physic_object_0002")
-	olr.del_by_name("lvl_test_physic_object_0001")
-	olr.del_by_name("lvl_test_physic_object_0003")
-	olr.del_by_name("lvl_test_physic_object_0006")
-	olr.del_by_name("lvl_test_physic_object_0066")
-	olr.del_by_name("lvl_test_physic_object_0000")
-
-	olr.del_by_name("lvl_test_physic_object_0007")
-	olr.del_by_name("lvl_test_physic_object_0008")
-	olr.del_by_name("lvl_test_physic_object_0009")
-
 	olr.del_by_name("l10u_radar_bunker_physic_object_0048")
 	olr.spawn_on_obj("item_razradnik", "l10u_radar_bunker_physic_object_0147")
 	olr.spawn_on_obj("item_razradnik", "l10u_radar_bunker_physic_object_0148")
@@ -6622,58 +6508,46 @@ function bun_on_nasos()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\radar_bunker_drain_water]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 
-	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003")
+	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
 	olr.spawn_on_obj("m_burer_green", "lvl12_radar_bunker_zone_radioactive_killing_0003")
 
-	olr.spawn_on_obj("conserva", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("conserva", "lvl12_radar_bunker_zone_radioactive_killing_0003")
+	olr.spawn_on_obj("conserva", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
 
 end
 
 function bun_mosk_start_otkachka()
 
-	local cnt = 0
 	local sim = alife()
 	for id=1, 65534 do
 		local kill = sim:object(id)
 		if kill and IsStalker(kill) or IsMonster(kill) then
 			if kill.level_name == "lvl14_stancia" then
 				if not kill:alive() then
-					cnt = cnt+1
 					alife():release(kill, true) 
 				end
 			end		
 		end
 	end
-	log1(cnt)
 
 	olr.blow_add(500)
 
 	local bloodbridge = vector():set( -7.55, -25.69, 20.00 )
-	local a = alife():create("hand_torch", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-	local b = alife():create("battery_change", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-	local c = alife():create("conserva", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-	local d = alife():create("af_lichinka", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-	--clear_useful_for_ai(a)
-	--clear_useful_for_ai(b)
-	--clear_useful_for_ai(c)
-	--clear_useful_for_ai(d)
+	alife():create("hand_torch", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+	alife():create("battery_change", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+	alife():create("conserva", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+	alife():create("af_lichinka", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 
-	olr.spawn_on_obj("item_razradnik", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("item_razradnik", "lvl12_radar_bunker_zone_radioactive_killing_0003")
+	olr.spawn_on_obj("item_razradnik", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
 
-	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0002")
-	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0002")
-
+	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0002", 2)
 	olr.spawn_on_obj("bloodsucker_strong", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 	olr.spawn_on_obj("m_fracture_e", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 	olr.spawn_on_obj("m_pseudodog_e", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 	olr.spawn_on_obj("m_burer_green", "lvl12_radar_bunker_zone_radioactive_killing_0002")
-
 	olr.spawn_on_obj("af_lichinka", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 
-	news_manager.send_tip(db.actor, game.translate_string("bun_mosk_start_otkachka_0"), nil, "act", 49000)
+	--news_manager.send_tip(db.actor, game.translate_string("bun_mosk_start_otkachka_0"), nil, "act", 5000)
+	olr.hud_tip("",game.translate_string("bun_mosk_start_otkachka_0"), 10)
 
 	olr.to_online("l10u_radar_bunker_physic_object_0008")
 	olr.to_online("l10u_radar_bunker_physic_object_0007")
@@ -6697,8 +6571,7 @@ function bun_mosk_start_otkachka()
 end
 
 function ros_fun_start_delete()
-	olr.spawn_on_obj("korpus_gas", "lvl6_rostok_physic_object_0278")
-	olr.spawn_on_obj("korpus_gas", "lvl6_rostok_physic_object_0278")
+	olr.spawn_on_obj("korpus_gas", "lvl6_rostok_physic_object_0278", 2)
 	olr.del_by_name("lvl6_rostok_space_restrictor_0038")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\wood_break]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -6866,14 +6739,14 @@ function expl_actor_away()
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\pkm\shoot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	db.actor.health = -1
-	local zh = hit()
-	zh.draftsman = db.actor
-	zh.type = hit.wound
-	zh.direction = self.object:position():sub(actor)
-	zh:bone("pelvis")
-	zh.power = 1121
-	zh.impulse = 20.01
-	db.actor:hit(zh)
+	local h = hit()
+	h.draftsman = db.actor
+	h.type = hit.wound
+	h.direction = vector():set(0, 1, 0)
+	h:bone("pelvis")
+	h.power = 1121
+	h.impulse = 20.01
+	db.actor:hit(h)
 end
 
 function bar_robber_actor()

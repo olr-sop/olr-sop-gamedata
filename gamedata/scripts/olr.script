@@ -875,27 +875,44 @@ function hide_inv()
 	end
 end
 
------- Создать объект на позиции объекта (!объект родитель должн быть на аи-сетке!) 
+------ Создать объект на позиции объекта (!объект родитель должен быть на аи-сетке!)
 ------ olr.spawn_on_obj("wpn_pm", "escape_trader_0000") - создаём ПМ на позиции Жабы
-function spawn_on_obj(obj, objpos)
-	if not alife() then
-		return
-	end
-	if not obj then
-		return
-	end
-	if not objpos then
-		return
-	end
-	local sobjpos = alife():object(objpos)
-	if sobjpos then
-		--log1("spawn_on_obj")
-		local base_dir = vector():set(sobjpos.position.x, sobjpos.position.y, sobjpos.position.z)
-		local sobj = alife():create(obj, base_dir, sobjpos.m_level_vertex_id, sobjpos.m_game_vertex_id)
-		clear_useful_for_ai(sobj)
-		--olr.add_spot_on_map( sobj.id,"jaba_spotmap",sobj:name() )
-		return sobj
-	end
+------ olr.spawn_on_obj("wpn_pm", "escape_trader_0000", 5) - создаём 5 ПМ на позиции Жабы
+function spawn_on_obj(obj, objpos, count)
+    if not alife() then
+        return
+    end
+    if not obj then
+        return
+    end
+    if not objpos then
+        return
+    end
+    
+    -- Устанавливаем количество по умолчанию 1, если не указано
+    count = count or 1
+    
+    local sobjpos = alife():object(objpos)
+    if sobjpos then
+        --log1("spawn_on_obj")
+        local base_dir = vector():set(sobjpos.position.x, sobjpos.position.y, sobjpos.position.z)
+        local spawned_objects = {}
+        
+        for i = 1, count do
+            local sobj = alife():create(obj, base_dir, sobjpos.m_level_vertex_id, sobjpos.m_game_vertex_id)
+            clear_useful_for_ai(sobj)
+            table.insert(spawned_objects, sobj)
+            --olr.add_spot_on_map(sobj.id, "jaba_spotmap", sobj:name())
+        end
+        
+        -- Возвращаем таблицу созданных объектов, если count > 1
+        -- Или одиночный объект, если count == 1
+        if count > 1 then
+            return spawned_objects
+        else
+            return spawned_objects[1]
+        end
+    end
 end
 
 -- удалить объект по имени
@@ -910,6 +927,32 @@ function del_by_name(name_to_del)
 		end
 		alife():release(se_obj, true)
 	end	
+end
+
+-- убить нпс по имени в оффлайне или онлайне, похуй, проверяем по level.object_by_id что у нас онлайн или оффлайн
+function kill_by_name(name_to_kill)
+	local se_obj = alife():object(name_to_kill)
+	if se_obj and (IsStalker(se_obj) or IsMonster(se_obj)) then
+		--log1("kill npc: name - "..se_obj:name().." on level - "..se_obj.level_name.." with id - "..tostring(se_obj.id).."")
+
+		local obj_id = level.object_by_id(se_obj.id)
+		if obj_id then
+			obj_id:kill(obj_id) -- убиваем онлайнового непеся, так как obj_id нам вернул не nil (в данном случае он в онлайне)
+		else 					-- иначе пытаемся убить оффлайного через редактирование нет-пакета непеся
+			local pk = xs_netpk.monster(se_obj) 	-- сначала проверяем что наш серверный объект монстр
+			if not pk:isOk() then 					-- это не монстр
+				pk = xs_netpk.stalker(se_obj)		-- тогда проверяем что это сталкер
+			end
+			if not pk:isOk() then					-- если же это не монстр и не сталкер то пишет в лог и уходим
+				log1("! ERROR ! olr.kill_by_name - We trying to kill not monster or stalker! Script was called with arg = "..tostring(name_to_kill).."") -- пишем в лог кого мы тут навызывали
+				return
+			end
+			local data = pk:get()					-- получаем пакеты серверного объекта
+			data.health = 0
+			data.updhealth = 0
+			pk:set(data)							-- устанавливаем новые значения для серверного объекта
+		end
+	end
 end
 
 -- объект в онлайн (по имени)

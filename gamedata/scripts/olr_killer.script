@@ -1,4 +1,4 @@
--- hi_flyer  28/05/15
+-- hi_flyer	 28/05/15
 
 count = xvars.kill_count
 
@@ -8,55 +8,54 @@ end
 
 function kill_neutral(victim, who)
 	if who:id() == db.actor:id() then
-	if victim:name() == "lvl5_bar_stalker_0038" then
-		return
-	end
-	if victim:name() == "lvl3_agroprom_stalker_0045" then
-		return
-	end
-	if victim:name() == "lvl13_prip_stalker_0089" then
-		return
-	end
-	if victim:name() == "lvl1_escape_stalker_0038" then
-		return
-	end
-	if victim:name() == "lvl9_military_stalker_0012" then
-		return
-	end
-	if victim:name() == "lvl9_military_stalker_0013" then
-		return
-	end
-	if victim:name() == "lvl9_military_stalker_0014" then
-		return
-	end
-	if victim:name() == "lvl11_deadcity_stalker_0048" then
-		return
-	end
-	if victim:name() == "lvl9_military_stalker_0053" then
-		return
-	end
-	if victim:name() == "lvl9_military_stalker_0054" then
-		return
-	end
-	if victim:name() == "lvl9_military_stalker_0055" then
-		return
-	end
-	if victim:name() == "lvl8_swamp_stalker_0020" then
-		return
-	end
-	local sobj = game.translate_string(xvars.quest_two_target)
-	if sobj and sobj == game.translate_string(victim:name()) then
-		return
-	end
-	local sobj2 = game.translate_string(xvars.quest_two_target_bar)
-	if sobj2 and sobj2 == game.translate_string(victim:name()) then
-		return
-	end
+		if victim:name() == "lvl5_bar_stalker_0038" then
+			return
+		end
+		if victim:name() == "lvl3_agroprom_stalker_0045" then
+			return
+		end
+		if victim:name() == "lvl13_prip_stalker_0089" then
+			return
+		end
+		if victim:name() == "lvl1_escape_stalker_0038" then
+			return
+		end
+		if victim:name() == "lvl9_military_stalker_0012" then
+			return
+		end
+		if victim:name() == "lvl9_military_stalker_0013" then
+			return
+		end
+		if victim:name() == "lvl9_military_stalker_0014" then
+			return
+		end
+		if victim:name() == "lvl11_deadcity_stalker_0048" then
+			return
+		end
+		if victim:name() == "lvl9_military_stalker_0053" then
+			return
+		end
+		if victim:name() == "lvl9_military_stalker_0054" then
+			return
+		end
+		if victim:name() == "lvl9_military_stalker_0055" then
+			return
+		end
+		if victim:name() == "lvl8_swamp_stalker_0020" then
+			return
+		end
+		local sobj = game.translate_string(xvars.quest_two_target)
+		if sobj and sobj == game.translate_string(victim:name()) then
+			return
+		end
+		local sobj2 = game.translate_string(xvars.quest_two_target_bar)
+		if sobj2 and sobj2 == game.translate_string(victim:name()) then
+			return
+		end
 
-	if has_alife_info("prp_first") then
-		return
-	end
-
+		if has_alife_info("prp_first") then
+			return
+		end
 	end
 	this.kill_neutral11(victim, who)
 	this.kill_neutral22(victim, who)
@@ -70,30 +69,22 @@ function kill_neutral11(victim, who)
 		end
 		if not has_alife_info("monolit_na_kordone") then
 			local community = victim:character_community()
-			if community == "stalker" or
-		   		community == "dolg" or
-		   		community == "freedom"
-                   		and community ~= "sin"
-			then
-                		if not has_alife_info("messer_killar_pre") then
+			if community == "stalker" or community == "dolg" or community == "freedom" and community ~= "sin" then
+				if not has_alife_info("messer_killar_pre") then
 					if not olr_timers.has_timer("first_killer_timer") then
-
-    					for k,v in pairs(db.storage) do
-        					local stalker = level.object_by_id(k)
-            					if stalker and stalker:is_stalker() and stalker:alive() then
-							if stalker:see_right_now(db.actor) then
-			    					--log1("see how kill 1")
-
-								olr_timers.st_timer("first_killer_timer_sms", 900, "nick.first_killer_timer_seen("..tostring(victim:id())..")")
-								--log1(""..tostring(victim:character_name()).."")
-                						olr_timers.st_timer("first_killer_timer", 790, "nick.first_killer_timer()")
-								olr.info("just_kill_the_man")
-								xvars.kill_count = 1000
-
+						for k, v in pairs(db.storage) do
+							local stalker = level.object_by_id(k)
+							if stalker and stalker:is_stalker() and stalker:alive() then
+								if stalker:see_right_now(db.actor) then
+									--log1("see how kill 1")
+									olr_timers.st_timer("first_killer_timer_sms", 900, "nick.first_killer_timer_seen("..tostring(victim:id())..")")
+									--log1(""..tostring(victim:character_name()).."")
+									olr_timers.st_timer("first_killer_timer", 790, "nick.first_killer_timer()")
+									olr.info("just_kill_the_man")
+									xvars.kill_count = 1000
+								end
 							end
 						end
-					end
-
 					end
 				end
 			end
@@ -108,16 +99,12 @@ function kill_neutral22(victim, who)
 			return
 		end
 		local community = victim:character_community()
-		if community == "stalker" or
-		   community == "dolg" or
-		   community == "freedom"
-                   and community ~= "sin"
-		then
-                	if has_alife_info("messer_killar_washe") then
-                        	count = count + math.random(550,1000)
-                        	xvars.kill_count = count
-                        	db.actor:change_character_reputation(-500) 
-                        	--news_manager.send_tip(db.actor, "ÊËÓÍÒ "..count.." ñåé÷àñ.", nil, "dolg", 6000)
+		if community == "stalker" or community == "dolg" or community == "freedom" and community ~= "sin" then
+			if has_alife_info("messer_killar_washe") then
+				count = count + math.random(550, 1000)
+				xvars.kill_count = count
+				db.actor:change_character_reputation(-500)
+				--news_manager.send_tip(db.actor, "ÊËÓÍÒ "..count.." ñåé÷àñ.", nil, "dolg", 6000)
 			end
 		end
 	end
@@ -129,24 +116,23 @@ function trader_check_oplata(trader, actor)
 	local k_oplate_cost = xvars.kill_count
 	if k_oplate_cost > 0 and db.actor:money() >= k_oplate_cost then
 		return true
-	end 
+	end
 	return false
 end
 
 function trader_oplata_sama(trader, actor)
-        local k_oplat = math.floor(count)
+	local k_oplat = math.floor(count)
 	dialogs.relocate_money(actor, k_oplat, "out")
 	xvars.kill_count = 0
 end
 
 function rasplata_costs(first_speaker, second_speaker)
 	local task_texture, task_rect = get_texture_info("ui_iconsTotal_lost_money")
-	
+
 	local rasplata_costs_price = ""
 	local rasplata_costs_cost = 0
-	if db.actor ~= nil then 
+	if db.actor ~= nil then
 		local rasplata_costsp = count
-
 		if rasplata_costsp ~= nil then
 			rasplata_costs_cost = count
 			if rasplata_costs_cost > 0 then

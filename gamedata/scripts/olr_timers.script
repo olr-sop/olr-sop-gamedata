@@ -134,25 +134,29 @@ function dump_timers()
         if timer_name then
             active_count = active_count + 1
             local end_time = load_xvars("xd"..a, 0)
+            local action = load_xvars("xp"..a, "нет данных")
             local current_time = game.time()
             local time_left = end_time - current_time
             
-            -- Оригинальный расчёт времени (без изменений)
+            -- Оригинальный расчёт времени
             local hours = math.floor(time_left / 3600000)
             local minutes = math.floor(time_left / 60000 - hours * 60)
+            local seconds = math.floor((time_left % 60000) / 1000)
             
-            -- Красивый вывод с простыми символами
+            -- Красивый вывод с информацией о таймере
             log1("----- Таймер #"..a.." -----")
-            log1("> Имя:     "..timer_name)
-            log1("> Часов:   "..hours)
-            log1("> Минут:   "..minutes)
-            log1("> Мсекунд: "..time_left)
+            log1("> Имя:      "..timer_name)
+            log1("> Осталось: "..hours.."ч "..minutes.."м "..seconds.."с")
+            log1("> Вызовет:  "..action)
+			log1("------------------")
+			log1("> Current time: "..current_time)
+			log1("> Left time: "..time_left)
             log1("> End time: "..end_time)
             log1("------------------")
         end
     end
     
-    -- Статистика (без изменений логики)
+    -- Статистика
     log1("\nИТОГО:")
     log1("> Активных таймеров: "..active_count)
     log1("> Всего таймеров:   "..(xvars.timers_count or "N/A"))

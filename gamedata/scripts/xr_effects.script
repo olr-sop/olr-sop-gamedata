@@ -2567,11 +2567,12 @@ function yan_labirint_telep_5()
 end
 
 function esc_prizrak_hitted()
-	-- Первая часть функции остается без изменений
+
 	if not has_alife_info("jaba_start_phanrom_spawen_agressive") then
 		xr_effects.kill_actor()
 		db.actor.health = -11
 	end
+	
 	db.actor.health = -0.03
 	level.add_pp_effector("dead_zone.ppe", 971974, false)
 	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
@@ -2595,17 +2596,15 @@ function esc_prizrak_hitted()
 				"zombie_blue"
 			}
 			local section = sectionsa[math.random(#sectionsa)]
-			alife():create(section, db.actor:position():add(db.actor:direction():mul(-24)), 
-						 db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			alife():create(section, db.actor:position():add(db.actor:direction():mul(-24)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		end
 	end
 
 	nick.set_norm_relation_stalkers()
 
-	-- Оптимизированная часть с прямым доступом к объекту
 	local target = alife():object("lvl1_escape_stalker_0038")
 	if target then
-		local level_obj = level.object_by_id(target:id())
+		local level_obj = level.object_by_id(target.id)
 		if level_obj then
 			-- Создаем партиклы
 			local boss_particle = particles_object("anomaly2\\body_tear_00")
@@ -2722,7 +2721,7 @@ function mg_boloto_hitted()
 	local observer = alife():object("lvl11_deadcity_observer")
 	if not observer or observer.health <= 0 then return end
 
-	local level_observer = level.object_by_id(observer:id())
+	local level_observer = level.object_by_id(observer.id)
 	if not level_observer then return end
 
 	--log1("health - " .. observer.health .. " ")
@@ -3435,7 +3434,7 @@ function mosk_fight_hitted()
 	if xvars.mosk_hits > 10 then
 		local target = alife():object("lvlobhod_nofeet_rad")
 		if target then
-			local level_obj = level.object_by_id(target:id())
+			local level_obj = level.object_by_id(target.id)
 			if level_obj then
 				level_obj:kill(level_obj)
 				olr.horror_snd()

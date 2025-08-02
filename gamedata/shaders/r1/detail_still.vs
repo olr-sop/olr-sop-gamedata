@@ -5,6 +5,7 @@ struct vf
 	float4 hpos	: POSITION;
 	float4 C	: COLOR0;
 	float2 tc	: TEXCOORD0;
+	float fog : FOG;
 };
 
 uniform float4 		consts; // {1/quant,1/quant,diffusescale,ambient}
@@ -34,6 +35,9 @@ vf main (v_detail v)
 #else	
 	o.hpos = mul(m_WVP, pos); // xform, input in world coords
 #endif
+
+    // Calc fog
+    o.fog = calc_fogging(pos);
 	
 	o.C		= c0;
 	o.tc.xy		= (v.misc * consts).xy;

@@ -37,35 +37,34 @@ function action_deadpsy:update( delta )
 	self:switch_state( actor )
 	
 	if self.state == state_inside then
-
-        iblocitm = db.actor:object("psy_blocerator")
-        if iblocitm then
-        	iblocitm:set_condition(iblocitm:condition() - 0.00005)
-		local cond = iblocitm:condition()
-		if cond == 0.50 then
-			news_manager.send_tip(db.actor, game.translate_string("action_deadpsyupdate_0"), nil, "default", 49000)
-		elseif cond == 0.10 then
-			news_manager.send_tip(db.actor, game.translate_string("action_deadpsyupdate_1"), nil, "default", 49000)
+		local iblocitm = db.actor:object("psy_blocerator")
+		if iblocitm then
+			iblocitm:set_condition(iblocitm:condition() - 0.00005)
+			local cond = iblocitm:condition()
+			if cond == 0.50 then
+				news_manager.send_tip(db.actor, game.translate_string("action_deadpsyupdate_0"), nil, "default", 49000)
+			elseif cond == 0.10 then
+				news_manager.send_tip(db.actor, game.translate_string("action_deadpsyupdate_1"), nil, "default", 49000)
+			end
+			if cond <= 0.01 then
+				news_manager.send_tip(db.actor, game.translate_string("action_deadpsyupdate_2"), nil, "default", 49000)
+				olr.del(iblocitm)
+			end
 		end
-        	if cond <= 0.01 then
-			news_manager.send_tip(db.actor, game.translate_string("action_deadpsyupdate_2"), nil, "default", 49000)
-        		olr.del(iblocitm)
-        	end
-        end
 
-        if not iblocitm then
-		level.add_pp_effector ("dead_zone.ppe", 971974, false)
-        	--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
-       		local song_start = xr_sound.get_safe_sound_object("ambient\\special\\psy_noise")
-		song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
-        	db.actor.psy_health = -0.01
-        end
+		if not iblocitm then
+			level.add_pp_effector ("dead_zone.ppe", 971974, false)
+			--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
+			local song_start = xr_sound.get_safe_sound_object("ambient\\special\\psy_noise")
+			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
+			db.actor.psy_health = -0.01
+		end
 
-        if iblocitm then 
-		level.remove_pp_effector(971974)
-        	level.remove_cam_effector(19749)	
-	end	 
-end
+		if iblocitm then 
+			level.remove_pp_effector(971974)
+			level.remove_cam_effector(19749)	
+		end	 
+	end
 end
 
 
@@ -93,8 +92,8 @@ end
 
 function action_deadpsy:zone_leave()
 	self.state = state_outside
-        level.remove_pp_effector(971974)
-        level.remove_cam_effector(19749)
+	level.remove_pp_effector(971974)
+	level.remove_cam_effector(19749)
 end
 
 
@@ -113,12 +112,4 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
 end
 
-
-
 ---------------------------------------------------------------------------------------------------------------------
-
-
-
-		
-	
-	

@@ -71,36 +71,25 @@ function use_hud_item()
     end
 
     --------------------------------------------------------------------------
+	
 	if section == "detector_siniy" then
-		for i=1,65535 do
-			local anom = level.object_by_id(i)
-			if anom ~= nil and anom:is_anomaly()
-			 and anom:position():distance_to(db.actor:position()) < 20 
-			then
-				if anom:name() == "lvl1_escape_zone_acid_fog" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0001" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal2")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0002" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal3")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0003" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal4")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0005" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal5")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0006" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal6")
-					return
-				end
+		-- Таблица соответствия аномалий и info_portion
+		local anomaly_map = {
+			["lvl1_escape_zone_acid_fog"]	 = "esc_zam_jab_sdelal",
+			["lvl1_escape_zone_acid_fog_0001"] = "esc_zam_jab_sdelal2",
+			["lvl1_escape_zone_acid_fog_0002"] = "esc_zam_jab_sdelal3",
+			["lvl1_escape_zone_acid_fog_0003"] = "esc_zam_jab_sdelal4",
+			["lvl1_escape_zone_acid_fog_0005"] = "esc_zam_jab_sdelal5",
+			["lvl1_escape_zone_acid_fog_0006"] = "esc_zam_jab_sdelal6"
+		}
+
+		-- Проверяем каждую аномалию напрямую
+		for anomaly_name, info_portion in pairs(anomaly_map) do
+			local anom = alife():object(anomaly_name)
+			if anom and anom:is_anomaly() 
+			   and anom:position():distance_to(db.actor:position()) < 20 then
+				db.actor:give_info_portion(info_portion)
+				return
 			end
 		end
 	end

@@ -2223,7 +2223,7 @@ function yan_labirint_telep_dead_strahovka()
 end
 
 function yan_labirint_telep_dead()
-	for i = 1, 65535 do
+	for i = 1, 65534 do
 		local obj = level.object_by_id(i)
 		if obj ~= nil then
 			if obj:clsid() == clsid.zombie_s or obj:clsid() == clsid.zombie and not obj:alive() then
@@ -2567,25 +2567,24 @@ function yan_labirint_telep_5()
 end
 
 function esc_prizrak_hitted()
+	-- Первая часть функции остается без изменений
 	if not has_alife_info("jaba_start_phanrom_spawen_agressive") then
 		xr_effects.kill_actor()
 		db.actor.health = -11
 	end
 	db.actor.health = -0.03
 	level.add_pp_effector("dead_zone.ppe", 971974, false)
-	--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
 	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
 	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 	db.actor.psy_health = -0.05
 
+	-- Случайные эффекты
 	local rnd = math.random(1, 5)
 	if rnd == 1 then
 		olr.horror_snd()
 	elseif rnd == 2 then
 		olr.spawen_phantoms()
-	elseif rnd == 3 then
-		olr.spawn_crows(2, 22)
-	elseif rnd == 4 then
+	elseif rnd == 3 or rnd == 4 then
 		olr.spawn_crows(2, 22)
 	elseif rnd == 5 then
 		for id = 1, math.random(1, 2) do
@@ -2595,49 +2594,34 @@ function esc_prizrak_hitted()
 				"zombie_strong",
 				"zombie_blue"
 			}
-			local section = sectionsa[math.random(table.getn(sectionsa))]
-			alife():create(section, db.actor:position():add(db.actor:direction():mul(-24)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			local section = sectionsa[math.random(#sectionsa)]
+			alife():create(section, db.actor:position():add(db.actor:direction():mul(-24)), 
+						 db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		end
 	end
 
 	nick.set_norm_relation_stalkers()
 
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl1_escape_stalker_0038" then
-				local boss_particle = particles_object("anomaly2\\body_tear_00")
-				boss_particle:play_at_pos(vector():set(car:position().x, car:position().y, car:position().z))
+	-- Оптимизированная часть с прямым доступом к объекту
+	local target = alife():object("lvl1_escape_stalker_0038")
+	if target then
+		local level_obj = level.object_by_id(target:id())
+		if level_obj then
+			-- Создаем партиклы
+			local boss_particle = particles_object("anomaly2\\body_tear_00")
+			boss_particle:play_at_pos(level_obj:position())
 
-				local bez_var = math.random(1, 5)
-
-				if bez_var == 1 then
-					--log1("telep 1")
-					local bloodbridgew = vector():set(46, 3, 145)
-					--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
-					level.object_by_id(car:id()):set_position(bloodbridgew)
-				elseif bez_var == 2 then
-					--log1("telep 2")
-					local bloodbridgew2 = vector():set(64, 3, 169)
-					--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew2)
-					level.object_by_id(car:id()):set_position(bloodbridgew2)
-				elseif bez_var == 3 then
-					--log1("telep 3")
-					local bloodbridgew3 = vector():set(71, 11, 164)
-					--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew3)
-					level.object_by_id(car:id()):set_position(bloodbridgew3)
-				elseif bez_var == 4 then
-					--log1("telep 4")
-					local bloodbridgew4 = vector():set(66, 3, 150)
-					--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew4)
-					level.object_by_id(car:id()):set_position(bloodbridgew4)
-				elseif bez_var == 5 then
-					local bloodbridgew5 = vector():set(56, -0.36, 157)
-					--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
-					level.object_by_id(car:id()):set_position(bloodbridgew5)
-				--log1("telep 5")
-				end
-			end
+			-- Случайная телепортация
+			local teleport_positions = {
+				vector():set(46, 3, 145),	-- позиция 1
+				vector():set(64, 3, 169),	-- позиция 2
+				vector():set(71, 11, 164),	-- позиция 3
+				vector():set(66, 3, 150),	-- позиция 4
+				vector():set(56, -0.36, 157) -- позиция 5
+			}
+			
+			local new_pos = teleport_positions[math.random(1, 5)]
+			level_obj:set_position(new_pos)
 		end
 	end
 end
@@ -2687,20 +2671,22 @@ function del_horok_esc()
 end
 
 function kvest_esc_5_kill_voyaka()
-	news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_message_ferret_greeting"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)
+	-- Отправка сообщения остается без изменений
+	news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_message_ferret_greeting"), 
+						 math.random(1000, 3000), "stalker", 15000, nil, nil, false)
 
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl1_escape_stalker_0003" then
-				local h = hit()
-				h.power = 100
-				h.direction = vector():set(0, -1, 0)
-				h.impulse = 0
-				h.draftsman = car
-				h.type = hit.strike
-				car:hit(h)
-			end
+	-- Прямое обращение к объекту по имени
+	local target = alife():object("lvl1_escape_stalker_0003")
+	if target then
+		local npc = level.object_by_id(target:id())
+		if npc then
+			local h = hit()
+			h.power = 100
+			h.direction = vector():set(0, -1, 0)
+			h.impulse = 0
+			h.draftsman = npc
+			h.type = hit.strike
+			npc:hit(h)
 		end
 	end
 end
@@ -2719,89 +2705,77 @@ function mg_boloto_hitted()
 	}
 
 	local cur_weapon = db.actor:active_item()
-	if cur_weapon ~= nil then
-		local cur_weapon_sec = cur_weapon:section()
-		if effect_for_wpn[cur_weapon_sec] ~= nil then
-			db.actor.health = -0.05
-			level.add_pp_effector("dead_zone.ppe", 971974, false)
-			--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
-			local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
-			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
-			db.actor.psy_health = -0.05
-			nick.rnd_ppe_eff()
-			nick.phantasms_zombies()
+	if cur_weapon == nil then return end
+	
+	local cur_weapon_sec = cur_weapon:section()
+	if not effect_for_wpn[cur_weapon_sec] then return end
 
-			for i = 1, 65534 do
-				local car = level.object_by_id(i)
-				if car then
-					if car:name() == "lvl11_deadcity_observer" and car.health > 0 then
-						log1("health - " .. car.health .. " ")
+	-- Применяем эффекты к актору
+	db.actor.health = -0.05
+	level.add_pp_effector("dead_zone.ppe", 971974, false)
+	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
+	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
+	db.actor.psy_health = -0.05
+	nick.rnd_ppe_eff()
+	nick.phantasms_zombies()
 
-						local bez_var = math.random(1, 5)
-						if bez_var == 1 then
-							--log1("telep 1")
-							--local bloodbridgew = vector():set( 192, -5, 159 )
-							--level.object_by_id(car:id()):set_position(bloodbridgew)
-							--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
-							for i = 1, 12 do
-								local wait_time = 0
-								wait_time = time_global() + i * 1000
-								level.add_call(
-									function()
-										return time_global() > wait_time
-									end,
-									function()
-										local rndx = math.random(186, 195)
-										local rndy = math.random(146, 165)
-										local bloodbridgew = vector():set(rndx, -5, rndy)
-										level.object_by_id(car:id()):set_position(bloodbridgew)
-										local snd_obj = xr_sound.get_safe_sound_object([[monsters\biting\def_0]]) -- ПОПРАВИТЬ САМ ЗВУК
-										snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-									end
-								)
-							end
-							olr.spawen_phantoms()
-							local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\earthquake]])
-							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 2.0)
-						elseif bez_var == 2 then
-							local bloodbridgew2 = vector():set(178, -9, 186)
-							level.object_by_id(car:id()):set_position(bloodbridgew2)
-							--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew2)
-							--log1("telep 2")
-							olr.spawen_phantoms()
-							olr.horror_snd()
-							local snd_obji = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
-							snd_obji:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 3.0)
-						elseif bez_var == 3 then
-							local bloodbridgew3 = vector():set(177, -9, 127)
-							level.object_by_id(car:id()):set_position(bloodbridgew3)
-							--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew3)
-							--log1("telep 3")
-							olr.spawen_phantoms()
-							olr.horror_snd()
-							local snd_obj = xr_sound.get_safe_sound_object([[anomaly\emi_blowout]])
-							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 4.0)
-						elseif bez_var == 4 then
-							local bloodbridgew4 = vector():set(165, -9, 151)
-							level.object_by_id(car:id()):set_position(bloodbridgew4)
-							--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew4)
-							--log1("telep 4")
-							olr.spawen_phantoms()
-							olr.horror_snd()
-							local snd_obj = xr_sound.get_safe_sound_object([[actor\hit_fist]])
-							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 3.0)
-						elseif bez_var == 5 then
-							local bloodbridgew5 = vector():set(176, -9, 151)
-							level.object_by_id(car:id()):set_position(bloodbridgew5)
-							--alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
-							--log1("telep 5")
-							olr.spawen_phantoms()
-							olr.horror_snd()
-						end
+	-- Получаем наблюдателя напрямую
+	local observer = alife():object("lvl11_deadcity_observer")
+	if not observer or observer.health <= 0 then return end
+
+	local level_observer = level.object_by_id(observer:id())
+	if not level_observer then return end
+
+	--log1("health - " .. observer.health .. " ")
+
+	local bez_var = math.random(1, 5)
+	local teleport_effects = {
+		[1] = function()
+			-- Серия телепортаций с задержкой
+			for i = 1, 12 do
+				local wait_time = time_global() + i * 1000
+				level.add_call(
+					function() return time_global() > wait_time end,
+					function()
+						local rndx = math.random(186, 195)
+						local rndy = math.random(146, 165)
+						level_observer:set_position(vector():set(rndx, -5, rndy))
+						local snd_obj = xr_sound.get_safe_sound_object([[monsters\biting\def_0]])
+						snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 					end
-				end
+				)
 			end
+			olr.spawen_phantoms()
+			xr_sound.get_safe_sound_object([[ambient\weather\earthquake]]):play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 2.0)
+		end,
+		[2] = function()
+			level_observer:set_position(vector():set(178, -9, 186))
+			olr.spawen_phantoms()
+			olr.horror_snd()
+			xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]]):play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 3.0)
+		end,
+		[3] = function()
+			level_observer:set_position(vector():set(177, -9, 127))
+			olr.spawen_phantoms()
+			olr.horror_snd()
+			xr_sound.get_safe_sound_object([[anomaly\emi_blowout]]):play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 4.0)
+		end,
+		[4] = function()
+			level_observer:set_position(vector():set(165, -9, 151))
+			olr.spawen_phantoms()
+			olr.horror_snd()
+			xr_sound.get_safe_sound_object([[actor\hit_fist]]):play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 3.0)
+		end,
+		[5] = function()
+			level_observer:set_position(vector():set(176, -9, 151))
+			olr.spawen_phantoms()
+			olr.horror_snd()
 		end
+	}
+
+	-- Выполняем выбранный эффект
+	if teleport_effects[bez_var] then
+		teleport_effects[bez_var]()
 	end
 end
 
@@ -2835,36 +2809,21 @@ function phantsam_hitted()
 end
 
 function phatstm_telep()
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl8_swamp_phantasm" then
-				--log1("health - "..car.health.." ")
-				local bez_var = math.random(1, 5)
-				if bez_var == 1 then
-					--log1("telep 1")
-					local bloodbridgew = vector():set(-3, 3, -213)
-					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
-				elseif bez_var == 2 then
-					--log1("telep 2")
-					local bloodbridgew2 = vector():set(127, 2, -179)
-					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew2)
-				elseif bez_var == 3 then
-					--log1("telep 3")
-					local bloodbridgew3 = vector():set(184, 3, -202)
-					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew3)
-				elseif bez_var == 4 then
-					--log1("telep 4")
-					local bloodbridgew4 = vector():set(65, -6, -181)
-					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew4)
-				elseif bez_var == 5 then
-					local bloodbridgew5 = vector():set(0, -6, -207)
-					alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
-				--log1("telep 5")
-				end
-			end
-		end
-	end
+	-- Получаем объект фантома напрямую
+	local phantom = alife():object("lvl8_swamp_phantasm")
+	if not phantom then return end
+
+	-- Таблица возможных позиций для телепортации
+	local teleport_positions = {
+		vector():set(-3, 3, -213),	 -- позиция 1
+		vector():set(127, 2, -179),	  -- позиция 2
+		vector():set(184, 3, -202),	  -- позиция 3
+		vector():set(65, -6, -181),	  -- позиция 4
+		vector():set(0, -6, -207)	  -- позиция 5
+	}
+
+	local new_pos = teleport_positions[math.random(1, #teleport_positions)]
+	alife():teleport_object(phantom:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), new_pos)
 end
 
 function del_mg_ludoed()
@@ -3038,26 +2997,22 @@ function greh_pris_5()
 end
 
 function greh_pris_10()
-	olr.blow_add(250)
-	db.actor.health = 1
-	db.actor.satiety = 1
-	news_manager.send_tip(db.actor, game.translate_string("greh_pris_10_0"), 5, "act", 31000)
-	db.actor:give_info_portion("start_greh_prisoning_rush")
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if kill:name() == "lvl9_military_box_rukzak" then
-				alife():create("wpn_knife_old_rotten", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id, kill.id)
-				alife():create("battery_change", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id, kill.id)
-			end
-		end
-	end
+    olr.blow_add(250)
+    db.actor.health = 1
+    db.actor.satiety = 1
+	olr.hud_tip("", game.translate_string("greh_pris_10_0"), 10)
+    db.actor:give_info_portion("start_greh_prisoning_rush")
+
+    local box = alife():object("lvl9_military_box_rukzak")
+    if box then
+        alife():create("wpn_knife_old_rotten", box.position, box.m_level_vertex_id, box.m_game_vertex_id, box.id)
+        alife():create("battery_change", box.position, box.m_level_vertex_id, box.m_game_vertex_id, box.id)
+    end
 end
 
 function greh_pris_11()
 	olr.blow_add(250)
-	news_manager.send_tip(db.actor, game.translate_string("greh_pris_11_0"), 10, "act", 31000)
+	olr.hud_tip("", game.translate_string("greh_pris_11_0"), 10)
 	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -3069,14 +3024,14 @@ function greh_pris_11()
 end
 
 function use_greh_save()
-	local STbron = db.actor:object("greh_leader_key") 
-	if not STbron then
-		news_manager.send_tip(db.actor, game.translate_string("use_greh_save_0"), nil, "default", 31000)
+	local obj = db.actor:object("greh_leader_key") 
+	if not obj then
+		olr.hud_tip("", game.translate_string("use_greh_save_0"), 10)
 		return
 	end
-	alife():create('vetri_bezumia_doki', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	olr.del(STbron)
-	news_manager.send_tip(db.actor, game.translate_string("use_greh_save_1"), nil, "default", 31000)
+	alife():create("vetri_bezumia_doki", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	olr.del(obj)
+	news_manager.relocate_item(db.actor, "in", "vetri_bezumia_doki")
 end
 
 function swatoy_wtf1()
@@ -3102,20 +3057,7 @@ end
 function swatoy_wtf5()
 	local snd_obj = xr_sound.get_safe_sound_object([[weapons\gauss\shoot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl12_radar_bunker_staler_undead_olr_0001" then
-				local h = hit()
-				h.power = 100000
-				h.direction = vector():set(0, -1, 0)
-				h.impulse = 0
-				h.draftsman = car
-				h.type = hit.strike
-				car:hit(h)
-			end
-		end
-	end
+	olr.kill_by_name("lvl12_radar_bunker_staler_undead_olr_0001")
 end
 
 function del_fil_done_glaz()
@@ -3126,7 +3068,7 @@ function del_fil_done_glaz()
 end
 
 function now_iremember()
-	news_manager.send_tip(db.actor, game.translate_string("now_iremember_0"), nil, "default", 30000)
+	olr.hud_tip("", game.translate_string("now_iremember_0"), 15)
 	db.actor:give_info_portion("now_iremember_demand")
 end
 
@@ -3327,28 +3269,28 @@ end
 
 function take_psyhead_yan()
 	if has_alife_info("yan_doc_psy_start_has") then
-	olr.del_by_name("lvl7_yantar_physic_object_0708")
-	nik_dialog.out_item_much("proto_psy_shap",1)
-	if math.random(2) == 1 then
-		db.actor.health = -db.actor.health/math.random(2,5)
-	end
-	if math.random(2) == 1 then
-		db.actor.power = -db.actor.power/math.random(2,5)
-	end
-	if math.random(2) == 1 then
-		db.actor.psy_health = -db.actor.psy_health/math.random(2,5)
-	end
-	if math.random(2) == 1 then
-		db.actor.radiation = -db.actor.radiation/math.random(2,5)
-	end
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\low_base]])
-	if not snd_obj:playing() then 
-	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
-	end
-	alife():create("af_dummy_glassbeads", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
+		olr.del_by_name("lvl7_yantar_physic_object_0708")
+		nik_dialog.out_item_much("proto_psy_shap",1)
+		if math.random(2) == 1 then
+			db.actor.health = -db.actor.health/math.random(2,5)
+		end
+		if math.random(2) == 1 then
+			db.actor.power = -db.actor.power/math.random(2,5)
+		end
+		if math.random(2) == 1 then
+			db.actor.psy_health = -db.actor.psy_health/math.random(2,5)
+		end
+		if math.random(2) == 1 then
+			db.actor.radiation = -db.actor.radiation/math.random(2,5)
+		end
+		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\low_base]])
+		if not snd_obj:playing() then 
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+		end
+		alife():create("af_dummy_glassbeads", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
 		level.add_pp_effector("radar_wake.ppe", 20131, false)
-	db.actor:give_info_portion("take_psyhead_yan_have")
-	--nik_dialog.out_item_much("proto_psy_shap",1)
+		db.actor:give_info_portion("take_psyhead_yan_have")
+		--nik_dialog.out_item_much("proto_psy_shap",1)
 	end
 end
 
@@ -3358,7 +3300,7 @@ function take_nii_gravmolot()
 		olr_timers.st_timer("molot_burers", 7, "nick.molot_burers()")
 		nick.del_molot_agr()
 	else
-		news_manager.send_tip(db.actor, game.translate_string("take_nii_gravmolot_0"), nil, "act", 9000)
+		olr.hud_tip("", game.translate_string("take_nii_gravmolot_0"), 5)
 	end	
 end
 
@@ -3473,8 +3415,6 @@ function mosk_dead_now()
 end
 
 function mosk_fight_hitted()
-	--log1("mosk hit "..xvars.mosk_hits.."")
-
 	local effect_for_wpn = {
 		["wpn_rg-6"] = true,
 		["wpn_rg6_m1"] = true,
@@ -3485,23 +3425,22 @@ function mosk_fight_hitted()
 	}
 
 	local cur_weapon = db.actor:active_item()
-	if cur_weapon ~= nil then
+	if cur_weapon then
 		local cur_weapon_sec = cur_weapon:section()
-		if effect_for_wpn[cur_weapon_sec] ~= nil then
+		if effect_for_wpn[cur_weapon_sec] then
 			xvars.mosk_hits = xvars.mosk_hits + 1
 			olr.spawen_phantoms()
 		end
 	end
 
 	if xvars.mosk_hits > 10 then
-		for i = 1, 65534 do
-			local car = level.object_by_id(i)
-			if car then
-				if car ~= nil and car:name() == "lvlobhod_nofeet_rad" then
-					car:kill(car)
-					olr.horror_snd()
-					olr_timers.st_timer("expl_ttftor", 1, "nick.punck_mosk_up()")
-				end
+		local target = alife():object("lvlobhod_nofeet_rad")
+		if target then
+			local level_obj = level.object_by_id(target:id())
+			if level_obj then
+				level_obj:kill(level_obj)
+				olr.horror_snd()
+				olr_timers.st_timer("expl_ttftor", 1, "nick.punck_mosk_up()")
 			end
 		end
 	end
@@ -3518,8 +3457,8 @@ end
 function gen_zombi_bazooka()
 	olr.del_by_name("lvl16_generators_space_restrictor_0054")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\fear_hata]])
-		if not snd_obj:playing() then 
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 	end
 	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0096")
 	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0096")
@@ -3533,21 +3472,21 @@ function gen_start_open_door_one()
 	olr.del_by_name("lvl17_warlab_space_restrictor_0000")
 	news_manager.send_tip(db.actor, game.translate_string("gen_start_open_door_one_0"), nil, "act", 49000)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\siren_gen]])
-		if not snd_obj:playing() then 
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
+	if not snd_obj:playing() then 
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 	end
 end
 
 function use_gen_klava()
 	if not has_alife_info("gen_two_door_open_spusk") then
-	db.actor:give_info_portion("gen_two_door_open_spusk")
-	nick.rad_bun_tv_casuality_room()
-	olr.del_by_name("lvl16_generators_physic_object_0224")
-	olr.del_by_name("lvl17_warlab_space_restrictor_0000")
-	olr.del_by_name("labu_prefix_lights_hdsfanging_lamp_0039")
-	olr.del_by_name("lvl16_generators_controller_tubeman")
-	olr.kill_mon_in_radius(db.actor:position(), 95)
-	olr.to_online("lvl16_generators_physic_object_0249")
+		db.actor:give_info_portion("gen_two_door_open_spusk")
+		nick.rad_bun_tv_casuality_room()
+		olr.del_by_name("lvl16_generators_physic_object_0224")
+		olr.del_by_name("lvl17_warlab_space_restrictor_0000")
+		olr.del_by_name("labu_prefix_lights_hdsfanging_lamp_0039")
+		olr.del_by_name("lvl16_generators_controller_tubeman")
+		olr.kill_mon_in_radius(db.actor:position(), 95)
+		olr.to_online("lvl16_generators_physic_object_0249")
 	end
 end
 
@@ -3696,20 +3635,7 @@ function actor_usel_boss()
 	olr_blowout.blowout_additional_timer()
 	news_manager.send_tip(db.actor, game.translate_string("actor_usel_boss_0"), nil, "act", 49000)
 	olr.info("oso_start_goavay_visel")
-	for i = 1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl16_generators_staler_undead_olr_0003" then
-				local h = hit()
-				h.power = 9999999
-				h.direction = vector():set(0, 1, 0)
-				h.impulse = 2
-				h.draftsman = db.actor
-				h.type = hit.strike
-				car:hit(h)
-			end
-		end
-	end
+	olr.kill_by_name("lvl16_generators_staler_undead_olr_0003")
 	olr.del_by_name("lvl16_generators_space_restrictor_0070")
 	olr.del_by_name("lvl16_generators_space_restrictor_0057")
 	olr.del_by_name("lvl16_generators_space_restrictor_0056")
@@ -3718,67 +3644,34 @@ end
 function start_oso_killed_shahta()
 	level.add_cam_effector("camera_effects\\shell_shock.anm", 34956, false, "")
 	olr.del_by_name("lvl16_generators_space_restrictor_0061")
-	local obj = olr.spawn_on_obj("ph_med_stolik_01", "lvl16_generators_space_restrictor_0058")
-	level.client_spawn_manager():add(obj.id, 0,
-		function(id, obj)
-			local h = hit()
-			h.draftsman = obj
-			h.type = hit.strike
-			h.direction = vector():set(math.random(1), 0.1, math.random(1))
-			h.power = 1
-			h.impulse = 2
-			obj:hit(h)
-		end
-	)
-	local obj = olr.spawn_on_obj("dead_body_skelet", "lvl16_generators_space_restrictor_0058")
-	level.client_spawn_manager():add(obj.id, 0,
-		function(id, obj)
-			local h = hit()
-			h.draftsman = obj
-			h.type = hit.strike
-			h.direction = vector():set(math.random(1), 0.1, math.random(1))
-			h.power = 1
-			h.impulse = 2
-			obj:hit(h)
-		end
-	)
-	local obj = olr.spawn_on_obj("ph_med_stoyka_01", "lvl16_generators_space_restrictor_0058")
-	level.client_spawn_manager():add(obj.id, 0,
-		function(id, obj)
-			local h = hit()
-			h.draftsman = obj
-			h.type = hit.strike
-			h.direction = vector():set(math.random(1), 0.1, math.random(1))
-			h.power = 1
-			h.impulse = 2
-			obj:hit(h)
-		end
-	)
-	local obj = olr.spawn_on_obj("ph_shkaf_4", "lvl16_generators_space_restrictor_0058")
-	level.client_spawn_manager():add(obj.id, 0,
-		function(id, obj)
-			local h = hit()
-			h.draftsman = obj
-			h.type = hit.strike
-			h.direction = vector():set(math.random(1), 0.1, math.random(1))
-			h.power = 1
-			h.impulse = 2
-			obj:hit(h)
-		end
-	)
-	local obj = olr.spawn_on_obj("ph_item_mks10", "lvl16_generators_space_restrictor_0058")
-	level.client_spawn_manager():add(obj.id, 0,
-		function(id, obj)
-			local h = hit()
-			h.draftsman = obj
-			h.type = hit.strike
-			h.direction = vector():set(math.random(1), 0.1, math.random(1))
-			h.power = 1
-			h.impulse = 2
-			obj:hit(h)
-		end
-	)
-	for i = 1, 65535 do
+
+	local spawn_data = {
+		{section = "ph_med_stolik_01"},
+		{section = "dead_body_skelet"},
+		{section = "ph_med_stoyka_01"},
+		{section = "ph_shkaf_4"},
+		{section = "ph_item_mks10"}
+	}
+
+	local function create_hit_effect(obj)
+		local h = hit()
+		h.draftsman = obj
+		h.type = hit.strike
+		h.direction = vector():set(math.random(), 0.1, math.random())
+		h.power = 1
+		h.impulse = 2
+		obj:hit(h)
+	end
+
+	for _, data in ipairs(spawn_data) do
+		local obj = olr.spawn_on_obj(data.section, "lvl16_generators_space_restrictor_0058")
+		level.client_spawn_manager():add(obj.id, 0, 
+			function(id, obj) 
+				create_hit_effect(obj) 
+			end)
+	end
+	
+	for i = 1, 65534 do
 		local lokobj = level.object_by_id(i)
 		if lokobj then
 			if get_clsid(lokobj) == clsid.hanging_lamp and lokobj:position():distance_to(db.actor:position()) < 50 then
@@ -3788,6 +3681,7 @@ function start_oso_killed_shahta()
 			end
 		end
 	end
+	
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_2]])
 	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -3903,8 +3797,8 @@ end
 function bar_babah_start()
 	olr.del_by_name("lvl5_bar_space_restrictor_0126")
 	olr_timers.st_timer("killin", 15, "nick.barbah()")
-	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_0"), nil, "default", 5000)
-	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_1"), 5, "default", 25000)
+	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_0"), nil, "act", 5000)
+	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_1"), 5, "default", 15000)
 end
 
 function bar_gop_fail()
@@ -3924,9 +3818,18 @@ function take_gar_deathlamp()
 		olr.del_by_name("lvl2_garbage_physic_object_0114")
 		olr.give_item("af_art_lampa")
 		olr.horror_snd()
-		news_manager.send_tip(db.actor, game.translate_string("take_gar_deathlamp_0"), 5, "act", 15000)
-		news_manager.send_tip(db.actor, game.translate_string("take_gar_deathlamp_1"), 9, "act", 15000)
-		news_manager.send_tip(db.actor, game.translate_string("take_gar_deathlamp_2"), 14, "act", 15000)
+  		level.add_call(
+    		function() return time_global() > time_global() + 5000 end,
+    		function() olr.hud_tip("", game.translate_string("take_gar_deathlamp_0"), 5) end
+  		)
+  		level.add_call(
+    		function() return time_global() > time_global() + 10000 end,
+    		function() olr.hud_tip("", game.translate_string("take_gar_deathlamp_1"), 5) end
+  		)
+  		level.add_call(
+    		function() return time_global() > time_global() + 15000 end,
+    		function() olr.hud_tip("", game.translate_string("take_gar_deathlamp_2"), 5) end
+  		)					
 	end
 end
 
@@ -3939,7 +3842,7 @@ end
 
 function use_oldgauss_yan()
 	if not has_alife_info("laborant_otpravlaet_spat_gg_finished") then
-		news_manager.send_tip(db.actor, game.translate_string("use_oldgauss_yan_0"), nil, "default", 30000)
+		olr.hud_tip("", game.translate_string("use_oldgauss_yan_0"), 10)
 		return
 	end
 	olr.del_by_name("lvl7_yantar_physic_object_0013")
@@ -3956,14 +3859,14 @@ end
 function start_killing_kris_gar()
 	olr.del_by_name("lvl2_garbage_space_restrictor_0029")
 	olr.del_by_name("lvl2_garbage_space_restrictor_0027")
-	news_manager.send_tip(db.actor, game.translate_string("start_killing_kris_gar_0"), 1, "dolg", 15000)
-	news_manager.send_tip(db.actor, game.translate_string("start_killing_kris_gar_1"), 6, "unknown", 15000)
+	news_manager.send_tip(db.actor, game.translate_string("start_killing_kris_gar_0"), 1, "dolg", 10000)
+	news_manager.send_tip(db.actor, game.translate_string("start_killing_kris_gar_1"), 6, "unknown", 10000)
 	olr_timers.st_timer("kill_go_krisa_st_kills", 10, "nick.kill_go_krisa_st_kills()")
 end
 
 function find_killer_agro()
 	olr.info("spawn_killer_deader")
-	news_manager.send_tip(db.actor, game.translate_string("find_killer_agro_0"), nil, "unknown", 15000)
+	news_manager.send_tip(db.actor, game.translate_string("find_killer_agro_0"), nil, "unknown", 5000)
 	olr.del_by_name("lvl3_agroprom_space_restrictor_0021")	
 end
 
@@ -3977,7 +3880,7 @@ end
 
 function use_lift_bar_verh()
 	if not has_alife_info("informer_under_prison_talked") then
-		news_manager.send_tip(db.actor, game.translate_string("use_lift_bar_verh_0"), nil, "default", 30000)
+		olr.hud_tip("", game.translate_string("use_lift_bar_verh_0"), 10)
 		return
 	end
 	if not has_alife_info("informer_under_prison_first_down") then
@@ -3996,7 +3899,7 @@ end
 
 function use_lift_bar_niz()
 	if not has_alife_info("informer_under_down_power_on") then
-		news_manager.send_tip(db.actor, game.translate_string("use_lift_bar_niz_0"), nil, "default", 30000)
+		olr.hud_tip("", game.translate_string("use_lift_bar_verh_0"), 10)
 	return
 	end
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\power_on]])
@@ -4114,9 +4017,7 @@ function gen_talk_5()
 	olr.del_by_name("restrictor_monologe_gen_0003")
 	olr_blowout.blowout_additional_timer2()
 	news_manager.send_tip(db.actor, game.translate_string("gen_talk_5_0"), 5, "unknown", 30000)
-	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
-	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
-	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133")
+	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0133", 3)
 end
 
 function gen_talk_6()

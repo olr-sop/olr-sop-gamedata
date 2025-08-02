@@ -276,25 +276,21 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------
 
 function go_zombied_yantar()
-	if has_alife_info("radar_de_done") then ---------- проверка что отключили мозг
-		return
-	end
-	if bind_car.act_in_car_now() then
-		return
-	end
+	if has_alife_info("radar_de_done") then return end -- проверка что отключили мозг
+	if bind_car.act_in_car_now() then return end
+	
 	if xr_conditions.actor_in_zone(nil, nil, {"central_complex_zombied_to"}) then
 		if zombied_walk == false then
 			get_console():execute("cam_inert 0.9")
-			for i = 1, 65535 do
-				local lokobj = level.object_by_id(i)
-				if lokobj then
-					if lokobj:name() == "lvl7_yantar_physic_object_0010" then
-						local pos = lokobj:bone_position("bones_00")
-						local vDir = pos:sub(db.actor:position())
-						db.actor:set_actor_direction(-vDir:getH())
-						olr_timers.st_timer("remove_cam_inert_timer", 2, "nick.remove_cam_inert_timer()")
-						zombied_walk = true
-					end
+			local target = alife():object("lvl7_yantar_physic_object_0010")
+			if target then
+				local level_obj = level.object_by_id(target:id())
+				if level_obj then
+					local pos = level_obj:bone_position("bones_00")
+					local vDir = pos:sub(db.actor:position())
+					db.actor:set_actor_direction(-vDir:getH())
+					olr_timers.st_timer("remove_cam_inert_timer", 2, "nick.remove_cam_inert_timer()")
+					zombied_walk = true
 				end
 			end
 		end

@@ -5564,6 +5564,7 @@ function gen_off_last_rubilnik()
 	olr.del_by_name("lvl16_generators_m_poltergeist_strong_flame")
 	olr.del_by_name("lvl16_generators_m_poltergeist_strong_flame_0000")
 	olr.del_by_name("lvl16_generators_m_poltergeist_strong_flame_0001")
+	xvars.cur_fov = device():get_fov() -- на всякий перед тем как начинать его уменьшать запишем еще раз
 	olr_timers.st_timer("fov_gen_out", 3, "nick.fov_gen_out()")
 	olr_timers.st_timer("fov_gen_out", 6, "nick.fov_gen_out()")
 	olr_timers.st_timer("fov_gen_out", 9, "nick.fov_gen_out()")
@@ -5577,7 +5578,7 @@ function fov_gen_out_eff_rub()
 	level.show_indicators()
 	level.enable_input()
 	level.add_pp_effector("black.ppe", 201831, false)
-	device():set_fov(65)
+	device():set_fov(xvars.cur_fov) -- восстанавливаем из xvars хранилища
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\fear_hata]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	nick.gen_vtotoy_zaval_online() -- заваливаем второй этаж
@@ -6711,7 +6712,7 @@ function agr_del_zaval()
 end
 
 function zaval_remove_start_talk_tmrst()
-	olr_timers.st_timer("fov_gen_out", 23, "nick.esc_kil_mil_go()")
+	olr_timers.st_timer("esc_kill_military_under_brigde", 23, "nick.esc_kil_mil_go()")
 end
 
 function esc_kil_mil_go()
@@ -6772,7 +6773,7 @@ function rat_fly_away()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\low_base]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	bind_stalker.hide_weapon()
-	amk.save_variable("actor_fov_default_quest", device():get_fov())
+	xvars.cur_fov = device():get_fov()  -- на всякий перед тем как начинать его уменьшать запишем еще раз
 	olr_timers.st_timer("fov_gen_out", 3, "nick.fov_gen_out()")
 	olr_timers.st_timer("fov_gen_out", 6, "nick.fov_gen_out()")
 	olr_timers.st_timer("fov_gen_out", 9, "nick.fov_gen_out()")
@@ -6806,9 +6807,7 @@ end
 
 function fov_gen_out_end()
 	level.add_pp_effector("black.ppe", 201831, false)
-	local fov = amk.load_variable("actor_fov_default_quest", 65)
-	device():set_fov(fov)
-	amk.del_variable("actor_fov_default_quest")
+	device():set_fov(xvars.cur_fov) -- восстанавливаем из xvars хранилища
 	xr_effects.game_credits()
 end
 
@@ -10216,7 +10215,7 @@ function bun_swatoy_rush_enable()
 end
 
 function bun_swatoy_rush_enable2()
-	xvars.cur_fov = device():get_fov()
+	xvars.cur_fov = device():get_fov() -- записываем перед играми с фовом
 	device():set_fov(40)
 	olr_timers.st_timer("omsfssssf3", 3, "nick.bun_swatoy_rush_enable()")
 end

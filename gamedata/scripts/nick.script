@@ -6760,8 +6760,8 @@ function first_killer_timer_seen(id)
 	if sobj then
 		local pk = get_netpk(sobj,1)
 		if pk:isOk() then
-				local data = pk:get()
-				local name = data.character_name
+			local data = pk:get()
+			local name = data.character_name
 			local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
 				news_manager.send_tip(db.actor, game.translate_string("first_killer_timer_seen_0") .." "..name.. game.translate_string("first_killer_timer_seen_1") ..pos.." ".. game.translate_string("first_killer_timer_seen_2"), nil, "unknown", 39000)
 		end
@@ -6774,6 +6774,7 @@ function rat_fly_away()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\low_base]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	bind_stalker.hide_weapon()
+	amk.save_variable("actor_fov_default_quest", device():get_fov())
 	olr_timers.st_timer("fov_gen_out", 3, "nick.fov_gen_out()")
 	olr_timers.st_timer("fov_gen_out", 6, "nick.fov_gen_out()")
 	olr_timers.st_timer("fov_gen_out", 9, "nick.fov_gen_out()")
@@ -6807,7 +6808,9 @@ end
 
 function fov_gen_out_end()
 	level.add_pp_effector("black.ppe", 201831, false)
-	device():set_fov(65)
+	local fov = amk.load_variable("actor_fov_default_quest", 65)
+	device():set_fov(fov)
+	amk.del_variable("actor_fov_default_quest")
 	xr_effects.game_credits()
 end
 
@@ -8670,6 +8673,10 @@ function on_lab_swithc_dok_fin_done_del_door()
 	olr_timers.st_timer("blowout_additional_timer5", 11, "olr_blowout.blowout_additional_timer5()")
 end
 
+function buy_hand_zonamap_action()
+	olr.give_item("planshet")
+end
+
 function buy_elmagnbads_action()
 	local anomaly_tbl = {
 		["zone_witches_galantine"] = true,
@@ -10226,28 +10233,22 @@ function bun_swatoy_rush_sms()
 	bind_stalker.hide_weapon()
 	olr.disable_walk()
 	olr_timers.st_timer("omsfssssf33", 0.5, "nick.bun_swatoy_rush_enable2()")
-	for i = 1, 65535 do
-		local lokobj = level.object_by_id(i)
-		if lokobj then
-			if lokobj:name() == "lvl12_radar_bunker_staler_undead_olr" then
-				local pos = lokobj:bone_position("bip01_head")
-				local vDir = pos:sub(db.actor:position())
-				db.actor:set_actor_direction(-vDir:getH())
-				local dir_d = vector()
-				dir_d:set(-2, 1, -1)
-				local h = -dir_d:getH()
-				local p = -dir_d:getP()
-				local cam = actor_camera(0)
-				if cam == nil then
-					return 0, 0
-				end
-				if h then
-					cam.yaw = h
-				end
-				if p then
-					cam.pitch = p
-				end
-			end
+
+	local target = alife():object("lvl12_radar_bunker_staler_undead_olr")
+	if target then
+		local pos = target:bone_position("bip01_head")
+		local vDir = pos:sub(db.actor:position())
+		db.actor:set_actor_direction(-vDir:getH())
+		
+		local dir_d = vector()
+		dir_d:set(-2, 1, -1)
+		local h = -dir_d:getH()
+		local p = -dir_d:getP()
+		local cam = actor_camera(0)
+		
+		if cam then
+			if h then cam.yaw = h end
+			if p then cam.pitch = p end
 		end
 	end
 end
@@ -10316,7 +10317,7 @@ end
 
 function ludoed_away_feedback()
 	db.actor:change_character_reputation(-60)
-	news_manager.send_tip(db.actor, game.translate_string("ludoed_away_feedback_0"), nil, "unknown", 49000)
+	news_manager.send_tip(db.actor, game.translate_string("ludoed_away_feedback_0"), nil, "unknown", 15000)
 end
 
 function del_mg_ludoed_door()
@@ -10339,7 +10340,7 @@ end
 
 function chislo_ten()
 	if math.random(1,10) == 1 then
-		news_manager.send_tip(db.actor, game.translate_string("chislo_ten_0"), nil, "unknown", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("chislo_ten_0"), nil, "unknown", 5000)
 	end
 end
 
@@ -10365,11 +10366,11 @@ function radar_del_otrad()
 end
 
 function bob_ten()
-	news_manager.send_tip(db.actor, game.translate_string("bob_ten_0"), nil, "unknown", 19000)
+	news_manager.send_tip(db.actor, game.translate_string("bob_ten_0"), nil, "unknown", 5000)
 end
 
 function radar_na_tochke_govlab_sms()
-	news_manager.send_tip(db.actor, game.translate_string("radar_na_tochke_govlab_sms"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("radar_na_tochke_govlab_sms"), math.random(1000, 3000), "new_task", 10000, nil, nil, false)
 end
 
 function radar_del_sniper_in_vhod()
@@ -10386,24 +10387,24 @@ function start_timer_destroy_dyatel_pre()
 end
 
 function timer_destroy_dyatel_pre_done()
-	news_manager.send_tip(db.actor, game.translate_string("timer_destroy_dyatel_pre_done_0"), nil, "barman", 79000)
+	news_manager.send_tip(db.actor, game.translate_string("timer_destroy_dyatel_pre_done_0"), nil, "barman", 5000)
 	olr.info("destroy_dyatel_pre_done_inf")
 end
 
 function timer_jaba_mil_quest()
-	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest_0"), nil, "trader", 29000)	
+	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest_0"), nil, "trader", 10000)	
 end
 
 function timer_jaba_mil_quest2()
-	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest2_0"), nil, "trader", 29000)	
+	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest2_0"), nil, "trader", 10000)	
 end
 
 function timer_jaba_mil_quest3()
-	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest3_0"), nil, "trader", 29000)	
+	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest3_0"), nil, "trader", 10000)	
 end
 
 function timer_jaba_mil_quest4()
-	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest4_0"), nil, "trader", 29000)	
+	news_manager.send_tip(db.actor, game.translate_string("timer_jaba_mil_quest4_0"), nil, "trader", 10000)	
 	olr.info("mil_jaba_quest_art_start")
 	olr.blow_add(1000)
 end
@@ -10447,7 +10448,7 @@ function kvest_esc_5_dialog_vdome()
 		alife():create("horok_rukzak_arts", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 	end
 	if not has_alife_info("horek_zdoh_nahui") then
-		news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_vdome"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_vdome"), math.random(1000, 3000), "stalker", 10000, nil, nil, false)
 	end
 end
 
@@ -10474,7 +10475,7 @@ function otdaem_saf_papka_fil()
 	--if has_boots ~= nil then
 	--alife():release(alife():object(has_boots:id()))
 	--end
-	news_manager.send_tip(db.actor, game.translate_string("otdaem_saf_papka_fil_0"), nil, "default", 39000)
+	news_manager.relocate_item(db.actor, "in", "ammo_bolts")
 	alife():create("ammo_bolts", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	alife():create("ammo_bolts", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	alife():create("ammo_bolts", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
@@ -10512,7 +10513,7 @@ end
 
 function kvest_esc_5_dialog_start_spaven_glazagar_kick()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_start_spaven_glazagar_kick"), math.random(1000, 3000), "new_task", 15000, nil, "pda_news", false)	
+	news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_start_spaven_glazagar_kick"), math.random(1000, 3000), "new_task", 15000, nil, "stalker", false)	
 end
 
 function del_gar_nap_dead_doroga_nap()
@@ -10585,7 +10586,7 @@ function kill_actor_svd_dolina()
 	soundtrack.ros_shoot_max()
 	xr_effects.kill_actor()
 	db.actor.health = -10
-	news_manager.send_tip(db.actor, game.translate_string("kill_actor_svd_dolina"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("kill_actor_svd_dolina"), math.random(1000, 3000), "unknown", 10000, nil, nil, false)
 end
 
 function hy_punk_dont_shoor_my_rat()
@@ -10594,7 +10595,7 @@ function hy_punk_dont_shoor_my_rat()
 	end
 	soundtrack.ros_shoot_max()
 	db.actor.health = -1
-	news_manager.send_tip(db.actor, game.translate_string("hy_punk_dont_shoor_my_rat"), math.random(1000, 3000), "new_task", 15000, nil, nil, false)	
+	news_manager.send_tip(db.actor, game.translate_string("hy_punk_dont_shoor_my_rat"), math.random(1000, 3000), "unknown", 5000, nil, nil, false)	
 end
 
 -- удаляем группу магнит
@@ -10625,15 +10626,12 @@ function del_prizrak_esk_most()
 	soundtrack.esc_prizrak_agressive()
 	olr_timers.st_timer("del_prizrak_esk_timer", 5, "nick.del_prizrak_esk_most_deltimer()")
 	db.actor:disable_info_portion("esc_prizrak_lamp_info")
-	for i=1, 65534 do
-		local car = level.object_by_id(i)
-		if car then
-			if car ~= nil and car:name() == "lvl1_escape_stalker_0038" then
-				db.actor:change_character_reputation(45)
-				local bloodbridgew5 = vector():set( 10056, -0.36, 157 )
-				alife():teleport_object(car:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
-			end
-		end
+
+	local target = alife():object("lvl1_escape_stalker_0038")
+	if target then
+		db.actor:change_character_reputation(45)
+		local bloodbridgew5 = vector():set(10056, -0.36, 157)
+		alife():teleport_object(target:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
 	end
 end
 
@@ -10738,7 +10736,7 @@ end
 
 function start_bar_one_timer()
 	if not has_alife_info("kill_rats_garbage_start_done") then
-		news_manager.send_tip(db.actor, game.translate_string("start_bar_one_timer_0"), nil, "dolg_mask1", 25000)
+		news_manager.send_tip(db.actor, game.translate_string("start_bar_one_timer_0"), nil, "dolg", 10000, nil, nil, false)
 	end
 	local gtime = level.get_time_days()*60*24+level.get_time_hours()*60+level.get_time_minutes() 
 	xvars.bar_one_timer = gtime		
@@ -10956,7 +10954,7 @@ end
 
 function novic_leaded_dead_sms_slizen()
 	if has_alife_info("ds_olr_1_slizen") then
-		news_manager.send_tip(db.actor, game.translate_string("novic_leaded_dead_sms_slizen"), math.random(3000, 4000), "new_task", 25000, nil, "pda_objective", false)
+		news_manager.send_tip(db.actor, game.translate_string("novic_leaded_dead_sms_slizen"), math.random(3000, 4000), "unknown", 25000, nil, "pda_objective", false)
 		db.actor:give_info_portion("ds_olr_1_slizen_fail_info")
 	end
 end
@@ -11027,16 +11025,12 @@ end
 
 function camlook_dol_lampa_first()
 	get_console():execute("cam_inert 0.9")
-	for i = 1, 65535 do
-		local lokobj = level.object_by_id(i)
-		if lokobj then
-			if lokobj:name() == "warlab_prefix_lights_hanging_lamp_0144" then
-				local pos = lokobj:bone_position("link")
-				local vDir = pos:sub(db.actor:position())
-				db.actor:set_actor_direction(-vDir:getH())
-				olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
-			end
-		end
+	local obj = alife():object("warlab_prefix_lights_hanging_lamp_0144")
+	if obj then
+		local pos = obj:bone_position("link")
+		local vDir = pos:sub(db.actor:position())
+		db.actor:set_actor_direction(-vDir:getH())
+		olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
 	end
 end
 
@@ -11313,32 +11307,32 @@ function proverka_est_net_banok_rats()
 end
 
 function done_kill_gopllit_hmm_actor2()
-	news_manager.send_tip(db.actor, game.translate_string("done_kill_gopllit_hmm_actor2"), math.random(3000, 4000), "new_task", 15000, nil, "pda_objective", false)
+	olr.hud_tip("", game.translate_string("done_kill_gopllit_hmm_actor2"), 10)
 end
 
 function done_kill_gopllit_hmm_actor()
 	olr_timers.st_timer("jaba_about_deathtruck", 755, "nick.jaba_about_deathtruck()")
 	if has_alife_info("agr_olr_1_pogo_koluchki") then
-		news_manager.send_tip(db.actor, game.translate_string("done_kill_gopllit_hmm_actor"), math.random(3000, 4000), "new_task", 55000, nil, "pda_objective", false)
+		olr.hud_tip("", game.translate_string("done_kill_gopllit_hmm_actor"), 10)
 	end
 end
 
 function jaba_about_deathtruck()
-	news_manager.send_tip(db.actor, game.translate_string("jaba_about_deathtruck_0"), nil, "trader", 35000)
+	news_manager.send_tip(db.actor, game.translate_string("jaba_about_deathtruck_0"), nil, "jaba", 15000)
 end
 
 function sms_city_monol_fake_take()
-	news_manager.send_tip(db.actor, game.translate_string("sms_city_monol_fake_take"), math.random(3000, 4000), "new_task", 15000, nil, "pda_objective", false)
+	olr.hud_tip("", game.translate_string("sms_city_monol_fake_take"), 10)
 end
 
 function killlll_plot_mg_sms2()
-	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms2"), math.random(3000, 4000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms2"), math.random(3000, 4000), "act", 15000, nil, "pda_objective", false)
 	olr.del_by_name("lvl7_yantar_stalker_0023")
 	olr.del_by_name("yan_equip_helicopter_0000")
 end
 
 function ahh_banki_agr()
-	olr.hud_tip("", game.translate_string("ahh_banki_agr"), 5)
+	olr.hud_tip("", game.translate_string("ahh_banki_agr"), 10)
 end
 
 function digger_combez_zametka()
@@ -11377,14 +11371,7 @@ function done_kill_gopllit()
 end
 
 function killlll_max_ros()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl6_rostok_stalker_0021" then 
-			obj = alife():object(npc:id())
-			npc:kill(npc)	
-		end
-	end
+	olr.kill_by_name("lvl6_rostok_stalker_0021")
 end
 
 function goplit_5_have()
@@ -11738,8 +11725,8 @@ end
 
 function esc_detector_diger_otdaem()
 	db.actor:change_character_reputation(20)
-	nik_dialog.out_item_much("detector_simple",1, 0.24)
-	news_manager.send_tip(db.actor, game.translate_string("esc_detector_diger_otdaem_0"), 55, "default", 19000, nil, nil, false)
+	nik_dialog.out_item_much("detector_simple", 1, 0.24)
+	news_manager.send_tip(db.actor, game.translate_string("esc_detector_diger_otdaem_0"), 55, "stalker", 15000, nil, nil, false)
 end
 
 function arts_zakaz1_sred_otdaem()
@@ -11847,6 +11834,7 @@ function set_thirst_jaba()
 	db.actor:change_actor_thirst(1)
 	db.actor:give_money(-50)
 	game_stats.money_quest_update(-50)
+	news_manager.relocate_money(db.actor, "out", 50)
 end
 
 function mecheny_swamp_attackeds2121() 
@@ -11901,7 +11889,7 @@ function jaba_horok_dead()
 end
 
 function deldeadhorekfail()
-	news_manager.send_tip(db.actor, game.translate_string("deldeadhorekfail_0"), nil, "default", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("deldeadhorekfail_0"), nil, "default", 10000)
 	olr.del_by_name("lvl1_escape_stalker")
 end
 
@@ -12046,6 +12034,7 @@ function otdaem_yan_oborud_quest()
 	alife():create("battery_change", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 	alife():create("battery_change_headlamp", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 	alife():create("med_injector_capsule", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+	alife():create("planshet", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 	alife():create("item_razradnik", jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
 end
 
@@ -12326,7 +12315,7 @@ end
 
 function angry_barman_knife_fec()
 	db.actor:change_character_reputation(-10)
-	news_manager.send_tip(db.actor, game.translate_string("angry_barman_knife_fec_0"), nil, "barman", 25000)
+	news_manager.send_tip(db.actor, game.translate_string("angry_barman_knife_fec_0"), nil, "barman", 15000)
 end
 
 function precond_pda_mg()
@@ -12334,9 +12323,9 @@ function precond_pda_mg()
 end
 
 function otdaem_pda_mg()
-	news_manager.send_tip(db.actor, game.translate_string("otdaem_pda_mg_0"), nil, "money", 39000)
 	db.actor:give_money(700)
 	game_stats.money_quest_update(700)
+	news_manager.relocate_money(db.actor, "in", 700)
 	nik_dialog.out_item_much("device_pda_uchenyh_deadcity",1)
 end
 
@@ -12431,25 +12420,21 @@ function give_graviart(first_speaker, second_speaker)
 end
 
 function killlll_gar_naparnika_part()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl2_garbage_stalker_0037lloh" then 
-			obj = alife():object(npc:id())			
-		end
+	local npc = alife():object("lvl2_garbage_stalker_0037lloh")
+	if npc then
+		local obj = alife():object(npc:id())
 	end
 end
 
 function killlll_rabogo()
 	olr_timers.st_timer("illlll_rabog", 43, "nick.illlll_rabog()")
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl5_bar_stalker_0038" then 
-			obj = alife():object(npc:id())
-			npc:kill(npc)
+	local npc = alife():object("lvl5_bar_stalker_0038")
+	if npc then
+		local level_obj = level.object_by_id(npc:id())
+		if level_obj then
+			level_obj:kill(level_obj)
 			local snd_obj = xr_sound.get_safe_sound_object([[weapons\pm\shoot]])
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 2.0)			
+			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 2.0)
 		end
 	end
 end
@@ -12739,7 +12724,7 @@ end
 
 -- удаляем двери мг лидеров
 function mg_doors_leadesr_spawen()
-	news_manager.send_tip(db.actor, game.translate_string("mg_doors_leadesr_spawen_0"), 21, "freedom", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("mg_doors_leadesr_spawen_0"), 21, "freedom", 10000)
 	delete_netspawn_objects("lvl11_deadcity_physic_object_0737")
 end
 
@@ -12765,7 +12750,7 @@ function fuck_this_door_prip_pri()
 end	
 
 function seen_fuck_this_door_prip()
-	news_manager.send_tip(db.actor, game.translate_string("seen_fuck_this_door_prip_0"), nil, "flash", 39000)
+	news_manager.send_tip(db.actor, game.translate_string("seen_fuck_this_door_prip_0"), nil, "stalker", 15000)
 	olr.del_by_name("lvl5_bar_physic_object_1001")
 	olr.del_by_name("lvl5_bar_physic_object_1000")
 end
@@ -12794,7 +12779,7 @@ end
 -- переводим в ОФФЛАЙН професора верт
 function del_proffesor_ver()
 	olr_timers.st_timer("del_proffesor_ver_online", 4224, "nick.del_proffesoronline_ver()")
-	news_manager.send_tip(db.actor, game.translate_string("del_proffesor_ver_0"), 60, "freedom", 49000)
+	news_manager.send_tip(db.actor, game.translate_string("del_proffesor_ver_0"), 60, "freedom", 10000)
 	olr_timers.st_timer("omsoffeoffeff3", 25, "nick.del_agr_yan_arg_ployt()")
 	local se_obj = alife():story_object(1510)
 	if se_obj then
@@ -13007,8 +12992,8 @@ function del_zagrada_quest_one()
 	if se_obj then
 		alife():release(se_obj, true)
 		olr.beep()
-		news_manager.send_tip(db.actor, game.translate_string("del_zagrada_quest_one_0"), nil, "unknown", 9000)
-		news_manager.send_tip(db.actor, game.translate_string("del_zagrada_quest_one_1"), 10, "unknown", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("del_zagrada_quest_one_0"), nil, "unknown", 9000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("del_zagrada_quest_one_1"), 10, "unknown", 9000, nil, nil, false)
 	end
 end
 
@@ -13121,81 +13106,32 @@ function del_fake_pulemet()
 end
 
 function killlll_seregu()
-local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl5_bar_stalker" then 
-			obj = alife():object(npc:id())
-			npc:kill(npc)			
-		end
-	end
+	olr.kill_by_name("lvl5_bar_stalker")
 end
 
 function killlll_plot_mg()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl11_deadcity_flesh_strong" then 
-			obj = alife():object(npc:id())
-			npc:kill(npc)	
-		end
-	end
+	olr.kill_by_name("lvl11_deadcity_flesh_strong")
 end
 
 --------------------------Убийство ветеранов---------------------------------------------------
 function napgar_gl_zfoh()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl2_garbage_stalker_0037lloh" then 
-			obj = alife():object(npc:id())
-		npc:kill(npc)			
-		end
-	end
+	olr.kill_by_name("lvl2_garbage_stalker_0037lloh")
 end
 
 function lider_gl_zfoh()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "lvl5_bar_stalker_0031" then 
-			obj = alife():object(npc:id())
-		npc:kill(npc)			
-		end
-	end
+	olr.kill_by_name("lvl5_bar_stalker_0031")
 end
 
 function lider_gl_zfoh2()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "bar_bar_visitors_3_3_0000" then 
-			obj = alife():object(npc:id())
-		npc:kill(npc)			
-		end
-	end
+	olr.kill_by_name("bar_bar_visitors_3_3_0000")
 end
 
 function lider_gl_zfoh3()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "bar_bar_visitors_3_3_0001" then 
-			obj = alife():object(npc:id())
-		npc:kill(npc)
-		end
-	end
+	olr.kill_by_name("bar_bar_visitors_3_3_0001")
 end
 
 function lider_gl_zfoh4()
-	local npc,obj
-	for i=0,65534 do 
-		npc = level.object_by_id(i)
-		if npc and npc:name() == "bar_bar_visitors_3_3" then 
-			obj = alife():object(npc:id())
-		npc:kill(npc)			
-		end
-	end
+	olr.kill_by_name("bar_bar_visitors_3_3")
 end
 --------------------------Убийство ветеранов---------------------------------------------------
 
@@ -13205,9 +13141,9 @@ end
 
 -- испортился фонарь
 function device_torch_bad()
-	local STfonar = db.actor:item_in_slot(9)
-	if STfonar and STfonar:condition() > 0.16 then
-		STfonar:set_condition(0.16)
+	local torch_obj = db.actor:item_in_slot(9)
+	if torch_obj and torch_obj:condition() > 0.16 then
+		torch_obj:set_condition(0.16)
 	end
 end
 
@@ -13601,7 +13537,7 @@ function progulka_prisli_plos_lead12()
 end
 
 function mg_sms_hey_punkass()
-	news_manager.send_tip(db.actor, game.translate_string("st_mg_sms_hey_punkass"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_mg_sms_hey_punkass"), math.random(1000, 3000), "unknown", 15000, nil, "pda_objective", false)
 end
 
 function progulka_prisli_plos_lead11()
@@ -13609,7 +13545,7 @@ function progulka_prisli_plos_lead11()
 end
 
 function sms_val_garbage_bandits()
-	news_manager.send_tip(db.actor, game.translate_string("st_sms_val_garbage_bandits"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_sms_val_garbage_bandits"), math.random(1000, 3000), "default", 15000, nil, "pda_objective", false)
 end
 
 function olr_lab_2_door_unlocked_fake_sms1()
@@ -13619,8 +13555,7 @@ function olr_lab_2_door_unlocked_fake_sms1()
 end
 
 function olr_lab_2_door_unlocked_fake_sms2()
-	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("st_olr_lab_2_door_unlocked_fake_sms2"), math.random(5000, 7000), "new_task", 10000, nil, "pda_objective", false)
+	olr.hud_tip("", game.translate_string("st_olr_lab_2_door_unlocked_fake_sms2"), 5)
 end
 
 function olr_lab_2_door_unlocked_fake_sms3()
@@ -13634,12 +13569,12 @@ end
 
 function shakal_esc_sms1()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("st_shakal_esc_sms1"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_shakal_esc_sms1"), math.random(1000, 3000), "default", 15000, nil, "pda_objective", false)
 end
 
 function shakal_esc_sms2()
-	news_manager.send_tip(db.actor, game.translate_string("st_shakal_esc_sms2"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
-	news_manager.send_tip(db.actor, game.translate_string("shakal_esc_sms2_0"), 5, "trader", 25000)
+	news_manager.send_tip(db.actor, game.translate_string("st_shakal_esc_sms2"), math.random(1000, 3000), "default", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("shakal_esc_sms2_0"), 5, "jaba", 25000)
 end
 
 function progulka_prisli_plos_lead9()
@@ -13847,7 +13782,7 @@ end
 
 function bar_dolg_fantasm_go_message()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("bar_dolg_fantasm_go_message_0"), nil, "dolg_voronin", 49000, nil, "pda_objective", true)
+	news_manager.send_tip(db.actor, game.translate_string("bar_dolg_fantasm_go_message_0"), nil, "dolg", 10000, nil, "pda_objective", true)
 end
 
 function diggr_blokpost()
@@ -13856,7 +13791,7 @@ end
 
 function dofhodi_kvestpat()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("st_dofhodi_kvestpat"), math.random(1000, 1500), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_dofhodi_kvestpat"), math.random(1000, 1500), "jaba", 15000, nil, "pda_objective", false)
 	local sobj = alife():object("lvl2_garbage_af_jabiy_glaz_garbage") 
 	if sobj then 
 	local id = sobj.id
@@ -13868,13 +13803,13 @@ end
 
 function jaba_zavod_doki_escsa()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("st_jaba_zavod_doki_escsa"), math.random(1000, 3500), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_jaba_zavod_doki_escsa"), math.random(1000, 3500), "jaba", 15000, nil, "pda_objective", false)
 	olr.del_by_name("lvl1_escape_physic_object_0570")
 end
 
 function horok_ne_have_go_nazad()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("st_horok_ne_have_go_nazad"), math.random(1000, 1500), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_horok_ne_have_go_nazad"), math.random(1000, 1500), "jaba", 15000, nil, "pda_objective", false)
 end
 
 function sms_esc_olr_kvest_3_zametki_bio()
@@ -13892,12 +13827,12 @@ function pda_zarad_info_zaba()
 end
 
 function olr_blowout_first_zaba()
-	news_manager.send_tip(db.actor, game.translate_string("st_olr_blowout_first_zaba"), math.random(1000, 1500), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_blowout_first_zaba"), math.random(1000, 1500), "jaba", 10000, nil, "pda_objective", false)
 end
 
 function olr_blowout_first_zaba_blok()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("st_olr_blowout_first_zaba_blok"), math.random(1000, 1500), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("st_olr_blowout_first_zaba_blok"), math.random(1000, 1500), "jaba", 10000, nil, "pda_objective", false)
 end
 
 function bar_dolg_lider_zom3()
@@ -13918,17 +13853,17 @@ function pes_propaganda()
 	olr.del_by_name("lvl1_escape_stalker_0055")
 	olr.del_by_name("lvl1_escape_stalker_0054")
 	olr_timers.st_timer("pes_propaganda", 21, "nick.pes_propaganda222()")
-	news_manager.send_tip(db.actor, game.translate_string("pes_propaganda_0"), nil, "dolg", 29000)
-	news_manager.send_tip(db.actor, game.translate_string("pes_propaganda_1"), 12, "dolg", 29000)	
+	news_manager.send_tip(db.actor, game.translate_string("pes_propaganda_0"), nil, "dolg", 15000)
+	news_manager.send_tip(db.actor, game.translate_string("pes_propaganda_1"), 12, "dolg", 15000)	
 end
 
 function pes_propaganda222()
-	news_manager.send_tip(db.actor, game.translate_string("pes_propaganda222_0"), nil, "dolg", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("pes_propaganda222_0"), nil, "dolg", 10000)
 end
 
 function fraer_yeag_3()
 	if math.random(1,30) == 1 then
-		news_manager.send_tip(db.actor, game.translate_string("fraer_yeag_3_0"), nil, "zombied", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("fraer_yeag_3_0"), nil, "zombied", 5000)
 	end
 end
 
@@ -13967,59 +13902,59 @@ end
 
 function jaba_killar_washe()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("jaba_killar_washe"), math.random(1000, 15000), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("jaba_killar_washe"), math.random(1000, 15000), "jaba", 15000, nil, "pda_objective", false)
 end
 
 function jaba_killar_pre()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("jaba_killar_pre"), math.random(1000, 15000), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("jaba_killar_pre"), math.random(1000, 15000), "jaba", 15000, nil, "pda_objective", false)
 end
 
 function jaba_ohrene()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("jaba_ohrene"), math.random(1000, 15000), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("jaba_ohrene"), math.random(1000, 15000), "jaba", 15000, nil, "pda_objective", false)
 end
 
 function komandir_zdohnah()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("komandir_zdohnah"), math.random(500, 1000), "jaba", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("komandir_zdohnah"), math.random(500, 1000), "jaba", 15000, nil, "pda_objective", false)
 end
 
 function infor_glob_rad_palba()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("infor_glob_rad_palba"), math.random(1000, 3000), "new_task", 20000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("infor_glob_rad_palba"), math.random(1000, 3000), "default", 5000, nil, nil, false)
 end
 
 function voy_dolineaa()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("voy_dolineaa"), math.random(1000, 2000), "new_task", 35000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("voy_dolineaa"), math.random(1000, 2000), "jaba", 20000, nil, "pda_objective", false)
 end
 
 function kolodetz_task_jaba()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("kolodetz_task_jaba_0"), nil, "trader", 55000, nil, "pda_objective", true)
+	news_manager.send_tip(db.actor, game.translate_string("kolodetz_task_jaba_0"), nil, "jaba", 5000, nil, "pda_objective", true)
 end
 
 function coolweather_napaai11()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai11"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai11"), math.random(1000, 3000), "stalker", 5000, nil, "pda_objective", false)
 end
 
 function radovoy_dolineaa_opne()
 	olr.del_by_name("lvl4_darkdolina_physic_object_0027_tomb")
 	olr.del_by_name("lvl4u_darklab_physic_object_0572")
-	news_manager.send_tip(db.actor, game.translate_string("radovoy_dolineaa_opne"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("radovoy_dolineaa_opne"), math.random(1000, 3000), "unknown", 5000, nil, "pda_objective", false)
 end
 
 function coolweather_napaai22()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai22"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai22"), math.random(1000, 3000), "act", 5000, nil, "pda_objective", false)
 end
 
 function coolweather_napaai33()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai33"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai33"), math.random(1000, 3000), "stalker", 5000, nil, "pda_objective", false)
 end
 
 function coolweather_nap4()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap4"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap4"), math.random(1000, 3000), "act", 15000, nil, "pda_objective", false)
 	olr.del_by_name("gar_zaraza_nap_0001")
 	olr.del_by_name("gar_zaraza_nap_0000")
 	olr.del_by_name("gar_zaraza_nap")
@@ -14028,19 +13963,19 @@ end
 
 function kostumu_pesda_agr()
 	if has_alife_info("medpribor_kvest_start_find_friend") then
-		news_manager.send_tip(db.actor, game.translate_string("kostumu_pesda_agr"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+		news_manager.send_tip(db.actor, game.translate_string("kostumu_pesda_agr"), math.random(1000, 3000), "act", 15000, nil, "pda_objective", false)
 	end
 end
 
 function kostumu_pesda_agr2()
 	if has_alife_info("medpribor_kvest_start_find_friend") then
 		olr.beep()
-		news_manager.send_tip(db.actor, game.translate_string("kostumu_pesda_agr2"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+		news_manager.send_tip(db.actor, game.translate_string("kostumu_pesda_agr2"), math.random(1000, 3000), "jaba", 15000, nil, nil, false)
 	end
 end
 
 function coolweather_nap3()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap3"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap3"), math.random(1000, 3000), "stalker", 15000, nil, "pda_objective", false)
 end
 
 function now_final_swapm_naprav_talk_done_docsms()
@@ -14053,30 +13988,28 @@ end
 
 function coolweather_nap()
 	olr.blow_add(150)
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", true)
-	for k,v in pairs(db.storage) do
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_nap"), math.random(1000, 3000), "stalker", 15000, nil, "pda_objective", true)
+	
+	for k, v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
-		if npc and npc:is_monster() and npc:position():distance_to(db.actor:position()) < 100 then
-			--log1("go offline "..npc:name().."")
-			local se_obj = alife():object(npc:id())
-			if se_obj then
-				alife():set_switch_offline (se_obj.id, true)
-				alife():set_switch_online (se_obj.id, false)
-				alife():set_interactive (se_obj.id, false)
-				olr_timers.st_timer("convert_online", 370, "olr_npc_eqp.convert_online_out("..npc:id()..")")
+		if npc and npc:position():distance_to(db.actor:position()) < 100 then
+			local should_process = false
+			
+			-- Проверяем условия для монстров или враждебных сталкеров
+			if npc:is_monster() then
+				should_process = true
+			elseif npc:is_stalker() then
+				local community = npc:character_community()
+				should_process = (community == "monolith" or community == "killer" or community == "bandit")
 			end
-		end
-	end
-	for k,v in pairs(db.storage) do
-		local npc = level.object_by_id(k)
-		if npc and npc:is_stalker() and npc:position():distance_to(db.actor:position()) < 100 then
-			if npc:character_community() == "monolith" or npc:character_community() == "killer" or npc:character_community() == "bandit" then
-				--log1("go offline "..npc:name().."")
+			
+			-- Обрабатываем подходящие NPC
+			if should_process then
 				local se_obj = alife():object(npc:id())
 				if se_obj then
-					alife():set_switch_offline (se_obj.id, true)
-					alife():set_switch_online (se_obj.id, false)
-					alife():set_interactive (se_obj.id, false)
+					alife():set_switch_offline(se_obj.id, true)
+					alife():set_switch_online(se_obj.id, false)
+					alife():set_interactive(se_obj.id, false)
 					olr_timers.st_timer("convert_online", 370, "olr_npc_eqp.convert_online_out("..npc:id()..")")
 				end
 			end
@@ -14085,23 +14018,23 @@ function coolweather_nap()
 end
 
 function coolweather_napaai2()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai2"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai2"), math.random(1000, 3000), "stalker", 5000, nil, "pda_objective", false)
 	for i = 1, 20 do
 		alife():create("m_crow", db.actor:position():add(db.actor:direction():mul(90)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	end
 end
 
 function coolweather_napaai()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai"), math.random(1000, 3000), "new_task", 10000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaai"), math.random(1000, 3000), "stalker", 10000, nil, "pda_objective", false)
 end
 
 function coolweather_napaaim()
-	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaaim"), math.random(1000, 3000), "new_task", 10000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("coolweather_napaaim"), math.random(1000, 3000), "act", 10000, nil, "pda_objective", false)
 end
 
 function prof_boloto_spawn_bandosov_smss5()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("prof_boloto_spawn_bandosov_smss5"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("prof_boloto_spawn_bandosov_smss5"), math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", false)
 end
 
 function rnd_zombies_spawn()
@@ -14122,7 +14055,7 @@ end
 
 function prof_boloto_spawn_bandosov_smss4()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("prof_boloto_spawn_bandosov_smss4"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("prof_boloto_spawn_bandosov_smss4"), math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", false)
 	level.add_pp_effector("vibros_p.ppe", 231, false)
 	nick.rnd_zombies_spawn()
 	for id = 1, 21 do
@@ -14157,24 +14090,24 @@ end
 
 function prof_heliequp_spawn_bandosov_smss()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_spawn_bandosov_smss"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("prof_boloto_spawn_bandosov_smss"), math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", false)
 	olr.kill_mon_in_radius(db.actor:position(), 120)
 end
 
 function killlll_plot_mg_sms3()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms3"), math.random(5000, 7000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms3"), math.random(5000, 7000), "ecolog", 15000, nil, "pda_objective", false)
 end
 
 function killlll_plot_mg_sms4()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms4"), math.random(5000, 7000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms4"), math.random(5000, 7000), "ecolog", 15000, nil, "pda_objective", false)
 end
 
 function yan_zamery_ucheny_zdoh_proff()
 	if not has_alife_info("yan_talk_done_zamery") then
 		olr.beep()
-		news_manager.send_tip(db.actor, game.translate_string("yan_zamery_ucheny_zdoh_proff"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+		news_manager.send_tip(db.actor, game.translate_string("yan_zamery_ucheny_zdoh_proff"), math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", false)
 	end
 end
 
@@ -14183,15 +14116,15 @@ function prof_heliequp_sms_krisabun()
 end
 
 function prof_heliequp_sms_pilot2()
-	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_sms_pilot2"), math.random(1000, 3000), "new_task", 25000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_sms_pilot2"), math.random(1000, 3000), "heli", 25000, nil, "pda_objective", false)
 end
 
 function prof_heliequp_sms_pilot()
-	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_sms_pilot"), math.random(1000, 3000), "new_task", 25000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_sms_pilot"), math.random(1000, 3000), "heli", 25000, nil, "pda_objective", false)
 end
 
 function prof_heliequp_smsone()
-	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_smsone"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("prof_heliequp_smsone"), math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", false)
 	olr.kill_mon_in_radius(db.actor:position(), 100)
 end
 
@@ -14202,15 +14135,15 @@ function yan_zamery_ucheny_gohome_proff()
 		function() return time_global() > wait_time end,
 		function() level.add_pp_effector("psychic.ppe", 20131, false) end
 	)
-	news_manager.send_tip(db.actor, game.translate_string("yan_zamery_ucheny_gohome_proff"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("yan_zamery_ucheny_gohome_proff"), math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", false)
 end
 
 function zov_monolita_pda()
-	news_manager.send_tip(db.actor, game.translate_string("zov_monolita_pda"), math.random(1000, 3000), "new_task", 5000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("zov_monolita_pda"), math.random(1000, 3000), "default", 5000, nil, nil, false)
 end
 
 function zov_kontakta_pda()
-	news_manager.send_tip(db.actor, game.translate_string("zov_kontakta_pda"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("zov_kontakta_pda"), math.random(1000, 3000), "default", 5000, nil, "pda_objective", false)
 end
 
 function zov_osvedom_case_pda()
@@ -14219,7 +14152,7 @@ function zov_osvedom_case_pda()
 end
 
 function zov_dveri_pda()
-	news_manager.send_tip(db.actor, game.translate_string("zov_dveri_pda"), math.random(1000, 3000), "new_task", 5000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("zov_dveri_pda"), math.random(1000, 3000), "default", 5000, nil, "pda_objective", false)
 end
 
 function zaba_ab_note()
@@ -14235,7 +14168,7 @@ end
 function jaba_ab_radweak()
 	olr.beep()
 	olr.info("tutor_radiat_jornl")
-	news_manager.send_tip(db.actor, game.translate_string("jaba_ab_radweak_0"), nil, "trader", 95000)
+	news_manager.send_tip(db.actor, game.translate_string("jaba_ab_radweak_0"), nil, "jaba", 15000)
 end
 
 function barm_sms_prcpntr()
@@ -14243,7 +14176,7 @@ function barm_sms_prcpntr()
 	olr.del_by_name("psy_izl_0001")
 	olr.del_by_name("psy_izl")
 	olr.del_by_name("psy_izl_0003_script")
-	news_manager.send_tip(db.actor, game.translate_string("barm_sms_prcpntr"), nil, "trader", 30000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("barm_sms_prcpntr"), nil, "jaba", 30000, nil, "pda_objective", false)
 	if has_alife_info("bun_mosk_start_quest_go_done") then
 		olr_timers.st_timer("del_bun_to_mosk", 25, "nick.rad_bun_to_mosk_prip()")
 	end
@@ -14259,7 +14192,7 @@ function njvis_oka_sch()
 end
 
 function oobrataan()
-	news_manager.send_tip(db.actor, game.translate_string("oobrataan"), nil, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("oobrataan"), nil, "default", 5000, nil, nil, false)
 	olr_timers.st_timer("oobrataan_thk_start", 1330, "nick.oobrataan_thk_start()")
 end
 
@@ -14267,62 +14200,56 @@ function oobrataan_thk_start()
 	if has_alife_info("yan_zablik_dead") then
 		return
 	end
-	news_manager.send_tip(db.actor, game.translate_string("oobrataan_thk_start"), nil, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("oobrataan_thk_start"), nil, "default", 15000, nil, nil, false)
 	olr.del_by_name("lvl7_yantar_bar_bar_visitors_3_2_0002")
 	db.actor:change_character_reputation(20)
 	olr_treasure.create_treasure()
 end
 
 function potkluchil_mg_izl()
-	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_space_restrictor_0009")
-	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_space_restrictor_0009")
-	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_space_restrictor_0009")
-	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_space_restrictor_0009")
+	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_space_restrictor_0009", 4)
 	olr.spawn_on_obj("chimera_weak", "lvl11_deadcity_space_restrictor_0009")
 	olr.spawn_on_obj("chimera_strong", "lvl11_deadcity_space_restrictor_0009")
-	olr.spawn_on_obj("zombie_blue", "lvl11_deadcity_space_restrictor_0008")
-	olr.spawn_on_obj("zombie_blue", "lvl11_deadcity_space_restrictor_0008")
-	olr.spawn_on_obj("zombie_blue", "lvl11_deadcity_space_restrictor_0008")
-	olr.spawn_on_obj("zombie_blue", "lvl11_deadcity_space_restrictor_0008")
+	olr.spawn_on_obj("zombie_blue", "lvl11_deadcity_space_restrictor_0008", 4)
 	olr.spawn_on_obj("chimera_midl", "lvl11_deadcity_space_restrictor_0008")
 	olr.spawn_on_obj("m_fracture_e", "lvl11_deadcity_space_restrictor_0008")
 	olr.spawn_on_obj("fracture_midle", "lvl11_deadcity_space_restrictor_0008")
 	olr_timers.st_timer("yahfg", 330, "nick.mg_lead_about_mon_start()")
-	news_manager.send_tip(db.actor, game.translate_string("potkluchil_mg_izl"), 4, "freedom", 30000)
+	news_manager.send_tip(db.actor, game.translate_string("potkluchil_mg_izl"), 4, "freedom", 10000)
 	delete_netspawn_objects("lvl7_dcccdewry_m_car_0001")
 end
 
 function killlll_plot_mg_sms1()
-	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms1"), nil, "freedom", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms1"), nil, "freedom", 5000, nil, nil, false)
 end
 
 function freedom_podriv_bazar_1()
-	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_1"), nil, "freedom", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_1"), nil, "freedom", 5000, nil, nil, false)
 	olr.blow_add(500)
 end
 
 function freedom_podriv_bazar_2()
-	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_2"), nil, "freedom", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_2"), nil, "freedom", 5000, nil, nil, false)
 end
 
 function freedom_podriv_bazar_3()
-	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_3"), nil, "freedom", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_3"), nil, "freedom", 5000, nil, nil, false)
 end
 
 function freedom_podriv_bazar_4()
-	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_4"), 5, "freedom", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_4"), 5, "freedom", 5000, nil, nil, false)
 end
 
 function freedom_podriv_bazar_5()
-	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_5"), nil, "freedom", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("freedom_podriv_bazar_5"), nil, "freedom", 5000, nil, nil, false)
 end
 
 function a_cod_dvery_ros()
-	news_manager.send_tip(db.actor, game.translate_string("a_cod_dvery_ros"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("a_cod_dvery_ros"), math.random(1000, 3000), "default", 15000, nil, "pda_objective", false)
 end
 
 function prisad_nahui()
-	news_manager.send_tip(db.actor, game.translate_string("a_cod_dvery_ros"), nil, "default", 10000, nil, nil, false)	
+	news_manager.send_tip(db.actor, game.translate_string("prisad_nahui"), nil, "default", 10000, nil, nil, false)	
 	olr.del_by_name("lvl8_swamp_physic_object_0040")
 	olr.del_by_name("lvl8_swamp_pseudodog_friend")
 end
@@ -14335,21 +14262,21 @@ function gr_lid_haha()
 end
 
 function car_barmen_bardachok()
-	news_manager.send_tip(db.actor, game.translate_string("car_barmen_bardachok_0"), nil, "default", 20000, nil, nil, false)
-	news_manager.send_tip(db.actor, game.translate_string("car_barmen_bardachok_1"), nil, "default", 10000, nil, nil, false)
+	olr.hud_tip("", game.translate_string("car_barmen_bardachok_0"), 10)
+	news_manager.relocate_item(db.actor, "in", "bar_barman_kamaz_doki")
 	alife():create("bar_barman_kamaz_doki", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 end
 
 function zomb_zametka_lab()
-	news_manager.send_tip(db.actor, game.translate_string("zomb_zametka_lab"), nil, "default", 10000, nil, nil, false)
+	olr.hud_tip("", game.translate_string("zomb_zametka_lab"), 10)
 end
 
 function zomb_zametka_agro()
-	news_manager.send_tip(db.actor, game.translate_string("zomb_zametka_agro"), nil, "default", 10000, nil, nil, false)
+	olr.hud_tip("", game.translate_string("zomb_zametka_agro"), 10)
 end
 
 function daaaa_vot()
-	news_manager.send_tip(db.actor, game.translate_string("daaaa_vot"), nil, "default", 20000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("daaaa_vot"), nil, "default", 10000, nil, nil, false)
 	olr.spawn_on_obj("wpn_igla", "lvl5_bar_space_restrictor_0046")
 	olr.spawn_on_obj("ammo_gauss", "lvl5_bar_space_restrictor_0046")
 	olr.spawn_on_obj("ammo_gauss", "lvl5_bar_space_restrictor_0046")
@@ -14365,17 +14292,17 @@ function daaaa_vot()
 end
 
 function basement_seryy_dee_dee_dee()
-	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_dee_dee"), nil, "default", 20000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_dee_dee"), nil, "default", 10000, nil, nil, false)
 end
 
 function basement_seryy_dee_dee()
-	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_dee"), nil, "default", 20000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_dee"), nil, "default", 10000, nil, nil, false)
 end
 
 function basement_seryy_dee()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_0"), nil, "default", 30000, nil, nil, false)
-	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_1"), 8, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_0"), nil, "default", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("basement_seryy_dee_1"), 8, "default", 10000, nil, nil, false)
 	olr_timers.st_timer("rost_alarm_korps", 22, "nick.rost_alarm_korps()")
 end
 
@@ -14385,7 +14312,7 @@ function rost_alarm_korps()
 end
 
 function ohran_zdoher()
-	news_manager.send_tip(db.actor, game.translate_string("ohran_zdoher"), nil, "saharov", 30000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("ohran_zdoher"), nil, "saharov", 15000, nil, "pda_objective", false)
 end
 
 function dol_sms_two_mertv()
@@ -14412,16 +14339,16 @@ end
 
 function flacke()
 	olr_timers.st_timer("flacke", 6, "nick.flacke2_mons()")
-	news_manager.send_tip(db.actor, game.translate_string("flacke"), nil, "default", 30000, nil, "pda_objective", false)	
+	news_manager.send_tip(db.actor, game.translate_string("flacke"), nil, "default", 10000, nil, "pda_objective", false)	
 end
 
 function flacke2_mons()
 	olr_timers.st_timer("flacke3", 6, "nick.flacke3_mons()")
-	news_manager.send_tip(db.actor, game.translate_string("flacke2_mons"), nil, "default", 30000, nil, "pda_objective", false)	
+	news_manager.send_tip(db.actor, game.translate_string("flacke2_mons"), nil, "default", 10000, nil, "pda_objective", false)	
 end
 
 function flacke3_mons()
-	news_manager.send_tip(db.actor, game.translate_string("ohran_zdoher"), nil, "default", 30000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("ohran_zdoher"), nil, "default", 10000, nil, "pda_objective", false)
 end
 
 function turn_arena_lamps_off_yan_tip()
@@ -14430,26 +14357,24 @@ end
 
 function basement_seryy()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("basement_seryy"), nil, "default", 30000, nil, nil, false)
-	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\contact_1]])
-	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	news_manager.send_tip(db.actor, game.translate_string("basement_seryy"), nil, "default", 5000, nil, nil, false)
 end
 
 function messer_fonar_sms()
-	news_manager.send_tip(db.actor, game.translate_string("messer_fonar_sms"), math.random(1000, 3000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("messer_fonar_sms"), math.random(1000, 3000), "default", 15000, nil, "pda_objective", false)
 end
 
 function messer_fonar_sms2()
-	news_manager.send_tip(db.actor, game.translate_string("messer_fonar_sms2"), math.random(3000, 6000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("messer_fonar_sms2"), math.random(3000, 6000), "default", 15000, nil, "pda_objective", false)
 end
 
 function barmen_abyantar_pre_blow_psy()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("barmen_abyantar_pre_blow_psy"), nil, "trader", 90000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("barmen_abyantar_pre_blow_psy"), nil, "jaba", 25000, nil, "pda_objective", false)
 end
 
 function barman_group_sms()
-	news_manager.send_tip(db.actor, game.translate_string("barman_group_sms"), nil, "barman", 30000, nil, "pda_tip", false)
+	news_manager.send_tip(db.actor, game.translate_string("barman_group_sms"), nil, "barman", 5000, nil, "pda_tip", false)
 end
 
 function bar_kill_actor_agerss()
@@ -14462,36 +14387,36 @@ end
 function edel_arrabar_territory_palba()
 	if not has_alife_info("bun_antenna_off") then
 		olr_timers.st_timer("garbage_timer_bigrat_done", 5, "nick.bar_kill_actor_agerss()")
-		news_manager.send_tip(db.actor, game.translate_string("edel_arrabar_territory_palba"), nil, "barman", 30000, nil, "pda_tip", false)
+		news_manager.send_tip(db.actor, game.translate_string("edel_arrabar_territory_palba"), nil, "barman", 10000, nil, "pda_tip", false)
 	end
 end
 
 function dolg_arrabar_territory_palba()
 	if xr_conditions.actor_in_zone(nil,nil,{"bar_bunker_online_restrictor"}) then
 		olr.beep()
-		news_manager.send_tip(db.actor, game.translate_string("dolg_arrabar_territory_palba"), nil, "dolg", 30000, nil, "pda_tip", false)
+		news_manager.send_tip(db.actor, game.translate_string("dolg_arrabar_territory_palba"), nil, "dolg", 10000, nil, "pda_tip", false)
 	end
 end
 
 function proffes_aftrbrain_sms()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("proffes_aftrbrain_sms"), nil, "saharov", 60000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("proffes_aftrbrain_sms"), nil, "saharov", 10000, nil, "pda_objective", false)
 end
 
 function spawn_jourlalist_note()
 	local pos = vector():set(-93,1,100)
 	olr.kill_mon_in_radius(pos, 80)
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_note"), nil, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_note"), nil, "default", 5000, nil, nil, false)
 end
 
 function seiy_2_sms()
-	news_manager.send_tip(db.actor, game.translate_string("seiy_2_sms"), nil, "default", 30000, nil, nil, false)	
+	news_manager.send_tip(db.actor, game.translate_string("seiy_2_sms"), nil, "default", 5000, nil, nil, false)	
 	olr_timers.st_timer("deadlamp_sosach_tmr", 2915, "nick.del_bomj_and_sosach_vedmak()")
 end
 
 function seiy_1_sms()
-	news_manager.send_tip(db.actor, game.translate_string("seiy_1_sms"), nil, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("seiy_1_sms"), nil, "default", 5000, nil, nil, false)
 end
 
 function radar_ant_off_sms()
@@ -14512,19 +14437,19 @@ end
 
 function kol()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("kol_0"), nil, "default", 30000, nil, "pda_tip", false)
+	news_manager.send_tip(db.actor, game.translate_string("kol_0"), nil, "default", 10000, nil, "pda_tip", false)
 	olr.del_by_name("lvl5_bar_physic_object_1411")
 	olr.del_by_name("lvl5_bar_physic_object_0011")
 	olr.del_by_name("lvl5_bar_physic_object_0308")
 	olr.del_by_name("lvl5_bar_stalker_0025")
 	if has_alife_info("olr_traders_night") then
-		news_manager.send_tip(db.actor, game.translate_string("kol_1"), nil, "default", 30000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("kol_1"), nil, "default", 10000, nil, nil, false)
 	end
 end
 
 function tele3()
 	olr_timers.st_timer("ombied_punk_tele3", 10, "nick.selfdestruck_lab_start()")
-	news_manager.send_tip(db.actor, game.translate_string("tele3"), nil, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("tele3"), nil, "default", 10000, nil, nil, false)
 end
 
 function tele2()
@@ -14579,19 +14504,19 @@ function tele()
 		alife():create("conserva", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 	end
 	
-	news_manager.send_tip(db.actor, game.translate_string("dok_zaidi_jurn_propal_1"), nil, "act", 20000)
+	olr.hud_tip("", game.translate_string("dok_zaidi_jurn_propal_1"), 10)
 	olr.del_by_name("lvl1_escape_karlik")
 	olr.del_by_name("lvl1_escape_stalker_0001")
 	olr.del_by_name("lvl1_escape_flesh_weak")
 end
 
 function varlab_1()
-	news_manager.send_tip(db.actor, game.translate_string("varlab_1"), nil, "default", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("varlab_1"), nil, "default", 2500, nil, nil, false)
 end
 
 function radar_door()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("radar_door"), nil, "default", 40000, nil, "pda_tip", false)
+	olr.hud_tip("", game.translate_string("radar_door"), 5)
 	olr_timers.st_timer("spawen_phantoms", 15, "olr.spawen_phantoms()")
 	olr_timers.st_timer("spawen_phantoms", 35, "olr.spawen_phantoms()")
 	olr_timers.st_timer("spawen_phantoms", 65, "olr.spawen_phantoms()")
@@ -14644,11 +14569,11 @@ end
 
 function spasipo_freed()
 	delete_netspawn_objects("lvl11_deadcity_physic_object_0736")
-	news_manager.send_tip(db.actor, game.translate_string("spasipo_freed"), nil, "freedom", 20000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("spasipo_freed"), nil, "freedom", 10000, nil, nil, false)
 end
 
 function slizen()
-	news_manager.send_tip(db.actor, game.translate_string("slizen"), nil, "unknown", 40000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("slizen"), nil, "unknown", 20000, nil, nil, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\darkvalley\slugs\slugs_message]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.del_by_name("lvl5_bar_staler_undead_olr_0012")
@@ -14656,22 +14581,22 @@ function slizen()
 end
 
 function dolg_pro_slizeny()
-	news_manager.send_tip(db.actor, game.translate_string("dolg_pro_slizeny_0"), nil, "dolg_voronin", 39000)
+	news_manager.send_tip(db.actor, game.translate_string("dolg_pro_slizeny_0"), nil, "dolg", 15000)
 end
 
 function poeh()
 	level.add_pp_effector("duality_circle.ppe", 207131, false)
-	news_manager.send_tip(db.actor, game.translate_string("poeh_0"), math.random(5000, 13000), "new_task", 15000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("poeh_0"), math.random(5000, 13000), "barman", 15000, nil, "pda_objective", false)
 	olr_timers.st_timer("blowout_additional_timer4", 13, "olr_blowout.blowout_additional_timer5()")
 end
 
 function zaba_zovet()
-	news_manager.send_tip(db.actor, game.translate_string("zaba_zovet"), nil, "trader", 40000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("zaba_zovet"), nil, "jaba", 10000, nil, nil, false)
 end
 
 function zaba_sobaki_angar()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("zaba_sobaki_angar"), nil, "trader", 30000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("zaba_sobaki_angar"), nil, "jaba", 10000, nil, nil, false)
 end
 
 function zaba_art_garb()
@@ -14682,7 +14607,7 @@ function zaba_art_garb()
 	if jaba_place then
 		local sobj = alife():create("kanistra_benz", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 	end
-	news_manager.send_tip(db.actor, game.translate_string("zaba_art_garb"), nil, "trader", 40000, nil, "pda_objective", false)
+	news_manager.send_tip(db.actor, game.translate_string("zaba_art_garb"), nil, "trader", 10000, nil, "pda_objective", false)
 	olr.to_online("lvl2_garbage_af_compas")
 end
 

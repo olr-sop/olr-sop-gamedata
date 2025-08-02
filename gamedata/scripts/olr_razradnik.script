@@ -16,8 +16,6 @@ local dist = 10
 local tab_anoms = {}
 
 function on_use()
-    -- Очищаем таблицу перед использованием
-    table.clear(tab_anoms)
     
     local actor_pos = db.actor:position()
     
@@ -26,7 +24,6 @@ function on_use()
         if anom and anom:is_anomaly() then
             -- Проверка исключенных секций через таблицу
             if not excluded_sections[anom:section()] then
-                -- Проверка расстояния
                 if anom:position():distance_to(actor_pos) < dist then
                     table.insert(tab_anoms, anom)
                 end

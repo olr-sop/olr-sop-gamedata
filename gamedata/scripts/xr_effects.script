@@ -2672,22 +2672,18 @@ end
 
 function kvest_esc_5_kill_voyaka()
 	-- Отправка сообщения остается без изменений
-	news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_message_ferret_greeting"), 
-						 math.random(1000, 3000), "stalker", 15000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_message_ferret_greeting"), math.random(1000, 3000), "stalker", 15000, nil, nil, false)
 
 	-- Прямое обращение к объекту по имени
-	local target = alife():object("lvl1_escape_stalker_0003")
-	if target then
-		local npc = level.object_by_id(target:id())
-		if npc then
-			local h = hit()
-			h.power = 100
-			h.direction = vector():set(0, -1, 0)
-			h.impulse = 0
-			h.draftsman = npc
-			h.type = hit.strike
-			npc:hit(h)
-		end
+	local npc = alife():object("lvl1_escape_stalker_0003")
+	if npc then
+		local h = hit()
+		h.power = 100
+		h.direction = vector():set(0, -1, 0)
+		h.impulse = 0
+		h.draftsman = npc
+		h.type = hit.strike
+		npc:hit(h)
 	end
 end
 

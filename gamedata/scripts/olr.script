@@ -762,26 +762,20 @@ function to_trade()
 end
 
 -- Дать актору предмет
+-- при выдаче еды или оружия выставляем флаг что оно не заражено
 function give_item(obj)
 	local item = alife():create(obj, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	if item then
-		local name = utils.cfg_get_string(system_ini(), item:section_name(), "inv_name", item, false, "", "")
-		sname = game.translate_string(name)
-		if not db.actor:is_talking() then
-			news_manager.send_tip(db.actor, game.translate_string("st_olr_item_received_notification").." "..sname.."", nil, "item", 3000)
-		else
-			local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_thing")
-			local news_text = "%c[255,255,255,255]"..game.translate_string("general_in_item").."\\n".."%c[255,255,255,255]"..game.translate_string(name)
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-		end
 		level.client_spawn_manager():add(item.id, 0,
 			function(id, obj)
 				if obj and obj:is_food_item() then
-					--log1("set norm food olr")
 					xvars.foods[obj:name()] = false
+				elseif obj then
+					xvars.weapons[obj:name()] = false
 				end
 			end
 		)
+		news_manager.relocate_item(db.actor, "in", item:section_name())
 		return item
 	end
 end

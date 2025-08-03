@@ -2,141 +2,118 @@
 
 function use_hud_item()
 
-    local item_in_hands = db.actor:item_in_slot(4)
-    local section = item_in_hands:section()
+	local item_in_hands = db.actor:item_in_slot(4)
+	local section = item_in_hands:section()
 
-    --news_manager.send_tip(db.actor, "EAT HUD ITEM "..item_in_hands:name().." ", nil, "default", 4000)
+	--news_manager.send_tip(db.actor, "EAT HUD ITEM "..item_in_hands:name().." ", nil, "default", 4000)
 
-    if section == "detector_activator_deznt" then
-        alife():create('detector_activator_deznt', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        activate_dezint_arts()
-    end
+	if section == "detector_activator_deznt" then
+		activate_dezint_arts()
+	end
 
-    if section == "med_injector" then
-        alife():create('med_injector_empty', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        --nick.clear_all_bolezns()
-    end
+	-- тут но_енд сделать?
+	if section == "detector_zomscan" then
+		local obj = bind_stalker.loked_obj_state()
+		if obj then
+			local item_in_hands = db.actor:active_item()
+			if item_in_hands then
+				local section = item_in_hands:section()
+				if section == "detector_zomscan" then
+					if obj:is_stalker() and obj:alive() then
+						if not has_alife_info("mil_zomb_check_one") and obj:name() == "lvl9_military_stalker_0055" then
+							db.actor:give_info_portion("mil_zomb_check_one")
+							news_manager.send_tip(db.actor, game.translate_string("use_hud_item_6"), nil, "zombied", 5000)
+						end
+						if not has_alife_info("mil_zomb_check_two") and obj:name() == "lvl9_military_stalker_0054" then
+							db.actor:give_info_portion("mil_zomb_check_two")
+							news_manager.send_tip(db.actor, game.translate_string("use_hud_item_7"), nil, "zombied", 5000)
+						end
+						if not has_alife_info("mil_zomb_check_tri") and obj:name() == "lvl9_military_stalker_0053" then
+							db.actor:give_info_portion("mil_zomb_check_tri")
+							news_manager.send_tip(db.actor, game.translate_string("use_hud_item_8"), nil, "zombied", 5000)
+						end
 
-    -- тут но_енд сделать?
-    if section == "med_injector_empty" then
-        alife():create('med_injector_empty', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-    end
-    if section == "detector_zomscan" then
-        alife():create('detector_zomscan', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        local obj = bind_stalker.loked_obj_state()
-        if obj then
-            local item_in_hands = db.actor:active_item()
-            if item_in_hands then
-                local section = item_in_hands:section()
-                if section == "detector_zomscan" then
-                    if obj:is_stalker() and obj:alive() then
-                        if not has_alife_info("mil_zomb_check_one") and obj:name() == "lvl9_military_stalker_0055" then
-                            db.actor:give_info_portion("mil_zomb_check_one")
-                            news_manager.send_tip(db.actor, game.translate_string("use_hud_item_6"), nil, "zombied", 5000)
-                        end
-                        if not has_alife_info("mil_zomb_check_two") and obj:name() == "lvl9_military_stalker_0054" then
-                            db.actor:give_info_portion("mil_zomb_check_two")
-                            news_manager.send_tip(db.actor, game.translate_string("use_hud_item_7"), nil, "zombied", 5000)
-                        end
-                        if not has_alife_info("mil_zomb_check_tri") and obj:name() == "lvl9_military_stalker_0053" then
-                            db.actor:give_info_portion("mil_zomb_check_tri")
-                            news_manager.send_tip(db.actor, game.translate_string("use_hud_item_8"), nil, "zombied", 5000)
-                        end
-
-                    end
-                    if obj:is_stalker() and not obj:alive() then
-                        if not has_alife_info("mil_zomb_check_one_dead") and obj:name() == "lvl9_military_stalker_0055" then
-                            db.actor:give_info_portion("mil_zomb_check_one_dead")
-                            news_manager.send_tip(db.actor, game.translate_string("use_hud_item_9"), nil, "zombied", 5000)
-                        end
-                        if not has_alife_info("mil_zomb_check_two_dead") and obj:name() == "lvl9_military_stalker_0054" then
-                            db.actor:give_info_portion("mil_zomb_check_two_dead")
-                            news_manager.send_tip(db.actor, game.translate_string("use_hud_item_10"), nil, "zombied", 5000)
-                        end
-                        if not has_alife_info("mil_zomb_check_tri_dead") and obj:name() == "lvl9_military_stalker_0053" then
-                            db.actor:give_info_portion("mil_zomb_check_tri_dead")
-                            news_manager.send_tip(db.actor, game.translate_string("use_hud_item_11"), nil, "zombied", 5000)
-                        end
-                    end
-                    if obj:is_stalker() and has_alife_info("docent_scan_zomb_done_inf") then
-                        if obj:character_community() == "zombied" or obj:character_community() == "sin" then
-                            news_manager.send_tip(db.actor, game.translate_string("st_olr_item_efs_name")..obj:character_name()..game.translate_string("st_olr_items_efs_succumbed_to_psi"), nil, "zombied", 5000)
-                        else
-                            news_manager.send_tip(db.actor, game.translate_string("st_olr_item_efs_name")..obj:character_name()..game.translate_string("st_olr_items_efs_did_not_succumb_to_psi"), nil, "medkit", 5000)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    --------------------------------------------------------------------------
-	
-	if section == "detector_siniy" then
-		for i=1,65535 do
-			local anom = level.object_by_id(i)
-			if anom ~= nil and anom:is_anomaly()
-			 and anom:position():distance_to(db.actor:position()) < 20 
-			then
-				if anom:name() == "lvl1_escape_zone_acid_fog" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0001" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal2")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0002" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal3")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0003" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal4")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0005" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal5")
-					return
-				end
-				if anom:name() == "lvl1_escape_zone_acid_fog_0006" then
-					db.actor:give_info_portion ("esc_zam_jab_sdelal6")
-					return
+					end
+					if obj:is_stalker() and not obj:alive() then
+						if not has_alife_info("mil_zomb_check_one_dead") and obj:name() == "lvl9_military_stalker_0055" then
+							db.actor:give_info_portion("mil_zomb_check_one_dead")
+							news_manager.send_tip(db.actor, game.translate_string("use_hud_item_9"), nil, "zombied", 5000)
+						end
+						if not has_alife_info("mil_zomb_check_two_dead") and obj:name() == "lvl9_military_stalker_0054" then
+							db.actor:give_info_portion("mil_zomb_check_two_dead")
+							news_manager.send_tip(db.actor, game.translate_string("use_hud_item_10"), nil, "zombied", 5000)
+						end
+						if not has_alife_info("mil_zomb_check_tri_dead") and obj:name() == "lvl9_military_stalker_0053" then
+							db.actor:give_info_portion("mil_zomb_check_tri_dead")
+							news_manager.send_tip(db.actor, game.translate_string("use_hud_item_11"), nil, "zombied", 5000)
+						end
+					end
+					if obj:is_stalker() and has_alife_info("docent_scan_zomb_done_inf") then
+						if obj:character_community() == "zombied" or obj:character_community() == "sin" then
+							news_manager.send_tip(db.actor, game.translate_string("st_olr_item_efs_name")..obj:character_name()..game.translate_string("st_olr_items_efs_succumbed_to_psi"), nil, "zombied", 5000)
+						else
+							news_manager.send_tip(db.actor, game.translate_string("st_olr_item_efs_name")..obj:character_name()..game.translate_string("st_olr_items_efs_did_not_succumb_to_psi"), nil, "medkit", 5000)
+						end
+					end
 				end
 			end
 		end
 	end
+
+	--------------------------------------------------------------------------
 	
-    if section == "item_razradnik" then
-        olr_razradnik.on_use()
-    end	
+	if section == "detector_siniy" then
+		-- Таблица соответствия аномалий и info_portion
+		local anomaly_map = {
+			["lvl1_escape_zone_acid_fog"]	 = "esc_zam_jab_sdelal",
+			["lvl1_escape_zone_acid_fog_0001"] = "esc_zam_jab_sdelal2",
+			["lvl1_escape_zone_acid_fog_0002"] = "esc_zam_jab_sdelal3",
+			["lvl1_escape_zone_acid_fog_0003"] = "esc_zam_jab_sdelal4",
+			["lvl1_escape_zone_acid_fog_0005"] = "esc_zam_jab_sdelal5",
+			["lvl1_escape_zone_acid_fog_0006"] = "esc_zam_jab_sdelal6"
+		}
+		-- Проверяем каждую аномалию напрямую
+		for anomaly_name, info_portion in pairs(anomaly_map) do
+			local obj = alife():object(anomaly_name)
+			local anom = level.object_by_id(obj.id)
+			if anom and anom:is_anomaly() and anom:position():distance_to(db.actor:position()) < 20 then
+				db.actor:give_info_portion(info_portion)
+				return
+			end
+		end
+	end
+	
+	if section == "item_razradnik" then
+		olr_razradnik.on_use()
+	end	
 end
 
 function activate_dezint_arts()
-    for i=1, 65534 do
-        local artid = level.object_by_id(i)
-        if artid and artid:is_artefact() then
-            if not artid:parent() then
-                local dist = db.actor:position():distance_to_sqr(artid:position())
-                if dist <= 80 then
-                    if artid:section() == "af_dummy_battery" then
-                        local obj = olr_anoms_spawn.spawn_anom("zone_buzz_dezint", math.random(2,4), artid:position(),artid:level_vertex_id(),artid:game_vertex_id(), 0.095 ,bit_not(0))
-                        olr_timers.st_timer("del_desint_anomaly", 55, "olr_items_efs.del_desint_anomaly("..tostring(obj.id)..")")
-                        --log1(""..obj:name().."")
-                        alife():release(alife():object(artid:id()))
-                    end
-                end
-            end
-        end
-    end
+	for i=1, 65534 do
+		local artid = level.object_by_id(i)
+		if artid and artid:is_artefact() then
+			if not artid:parent() then
+				local dist = db.actor:position():distance_to_sqr(artid:position())
+				if dist <= 80 then
+					if artid:section() == "af_dummy_battery" then
+						local obj = olr_anoms_spawn.spawn_anom("zone_buzz_dezint", math.random(2,4), artid:position(),artid:level_vertex_id(),artid:game_vertex_id(), 0.095 ,bit_not(0))
+						olr_timers.st_timer("del_desint_anomaly", 55, "olr_items_efs.del_desint_anomaly("..tostring(obj.id)..")")
+						--log1(""..obj:name().."")
+						alife():release(alife():object(artid:id()))
+					end
+				end
+			end
+		end
+	end
 end
 
 function del_desint_anomaly(id)
-    local sobj = alife():object(id)
-    if sobj then
-    --local bloodbridgew = vector():set( 0, -1123, 0 )
-    --alife():teleport_object(sobj.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
-    --olr.to_offline(sobj:name())
-    end
+	local sobj = alife():object(id)
+	if sobj then
+		--local bloodbridgew = vector():set( 0, -1123, 0 )
+		--alife():teleport_object(sobj.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew)
+		--olr.to_offline(sobj:name())
+	end
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -159,27 +136,29 @@ function quick_hud_tip(item)
 end
 
 function on_quick_bandage()
-    if has_alife_info("ui_inventory") then return end
-    local inv_window = level.main_input_receiver()
-    if inv_window and inv_window:IsShown() then
-        return
-    end
-    local bandage = db.actor:object("bandage")
-    if bandage ~= nil then
+	if has_alife_info("ui_inventory") then return end
+	local inv_window = level.main_input_receiver()
+	if inv_window and inv_window:IsShown() then
+		return
+	end
+	local bandage = db.actor:object("bandage")
+	if bandage ~= nil then
 		db.actor:eat(bandage)
 		quick_hud_tip(bandage)
-    end
+	end
 end
 
 function on_quick_medkit()
-    if has_alife_info("ui_inventory") then return end
-    local inv_window = level.main_input_receiver()
-    if inv_window and inv_window:IsShown() then
-        return
-    end
-    local medkit = db.actor:object("medkit")
-    if medkit ~= nil then
+	if has_alife_info("ui_inventory") then return end
+	
+	local inv_window = level.main_input_receiver()
+	if inv_window and inv_window:IsShown() then
+		return
+	end
+	
+	local medkit = db.actor:object("medkit")
+	if medkit ~= nil then
 		db.actor:eat(medkit)
 		quick_hud_tip(medkit)
-    end
+	end
 end

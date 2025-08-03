@@ -178,10 +178,7 @@ function precond_quest_done()
         local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
         local notart = db.actor:object(obj_targ)
         if notart and not notart:is_artefact() then
-            if
-                xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and
-                    nik_dialog.item_much(obj_targ, 1) ~= false
-             then
+            if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and nik_dialog.item_much(obj_targ, 1) ~= false then
                 return true
             end
         end
@@ -249,8 +246,7 @@ function take_reward()
                 if item:is_ammo() and flg == false and item:get_ammo_box_curr() ~= item:get_ammo_box_size() then
                     flg = true
                     npc:transfer_item(item, db.actor)
-                    news_manager.send_tip(db.actor, ""..game.translate_string("item_taken_text").." "..item:get_name().." - x"..item:get_ammo_box_curr()..".", 1, "item", 9000)
-					--log1(item:name())
+					news_manager.relocate_item(db.actor, "in", item:section())
                 end
             end
         end

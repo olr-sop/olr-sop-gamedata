@@ -45,7 +45,7 @@ function ui_quests_table:bt_find_item_button_clicked()
 	elseif xvars.quest_one_target == "" and has_alife_info("doska_one_taken") then
 		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
-		self.static_desc_quest:SetText("Взято задание на добычу предмета: "..xvars.quest_one_text_name..", Оплата: "..xvars.quest_one_cost.." ")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_retrieve_item").." "..xvars.quest_one_text_name..game.translate_string("st_olr_doska_payment").." "..xvars.quest_one_cost.." ")
 	end  
 end
 
@@ -78,7 +78,7 @@ function ui_quests_table:bt_kill_stalker_button_clicked()
 			olr_timers.st_timer("gen_kill_stalker", 52, "olr_doska_escape.gen_kill_stalker()")
 		end
 	else
-		self.static_desc_quest:SetText("Взято задание на убийство сталкера: "..nm.."")
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_kill_stalker").." "..nm.."")
 	end  
 end
 
@@ -185,7 +185,7 @@ function one_complete_func_item()
 	local mon = math.floor(xvars.quest_one_cost) 
 	db.actor:give_money(mon)
 	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received").." "..mon.."", nil, "item", 3000)
+	news_manager.relocate_money(db.actor, "in", mon)
 	local obj_targ = game.translate_string(xvars.quest_one_target)
 	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_escape.clear_find_item()

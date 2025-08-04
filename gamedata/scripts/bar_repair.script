@@ -7,6 +7,7 @@ local weapon_profit_margin = 1.2
 local armor_profit_margin = 1.2
 
 function trader_repair_precond(trader, actor)
+	local item_in_slot_0 = db.actor:item_in_slot(0)
 	local item_in_slot_1 = db.actor:item_in_slot(1)
 	local item_in_slot_2 = db.actor:item_in_slot(2)
 	local item_in_slot_6 = db.actor:item_in_slot(6)
@@ -17,9 +18,22 @@ function trader_repair_precond(trader, actor)
 		return true
 	elseif item_in_slot_6 ~= nil and 1 > item_in_slot_6:condition() + 0.01 then
 		return true
+	elseif item_in_slot_0 ~= nil and 1 > item_in_slot_0:condition() + 0.01 then
+		return true
 	else
 		return false
 	end
+end
+
+function trader_check_money_s0(trader, actor)
+	local item_in_slot = db.actor:item_in_slot(0)
+	if item_in_slot ~= nil then
+		local item_repair_cost = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin)
+		if item_repair_cost > 0 and db.actor:money() >= item_repair_cost and 1 > item_in_slot:condition() then
+			return true
+		end
+	end
+	return false
 end
 
 function trader_check_money_s1(trader, actor)
@@ -55,47 +69,26 @@ function trader_check_money_s6(trader, actor)
 	return false
 end
 
-function trader_repiar_weapon_s1(trader, actor)
-	local item_in_slot = db.actor:item_in_slot(1)
-	if item_in_slot ~= nil then
-		local item_repair_cost = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin)
-		local time_to_repair = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin * 2)
-		dialogs.relocate_money(actor, item_repair_cost, "out")
-		olr.del(item_in_slot)
-		local sect = item_in_slot:section()
-		xvars.cur_rest_wpn = tostring(sect)
-		olr_timers.st_timer("item_repair_bar_timer", time_to_repair, "nick.item_repair_bar_timer()")
-		db.actor:disable_info_portion("bar_trader_repair_gotov")
-		db.actor:give_info_portion("ametist_go_to_stanok_info")
-	end
-end
 
-function trader_repiar_weapon_s2(trader, actor)
-	local item_in_slot = db.actor:item_in_slot(2)
+function repair_func(slot_id, time_div, is_outfit)
+	local item_in_slot = db.actor:item_in_slot(slot_id)
 	if item_in_slot ~= nil then
-		local item_repair_cost = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin)
-		local time_to_repair = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin * 2)
+		local item_repair_cost
+		local time_to_repair
+		if is_outfit then
+			item_repair_cost = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin)
+			time_to_repair = (math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin * 2)) / time_div
+		else
+			item_repair_cost = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin)
+			time_to_repair = (math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin * 2)) / time_div
+		end
 		dialogs.relocate_money(actor, item_repair_cost, "out")
 		olr.del(item_in_slot)
 		local sect = item_in_slot:section()
 		xvars.cur_rest_wpn = tostring(sect)
-		olr_timers.st_timer("item_repair_bar_timer", time_to_repair, "nick.item_repair_bar_timer()")
-		db.actor:disable_info_portion("bar_trader_repair_gotov")
-		db.actor:give_info_portion("ametist_go_to_stanok_info")
-	end
-end
-
-function trader_repiar_armor_s6(trader, actor)
-	local item_in_slot = db.actor:item_in_slot(6)
-	if item_in_slot ~= nil then
-		olr_ruck_limit.on_to_box(item_in_slot)
-		local item_repair_cost = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin)
-		local time_to_repair = math.floor((1 - item_in_slot:condition()) * item_in_slot:cost() * weapon_profit_margin * 2)
-		dialogs.relocate_money(actor, item_repair_cost, "out")
-		olr.del(item_in_slot)
-		local sect = item_in_slot:section()
-		xvars.cur_rest_wpn = tostring(sect)
-		if item_in_slot:section() == "exo_outfit" and item_in_slot:condition() < 0.5 then
+		--log1(string.format("knife time_to_repair [%.2f]", time_to_repair))
+		
+		if sect == "exo_outfit" and item_in_slot:condition() < 0.5 then
 			news_manager.send_tip(db.actor, game.translate_string("trader_repiar_armor_s6_0"), 16, "item", 25000)
 		end
 		olr_timers.st_timer("item_repair_bar_timer", time_to_repair, "nick.item_repair_bar_timer()")
@@ -104,16 +97,40 @@ function trader_repiar_armor_s6(trader, actor)
 	end
 end
 
+function trader_repiar_weapon_s0(trader, actor)
+	repair_func(0, 10, false)
+end
+
+function trader_repiar_weapon_s1(trader, actor)
+	repair_func(1, 1, false)
+end
+
+function trader_repiar_weapon_s2(trader, actor)
+	repair_func(2, 1, false)
+end
+
+function trader_repiar_armor_s6(trader, actor)
+	repair_func(6, 1, true)
+end
+
 function repair_costs(first_speaker, second_speaker)
 	local task_texture, task_rect = get_texture_info("ui_iconsTotal_lost_money")
 
 	local item_name_and_price = ""
 	local item_repair_cost = 0
 	if db.actor ~= nil then
+		local item_in_slot_0 = db.actor:item_in_slot(0)
 		local item_in_slot_1 = db.actor:item_in_slot(1)
 		local item_in_slot_2 = db.actor:item_in_slot(2)
 		local item_in_slot_6 = db.actor:item_in_slot(6)
 
+		if item_in_slot_0 ~= nil then
+			item_repair_cost = math.floor((1 - item_in_slot_0:condition()) * item_in_slot_0:cost() * armor_profit_margin)
+			if item_repair_cost > 0 then
+				item_name_and_price = game.translate_string("list_trader_repair_3").." %c[255,238,155,23]"..item_repair_cost.."Ru%c[default]"
+				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "iconed_trade_info")
+			end
+		end
 		if item_in_slot_1 ~= nil then
 			item_repair_cost = math.floor((1 - item_in_slot_1:condition()) * item_in_slot_1:cost() * weapon_profit_margin)
 			if item_repair_cost > 0 then

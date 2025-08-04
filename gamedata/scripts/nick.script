@@ -1323,7 +1323,7 @@ function out_dva_kasara()
 	news_manager.send_tip(db.actor, game.translate_string("out_dva_kasara_0"), nil, "money", 39000)
 	db.actor:give_money(-2000)
 	game_stats.money_quest_update(-2000)
-	news_manager.send_tip(db.actor, game.translate_string("out_dva_kasara_1"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("out_dva_kasara_1"), nil, "flash", 15000, nil, nil, false)
 end
 
 function precond_desat_kasara()
@@ -1334,7 +1334,9 @@ function out_desat_kasara()
 	news_manager.send_tip(db.actor, game.translate_string("out_desat_kasara_0"), nil, "money", 39000)
 	db.actor:give_money(-10000)
 	game_stats.money_quest_update(-10000)
-	news_manager.send_tip(db.actor, game.translate_string("out_desat_kasara_1"), nil, "flash", 29000)
+	local npc = level:get_second_talker()
+	dialogs.relocate_money(npc, 10000, "out")
+	news_manager.send_tip(db.actor, game.translate_string("out_desat_kasara_1"), nil, "flash", 15000, nil, nil, false)
 end
 
 function dolgmed_about_injector_done()
@@ -1709,9 +1711,8 @@ function chekart_belt()
 		end
 		local m_where = game.translate_string("chekart_belt_3")
 		olr.info(known_inf_desc)
-		news_manager.send_tip(db.actor, game.translate_string("chekart_belt_5"), nil, "money", 39000)
-		db.actor:give_money(-250)
-		game_stats.money_quest_update(-250)
+		local npctalk = level:get_second_talker()
+		dialogs.relocate_money(npctalk, 250, "out")
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconsTotal", Frect():set(0,0,10,10), "simple_answer_item")
 		return
 	end

@@ -186,9 +186,7 @@ end
 -- сдаём квест на предмет
 function one_complete_func_item()
 	local mon = math.floor(xvars.quest_one_cost_bar) 
-	db.actor:give_money(mon)
-	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received").." "..mon.."", nil, "item", 3000)
+	dialogs.relocate_money(db.actor, mon, "in")
 	local obj_targ = game.translate_string(xvars.quest_one_target_bar)
 	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_bar.clear_find_item()
@@ -315,9 +313,7 @@ function two_complete_func_kill()
 		db.actor:change_character_reputation(20)
 		mon = 700
 	end
-	db.actor:give_money(mon)
-	game_stats.money_quest_update(mon)
-	news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_money_received").." "..mon.."", nil, "item", 3000)
+	dialogs.relocate_money(db.actor, mon, "in")
 	db.actor:disable_info_portion("doska_two_working_bar")
 	local time = math.random(90,160)
 	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_bar.gen_kill_stalker()")

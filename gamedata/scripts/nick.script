@@ -1179,7 +1179,7 @@ end
 function actor_problem_with_stalkers_fine()
 	db.actor:give_money(-3000)
 	game_stats.money_quest_update(-3000)
-	news_manager.send_tip(db.actor, game.translate_string("actor_problem_with_stalkers_fine_0"), 5, "money", 39000)
+	news_manager.relocate_money(db.actor, "out", 3000)
 end
 
 function gar_slizen_noviki_dead_have_done_func()
@@ -1266,9 +1266,9 @@ function has_weapon_slot_two()
 end
 
 function set_vintovka_good_cond()
-	news_manager.send_tip(db.actor, game.translate_string("set_vintovka_good_cond_0"), nil, "money", 39000)
 	db.actor:give_money(-1000)
 	game_stats.money_quest_update(-1000)
+	news_manager.relocate_money(db.actor, "out", 1000)
 	local wpn = db.actor:item_in_slot(2)
 	if wpn then
 		xvars.goodcondweaps[wpn:name()] = true
@@ -1320,9 +1320,9 @@ function precond_dva_kasara()
 end
 
 function out_dva_kasara()
-	news_manager.send_tip(db.actor, game.translate_string("out_dva_kasara_0"), nil, "money", 39000)
 	db.actor:give_money(-2000)
 	game_stats.money_quest_update(-2000)
+	news_manager.relocate_money(db.actor, "out", 2000)
 	news_manager.send_tip(db.actor, game.translate_string("out_dva_kasara_1"), nil, "flash", 15000, nil, nil, false)
 end
 
@@ -1331,18 +1331,16 @@ function precond_desat_kasara()
 end
 
 function out_desat_kasara()
-	news_manager.send_tip(db.actor, game.translate_string("out_desat_kasara_0"), nil, "money", 39000)
 	db.actor:give_money(-10000)
 	game_stats.money_quest_update(-10000)
-	local npc = level:get_second_talker()
-	dialogs.relocate_money(npc, 10000, "out")
+	news_manager.relocate_money(db.actor, "out", 10000)
 	news_manager.send_tip(db.actor, game.translate_string("out_desat_kasara_1"), nil, "flash", 15000, nil, nil, false)
 end
 
 function dolgmed_about_injector_done()
-	news_manager.send_tip(db.actor, game.translate_string("dolgmed_about_injector_done_0"), nil, "money", 39000)
 	db.actor:give_money(-10000)
 	game_stats.money_quest_update(-10000)
+	news_manager.relocate_money(db.actor, "out", 10000)
 	olr.give_item("med_injector")
 end
 
@@ -1385,7 +1383,7 @@ function navodka_jurnal_1_high()
 end
 
 function navodka_jurnal_finded_high_1()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_1_0"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_1_0"), nil, "flash", 10000, nil, nil, false)
 	olr.info("navodka_jurnal_finded_high_1")
 end
 
@@ -1408,12 +1406,12 @@ function navodka_jurnal_finded_1()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_0"), nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_0"), nil, "flash", 10000, nil, nil, false)
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_1") .. pos, nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_1").." "..pos, nil, "flash", 10000, nil, nil, false)
 		return
 	end
 end
@@ -1424,7 +1422,7 @@ function navodka_jurnal_2_high()
 end
 
 function navodka_jurnal_finded_high_2()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_2_0"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_2_0"), nil, "flash", 10000, nil, nil, false)
 	olr.info("navodka_jurnal_finded_high_2")
 end
 
@@ -1447,12 +1445,12 @@ function navodka_jurnal_finded_2()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_0"), nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_0"), nil, "flash", 10000, nil, nil, false)
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_1") .. pos, nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_1").." "..pos, nil, "flash", 10000, nil, nil, false)
 		return
 	end
 end
@@ -1463,7 +1461,7 @@ function navodka_jurnal_3_high()
 end
 
 function navodka_jurnal_finded_high_3()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_3_0"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_3_0"), nil, "flash", 10000, nil, nil, false)
 	olr.info("navodka_jurnal_finded_high_3")
 end
 
@@ -1486,12 +1484,12 @@ function navodka_jurnal_finded_3()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_0"), nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_0"), nil, "flash", 10000, nil, nil, false)
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_1") .. pos, nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_1").." "..pos, nil, "flash", 10000, nil, nil, false)
 		return
 	end
 end
@@ -1502,7 +1500,7 @@ function navodka_jurnal_4_high()
 end
 
 function navodka_jurnal_finded_high_4()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_4_0"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_4_0"), nil, "flash", 10000, nil, nil, false)
 	olr.info("navodka_jurnal_finded_high_4")
 end
 
@@ -1525,12 +1523,12 @@ function navodka_jurnal_finded_4()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_0"), nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_0"), nil, "flash", 10000, nil, nil, false)
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_1") .. pos, nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_1").." "..pos, nil, "flash", 10000, nil, nil, false)
 		return
 	end
 end
@@ -1541,7 +1539,7 @@ function navodka_jurnal_5_high()
 end
 
 function navodka_jurnal_finded_high_5()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_5_0"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_5_0"), nil, "flash", 10000, nil, nil, false)
 	olr.info("navodka_jurnal_finded_high_5")
 end
 
@@ -1565,13 +1563,13 @@ function navodka_jurnal_finded_5()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_0"), nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_0"), nil, "flash", 10000, nil, nil, false)
 		return
 	end
 	if cnt > 0 then
 		local pos =
 			news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_1") .. pos, nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_1").." "..pos, nil, "flash", 10000, nil, nil, false)
 		return
 	end
 end
@@ -1582,7 +1580,7 @@ function navodka_jurnal_6_high()
 end
 
 function navodka_jurnal_finded_high_6()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_6_0"), nil, "flash", 29000)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_6_0"), nil, "flash", 10000, nil, nil, false)
 	olr.info("navodka_jurnal_finded_high_6")
 end
 
@@ -1606,12 +1604,12 @@ function navodka_jurnal_finded_6()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_0"), nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_0"), nil, "flash", 10000, nil, nil, false)
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_1") .. pos, nil, "flash", 29000)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_1").." "..pos, nil, "flash", 10000, nil, nil, false)
 		return
 	end
 end
@@ -1711,8 +1709,9 @@ function chekart_belt()
 		end
 		local m_where = game.translate_string("chekart_belt_3")
 		olr.info(known_inf_desc)
-		local npctalk = level:get_second_talker()
-		dialogs.relocate_money(npctalk, 250, "out")
+		db.actor:give_money(-250)
+		game_stats.money_quest_update(-250)
+		news_manager.relocate_money(db.actor, "out", 250)
 		db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconsTotal", Frect():set(0,0,10,10), "simple_answer_item")
 		return
 	end

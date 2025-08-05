@@ -269,13 +269,13 @@ function get_task_walk(obj)
 	-- офл торговля бар
 	if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true then
 		--olr.add_spot_on_map( obj.id,"red_location"," идёт торговать в бар офлайн "..obj:name().."")
-		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в бар в оффлайне", nil, "dolg", 36000)
+		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в бар в оффлайне", nil, "dolg", 15000)
 		return "serogas_look"	
 	end
 	-- офл торговля янтарь
 	if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true then
 		--olr.add_spot_on_map( obj.id,"red_location"," идёт торговать в янтарь офлайн "..obj:name().."")
-		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в янтарь в оффлайне", nil, "dolg", 36000)
+		--news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в янтарь в оффлайне", nil, "dolg", 15000)
 		return "proff_prilavok_look"
 	end
 
@@ -342,7 +342,7 @@ function get_task_walk(obj)
 	end
 
 	--printf(" !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().." set new ")
-	--news_manager.send_tip(db.actor, " !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().."  идёт под смарт  "..obj.level_name.."  ", nil, "dolg", 36000)
+	--news_manager.send_tip(db.actor, " !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().."  идёт под смарт  "..obj.level_name.."  ", nil, "dolg", 15000)
 	--olr.add_spot_on_map( obj.id,"green_location",obj:name() )
 	--this.set_obj_rndway(obj)
 	--return "escccc_cutscene_walk"  -- default Jaba's place
@@ -358,7 +358,7 @@ function check_complete_main(obj)
 	if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true and obj.level_name == "lvl5_bar" then
 		local bar_pos = vector():set(-107,-90,-231)
 		if obj.position:distance_to(bar_pos) < 20 then
-			--news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в бар и торгует сейчас", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в бар и торгует сейчас", nil, "dolg", 15000)
 			olr_ofl_trade.on_point_bar(obj)
 			amk_offline_alife.now_trade_ofl_bar(obj)
 		end
@@ -367,7 +367,7 @@ function check_complete_main(obj)
 	if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true and obj.level_name == "lvl7_yantar" then
 		local yan_pos = vector():set(-177,6,177)
 		if obj.position:distance_to(yan_pos) < 10 then
-			--news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в янтарь и торгует сейчас", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в янтарь и торгует сейчас", nil, "dolg", 15000)
 			xvars.npc_ofl_trade_yan[obj:name()] = nil
 			olr_ofl_trade.on_point_yan(obj)
 		end
@@ -394,7 +394,7 @@ function check_complete_main(obj)
 					smart_terrain.on_death(obj.id)
 					if flgmond == false then
   						if level.name() == "lvl16_generators" then return end
-						news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_monolith_searcher_1") ..name.. game.translate_string("st_olr_ai_tasks_monolith_searcher_2"), 1, "default", 36000)
+						news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_monolith_searcher_1").." "..name.." "..game.translate_string("st_olr_ai_tasks_monolith_searcher_2"), 1, "default", 15000)
 						flgmond = true
 					end
 				end
@@ -420,7 +420,7 @@ function check_complete_main(obj)
 					smart_terrain.on_death(obj.id)
 					if flgmondr == false then
   						if level.name() == "lvl16_generators" then return end
-						news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_destruction_seeker_1") ..name.. game.translate_string("st_olr_ai_tasks_destruction_seeker_2"), 1, "default", 36000)
+						news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_destruction_seeker_1").." "..name.." "..game.translate_string("st_olr_ai_tasks_destruction_seeker_2"), 1, "default", 15000)
 						flgmondr = true
 					end
 				end
@@ -431,7 +431,7 @@ function check_complete_main(obj)
 	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "revenge" then
 		if this.precondition_revenge_is_dead(obj) then
 			--olr.add_spot_on_map( obj.id,"green_location", " revenge go out "..obj:name().."" )
-			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  месть мертва - уходим из зоны сейчас на уровне - "..obj.level_name.."   "..obj.position.x.." - "..obj.position.y.." - "..obj.position.z.."  ", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  месть мертва - уходим из зоны сейчас на уровне - "..obj.level_name.."   "..obj.position.x.." - "..obj.position.y.." - "..obj.position.z.."  ", nil, "dolg", 15000)
 			this.away_from_zone_revenge(obj)
 		else
 			-- ищем дальше - устанавливаем рнд путь гуляния
@@ -442,7 +442,7 @@ function check_complete_main(obj)
 	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "cash" then
 		if xvars.cash_need_summa_has[obj:name()] == true then
 			-- собрали нужное колво денег - валим с зоны
-			--news_manager.send_tip(db.actor, "у сталкера Поднял бабла "..obj:name().."  Поднял бабла- уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, "у сталкера Поднял бабла "..obj:name().."  Поднял бабла- уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 15000)
 			this.away_from_zone_cash(obj)
 		else
 			-- собираем бабки дальше - устанавливаем рнд путь гуляния
@@ -452,7 +452,7 @@ function check_complete_main(obj)
 	-- Туризм
 	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "tourism" then
 		if this.precondition_tourism(obj) then
-			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  натуристился - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  натуристился - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 15000)
 			this.away_from_zone_tourism(obj)
 		else
 			-- туристим дальше - устанавливаем рнд путь гуляния
@@ -462,7 +462,7 @@ function check_complete_main(obj)
 	-- Нашли себя
 	if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_himself" then
 		if this.precondition_find_himself(obj) then
-			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  нашёл себя - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  нашёл себя - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 15000)
 			--olr.add_spot_on_map( obj.id,"green_location", obj:name() )
 			this.away_from_zone(obj)	
 		else
@@ -483,7 +483,7 @@ function set_rnd_way_walk(obj)
 		if tostring(obj.m_level_vertex_id) == tostring(rnd_path_vert) then
 			--olr.add_spot_on_map( obj.id,"green_location", obj:name() )
 			--local itms = table.getn(amk_offline_alife.items[obj.id]) or 0  ставим новый итемов - "..itms.."
-			--news_manager.send_tip(db.actor, " "..obj:name().." -- "..xvars.npcs_tasks[obj:name()].."  пришёл на свой путь - "..xpath.."  на "..obj.level_name.."  ", nil, "dolg", 36000)
+			--news_manager.send_tip(db.actor, " "..obj:name().." -- "..xvars.npcs_tasks[obj:name()].."  пришёл на свой путь - "..xpath.."  на "..obj.level_name.."  ", nil, "dolg", 15000)
 			-- todo если можем (есть экипировка) то гуляем дальше, если нет идём в бар 
 			this.set_obj_rndway(obj)
 			amk_offline_alife.process_trade(obj) -- переберем свой хабар
@@ -525,7 +525,7 @@ function away_from_zone_cash(obj)
 				data.updhealth = 0
 				pk:set(data)
 				smart_terrain.on_death(obj.id)
-				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_cashmoney")..name..game.translate_string("st_olr_ai_tasks_cashmoney_2"), 5, "default", 36000)
+				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_cashmoney").." "..name.." "..game.translate_string("st_olr_ai_tasks_cashmoney_2"), 5, "default", 15000)
 			end
 			--printf("away from zone cash kill - "..obj:name().." ")	
 		end	
@@ -551,7 +551,7 @@ function away_from_zone_tourism(obj)
 				data.updhealth = 0
 				pk:set(data)
 				smart_terrain.on_death(obj.id)
-				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_tourism")..name..game.translate_string("st_olr_ai_tasks_tourism_2"), 5, "default", 36000)
+				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_tourism").." "..name.." "..game.translate_string("st_olr_ai_tasks_tourism_2"), 5, "default", 15000)
 			end
 			--printf("away from zone tourism kill - "..obj:name().." ")
 		end	
@@ -572,14 +572,14 @@ function away_from_zone_revenge(obj)
   				)
 				local pk = get_netpk(obj,1)
   				if pk:isOk() then
-    					local data = pk:get()
-          				local name = data.character_name
+    				local data = pk:get()
+          			local name = data.character_name
 					data.health = 0
 					data.updhealth = 0
 					pk:set(data)
 					smart_terrain.on_death(obj.id)
-     					news_manager.send_tip(db.actor, ""..name..game.translate_string("st_olr_ai_tasks_revenger"), nil, "unknown", 39000)
-					news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_revenger_2")..name.. game.translate_string("st_olr_ai_tasks_revenger_3"), 5, "default", 36000)
+     				news_manager.send_tip(db.actor, ""..name.." "..game.translate_string("st_olr_ai_tasks_revenger"), nil, "unknown", 39000)
+					news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_revenger_2").." "..name.." "..game.translate_string("st_olr_ai_tasks_revenger_3"), 5, "default", 15000)
 				end	
 			end	
 		end 
@@ -597,14 +597,14 @@ function away_from_zone(obj)
   				)
 				local pk = get_netpk(obj,1)
   				if pk:isOk() then
-    					local data = pk:get()
-          				local name = data.character_name
+    				local data = pk:get()
+          			local name = data.character_name
 					data.health = 0
 					data.updhealth = 0
 					pk:set(data)
 					smart_terrain.on_death(obj.id)
-     					news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_leave_zone_1")..name..game.translate_string("st_olr_ai_tasks_leave_zone_2"), nil, "unknown", 39000)
-					news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_leave_zone_3")..name..game.translate_string("st_olr_ai_tasks_leave_zone_4"), 5, "default", 36000)
+     				news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_leave_zone_1").." "..name.." "..game.translate_string("st_olr_ai_tasks_leave_zone_2"), nil, "unknown", 15000)
+					news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_tasks_leave_zone_3").." "..name.." "..game.translate_string("st_olr_ai_tasks_leave_zone_4"), 5, "default", 15000)
 				end	
 			end	
 		end 

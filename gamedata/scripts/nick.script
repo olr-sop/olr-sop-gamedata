@@ -1333,7 +1333,7 @@ end
 function out_desat_kasara()
 	db.actor:give_money(-10000)
 	game_stats.money_quest_update(-10000)
-	news_manager.relocate_money(db.actor, "out", 10000)
+	news_manager.relocate_money(db.actor, "out", 10000) -- я рот наоборот извините этого приколиста, зачем дропать диалог то?
 	news_manager.send_tip(db.actor, game.translate_string("out_desat_kasara_1"), nil, "flash", 15000, nil, nil, false)
 end
 
@@ -2319,7 +2319,10 @@ function podzem_sosatel_deadd()
 	wait_time = time_global() + 5400
 	level.add_call(
 		function() return time_global() > wait_time end,
-		function() snd_obj2:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0) end
+		function()
+			snd_obj2:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0) 
+			olr.on_ui() -- принудительно включим обратно
+		end
 	)
 	olr.off_ui()
 end
@@ -2342,7 +2345,10 @@ function plosadka_sosatel_deadd()
 	wait_time = time_global() + 5400
 	level.add_call(
 		function() return time_global() > wait_time end,
-		function() snd_obj2:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0) end
+		function()
+			snd_obj2:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+			olr.on_ui() -- принудительно включим обратно
+		end
 	)
 	olr.kill_mon_in_radius(db.actor:position(), 50)
 end
@@ -3018,7 +3024,7 @@ end
 function vorglaz_zombigo()
 	olr.enable_walk()
 	olr_timers.st_timer("delglazazomb", 2, "nick.delglazazomb()")	
-	news_manager.send_tip(db.actor, game.translate_string("vorglaz_zombigo_0"), nil, "dolg", 9000)
+	news_manager.send_tip(db.actor, game.translate_string("vorglaz_zombigo_0"), nil, "dolg", 9000, nil, nil, false)
 	olr_timers.st_timer("gdfsdfsactcontsvd", 19, "nick.gdfsdfsactcontsvd()")
 	olr.del_by_name("lvl3_agroprom_agro_case_02")
 	olr.del_by_name("lvl3_agroprom_agro_case_02_0000")
@@ -3027,7 +3033,7 @@ function vorglaz_zombigo()
 end
 
 function gdfsdfsactcontsvd()
-	news_manager.send_tip(db.actor, game.translate_string("gdfsdfsactcontsvd_0"), nil, "act", 9000)
+	news_manager.send_tip(db.actor, game.translate_string("gdfsdfsactcontsvd_0"), nil, "act", 9000, nil, nil, false)
 	--olr.spawn_on_obj("m_controller_e", "lvl2_garbage_zone_radioactive_weak_0008")
 	local bloodbridge = vector():set( 51.55, 4.69, 448.00 )
 	alife():create("controller_new", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
@@ -3037,9 +3043,9 @@ function vorglaz_way_dolgbazaa_zombigo()
 	olr.disable_walk()
 	olr.blow_add(100)
 	olr.kill_mon_in_radius(db.actor:position(), 140)
-	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_0"), nil, "dolg", 9000)
-	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_1"), 8, "act", 9000)
-	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_2"), 16, "act", 9000)
+	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_0"), nil, "dolg", 9000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_1"), 8, "act", 9000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_2"), 16, "act", 9000, nil, nil, false)
 
 	olr.del_by_name("lvl5_bar_physic_object_0214")
 	olr.del_by_name("lvl5_bar_physic_object_0798")
@@ -6689,7 +6695,7 @@ function kvest_gravimolot_acessss()
 	db.actor:give_info_portion("kvest_gravimolot_go")
 	olr.del_by_name("lvl3_agroprom_physic_object_0382")
 	olr.del_by_name("lvl3_agroprom_rat_zaval")
-	news_manager.send_tip(db.actor, game.translate_string("kvest_gravimolot_acessss_0"), nil, "flash", 49000)
+	news_manager.send_tip(db.actor, game.translate_string("kvest_gravimolot_acessss_0"), nil, "flash", 20000, nil, nil, false)
 end
 
 function away_zaval_and_del()

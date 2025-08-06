@@ -53,11 +53,11 @@ ce_power			= 0.5	; power
 ;	anim			| cycles | time1 | power1 | time2 | power2 | time3 | power3 | time4 | power4 |
 ;-------------------------------------------------------------------------------------------------------------
 stand_walk_fwd_0	=	   1,	0.2,     0.75,	0.4,     0.7,    0.6,     0.75,    0.8,    0.75
-stand_walk_dmg_0	=      	   1,	0.4,     0.75,	0.2,     0.7,    0.45,    0.75,    0.7,    0.75
+;stand_walk_dmg_0	=      	   1,	0.4,     0.75,	0.2,     0.7,    0.45,    0.75,    0.7,    0.75
 stand_run_fwd_0		=	   1,	0.25,    0.75,	0.20,    0.7,    0.6,	  0.75,    0.67,   0.75
-stand_run_dmg_0		=	   1,	0.4,     0.75,	0.20,    0.7,    0.7,	  0.75,    0.7,    0.75
-stand_steal_0		=	   1,	0.2,     0.75,	0.25,    0.7,    0.7,	  0.75,    0.7,    0.75
-stand_drag_0		=	   1,	0.2,     0.75,	0.25,    0.7,    0.7,	  0.75,    0.7,    0.75
+;stand_run_dmg_0		=	   1,	0.4,     0.75,	0.20,    0.7,    0.7,	  0.75,    0.7,    0.75
+;stand_steal_0		=	   1,	0.2,     0.75,	0.25,    0.7,    0.7,	  0.75,    0.7,    0.75
+;stand_drag_0		=	   1,	0.2,     0.75,	0.25,    0.7,    0.7,	  0.75,    0.7,    0.75
 
 ;===========================================================================
 ; IMMUNITIES
@@ -94,8 +94,8 @@ MaxHealthValue		= 100			; range [0..200]
 DynamicObjectsCount	= 32
 
 cform                = skeleton					; collision class
-class                = SM_CAT_S					; AI class
-
+class                = AI_RAT					; AI class
+script_binding  		= bind_monster.bind
 ;class                = SM_CAT_S					; AI class
 
 ef_creature_type	 = 2				; option for evaluation functions
@@ -118,7 +118,7 @@ ph_crash_speed_max			= 30
 ph_collision_damage_factor	= 0.1
 ph_mass 		     = 10;30						; also it's the food
 
-smart_terrain_choose_interval	= 00:15:00
+smart_terrain_choose_interval	= 00:20:00
 satiety_threshold		= 0.5							; below this value monster fill hunger
 critical_wound_threshold		= 0.4
 critical_wound_decrease_quant	= 0.
@@ -298,13 +298,7 @@ distant_idle_sound_range	= 100.0
 DamagedThreshold		= 0.2
 
 ;-- Звук топанья
-material = creatures\medium		;самый подходящий (шуршит)
-;material = creatures\actor
-;material = creatures\human
-;material = creatures\hoof		;больше на треск похоже
-;material = creatures\large		;Топает как бизон
-;material = creatures\small		;Топает как в башмаках
-;material = creatures\phantom	;Вообще не слышно
+material = creatures\small
 
 min_view_distance   		= 0.8				; коэффициент, который множится на eye_range, в зависимости от угла
 max_view_distance	 		= 1.0				; коэффициент, который множится на eye_range, в зависимости от угла
@@ -330,8 +324,6 @@ damage					= m_rat_damage
 
 LegsCount				= 4
 
-script_binding  		= bind_monster.bind
-
 ;species of monster
 species					= rat
 rank					= 0
@@ -339,12 +331,78 @@ spec_rank				= weak
 community				= rat
 ;monster_type			= indoor
 
+EyeYShift		     = .15			; meters
+
+MinVoiceInterval	     =  30000			; milliseconds
+MaxVoiceInterval	     = 120000			; milliseconds
+VoiceRefreshRate	     =   2500			; milliseconds
+
+ChangeActiveStateProbability = 1.0 			; range [0..1]
+ActiveCountPercent	     =   16				; percents
+StandingCountPercent	 =   16				; percents
+PassiveScheduleMin	     =  100				; microseconds
+PassiveScheduleMax       = 1000				; microseconds
+
+LostMemoryTime		     = 20000			; milliseconds
+LostRecoilTime		     =  2000			; milliseconds
+UnderFireDistance	     =   100			; meters
+RetreatTime				 = 10000			; milliseconds
+RetreatDistance		     =   100			; meters
+AttackStraightDistance	 =    10			; meters
+StableDistance		     =     5			; meters
+WallMinTurnValue	     =    90 			; degrees
+WallMaxTurnValue	     =   270			; degrees
+
+AngleSpeed				 = 0.2	            ; degrees per second
+GoalChangeDelta	 	     = 10.0				; seconds
+GoalVariation	  	     = 10.0, 0.0, 20.0	; each coordinate in meters
+AngularStandSpeed		 = 360				; degrees
+AngularMinSpeed			 = 360				; degrees
+AngularMaxSpeed			 = 30				; degrees
+AngularAttackSpeed		 = 10				; degrees
+
+MoraleDeathDistance	     = 50				; meters
+SoundThreshold		     = 0.06             ; range [0..1]
+
+ActionRefreshRate	     = 500			; milliseconds
+MaxHealthValue		     = 15			; range [0..200]
+
+EatMemberCorpses	     = 1			; range {0,1}
+Cannibalism				 = 1			; range {0,1}
+EatCorpseInterval	     = 600000		; milliseconds
+
+cost					= 0
+slot					= 7
+description				= "suka rat, stole narabotkie"
+default_to_ruck			= false
+sprint_allowed			= true
+control_inertion_factor = 1
+script_binding     		= bind_physic_object.init
+
+inv_name			= "dead rat"
+inv_name_short		= "rat"
+inv_weight			= 1.0	;.5
+inv_grid_width		= 1
+inv_grid_height		= 1
+inv_grid_x			= 8
+inv_grid_y			= 13
+inv_weight			= 0.5
+food_value			= 10
+
 
 ;===========================================================================
 ; TERRAIN
 ;===========================================================================
 [rat_terrain]
-	255,000,255,255
+	255,000,255,255 ;на всех уровнях, по графам без описания
+	255,004,255,255 ;на всех уровнях, по мертвой земле
+	255,005,255,255 ;на всех уровнях, по деревням
+	255,006,255,255 ;на всех уровнях, по городам
+	255,007,255,255 ;на всех уровнях, по промзастройкам
+	255,008,255,255 ;на всех уровнях, по туннелям
+	255,009,255,255 ;на всех уровнях, по подземельям
+	255,014,255,255 ;на всех уровнях, по железнодорожным насыпям
+	255,015,255,255 ;на всех уровнях, по искусственным заграждениям
 
 
 

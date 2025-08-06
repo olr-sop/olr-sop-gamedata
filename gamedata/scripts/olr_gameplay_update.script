@@ -520,12 +520,15 @@ function yan_hit_acid()
 		return
 	end
 
+	local has_boots = db.actor:object("actor_boots")
+
 	local song_start = xr_sound.get_safe_sound_object([[anomaly\burning_fuzz_hit]])
-	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d + sound_object.looped)
+	if not song_start:playing() and has_boots == nil then
+		song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d + sound_object.looped)
+	end
 
 	--news_manager.send_tip(db.actor, game.translate_string("yan_hit_acid_0"), nil, "default", 10000)
 
-	local has_boots = db.actor:object("actor_boots")
 	if has_boots ~= nil then
 		local condb = has_boots:condition()
 		has_boots:set_condition(condb - 0.0005)

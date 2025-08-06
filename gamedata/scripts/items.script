@@ -1,0 +1,91 @@
+
+-- File       : items.script (Lost Alpha)
+-- Author     : Barin, Dezowave
+
+-- Handy script to check item type using section name. 
+
+quest_items = {}
+unique_items = {}
+--npc_ignore_items = {}
+
+cached_loot_classes = {}
+
+local sini = system_ini()
+--local npc_ignore_items_ltx = nil
+
+function get_loot_class(section)
+	if cached_loot_classes[section] == nil then
+		cached_loot_classes[section] = sini:line_exist(section, "script_loot_class") and sini:r_string(section, "script_loot_class")
+	end
+	return cached_loot_classes[section]
+end
+
+function is_quest_item(section)
+	if quest_items[section] == nil then
+		quest_items[section] = sini:line_exist(section, "quest_item") and sini:r_bool(section, "quest_item")
+	end
+	
+	--log(section.." is quest item "..tostring(quest_items[section] == true))
+	
+	return (quest_items[section] == true)
+end
+
+function is_unique_item(section)
+	if unique_items[section] == nil then
+		unique_items[section] = sini:line_exist(section, "unique_item") and sini:r_bool(section, "unique_item")
+	end
+	return (unique_items[section] == true)
+end
+
+function is_npc_ignore_item(section)
+	if is_quest_item(section) then
+		return true
+	end
+
+	--if (npc_ignore_items_ltx == nil) then
+	--	npc_ignore_items_ltx = ini_file("misc\\npc_ignore_items.ltx")
+	--end
+
+	--if npc_ignore_items[section] == nil then
+	--	npc_ignore_items[section] = npc_ignore_items_ltx:line_exist("npc_ignore_items_list", section)
+	--end
+	
+	--return (npc_ignore_items[section] == true)
+	return false
+end
+
+function is_mutant_body_part(section)
+	return get_loot_class(section) == "mutant"
+end
+
+function is_money(section)
+	return get_loot_class(section) == "money"
+end
+
+function is_outfit(section)
+	return get_loot_class(section) == "outfit"
+end
+
+function is_ammo(section)
+	return get_loot_class(section) == "ammo"
+end
+
+function is_weapon(section)
+	return get_loot_class(section) == "weapon"
+end
+
+function is_grenade(section)
+	return get_loot_class(section) == "grenade"
+end
+
+function is_artifact(section)
+	return get_loot_class(section) == "artefact"
+end
+
+function is_af_detector(section)
+	return get_loot_class(section) == "af_detector"
+end
+
+function is_anom_detector(section)
+	return get_loot_class(section) == "anom_detector"
+end

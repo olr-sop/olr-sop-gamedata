@@ -1244,8 +1244,7 @@ function spawen_aftervibros_stalkers()
 				local bol_var = math.random(1, 15)
 				if bol_var == 1 then
 					if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
-						local sobj =
-							alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+						local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 						if sobj.level_name ~= level.name() then
 							amk.on_REspawn(sobj)
 							olr.clear_restrictors(sobj)
@@ -1377,35 +1376,6 @@ function spawen_pseudohuman()
 		end
 	end
 	--news_manager.send_tip(db.actor,"всего радиоактивных обломков " .. count .. " нау ииии",nil,"freedom",9000)
-end
-
-----------------------------------------------
-
-function ph_impulse_blow()
-	if level.name() == "lvl16_generators" or level.name() == "lvl7_yantar" or level.name() == "lvl12_radar_bunker" then
-		return
-	end
-	for id = 1, 65534 do
-		local npc = level.object_by_id(id)
-		if npc and npc:is_obj_outdoors() == true and not npc:is_stalker() and npc:section() ~= "m_crow" then
-			if npc:position():distance_to(db.actor:position()) <= 50 then
-				--log1("kill is outdoor - "..npc:name().."")
-
-				local look_vec = vector():set(device().cam_dir):normalize()
-				look_vec.x = look_vec.x + math.random(30, 30)
-				look_vec.z = look_vec.z + math.random(30, 300)
-				look_vec.y = look_vec.y + math.random(30, 50)
-
-				local h = hit()
-				h.draftsman = db.actor
-				h.type = hit.explosion
-				h.direction = vector():set(look_vec)
-				h.power = 0.00001
-				h.impulse = npc:mass() * math.random(5, 10)
-				npc:hit(h)
-			end
-		end
-	end
 end
 
 ----------------------------------------------
@@ -1614,7 +1584,6 @@ function blowout_additional_timer3()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_hit_3]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("blowout_additional_timer3", 33, "olr_blowout.blowout_additional_timer4()")
-	ph_impulse_blow()
 end
 
 function blowout_additional_timer4()
@@ -1625,7 +1594,6 @@ function blowout_additional_timer4()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_hit_1]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("blowout_additional_timer4", 13, "olr_blowout.blowout_additional_timer5()")
-	ph_impulse_blow()
 end
 
 function blowout_additional_timer5()
@@ -1637,10 +1605,9 @@ function blowout_additional_timer5()
 	level.add_pp_effector("monolith_off.ppe", 2003, false)
 	--log1("blowout_additional_timer5 ADD PP EFFECTOR 2001")
 	level.add_pp_effector("psy_antenna_indoor.ppe", 2001, true)
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\blowout_wave_3]])
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_wave_3]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("blowout_additional_timer5", 23, "olr_blowout.blowout_additional_timer6()")
-	ph_impulse_blow()
 end
 
 function blowout_additional_timer6()

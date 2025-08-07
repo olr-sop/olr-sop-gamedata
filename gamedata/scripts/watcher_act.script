@@ -79,7 +79,7 @@ function bad_situation(npc)
 		if db.storage[npc:id()].active_scheme == "wounded" then return true end --- если отыгрываем тяжелораненного
 		if db.storage[npc:id()].active_scheme == "actor_dialogs" then return true end --- если говорим с актором
 
-		if max_weight(npc) > 40.0 then return true end --- если непись и так уже нагрёб дохренища вещей
+		if max_weight(npc) > 22.5 then return true end --- если непись и так уже нагрёб дохренища вещей
 		if bad_danger(npc) then return true end --- если мы в опасности
 		if not npc:alive() then return true end --- если мы трупик
 		if cannot_take_that(npc) then return true end --- если мы не той фракции
@@ -645,32 +645,34 @@ function on_take(item, npc)
 		return
 	end
 
-	local rndd = math.random(1, 5)
-	if item:cost() > 150 and item:cost() < 550 and rndd == 1 then
-		local text_phrase = {
-			game.translate_string("st_watcher_act_found_item_1").." "..item:get_name().."",
-			game.translate_string("st_watcher_act_found_item_2").." "..item:get_name().."",
-			game.translate_string("st_watcher_act_found_item_3").." "..item:get_name()..""
-		}
-		local news_text = "%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, true)
-	elseif item:cost() > 550 and item:cost() < 1550 and math.random(1, 5) == 1 then
-		local text_phrase = {
-			game.translate_string("st_watcher_act_found_item_good_1").." "..item:get_name().."",
-			game.translate_string("st_watcher_act_found_item_good_2").." "..item:get_name().."",
-			game.translate_string("st_watcher_act_found_item_good_3").." "..item:get_name()..""
-		}
-		local news_text = "%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, true)
-	elseif item:cost() > 1550 and item:cost() < 9550 and math.random(1, 5) == 1 then
-		local text_phrase = {
-			game.translate_string("st_watcher_act_found_item_great_1").." "..item:get_name().."",
-			game.translate_string("st_watcher_act_found_item_great_2").." "..item:get_name().."",
-			game.translate_string("st_watcher_act_found_item_great_3").." "..item:get_name()..""
-		}
-		local news_text ="%c[255,255,255,255]"..game.translate_string(npc:character_name()).."\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-		news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, true)
+	local rndd = math.random(1, 50)
+	if rndd == 25 then
+		text_phrase = {}
+		if item:cost() > 150 and item:cost() < 550 then
+			text_phrase = {
+				game.translate_string("st_watcher_act_found_item_1").." "..item:get_name().."",
+				game.translate_string("st_watcher_act_found_item_2").." "..item:get_name().."",
+				game.translate_string("st_watcher_act_found_item_3").." "..item:get_name()..""
+			}
+		elseif item:cost() > 550 and item:cost() < 1550 then
+			text_phrase = {
+				game.translate_string("st_watcher_act_found_item_good_1").." "..item:get_name().."",
+				game.translate_string("st_watcher_act_found_item_good_2").." "..item:get_name().."",
+				game.translate_string("st_watcher_act_found_item_good_3").." "..item:get_name()..""
+			}
+		elseif item:cost() > 1550 and item:cost() < 9550 then
+			text_phrase = {
+				game.translate_string("st_watcher_act_found_item_great_1").." "..item:get_name().."",
+				game.translate_string("st_watcher_act_found_item_great_2").." "..item:get_name().."",
+				game.translate_string("st_watcher_act_found_item_great_3").." "..item:get_name()..""
+			}
+		end
+		if #text_phrase > 0 then
+			local news_text ="%c[255,160,181,169]"..game.translate_string(npc:character_name())..":\\n".."%c[255,245,240,218]"..game.translate_string(text_phrase[math.random(#text_phrase)])
+			news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, false)
+		end
 	end
+	
 	local cnt = 0
 	npc:iterate_inventory(
 		function(_, item)
@@ -683,7 +685,7 @@ function on_take(item, npc)
 		end
 	)
 	if cnt > 10 then
-		local rnd = math.random(1, 5)
+		local rnd = math.random(1, 25)
 		if rnd == 3 then
 			if flg == false then
 				flg = true
@@ -699,11 +701,8 @@ function on_take(item, npc)
 					game.translate_string("st_watcher_act_trade_invite_2").." "..pos.." ",
 					game.translate_string("st_watcher_act_trade_invite_3").." "..pos.." "
 				}
-				local news_text =
-					"%c[255,255,255,255]"..
-					game.translate_string(npc:character_name())..
-						"\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-				news_manager.send_tip(db.actor, news_text, 4, "item", 15000, nil, nil, true)
+				local news_text = "%c[255,160,181,169]"..game.translate_string(npc:character_name())..":\\n".."%c[255,245,240,218]"..game.translate_string(text_phrase[math.random(#text_phrase)])
+				news_manager.send_tip(db.actor, news_text, 4, "item", 15000, nil, nil, false)
 			end
 		end
 		xrs_trade.on_sms_trade_otvet(npc)

@@ -2226,8 +2226,10 @@ function yan_labirint_telep_dead()
 	for i = 1, 65534 do
 		local obj = level.object_by_id(i)
 		if obj ~= nil then
-			if obj:clsid() == clsid.zombie_s or obj:clsid() == clsid.zombie and not obj:alive() then
-				olr.del(obj)
+			if obj:clsid() == clsid.zombie_s or obj:clsid() == clsid.zombie then
+				if not obj:alive() then
+					olr.del(obj)
+				end
 			end
 		end
 	end
@@ -2251,9 +2253,13 @@ function yan_labirint_telep_dead()
 	db.actor:set_actor_direction(-dir:getH())
 	level.add_pp_effector("black.ppe", 201831, false)
 	for k, v in pairs(db.storage) do
-		npc = level.object_by_id(k)
-		if npc and npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
-			npc:enable_memory_object(db.actor, false)
+		local npc = level.object_by_id(k)
+		if npc then
+			if npc:is_stalker() or npc:is_monster() then
+				if npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
+					npc:enable_memory_object(db.actor, false)
+				end
+			end
 		end
 	end
 end
@@ -2575,7 +2581,7 @@ function esc_prizrak_hitted()
 	
 	db.actor.health = -0.03
 	level.add_pp_effector("dead_zone.ppe", 971974, false)
-	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
+	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 	db.actor.psy_health = -0.05
 
@@ -2711,25 +2717,21 @@ function mg_boloto_hitted()
 	-- Применяем эффекты к актору
 	db.actor.health = -0.05
 	level.add_pp_effector("dead_zone.ppe", 971974, false)
-	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
+	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 	db.actor.psy_health = -0.05
 	nick.rnd_ppe_eff()
 	nick.phantasms_zombies()
 
-	-- Получаем наблюдателя напрямую
-	local observer = alife():object("lvl11_deadcity_observer")
-	if not observer or observer.health <= 0 then return end
-
-	local level_observer = level.object_by_id(observer.id)
-	if not level_observer then return end
-
-	--log1("health - " .. observer.health .. " ")
+    local observer = alife():object("lvl11_deadcity_observer")
+    if not observer then return end
+    
+    local level_observer = level.object_by_id(observer.id)
+    if not level_observer or level_observer.health <= 0 then return end
 
 	local bez_var = math.random(1, 5)
 	local teleport_effects = {
 		[1] = function()
-			-- Серия телепортаций с задержкой
 			for i = 1, 12 do
 				local wait_time = time_global() + i * 1000
 				level.add_call(
@@ -2796,7 +2798,7 @@ function phantsam_hitted()
 			db.actor.health = -0.06
 			level.add_pp_effector("dead_zone.ppe", 971974, false)
 			--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
-			local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat]])
+			local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 			db.actor.psy_health = -0.1
 			nick.phantasms_zombies()
@@ -2821,7 +2823,7 @@ function phatstm_telep()
 	}
 
 	local new_pos = teleport_positions[math.random(1, #teleport_positions)]
-	alife():teleport_object(phantom:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), new_pos)
+	alife():teleport_object(phantom.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), new_pos)
 end
 
 function del_mg_ludoed()

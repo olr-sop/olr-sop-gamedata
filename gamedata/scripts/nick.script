@@ -972,7 +972,7 @@ function phantasms_zombies()
 		"zombie_blue"
 	}
 
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\earthquake]])
+	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\earthquake]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 2.0)
 
 	for i = 1, math.random(2, 3) do
@@ -1623,7 +1623,6 @@ function ded_pomeraet_yan()
 	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
-	olr.kill_by_name("lvl7_yantar_stalker_sakharov")
 	delete_netspawn_objects({"lvl7_yantar_stalker_sakharov", "lvl7_yantar_physic_object_0673"})
 end
 
@@ -6943,8 +6942,8 @@ end
 function esc_to_bar_start_go_dolina_spawn_fix_enemys_delete()
 	local pos = vector():set(-21,2,6)
 	olr.kill_mon_in_radius(pos, 70)
-	news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_0"), nil, "sos", 39000)
-	news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_1"), nil, "act", 39000)
+	news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_0"), nil, "sos", 5000)
+	news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_1"), nil, "act", 10000) -- мысль мессера, переделать
 	olr.del_by_name("lvl4_darkdolina_space_restrictor_glaz_place_0000")
 end
 
@@ -7419,12 +7418,16 @@ function deadcity_jaba_about()
 end
 
 function step_yan_deadtw()
-	for k,v in pairs(db.storage) do
+	for k, v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
-		if npc and npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
-			npc:enable_memory_object(db.actor,false)
+		if npc then
+			if npc:is_stalker() or npc:is_monster() then
+				if npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
+					npc:enable_memory_object(db.actor, false)
+				end
+			end
 		end
-	end
+	end		
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\siren_gen]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	db.actor:set_actor_position(db.actor:position():add(db.actor:direction():mul(5)), db.actor:level_vertex_id())
@@ -7445,12 +7448,16 @@ function step_yan_deadtw()
 end
 
 function step_yan_dead()
-	for k,v in pairs(db.storage) do
+	for k, v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
-		if npc and npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
-			npc:enable_memory_object(db.actor,false)
+		if npc then
+			if npc:is_stalker() or npc:is_monster() then
+				if npc:alive() and npc:position():distance_to(db.actor:position()) < 35 then
+					npc:enable_memory_object(db.actor, false)
+				end
+			end
 		end
-	end
+	end	
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\siren_gen]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("step_yan_dead2", 3, "nick.step_yan_deadtw()")
@@ -7505,21 +7512,24 @@ end
 
 function hit_yan_zombies()
 	olr_timers.st_timer("from_yan_dead", 2, "nick.from_yan_dead()")	
-	for k,v in pairs(db.storage) do
+	for k, v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
-		if npc and npc:alive() and npc:position():distance_to(db.actor:position()) < 35 and not npc:is_actor() then
-			npc:enable_memory_object(db.actor,true)
-				local h = hit()
-			h.draftsman = db.actor
-			h.type = hit.strike
-			h.direction = vector():set(math.random(1),0.1,math.random(1))
-			h.power = 0.01
-			h.impulse = 2
-			npc:hit(h)
-			npc:enable_memory_object(db.actor,true)
+		if npc then
+			if npc:is_stalker() or npc:is_monster() then
+				if npc:alive() and npc:position():distance_to(db.actor:position()) < 35 and not npc:is_actor() then
+					npc:enable_memory_object(db.actor,true)
+					local h = hit()
+					h.draftsman = db.actor
+					h.type = hit.strike
+					h.direction = vector():set(math.random(1),0.1,math.random(1))
+					h.power = 0.01
+					h.impulse = 2
+					npc:hit(h)
+					npc:enable_memory_object(db.actor,true)
+				end
+			end
 		end
-	end
-
+	end	
 end
 
 function explode_lenin()
@@ -11637,7 +11647,7 @@ function give_konservas(first_speaker, second_speaker)
 	dialogs.relocate_item_section(second_speaker, "af_banka_s_holodcom","in")
 	dialogs.relocate_item_section(second_speaker, "af_banka_s_holodcom","in")
 	if not has_alife_info("komandir_zdoh_nahui") then
-		news_manager.send_tip(db.actor, game.translate_string("give_konservas_0"), 17, "military", 49000)
+		news_manager.send_tip(db.actor, game.translate_string("give_konservas_0"), 17, "military", 15000)
 	end
 end
 

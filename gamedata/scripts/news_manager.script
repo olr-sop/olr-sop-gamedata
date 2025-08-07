@@ -94,19 +94,21 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 		pda_tip = pda_tips,
 		pda_objective = pda_task
 	}
-
-	local sound_to_play = sound_map[kostyl] or pda_tips
-	sound_to_play:play(db.actor, timeout, sound_object.s2d)
 	
-    -- Определение времени отображения (в миллисекундах)
-    local display_time
+    -- Определение задержки (в миллисекундах)
+    local timeout_msg
+	local timeout_snd = timeout
     if timeout >= 100 then
         -- Если timeout уже в миллисекундах (>=100), используем как есть
-        display_time = timeout
+        timeout_msg = timeout
+		timeout_snd = timeout / 1000 -- переводим из мс в сек
     else
         -- Иначе конвертируем секунды в миллисекунды
-        display_time = timeout * 1000
-    end	
+        timeout_msg = timeout * 1000
+    end		
+
+	local sound_to_play = sound_map[kostyl] or pda_tips
+	sound_to_play:play(db.actor, timeout_snd, sound_object.s2d)
 	
 	if sender == nil then
 		sender = "default"
@@ -122,7 +124,7 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 		news_text = "%c[255,255,255,255]"..game.translate_string(news_id)
 	end
 	
-	actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(x,y,50,50), display_time, showtime)
+	actor:give_game_news(news_text, "ui\\icons\\icons_task", Frect():set(x,y,50,50), timeout_msg, showtime)
 	return true
 end
 

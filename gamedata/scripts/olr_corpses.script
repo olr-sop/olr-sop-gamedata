@@ -38,7 +38,6 @@ function del_corpse(obj)
 				-- если пустой труп
 				if obj:ruck_count() == 0 then
 					--log1("dead without habar "..obj:name().." DEL ")
-					xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
 					this.spawn_rotten(obj)
 					this.del_now(obj)
 					return
@@ -53,30 +52,17 @@ function del_corpse(obj)
 							if olr.bad_items[item:section()] and olr.bad_items[item:section()] == true then
 								--news_manager.send_tip(db.actor, "АХТУНГ в трупе есть важный bad_items "..item:name().." ", nil, "act", 9000)
 								nodelflag = true
+								return -- сразу заканчиваем, если итем есть нефиг дальше ковырять
 							end
 							if ini:line_exist(item:section(), "quest_item") and ini:r_bool(item:section(), "quest_item") == true then
 								--news_manager.send_tip(db.actor, "АХТУНГ в трупе есть важный quest_item "..item:name().." ", nil, "dolg", 9000)
 								nodelflag = true
+								return -- сразу заканчиваем, если итем есть нефиг дальше ковырять
 							end	
 						end
 					end
 					, obj)
 					if nodelflag == false then
-
-						-- DEBUG
-						--news_manager.send_tip(db.actor, "can del now -  "..obj:name().." no import items ", nil, "freedom", 9000)
-						--olr.add_spot_on_map( obj:id(),"level_changer","АХТУНГ в трупе НЕТ ВАЖНЫХ итемов")
-						--obj:iterate_inventory(
-						--function(obj, item) 
-						--if item then
-						--	xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-						--	--log1("deadmen CANDIDATE  "..obj:name().." with ITEM - "..item:name().." ")	
-						--end
-						--end
-						--, obj)
-						--xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-						-- DEBUG
-
 						this.spawn_rotten(obj)
 						this.del_now(obj)
 					end
@@ -87,7 +73,6 @@ function del_corpse(obj)
 		end
 	end
 end
-
 
 function del_now(obj)
 	xvars.npc_actor_use[obj:name()] = nil
@@ -104,85 +89,57 @@ function del_now(obj)
 		xvars.npc_jobs_foractor_target[obj:name()] = nil
 	end
 	local wait_time = 0
-  	wait_time = time_global() + 900
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() olr.del(obj) end
-  	)
+	wait_time = time_global() + 900
+	level.add_call(
+		function()
+			return time_global() > wait_time
+		end,
+		function()
+			olr.del(obj)
+		end
+	)
 end
-
 
 function spawn_rotten(obj)
 	if level_name == "lvl14_stancia" or level_name == "lvl5_bar" then
 		return
 	end
-	local rnd = math.random(1,8)
+	local rnd = math.random(1, 8)
 	if rnd == 1 then
 		local bobj2 = alife():create("dead_body_skelet", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
-		level.client_spawn_manager():add(bobj2.id, 0, 
-                        function(id,obj) 
-						
-                        if obj then
-                                local h = hit()
-		                h.draftsman = obj
-		                h.type = hit.strike
-                                h:bone("head")
-		                h.direction = vector():set(math.random(1),0.1,math.random(1))
-		                h.power = 0.1
-		                h.impulse = math.random(1,3)
-		                obj:hit(h)
-
-                        end						
- 
-                        end)
+		level.client_spawn_manager():add(
+			bobj2.id,
+			0,
+			function(id, obj)
+				if obj then
+					local h = hit()
+					h.draftsman = obj
+					h.type = hit.strike
+					h:bone("head")
+					h.direction = vector():set(math.random(1), 0.1, math.random(1))
+					h.power = 0.1
+					h.impulse = math.random(1, 3)
+					obj:hit(h)
+				end
+			end
+		)
 	elseif rnd == 2 then
 		local bobj2 = alife():create("dead_body_skelet2", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
-		level.client_spawn_manager():add(bobj2.id, 0, 
-                        function(id,obj) 
-						
-                        if obj then
-                                local h = hit()
-		                h.draftsman = obj
-		                h.type = hit.strike
-                                h:bone("head")
-		                h.direction = vector():set(math.random(1),0.1,math.random(1))
-		                h.power = 0.2
-		                h.impulse = math.random(1,3)
-		                obj:hit(h)
-
-                        end						
- 
-                        end)
+		level.client_spawn_manager():add(
+			bobj2.id,
+			0,
+			function(id, obj)
+				if obj then
+					local h = hit()
+					h.draftsman = obj
+					h.type = hit.strike
+					h:bone("head")
+					h.direction = vector():set(math.random(1), 0.1, math.random(1))
+					h.power = 0.2
+					h.impulse = math.random(1, 3)
+					obj:hit(h)
+				end
+			end
+		)
 	end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

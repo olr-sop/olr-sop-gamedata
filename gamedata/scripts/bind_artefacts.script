@@ -10,9 +10,10 @@ function Init(obj)
 	obj:bind_object(oNewBinder)
 end
 
-class "CArtBinder" (object_binder)
-function CArtBinder:__init(obj) super(obj)
-end 
+class "CArtBinder"(object_binder)
+function CArtBinder:__init(obj)
+	super(obj)
+end
 
 function CArtBinder:reload(section)
 	object_binder.reload(self, section)
@@ -27,13 +28,12 @@ function CArtBinder:net_save_relevant()
 end
 
 function CArtBinder:save(packet)
-	object_binder.save(self, packet)	
+	object_binder.save(self, packet)
 end
 
 function CArtBinder:load(reader)
 	object_binder.load(self, reader)
 end
-
 
 function CArtBinder:net_destroy()
 	object_binder.net_destroy(self)
@@ -54,20 +54,20 @@ function CArtBinder:net_spawn(data)
 				local val_weight = self.object:weight()
 				local val_weight_fin = val_weight + ((val_weight / 100) * math.random(-10, 10))
 				local stng_w = game.translate_string(weight)
-				xvars.arts[s_name..stng_w] = val_weight_fin
-				if xvars.arts[s_name..stng_w] then
+				xvars.arts[s_name .. stng_w] = val_weight_fin
+				if xvars.arts[s_name .. stng_w] then
 					self.object:set_weight(val_weight_fin)
-					--log1("REG NEW ART bind art "..xvars.arts[self.object:name()].." - set weight - "..val_weight.."")
+				--log1("REG NEW ART bind art "..xvars.arts[self.object:name()].." - set weight - "..val_weight.."")
 				end
 
 				local cost = "cost"
 				local val_cost = ini:r_float(self.object:section(), "cost")
 				local val_cost_fin = val_cost + ((val_cost / 100) * math.random(-10, 10))
 				local stng_c = game.translate_string(cost)
-				xvars.arts[s_name..stng_c] = val_cost_fin
-				if xvars.arts[s_name..stng_c] then
+				xvars.arts[s_name .. stng_c] = val_cost_fin
+				if xvars.arts[s_name .. stng_c] then
 					self.object:set_cost(val_cost_fin)
-					--log1("REG NEW ART bind art "..xvars.arts[self.object:name()].." - set cost - "..val_weight.."")
+				--log1("REG NEW ART bind art "..xvars.arts[self.object:name()].." - set cost - "..val_weight.."")
 				end
 
 				-- TODO ???
@@ -75,26 +75,26 @@ function CArtBinder:net_spawn(data)
 				--local StatText_health = string.format("%1.0f", val_health_restore_speed * 1000000)
 				--local stng_h = game.translate_string(StatText_health)
 				--xvars.arts[s_name..stng_h] = stng_h
-							
+
 				--log1("bind art - regist new art "..xvars.arts[self.object:name()].."")
 				--log1("bind art - regist new art - health_restore_speed "..xvars.arts[s_name..stng_h].."")
-				end
 			end
 		end
-	
+	end
+
 	-----------------------------------------------------------------------------------------------------
 	if xvars.arts then
 		local weight = "weight"
 		local s_name = xvars.arts[self.object:name()]
 		local stng_w = game.translate_string(weight)
-		local weghper = xvars.arts[s_name..stng_w]
+		local weghper = xvars.arts[s_name .. stng_w]
 		if s_name and weghper then
-			if xvars.arts[s_name..stng_w] then
-        		--if not self.object:section() == "af_ameba_mica" then
+			if xvars.arts[s_name .. stng_w] then
+				--if not self.object:section() == "af_ameba_mica" then
 				--log1("abas "..weghper.."")
 				self.object:set_weight(weghper)
-				--log1("bind art "..xvars.arts[self.object:name()].." - set weight - "..xvars.arts[s_name..stng_w].."")
-				--end
+			--log1("bind art "..xvars.arts[self.object:name()].." - set weight - "..xvars.arts[s_name..stng_w].."")
+			--end
 			end
 		end
 		if not weghper then
@@ -102,11 +102,11 @@ function CArtBinder:net_spawn(data)
 			local val_weight = self.object:weight()
 			local val_weight_fin = val_weight + ((val_weight / 100) * math.random(-10, 10))
 			local stng_w = game.translate_string(weight)
-			xvars.arts[s_name..stng_w] = val_weight_fin
-			if xvars.arts[s_name..stng_w] then
+			xvars.arts[s_name .. stng_w] = val_weight_fin
+			if xvars.arts[s_name .. stng_w] then
 				self.object:set_weight(val_weight_fin)
-				--log1("!!! RE-REG !!! NEW ART bind art "..xvars.arts[self.object:name()].." - set weight - "..val_weight.."")
-			end	
+			--log1("!!! RE-REG !!! NEW ART bind art "..xvars.arts[self.object:name()].." - set weight - "..val_weight.."")
+			end
 		end
 	end
 
@@ -114,11 +114,11 @@ function CArtBinder:net_spawn(data)
 		local cost = "cost"
 		local s_name = xvars.arts[self.object:name()]
 		local stng_c = game.translate_string(cost)
-		local costper = xvars.arts[s_name..stng_c]
+		local costper = xvars.arts[s_name .. stng_c]
 		if s_name and costper then
-			if xvars.arts[s_name..stng_c] then
-			--log1("abas "..costper.."")
-			self.object:set_cost(costper)
+			if xvars.arts[s_name .. stng_c] then
+				--log1("abas "..costper.."")
+				self.object:set_cost(costper)
 			--log1("load saved params bind art "..xvars.arts[self.object:name()].." - set cost - "..xvars.arts[s_name..stng_c].."")
 			end
 		end
@@ -127,18 +127,18 @@ function CArtBinder:net_spawn(data)
 			local val_cost = ini:r_float(self.object:section(), "cost")
 			local val_cost_fin = val_cost + ((val_cost / 100) * math.random(-10, 10))
 			local stng_c = game.translate_string(cost)
-			xvars.arts[s_name..stng_c] = val_cost_fin
-			if xvars.arts[s_name..stng_c] then
-				self.object:set_cost(val_cost_fin)	
-				--log1("!! RE-REG!!! NEW ART bind art "..xvars.arts[self.object:name()].." - set cost - "..val_weight.."")
+			xvars.arts[s_name .. stng_c] = val_cost_fin
+			if xvars.arts[s_name .. stng_c] then
+				self.object:set_cost(val_cost_fin)
+			--log1("!! RE-REG!!! NEW ART bind art "..xvars.arts[self.object:name()].." - set cost - "..val_weight.."")
 			end
 		end
 	end
-	
+
 	-----------------------------------------------------------------------------------------------------
 
 	--db.arts_online[self.object:id()] = self.object
-	
+
 	return true
 end
 
@@ -148,61 +148,63 @@ function CArtBinder:update(delta)
 	--local pt = profile_timer()
 	--pt:start()
 
-
-    local iParent = self.object:parent()
+	local iParent = self.object:parent()
 	local isec = self.object:section()
 
-	
 	--local a = self.object:get_artefact()
 	--if a then
 	--a.trail_light_range = math.random(10,100)
 	--end
 
-    if isec == "af_electra_moonlight" or isec == "af_fuzz_kolobok" or isec == "af_fireball" then
+	if isec == "af_electra_moonlight" or isec == "af_fuzz_kolobok" or isec == "af_fireball" then
 		if not iParent then
-		local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
-		shelbone:apply_force(70,math.random(10,750),math.random(100,900))
+			local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
+			shelbone:apply_force(70, math.random(10, 750), math.random(100, 900))
 		end
-    end
-
+	end
 
 	--рутный шар
 	if isec == "af_ameba_mica" then
 		self.object:set_condition(self.object:condition() - self:TimeCondLostSh())
 		self.object:set_weight(self.object:condition() * 10 - self:TimeCondLostSh())
 		if self.object:condition() <= 0.01 then
-			olr.del(self.object) 
-		end			
+			olr.del(self.object)
+		end
 	end
 
-
-    if db.actor then
-		if self.object:position():distance_to(db.actor:position()) > 7 then 
-			return 
+	if db.actor then
+		if self.object:position():distance_to(db.actor:position()) > 7 then
+			return
 		end
 
-
-		-- испаряем эти арты когда кондишн в ноль 
+		-- испаряем эти арты когда кондишн в ноль
 		if isec == "af_night_star" or isec == "af_vyvert" or isec == "af_gravi" or isec == "af_gold_fish" or isec == "af_gold_fish_black" then
 			if self.object:condition() <= 0.01 then
-				olr.del(self.object) 
-			end			
+				olr.del(self.object)
+			end
 		end
-	
+
 		--рутный шар
 		if loaded == false then
-			if device().precache_frame >1 then
+			if device().precache_frame > 1 then
 				for i = 0, db.actor:belt_count() - 1 do
 					local item = db.actor:item_on_belt(i)
-						if item and item:section() == "af_ameba_mica" then
-							db.actor:drop_item(item)
-							db.actor:transfer_item(item, db.actor)
-							local wait_time = 0
-							wait_time = time_global() + 300
-							level.add_call(function() return time_global() > wait_time end, function() db.actor:move_to_belt(item) end)
-							db.actor:invalidate_inventory()
-							loaded = true
-						end
+					if item and item:section() == "af_ameba_mica" then
+						db.actor:drop_item(item)
+						db.actor:transfer_item(item, db.actor)
+						local wait_time = 0
+						wait_time = time_global() + 300
+						level.add_call(
+							function()
+								return time_global() > wait_time
+							end,
+							function()
+								db.actor:move_to_belt(item)
+							end
+						)
+						db.actor:invalidate_inventory()
+						loaded = true
+					end
 				end
 			end
 		end
@@ -210,14 +212,14 @@ function CArtBinder:update(delta)
 			if iParent then
 				if get_clsid(iParent) == clsid.actor then
 					db.actor.health = -0.001
-					local par_var = math.random(1,256)
+					local par_var = math.random(1, 256)
 					if par_var == 1 then
 						local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
-						if not snd_obj:playing() then 
+						if not snd_obj:playing() then
 							snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 							olr.hud_tip(game.translate_string("st_bind_artifacts_container_warning_1"), game.translate_string("st_bind_artifacts_container_warning_2"), 2)
 						end
-					end		
+					end
 				end
 			end
 		end
@@ -232,12 +234,8 @@ function CArtBinder:update(delta)
 	end
 	--pt:stop()
 	--printf("работало (art binder) "..pt:time().." ms")
-
 end
 
-
 function CArtBinder:TimeCondLostSh()
-	return 100/16/24/100/60
-end		
-
-
+	return 100 / 16 / 24 / 100 / 60
+end

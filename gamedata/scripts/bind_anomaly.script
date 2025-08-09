@@ -71,7 +71,6 @@ end
 
 function CAnomBinder:update(delta)
 	object_binder.update(self, delta)
-
 	if db.actor then
 		if self.object:section() == "zone_flame_small" and self.object:position():distance_to(db.actor:position()) < CAMP_POS then
 			actor_u_costra = true
@@ -153,117 +152,127 @@ end
 local gvid_to_lname = {}
 
 function get_all_nearest_anomalies_by_point_in_radius(position, rads)
-	if not db.anoms_online then return {} end
-	
-	local loc = gvid_to_lname[db.actor:game_vertex_id()]
-	local mindist = rads
-	
-	local anom_out = {}
+    if not db.anoms_online then
+        return {}
+    end
 
-	for k,v in pairs(db.anoms_online) do
-		if v and loc == v.location then -- если аномалия на текущей локации
-			local dist = v:position():distance_to(position)
-			local dist = dist - v:get_shape_radius()
-			if dist < mindist then
-				local anomid = k
-				local anom_desc = v
-				anom_out[anomid] = { 
-					pos = anom_desc.pos, 
-					clsid = anom_desc.clsid, 
-					dist = dist, -- минимальное безопасное расстояние до аномалии 
-					radius = anom_desc.radius, 
-					sect = anom_desc.section 
-				}
-			end
-		end
-	end
-	
-	if anom_out ~= {} then
-		return anom_out
-	else
-		return {}
-	end
+    local loc = gvid_to_lname[db.actor:game_vertex_id()]
+    local mindist = rads
+
+    local anom_out = {}
+
+    for k, v in pairs(db.anoms_online) do
+        if v and loc == v.location then -- если аномалия на текущей локации
+            local dist = v:position():distance_to(position)
+            local dist = dist - v:get_shape_radius()
+            if dist < mindist then
+                local anomid = k
+                local anom_desc = v
+                anom_out[anomid] = {
+                    pos = anom_desc.pos,
+                    clsid = anom_desc.clsid,
+                    dist = dist, -- минимальное безопасное расстояние до аномалии
+                    radius = anom_desc.radius,
+                    sect = anom_desc.section
+                }
+            end
+        end
+    end
+
+    if anom_out ~= {} then
+        return anom_out
+    else
+        return {}
+    end
 end
-
 
 function set_anomaly_status(sobj, status)
-	if sobj then
-		local anom_id= alife():object(sobj:id())
-		local tbl = amk.get_anomaly_data(anom_id)
-		tbl.custom=modify_anomaly_custom_data(tbl.custom,status)
-		amk.set_anomaly_data( tbl, anom_id )
-	end
+    if sobj then
+        local anom_id = alife():object(sobj:id())
+        local tbl = amk.get_anomaly_data(anom_id)
+        tbl.custom = modify_anomaly_custom_data(tbl.custom, status)
+        amk.set_anomaly_data(tbl, anom_id)
+    end
 end
 
-function modify_anomaly_custom_data(cd,status)
-	cd = amk.parse_custom_data(cd)
-	if not cd then cd={} end
-	if not cd.dyn_anom then cd.dyn_anom={} end
-	cd.dyn_anom.status = status
-	return amk.gen_custom_data(cd)
+function modify_anomaly_custom_data(cd, status)
+    cd = amk.parse_custom_data(cd)
+    if not cd then
+        cd = {}
+    end
+    if not cd.dyn_anom then
+        cd.dyn_anom = {}
+    end
+    cd.dyn_anom.status = status
+    return amk.gen_custom_data(cd)
 end
 
 function get_anomaly_status(sobj)
-	local tbl = amk.get_anomaly_data(sobj)
-	local cd = tbl.custom
-	cd = amk.parse_custom_data(cd)
-	if not cd.dyn_anom then return "" end
-	if not cd.dyn_anom.status then return "" end
-	return cd.dyn_anom.status
+    local tbl = amk.get_anomaly_data(sobj)
+    local cd = tbl.custom
+    cd = amk.parse_custom_data(cd)
+    if not cd.dyn_anom then
+        return ""
+    end
+    if not cd.dyn_anom.status then
+        return ""
+    end
+    return cd.dyn_anom.status
 end
 
 function set_anomaly_status_offline(sobj, status)
+    local cur_lev = level.name()
+    local gvid = sobj.m_game_vertex_id
+    if game_graph():valid_vertex_id(gvid) then
+        if alife():level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
+            return
+        end
+    end
 
-	local cur_lev = level.name()
-	local gvid = sobj.m_game_vertex_id
-	        if game_graph():valid_vertex_id(gvid) then
-		if alife():level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
-	return
-	end
-	end
-
-	local anom_id = alife():object(sobj.id)
-	local tbl = amk.get_anomaly_data(anom_id)
-	tbl.custom=modify_anomaly_custom_data(tbl.custom,status)
-	amk.set_anomaly_data(tbl,anom_id)
+    local anom_id = alife():object(sobj.id)
+    local tbl = amk.get_anomaly_data(anom_id)
+    tbl.custom = modify_anomaly_custom_data(tbl.custom, status)
+    amk.set_anomaly_data(tbl, anom_id)
 end
 
 function get_anomaly_status_offline(sobj)
-
-	local cur_lev = level.name()
-	local gvid = sobj.m_game_vertex_id
-	        if game_graph():valid_vertex_id(gvid) then
-		if alife():level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
-	return
-	end
-	end
-
-	local anom_id= alife():object(sobj.id)
-	local tbl = amk.get_anomaly_data(anom_id)
-	local cd = tbl.custom
-	cd = amk.parse_custom_data(cd)
-	if not cd.dyn_anom then return "" end
-	if not cd.dyn_anom.status then return "" end
-	return cd.dyn_anom.status
-end
-
-function get_anomaly_list(npc,radius)
-	return get_anomaly_list_for_pos(npc:position(),radius)
-end
-
-function get_anomaly_list_for_pos(posn,radius)
-  local ret={}
-  if db.anoms_online then
-    for id,o in pairs(db.anoms_online) do
-			local obj=level.object_by_id(id)
-			if obj then
-				local dist=posn:distance_to(obj:position())-obj:get_shape_radius()
-				if dist<radius then
-					table.insert(ret,{id=id,name=obj:name(),pos=obj:position(),radius=obj:get_shape_radius()})
-				end
-			end
+    local cur_lev = level.name()
+    local gvid = sobj.m_game_vertex_id
+    if game_graph():valid_vertex_id(gvid) then
+        if alife():level_name(game_graph():vertex(gvid):level_id()) == cur_lev then
+            return
+        end
     end
-  end
-  return ret
+
+    local anom_id = alife():object(sobj.id)
+    local tbl = amk.get_anomaly_data(anom_id)
+    local cd = tbl.custom
+    cd = amk.parse_custom_data(cd)
+    if not cd.dyn_anom then
+        return ""
+    end
+    if not cd.dyn_anom.status then
+        return ""
+    end
+    return cd.dyn_anom.status
 end
 
+function get_anomaly_list(npc, radius)
+    return get_anomaly_list_for_pos(npc:position(), radius)
+end
+
+function get_anomaly_list_for_pos(posn, radius)
+    local ret = {}
+    if db.anoms_online then
+        for id, o in pairs(db.anoms_online) do
+            local obj = level.object_by_id(id)
+            if obj then
+                local dist = posn:distance_to(obj:position()) - obj:get_shape_radius()
+                if dist < radius then
+                    table.insert(ret, {id = id, name = obj:name(), pos = obj:position(), radius = obj:get_shape_radius()})
+                end
+            end
+        end
+    end
+    return ret
+end

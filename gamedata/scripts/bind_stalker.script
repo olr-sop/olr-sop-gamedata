@@ -23,6 +23,8 @@ local weapon_hide = false
 local loked_obj = nil
 local loked_obj_name = ""
 
+local dbg_time = false -- выводит время на худ используя статик debug_time
+
 ----------------------------------------------------------------------------------------------------------------------
 class "actor_binder" (object_binder)
 ----------------------------------------------------------------------------------------------------------------------
@@ -737,7 +739,57 @@ function actor_binder:update(delta)
 	amk.on_actor_upade()
 	olr_debug.upd()
 	core.tc("actor_update", delta)
+	
+	if dbg_time then
+	
+		local hud = get_hud()
+		local StatCS = hud:GetCustomStatic("debug_time")
+		local current_time = game.time()
+		local sys_ini = system_ini()
 
+		-- Получаем time_factor из конфига
+		local alife_time_factor = sys_ini:r_float("alife", "time_factor")
+
+		-- Расчет времени из game.time()
+		local hours_from_game = math.floor(current_time / 3600000)
+		local minutes_from_game = math.floor(current_time / 60000 - hours_from_game * 60)
+		local seconds = math.floor((current_time % 60000) / 1000)	
+		local formatted_game_time = string.format("%02d:%02d:%02d", hours_from_game, minutes_from_game, seconds)
+
+		-- Получение времени из level
+		local time_h = level.get_time_hours()
+		local time_m = level.get_time_minutes()
+		local formatted_level_time = string.format("%02d:%02d", time_h, time_m)
+
+		-- Расчет delay (время с учетом time_factor)
+		local delay = current_time * 1000 * alife_time_factor
+		
+		-- Получаем текущее время
+		local current_time_real = os.time()
+		-- Форматируем время в строку ЧЧ:ММ:СС
+		local formatted_time_real = os.date("%H:%M:%S", current_time_real)
+		
+		-- Создание HUD элемента если он не существует
+		if StatCS == nil then
+			hud:AddCustomStatic("debug_time", true)
+			StatCS = hud:GetCustomStatic("debug_time")
+		end
+
+		-- Формирование текста для отображения
+		if StatCS ~= nil then
+			local display_text = 
+				"Реальное время: " .. tostring(formatted_time_real) .. "\\n" ..
+				"Расчетное время из game.time(): " .. tostring(formatted_game_time) .. "\\n" ..
+				"Игровое время (level): " .. tostring(formatted_level_time) .. "\\n" ..
+				"Таймер функций (time*1000*time_factor): " .. tostring(delay) .. "\\n" ..
+				"blowout_timer: " .. tostring(xvars.blowout_timer) .. "\\n" ..
+				"time_global(): " .. tostring(time_global()) .. "\\n" ..			
+				"game.time(): " .. tostring(current_time) .. "\\n"
+			
+			StatCS:wnd():SetTextST(display_text)
+		end	
+	
+	end
 end
 ------------------------------------------------------------------
 function actor_binder:save(packet)

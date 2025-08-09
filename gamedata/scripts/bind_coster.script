@@ -5,17 +5,16 @@ local coster_particle = particles_object("explosions\\campfire_05")
 --local snd_obj = xr_sound.get_safe_sound_object([[anomaly\fire]])
 local actor_u_costra = false
 
-local food_sections = 
-{
-["rat_food"] = true,
-["crow_food"] = true,
-["mutant_flesh_eye"] = true,
-["mutant_boar_leg"] = true,
-["mutant_dog_tail"] = true,
-["mutant_psevdodog_tail"] = true,
-["mutant_krovosos_jaw"] = true,
-["mutant_burer_hand"] = true,
-["mutant_zombie_hand"] = true
+local food_sections = {
+	["rat_food"] = true,
+	["crow_food"] = true,
+	["mutant_flesh_eye"] = true,
+	["mutant_boar_leg"] = true,
+	["mutant_dog_tail"] = true,
+	["mutant_psevdodog_tail"] = true,
+	["mutant_krovosos_jaw"] = true,
+	["mutant_burer_hand"] = true,
+	["mutant_zombie_hand"] = true
 }
 
 function init(obj)
@@ -23,14 +22,15 @@ function init(obj)
 	obj:bind_object(new_binder)
 end
 
-class "coster_binder" (object_binder)
+class "coster_binder"(object_binder)
 
-function coster_binder:__init(obj) super(obj)
-end 
+function coster_binder:__init(obj)
+	super(obj)
+end
 
 function coster_binder:reinit()
 	object_binder.reinit(self)
-	self.object:set_callback( callback.use_object, self.use_callback, self )
+	self.object:set_callback(callback.use_object, self.use_callback, self)
 end
 
 function coster_binder:net_spawn(data)
@@ -42,61 +42,58 @@ function coster_binder:net_spawn(data)
 end
 
 function coster_binder:update(delta)
-
 	if self.object:section() == "koster_razvodnoy" then
 		if level.rain_factor() > 0 then
-			if coster_particle:playing() then 
+			if coster_particle:playing() then
 				coster_particle:stop()
 			end
 		end
 
-		if not coster_particle:playing() and level.rain_factor() <= 0 then 
+		if not coster_particle:playing() and level.rain_factor() <= 0 then
 			coster_particle:play_at_pos(self.object:position())
 		end
 
 		--if snd_obj:playing() then snd_obj:set_position(self.object:position()) end
 
-	if self.object:position():distance_to(db.actor:position()) < 4 then
-		actor_u_costra = true
-	else
-		actor_u_costra = false
-	end
-
-	if self.object:position():distance_to(db.actor:position()) > 200 then
-		coster_particle:stop()
-		this.hide_coster_light()
-		olr.del(self.object)
-		xvars.coster_id = 0
-		xvars.cooked_food_name = ""
-	end
-
-	--self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
-
-	local active_item = db.actor:active_item()
-	if active_item then
-		if food_sections[active_item:section()] then 
-			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_cook")..active_item:get_name().." (F)")
+		if self.object:position():distance_to(db.actor:position()) < 4 then
+			actor_u_costra = true
 		else
-			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
+			actor_u_costra = false
 		end
-	else
-		self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook_expanded"))
-	end
-	end
 
+		if self.object:position():distance_to(db.actor:position()) > 200 then
+			coster_particle:stop()
+			this.hide_coster_light()
+			olr.del(self.object)
+			xvars.coster_id = 0
+			xvars.cooked_food_name = ""
+		end
+
+		--self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
+
+		local active_item = db.actor:active_item()
+		if active_item then
+			if food_sections[active_item:section()] then
+				self.object:set_tip_text(game.translate_string("st_bind_coster_tip_cook") .. active_item:get_name() .. " (F)")
+			else
+				self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook"))
+			end
+		else
+			self.object:set_tip_text(game.translate_string("st_bind_coster_tip_how2cook_expanded"))
+		end
+	end
 end
 
 function coster_binder:net_destroy()
 	object_binder.net_destroy(self)
-	self.object:set_callback( callback.use_object, nil )
+	self.object:set_callback(callback.use_object, nil)
 end
 
 function coster_binder:net_save_relevant()
 	return true
 end
 
-function coster_binder:use_callback(obj,who)
-
+function coster_binder:use_callback(obj, who)
 	if olr_timers.has_timer("coocking_timer_start") then
 		news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_0"), nil, "act", 3000)
 		return
@@ -109,41 +106,39 @@ function coster_binder:use_callback(obj,who)
 
 	local active_item = db.actor:active_item()
 	if active_item then
-	if food_sections[active_item:section()] then 
-	local itm_in_slot = db.actor:item_in_slot(4)
-	if itm_in_slot ~= nil then
+		if food_sections[active_item:section()] then
+			local itm_in_slot = db.actor:item_in_slot(4)
+			if itm_in_slot ~= nil then
+				local stng = itm_in_slot:section()
+				local stngqz = tostring(stng)
+				local stngt = stngqz .. "_coocked"
+				local stngq = game.translate_string(stngt)
+				xvars.cooked_food_name = stngq
+				--log1(" cooking now - "..stngq.."	section - "..stng.." ")
+				olr.del(itm_in_slot)
 
-	local stng = itm_in_slot:section()
-	local stngqz = tostring(stng)
-	local stngt = stngqz.."_coocked"
-	local stngq = game.translate_string(stngt)
-	xvars.cooked_food_name = stngq
-	--log1(" cooking now - "..stngq.."  section - "..stng.." ")
-	olr.del(itm_in_slot)
-
-
-	--news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_2"), nil, "default", 3000)
-	olr.hud_tip("", game.translate_string("st_bind_coster_tip_cooking_start"), 4)
-	olr_timers.st_timer("coocking_timer_start", 7, "bind_coster.create_coster_food()")
-	--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент, чтобы потушить нажмите TAB")
+				--news_manager.send_tip(db.actor, game.translate_string("coster_binderuse_callback_2"), nil, "default", 3000)
+				olr.hud_tip("", game.translate_string("st_bind_coster_tip_cooking_start"), 4)
+				olr_timers.st_timer("coocking_timer_start", 7, "bind_coster.create_coster_food()")
+				--self.object:set_tip_text("Чтобы приготовить еду, нужно взять в руки необходимый ингридиент, чтобы потушить нажмите TAB")
+			end
+		end
 	end
-	end
-	end
-	
 end
-
 
 --------------------------------------------------------------------------------------
 function onKeyPress(dik)
 	if dik == 15 then
 		local loked_obj = bind_stalker.loked_obj_state()
-		if loked_obj == nil then return end
-		--log1("use k2  -- "..loked_obj:id().." = "..xvars.coster_id.." ")
+		if loked_obj == nil then
+			return
+		end
+		--log1("use k2	-- "..loked_obj:id().." = "..xvars.coster_id.." ")
 		if tonumber(loked_obj:id()) == tonumber(xvars.coster_id) and loked_obj:position():distance_to(db.actor:position()) < 2 then
 			--log1("del kos")
 			level.add_pp_effector("black.ppe", 20131, false)
 			lev_chng()
-			if coster_particle:playing() then 
+			if coster_particle:playing() then
 				coster_particle:stop()
 			end
 		end
@@ -151,27 +146,27 @@ function onKeyPress(dik)
 end
 
 function create_coster_food()
-        if xvars.coster_id ~= 0 then
-	local sim = alife()
-	for id=1, 65534 do
-		local kill = sim:object(id)
-		if kill then    
-			if kill:section_name() == "koster_razvodnoy" then
-				news_manager.send_tip(db.actor, game.translate_string("create_coster_food_0"), nil, "default", 3000)
-				local position = vector():set( 0, 0, 0 )
-    				position.x = kill.position.x + math.random( -30, 30 ) / 100
-    				position.z = kill.position.z + math.random( -30, 30 ) / 100
-    				position.y = kill.position.y + math.random(  30, 50 ) / 100 
-                		alife():create(""..xvars.cooked_food_name.."", position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-				xvars.cooked_food_name = ""
+	if xvars.coster_id ~= 0 then
+		local sim = alife()
+		for id = 1, 65534 do
+			local kill = sim:object(id)
+			if kill then
+				if kill:section_name() == "koster_razvodnoy" then
+					news_manager.send_tip(db.actor, game.translate_string("create_coster_food_0"), nil, "default", 3000)
+					local position = vector():set(0, 0, 0)
+					position.x = kill.position.x + math.random(-30, 30) / 100
+					position.z = kill.position.z + math.random(-30, 30) / 100
+					position.y = kill.position.y + math.random(30, 50) / 100
+					alife():create("" .. xvars.cooked_food_name .. "", position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+					xvars.cooked_food_name = ""
+				end
 			end
 		end
-	end
 	end
 end
 
 function u_costra()
-	if actor_u_costra == true then 
+	if actor_u_costra == true then
 		return true
 	end
 end
@@ -183,25 +178,24 @@ function hide_coster_light()
 	end
 end
 
-
 function lev_chng()
 	if not alife() then
 		return
 	end
-if db.actor then		
-if xvars.coster_id ~= 0 then
-local sim = alife()
-	for i=1, 65534 do
-		local kill = sim:object(i)
-		if kill then
-		if kill:section_name() == "koster_razvodnoy" then
-			alife():release(kill, true)
-			xvars.coster_id = 0
-			xvars.cooked_food_name = ""
-			this.hide_coster_light()
+	if db.actor then
+		if xvars.coster_id ~= 0 then
+			local sim = alife()
+			for i = 1, 65534 do
+				local kill = sim:object(i)
+				if kill then
+					if kill:section_name() == "koster_razvodnoy" then
+						alife():release(kill, true)
+						xvars.coster_id = 0
+						xvars.cooked_food_name = ""
+						this.hide_coster_light()
+					end
+				end
+			end
 		end
-end
-end
-end
-end
+	end
 end

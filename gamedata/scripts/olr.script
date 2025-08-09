@@ -189,11 +189,11 @@ function change_level()
 	olr_del_corpses.on_del()
 	bind_coster.lev_chng()
 	olr_anoms_spawn.on_spawn()
-        olr_monsters_sim.sim_location_traveling()
+	olr_monsters_sim.sim_location_traveling()
 	--olr_ai_follower_agree.naparnik_teleport()
 	xvars.bar_base_shot = 0 
 	xvars.dolg_base_shot = 0
-        xvars.esc_jaba_close_shots = 0
+	xvars.esc_jaba_close_shots = 0
 	if has_alife_info("spawn_jourlalist") and not has_alife_info("gen_first") then
 		local rnd = math.random(19,60)
 		olr_timers.st_timer("surge", rnd, "nick.surge_day_now()")
@@ -335,7 +335,6 @@ function start_game_vars()
 	xvars.npcs_tasks_rndway = {} 	-- Таблица рандомных путей НПС
 	xvars.rand_shit_timer_cnt = 0   -- колво рандомного хлама по таймеру
 	xvars.npc_del_afterblow = {}	-- Таблица НПС трупов что удаляем после выброса
-	xvars.del_hlam_cnt = 0		 -- колво хлама что удалил выброс
 	xvars.actor_pda_trade  = {}      -- кого позвали по ПДА торговать
 	xvars.blowout_timer = 1005
 	xvars.cash_need_summa_has = {}	-- Таблица НПС идущих с баблом из зоны
@@ -916,9 +915,6 @@ function del_by_name(name_to_del)
 		if olr.olrdbg == true then
 			log1("del by name: "..se_obj:name().." -on level- "..se_obj.level_name.."")
 		end
-		if xvars and xvars.del_hlam_cnt then
-			xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
-		end
 		alife():release(se_obj, true)
 	end	
 end
@@ -927,24 +923,23 @@ end
 function kill_by_name(name_to_kill)
 	local se_obj = alife():object(name_to_kill)
 	if se_obj and (IsStalker(se_obj) or IsMonster(se_obj)) then
+	
 		--log1("kill npc: name - "..se_obj:name().." on level - "..se_obj.level_name.." with id - "..tostring(se_obj.id).."")
 
 		local obj_id = level.object_by_id(se_obj.id)
 		if obj_id then
 			obj_id:kill(obj_id) -- убиваем онлайнового непеся, так как obj_id нам вернул не nil (в данном случае он в онлайне)
 		else 					-- иначе пытаемся убить оффлайного через редактирование нет-пакета непеся
-			local pk = xs_netpk.monster(se_obj) 	-- сначала проверяем что наш серверный объект монстр
-			if not pk:isOk() then 					-- это не монстр
-				pk = xs_netpk.stalker(se_obj)		-- тогда проверяем что это сталкер
+			local pk = xs_netpk.monster(se_obj) 		-- сначала проверяем что наш серверный объект монстр
+			if not pk:isOk() then 						-- это не монстр
+				pk = xs_netpk.stalker(se_obj)			-- тогда проверяем что это сталкер
 			end
-			if not pk:isOk() then					-- если же это не монстр и не сталкер то пишет в лог и уходим
-				log1("! ERROR ! olr.kill_by_name - We trying to kill not monster or stalker! Script was called with arg = "..tostring(name_to_kill).."") -- пишем в лог кого мы тут навызывали
-				return
-			end
-			local data = pk:get()					-- получаем пакеты серверного объекта
+			local data = pk:get()						-- получаем пакеты серверного объекта
 			data.health = 0
 			data.updhealth = 0
-			pk:set(data)							-- устанавливаем новые значения для серверного объекта
+			pk:set(data)								-- устанавливаем новые значения для серверного объекта
+			smart_terrain.on_death(se_obj.id)			-- говорим смарту о том что у нас тут труп
+			xvars.dead_in_offline[se_obj:name()] = true	-- забиваем его в таблицу мёртвых в оффлайне
 		end
 	end
 end
@@ -983,7 +978,6 @@ function del(obj)
 			--if olr.olrdbg == true then
 			--	log1(" ! olr del object - ["..obj:name().."]")
 			--end
-			xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
 			alife():release(sobj, true)
 			return true
 		end
@@ -1014,22 +1008,38 @@ function sopli()
 end
 
 -- вывести custom static сообщение на худ
-function hud_tip(sender, text, timeout)
-	if text == nil then
-		return
+function hud_tip(sender, text, timeout, actor_musli) -- отправитель, текст, время вывода на экран, мюсли мессира
+	if actor_musli ~= true then
+		if text == nil then
+			return
+		end
+		if sender == nil then
+			sender = game.translate_string("st_tip")
+		end
+		if timeout == nil then
+			timeout = 5
+		end
+		local text_all = ""..sender.." "..text..""
+		local hud = get_hud()
+		local custom_static = hud:GetCustomStatic("custom_sms_text")
+		hud:AddCustomStatic("custom_sms_text", true)
+		hud:GetCustomStatic("custom_sms_text"):wnd():SetTextST(tostring(text_all))
+		hud:GetCustomStatic("custom_sms_text").m_endTime = time_global()/1000 + timeout
+	else
+		if text == nil then
+			return
+		end
+		if timeout == nil then
+			timeout = 5
+		end
+		local text_all = ""..text..""
+		local hud = get_hud()
+		local custom_static = hud:GetCustomStatic("custom_sms_text_actor")
+		hud:AddCustomStatic("custom_sms_text_actor", true)
+		hud:GetCustomStatic("custom_sms_text_actor"):wnd():SetTextST(tostring(text_all))
+		hud:GetCustomStatic("custom_sms_text_actor").m_endTime = time_global()/1000 + timeout
+		olr.snd([[device\pda\contact_1]])
 	end
-	if sender == nil then
-		sender = game.translate_string("st_tip")
-	end
-	if timeout == nil then
-		timeout = 5
-	end
-	local text_all = ""..sender.." "..text..""
-	local hud = get_hud()
-	local custom_static = hud:GetCustomStatic("custom_sms_text")
-	hud:AddCustomStatic("custom_sms_text", true)
-	hud:GetCustomStatic("custom_sms_text"):wnd():SetTextST(tostring(text_all))
-	hud:GetCustomStatic("custom_sms_text").m_endTime = time_global()/1000 + timeout
 end
 
 -- добавить мапспот
@@ -1344,7 +1354,6 @@ function del_noparent_weapons()
 					if xvars.weapons[kill:name()] ~= nil then
 						xvars.weapons[kill:name()] = nil
 					end
-					xvars.del_hlam_cnt = xvars.del_hlam_cnt + 1
 					alife():release(kill, true)
 				end
 			end
@@ -1473,4 +1482,35 @@ function give_nagrada(first_speaker, second_speaker)
 	dialogs.relocate_money(second_speaker, 200, "in") 
 	dialogs.relocate_item_section(second_speaker, "ammo_9x18_fmj", "in") 
 	dialogs.relocate_item_section(second_speaker, "ammo_5.45x39_fmj","in") 
+end
+
+-- Выяснил что время таймера задаётся в реальных секундах (тормоз да). т.е через сколько РЕАЛЬНЫХ секунд это произойдёт.
+-- Что бы примерно прикидывать через ИГРОВЫХ секунд это произойдёт нужно эти секунды делить на 10, как время в игре идёт в 10 раз быстрее
+
+function test1()
+	olr_timers.st_timer("test_timer_1", 1, "olr.test2()")
+	olr_timers.st_timer("test_timer_2", 2, "olr.test3()")
+	olr_timers.st_timer("test_timer_3", 3, "olr.test4()")
+	olr_timers.st_timer("test_timer_4", 10, "olr.test5()")
+	olr_timers.st_timer("test_timer_5", 20, "olr.test6()")
+end
+
+function test2()
+	olr.hud_tip("", "Test timer, set 1", 5)
+end
+
+function test3()
+	olr.hud_tip("", "Test timer, set 2", 5)
+end
+
+function test4()
+	olr.hud_tip("", "Test timer, set 3", 5)
+end
+
+function test5()
+	olr.hud_tip("", "Test timer, set 10", 5)
+end
+
+function test6()
+	olr.hud_tip("", "Test timer, set 20", 5)
 end

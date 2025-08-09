@@ -299,9 +299,9 @@ local snd_vol = 1
 function sleep_main(scale)
 	olr.switch_torch(false)
 	level.hide_indicators()
-    	level.disable_input()
-    	level.add_pp_effector("peace_fade.ppe", 11973, false)
-    	basic_time_factor = level.get_time_factor()
+	level.disable_input()
+	level.add_pp_effector("peace_fade.ppe", 11973, false)
+	basic_time_factor = level.get_time_factor()
 	snd_vol = level.get_snd_volume()
 	level.set_snd_volume(0)
 	olr_timers.st_timer("sleep_starter", 2, "olr_sleep.sleep_starter("..tostring(scale)..")")
@@ -309,21 +309,21 @@ end
 
 function sleep_starter(scale)
 	level.hide_indicators()
-    	level.disable_input()
-    	local factor = scale*1325
+	level.disable_input()
+	local factor = scale*1325
 	local rnd = math.random(1,2)
 	game.start_tutorial("time_scaling")
-    	level.set_time_factor(factor)
-    	bind_stalker.actor_in_sleep = true
+	level.set_time_factor(factor)
+	bind_stalker.actor_in_sleep = true
 	blow_sleep_timer_low(scale)
 	cursatsleepbef = db.actor.satiety
 	zazdasleepbef = db.actor:get_actor_thirst()
 end
  
 function sleep_dreamer()
-    	level.set_time_factor(basic_time_factor)
-    	game.start_tutorial("without_dream") 
-    	bind_stalker.actor_in_sleep = false
+	level.set_time_factor(basic_time_factor)
+	game.start_tutorial("without_dream") 
+	bind_stalker.actor_in_sleep = false
 	db.actor.satiety = cursatsleepbef - db.actor.satiety / 4
 	local aftrslepzaz = zazdasleepbef - db.actor:get_actor_thirst() / 4
 	db.actor:change_actor_thirst(aftrslepzaz)
@@ -331,22 +331,23 @@ end
  
 function sleep_stopper()
 	level.show_indicators()
-    	level.enable_input()
-    	level.add_pp_effector("peace_unfade.ppe", 11973, false)
-    	bind_stalker.actor_in_sleep = false
-    	spawen_izlom_rand()
-    	olr_sleep_robers.sleep_rob()
-    	olr_monsters_sim.sim_kill_stalkers()
-    	nick.clear_drinked_vodka()
-    	db.actor:change_actor_sleep(1)
+	level.enable_input()
+	level.add_pp_effector("peace_unfade.ppe", 11973, false)
+	bind_stalker.actor_in_sleep = false
+	spawen_izlom_rand()
+	olr_sleep_robers.sleep_rob()
+	olr_monsters_sim.sim_kill_stalkers()
+	nick.clear_drinked_vodka()
+	db.actor:change_actor_sleep(1)
 	level.set_snd_volume(snd_vol)
-	unic_arts()
-	yan_dead_call()
-	set_food_art_sleep()
-	db.actor:disable_info_portion("actor_has_prostuda")
-	olr_timers.st_timer("respawn_now", 19, "olr_blowout.respawn_now()")
-	olr.check_time()
-	olr_blowout.clear_dead_monsters()
+	unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
+	yan_dead_call() -- Странные сообщения на янтаре
+	set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
+	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
+	olr_timers.st_timer("respawn_now", 19, "olr_blowout.respawn_now()") 
+	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
+	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне
+	xrs_trade.on_item_drop() -- продажа покупка между непесями
 end
 ------------------------------------------------------------------------------------------------------------------------ 
 
@@ -364,11 +365,11 @@ function yan_dead_call()
 	if level.name() == "lvl7_yantar" then
 		if not xr_conditions.is_day() then
 			if not has_alife_info("radar_de_done") then
-				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_0"), nil, "unknown", 39000)
-				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_1"), 5, "unknown", 39000)
-				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_2"), 15, "unknown", 39000)
-				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_3"), 25, "unknown", 39000)
-				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_4"), 35, "unknown", 39000)
+				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_0"), nil, "unknown", 5000)
+				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_1"), 5, "unknown", 5000)
+				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_2"), 15, "unknown", 5000)
+				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_3"), 25, "unknown", 5000)
+				news_manager.send_tip(db.actor, game.translate_string("yan_dead_call_4"), 35, "unknown", 5000)
 			end
 		end
 	end
@@ -418,9 +419,6 @@ function spawen_izlom_rand()
     		alife():create("m_fracture_e", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	end
 end
-
-------------------------------------------------------------------------------------------------------------------------
-
 
 function set_food_art_sleep()
 
@@ -501,9 +499,3 @@ end
 
 
 end
-
-
-
-
-
-

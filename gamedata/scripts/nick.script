@@ -6744,26 +6744,6 @@ function expl_actor_away()
 	db.actor:hit(h)
 end
 
-function bar_robber_actor()
-	db.actor:change_character_reputation(-5)
-	news_manager.send_tip(db.actor, game.translate_string("bar_robber_actor_0"), nil, "unknown", 49000)
-end
-
-function first_killer_timer_seen(id)
-	olr.info("messer_killar_washe")
-	db.actor:change_character_reputation(-400)
-	local sobj = alife():object(id)
-	if sobj then
-		local pk = get_netpk(sobj,1)
-		if pk:isOk() then
-			local data = pk:get()
-			local name = data.character_name
-			local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-				news_manager.send_tip(db.actor, game.translate_string("first_killer_timer_seen_0") .." "..name.. game.translate_string("first_killer_timer_seen_1") ..pos.." ".. game.translate_string("first_killer_timer_seen_2"), nil, "unknown", 39000)
-		end
-	end	
-end
-
 function rat_fly_away()
 	level.disable_input()
 	level.hide_indicators()
@@ -7961,13 +7941,6 @@ end
 function anti_glob_rad_timer()
 	db.actor:disable_info_portion("anti_glob_rad")
 	db.actor.health = -0.1
-end
-
-function first_killer_timer()
-	if not has_alife_info("messer_killar_pre") then
-		db.actor:give_info_portion("messer_killar_pre")
-		db.actor:change_character_reputation(-100)
-	end 
 end
 
 function disable_rand_stuff()
@@ -11288,7 +11261,7 @@ end
 
 function agr_spawen_nauchinkia()
 	if has_alife_info("digger_combez_zametka_info") then
-	local level_name = level.name()
+		local level_name = level.name()
 		if level_name == "lvl3_agroprom" then
 			local bloodbridge = vector():set( 97.55, 1.69, 48.00 )
 			alife():create("ecolog_outfit", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
@@ -11297,13 +11270,13 @@ function agr_spawen_nauchinkia()
 end
 
 function done_kill_gopllit_hmm_actor2()
-	olr.hud_tip("", game.translate_string("done_kill_gopllit_hmm_actor2"), 10)
+	olr.hud_tip("", game.translate_string("done_kill_gopllit_hmm_actor2"), 10, true) -- мысль мессера
 end
 
 function done_kill_gopllit_hmm_actor()
 	olr_timers.st_timer("jaba_about_deathtruck", 755, "nick.jaba_about_deathtruck()")
 	if has_alife_info("agr_olr_1_pogo_koluchki") then
-		olr.hud_tip("", game.translate_string("done_kill_gopllit_hmm_actor"), 10)
+		olr.hud_tip("", game.translate_string("done_kill_gopllit_hmm_actor"), 10, true) -- мысль мессера
 	end
 end
 
@@ -11312,7 +11285,7 @@ function jaba_about_deathtruck()
 end
 
 function sms_city_monol_fake_take()
-	olr.hud_tip("", game.translate_string("sms_city_monol_fake_take"), 10)
+	olr.hud_tip("", game.translate_string("sms_city_monol_fake_take"), 10, true) -- мысль мессера
 end
 
 function killlll_plot_mg_sms2()
@@ -13069,7 +13042,15 @@ end
 
 -- удаляем камаз заграду
 function kamaz_zagra_zfohssd()
-	delete_netspawn_objects({ "lvl2_garbage_physic_object_0010", "lvl1_escape_lights_hanging_lamp", "lvl1_escape_space_restrictor_0008", "lvl1_escape_space_restrictor_0005", "lvl1_escape_zone_flame", "level_prefix_lights_hanging_lamp_0004", "gar_prefix_lights_hangi3r3r3gdgdxng_lamp_0003" })
+	delete_netspawn_objects({ 
+		"lvl2_garbage_physic_object_0010", 
+		"lvl1_escape_lights_hanging_lamp", 
+		"lvl1_escape_space_restrictor_0008", 
+		"lvl1_escape_space_restrictor_0005", 
+		"lvl1_escape_zone_flame", 
+		"level_prefix_lights_hanging_lamp_0004", 
+		"gar_prefix_lights_hangi3r3r3gdgdxng_lamp_0003"
+	})
 end
 
 -- удаляем забор росток

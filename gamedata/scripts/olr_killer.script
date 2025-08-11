@@ -77,9 +77,9 @@ function kill_neutral11(victim, who)
 							if stalker and stalker:is_stalker() and stalker:alive() then
 								if stalker:see_right_now(db.actor) then
 									--log1("see how kill 1")
-									olr_timers.st_timer("first_killer_timer_sms", 900, "nick.first_killer_timer_seen("..tostring(victim:id())..")")
+									olr_timers.st_timer("first_killer_timer_sms", 900, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..")")
 									--log1(""..tostring(victim:character_name()).."")
-									olr_timers.st_timer("first_killer_timer", 790, "nick.first_killer_timer()")
+									olr_timers.st_timer("first_killer_timer", 790, "olr_killer.first_killer_timer()")
 									olr.info("just_kill_the_man")
 									xvars.kill_count = 1000
 								end
@@ -108,6 +108,30 @@ function kill_neutral22(victim, who)
 			end
 		end
 	end
+end
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+function first_killer_timer()
+	if not has_alife_info("messer_killar_pre") then
+		db.actor:give_info_portion("messer_killar_pre")
+		db.actor:change_character_reputation(-100)
+	end 
+end
+
+function first_killer_timer_seen(id)
+	olr.info("messer_killar_washe")
+	db.actor:change_character_reputation(-400)
+	local sobj = alife():object(id)
+	if sobj then
+		local pk = get_netpk(sobj,1)
+		if pk:isOk() then
+			local data = pk:get()
+			local name = data.character_name
+			local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
+				news_manager.send_tip(db.actor, game.translate_string("first_killer_timer_seen_0") .." "..name.. game.translate_string("first_killer_timer_seen_1") ..pos.." ".. game.translate_string("first_killer_timer_seen_2"), nil, "unknown", 39000)
+		end
+	end	
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------

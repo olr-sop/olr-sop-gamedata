@@ -582,112 +582,6 @@ function load_job(sj, gname, type, squad, groups)
 	end
 
 
-
-	--- MONSTERS GULAGS
-
-
-
-
-	-- ARENA MONSTERS
-	if type == "bar_arena_monstr" then
-		t = { section = "logic@bar_arena_monstr_pseudodog", 
-			idle = 0,
-			prior = 5, state = {1}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "pseudodog_arena"
-			            end
-		}
-		table.insert(sj, t)
-		t = { section = "logic@bar_arena_monstr_pseudodog_none", 
-			idle = 0,
-			prior = 5, state = {0}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "pseudodog_arena"
-			            end
-		}
-		table.insert(sj, t)
-
-		t = { section = "logic@bar_arena_monstr_snork", 
-			idle = 0,
-			prior = 5, state = {1}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "snork_arena"
-			            end
-		}
-		table.insert(sj, t)
-		t = { section = "logic@bar_arena_monstr_snork_none", 
-			idle = 0,
-			prior = 5, state = {0}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "snork_arena"
-			            end
-		}
-		table.insert(sj, t)
-
-		t = { section = "logic@bar_arena_monstr_bloodsucker", 
-			idle = 0,
-			prior = 5, state = {1}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "bloodsucker_arena"
-			            end
-		}
-		table.insert(sj, t)
-		t = { section = "logic@bar_arena_monstr_bloodsucker_none", 
-			idle = 0,
-			prior = 5, state = {0}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "bloodsucker_arena"
-			            end
-		}
-		table.insert(sj, t)
-
-		t = { section = "logic@bar_arena_monstr_burer", 
-			idle = 0,
-			prior = 5, state = {1}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "burer_arena"
-			            end
-		}
-		table.insert(sj, t)
-		t = { section = "logic@bar_arena_monstr_burer_none", 
-			idle = 0,
-			prior = 5, state = {0}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.section_name == "burer_arena"
-			            end
-		}
-		table.insert(sj, t)
-
-		t = { section = "logic@bar_arena_monstr_savage", 
-			idle = 0,
-			prior = 5, state = {1}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.community == "arena_enemy"
-			            end
-		}
-		table.insert(sj, t)
-		t = { section = "logic@bar_arena_monstr_savage_none", 
-			idle = 0,
-			prior = 5, state = {0}, squad = squad, group = groups[0],
-			in_rest = "", out_rest = "bar_arena_sr",
-			predicate = function(obj_info)
-				         	return obj_info.community == "arena_enemy"
-			            end
-		}
-		table.insert(sj, t)
-	end
-
-
-	
 end
 
 function load_states(gname, type)
@@ -787,16 +681,6 @@ function load_states(gname, type)
 		end
 	end
 
-	
-	if type == "bar_arena_monstr" then
-		return function(gulag)
-			if has_alife_info("bar_arena_state_1")
-			then
-				return 1
-			end
-			return 0
-		end
-	end
 
 end
 
@@ -846,21 +730,5 @@ function checkStalker(npc_community, gulag_type)
 end
 
 function checkMonster(npc_community, gulag_type, npc_rank, se_obj)
-		
-	if gulag_type == "bar_arena_monstr" then
-		if npc_community == "arena_enemy" then
-			return true
-		end
-		local se_obj_name = se_obj:section_name()
-		if se_obj_name == "pseudodog_arena" or
-		   se_obj_name == "snork_arena" or
-		   se_obj_name == "bloodsucker_arena" or
-		   se_obj_name == "burer_arena"
-		then
-			return true
-		end
-		return false
-	end
-		
 	return false
 end

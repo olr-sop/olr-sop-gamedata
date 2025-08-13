@@ -474,6 +474,7 @@ function CKampManager:__init(path)
 	-- ’ранилище дл€ режиссера лагер€. –ежиссерем €вл€етс€ сталкер, зате€вший необычное поведение
 	self.director = nil
 end
+
 function CKampManager:selectPosition(npc_id)
     --log1(string.format("xr_camp : [CKampManager:selectPosition] Selecting position for NPC %s", npc_id))
     -- создаем список доступных позиций
@@ -503,6 +504,7 @@ function CKampManager:selectPosition(npc_id)
     --log1(string.format("xr_camp : [CKampManager:selectPosition] Position table after selection:"))
     print_table(self.position)
 end
+
 function CKampManager:getDestVertex(npc, radius)
 	local npc_id = npc:id()
 	if self.npc == nil or self.npc[npc_id] == nil then
@@ -535,6 +537,7 @@ function CKampManager:getDestVertex(npc, radius)
 	--log1(string.format("xr_camp : vertex selected [%s]", npc_id)   	)
 	return pp		
 end
+
 function CKampManager:proceedState(npc)
 	-- ѕроверка на таймаут
 	local npc_id = npc:id()
@@ -624,6 +627,7 @@ function CKampManager:proceedState(npc)
 		end
 	end
 end
+
 function CKampManager:proceedRole(npc, director)
 	--log1(string.format("xr_camp : Proceed Role for [%s]", npc:id()))
 	-- ќпределить список доступных анимаций по состо€нию лагер€.
@@ -674,6 +678,7 @@ function CKampManager:proceedRole(npc, director)
 	--log1(string.format("xr_camp : Proceed Role state [%s] sound [%s]", state, sound))
 	return state, sound
 end
+
 function CKampManager:updateNpc(npc)
 	-- ѕроверка что сталкер может делать, а что нет.
 	self:checkNpcAbility(npc)
@@ -797,6 +802,7 @@ function CKampManager:updateNpc(npc)
 	--log1(string.format("xr_camp : Proceed Update Npc [%s] sound [%s]", state, sound)	)
 	return state, sound, substate
 end
+
 function CKampManager:checkNpcAbility(npc)
 	local npc_id = npc:id()
 	
@@ -821,8 +827,8 @@ function CKampManager:checkNpcAbility(npc)
 		else
 			self.npc[npc_id].states["eat_vodka"] = false
 		end
-		-- пить енергитический напиток
-		if npc:object("energy_drink") then
+		-- пить енергитический напиток (воду)
+		if npc:object("water") then
 			self.npc[npc_id].states["eat_energy"] = true
 		else
 			self.npc[npc_id].states["eat_energy"] = false
@@ -835,19 +841,19 @@ function CKampManager:checkNpcAbility(npc)
 		end
 
 		-- играть на гармошке
---		if npc:object("harmonica_a") then
---			self.npc[npc_id].states["play_harmonica"] = true
---			self.npc[npc_id].states["wait_harmonica"] = true
---			self.kamp_states["pre_harmonica"] = true
---			self.kamp_states["harmonica"] = true
---			self.kamp_states["post_harmonica"] = true
---		else
+		if npc:object("harmonica_a") then
+			self.npc[npc_id].states["play_harmonica"] = true
+			self.npc[npc_id].states["wait_harmonica"] = true
+			self.kamp_states["pre_harmonica"] = true
+			self.kamp_states["harmonica"] = true
+			self.kamp_states["post_harmonica"] = true
+		else
 			self.npc[npc_id].states["play_harmonica"] = false
 			self.npc[npc_id].states["wait_harmonica"] = false
 			self.kamp_states["pre_harmonica"] = false
 			self.kamp_states["harmonica"] = false
 			self.kamp_states["post_harmonica"] = false
---		end
+		end
 		-- играть на гитаре
 		if npc:object("guitar_a") then
 			self.npc[npc_id].states["play_guitar"] = true
@@ -873,9 +879,8 @@ function CKampManager:checkNpcAbility(npc)
 			self.kamp_states["joke"] = false
 			self.kamp_states["post_joke"] = false
 		end
-	
 	end
-	
+
 	-- ≈сли чувак знает истории, надо добавить их к лагерю
 	if self.population > 1 and db.story_by_id[npc:id()] ~= nil then
 		--log1("xr kamp - dude know storyes")
@@ -885,7 +890,9 @@ function CKampManager:checkNpcAbility(npc)
 		self.kamp_states["story"] = false
 		self.kamp_states["post_story"] = false	
 	end
+
 end
+
 function CKampManager:addNpc(npc)
 	--log1(string.format("xr_camp : KAMP [%s] add npc", npc:name()))
 	if self.npc[npc:id()] ~= nil then
@@ -909,6 +916,7 @@ function CKampManager:addNpc(npc)
 	end
 	self:selectPosition(npc:id())	
 end
+
 function CKampManager:removeNpc(npc)
 	--log1(string.format("xr_camp : KAMP [%s] remove npc", npc:name()))
 	local npc_id = npc:id()
@@ -931,9 +939,11 @@ function CKampManager:removeNpc(npc)
 		self.npc[npc_id] = nil
 	end
 end
+
 function CKampManager:increasePops(npc)
 	self.population = self.population + 1
 end
+
 function CKampManager:decreasePops(npc)
 	self.population = self.population - 1
 end

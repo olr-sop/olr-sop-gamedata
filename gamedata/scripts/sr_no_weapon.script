@@ -57,22 +57,16 @@ end
 
 function action_no_weapon:zone_enter()
 	self.state = state_inside
-        if not has_alife_info("actor_zone_no_weapon") then 
+	if not has_alife_info("actor_zone_no_weapon") then 
 		db.actor:give_info_portion("actor_zone_no_weapon") 
 	end
 	--bind_stalker.hide_weapon()
         
-        -- просто убираем оружие при входе в зону \ hi_flyer 21.03.16
-        local active_item = db.actor:active_slot()
-        if active_item == 1 then
-        	get_actor_obj():press_action(25)
-        end
-
-        local active_item2 = db.actor:active_slot()
-        if active_item2 == 2 then
-        	get_actor_obj():press_action(26)
-        end
-
+	-- просто убираем оружие при входе в зону \ hi_flyer 21.03.16
+	local active_item = db.actor:active_slot()
+	if active_item ~= nil then
+		db.actor:activate_slot(-1)
+	end
 end
 
 
@@ -82,7 +76,6 @@ function action_no_weapon:zone_leave()
 		db.actor:disable_info_portion("actor_zone_no_weapon") 
 	end
 	--bind_stalker.restore_weapon()
-        
 end
 
 ---------------------------------------------------------------------------------------------------------------------

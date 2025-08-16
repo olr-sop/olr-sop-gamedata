@@ -342,7 +342,6 @@ function all_blowend_funcs()
 	olr_timers.st_timer("spawen_radhlam_random", 16, "olr_blowout.spawen_radhlam_random()")
 	olr_timers.st_timer("spawen_rtut_shars_random", 18, "olr_blowout.spawen_rtut_shars_random()")
 	olr_timers.st_timer("spawen_rtut_shars", 20, "olr_blowout.spawen_rtut_shars()")
-	olr_timers.st_timer("spawen_aftervibros_stalkers", 30, "olr_blowout.spawen_aftervibros_stalkers()")
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
 	olr_timers.st_timer("mg_spawn_zombies", 36, "olr_blowout.mg_spawn_zombies()")
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
@@ -585,7 +584,7 @@ function respawn_now()
 	end
 	--log1(cnt)
 
-	if cnt > 100 then
+	if cnt > 50 then
 		--news_manager.send_tip(db.actor, " DBG respawn_now TOO MUCH ALIVE STALKERS - RESPAWN FALSE ["..cnt.."] сейчас.", nil, "freedom", 9000)
 		return
 	end
@@ -594,7 +593,7 @@ function respawn_now()
 	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-			if kill:clsid() == clsid.respawn then
+			if kill:clsid() == clsid.respawn and math.random(15) == 1 then	-- добавлен рандом 1 из 15
 				--log1("DBG respawn_now - "..kill:name().."	  "..kill.level_name.."	  ")
 				kill:spawn(100)
 			end
@@ -1162,74 +1161,6 @@ function spawen_rtut_shars_random()
 		end
 	end
 	--news_manager.send_tip(db.actor,"всего ртутных шаров " .. count .. " нау ииии",nil,"freedom",9000)
-end
-
-----------------------------------------------
-
-function spawen_aftervibros_stalkers()
-	local montabl = {
-		[clsid.respawn] = true
-	}
-
-	local sectionsa = {
-		"agr_stalker_regular",
-		"agr_stalker_veteran",
-		"agr_bandit_respawn_1",
-		"agr_bandit_respawn_2",
-		"mil_freedom_respawn_1",
-		"mil_freedom_respawn_2",
-		"mil_freedom_respawn_sniper",
-		"mil_freedom_barier_respawn_1",
-		"pri_monolith_respawn_1",
-		"gar_stalker_respawn_1",
-		"gar_stalker_respawn_2",
-		"gar_dolg_respawn_1",
-		"gar_dolg_respawn_2",
-		"esc_soldier_respawn_specnaz",
-		"rad_soldier_master",
-		"esc_stalker_respawn_2",
-		"esc_soldier_respawn_1",
-		"yan_ecolog_respawn_1",
-		"bar_stalker_respawn_4",
-		"bar_dolg_respawn_3",
-		"cit_killer_respawn_1",
-		"ros_killer_respawn_4",
-		"bar_stalker_respawn_1",
-		"bar_stalker_respawn_2",
-		"bar_stalker_respawn_3",
-		"bar_stalker_respawn_4",
-		"slizen_reg",
-		"iskatels",
-		"ros_bandit_respawn_4"
-	}
-
-	local count = 0
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
-				local bol_var = math.random(1, 15)
-				if bol_var == 1 then
-					if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
-						local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-						if sobj.level_name ~= level.name() then
-							amk.on_REspawn(sobj)
-							olr.clear_restrictors(sobj)
-							if sobj and IsStalker(sobj) then
-								table.insert(olr_offline_walk.tabst, sobj)
-								olr_newnpc_eqp.on_spawn(sobj)
-								olr_ai_tasks.on_spawn_npc(sobj)
-								count = count + 1
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	--news_manager.send_tip(db.actor,"spawen_aftervibros_stalkers заспавнилось " ..count .. " нау --- on " .. sobj.level_name .. " ",nil,"freedom",9000)
 end
 
 ----------------------------------------------

@@ -1,29 +1,28 @@
 --[[-----------------------------------------------------------------------------------------------
- File         : sr_deadrad.script
+ File		  : sr_deadpy.script
  Description  : Модуль глобального пси-поля
- Copyright    : Oblivion Lost Remake 3.0
- Author       : hi_flyer
- Date         : 16.05.15
- Last Edit    : 17.05.15
+ Copyright	  : Oblivion Lost Remake 3.0
+ Author		  : hi_flyer, theysani
+ Date		  : 16.05.15
+ Last Edit	  : 16.08.25
 --]]----------------------------------------------------------------------------------------------- 
-
 
 local state_nowhere = 0 -- схема только что включилась
 local state_inside = 1 -- актер внутри
 local state_outside = 2 -- актер снаружи
 
+local snd_psy = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]]) -- звук шума
 
 class "action_deadpsy"
 
 function action_deadpsy:__init( obj, storage )
 	self.object = obj
 	self.st = storage
+	self.pp_effector_active = false
 end
 
 function action_deadpsy:reset_scheme()
-	
 	self.state = state_nowhere -- еще неясно, в зоне он, или нет
-	
 	self:switch_state(db.actor)
 end
 
@@ -32,13 +31,16 @@ function action_deadpsy:update( delta )
 
 	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
 		return
-	end	
+	end	   
 	
 	self:switch_state( actor )
 	
 	if self.state == state_inside then
 		local iblocitm = db.actor:object("psy_blocerator")
 		if iblocitm then
+			if self.pp_effector_active then
+				self:remove_effects()
+			end
 			iblocitm:set_condition(iblocitm:condition() - 0.00005)
 			local cond = iblocitm:condition()
 			if cond == 0.50 then
@@ -53,20 +55,15 @@ function action_deadpsy:update( delta )
 		end
 
 		if not iblocitm then
-			level.add_pp_effector ("dead_zone.ppe", 971974, false)
-			--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
-			local song_start = xr_sound.get_safe_sound_object("ambient\\special\\psy_noise")
-			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d+sound_object.looped)
 			db.actor.psy_health = -0.01
+			if not self.pp_effector_active then
+				snd_psy:play_at_pos(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d + sound_object.looped)
+				level.add_pp_effector("dead_zone.ppe", 971974, true)
+				self.pp_effector_active = true
+			end			
 		end
-
-		if iblocitm then 
-			level.remove_pp_effector(971974)
-			level.remove_cam_effector(19749)	
-		end	 
 	end
 end
-
 
 function action_deadpsy:switch_state( actor )
 	local state = self.state
@@ -88,14 +85,36 @@ end
 
 function action_deadpsy:zone_enter()
 	self.state = state_inside
+	
+	local iblocitm = db.actor:object("psy_blocerator")
+	if not iblocitm then
+		-- Включаем эффекты только если их нет и у актера нет блокератора
+		if not self.pp_effector_active then
+			snd_psy:play_at_pos(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d + sound_object.looped)	
+			level.add_pp_effector("dead_zone.ppe", 971974, true)
+			self.pp_effector_active = true
+		end
+	else
+		-- Если есть блокератор - убедимся что эффекты выключены
+		self:remove_effects()
+	end
 end
 
 function action_deadpsy:zone_leave()
 	self.state = state_outside
-	level.remove_pp_effector(971974)
-	level.remove_cam_effector(19749)
+	self:remove_effects()
 end
 
+function action_deadpsy:remove_effects()
+	if self.pp_effector_active then
+		if snd_psy:playing() then
+			snd_psy:stop()
+		end
+		level.remove_pp_effector(971974)
+		self.pp_effector_active = false
+	end
+	
+end
 
 ---------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc, ini, scheme, section, storage)
@@ -111,5 +130,3 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
 end
-
----------------------------------------------------------------------------------------------------------------------

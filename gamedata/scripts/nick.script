@@ -8940,8 +8940,8 @@ function jaba_art_zakaz_spawn()
 		"st_zhaba_random_zakaz_1",
 		"st_zhaba_random_zakaz_2"
 	}
-	local news_text = "%c[255,255,255,255]"..game.translate_string("escape_trader_name")..":\\n".."%c[255,255,255,255]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-	news_manager.send_tip(db.actor, news_text, 3, "artefact", 15000, "pda_objective")
+	local news_text = "%c[255,160,181,169]"..game.translate_string("escape_trader_name")..":\\n".."%c[255,245,240,218]"..game.translate_string(text_phrase[math.random(#text_phrase)])
+	news_manager.send_tip(db.actor, news_text, 3, "artefact", 15000, nil, "pda_objective", false)
 end
 
 function del_rnd_zakaz_metka(id)
@@ -13695,13 +13695,15 @@ function sms_esc_olr_kvest_3_zametki_bio()
 	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_sms_esc_olr_kvest_3_zametki_bio"), nil, "jaba", 15000, nil, "pda_objective", false)
 	olr.del_by_name("lvl1_escape_physic_object_0341")
-	olr_timers.st_timer("pda_zarad_info_zaba", 3, "nick.pda_zarad_info_zaba()")
-	news_manager.send_tip(db.actor, game.translate_string("minimap_scale_info_zaba_0"), 10, "default", 10000)
+	olr_timers.st_timer("pda_zarad_info_zaba", 15, "nick.pda_zarad_info_zaba()")
+	db.actor:give_info_portion("encyclopedy_tutorial_minimap_scale")
+	game.start_tutorial("tutor_minimap_scale")
 end
 
 function pda_zarad_info_zaba()
-	news_manager.send_tip(db.actor, game.translate_string("st_pda_zarad_info_zaba"), 15, "jaba", 15000, nil, "pda_objective", false)
-	news_manager.send_tip(db.actor, game.translate_string("pda_zarad_info_zaba_0"), 20, "default", 10000)
+	news_manager.send_tip(db.actor, game.translate_string("st_pda_zarad_info_zaba"), nil, "jaba", 15000, nil, "pda_objective", false)
+	db.actor:give_info_portion("encyclopedy_tutorial_pda_charge")
+	game.start_tutorial("tutor_pda_charge")
 end
 
 function olr_blowout_first_zaba()

@@ -695,7 +695,7 @@ function CKampManager:updateNpc(npc)
 	local substate = nil
 	if state == "wait_harmonica" then
 		if sound == "pre_harmonica" and self.npc[npc_id].new == true then
-			xr_sound.set_sound_play(npc, "intro_harmonica", math.random(2000,3000))
+			xr_sound.set_sound_play(npc, "intro_harmonica", math.random(200,300))
 			self.npc[npc_id].new = false
 		end
 		state = "harmonica"
@@ -706,7 +706,7 @@ function CKampManager:updateNpc(npc)
 		xr_kamp.kamp_stalkers[npc_id] = false
 	elseif state == "wait_guitar" then
 		if sound == "pre_guitar" and self.npc[npc_id].new == true then
-			xr_sound.set_sound_play(npc, "intro_guitar", math.random(2000,3000))
+			xr_sound.set_sound_play(npc, "intro_guitar", math.random(200,300))
 			self.npc[npc_id].new = false
 		end
 		state = "guitar"
@@ -718,9 +718,9 @@ function CKampManager:updateNpc(npc)
 	elseif state == "declarate" then
 		if self.npc[npc_id].new == true then
 			if sound == "pre_joke" then
-				xr_sound.set_sound_play(npc, "intro_joke", math.random(2000,3000))
+				xr_sound.set_sound_play(npc, "intro_joke", math.random(200,300))
 			elseif sound == "play_joke" then
-				xr_sound.set_sound_play(npc, "joke", math.random(2000,3000))
+				xr_sound.set_sound_play(npc, "joke", math.random(200,300))
 			elseif sound == "play_story" then
 				xr_sound.set_sound_play(npc, self.selected_story)
 				self.story_last, self.story_max = xr_sound.get_last_IDS(npc, self.selected_story)
@@ -772,25 +772,20 @@ function CKampManager:updateNpc(npc)
 		sound = "reac_music"
 	elseif sound == "reac_joke" then
 		sound = ""	
-		if self.npc[npc_id].new == true then
-			if self.censor == nil then
-				xr_sound.set_sound_play(npc, "reac_joke", math.random(2000,3000))
-				self.censor = npc_id
-			else
-				xr_sound.set_sound_play(npc, "story_reac_laughter", math.random(100,300))
-			end
-			self.npc[npc_id].new = false
+		if self.censor == nil then
+			xr_sound.set_sound_play(npc, "reac_joke", math.random(200,300))
+			self.censor = npc_id
+		else
+			xr_sound.set_sound_play(npc, "story_reac_laughter", math.random(100,300))
 		end
 	elseif sound == "reac_story" then
 		sound = ""
-		if self.npc[npc_id].new == true then
-			local dep = sound_theme.theme[self.selected_story].depence[self.story_last+1]
-			if dep then
-				if dep.type == "all" then
-					xr_sound.set_sound_play(npc, dep.theme, math.random(100,300))
-				else
-					sound = dep.theme
-				end
+		local dep = sound_theme.theme[self.selected_story].depence[self.story_last+1]
+		if dep then
+			if dep.type == "all" then
+				xr_sound.set_sound_play(npc, dep.theme, math.random(100,300))
+			else
+				sound = dep.theme
 			end
 		end
 	else

@@ -35,9 +35,6 @@ function action_subtitle:update(delta)
 		then
 			if self.st.tips_sended == false then
 				olr.hud_tip("", game.translate_string(self.st.info), self.st.showtime, self.st.from_actor)
-				if self.st.infoportion ~=nil and not db.actor:has_info(self.st.infoportion) then
-					db.actor:give_info_portion(self.st.infoportion)
-				end
 				if self.st.single == true then
 					self.st.signals["tip_sended"] = true
 					self.st.tips_sended = true
@@ -62,13 +59,12 @@ function add_to_binder(npc, ini, scheme, section, storage)
 end
 
 function set_scheme(obj, ini, scheme, section, gulag_name)
-	local st			= xr_logic.assign_storage_and_bind(obj, ini, scheme, section)
-	st.logic			= xr_logic.cfg_get_switch_conditions(ini, section, obj)
+	local st		= xr_logic.assign_storage_and_bind(obj, ini, scheme, section)
+	st.logic		= xr_logic.cfg_get_switch_conditions(ini, section, obj)
 
-	st.info				= utils.cfg_get_string( ini, section, "name",     		obj, true,  "", "" )
-	st.showtime			= utils.cfg_get_number( ini, section, "showtime", 		obj, false,     5 )
-	st.from_actor		= utils.cfg_get_bool  ( ini, section, "from_actor", 	obj, false, true )
-	st.infoportion		= utils.cfg_get_string( ini, section, "infoportion",	obj, false, "", nil )
+	st.info			= utils.cfg_get_string( ini, section, "name",     obj, true,  "", "" )
+	st.showtime		= utils.cfg_get_number( ini, section, "showtime", obj, false,     5 )
+	st.from_actor	= utils.cfg_get_bool  ( ini, section, "from_actor", obj, false, true )
 
-	st.conditions		= xr_logic.cfg_get_condlist( ini, section, "cond", obj )
+	st.conditions	= xr_logic.cfg_get_condlist( ini, section, "cond", obj )
 end

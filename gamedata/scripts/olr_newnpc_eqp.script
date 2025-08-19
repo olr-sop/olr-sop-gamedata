@@ -1,214 +1,923 @@
--- hi_flyer 22.02.16
--- ранодомные стволы и визуалы для новых сталкеров в зоне
+--[[
+	-- Script name: olr_newnpc_eqp.script
+	-- Description: Скрипт раздаёт оружие непесям (Только для респавновых, не для тех кто заранее заспавнен)
+	-- Author: theysani
+	-- Last edit: 18.08.25
+--]]
 
-local first_tab = {
-	 
-		 [1] = {name = "wpn_pm",                ammo = "ammo_9x18_pmm", prb = 0.5},
-		 [2] = {name = "wpn_fort",       	ammo = "ammo_9x18_pmm", prb = 0.5},
-		 [3] = {name = "wpn_pb", 	   	ammo = "ammo_9x18_pmm", prb = 0.5},
-		 [4] = {name = "wpn_sig220", 		   ammo = "ammo_11.43x23_hydro", prb = 0.4},
-		 [5] = {name = "wpn_hpsa", 		   ammo = "ammo_9x19_pbp", prb = 0.4},
-		 [6] = {name = "wpn_walther", 		   ammo = "ammo_9x19_pbp", prb = 0.5}
+--[[
 
-		}
+Списки оружия по группировкам и рангу:
 
-local second_tab = {
-	 
-		 [1] = {name = "wpn_lr300",                ammo = "ammo_5.56x45_ap", prb = 0.5},
-		 [2] = {name = "wpn_mp5", 		   ammo = "ammo_5.56x45_ap", prb = 0.5},
-		 [3] = {name = "wpn_akms", 	   ammo = "ammo_5.45x39_ap", prb = 0.5},
-		 [4] = {name = "wpn_groza", 	   ammo = "ammo_9x39_ap", prb = 0.3},
-		 [5] = {name = "wpn_wincheaster1300", 	   ammo = "ammo_12x76_dart", prb = 0.4},
-		 [6] = {name = "wpn_toz34", 	   	ammo = "ammo_12x76_dart", prb = 0.5},
-		 [7] = {name = "wpn_svd", 	   	ammo = "ammo_7.62x54_7h14", prb = 0.2},
-		 [8] = {name = "wpn_svu", 	   	ammo = "ammo_7.62x54_7h14", prb = 0.2},
-		 [9] = {name = "wpn_val", 	   	ammo = "ammo_9x39_ap", prb = 0.2},
-		 [10] = {name = "wpn_vintorez", 	   	ammo = "ammo_9x39_ap", prb = 0.1},
-		 [11] = {name = "wpn_fn2000", 	   	ammo = "ammo_5.56x45_ap", prb = 0.15},
-		 [12] = {name = "wpn_g36", 	   	ammo = "ammo_5.56x45_ap", prb = 0.15},
-		 [13] = {name = "wpn_groza", 	   	ammo = "ammo_9x39_ap", prb = 0.15}
+Бандит новичок - wpn_pm, wpn_pb, wpn_fort, wpn_bm16, wpn_toz34
+Бандит опытный - wpn_pm, wpn_pb, wpn_fort, wpn_aps, wpn_bm16, wpn_toz34, wpn_mp5, wpn_akms
+Бандит ветеран - wpn_fort, wpn_aps, wpn_hpsa, wpn_mp5, wpn_akms, wpn_ak74
+Бандит мастер - wpn_aps, wpn_walther, wpn_colt1911, wpn_ak74, wpn_lr300
 
-		}
+Слизень новичок - wpn_pm, wpn_pb, wpn_fort, wpn_bm16, wpn_toz34
+Слизень опытный - wpn_pm, wpn_pb, wpn_fort, wpn_aps, wpn_bm16, wpn_toz34, wpn_mp5, wpn_akms
+Слизень ветеран - wpn_fort, wpn_aps, wpn_hpsa, wpn_mp5, wpn_akms, wpn_ak74
+Слизень мастер - wpn_aps, wpn_walther, wpn_colt1911, wpn_ak74, wpn_lr300
 
-local mil_tab = {
-	 
-		 [1] = {name = "wpn_akms", 	   	ammo = "ammo_5.45x39_ap"},
-		 [2] = {name = "wpn_groza", 	   	ammo = "ammo_9x39_ap"},
+Сталкер новичок - wpn_pm, wpn_pb, wpn_fort, wpn_bm16, wpn_toz34
+Сталкер опытный - wpn_pm, wpn_pb, wpn_fort, wpn_aps, wpn_hpsa, wpn_bm16, wpn_toz34, wpn_mp5, wpn_akms, wpn_ak74, wpn_lr300
+Сталкер ветеран - wpn_aps, wpn_hpsa, wpn_colt1911, wpn_walther, wpn_ak74, wpn_lr300, wpn_wincheaster1300
+Сталкер мастер - wpn_colt1911, wpn_sig220, wpn_usp, wpn_g36, wpn_val, wpn_vintorez, wpn_wincheaster1300
 
+Долг новичок - wpn_pb, wpn_fort, wpn_aps, wpn_akms
+Долг опытный - wpn_aps, wpn_hpsa, wpn_ak74
+Долг ветеран - wpn_colt1911, wpn_walther, wpn_lr300, wpn_vintorez, wpn_val
+Долг мастер - wpn_aps, wpn_usp, wpn_fn2000, wpn_groza, wpn_wincheaster1300, wpn_svu
+
+Свобода новичок - wpn_pb, wpn_fort, wpn_akms, wpn_ak74
+Свобода опытный - wpn_pb, wpn_fort, wpn_hpsa, wpn_ak74, wpn_lr300, wpn_vintorez
+Свобода ветеран - wpn_colt1911, wpn_walther, wpn_g36, wpn_val
+Свобода мастер - wpn_aps, wpn_colt1911, wpn_sig220, wpn_fn2000, wpn_groza, wpn_wincheaster1300, wpn_svd
+
+Наемник новичок - wpn_aps, wpn_hpsa, wpn_ak74
+Наемник опытный - wpn_aps, wpn_hpsa, wpn_ak74, wpn_lr300, wpn_wincheaster1300
+Наемник ветеран - wpn_walther, wpn_colt1911, wpn_g36, wpn_vintorez
+Наемник мастер - wpn_colt1911, wpn_usp, wpn_sig220, wpn_g36, wpn_val
+
+Монолит новичок - wpn_aps, wpn_hpsa, wpn_akms, wpn_ak74
+Монолит опытный - wpn_aps, wpn_walther, wpn_ak74, wpn_lr300, wpn_wincheaster1300
+Монолит ветеран - wpn_colt1911, wpn_g36, wpn_val
+Монолит мастер - wpn_usp, wpn_sig220, wpn_fn2000, wpn_groza, wpn_rg-6, wpn_svu
+
+Ученый новичок: wpn_pm
+Ученый опытный: wpn_fort
+Ученый ветеран: wpn_aps, wpn_akms
+Ученый мастер: wpn_hpsa, wpn_ak74
+
+Небо новичок: wpn_pm, wpn_akms
+Небо опытный: wpn_pm, wpn_fort, wpn_akms
+Небо ветеран: wpn_pm, wpn_fort, wpn_aps, wpn_akms
+Небо мастер: wpn_pm, wpn_fort, wpn_hpsa, wpn_ak74
+
+Военный новичок: wpn_pm, wpn_akms
+Военный опытный: wpn_pm, wpn_fort, wpn_akms
+Военный ветеран: wpn_pm, wpn_hpsa wpn_fort, wpn_akms, wpn_ak74
+Военный мастер: wpn_aps, wpn_hpsa, wpn_fort, wpn_ak74
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ссылка на тир-лист оружия - https://docs.google.com/spreadsheets/d/128LtOYGN1QQG-Monio_g4W48sRZ4i_8ffbc4tDLLjrc/edit?gid=0#gid=0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ранги по числам:
+Новичок - от 0 до 300
+Опытный - от 300 до 600
+Ветеран - от 600 до 900
+Мастер	- от 900
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Тир лист по секциями
+
+S - prob = 0.1
+A - prob = 0.3
+B - prob = 0.5
+C - prob = 0.7
+D - prob = 0.9
+
+Пистолеты
+wpn_usp				- S
+wpn_sig220			- S
+wpn_colt1911		- A
+wpn_walther			- A
+wpn_hpsa			- B
+wpn_aps				- B
+wpn_fort			- C
+wpn_pb				- C
+wpn_pm				- D
+
+ПП
+wpn_mp5				- S
+
+Дробовики
+wpn_wincheaster1300	- S
+wpn_toz34			- B
+wpn_bm16			- C
+
+Штурмовые винтовки
+wpn_fn2000			- S
+wpn_groza			- S
+wpn_g36				- A 
+wpn_val				- A
+wpn_lr300			- B
+wpn_ak74			- B
+wpn_akms			- D
+
+Снайперские винтовки
+wpn_svu				- S
+wpn_vintorez		- A
+wpn_svd				- B
+
+Остальное
+wpn_rg-6			- S
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+В first не может быть любой секции кроме этих
+wpn_usp - wpn_usp
+wpn_sig220 - wpn_sig220
+wpn_colt1911 - wpn_colt1911
+wpn_walther - wpn_walther
+wpn_hpsa - wpn_hpsa
+wpn_aps - wpn_aps
+wpn_fort - wpn_fort
+wpn_pb - wpn_pb
+wpn_pm - wpn_pm
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+В second могут быть все остальные секции кроме тех что есть в first
+wpn_mp5 - wpn_mp5
+wpn_wincheaster1300 - wpn_wincheaster1300
+wpn_toz34 - wpn_toz34
+wpn_bm16 - wpn_bm16
+wpn_fn2000 - wpn_fn2000
+wpn_groza - wpn_groza
+wpn_g36 - wpn_g36
+wpn_val - wpn_val
+wpn_lr300 - wpn_lr300
+wpn_ak74 - wpn_ak74
+wpn_akms - wpn_akms
+wpn_svu - wpn_svu
+wpn_vintorez - wpn_vintorez
+wpn_svd - wpn_svd
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+--]]
+
+local weapon_tables_blank = {
+    bandit = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    sliznyaki = {
+        novice = {
+            first = {
+            },
+            second = {
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    stalker = {
+        novice = {
+            first = {
+            },
+            second = {
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    dolg = {
+        novice = {
+            first = {
+            },
+            second = {
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    freedom = {
+        novice = {
+            first = {
+            },
+            second = {
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    killer = {
+        novice = {
+            first = {
+            },
+            second = {
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    monolith = {
+        novice = {
+            first = {
+            },
+            second = {
+            }
+        },
+        experienced = {
+            first = {
+            },
+            second = {
+            }
+        },
+        veteran = {
+            first = {
+            },
+            second = {
+            }
+        },
+        master = {
+            first = {
+            },
+            second = {
+            }
+        }
+    },
+    ecologs = {
+        novice = {
+            first = {
+            },
+            second = {}
+        },
+        experienced = {
+            first = {
+            },
+            second = {}
+        },
+        veteran = {
+            first = {
+            },
+            second = {}
+        },
+        master = {
+            first = {
+            },
+            second = {}
+        }
+    },
+    sky = {
+        novice = {
+            first = {
+            },
+            second = {}
+        },
+        experienced = {
+            first = {
+            },
+            second = {}
+        },
+        veteran = {
+            first = {
+            },
+            second = {}
+        },
+        master = {
+            first = {
+            },
+            second = {}
+        }
+    },
+    military = {
+        novice = {
+            first = {
+            },
+            second = {}
+        },
+        experienced = {
+            first = {
+            },
+            second = {}
+        },
+        veteran = {
+            first = {
+            },
+            second = {}
+        },
+        master = {
+            first = {
+            },
+            second = {}
+        }
+    }
 }
 
-local eco_tab = {
-	 
-		 [1] = {name = "wpn_fn2000", 	   	ammo = "ammo_5.56x45_ap"},
-		 [2] = {name = "wpn_g36", 	   	ammo = "ammo_5.56x45_ap"},
-		 [3] = {name = "wpn_groza", 	   	ammo = "ammo_9x39_ap"}
+local weapon_tables = {
+    bandit = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+                {section = "wpn_toz34", prob = 0.5}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+                {section = "wpn_toz34", prob = 0.5},
+                {section = "wpn_mp5", prob = 0.1},
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_mp5", prob = 0.1},
+                {section = "wpn_akms", prob = 0.8},
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_walther", prob = 0.3},
+                {section = "wpn_colt1911", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5}
+            }
+        }
+    },
+    sliznyaki = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+                {section = "wpn_toz34", prob = 0.5}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+                {section = "wpn_toz34", prob = 0.5},
+                {section = "wpn_mp5", prob = 0.1},
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_mp5", prob = 0.1},
+                {section = "wpn_akms", prob = 0.8},
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_walther", prob = 0.3},
+                {section = "wpn_colt1911", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5}
+            }
+        }
+    },
+    stalker = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+                {section = "wpn_toz34", prob = 0.5}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_bm16", prob = 0.6},
+                {section = "wpn_toz34", prob = 0.5},
+                {section = "wpn_mp5", prob = 0.1},
+                {section = "wpn_akms", prob = 0.8},
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5},
+                {section = "wpn_colt1911", prob = 0.3},
+                {section = "wpn_walther", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5},
+                {section = "wpn_wincheaster1300", prob = 0.1}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_colt1911", prob = 0.3},
+                {section = "wpn_sig220", prob = 0.1},
+                {section = "wpn_usp", prob = 0.1}
+            },
+            second = {
+                {section = "wpn_g36", prob = 0.3},
+                {section = "wpn_val", prob = 0.3},
+                {section = "wpn_vintorez", prob = 0.3},
+                {section = "wpn_wincheaster1300", prob = 0.1}
+            }
+        }
+    },
+    dolg = {
+        novice = {
+            first = {
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_colt1911", prob = 0.3},
+                {section = "wpn_walther", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_lr300", prob = 0.5},
+                {section = "wpn_vintorez", prob = 0.3},
+                {section = "wpn_val", prob = 0.3}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_usp", prob = 0.1}
+            },
+            second = {
+                {section = "wpn_fn2000", prob = 0.1},
+                {section = "wpn_groza", prob = 0.1},
+                {section = "wpn_wincheaster1300", prob = 0.1},
+                {section = "wpn_svu", prob = 0.1}
+            }
+        }
+    },
+    freedom = {
+        novice = {
+            first = {
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8},
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_pb", prob = 0.6},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5},
+                {section = "wpn_vintorez", prob = 0.3}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_colt1911", prob = 0.3},
+                {section = "wpn_walther", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_g36", prob = 0.3},
+                {section = "wpn_val", prob = 0.3}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_colt1911", prob = 0.3},
+                {section = "wpn_sig220", prob = 0.1}
+            },
+            second = {
+                {section = "wpn_fn2000", prob = 0.1},
+                {section = "wpn_groza", prob = 0.1},
+                {section = "wpn_wincheaster1300", prob = 0.1},
+                {section = "wpn_svd", prob = 0.5}
+            }
+        }
+    },
+    killer = {
+        novice = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5},
+                {section = "wpn_wincheaster1300", prob = 0.1}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_walther", prob = 0.3},
+                {section = "wpn_colt1911", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_g36", prob = 0.3},
+                {section = "wpn_vintorez", prob = 0.3}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_colt1911", prob = 0.3},
+                {section = "wpn_usp", prob = 0.1},
+                {section = "wpn_sig220", prob = 0.1}
+            },
+            second = {
+                {section = "wpn_g36", prob = 0.3},
+                {section = "wpn_val", prob = 0.3}
+            }
+        }
+    },
+    monolith = {
+        novice = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8},
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_walther", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5},
+                {section = "wpn_lr300", prob = 0.5},
+                {section = "wpn_wincheaster1300", prob = 0.1}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_colt1911", prob = 0.3}
+            },
+            second = {
+                {section = "wpn_g36", prob = 0.3},
+                {section = "wpn_val", prob = 0.3}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_usp", prob = 0.1},
+                {section = "wpn_sig220", prob = 0.1}
+            },
+            second = {
+                {section = "wpn_fn2000", prob = 0.1},
+                {section = "wpn_groza", prob = 0.1},
+                {section = "wpn_rg-6", prob = 0.1},
+                {section = "wpn_svu", prob = 0.1}
+            }
+        }
+    },
+    ecologs = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8}
+            },
+            second = {}
+        },
+        experienced = {
+            first = {
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {}
+        },
+        veteran = {
+            first = {
+                {section = "wpn_aps", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        }
+    },
+    sky = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_aps", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_fort", prob = 0.6},
+                {section = "wpn_hpsa", prob = 0.5}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        }
+    },
+    military = {
+        novice = {
+            first = {
+                {section = "wpn_pm", prob = 0.8}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        experienced = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8}
+            }
+        },
+        veteran = {
+            first = {
+                {section = "wpn_pm", prob = 0.8},
+                {section = "wpn_hpsa", prob = 0.5},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_akms", prob = 0.8},
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        },
+        master = {
+            first = {
+                {section = "wpn_aps", prob = 0.5},
+                {section = "wpn_hpsa", prob = 0.5},
+                {section = "wpn_fort", prob = 0.6}
+            },
+            second = {
+                {section = "wpn_ak74", prob = 0.5}
+            }
+        }
+    }
 }
 
+-- функция для получения первого класса патронов
+local function get_ammo_class(weapon_section)
+    local ac = utils.cfg_get_string(system_ini(), weapon_section, "ammo_class", "", false, "")
+    if not ac or ac == "" then return nil end
+    
+    -- Быстрый поиск первой подстроки до запятой
+    local comma_pos = string.find(ac, ",", 1, true)
+    if comma_pos then
+        return string.sub(ac, 1, comma_pos - 1):match("^%s*(.-)%s*$")  -- с обрезкой пробелов
+    end
+    return ac:match("^%s*(.-)%s*$")  -- если запятых нет, возвращаем всю строку с обрезкой пробелов
+end
 
-local visuals_bandits = {
-		[[actors\bandit\bandit_antigas]],
-		[[actors\bandit\bandit_coat_01]],
-		[[actors\bandit\bandit_coat_02]],
-		[[actors\bandit\bandit_hood_01]],
-		[[actors\bandit\bandit_hood_02]],
-		[[actors\bandit\bandit_hood_03]],
-		[[actors\bandit\bandit_hood_04]],
-		[[actors\bandit\bandit_hood_05]],
-		[[actors\bandit\bandit_hood_06]]
+-- таблица соответствия группировок
+local faction_groups = {
+    deads = "bandit", sin = "bandit", lastday = "bandit",
+    stranger = "stalker", neutral = "stalker", zombied = "stalker",
+    sky = "ecolog", iskateli = "ecolog", voenstals = "military",
+    -- Основные группировки
+    bandit = "bandit", stalker = "stalker", ecolog = "ecolog", 
+    military = "military", sliznyaki = "sliznyaki", dolg = "dolg",
+    freedom = "freedom", killer = "killer", monolith = "monolith", 
+    ecologs = "ecologs"
 }
 
-local visuals_novice = {
-		[[actors\novice\novice_b_01]],
-		[[actors\novice\novice_b_02]],
-		[[actors\novice\novice_b_03]],
-		[[actors\novice\novice_b_04]],
-		[[actors\novice\novice_b_mask]],
-		[[actors\novice\novice_w_01]],
-		[[actors\novice\novice_w_02]],
-		[[actors\novice\novice_w_03]],
-		[[actors\novice\novice_w_04]],
-		[[actors\novice\novice_w_mask]]
-}
+local function get_main_faction(community)
+    return faction_groups[community] or "stalker"
+end
 
+local function get_rank_key(rank)
+    if rank <= 300 then return "novice"
+    elseif rank <= 600 then return "experienced"
+    elseif rank <= 900 then return "veteran"
+    else return "master" end
+end
 
-local visuals_neytral = {
-		[[actors\neutral\stalker_exo]],
-		[[actors\neutral\stalker_hood_backpack_01]],
-		[[actors\neutral\stalker_hood_backpack_02]],
-		[[actors\neutral\stalker_hood_backpack_03]],
-		[[actors\neutral\stalker_hood_backpack_04]],
-		[[actors\neutral\stalker_hood_backpack_05]],
-		[[actors\neutral\stalker_hood_backpack_06]],
-		[[actors\neutral\stalker_hood_backpack_antigas]],
-		[[actors\neutral\stalker_hood_backpack_mask]],
-		[[actors\neutral\stalker_hood_balon_01]],
-		[[actors\neutral\stalker_hood_balon_02]],
-		[[actors\neutral\stalker_hood_balon_03]],
-		[[actors\neutral\stalker_hood_balon_04]],
-		[[actors\neutral\stalker_hood_balon_05]],
-		[[actors\neutral\stalker_hood_balon_06]],
-		[[actors\neutral\stalker_hood_balon_07]],
-		[[actors\neutral\stalker_hood_balon_antigas]],
-		[[actors\neutral\stalker_no_hood_backpack_01]],
-		[[actors\neutral\stalker_no_hood_backpack_02]],
-		[[actors\neutral\stalker_no_hood_backpack_03]],
-		[[actors\neutral\stalker_no_hood_backpack_04]],
-		[[actors\neutral\stalker_no_hood_balon_01]],
-		[[actors\neutral\stalker_no_hood_balon_02]],
-		[[actors\neutral\stalker_no_hood_balon_03]],
-		[[actors\neutral\stalker_no_hood_balon_04]],
-		[[actors\neutral\stalker_no_hood_backpack_mask]],
-		[[actors\neutral\stalker_protected]]
-}
+local function select_weapon(weapons)
+    if not weapons or #weapons == 0 then return nil end
+    if #weapons == 1 then return weapons[1].section end
+    
+    local rand = math.random()
+    for i = 1, #weapons do
+        if rand < weapons[i].prob then
+            return weapons[i].section
+        end
+        rand = rand - weapons[i].prob
+    end
+    return weapons[1].section
+end
 
-
+-- Основная функция
 function on_spawn(obj)
-
-	if not obj then return end
-
-	if obj:community()=="military" then
-		--news_manager.send_tip(db.actor, " se_respawn MILITARY ["..obj:name().."] on level ["..obj.level_name.."] ", nil, "zombied", 5000)
-		--olr.add_spot_on_map( obj.id,"red_location",obj:name() )
-		local frndpos = math.random(#mil_tab) or 1
-		alife():create(tostring(mil_tab[frndpos].name), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		se_respawn.create_ammo(tostring(mil_tab[frndpos].ammo), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id, 10)
-		return
-	end
-
-	if obj:community()=="ecolog" then
-		--news_manager.send_tip(db.actor, " se_respawn ecolog ["..obj:name().."] on level ["..obj.level_name.."] ", nil, "zombied", 5000)
-		--olr.add_spot_on_map( obj.id,"red_location",obj:name() )
-		local frndpos = math.random(#eco_tab) or 1
-		alife():create(tostring(eco_tab[frndpos].name), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		se_respawn.create_ammo(tostring(eco_tab[frndpos].ammo), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id, 10)
-		return
-	end
-
-	local frndpos = math.random(#first_tab) or 1
-	local rndpos = math.random(#second_tab) or 1
-	
-	if math.random() < second_tab[rndpos].prb then
-		--log1("по рандому заспавнился ствол "..second_tab[rndpos].name.."") 
-		alife():create(tostring(second_tab[rndpos].name), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		se_respawn.create_ammo(tostring(second_tab[rndpos].ammo), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id, 10)
-	end
-
-	if math.random() < first_tab[frndpos].prb then
-		--log1("по рандому заспавнился ствол "..first_tab[frndpos].name.."") 
-		alife():create(tostring(first_tab[frndpos].name), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		se_respawn.create_ammo(tostring(first_tab[frndpos].ammo), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id, 10)
-	end
-
-	if obj:community()=="bandit" then
-		--news_manager.send_tip(db.actor, " se_respawn BANDIT ["..obj:name().."] on level ["..obj.level_name.."] wpn - ["..first_tab[frndpos].name.."] wpn2 - ["..second_tab[rndpos].name.."] ", nil, "zombied", 5000)
-		--olr.add_spot_on_map( obj.id,"red_location",obj:name() )
-		local pk = get_netpk(obj,1)
-  		if pk and pk:isOk() then
-    			local data = pk:get()
-    			data.visual_name = visuals_bandits[math.random(#visuals_bandits)]
-          		data.character_name = game.translate_string("neizvestnyy_bandits")
-      			pk:set(data)
-		end
-	end
-
-	if obj:community()=="stalker" then
-		--news_manager.send_tip(db.actor, " se_respawn stalker ["..obj:name().."] on level ["..obj.level_name.."] wpn - ["..first_tab[frndpos].name.."] wpn2 - ["..second_tab[rndpos].name.."] ", nil, "zombied", 5000)
-		--olr.add_spot_on_map( obj.id,"red_location",obj:name() )
-		local num = obj:rank()
-		if num >= 0 and num <= 300 then
-			--log1("stalker rank NOVICE "..obj:rank().."")
-			set_novice_vis(obj)
-		elseif num > 300 and num <= 600 then
-			--log1("stalker rank OPYTNIY "..obj:rank().."")
-			set_novice_vis(obj)
-		elseif num > 600 and num <= 900 then
-			--log1("stalker rank VETERAN "..obj:rank().."")
-			set_veteran_vis(obj)
-		elseif num > 900 then
-			--log1("stalker rank MASTER "..obj:rank().."")
-			set_veteran_vis(obj)
-		end
-	end
-
+    if not obj then return end
+    
+    local main_faction = get_main_faction(obj:community())
+    local weapons = weapon_tables[main_faction] or weapon_tables.stalker
+    weapons = weapons[get_rank_key(obj:rank())]
+    if not weapons then return end
+    
+    -- Выдача оружия
+    local function give_weapon(weapon_list)
+        if not weapon_list or #weapon_list == 0 then return end
+        local weapon_section = select_weapon(weapon_list)
+        if not weapon_section then return end
+        
+        alife():create(weapon_section, obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+        local ammo_class = get_ammo_class(weapon_section)
+        if ammo_class then
+            alife():create(ammo_class, obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+        end
+    end
+    
+    give_weapon(weapons.first)
+    give_weapon(weapons.second)
 end
-
-
-function set_novice_vis(obj)
-	local pk = get_netpk(obj,1)
-  	if pk and pk:isOk() then
-    		local data = pk:get()
-		local rndmoney = math.random(205,743)
-		data.money = rndmoney
-    		data.visual_name = visuals_novice[math.random(#visuals_novice)]
-      		pk:set(data)
-	end	
-end
-
-function set_veteran_vis(obj)
-	local pk = get_netpk(obj,1)
-  	if pk:isOk() then
-    		local data = pk:get()
-		local rndmoney = math.random(905,2743)
-		data.money = rndmoney
-    		data.visual_name = visuals_neytral[math.random(#visuals_neytral)]
-      		pk:set(data)
-	end	
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

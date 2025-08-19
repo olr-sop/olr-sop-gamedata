@@ -333,7 +333,10 @@ function start_game_vars()
 	xvars.rand_shit_timer_cnt = 0   -- колво рандомного хлама по таймеру
 	xvars.npc_del_afterblow = {}	-- Таблица НПС трупов что удаляем после выброса
 	xvars.actor_pda_trade  = {}      -- кого позвали по ПДА торговать
-	xvars.blowout_timer = 1005
+	
+	xvars.blowout_timer = 17280		-- через сколько стартует первый выброс
+	xvars.blowout_state = 0			-- нынешний стейт (0 == BLOWOUT_STATES.NONE)
+	
 	xvars.cash_need_summa_has = {}	-- Таблица НПС идущих с баблом из зоны
 	xvars.pos_x = 0  -- Позиция актора для дропа переполненого инв
 	xvars.pos_y = 0
@@ -913,6 +916,8 @@ function del_by_name(name_to_del)
 			log1("del by name: "..se_obj:name().." -on level- "..se_obj.level_name.."")
 		end
 		alife():release(se_obj, true)
+	else
+		log1("! olr.del_by_name - "..tostring(name_to_del).." return nil")		
 	end	
 end
 
@@ -977,6 +982,8 @@ function del(obj)
 			--end
 			alife():release(sobj, true)
 			return true
+		else
+			log1("! olr.del - "..tostring(name_to_del).." return nil")					
 		end
 	end
 	return false

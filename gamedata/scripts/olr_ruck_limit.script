@@ -168,13 +168,9 @@ end
 
 function drop_item_on_inv(obj)
 	--log1("called drop_item_on_inv")
-	if db.actor.health == 0 then
-		return
-	end
-	if device().precache_frame > 1 then
-		return
-	end
-	if obj ~= nil then
+	if db.actor.health == 0 or device().precache_frame > 1 then return end
+	
+	if obj then
 		if ini:line_exist(obj:section(), "item_amount") then
 			local val = ini:r_float(obj:section(), "item_amount") or 0
 			if tab_objs_on_slots[tostring(obj:id())] == true then
@@ -182,10 +178,7 @@ function drop_item_on_inv(obj)
 				forced_drop_outfit(obj) -- доп проверка на дроп костюма со слота
 			else
 				--log1("drop_item_on_inv кидаем с рюкзака УМЕНЬШАЕМ ОБЪЕМ cur_amount")
-				cur_amount = cur_amount - val
-				if cur_amount < 0 then
-					--cur_amount = 0
-				end
+				cur_amount = math.max(cur_amount - val, 0) -- Не даем уйти в минус
 			end
 		end
 	end
@@ -197,6 +190,12 @@ function drop_item_on_inv(obj)
 		tab_objs_on_ruck[tostring(obj:id())] = nil
 		--log1("drop_item_on_inv удаляем с таблицы В РЮКЗАКЕ")
 	end
+	
+	-- Принудительная проверка лимита после сброса
+	if cur_amount > max_item_amount then
+		check_and_drop_excess()
+	end	
+	
 	--log1("end drop_item_on_inv")
 	olr_ui_inv_acinfo.repaint()
 end
@@ -251,6 +250,12 @@ function obj_to_ruck(obj)
 		--log1("obj_to_ruck сняли броню ")
 		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
 		max_item_amount = max_item_amount - val_add
+		
+		-- Немедленная проверка превышения
+		if cur_amount > max_item_amount then
+			check_and_drop_excess()
+		end		
+		
 	end
 	
 	if tab_objs_on_slots[tostring(obj:id())] ~= nil then
@@ -347,14 +352,39 @@ end
 
 -- костыль
 function forced_drop_outfit(obj)
-	--log1("called forced_drop_outfit")
 	if obj:id() == cur_outfit then
-		cur_outfit = -1
-		printf(" С нас принудительно снята броня ")
+		-- Уменьшаем объем самого костюма
+		local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+		cur_amount = math.max(cur_amount - val, 0)
+		
+		-- Убираем бонус костюма
 		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
 		max_item_amount = max_item_amount - val_add
+		
+		cur_outfit = -1
+		printf("Броня снята, новый лимит: "..max_item_amount)
+		
+		-- Немедленная проверка превышения
+		if cur_amount > max_item_amount then
+			check_and_drop_excess()
+		end
 	end
 	olr_ui_inv_acinfo.repaint()
+end
+
+function check_and_drop_excess()
+	local excess = cur_amount - max_item_amount
+	
+	-- Собираем предметы для сброса (кроме экипированных)
+	db.actor:iterate_inventory(function(_, obj)
+		if obj and tab_objs_on_slots[tostring(obj:id())] == nil then
+			local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+			if val > 0 and excess > 0 then
+				tmr_drop(obj)
+				excess = excess - val
+			end
+		end
+	end)
 end
 
 function dump_info()
@@ -363,19 +393,19 @@ function dump_info()
 	log1("Содержимое tab_objs_on_slots:")
 	for obj_id, exists in pairs(tab_objs_on_slots) do
 		if exists then
-			log1("  Объект " .. obj_id .. " присутствует")
+			log1("	Объект " .. obj_id .. " присутствует")
 		else
 			-- (эта ветка вряд ли выполнится, т.к. nil-значения не попадают в pairs)
-			log1("  Объект " .. obj_id .. " отсутствует")
+			log1("	Объект " .. obj_id .. " отсутствует")
 		end
 	end
 	log1("Содержимое tab_objs_on_ruck:")
 	for obj_id, exists in pairs(tab_objs_on_ruck) do
 		if exists then
-			log1("  Объект " .. obj_id .. " присутствует")
+			log1("	Объект " .. obj_id .. " присутствует")
 		else
 			-- (эта ветка вряд ли выполнится, т.к. nil-значения не попадают в pairs)
-			log1("  Объект " .. obj_id .. " отсутствует")
+			log1("	Объект " .. obj_id .. " отсутствует")
 		end
 	end
 end

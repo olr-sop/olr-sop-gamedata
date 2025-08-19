@@ -77,173 +77,319 @@ local ecologs_smarts = {
 
 function ecologs_neutral_task_select()
 	if db.actor then
-	
+		--log1("! ecologs_neutral_task_select: function called")
 		local montabl = {
 			[clsid.script_stalker] = true
 		}
 
 		local sim = alife()
+		--log1("! ecologs_neutral_task_select: alife() called, sim = " .. tostring(sim))
+		
 		for id = 1, 65534 do
+			--log1("! ecologs_neutral_task_select: processing id = " .. tostring(id))
 			local kill = sim:object(id)
+			
 			if kill then
+				--log1("! ecologs_neutral_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+				
 				if montabl[kill:clsid()] then
+					--log1("! ecologs_neutral_task_select: object is a stalker")
+					
 					if not kill.online then
+						--log1("! ecologs_neutral_task_select: object is offline")
+						
 						if kill:alive() then
+							--log1("! ecologs_neutral_task_select: object is alive")
+							
 							if kill:community() == "ecolog" then
+								--log1("! ecologs_neutral_task_select: object has community 'ecolog'")
 								local strn_id = kill:smart_terrain_id()
+								
 								if strn_id ~= 65535 then
+									--log1("! ecologs_neutral_task_select: object has smart_terrain_id = " .. tostring(strn_id))
 									local rnd = math.random(1, 2)
+									--log1("! ecologs_neutral_task_select: random roll = " .. tostring(rnd))
+									
 									if rnd == 1 then
+										--log1("! ecologs_neutral_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+										--log1("! ecologs_neutral_task_select: selected for migration")
 										local params = amk.read_stalker_params(kill)
 										params.custom = ""
 										amk.write_stalker_params(params, kill)
+										--log1("! ecologs_neutral_task_select: cleared custom params")
+										
 										smart_terrain.unregister_npc(kill)
+										--log1("! ecologs_neutral_task_select: unregistered from smart terrain")
+										
+										--log1("! ecologs_neutral_task_select: try to set can_choose_alife_tasks")
+										--if kill:brain():can_choose_alife_tasks() then log1("! ecologs_neutral_task_select: can_choose_alife_tasks return true") else log1("! ecologs_neutral_task_select: return false") end
 										kill:brain():can_choose_alife_tasks(true)
-										kill:brain():update()
-										olr.clear_restrictors(kill)
+										--log1("! ecologs_neutral_task_select: try update brain")
 
+										--log1("! stalkers_neutral_task_select: try update brain")
+										run_safely(
+											function() kill:brain():update() end,
+											"! olr_offline_task Error in brain update"
+										)
+										--log1("! stalkers_neutral_task_select: updated brain")
+
+										--log1("! ecologs_neutral_task_select: updated brain")
+										--log1("! ecologs_neutral_task_select: try clear restrictors")
+										olr.clear_restrictors(kill)
+										--log1("! ecologs_neutral_task_select: cleared restrictors")
+										
 										local params = amk.read_stalker_params(kill)
 										local rand_kill = ecologs_smarts[math.random(#ecologs_smarts)]
 										local rand_ki = game.translate_string(rand_kill)
+										--log1("! ecologs_neutral_task_select: selected smart terrain - " .. rand_ki)
+										
 										local b = "\n[smart_terrains]\n" .. rand_ki .. " = true\n"
 										local stng_full = game.translate_string(b)
 										params.custom = stng_full
 										amk.write_stalker_params(params, kill)
-
-										--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
-										--news_manager.send_tip(db.actor, game.translate_string("ecologs_neutral_task_select_0"), nil, "freedom", 9000)
-										--log1("!!!!!!!!!!!!!Ã»√–¿÷»ﬂ —“¿À ≈–Œ¬ ecologs_smarts!!!!!!!!!!!!!!")
+										--log1("! ecologs_neutral_task_select: updated custom params with new smart terrain")
+										
+										local params = amk.read_stalker_params(kill)
+										local a = params.custom
+										--log1("! ecologs_neutral_task_select: final custom data for " .. kill:name() .. " --- " .. a)
+									else
+										--log1("! ecologs_neutral_task_select: random roll != 1, skipping")
 									end
+								else
+									--log1("! ecologs_neutral_task_select: smart_terrain_id == 65535, skipping")
 								end
+							else
+								--log1("! ecologs_neutral_task_select: community is not 'ecolog', skipping")
 							end
+						else
+							--log1("! ecologs_neutral_task_select: object is not alive, skipping")
 						end
+					else
+						--log1("! ecologs_neutral_task_select: object is online, skipping")
 					end
+				else
+					--log1("! ecologs_neutral_task_select: object is not a stalker, skipping")
 				end
+			else
+				--log1("! ecologs_neutral_task_select: no object with id = " .. tostring(id))
 			end
 		end
+	else
+		--log1("! ecologs_neutral_task_select: db.actor not found, exiting")
 	end
 end
-
-------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------
 
 function bandits_neutral_task_select()
 	if db.actor then
-	
+		--log1("! bandits_neutral_task_select: function called")
 		local montabl = {
 			[clsid.script_stalker] = true
 		}
 
 		local sim = alife()
+		--log1("! bandits_neutral_task_select: alife() called, sim = " .. tostring(sim))
+		
 		for id = 1, 65534 do
+			--log1("! bandits_neutral_task_select: processing id = " .. tostring(id))
 			local kill = sim:object(id)
+			
 			if kill then
+				--log1("! bandits_neutral_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+				
 				if montabl[kill:clsid()] then
+					--log1("! bandits_neutral_task_select: object is a stalker")
+					
 					if not kill.online then
+						--log1("! bandits_neutral_task_select: object is offline")
+						
 						if kill:alive() then
+							--log1("! bandits_neutral_task_select: object is alive")
+							
 							if kill:community() == "bandit" then
+								--log1("! bandits_neutral_task_select: object has community 'bandit'")
 								local strn_id = kill:smart_terrain_id()
+								
 								if strn_id ~= 65535 then
+									--log1("! bandits_neutral_task_select: object has smart_terrain_id = " .. tostring(strn_id))
 									local rnd = math.random(1, 2)
+									--log1("! bandits_neutral_task_select: random roll = " .. tostring(rnd))
+									
 									if rnd == 1 then
+										--log1("! bandits_neutral_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+										--log1("! bandits_neutral_task_select: selected for migration")
 										local params = amk.read_stalker_params(kill)
 										params.custom = ""
 										amk.write_stalker_params(params, kill)
+										--log1("! bandits_neutral_task_select: cleared custom params")
+										
 										smart_terrain.unregister_npc(kill)
+										--log1("! bandits_neutral_task_select: unregistered from smart terrain")
+										
+										--log1("! bandits_neutral_task_select: try to set can_choose_alife_tasks")
+										--if kill:brain():can_choose_alife_tasks() then log1("! bandits_neutral_task_select: can_choose_alife_tasks return true") else log1("! bandits_neutral_task_select: return false") end
 										kill:brain():can_choose_alife_tasks(true)
-										kill:brain():update()
-										olr.clear_restrictors(kill)
+										--log1("! bandits_neutral_task_select: try update brain")
 
+										--log1("! stalkers_neutral_task_select: try update brain")
+										run_safely(
+											function() kill:brain():update() end,
+											"! olr_offline_task Error in brain update"
+										)
+										--log1("! stalkers_neutral_task_select: updated brain")
+
+										--log1("! bandits_neutral_task_select: updated brain")
+										--log1("! bandits_neutral_task_select: try clear restrictors")
+										olr.clear_restrictors(kill)
+										--log1("! bandits_neutral_task_select: cleared restrictors")
+										
 										local params = amk.read_stalker_params(kill)
 										local rand_kill = bandits_smarts[math.random(#bandits_smarts)]
 										local rand_ki = game.translate_string(rand_kill)
+										--log1("! bandits_neutral_task_select: selected smart terrain - " .. rand_ki)
+										
 										local b = "\n[smart_terrains]\n" .. rand_ki .. " = true\n"
 										local stng_full = game.translate_string(b)
 										params.custom = stng_full
 										amk.write_stalker_params(params, kill)
-
+										--log1("! bandits_neutral_task_select: updated custom params with new smart terrain")
+										
 										local params = amk.read_stalker_params(kill)
 										local a = params.custom
-										--log1("name custom data for "..kill:name().." --- "..a.."")
-
-										--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
-										--news_manager.send_tip(db.actor, game.translate_string("bandits_neutral_task_select_0"), nil, "freedom", 9000)
-										--log1("!!!!!!!!!!!!!Ã»√–¿÷»ﬂ —“¿À ≈–Œ¬ ¡¿Õƒ»“Œ¬!!!!!!!!!!!!!!")
+										--log1("! bandits_neutral_task_select: final custom data for " .. kill:name() .. " --- " .. a)
+									else
+										--log1("! bandits_neutral_task_select: random roll != 1, skipping")
 									end
+								else
+									--log1("! bandits_neutral_task_select: smart_terrain_id == 65535, skipping")
 								end
+							else
+								--log1("! bandits_neutral_task_select: community is not 'bandit', skipping")
 							end
+						else
+							--log1("! bandits_neutral_task_select: object is not alive, skipping")
 						end
+					else
+						--log1("! bandits_neutral_task_select: object is online, skipping")
 					end
+				else
+					--log1("! bandits_neutral_task_select: object is not a stalker, skipping")
 				end
+			else
+				--log1("! bandits_neutral_task_select: no object with id = " .. tostring(id))
 			end
 		end
+	else
+		--log1("! bandits_neutral_task_select: db.actor not found, exiting")
 	end
 end
 
-------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------
-
 function stalkers_neutral_task_select()
 	if db.actor then
-	
+		--log1("! stalkers_neutral_task_select: function called")
 		local montabl = {
 			[clsid.script_stalker] = true
 		}
 
 		local sim = alife()
+		--log1("! stalkers_neutral_task_select: alife() called, sim = " .. tostring(sim))
+		
 		for id = 1, 65534 do
+			--log1("! stalkers_neutral_task_select: processing id = " .. tostring(id))
 			local kill = sim:object(id)
+			
 			if kill then
+				--log1("! stalkers_neutral_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+				
 				if montabl[kill:clsid()] then
+					--log1("! stalkers_neutral_task_select: object is a stalker")
+					
 					if not kill.online then
+						--log1("! stalkers_neutral_task_select: object is offline")
+						
 						if kill:alive() then
+							--log1("! stalkers_neutral_task_select: object is alive")
+							
 							if kill:community() == "stalker" then
+							   -- log1("! stalkers_neutral_task_select: object has community 'stalker'")
 								local strn_id = kill:smart_terrain_id()
+								
 								if strn_id ~= 65535 then
+									--log1("! stalkers_neutral_task_select: object has smart_terrain_id = " .. tostring(strn_id))
 									local rnd = math.random(1, 2)
+									--log1("! stalkers_neutral_task_select: random roll = " .. tostring(rnd))
+									
 									if rnd == 1 then
+										--log1("! stalkers_neutral_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+										--log1("! stalkers_neutral_task_select: selected for migration")
 										local params = amk.read_stalker_params(kill)
 										params.custom = ""
 										amk.write_stalker_params(params, kill)
+										--log1("! stalkers_neutral_task_select: cleared custom params")
+										
 										smart_terrain.unregister_npc(kill)
+										--log1("! stalkers_neutral_task_select: unregistered from smart terrain")
+										
+										--log1("! stalkers_neutral_task_select: try to set can_choose_alife_tasks")
+										--if kill:brain():can_choose_alife_tasks() then log1("! stalkers_neutral_task_select: can_choose_alife_tasks return true") else log1("! stalkers_neutral_task_select: return false") end
 										kill:brain():can_choose_alife_tasks(true)
-										kill:brain():update()
+										
+										--log1("! stalkers_neutral_task_select: try update brain")
+										run_safely(
+											function() kill:brain():update() end,
+											"! olr_offline_task Error in brain update"
+										)
+										--log1("! stalkers_neutral_task_select: updated brain")
+										
+										--log1("! stalkers_neutral_task_select: try clear restrictors")
 										olr.clear_restrictors(kill)
-
+										--log1("! stalkers_neutral_task_select: cleared restrictors")
+										
 										local params = amk.read_stalker_params(kill)
 										local rand_kill = neutral_smarts[math.random(#neutral_smarts)]
 										local rand_ki = game.translate_string(rand_kill)
+										--log1("! stalkers_neutral_task_select: selected smart terrain - " .. rand_ki)
+										
 										local b = "\n[smart_terrains]\n" .. rand_ki .. " = true\n"
 										local stng_full = game.translate_string(b)
 										params.custom = stng_full
 										amk.write_stalker_params(params, kill)
-
+										--log1("! stalkers_neutral_task_select: updated custom params with new smart terrain")
+										
 										local params = amk.read_stalker_params(kill)
 										local a = params.custom
-										--log1("name custom data for "..kill:name().." --- "..a.."")
-
-										--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
-										--news_manager.send_tip(db.actor, game.translate_string("stalkers_neutral_task_select_0"), nil, "freedom", 9000)
-										--log1("!!!!!!!!!!!!!Ã»√–¿÷»ﬂ —“¿À ≈–Œ¬ Õ≈…“–¿ÀŒ¬!!!!!!!!!!!!!!")
+										--log1("! stalkers_neutral_task_select: final custom data for " .. kill:name() .. " --- " .. a)
+									else
+										--log1("! stalkers_neutral_task_select: random roll != 1, skipping")
 									end
+								else
+									--log1("! stalkers_neutral_task_select: smart_terrain_id == 65535, skipping")
 								end
+							else
+								--log1("! stalkers_neutral_task_select: community is not 'stalker', skipping")
 							end
+						else
+							--log1("! stalkers_neutral_task_select: object is not alive, skipping")
 						end
+					else
+						--log1("! stalkers_neutral_task_select: object is online, skipping")
 					end
+				else
+					--log1("! stalkers_neutral_task_select: object is not a stalker, skipping")
 				end
+			else
+				--log1("! stalkers_neutral_task_select: no object with id = " .. tostring(id))
 			end
 		end
+	else
+		--log1("! stalkers_neutral_task_select: db.actor not found, exiting")
 	end
 end
 
-------------------------------------------------------------------------------------------
 function dogs_task_select()
 	if db.actor then
+		--log1("! dogs_task_select: function called")
 		if bind_stalker.actor_in_sleep == true then
+			--log1("! dogs_task_select: actor is sleeping, exiting")
 			return
 		end
 
@@ -282,46 +428,82 @@ function dogs_task_select()
 		}
 
 		local sim = alife()
+		--log1("! dogs_task_select: alife() called, sim = " .. tostring(sim))
+		
 		for id = 1, 65534 do
+			--log1("! dogs_task_select: processing id = " .. tostring(id))
 			local kill = sim:object(id)
+			
 			if kill then
+				--log1("! dogs_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+				
 				if montabl[kill:clsid()] then
+					--log1("! dogs_task_select: object is a dog")
+					
 					if not kill.online then
+						--log1("! dogs_task_select: object is offline")
+						
 						if kill:alive() and kill.level_name ~= "lvl5_bar" then
+							--log1("! dogs_task_select: object is alive and not on bar level")
 							local strn_id = kill:smart_terrain_id()
+							
 							if strn_id ~= 65535 then
+								--log1("! dogs_task_select: object has smart_terrain_id = " .. tostring(strn_id))
 								local rnd = math.random(1, 2)
+								--log1("! dogs_task_select: random roll = " .. tostring(rnd))
+								
 								if rnd == 1 then
+									--log1("! dogs_task_select: selected for migration")
 									smart_terrain.unregister_npc(kill)
+									--log1("! dogs_task_select: unregistered from smart terrain")
+									
 									kill:brain():can_choose_alife_tasks(true)
+									--log1("! dogs_task_select: enabled alife tasks")
+									
 									olr.clear_restrictors(kill)
-
+									--log1("! dogs_task_select: cleared restrictors")
+									
 									local pk = xs_netpk.monster(kill)
 									if pk:isOk() then
+										--log1("! dogs_task_select: xs_netpk is OK")
 										local data = pk:get()
 										local cd = data.custom_data:getTable()
 										cd.smart_terrains = {["dog_smarts[math.random(#dog_smarts)]"] = "true"}
 										data.custom_data:set(cd)
 										pk:set(data)
-
-										--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
-										--news_manager.send_tip(db.actor, game.translate_string("dogs_task_select_0"), nil, "freedom", 9000)
-										--log1("!!!!!!!!!!!!!Ã»√–¿÷»ﬂ —Œ¡¿ !!!!!!!!!!!!!!")
+										--log1("! dogs_task_select: updated custom data")
+									else
+										--log1("! dogs_task_select: xs_netpk is not OK")
 									end
+								else
+									--log1("! dogs_task_select: random roll != 1, skipping")
 								end
+							else
+								--log1("! dogs_task_select: smart_terrain_id == 65535, skipping")
 							end
+						else
+							--log1("! dogs_task_select: object is not alive or is on bar level, skipping")
 						end
+					else
+						--log1("! dogs_task_select: object is online, skipping")
 					end
+				else
+					--log1("! dogs_task_select: object is not a dog, skipping")
 				end
+			else
+				--log1("! dogs_task_select: no object with id = " .. tostring(id))
 			end
 		end
+	else
+		--log1("! dogs_task_select: db.actor not found, exiting")
 	end
 end
 
-------------------------------------------------------------------------------------------
 function zombies_task_select()
 	if db.actor then
+		--log1("! zombies_task_select: function called")
 		if bind_stalker.actor_in_sleep == true then
+			--log1("! zombies_task_select: actor is sleeping, exiting")
 			return
 		end
 
@@ -361,51 +543,82 @@ function zombies_task_select()
 		}
 
 		local sim = alife()
+		--log1("! zombies_task_select: alife() called, sim = " .. tostring(sim))
+		
 		for id = 1, 65534 do
+			--log1("! zombies_task_select: processing id = " .. tostring(id))
 			local kill = sim:object(id)
+			
 			if kill then
+				--log1("! zombies_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+				
 				if montabl[kill:clsid()] then
+					--log1("! zombies_task_select: object is a zombie")
+					
 					if not kill.online then
+						--log1("! zombies_task_select: object is offline")
+						
 						if kill:alive() then
+							--log1("! zombies_task_select: object is alive")
 							local strn_id = kill:smart_terrain_id()
+							
 							if strn_id ~= 65535 then
+								--log1("! zombies_task_select: object has smart_terrain_id = " .. tostring(strn_id))
 								local rnd = math.random(1, 2)
+								--log1("! zombies_task_select: random roll = " .. tostring(rnd))
+								
 								if rnd == 1 then
+									--log1("! zombies_task_select: selected for migration")
 									smart_terrain.unregister_npc(kill)
+									--log1("! zombies_task_select: unregistered from smart terrain")
+									
 									kill:brain():can_choose_alife_tasks(true)
+									--log1("! zombies_task_select: enabled alife tasks")
+									
 									olr.clear_restrictors(kill)
-
-									--local params=amk.read_monster_params(kill)
-									--params.custom =
-									--"[smart_terrains]\nzombies_smarts[math.random(#zombies_smarts)]=true\n"
-									--amk.write_monster_params(params,kill)
-
+									--log1("! zombies_task_select: cleared restrictors")
+									
 									local pk = xs_netpk.monster(kill)
 									if pk:isOk() then
+										--log1("! zombies_task_select: xs_netpk is OK")
 										local data = pk:get()
 										local cd = data.custom_data:getTable()
 										cd.smart_terrains = {["zombies_smarts[math.random(#zombies_smarts)]"] = "true"}
 										data.custom_data:set(cd)
 										pk:set(data)
-
-										--olr.add_spot_on_map( kill.id,"alife_presentation_smart_on",kill:name() )
-										--news_manager.send_tip(db.actor, game.translate_string("zombies_task_select_0"), nil, "dolg", 9000)
-										--log1("!!!!!!!!!!!!!Ã»√–¿÷»ﬂ zombies!!!!!!!!!!!!!!")
+										--log1("! zombies_task_select: updated custom data")
+									else
+										--log1("! zombies_task_select: xs_netpk is not OK")
 									end
+								else
+									--log1("! zombies_task_select: random roll != 1, skipping")
 								end
+							else
+								--log1("! zombies_task_select: smart_terrain_id == 65535, skipping")
 							end
+						else
+							--log1("! zombies_task_select: object is not alive, skipping")
 						end
+					else
+						--log1("! zombies_task_select: object is online, skipping")
 					end
+				else
+					--log1("! zombies_task_select: object is not a zombie, skipping")
 				end
+			else
+				--log1("! zombies_task_select: no object with id = " .. tostring(id))
 			end
 		end
+	else
+		--log1("! zombies_task_select: db.actor not found, exiting")
 	end
 end
 
-------------------------------------------------------------------------------------------
 function dolgs_task_select()
 	if db.actor then
+		--log1("! dolgs_task_select: function called")
 		if bind_stalker.actor_in_sleep == true then
+			--log1("! dolgs_task_select: actor is sleeping, exiting")
 			return
 		end
 
@@ -424,43 +637,87 @@ function dolgs_task_select()
 		}
 
 		local sim = alife()
+		--log1("! dolgs_task_select: alife() called, sim = " .. tostring(sim))
+		
 		for id = 1, 65534 do
+			--log1("! dolgs_task_select: processing id = " .. tostring(id))
 			local kill = sim:object(id)
+			
 			if kill then
+				--log1("! dolgs_task_select: found object with id = " .. tostring(id) .. ", clsid = " .. tostring(kill:clsid()))
+				
 				if montabl[kill:clsid()] then
+					--log1("! dolgs_task_select: object is a stalker")
+					
 					if not kill.online then
+						--log1("! dolgs_task_select: object is offline")
+						
 						if kill:alive() then
+							--log1("! dolgs_task_select: object is alive")
+							
 							if kill:community() == "dolg" then
+								--log1("! dolgs_task_select: object has community 'dolg'")
 								local strn_id = kill:smart_terrain_id()
+								
 								if strn_id ~= 65535 then
+									--log1("! dolgs_task_select: object has smart_terrain_id = " .. tostring(strn_id))
 									local rnd = math.random(1, 2)
+									--log1("! dolgs_task_select: random roll = " .. tostring(rnd))
+									
 									if rnd == 1 then
+										--log1("! dolgs_task_select: selected for migration")
 										local params = amk.read_stalker_params(kill)
 										params.custom = ""
 										amk.write_stalker_params(params, kill)
+										--log1("! dolgs_task_select: cleared custom params")
+										
 										smart_terrain.unregister_npc(kill)
+										--log1("! dolgs_task_select: unregistered from smart terrain")
+										
 										kill:brain():can_choose_alife_tasks(true)
-										kill:brain():update()
+										
+										run_safely(
+											function() kill:brain():update() end,
+											"! olr_offline_task Error in brain update"
+										)
+										--log1("! dolgs_task_select: updated brain")
+										
 										olr.clear_restrictors(kill)
-
+										--log1("! dolgs_task_select: cleared restrictors")
+										
 										local params = amk.read_stalker_params(kill)
 										local rand_kill = dolgs_smarts[math.random(#dolgs_smarts)]
 										local rand_ki = game.translate_string(rand_kill)
+										--log1("! dolgs_task_select: selected smart terrain - " .. rand_ki)
+										
 										local b = "\n[smart_terrains]\n" .. rand_ki .. " = true\n"
 										local stng_full = game.translate_string(b)
 										params.custom = stng_full
 										amk.write_stalker_params(params, kill)
-
-										--olr.add_spot_on_map( kill.id,"green_location",kill:name() )
-										--news_manager.send_tip(db.actor, game.translate_string("dolgs_task_select_0"), nil, "freedom", 9000)
-										--log1("!!!!!!!!!!!!!Ã»√–¿÷»ﬂ —“¿À ≈–Œ¬ Õ≈…“–¿ÀŒ¬!!!!!!!!!!!!!!")
+										--log1("! dolgs_task_select: updated custom params with new smart terrain")
+									else
+										--log1("! dolgs_task_select: random roll != 1, skipping")
 									end
+								else
+									--log1("! dolgs_task_select: smart_terrain_id == 65535, skipping")
 								end
+							else
+								--log1("! dolgs_task_select: community is not 'dolg', skipping")
 							end
+						else
+							--log1("! dolgs_task_select: object is not alive, skipping")
 						end
+					else
+						--log1("! dolgs_task_select: object is online, skipping")
 					end
+				else
+					--log1("! dolgs_task_select: object is not a stalker, skipping")
 				end
+			else
+				--log1("! dolgs_task_select: no object with id = " .. tostring(id))
 			end
 		end
+	else
+		--log1("! dolgs_task_select: db.actor not found, exiting")
 	end
 end

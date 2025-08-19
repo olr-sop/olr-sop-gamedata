@@ -362,7 +362,12 @@ function se_respawn:create(prob)
 
 		if self.item_spawn == false then				
 			if tt.check == true then
-				obj:brain():update()
+
+				run_safely(
+					function() obj:brain():update() end,
+					"! se_respawn Error in brain update"
+				)				
+				
 				local smart_terrain_id = obj:smart_terrain_id()
           			--log1("SPAWN [%s] move_offline [%s], interactive [%s], smart_terrain_id [%s]", tostring(self:name()), tostring(self:move_offline()), tostring(self:interactive()), smart_terrain_id)
 				if smart_terrain_id ~= 65535 then		

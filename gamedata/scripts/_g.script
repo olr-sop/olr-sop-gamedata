@@ -1380,6 +1380,36 @@ function print_table(table, subs)
 	end  
 end
 
+-- –екурсивна€ распечатка таблицы с использованием log1
+function print_table_log1(table, subs)
+    local sub = subs or ""
+    
+    for k, v in pairs(table) do
+        local key_str = tostring(k)
+        local output = sub
+        
+        if type(v) == "table" then
+            log1(output .. key_str .. ":")
+            print_table(v, sub .. "    ")
+        else
+            local value_str
+            if type(v) == "function" then
+                value_str = "function"
+            elseif type(v) == "userdata" then
+                value_str = "userdata"
+            elseif type(v) == "boolean" then
+                value_str = v and "true" or "false"
+            elseif v == nil then
+                value_str = "nil"
+            else
+                value_str = tostring(v)
+            end
+            
+            log1(output .. key_str .. ":" .. value_str)
+        end
+    end  
+end
+
 -------------------------------------------------------------------------------------------
 function switch_online (id)
     if id == -1 then return end

@@ -108,7 +108,20 @@ function init()
 				tbl.money = math.random(30, 450)
 				amk.write_stalker_params(tbl, obj)
 			end
+			
+			if not processed and IsAnomaly(obj) then
+				set_anomaly_status(obj, "on")
+			end
 		end
 	end
 	log1("Конец!")
+end
+
+-- Дубликат, но что поделать...
+function set_anomaly_status(sobj, status)
+    if sobj then
+        local tbl = amk.get_anomaly_data(sobj)
+        tbl.custom = bind_anomaly.modify_anomaly_custom_data(tbl.custom, status)
+        amk.set_anomaly_data(tbl, sobj)
+    end
 end

@@ -10,6 +10,7 @@ local hud = get_hud()
 local st_call = false
 local i_in_car = false
 local obj_for_reload = nil
+local is_help_shown = false
 
 actor_in_car = {} -- хранит одно значение, в ключе которого айдишник используемого актором авто
 
@@ -626,6 +627,10 @@ function onKeyPress(dik)
 			end
 		end
 	end
+	if bind_car.act_in_car_now() == true and dik == DIK_keys.DIK_F1 and not is_help_shown then
+		level.start_stop_menu(bind_car.car_intro(), true)
+		is_help_shown = true
+	end
 	if dik == DIK_keys.DIK_B and loked_obj ~= nil then 
 		local obj_for_reload = loked_obj
 		if obj_for_reload and obj_for_reload:get_car() ~= nil then
@@ -752,6 +757,7 @@ function on_input(actor, obj)
 	if not has_alife_info("car_olr_info") then
 		db.actor:give_info_portion("car_olr_info")
 		level.start_stop_menu(bind_car.car_intro(),true)
+		is_help_shown = true
 	end
 	olr.switch_torch(false)
 end
@@ -810,10 +816,12 @@ end
 
 function car_intro:button_exit_button_clicked()
 	self:GetHolder():start_stop_menu(self, true)
+	is_help_shown = false
 end
 
 function car_intro:Hide()
 	self:GetHolder():start_stop_menu(self, true)
+	is_help_shown = false
 end
 
 

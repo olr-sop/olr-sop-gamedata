@@ -222,13 +222,14 @@ function keep_item(npc, item)
 	if item:is_weapon() then
 		item:set_condition((math.random(15) + 55) / 100)
 	end
-
+	
+	local obj = item and item:id() and alife():object(item:id()) and item:is_ammo()
 	local ammornd = math.random(1, 4)
-	if item:is_ammo() and ammornd == 3 then
+	if obj and ammornd == 3 then
 		--log1("dell ammo - "..item:name().."")
-		olr.del(item)
+		alife():release(obj, true)
 	end
-
+	
 	if item:is_weapon() then
 		local rndgood = math.random(1, 50)
 		if rndgood == 1 then
@@ -245,8 +246,9 @@ function keep_item(npc, item)
 	end
 
 	local medrnd = math.random(1, 10)
-	if item:is_medkit() and medrnd ~= 5 then
-		olr.del(item)
+	local obj = item and item:id() and alife():object(item:id()) and item:is_medkit()
+	if obj and medrnd ~= 5 then
+		alife():release(obj, true)
 	end
 
 	if item:is_ammo() then
@@ -269,19 +271,6 @@ function keep_item(npc, item)
 	if npc:character_community() == "trader" then
 		olr.del(item)
 	end
-
-	local wait_time = 0
-	wait_time = time_global() + 400
-	level.add_call(
-		function()
-			return time_global() > wait_time
-		end,
-		function()
-			if npc then
-				xr_motivator.fix_ammo(npc)
-			end
-		end
-	)
 
 	--log1(obj:name())
 end

@@ -15,16 +15,11 @@ function load_scheme(filename, scheme, stype)
 	schemes[scheme] = filename
 	stypes[scheme] = stype
 end
-
--- если компилируете компилятором который огрызок ебучий
--- то ставить true
-local compilyatar = false
-
 ----------------------------------------------------------------------
 -- Отладочный код
 ----------------------------------------------------------------------
 
-if not compilyatar then
+if not editor() then
 
 SIMPLE_LUA_DEBUG = false -- подрубает использование printf и кучи производных. Не трогает log1
 WRITE_SCRIPT_NAME_TO_LOG = true -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
@@ -241,6 +236,9 @@ end
 else
 
 function printf(fmt,...)
+end
+
+function abort(fmt, ...)
 end
 
 end
@@ -1151,30 +1149,35 @@ end
 
 -- Парсит строку вида "ааа, ббб, ввв..." в таблицу { "ааа", "ббб", "ввв", ... }
 -- Чугай
-function parse_names( s )
+function parse_names(s)
     local t = {}
-    for name in string.gfind( s, "([%w_\\]+)%p*" ) do
-    --for name in string.gfind( s, "%s*([^%,]+)%s*" ) do
-        table.insert( t, name )
+    if not s then return t end
+    
+    -- Разбиваем строку по запятым, но учитываем тире как часть имени
+    for name in string.gmatch(s, "([%w_\\%-]+)%p*") do
+        table.insert(t, name)
     end
-
+    
     return t
 end
 
-function parse_key_value( s )
+function parse_key_value(s)
     local t = {}
-	if s == nil then
-		return nil
-	end
-    local key, nam = nil, nil
-    for name in string.gfind( s, "([%w_\\]+)%p*" ) do
-		if key == nil then
-			key = name
-		else
-			t[key] = name
-			key = nil
-		end
+    if s == nil then
+        return nil
     end
+    
+    local key, nam = nil, nil
+    -- Разбиваем строку, учитывая тире как часть ключей и значений
+    for name in string.gmatch(s, "([%w_\\%-]+)%p*") do
+        if key == nil then
+            key = name
+        else
+            t[key] = name
+            key = nil
+        end
+    end
+    
     return t
 end
 

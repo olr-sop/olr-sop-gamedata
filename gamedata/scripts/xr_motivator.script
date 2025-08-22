@@ -338,31 +338,6 @@ function motivator_binder:death_callback(victim, who)
 
 end
 
-function fix_ammo(selfobj)
-	-- fix more ammo
-  	local ammocnt = 0
-	selfobj:iterate_inventory(
-	function(npc, obj) 
-	if obj then	
-        if obj:is_ammo() or obj:is_grenade() then
-		ammocnt = ammocnt + 1
-		--log1(" death ammo cnt is - "..ammocnt.." ")
-		if ammocnt > 4 then
-			--news_manager.send_tip(db.actor, "fix too much ammo death - del - "..obj:name().." ", nil, "unknown", 15000)
-			olr.del(obj)
-		end
-		if obj and obj:is_ammo() then
-			if obj:get_ammo_box_curr() < 3 or obj:get_ammo_box_curr() == 10 then 
-				--news_manager.send_tip(db.actor, "mini ammo - del - "..obj:name().." ", nil, "unknown", 15000)
-				olr.del(obj)
-			end
-		end
-   	end
-	end
-	end
-	, selfobj)
-end
-
 function motivator_binder:use_callback(obj, who)
 	if self.object:alive() then
 		xr_use.notify_on_use(obj, who)
@@ -638,6 +613,7 @@ end
 
 function motivator_binder:save(packet)
 	printf("motivator_binder:save(): self.object:name()='%s'", self.object:name())
+	set_save_marker(packet, "save", false, "motivator_binder")	
 	object_binder.save(self, packet)
 
 	packet:w_bool(self.treasure_processed)
@@ -645,14 +621,16 @@ function motivator_binder:save(packet)
 	xr_logic.save_obj(self.object, packet)
 	dialog_manager.save(self.object, packet)
 	trade_manager.save(self.object, packet)
-        --olr_ai_trade_agree.npc_save(packet, self.object)
-        --olr_ai_follower_agree.npc_save(packet, self.object)
-  
+	--olr_ai_trade_agree.npc_save(packet, self.object)
+	--olr_ai_follower_agree.npc_save(packet, self.object)
+		
+	set_save_marker(packet, "save", true, "motivator_binder")  
 end
 
 function motivator_binder:load(reader)
 	self.loaded = true
-
+	set_save_marker(reader, "load", false, "motivator_binder")
+	
 	printf("motivator_binder:load(): self.object:name()='%s'", self.object:name())
 	object_binder.load(self, reader)
 	printf("motivator_binder:object_binder.load(): self.object:name()='%s'", self.object:name())
@@ -668,9 +646,10 @@ function motivator_binder:load(reader)
 	self.npc_script_version = alife():object(self.object:id()).script_version
 	dialog_manager.load(self.object, reader, self.npc_script_version)
 	trade_manager.load(self.object, reader)
-        --olr_ai_trade_agree.npc_load(reader, self.object)
-        --olr_ai_follower_agree.npc_load(reader, self.object)
-
+	--olr_ai_trade_agree.npc_load(reader, self.object)
+	--olr_ai_follower_agree.npc_load(reader, self.object)
+		
+	set_save_marker(reader, "load", true, "motivator_binder")
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------

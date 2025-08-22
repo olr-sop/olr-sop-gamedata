@@ -1083,12 +1083,18 @@ end
 -- освободить объект от работы и переинициализировать логику.
 -- если сталкер в онлайне и начал работу, то сбросить его схему поведения
 -- как будто он только что загрузился
-function gulag:free_obj_and_reinit( obj_id )
+function gulag:free_obj_and_reinit(obj_id)
 	self:free_obj(obj_id)
-
 	local t = self.Object[obj_id]
 	if t ~= nil and t ~= true and self.Object_begin_job[obj_id] then
-		xr_logic.initialize_obj( t, nil, false, db.actor, self:get_stype( obj_id ) )
+		if amk.check_game() then -- тут проверяется, запущена ли игра, если ли актор и жив ли он. Если да, делаем по новому.
+			local s_obj = alife():object(obj_id) -- проверим есть ли у цели разрегистрации валидный серверный объект
+			if s_obj and (IsStalker(s_obj) or IsMonster(s_obj)) and s_obj:alive() then -- если есть, он жив и сталкер или монстр
+				xr_logic.initialize_obj(t, nil, false, db.actor, self:get_stype(obj_id)) -- только тогда инициализируем логику
+			end
+		else -- а если игра не запущена, то как раньше. Это нужно для того, чтобы обработка запуска игры нормально работала.
+			xr_logic.initialize_obj(t, nil, false, db.actor, self:get_stype(obj_id))
+		end
 	end
 end
 

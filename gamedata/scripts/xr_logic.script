@@ -1202,6 +1202,7 @@ function pstor_store(obj, varname, val)
 	local tv = type(val)
 	if not pstor_is_registered_type(tv) then
 		log1("!!!xr_logic: pstor_store: not registered type encountered - write in pstor_store cancelled - "..obj:name().."   ")
+		abort("!!!xr_logic: pstor_store: not registered type encountered - write in pstor_store cancelled - "..obj:name().."   ")		
 		-- abort убран, так как один хрен не работает. Пусть тогда хотя бы в лог что-то валится.
 	else
 		db.storage[npc_id].pstor[varname] = val
@@ -1254,6 +1255,7 @@ function pstor_save_all(obj, packet)
 	 		packet:w_bool(v)
 		else
 			abort("xr_logic: pstor_save_all: not registered type '%s' encountered", tv)
+			log1(string.format("xr_logic: pstor_save_all: not registered type '%s' encountered", tv))
 		end
 	end
 end
@@ -1294,6 +1296,7 @@ end
 
 function save_obj(obj, packet)
 	printf("save_obj: obj:name()='%s'", obj:name())
+	set_save_marker(packet, "save", false, "object"..obj:name())	
 
 	local npc_id = obj:id()
 	local st = db.storage[npc_id]
@@ -1342,10 +1345,12 @@ function save_obj(obj, packet)
 	end
 
 	pstor_save_all(obj, packet)
+	set_save_marker(packet, "save", true, "object"..obj:name())	
 end
 
 function load_obj(obj, reader)
 	printf("load_obj: obj:name()='%s'", obj:name())
+	set_save_marker(reader, "load", false, "object"..obj:name())	
 	local npc_id = obj:id()
 	local st = db.storage[npc_id]
 
@@ -1394,6 +1399,7 @@ function load_obj(obj, reader)
 	load_logic(obj, reader)
 
 	pstor_load_all(obj, reader)
+	set_save_marker(reader, "load", true, "object"..obj:name())	
 end
 
 function get_customdata_or_ini_file(npc, filename)

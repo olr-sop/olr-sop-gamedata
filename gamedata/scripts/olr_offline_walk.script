@@ -91,11 +91,12 @@ function update(delta)
 								return
 							end
 
-						--local scallwalk, serr_msg = pcall(fast_to_smart, val, tmr_cnt)
-						--if not scallwalk then
-						--	log1("ERROR: fast_to_smart olr_offline_walk pcall FAIL - reason: "..tostring(serr_msg))
-						--	news_manager.send_tip(db.actor, game.translate_string("update_2"))
-						--end
+							--local callwalk, err_msg = pcall(procees, val)
+							--if not callwalk then
+							--	log1("ERROR: olr_offline_walk pcall FAIL - reason: " .. tostring(err_msg))
+							--	news_manager.send_tip(db.actor, "ERROR: olr_offline_walk pcall FAIL")
+							--end
+
 						end
 					end
 				end
@@ -103,21 +104,6 @@ function update(delta)
 		end
 	end
 end
-
---[[
-function fast_to_smart(victim)
-	if amk_offline_alife.IsInHideout(victim) == true then
-		olr.add_spot_on_map( victim.id,"red_location", victim:name() )
-		news_manager.send_tip(db.actor, " fast_to_smart in hideot - "..victim:name().." on "..victim.level_name.." ")
-
-		local strn_id = victim:smart_terrain_id()
-			if strn_id then
-			local smart = alife():object(strn_id)
-					if smart and smart.level_name == smart.level_name and val.position:distance_to(smart.position) > 20 then
-
-	end
-end
-]]
 
 function procees(val)
 	if val then
@@ -136,9 +122,9 @@ function procees(val)
 
 						if spots == true then
 							if IsMonster(val) then
-								olr.add_spot_on_map(val.id, "red_location", "" .. tostring(val:name()) .. "	 ")
+								olr.add_spot_on_map(val.id, "red_location", ""..tostring(val:name()).."	 ")
 							else
-								olr.add_spot_on_map(val.id, "green_location", "" ..tostring(val:name()) .." -- " .. tostring(xvars.npcs_tasks_rndway[val:name()]) .. " ")
+								olr.add_spot_on_map(val.id, "green_location",""..tostring(val:name()).." -- "..tostring(xvars.npcs_tasks_rndway[val:name()]).." ")
 							end
 						end
 
@@ -152,7 +138,10 @@ function procees(val)
 								return time_global() > wait_time
 							end,
 							function()
-								val:brain():update(true)
+								run_safely(
+									function() val:brain():update(true) end,
+									"! olr_offline_task Error in brain update"
+								)
 								--olr.add_spot_on_map( val.id,"red_location", val:name() )
 								--news_manager.send_tip(db.actor, game.translate_string("procees_1"), nil, "freedom", 9000)
 							end

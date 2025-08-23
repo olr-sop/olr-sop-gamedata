@@ -125,13 +125,8 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.on_level_map_click, nil)
 	
 	--theysani added
---	self.object:set_callback(callback.on_cell_item_mouse, nil)
---	self.object:set_callback(callback.on_cell_item_focus, nil)
---	self.object:set_callback(callback.on_cell_item_focus_lost, nil)
---	self.object:set_callback(callback.on_group_items, nil)
-	
 	self.object:set_callback(callback.on_drop_item_on_item, nil)
-
+	self.object:set_callback(callback.actor_sleep, nil) 	
 	self.object:set_callback(callback.on_obj_look, nil)	
 	self.object:set_callback(callback.on_obj_not_look, nil) 
 	
@@ -190,13 +185,8 @@ function actor_binder:reinit()
 	self.object:set_callback(callback.on_level_map_click, self.on_map_click, self)
 	
 	--theysani added
---	self.object:set_callback(callback.on_cell_item_mouse, self.on_cell_item_mouse, self)
---	self.object:set_callback(callback.on_cell_item_focus, self.on_cell_item_focus, self)
---	self.object:set_callback(callback.on_cell_item_focus_lost, self.on_cell_item_focus_lost, self)
---	self.object:set_callback(callback.on_group_items, self.on_group_items, self)
-	
 	self.object:set_callback(callback.on_drop_item_on_item, self.on_drop_item_on_item, self)
-	
+	self.object:set_callback(callback.actor_sleep, self.actor_sleep, self) 	
 	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
 	self.object:set_callback(callback.on_obj_not_look, self.on_not_look, self) 
 	
@@ -204,22 +194,6 @@ function actor_binder:reinit()
 
     olr_pda.reinit(self.object)
     bind_car.reinit(self.object)
-end
-
-function actor_binder:on_cell_item_mouse(item,x,y,action)
-	--log1("on_cell_item_mouse: item = "..item:name()..", action = "..tostring(action).."")
-end
-
-function actor_binder:on_cell_item_focus(item)
-	--log1("on_cell_item_focus: item = "..item:name().."")
-end
-
-function actor_binder:on_cell_item_focus_lost(item)
-	--log1("on_cell_item_focus_lost: item = "..item:name().."")
-end
-
-function actor_binder:on_group_items(item1, item2)
-	--log1("on_group_items: item1 = "..item1:name()..", item 2 = "..item2:name().."")
 end
 
 function actor_binder:on_drop_item_on_item(item1, item2)
@@ -306,6 +280,20 @@ function actor_binder:on_drop_item_on_item(item1, item2)
         -- Если один из предметов - устройство, а второй не батарейка - игнорируем
         return
     end
+end
+
+function actor_binder:actor_sleep()
+	log1("actor in sleeeep")
+	olr_sleep.spawen_izlom_rand()
+	olr_sleep_robers.sleep_rob()
+	nick.clear_drinked_vodka()
+	olr_sleep.unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
+	olr_sleep.yan_dead_call() -- Странные сообщения на янтаре
+	olr_sleep.set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
+	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
+	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
+	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне
+	xrs_trade.on_item_drop() -- продажа покупка между непесями
 end
 
 ----------------------------------------------------------------------------------------------------------------------

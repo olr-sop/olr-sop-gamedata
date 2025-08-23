@@ -122,7 +122,7 @@ function update_norm(obj)
 	local curr_pos = npc:position()
 	local prev_pos = last_position[npc:id()]
 	if prev_pos then
-		if prev_pos:distance_to(curr_pos) < 5 then -- сильно чаще обновляем последнюю позицию в таблице (каждые 5 метров)
+		if prev_pos:distance_to(curr_pos) < 20 then
 			return
 		else
 			last_position[npc:id()] = curr_pos
@@ -140,7 +140,7 @@ function update_norm(obj)
 	end
 
 	local restr = {}
-	for a, b in pairs(bind_anomaly.get_all_nearest_anomalies_by_point_in_radius(npc:position(), 35)) do	-- собираем аномалии в радиусе 35 метров вместо 30
+	for a, b in pairs(bind_anomaly.get_all_nearest_anomalies_by_point_in_radius(npc:position(), 30)) do
 		if debug_flag(npc) then
 			log1("[ANOMALY EVADER] anomaly " .. tostring(a))
 		end

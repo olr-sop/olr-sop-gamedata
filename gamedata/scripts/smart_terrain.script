@@ -1169,14 +1169,16 @@ end
 -- Удаляет объект из смарттеррейнов.
 function unregister_npc(npc)
 	local sim = alife()
-
-	if sim then
-		local obj     = sim:object(npc.id)
-		local strn_id = obj:smart_terrain_id()
-
-		if strn_id ~= 65535 then
-			if sim:object(strn_id) then
-				sim:object(strn_id):unregister_npc(obj)
+	if sim and npc and npc.id then
+--		printf("unregister_npc:id=[%s]:[%s]", npc.id, ">")
+		local sobj = sim:object(npc.id)
+		if sobj and sobj.smart_terrain_id then
+			local strn_id = sobj:smart_terrain_id()
+			if strn_id and strn_id ~= 65535 then
+				if sim:object(strn_id) then
+--					printf("unregister_npc:id=[%s]:[%s]", npc.id, "i")
+					sim:object(strn_id):unregister_npc(sobj)
+				end
 			end
 		end
 	end

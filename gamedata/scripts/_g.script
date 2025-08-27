@@ -15,23 +15,38 @@ function load_scheme(filename, scheme, stype)
 	schemes[scheme] = filename
 	stypes[scheme] = stype
 end
+
+----------------------------------------------------------------------
+-- Некоторый дебаг функционал
+----------------------------------------------------------------------
+
+ENABLE_SPOTS_STALKERS	 = false -- включает отображение спотов сталкерни (se_stalker)
+ENABLE_SPOTS_MUTANTS	 = false -- включает отображение спотов мутантов (se_monster)
+ENABLE_SPOTS_SMARTS		 = false -- включает отображение спотов смарт террейнов (smart_terrain) 
+ENABLE_SPOTS_RESPAWN	 = false -- включает отображение спотов респавнеров (sim_statistic)
+
+-- для странного кода, надо будет проверить 
+-- включается при включённом ENABLE_SPOTS_STALKERS или ENABLE_SPOTS_MUTANTS
+-- Вроде как добавляет информацию в спот сталкера или мутанта что он вышел из смарта
+ENABLE_SOME_SPOTS_FROM_SMARTS = false
+
 ----------------------------------------------------------------------
 -- Отладочный код
 ----------------------------------------------------------------------
 
 if not editor() then
 
-SIMPLE_LUA_DEBUG = false -- подрубает использование printf и кучи производных. Не трогает log1
-WRITE_SCRIPT_NAME_TO_LOG = true -- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
-WIRTE_PRINTF_TO_LOG = false -- пишет printf в лог (медленно)
-WRITE_PRINTF_TO_FILE = true -- пишет printf в отдельный txt файл olr_debug_log.txt находящийся в папке с игрой
-WRITE_PRINTF_TO_FILE_USE_TRACEBACK = false -- при записи в отдельный файл использовать функцию traceback для большей отладки
-FATAL_ABORT = false -- при abort игра закрывается принудительно
+SIMPLE_LUA_DEBUG					= false	-- подрубает использование printf и кучи производных. Не трогает log1
+WRITE_SCRIPT_NAME_TO_LOG			= true	-- пишет имя скрипта в лог который вызвал printf, тяжелая функция, использует трейсбэк
+WIRTE_PRINTF_TO_LOG					= false	-- пишет printf в лог (медленно)
+WRITE_PRINTF_TO_FILE				= true	-- пишет printf в отдельный txt файл olr_debug_log.txt находящийся в папке с игрой
+WRITE_PRINTF_TO_FILE_USE_TRACEBACK	= false	-- при записи в отдельный файл использовать функцию traceback для большей отладки
+FATAL_ABORT							= false	-- при abort игра закрывается принудительно
 
 -- Данные переменные работают только если SIMPLE_LUA_DEBUG равен true, либо тут либо через ключ -simple_script_lua_debug
-LOGGING_ONLY_SCRIPTNAME_ENABLE = true -- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
-LOGGING_ONLY_SCRIPTNAME = "" -- список скриптов через запятую
-LOGGING_ONLY_SCRIPTNAME_EXCLUSION = "" -- исключения через запятую (игнорируются всегда)
+LOGGING_ONLY_SCRIPTNAME_ENABLE		= true	-- включает обработку printf только для определенный скриптов (список скриптов для переключения идут ниже)
+LOGGING_ONLY_SCRIPTNAME				= ""	-- список скриптов через запятую
+LOGGING_ONLY_SCRIPTNAME_EXCLUSION	= ""	-- исключения через запятую (игнорируются всегда)
 
 function lua_traceback(caption, depth)
  return ( debug.traceback(caption, depth or 2 + 1) or 'nil' )

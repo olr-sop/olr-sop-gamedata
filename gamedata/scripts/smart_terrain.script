@@ -716,15 +716,15 @@ function se_smart_terrain:unregister_npc( obj )
 
 	sim_statistic.remove( obj )
 
---	if sim_statistic.show_stalker_spot == true and obj:alive() then
---		local community, rank = sim_statistic.getNpcType(obj)
---		local spot = "alife_presentation_monstr"
---		if IsStalker(obj) then
---			spot = "alife_presentation_"..community
---		end
---		local str = obj:name().." "..self:name().."\\n".."<<removed>>"
---		level.map_change_spot_hint(obj.id, spot, str)		
---	end
+	if ENABLE_SOME_SPOTS_FROM_SMARTS and obj:alive() then
+		local community, rank = sim_statistic.getNpcType(obj)
+		local spot = "alife_presentation_monstr"
+		if IsStalker(obj) then
+			spot = "alife_presentation_"..community
+		end
+		local str = obj:name().." "..self:name().."\\n".."<<removed>>"
+		level.map_change_spot_hint(obj.id, spot, str)		
+	end
 
 	--printf( "[smart_terrain %s] removed %s from gulag type=%s, strn_id=%s", self:name(), obj:name() or "<<<nil>>>", self.gparams.type, obj:smart_terrain_id())
 end
@@ -783,13 +783,13 @@ end
 function se_smart_terrain:is_gulag_available()
 	if self.gparams.cond then
 		local bb = xr_logic.pick_section_from_condlist( db.actor_proxy, self, self.gparams.cond ) ~= nil
---		self:show_smart_debug_spot(bb)
+		self:show_smart_debug_spot(bb)
 --		if self:name() == "gar_bandit_agr" then
 --			printf("[smartterrain %s] is_gulag_available = %s", self:name(), tostring(bb))
 --		end
 		return bb
 	else
---		self:show_smart_debug_spot(true)
+		self:show_smart_debug_spot(true)
 --		if self:name() == "gar_bandit_agr" then
 --			printf("[smartterrain %s] is_gulag_available = %s extra", self:name(), tostring(true))
 --		end
@@ -797,7 +797,7 @@ function se_smart_terrain:is_gulag_available()
 	end
 end
 function se_smart_terrain:show_smart_debug_spot(avail)  -- if sim_statistic.show_smart_spot == true then
-	if sim_statistic.show_smart_spot == true then
+	if ENABLE_SPOTS_SMARTS then
 		-- Показать отметку
 		local str = self:name().." ("..tostring(self.gulag.state)..")\\n".."pop = "..tostring(self.gulag:get_population()).."("..tostring(self.gulag.capacity_non_exclusive)..":"..tostring(self.gulag.capacity)..") comed = "..tostring(self.gulag:get_population_comed())
 
@@ -893,7 +893,7 @@ function se_smart_terrain:remove_gulag( disable )
 		self.gulag.capacity_non_exclusive = 0
 	end
 
---	self:show_smart_debug_spot(false)
+	self:show_smart_debug_spot(false)
 end
 
 -- заполняет таблицу monster_classes

@@ -185,20 +185,18 @@ function se_monster:on_register()
 	--self:fill_exclusives()
 
 	-- Нарисовать мапспот с собой
---	if self:alive() and sim_statistic.show_monster_spot == true then
---		local community, rank = sim_statistic.getNpcType(self)
---		level.map_add_object_spot_ser(self.id, "alife_presentation_monstr", self:name().." "..community)
---	end
+	if self:alive() and ENABLE_SPOTS_MUTANTS then
+		local community, rank = sim_statistic.getNpcType(self)
+		level.map_add_object_spot_ser(self.id, "alife_presentation_monstr", self:name().." "..community)
+	end
 end
 --------------------
 function se_monster:on_unregister()
 	cse_alife_monster_base.on_unregister( self )
 
 	-- Убрать мапспот с собой
---	if sim_statistic.show_monster_spot == true then
---		local community, rank = sim_statistic.getNpcType(self)
---		level.map_remove_object_spot(self.id, "alife_presentation_monstr")
---	end
+	local community, rank = sim_statistic.getNpcType(self)
+	level.map_remove_object_spot(self.id, "alife_presentation_monstr")
 
 	smart_terrain.unregister_npc(self)
 end
@@ -207,10 +205,8 @@ function se_monster:on_death(killer)
 	cse_alife_monster_base.on_death(self, killer)
 
 	-- Убрать мапспот с собой
-	if sim_statistic.show_monster_spot == true then
-		local community, rank = sim_statistic.getNpcType(self)
-		level.map_remove_object_spot(self.id, "alife_presentation_monstr")
-	end
+	local community, rank = sim_statistic.getNpcType(self)
+	level.map_remove_object_spot(self.id, "alife_presentation_monstr")
 end
 --------------------
 function se_monster:fill_exclusives()

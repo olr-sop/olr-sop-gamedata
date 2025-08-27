@@ -138,23 +138,56 @@ end
 -- Статистика респавнеров
 local reg_objects_respawn = {}
 local show_respawn_spot = ENABLE_SPOTS_RESPAWN
+
 function register_respawn(obj)
 	-- Не отбражать респавнеры с событийным спауном
 	if obj.item_spawn ~= false then
 		return
 	end
-	local section = obj.str_conditions.."\\n"
+	
+	-- Формируем детальную информацию о секциях с вероятностями
+	local section = "ВЕРОЯТНОСТЬ СПАВНА: " .. (obj.str_conditions or "0") .. "%\\n"
+	local total_prob = 0
+	
 	for k,v in pairs(obj.respawn_section) do
-		section = section .. v.section .. "=" .. v.prob .. "\\n"
+		section = section .. "СЕКЦИЯ: " .. v.section .. " = " .. v.prob .. "\\n"
+		total_prob = total_prob + v.prob
 	end
-	reg_objects_respawn[obj.id] = {section = section, enabled = false, max_count = obj.max_count, count = 0}
+	
+	-- Добавляем общую информацию о весах
+	section = section .. "ОБЩИЙ ВЕС: " .. total_prob .. "\\n"
+	
+	-- Анализируем секции на наличие ошибок конфигурации
+	local config_errors = ""
+	for kk,vv in pairs(obj.respawn_section) do
+		local tt = obj.sectSpawnProps[vv.section]
+		if tt and (tt.community == "nil" or tt.rank == "nil") then
+			config_errors = config_errors .. "ОШИБКА: " .. vv.section .. "\\n"
+		end
+	end
+	
+	if config_errors ~= "" then
+		section = section .. "--- ОШИБКИ КОНФИГУРАЦИИ ---\\n" .. config_errors
+	end
+	
+	reg_objects_respawn[obj.id] = {
+		section = section, 
+		enabled = false, 
+		max_count = obj.max_count, 
+		count = 0,
+		name = tostring(obj:name()) or "unknown",
+		min_count = obj.min_count or 0
+	}
+	
 	if show_respawn_spot == true then
 		mark_respawn(obj.id)
 	end
 end
+
 function unregister_respawn(obj)
 	reg_objects_respawn[obj.id] = nil
 end
+
 function respawn_enabled(obj, enabled)
 	if obj.item_spawn ~= false then
 		return
@@ -174,10 +207,36 @@ function respawn_enabled(obj, enabled)
 		mark_respawn(obj.id)
 	end
 end
+
 function mark_respawn(obj_id)
 	local rr = reg_objects_respawn[obj_id]
 	if rr.exist ~= true then
-		local str = rr.section.."spawned "..tostring(rr.count).."("..rr.max_count..")"
+		-- Детализированная информационная строка
+		local status_text = rr.enabled and "АКТИВЕН" or "НЕАКТИВЕН"
+		local spawn_status = rr.enabled and ("ЗАСПАВНЕНО: " .. tostring(rr.count) .. " из " .. tostring(rr.max_count)) or "РЕСПАВН ОТКЛЮЧЕН"
+		local min_max_info = "ЛИМИТЫ: " .. tostring(rr.min_count) .. "-" .. tostring(rr.max_count)
+		
+		-- Определяем статус заполненности
+		local capacity_status = ""
+		if rr.enabled then
+			if rr.count >= rr.max_count then
+				capacity_status = "ПОЛНОСТЬЮ ЗАПОЛНЕН"
+			elseif rr.count >= rr.min_count then
+				capacity_status = "ЧАСТИЧНО ЗАПОЛНЕН"
+			else
+				capacity_status = "НЕДОСТАТОЧНО"
+			end
+		end
+		
+		local str = "РЕСПАВНЕР: " .. rr.name .. "\\n" ..
+				   "СТАТУС: " .. status_text .. "\\n" ..
+				   spawn_status .. "\\n" ..
+				   capacity_status .. "\\n" ..
+				   min_max_info .. "\\n" ..
+				   "ID: " .. tostring(obj_id) .. "\\n" ..
+				   "--- КОНФИГУРАЦИЯ ---\\n" ..
+				   rr.section
+		
 		if rr.enabled then
 			level.map_add_object_spot(obj_id, "alife_presentation_respawn_on", str)
 		else
@@ -186,6 +245,7 @@ function mark_respawn(obj_id)
 		reg_objects_respawn[obj_id].exist = true
 	end
 end
+
 function unmark_respawn(obj_id)
 	local rr = reg_objects_respawn[obj_id]
 	if rr.exist == true then
@@ -197,12 +257,14 @@ function unmark_respawn(obj_id)
 		reg_objects_respawn[obj_id].exist = nil
 	end
 end
+
 function unmark_all_respawns()
 	show_respawn_spot = false
 	for k,v in pairs(reg_objects_respawn) do
-		unmark_respawn(obj_id)			
+		unmark_respawn(k)			
 	end
 end
+
 function mark_all_respawns()
 	if show_respawn_spot == true then
 		unmark_all_respawns()
@@ -213,7 +275,6 @@ function mark_all_respawns()
 		mark_respawn(k)
 	end
 end
-
 
 -- Статистика смарттеррейнов
 show_smart_spot = ENABLE_SPOTS_SMARTS

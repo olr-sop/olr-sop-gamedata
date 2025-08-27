@@ -796,44 +796,95 @@ function se_smart_terrain:is_gulag_available()
 		return true
 	end
 end
-function se_smart_terrain:show_smart_debug_spot(avail)  -- if sim_statistic.show_smart_spot == true then
-	if ENABLE_SPOTS_SMARTS then
-		-- Показать отметку
-		local str = self:name().." ("..tostring(self.gulag.state)..")\\n".."pop = "..tostring(self.gulag:get_population()).."("..tostring(self.gulag.capacity_non_exclusive)..":"..tostring(self.gulag.capacity)..") comed = "..tostring(self.gulag:get_population_comed())
 
-		if self.debug_avail ~= avail then
-			if self.debug_avail == true then
-				level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
-			elseif self.debug_avail == false then
-				level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
-			end
-			if avail == true then
-				level.map_add_object_spot(self.id, "alife_presentation_smart_on", str)
-			else
-				level.map_add_object_spot(self.id, "alife_presentation_smart_off", str)
-			end
-			self.debug_avail = avail
-		else
-			if avail == true then
-				level.map_change_spot_hint(self.id, "alife_presentation_smart_on", str)
-			else
-				level.map_change_spot_hint(self.id, "alife_presentation_smart_off", str)
-			end
-		end
-		 self.spot_showed = true
-	else
-		-- Убрать отметку
-		if self.spot_showed == nil then
-			return
-		end
-		self.spot_showed = nil
-		if self.debug_avail == true then
-			level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
-		else
-			level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
-		end		
-	end
+function se_smart_terrain:show_smart_debug_spot(avail)
+    if ENABLE_SPOTS_SMARTS then
+        -- Формируем детальную информационную строку
+        local state_text = "Состояние: " .. tostring(self.gulag.state)
+        local population = "Население: " .. tostring(self.gulag:get_population()) .. " из " .. tostring(self.gulag.capacity)
+        local non_exclusive = "Неэксклюзивные: " .. tostring(self.gulag:get_non_exclusive_population()) .. " из " .. tostring(self.gulag.capacity_non_exclusive)
+        local comedians = "Пришедшие: " .. tostring(self.gulag:get_population_comed())
+        local exclusives = "Эксклюзивные: " .. tostring(self.exclusives or 0)
+        
+        -- Добавляем информацию о доступности
+        local availability = "Доступность: " .. (avail and "ДА" or "НЕТ")
+        
+        -- Добавляем информацию о preset'е и типе
+        local preset_info = "Preset: " .. (self.gparams.preset_name or "нет")
+        local type_info = "Тип: " .. (self.gparams.type or "неизвестно")
+        
+        -- Добавляем информацию о группах
+        local groups_info = "Группы: "
+        if self.gparams.groups then
+            for _, group in ipairs(self.gparams.groups) do
+                groups_info = groups_info .. group .. ", "
+            end
+        else
+            groups_info = groups_info .. "все"
+        end
+        
+        -- Добавляем информацию о состоянии блокировки
+        local lock_info = "Блокировка: " .. (self.population_locked and "ДА" or "НЕТ")
+        
+        -- Добавляем информацию о условиях
+        local cond_info = "Условия: " .. (self.gparams.cond and "есть" or "нет")
+        
+        -- Формируем итоговую строку
+        local str = "Смарт-террейн: " .. self:name() .. "\\n" ..
+                   "ID: " .. tostring(self.id) .. "\\n" ..
+                   "----------------------------\\n" ..
+                   state_text .. "\\n" ..
+                   population .. "\\n" ..
+                   non_exclusive .. "\\n" ..
+                   comedians .. "\\n" ..
+                   exclusives .. "\\n" ..
+                   "----------------------------\\n" ..
+                   availability .. "\\n" ..
+                   lock_info .. "\\n" ..
+                   cond_info .. "\\n" ..
+                   preset_info .. "\\n" ..
+                   type_info .. "\\n" ..
+                   groups_info .. "\\n" ..
+                   "Уровень: " .. self:get_level_name()
+
+        if self.debug_avail ~= avail then
+            -- Удаляем старый маркер
+            if self.debug_avail == true then
+                level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
+            elseif self.debug_avail == false then
+                level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
+            end
+            
+            -- Создаем новый маркер
+            if avail == true then
+                level.map_add_object_spot(self.id, "alife_presentation_smart_on", str)
+            else
+                level.map_add_object_spot(self.id, "alife_presentation_smart_off", str)
+            end
+            self.debug_avail = avail
+        else
+            -- Обновляем подсказку существующего маркера
+            if avail == true then
+                level.map_change_spot_hint(self.id, "alife_presentation_smart_on", str)
+            else
+                level.map_change_spot_hint(self.id, "alife_presentation_smart_off", str)
+            end
+        end
+        self.spot_showed = true
+    else
+        -- Убрать отметку
+        if self.spot_showed == nil then
+            return
+        end
+        self.spot_showed = nil
+        if self.debug_avail == true then
+            level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
+        else
+            level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
+        end        
+    end
 end
+
 -- установка/снятие блокировки приёма персонажей
 function se_smart_terrain:lock_population( need_lock )
 	self.population_locked = need_lock

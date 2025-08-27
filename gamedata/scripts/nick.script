@@ -3467,8 +3467,8 @@ end
 function clear_chaes_zom()
 	for k, v in pairs(db.storage) do
 		local zom = level.object_by_id(k)
-		if zom and not zom:alive() and zom:is_monster() then
-			if db.actor:position():distance_to(zom:position()) > 20 then
+		if zom and zom:is_monster() then
+			if db.actor:position():distance_to(zom:position()) > 20 and not zom:alive() then
 				--log1("del chaes mon - "..zom:name().."")
 				local boss_particle = particles_object("anomaly2\\unknown_star")
 				boss_particle:play_at_pos(vector():set(zom:position().x, zom:position().y - 4.6, zom:position().z))
@@ -13910,10 +13910,8 @@ function prof_boloto_spawn_bandosov_smss4()
 	level.add_pp_effector("vibros_p.ppe", 231, false)
 	nick.rnd_zombies_spawn()
 	for id = 1, 21 do
-		olr_rnd_sounds.play_rnd_snd()
 		local tmr = math.random(10, 50)
 		olr_timers.st_timer("rndppe", tmr, "nick.rnd_ppe_eff()")
-		olr_timers.st_timer("rndppesnd", tmr, "olr_rnd_sounds.play_rnd_snd()")
 	end
 end
 

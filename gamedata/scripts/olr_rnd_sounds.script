@@ -1,11 +1,3 @@
-local day_sounds = {"$no_sound"}
-
-local night_sounds = {"$no_sound"}
-
-local default_sounds = {"$no_sound"}
-
-local indoor_lab_sounds = {"$no_sound"}
-
 local monolith_call = {
 	"characters_voice\\scenario\\sarcofag\\monolith\\monolith_call_1",
 	"characters_voice\\scenario\\sarcofag\\monolith\\monolith_call_2",
@@ -26,13 +18,6 @@ function play_rnd_snd()
 		if has_alife_info("oso_killed") then
 			return
 		end
-
-		local snd_obj = xr_sound.get_safe_sound_object(indoor_lab_sounds[math.random(table.getn(indoor_lab_sounds))])
-		local a = vector()
-		a.x = math.random(0, 1)
-		a.y = math.random(0, 1)
-		a.z = math.random(0, 1)
-		snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
 		
 		local randd = math.random(1, 3)
 		if randd == 1 then
@@ -48,46 +33,8 @@ function play_rnd_snd()
 	if level.name() == "lvl16_generators" then
 		return
 	end
-
-	if has_alife_info("olr_traders_night") and not olr.actor_in_lab() then
-		local snd_obj = xr_sound.get_safe_sound_object(night_sounds[math.random(table.getn(night_sounds))])
-		local a = vector()
-		a.x = math.random(0, 1)
-		a.y = math.random(0, 1)
-		a.z = math.random(0, 1)
-		snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
-	elseif has_alife_info("olr_traders_day") and not olr.actor_in_lab() and level.rain_factor() <= 0.1 then
-		local snd_obj = xr_sound.get_safe_sound_object(day_sounds[math.random(table.getn(day_sounds))])
-		local a = vector()
-		a.x = math.random(0, 1)
-		a.y = math.random(0, 1)
-		a.z = math.random(0, 1)
-		snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
-	else
-		local snd_obj = xr_sound.get_safe_sound_object(default_sounds[math.random(table.getn(default_sounds))])
-		local a = vector()
-		a.x = math.random(0, 1)
-		a.y = math.random(0, 1)
-		a.z = math.random(0, 1)
-		snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
-	end
-	
-	if olr.actor_in_lab() then
-		local snd_obj = xr_sound.get_safe_sound_object(indoor_lab_sounds[math.random(table.getn(indoor_lab_sounds))])
-		local a = vector()
-		a.x = math.random(0, 1)
-		a.y = math.random(0, 1)
-		a.z = math.random(0, 1)
-		snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
-	end
 	
 	if actor_on_chaes() then
-		local snd_obj = xr_sound.get_safe_sound_object(monolith_call[math.random(table.getn(monolith_call))])
-		local a = vector()
-		a.x = math.random(0, 1)
-		a.y = math.random(0, 1)
-		a.z = math.random(0, 1)
-		snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
 		local rnd = math.random(1, 5)
 		if rnd == 1 then
 			olr.spawen_phantoms()

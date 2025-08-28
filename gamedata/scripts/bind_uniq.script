@@ -57,28 +57,6 @@ function uniq_binder:update(delta)
 				end
 			end
 		end
-		-- аккум экзы
-		if self.object:section() == "exo_acum_ob" then
-			local has_out = db.actor:object("exo_outfit")
-			if not has_out then
-				return
-			end
-			if has_out and not db.actor:is_in_slot(has_out) then
-				return
-			end
-			if get_actor_obj().state.run or get_actor_obj().state.walk then
-			--news_manager.send_tip(db.actor, game.translate_string("uniq_binderupdate_0"), nil, "default", 9000)
-			if has_out and db.actor:is_in_slot(has_out) and db.actor:is_on_belt(self.object) then
-				--log1("accum cond  "..self.object:condition().."")
-				self.object:set_condition(self.object:condition() - 0.00000325)
-				if self.object:condition() < 0.05 then
-					olr.del(self.object)
-					news_manager.send_tip(db.actor, game.translate_string("uniq_binderupdate_1"), nil, "default", 9000)
-					alife():create('exo_acum_ob_dead', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id()) 
-				end
-			end
-			end
-		end
 		-- пси-визор
 		if time_global() - self.last_update > 1000 then
 		if self.object:section() == "psivizor_detector" then

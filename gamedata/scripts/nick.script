@@ -1738,13 +1738,14 @@ end
 
 function exo_accum_zarad()
 	local acc = db.actor:object("exo_acum_ob")
-	acc:set_condition(1)
-	db.actor:give_money(-500)
-	game_stats.money_quest_update(-500)
+	if acc then
+		acc:set_condition(1)
+		db.actor:give_money(-500)
+		game_stats.money_quest_update(-500)
+	end
 end
 
 function zaradka_battery_exo()
-	log1("zaradka_battery_exo")
 	local item_in_slot_6 = db.actor:item_in_slot(6)
 	if item_in_slot_6 ~= nil and item_in_slot_6:section() == "exo_outfit" then
 		if not item_in_slot_6:has_exo_accum() then

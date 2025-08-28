@@ -9653,7 +9653,7 @@ function start_sarcofag_cutscene_two(actor)
 	end
 	nick.flying_corpses()
 	olr.info("monolit_olr_jur_have")
-	olr_timers.st_timer("otdaem_goplit_pda", 4, "nick.tele()")
+	olr_timers.st_timer("teleport_start_sarcofag_cutscene_two", 4, "nick.tele()")
 end
 
 function sarcof_multicutscene_tri(actor)
@@ -14320,40 +14320,49 @@ function tele()
 	local bobj3 = alife():object("lvl5_bar_inventory_box")
 	local jaba_place = alife():object("lvl1_escape_stalker_0023")
 	local sim = alife()
-	
+
+	local container_ids = {}
+	if bobj then table.insert(container_ids, bobj.id) end
+	if bobj2 then table.insert(container_ids, bobj2.id) end
+	if bobj3 then table.insert(container_ids, bobj3.id) end
+
 	for id = 1, 65534 do
 		local kill = sim:object(id)
 		if kill then
-			-- Первый цикл: обработка объектов в контейнерах
-			if bobj and bobj2 and bobj3 then
-				if kill.parent_id == bobj.id or kill.parent_id == bobj2.id or kill.parent_id == bobj3.id then
-					local rnd = math.random(1, 2)
-					if rnd == 1 then
-						alife():release(kill, true)
+			if #container_ids > 0 then
+				for _, cont_id in ipairs(container_ids) do
+					if kill.parent_id == cont_id then
+						local rnd = math.random(1, 2)
+						if rnd == 1 then
+							sim:release(kill, true)
+						end
+						break
 					end
 				end
 			end
-			
-			-- Второй цикл: обработка мертвых сталкеров
-			if not olr_protected.is_no_offline_alife_obj(kill:name()) then
-				if IsStalker(kill) and not kill:alive() then
-					if kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl5_bar" or kill.level_name == "lvl7_yantar" or kill.level_name == "lvl11_deadcity" then
-						alife():release(kill, true)
+
+			if IsStalker(kill) then
+				if not kill:alive() then
+					if not olr_protected.is_no_offline_alife_obj(kill:name()) then
+						local lvl = kill.level_name
+						if lvl == "lvl1_escape" or lvl == "lvl2_garbage" or lvl == "lvl5_bar" or lvl == "lvl7_yantar" or lvl == "lvl11_deadcity" then
+							sim:release(kill, true)
+						end
 					end
 				end
 			end
 		end
 	end
-	
+
 	-- Создание предметов
 	if jaba_place then
-		alife():create("novice_outfit", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
-		alife():create("detector_simple", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
-		alife():create("battery_change", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
-		alife():create("conserva", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
+		sim:create("novice_outfit", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
+		sim:create("detector_simple", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
+		sim:create("battery_change", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
+		sim:create("conserva", jaba_place.position, jaba_place.m_level_vertex_id, jaba_place.m_game_vertex_id)
 	end
-	
-	olr.hud_tip("", game.translate_string("dok_zaidi_jurn_propal_1"), 10)
+
+	olr.hud_tip("", game.translate_string("dok_zaidi_jurn_propal_1"), 10, true)
 	olr.del_by_name("lvl1_escape_karlik")
 	olr.del_by_name("lvl1_escape_stalker_0001")
 	olr.del_by_name("lvl1_escape_flesh_weak")

@@ -72,21 +72,24 @@ function is_map_spot_present(sid, location)
 	return false
 end
 
-function set_lchanger_mapspot(obj, hint)
+function set_lchanger_mapspot(obj, hint, spot)
 	if obj then
-		local spot = "level_changer" -- нам не нужны переходы со стрелочками как в ЧН, пока что
+		if spot == nil then
+			spot = ""
+		end
+		local spot_out = "level_changer"..spot -- нам не нужны переходы со стрелочками как в ЧН, пока что
 		local obj_id = obj.id
 		local ce_obj = level.object_by_id(obj_id)
 		if ce_obj then
-			if level.map_has_object_spot(obj_id, spot) == 0 then
-				level.map_add_object_spot(obj_id, spot, hint)
+			if level.map_has_object_spot(obj_id, spot_out) == 0 then
+				level.map_add_object_spot(obj_id, spot_out, hint)
 			end
 			if not ce_obj:is_level_changer_enabled() then
 				ce_obj:enable_level_changer(true)
 			end
 		else
-			if level.map_has_object_spot(obj_id, spot) == 0 then
-				level.map_add_object_spot(obj_id, spot, hint)
+			if level.map_has_object_spot(obj_id, spot_out) == 0 then
+				level.map_add_object_spot(obj_id, spot_out, hint)
 			end
 		end
 	end
@@ -113,7 +116,7 @@ function add_lchanger_location()
 		local obj = sim:story_object(701)
 		if obj then
 			--and has_alife_info("kv_4_done_go_timer")
-			set_lchanger_mapspot(obj, "lvl1_escape_level_changer")
+			set_lchanger_mapspot(obj, "lvl1_escape_level_changer", "_up")
 		end
 
 		-- garbage

@@ -188,7 +188,7 @@ function se_respawn:STATE_Write( packet )
 		packet:w_u16(self.spawned_obj[i])
 	end
 	
-    if self.respawn_time == nil then
+    if self.respawn_time == nil and not editor() then
         self.respawn_time = game.CTime()
     end
 	--log1(tostring(self:name()) .. " write respawn_time " .. self.respawn_time:dateToString(0) .. " " .. self.respawn_time:timeToString(1))
@@ -280,7 +280,7 @@ function se_respawn:on_register()
 	self.item_spawn	= r_bool(ini, section_name, "item_spawn", false)
 	
     -- производим первичную инициализацию
-    if self.rt_read == false then
+    if self.rt_read == false and not editor() then
         self.respawn_time = game.CTime()
 		--printf("INIT [%s] %s %s", tostring(self:name()), self.respawn_time:dateToString(0), self.respawn_time:timeToString(1))
 		--log1("INIT [" .. tostring(self:name()) .. "] " .. self.respawn_time:dateToString(0) .. " " .. self.respawn_time:timeToString(1))

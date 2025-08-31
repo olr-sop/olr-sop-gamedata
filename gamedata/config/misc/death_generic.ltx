@@ -2,6 +2,10 @@
 #include "death_items_by_levels.ltx"
 #include "death_items_count.ltx"
 
+; Подствольные гранаты временно полностью убраны из спавна
+; Нужно будет как то сделать что бы знать если он вообще на стволе непеся
+
+; Общая "таблица" зависимости
 [item_dependence]
 ammo_11.43x23_fmj   	= wpn_colt1911, wpn_sig220, wpn_usp
 ammo_11.43x23_hydro 	= wpn_colt1911, wpn_sig220, wpn_usp
@@ -28,11 +32,116 @@ ammo_9x39_sp5       	= wpn_groza, wpn_val, wpn_vintorez, wpn_vintorez_gravi, wpn
 ammo_bolts          	= wpn_shotgra
 ammo_gauss          	= wpn_gauss, wpn_gauss_m1
 ammo_igla           	= wpn_igla
-ammo_m209           	= wpn_fn2000, wpn_g36, wpn_lr300
+;ammo_m209           	= wpn_fn2000, wpn_g36, wpn_lr300
 ammo_og-7b          	= wpn_rpg7
-ammo_vog-25         	= wpn_ak74, wpn_akms, wpn_groza, wpn_rg-6
-ammo_vog-25p        	= wpn_ak74, wpn_akms, wpn_groza, wpn_rg-6
+;ammo_vog-25         	= wpn_ak74, wpn_akms, wpn_groza, wpn_rg-6
+;ammo_vog-25p        	= wpn_ak74, wpn_akms, wpn_groza, wpn_rg-6
 ammo_psy				= wpn_pistol_future
+
+; Базовые множители для патронов (независимые от других факторов)
+[ammo_base_multiplier]
+ammo_11.43x23_fmj = 1.0
+ammo_11.43x23_hydro = 0.3
+ammo_12x70_buck = 1.0
+ammo_12x76_dart = 0.4
+ammo_12x76_zhekan = 0.2
+ammo_5.45x39_ap = 0.4
+ammo_5.45x39_fmj = 1.0
+ammo_5.56x45_ap = 0.5
+ammo_5.56x45_ss190 = 1.0
+ammo_7.62x39 = 1.0
+ammo_7.62x54_7h1 = 1.0
+ammo_7.62x54_7h14 = 0.6
+ammo_7.62x54_7h14_anom = 0.2
+ammo_7.62x54_ap = 0.5
+ammo_9x18_fmj = 1.0
+ammo_9x18_pbp = 0.5
+ammo_9x18_pmm = 0.8
+ammo_9x19_fmj = 1.0
+ammo_9x19_pbp = 0.6
+ammo_9x39_ap = 0.5
+ammo_9x39_pab9 = 0.8
+ammo_9x39_sp5 = 1.0
+ammo_bolts = 1.0
+ammo_gauss = 0.1
+ammo_igla = 0.05
+ammo_m209 = 0.7
+ammo_og-7b = 0.3
+ammo_vog-25 = 0.8
+ammo_vog-25p = 0.4
+ammo_psy = 0.9
+
+; Множители сложности игры (общее количество патронов)
+; При новичке у нас будет 100% от count
+; А вот при мастере лишь 25% от count (и это еще с доп. рандомом прочим)
+[difficulty_multiplier]
+novice = 1.00    ; 100%
+stalker = 0.75   ; 75%  
+veteran = 0.50   ; 50%
+master = 0.25    ; 25%
+
+; Множители работают так
+; Тут вносятся секции которым нужно переопределение базового множителя
+; Например у сталкеров новичком редкие и бронебойные например можно вообще убрать бронебойные у новичков
+; Либо сделать сильно реже их шансы на спавн
+
+; Множители для ранга NPC: novice (0-300)
+[rank_novice]
+ammo_5.45x39_ap = 0.0
+ammo_5.56x45_ap = 0.0
+ammo_7.62x54_ap = 0.0
+ammo_9x39_ap = 0.2
+
+; Множители для ранга NPC: experienced (300-600)
+[rank_experienced]
+ammo_11.43x23_hydro = 0.3
+ammo_12x76_dart = 0.4
+ammo_12x76_zhekan = 0.3
+ammo_5.45x39_ap = 0.4
+ammo_5.56x45_ap = 0.5
+ammo_7.62x54_7h14_anom = 0.3
+ammo_7.62x54_ap = 0.5
+ammo_9x18_pbp = 0.4
+ammo_9x19_pbp = 0.5
+ammo_9x39_ap = 0.4
+ammo_gauss = 0.2
+ammo_igla = 0.1
+ammo_og-7b = 0.3
+ammo_vog-25p = 0.4
+
+; Множители для ранга NPC: veteran (600-900)
+[rank_veteran]
+ammo_11.43x23_hydro = 0.6
+ammo_12x76_dart = 0.7
+ammo_12x76_zhekan = 0.6
+ammo_5.45x39_ap = 0.7
+ammo_5.56x45_ap = 0.8
+ammo_7.62x54_7h14_anom = 0.6
+ammo_7.62x54_ap = 0.8
+ammo_9x18_pbp = 0.7
+ammo_9x19_pbp = 0.8
+ammo_9x39_ap = 0.7
+ammo_gauss = 0.4
+ammo_igla = 0.3
+ammo_og-7b = 0.6
+ammo_vog-25p = 0.7
+
+; Множители для ранга NPC: master (900+)
+[rank_master]
+ammo_11.43x23_hydro = 1.0
+ammo_12x76_dart = 1.0
+ammo_12x76_zhekan = 1.0
+ammo_5.45x39_ap = 1.0
+ammo_5.56x45_ap = 1.0
+ammo_7.62x54_7h14_anom = 1.0
+ammo_7.62x54_ap = 1.0
+ammo_9x18_pbp = 1.0
+ammo_9x19_pbp = 1.0
+ammo_9x39_ap = 1.0
+ammo_gauss = 0.8
+ammo_igla = 0.6
+ammo_og-7b = 1.0
+ammo_vog-25p = 1.0
 
 [keep_items]
 jabina_peredachka               = true

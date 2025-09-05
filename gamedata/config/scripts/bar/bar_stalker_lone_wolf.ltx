@@ -1,0 +1,64 @@
+[logic]
+active = walker
+combat_ignore = combat_ignore
+danger = danger_condition
+
+[walker]
+path_walk = lonewolf_bar_walk
+path_look = lonewolf_bar_look
+def_state_standing = search
+combat_ignore_cond = always
+on_info = {+lonewolf_bar_spawn_have} walker@combat_2
+
+[walker@combat_2]
+path_walk = wolkrush_to_shkola_way
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+meet = no_meet
+danger = danger_condition
+combat_ignore_cond = always 
+on_signal = prissneo | %+lonewolf_bar_spawn_have_shkola% remark@hold3
+
+[remark@hold3]
+anim = guard
+danger = danger_condition 
+combat_ignore_cond = always
+on_info = {+sleeped_in_shlkola_done} walker3
+
+[walker3]
+path_walk = wolkrush_to_bar_way
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+meet = no_meet
+danger = danger_condition 
+combat_ignore_cond = always
+on_signal = prieo | %+lonewolf_bar_spawn_have_bar% walker4
+
+[walker4]
+path_walk = lonewolf_bar_sit_walk
+path_look = lonewolf_bar_sit_look
+def_state_standing = wait
+combat_ignore_cond = always
+on_info = {+bar_1_done} walker5
+
+[walker5]
+path_walk = lonewolf_way_to_backdoor
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+on_info = {+lonewolf_bar_talk_to_krisa_fin_done} walker6
+
+[walker6]
+path_walk = denisbar_path_hehe_walk
+path_look = denisbar_path_hehe_look
+def_state_standing = wait
+on_info = {=dist_to_actor_ge(140)} nil %=del_bar_wolfy%
+
+[combat_ignore]
+combat_ignore_cond = always
+ 
+[danger_condition]
+ignore_distance = 2
+ignore_distance_corpse = 2

@@ -1,24 +1,32 @@
---Oblivion Lost Remake (2014)
---(c) proger_Dencheek
---Нумерция быстрых сохранений
-
 function on_button()
+	local con = get_console()
+	local list = getFS():file_list_open_ex("$game_saves$", bit_or(FS.FS_ListFiles, FS.FS_RootOnly), "*.sav")
 
-local con = get_console()
-	local list = getFS():file_list_open_ex(
-		"$game_saves$",
-		bit_or(FS.FS_ListFiles,FS.FS_RootOnly),
-		"*.sav"
-	)
-list:Sort(FS.FS_sort_by_modif_down)
-local cnt = list:Size()
-	for i=0,cnt-1 do
-		local file =	list:GetAt(i)
-		local file_name = file:NameFull():sub(0, file:NameFull():len() - 4)
-		if file_name:find(("%s_quicksave_"):format(usero_name())) then
-			con:execute(("load %s"):format(file_name))
+	-- Сортируем по дате (самые новые first)
+	list:Sort(FS.FS_sort_by_modif_down)
+	
+	local user = user_name()
+	local search_pattern = ("%s_quicksave_"):format(user):lower()
+	
+	local cnt = list:Size()
+	local target_file = nil
+	
+	for i = 0, cnt - 1 do
+		local file = list:GetAt(i)
+		local full_name = file:NameFull()
+		local file_name_lower = full_name:lower()
+		local file_name_clean = full_name:sub(0, full_name:len() - 4)
+		
+		-- Ищем паттерн в имени файла
+		if file_name_lower:find(search_pattern, 1, true) then
+			target_file = file_name_clean
 			break
 		end
 	end
+	
+	if target_file then
+		con:execute("load " .. target_file)
+	else
+		log1("NO QUICKSAVE FOUND FOR: " .. user)
+	end
 end
-

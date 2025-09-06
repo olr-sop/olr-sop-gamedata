@@ -1031,6 +1031,19 @@ function hud_tip(sender, text, timeout, actor_musli) -- отправитель, текст, врем
 	end
 end
 
+function hud_tip_fatal(text) -- отправитель, текст
+	if text == nil then
+		return
+	end
+	local text_all = ""..text..""
+	local hud = get_hud()
+	local custom_static = hud:GetCustomStatic("custom_sms_text_fatal")
+	hud:AddCustomStatic("custom_sms_text_fatal", true)
+	hud:GetCustomStatic("custom_sms_text_fatal"):wnd():SetTextST(tostring(text_all))
+	hud:GetCustomStatic("custom_sms_text_fatal").m_endTime = time_global()/1000 + 15
+	olr.snd([[device\pda\pda_sos]])
+end
+
 -- добавить мапспот
 function add_spot(obj, spot, text)
 	if obj == nil then

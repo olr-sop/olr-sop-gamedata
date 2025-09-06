@@ -183,12 +183,12 @@ function abort(fmt, ...)
 	local reason = format_to_string(fmt,...) or "<nil>"
 	local msg_crit_error = "ВНИМАНИЕ! Игра принудительно прерывается! Строка ниже является информацией об ошибке!\n".."ОШИБКА: "..reason..""
 	log1(msg_crit_error)
-	if level.present() then if db and (db.actor ~= nil) then olr.hud_tip("", msg_crit_error, 5) end end
+	if level.present() then if db and (db.actor ~= nil) then olr.hud_tip_fatal(msg_crit_error) end end
 	if not FATAL_ABORT then
 		log1("FATAL_ABORT отключён!")
 		local msg_saves_corrupted = "Продолженная игра может привести к проблемам в игре и <битым> сохранениям!"
 		log1(msg_saves_corrupted)
-		if level.present() then if db and (db.actor ~= nil) then olr.hud_tip("", msg_saves_corrupted, 5) end end
+		if level.present() then if db and (db.actor ~= nil) then olr.hud_tip_fatal(msg_saves_corrupted) end end
 		console:execute("flush")
 	else
 		log1("FATAL_ABORT включён!")
@@ -276,16 +276,16 @@ function set_save_marker(p, mode, check, prefix)
 
 	-- определяем ключ маркера.
 	local result = ""
---	if debug ~= nil then
---		local info_table = debug.getinfo(2)
---		local script_name = string.gsub(info_table.short_src, "%.script", "")
---		script_name = string.gsub(script_name, "gamedata\\scripts\\", "")
---		result = script_name
---	end
+--	  if debug ~= nil then
+--		  local info_table = debug.getinfo(2)
+--		  local script_name = string.gsub(info_table.short_src, "%.script", "")
+--		  script_name = string.gsub(script_name, "gamedata\\scripts\\", "")
+--		  result = script_name
+--	  end
 
---	if prefix ~= nil then
+--	  if prefix ~= nil then
 		result = result .. "_" .. prefix
---	end
+--	  end
 
 	if check == true then
 		if save_markers[result] == nil then
@@ -294,44 +294,40 @@ function set_save_marker(p, mode, check, prefix)
 
 		if mode == "save" then
 			local dif = p:w_tell() - save_markers[result]
-			printf(result..": SAVE DIF: %s", dif)
+			--log1(result .. ": SAVE DIF: " .. tostring(dif))
 			if dif >= 8000 then
-				printf("WARNING! may be this is problem save point")
+				log1("~ WARNING! may be this is problem save point")
 			end
 			if dif >= 10240 then
---				abort("You are saving too much")
+--				  abort("You are saving too much")
 			end
 			p:w_u16(dif)
 		else
 			local c_dif = p:r_tell() - save_markers[result]
 			local dif = p:r_u16()
 			 if dif ~= c_dif then
-			 	abort("INCORRECT LOAD [%s].[%s][%s]", result, dif, c_dif)
+				abort("INCORRECT LOAD [%s].[%s][%s]", result, dif, c_dif)
 			 else
-			 	printf(result..": LOAD DIF: %s", dif)
+				--log1(result .. ": LOAD DIF: " .. tostring(dif))
 			 end
 		end
 		return
 	end
 
 	if mode == "save" then
-		printf(result..": set save marker: %s", p:w_tell())
+		--log1(result .. ": set save marker: " .. tostring(p:w_tell()))
 		save_markers[result] = p:w_tell()
 		if p:w_tell() > 16000 then
 			abort("You are saving too much")
 		end
 	else
-		printf(result..": set load marker: %s", p:r_tell())
+		--log1(result .. ": set load marker: " .. tostring(p:r_tell()))
 		save_markers[result] = p:r_tell()
 	end
 
 end
 
 ----------------------------------------------------------------------
-
-function usero_name()
-	return "olr"                         
-end
 
 function IsAnomaly(obj)
 	return obj:clsid() > 167 and obj:clsid() < 180

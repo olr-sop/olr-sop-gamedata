@@ -1,0 +1,48 @@
+[logic]
+active = heli_move@idle
+on_death = death@bar_attack_heli1
+
+[heli_move@idle]
+path_move = yan_heli_equipment_idle
+engine_sound = false
+on_info = {+prof_heliequp_start_fly_letit} heli_move@fly
+combat_safe_altitude = -50
+
+[heli_move@fly]
+path_move = yan_heli_equipment_long_way
+engine_sound = true
+combat_safe_altitude = 0
+default_velocity = 15
+on_info = {+prof_heliequp_kruzit_nad_derevney_spawn_bandosov} heli_move@retreatderevna
+
+[heli_move@retreatderevna]
+path_move = yan_heli_nad_derevney_idle
+engine_sound = true
+combat_safe_altitude = 0
+default_velocity = 15
+on_info = {+prof_rpg_dead_heli} heli_move@kbaze
+
+[heli_move@kbaze]
+default_velocity = 4
+velocity = 0
+path_move = yan_heli_equipment_baza_pre_waited
+engine_sound = true
+combat_safe_altitude = 75
+on_info = {+prof_heliequp_na_posadku} heli_move@retreat
+
+[heli_move@retreat]
+default_velocity = 4
+velocity = 0
+path_move = yan_heli_equipment_baza_waited
+engine_sound = true
+combat_safe_altitude = 75
+on_info = {+start_mission_yan_mon_done} heli_move@stop
+
+[heli_move@stop]
+path_move = yan_heli_equipment_idle
+engine_sound = false
+
+[death@bar_attack_heli1]
+on_info = %=yan_attack_heli_dead%
+
+

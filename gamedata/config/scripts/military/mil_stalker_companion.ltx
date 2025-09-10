@@ -1,0 +1,59 @@
+[logic]
+active = remark
+combat_ignore = combat_ignore
+
+[remark]
+anim = hello
+target = actor
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+on_info = {+mil_quest_art_spawn_naparnik_go} walker2
+meet = meet@nopain
+
+[walker2]
+path_walk = milquest_rush_way
+def_state_moving1 = raid
+def_state_moving2 = raid
+def_state_moving3 = raid
+meet = no_meet
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+on_signal = prio| %+mil_nap_on_base_blow% walker3
+
+[walker3]
+path_walk = milquest_rush_to_home
+def_state_moving1 = limping_walk
+def_state_moving2 = limping_walk
+def_state_moving3 = limping_walk
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
+on_signal = pril| %+mil_nap_on_base_blow_prisel% remark@nopain
+
+[remark@nopain]
+anim = umiraet_kashel
+no_rotate = true
+no_move = true
+combat_ignore_cond = always
+meet = meetd
+on_info = {+mil_nap_to_pes_done} remark22
+
+[remark22]
+anim = umiraet_dramatic
+no_rotate = true
+no_move = true
+meet = no_meet
+combat_ignore_cond = always
+on_signal = action_end | %=kill_mil_nap%
+on_timer = 9500 |  %=kill_mil_nap% 
+
+[meet@nopain]
+use = true
+use_wpn = true
+meet_dialog = mil_hap_talk_niva
+
+[combat_ignore]
+
+[meetd] 
+use = true
+use_wpn = true
+meet_dialog	= mil_nap_to_pes

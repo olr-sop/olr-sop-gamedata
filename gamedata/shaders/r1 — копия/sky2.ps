@@ -1,0 +1,41 @@
+#include "common.h"
+
+struct v2p
+{
+    float4  factor: COLOR0;
+    float3  tc0:    TEXCOORD0;
+    float3  tc1:    TEXCOORD1;
+};
+
+uniform samplerCUBE   s_sky0  : register(s0);
+uniform samplerCUBE   s_sky1  : register(s1);
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+float4  main ( v2p I ) : COLOR
+{
+    float3 reflected_tc0 = float3(-I.tc0.x, I.tc0.y, I.tc0.z);
+    float3 reflected_tc1 = float3(-I.tc1.x, I.tc1.y, I.tc1.z);
+
+    float3 s0    = texCUBE(s_sky0, reflected_tc0);
+    float3 s1    = texCUBE(s_sky1, reflected_tc1);
+    float3 sky   = I.factor * lerp(s0, s1, I.factor.w) * 2;
+
+    // --- ВЫЧИСЛЯЕМ ГРАДИЕНТ ДЛЯ ТУМАНА ---
+    // 1. Получаем высоту текущего пикселя на кубической карте.
+    // reflected_tc0.y находится в диапазоне ~[-1.0 (низ), 1.0 (верх)].
+    // 2. Инвертируем и нормализуем в диапазон [0.0 (низ), 1.0 (верх)].
+    float height_factor = saturate((-reflected_tc0.y) * 0.5 + 0.5);
+
+    // Теперь fog_blend = 0 у горизонта, 1 в зените.
+    float fog_blend = height_factor;
+
+    // 4. Поднимаем в степень для контроля плавности.
+    // Чем больше второй аргумент, тем резче переход и "выше" поднимается туман.
+    fog_blend = pow(fog_blend, 1.5);
+
+    // 5. Плавно смешиваем цвет неба с цветом тумана.
+    float3 final_color = lerp(sky, fog_color, fog_blend);
+
+    return float4(sky, 1);
+}

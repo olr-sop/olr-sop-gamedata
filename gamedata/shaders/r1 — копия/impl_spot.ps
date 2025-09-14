@@ -1,0 +1,18 @@
+#include "common.h"
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+float4 main(vf_spot I) : COLOR
+{
+	float4 t_base = tex2D(s_base, I.tc0);
+	float4 t_lmap = tex2Dproj(s_lmap, I.tc1); // spot-projector
+	float4 t_att = tex2D(s_att, I.tc2);		  // spot-attenuation
+	
+	float3 final_rgb = t_base.rgb * t_lmap.rgb * t_att.rgb * I.color.rgb;
+	final_rgb *= 2.0f;
+	
+	float base_alpha = clamp(t_base.a, 0.8f, 1.0f);
+	float final_alpha = base_alpha * t_lmap.a * t_att.a * I.color.a;
+	
+	return float4(final_rgb, final_alpha);
+}

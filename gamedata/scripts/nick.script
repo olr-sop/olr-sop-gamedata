@@ -10434,7 +10434,7 @@ end
 
 function kvest_esc_5_dialog_start_spaven_glazagar_kick()
 	olr.beep()
-	news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_start_spaven_glazagar_kick"), math.random(1000, 3000), "new_task", 15000, nil, "stalker", false)	
+	news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_start_spaven_glazagar_kick"), math.random(1000, 3000), "dolg", 15000, nil, "stalker", false)	
 end
 
 function otdaem_gazeta_otrivok_1(first_speaker, second_speaker)
@@ -10540,9 +10540,12 @@ function del_prizrak_esk_most()
 
 	local target = alife():object("lvl1_escape_stalker_0038")
 	if target then
-		db.actor:change_character_reputation(45)
-		local bloodbridgew5 = vector():set(10056, -0.36, 157)
-		alife():teleport_object(target:id(), db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+		local obj = level.object_by_id(target.id)
+		if obj then
+			db.actor:change_character_reputation(45)
+			local bloodbridgew5 = vector():set(10056, -0.36, 157)
+			alife():teleport_object(obj.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), bloodbridgew5)
+		end
 	end
 end
 

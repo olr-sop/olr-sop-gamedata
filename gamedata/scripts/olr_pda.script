@@ -124,7 +124,6 @@ function phrase_list_item:__init(item_name, id) super()
 	self.id = id
 	self.item_name = item_name
 	self.text_item = CUIStatic()
-	self:AttachChild(self.text_item)
 	self.text_item:SetText(game.translate_string(item_name))
 	self.text_item:SetFont(GetFontLetterica18())
 	self.text_item:SetTextComplexMode(true)
@@ -136,6 +135,7 @@ function phrase_list_item:__init(item_name, id) super()
 	if string.len(self.text_item:GetText()) > 10 then -- работает криво, проблема трилогии, когда до первого апдейта не пересчитывается размер элемента
 		lheight = self.text_item:GetHeight() * 2
 	end
+	self:AttachChild(self.text_item)
 	self:SetHeight(lheight)
 	self.text_item:SetTextColor(255,255,255,255)
 end
@@ -188,15 +188,39 @@ function pda_talk:InitControls()
 	else
 		self.xml:ParseFile("pda_type_"..self.xml:get_pda_type().."\\pda_talk_"..self.xml:get_pda_type()..".xml")
 	end
-	
+
+	local has_mask = self.xml:NavigateToNode("frame:mask_frame_window", 0)
 	self.frame_back = self.xml:InitStatic("frame:frame_back", self)
-	self.frame_fr = self.xml:InitFrame("frame:frame", self)
-	self.frame_rt = self.xml:InitFrame("frame:frame_right", self)
-	self.frame_dn = self.xml:InitFrame("frame:frame_down", self)
-	self.frameline = self.xml:InitFrameLine("frame:top_frame_line", self)
-	self.frameline_down = self.xml:InitFrameLine("frame:down_frame_line", self)	
-	self.frameline_right = self.xml:InitFrameLine("frame:right_frame_line", self)	
-	self.frameline_time = self.xml:InitFrameLine("frame:time_frame_line", self)
+	self.xml:InitAutoStaticGroup("frame:auto_", self.frame_back)
+	self.xml:InitAutoStaticGroup("frame:auto", self)
+	self.frame_fr = nil
+	self.frame_rt = nil
+	self.frame_dn = nil
+	self.frameline = nil
+	self.frameline_down = nil
+	self.frameline_right = nil
+	self.frameline_time = nil
+	if self.xml:NavigateToNode("frame:frame", 0) then
+		self.frame_fr = self.xml:InitFrame("frame:frame", self)
+	end
+	if self.xml:NavigateToNode("frame:frame_right", 0) then
+		self.frame_rt = self.xml:InitFrame("frame:frame_right", self)
+	end
+	if self.xml:NavigateToNode("frame:frame_down", 0) then
+		self.frame_dn = self.xml:InitFrame("frame:frame_down", self)
+	end
+	if self.xml:NavigateToNode("frame:top_frame_line", 0) then
+		self.frameline = self.xml:InitFrameLine("frame:top_frame_line", self)
+	end
+	if self.xml:NavigateToNode("frame:down_frame_line", 0) then
+		self.frameline_down = self.xml:InitFrameLine("frame:down_frame_line", self)
+	end
+	if self.xml:NavigateToNode("frame:right_frame_line", 0) then
+		self.frameline_right = self.xml:InitFrameLine("frame:right_frame_line", self)
+	end
+	if self.xml:NavigateToNode("frame:time_frame_line", 0) then
+		self.frameline_time = self.xml:InitFrameLine("frame:time_frame_line", self)
+	end
 	if self.xml:NavigateToNode("frame:anim_static", 0) then
 		self.xml:InitAnimStatic("frame:anim_static", self)
 	end
@@ -207,7 +231,7 @@ function pda_talk:InitControls()
 	self.xml:InitFrame("frame:phrase_list_frame", self.frame)
 	
 	self.phrase_list = self.xml:InitList("frame:phrase_list", self.frame)
-	self.phrase_list:ShowSelectedItem(true)
+	--self.phrase_list:ShowSelectedItem(true)
 	self:Register(self.phrase_list, "phrase_list")
 	self.rank_static = self.xml:InitStatic("frame:rank_static", self)
 	self.community_static = self.xml:InitStatic("frame:community_static", self)
@@ -239,7 +263,9 @@ function pda_talk:InitControls()
 		self[key] = self.xml:InitStatic(_val, self.frame)
 		if val[2] == texture then
 			self[key]:InitTexture(val[1])
-			self[key]:SetMask(self.xml:InitFrame("frame:mask_frame_window", nil))
+			if has_mask then
+				self[key]:SetMask(self.xml:InitFrame("frame:mask_frame_window", nil))
+			end
 		elseif val[2] == text then
 			if val[3] == true then
 				self[key]:SetText(game.translate_string(tostring(val[1])))

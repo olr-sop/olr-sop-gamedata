@@ -66,7 +66,8 @@ function trade_init( npc, cfg )
 	-- if npc:clsid() == clsid.script_trader then
 	--	log( "info", "init: %s", npc:name() )
 	-- end
-
+	local need_restore_money = (ini and ini:section_exist("trader") and ini:line_exist("trader", "need_restore_money") and ini:r_bool("trader", "need_restore_money") == true)
+	npc:set_money_restore(need_restore_money)
 end
 
 
@@ -93,17 +94,29 @@ function update( npc )
 	str = pick_section( actor, npc, tt.buy_supplies )
 	if ( tt.current_buy_supplies ~= str ) or ( not tt.resuply_time ) or tt.resuply_time < game.get_game_time() then
 
-		 --if npc:clsid() == clsid.script_trader then
+		--if npc:clsid() == clsid.script_trader then
 		--	log1( "info", "csup: %s (%s)", tt.current_buy_supplies, npc:name() )
 		--	log1( "info", "usup: %s (%s)", str, npc:name() )
-		 --end
-		 --log1( "info", "res: %s (%s:%s)", tostring( tt.resuply_time ), time_global(), npc:name() )
+		--end
+		--log1( string.format("info res: %s (%s:%s)", tostring( tt.resuply_time ), time_global(), npc:name() ))
 
 		npc:buy_supplies( tt.config, str )
 		tt.current_buy_supplies = str
 		c_time:setHMS( h24, 0, 0 )
 		tt.resuply_time = game.get_game_time() + c_time
-	end	
+
+		--log1("before restoring money")
+		local min_money = npc:get_min_money()
+		local max_money = npc:get_max_money()
+		if npc:get_money_restore() then
+			--log1("need_restore_money = true")
+			if npc:money() < max_money then
+				local fin_money = math.random(min_money, max_money)
+				npc:set_money(fin_money)
+				--log1(string.format("setting money [%d] min[%d] max[%d]", fin_money, min_money, max_money))
+			end
+		end
+	end
 end
 
 

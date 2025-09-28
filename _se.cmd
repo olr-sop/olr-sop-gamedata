@@ -1,1 +1,0 @@
-start bin\Editors\ShaderEditor.exe -editor

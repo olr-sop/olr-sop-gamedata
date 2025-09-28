@@ -1,1 +1,0 @@
-start bin\Editors\ActorEditor.exe -editor

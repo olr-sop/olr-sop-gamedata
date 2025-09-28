@@ -1,1 +1,0 @@
-@start bin\Win32\ReleaseDebugRender\xr_3da.exe -ltx user_%USERNAME%_editor.ltx -editor

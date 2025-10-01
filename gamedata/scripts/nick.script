@@ -10153,19 +10153,22 @@ function bun_swatoy_rush_sms()
 
 	local target = alife():object("lvl12_radar_bunker_staler_undead_olr")
 	if target then
-		local pos = target:bone_position("bip01_head")
-		local vDir = pos:sub(db.actor:position())
-		db.actor:set_actor_direction(-vDir:getH())
-		
-		local dir_d = vector()
-		dir_d:set(-2, 1, -1)
-		local h = -dir_d:getH()
-		local p = -dir_d:getP()
-		local cam = actor_camera(0)
-		
-		if cam then
-			if h then cam.yaw = h end
-			if p then cam.pitch = p end
+		local obj = level.object_by_id(target.id)
+		if obj then
+			local pos = target:bone_position("bip01_head")
+			local vDir = pos:sub(db.actor:position())
+			db.actor:set_actor_direction(-vDir:getH())
+			
+			local dir_d = vector()
+			dir_d:set(-2, 1, -1)
+			local h = -dir_d:getH()
+			local p = -dir_d:getP()
+			local cam = actor_camera(0)
+			
+			if cam then
+				if h then cam.yaw = h end
+				if p then cam.pitch = p end
+			end
 		end
 	end
 end

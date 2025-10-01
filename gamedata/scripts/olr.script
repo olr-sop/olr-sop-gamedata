@@ -1355,14 +1355,20 @@ function del_noparent_weapons()
 	local sim = alife()
 	for i = 1, 65534 do
 		local kill = sim:object(i)
-		if kill then
-			if montabl[kill:clsid()] then
+		if kill and kill.clsid and kill.parent_id then
+			local obj_clsid = kill:clsid()
+			if obj_clsid and montabl[obj_clsid] then
 				if kill.parent_id == 65535 then
+					local obj_name = kill:name()
 					if olr.olrdbg == true then
-						log1("clear free weapon	 " .. kill:name() .. " --- " .. kill.level_name .. "")
+						if obj_name then
+							log1("clear free weapon	 " .. obj_name .. " --- " .. (kill.level_name or "unknown") .. "")
+						else
+							log1("clear free weapon	 unknown --- " .. (kill.level_name or "unknown") .. "")
+						end
 					end
-					if xvars.weapons[kill:name()] ~= nil then
-						xvars.weapons[kill:name()] = nil
+					if obj_name and xvars.weapons and xvars.weapons[obj_name] ~= nil then
+						xvars.weapons[obj_name] = nil
 					end
 					alife():release(kill, true)
 				end

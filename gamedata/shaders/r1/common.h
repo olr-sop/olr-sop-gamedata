@@ -101,6 +101,25 @@ struct 	vf_point
 	float2 tc2	: TEXCOORD2;	// att2 + clipper
 	float4 color	: COLOR0;
 };
+
+struct 	impl_vf_spot
+{
+	float4 hpos	: POSITION;
+	float2 tc0	: TEXCOORD0;	// base
+	float4 tc1	: TEXCOORD1;	// lmap, projected
+	float2 tc2	: TEXCOORD2;	// att + clipper
+	float2 tcd	: TEXCOORD3;	// details	
+	float4 color	: COLOR0;
+};
+struct 	impl_vf_point
+{
+	float4 hpos	: POSITION;
+	float2 tc0	: TEXCOORD0;	// base
+	float2 tc1	: TEXCOORD1;	// att1 + clipper
+	float2 tc2	: TEXCOORD2;	// att2 + clipper
+	float2 tcd	: TEXCOORD3;	// details	
+	float4 color	: COLOR0;
+};
 //////////////////////////////////////////////////////////////////////////////////////////
 uniform sampler2D 	s_base;
 uniform samplerCUBE 	s_env;

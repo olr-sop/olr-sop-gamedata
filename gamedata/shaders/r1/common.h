@@ -120,9 +120,28 @@ struct 	impl_vf_point
 	float2 tcd	: TEXCOORD3;	// details	
 	float4 color	: COLOR0;
 };
+
+//	TL
+struct	p_TL
+{
+	float2 	tc0		: TEXCOORD0;
+	float4	color	: COLOR;
+};
+struct	v_TL
+{
+	float4	hpos	: POSITION;
+	float2	tc0		: TEXCOORD0;
+	float4	color	: COLOR; 
+};
+struct	v2p_TL
+{
+	float2 	tc0		: TEXCOORD0;
+	float4	color	: COLOR;
+	float4 	hpos	: POSITION;	// Clip-space position 	(for rasterization)
+};
 //////////////////////////////////////////////////////////////////////////////////////////
 uniform sampler2D 	s_base;
-uniform samplerCUBE 	s_env;
+uniform samplerCUBE	s_env;
 uniform sampler2D 	s_lmap;
 uniform sampler2D 	s_hemi;
 uniform sampler2D 	s_att;

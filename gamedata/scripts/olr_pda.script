@@ -10,16 +10,10 @@ local zombies_names = {
 ["lvl4u_darklab_stalker_0026"] = true
 }
 
--- TODO: данный скрипт используется теперь только для прекондишенов диалогов
--- необходимо перенести поведение блокировок в движок
--- возможно, вызывать скриптовый функтор true-false для блокировки старта разговора
--- оставил пока что эти проверки, будут перенесены
--- если есть возможность передавать два аргумента обратно в скриптах, то
--- передавать будем булеану и причину по типу `game.translate_string("on_press_1")`
-
 --Коллбек на нажатие по элементу в списке контактов
-function on_press(actor, id)	
-	if (obj:relation(db.actor) == game_object.enemy) then
+function on_press(actor, npc)
+	--news_manager.send_tip(db.actor, "on_press_check")
+	if (npc:relation(db.actor) == game_object.enemy) then
 		local rnd = math.random(1,4)
 		if rnd == 1 then
 			news_manager.send_tip(db.actor, game.translate_string("on_press_1"))
@@ -28,47 +22,49 @@ function on_press(actor, id)
 		elseif rnd == 2 then
 			news_manager.send_tip(db.actor, game.translate_string("on_press_3"))
 		end
-		return nil
+		return false
 	end
 
-	if zombies_names[obj:name()] or obj:character_community() == "zombied" then
+	if zombies_names[npc:name()] or npc:character_community() == "zombied" then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "zombied", 5000)
-		return nil
+		return false
 	end
 
 
-	if obj:name() == "lvl4_darkdolina_staler_undead_olr_0001" then
+	if npc:name() == "lvl4_darkdolina_staler_undead_olr_0001" then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_5"), nil, "default", 5000)
-		return nil
+		return false
 	end
 
 	if db.actor:has_info("olr_blowout_phase_2") then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_6"))
-		return nil
+		return false
 	end
 
-	if obj:name() == "bar_barman" and has_alife_info("olr_traders_night") then
+	if npc:name() == "bar_barman" and has_alife_info("olr_traders_night") then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_7"), nil, "barman", 5000)
-		return nil
+		return false
 	end
 	
-	if (obj:name() == "escape_trader_0000" or obj:name() == "lvl9_military_m_trader") and has_alife_info("olr_traders_night") then
+	if (npc:name() == "escape_trader_0000" or npc:name() == "lvl9_military_m_trader") and has_alife_info("olr_traders_night") then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_7"), nil, "jaba", 5000)
-		return nil
+		return false
 	end	
 
 	if level.name() == "lvl16_generators" then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_8"))
-		return nil
+		return false
 	end
 	
 	for i=0, ignore_ini:line_count("main") - 1 do
 		local _, val = ignore_ini:r_line("main", i, "", "")
-		if obj:profile_name() == val then
+		if npc:profile_name() == val then
 			news_manager.send_tip(db.actor, game.translate_string("on_press_9"))
-			return nil
+			return false
 		end
 	end
+	--news_manager.send_tip(db.actor, "on_press_passed")
+	return true
 end
 
 --Условия для диалогов (сейчас только они используются движком)

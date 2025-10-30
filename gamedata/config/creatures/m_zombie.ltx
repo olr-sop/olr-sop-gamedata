@@ -182,13 +182,13 @@ sound_idle				= monsters\zombie\idle_
 sound_eat				= monsters\zombie\eat_ 
 sound_aggressive		= monsters\zombie\aggressive_
 sound_attack_hit		= monsters\zombie\attack_hit_
-sound_take_damage		= monsters\zombie\take_damage_
+sound_take_damage		= monsters\zombie\hurt_
 sound_die				= monsters\zombie\die_
-sound_threaten			= monsters\biting\def_		
+sound_threaten			= monsters\zombie\threaten_
 sound_landing			= monsters\biting\def_
 sound_steal				= monsters\biting\def_
 sound_panic				= monsters\zombie\aggressive_
-sound_growling			= monsters\biting\def_
+sound_growling			= monsters\zombie\threaten_
 sound_die_in_anomaly	= monsters\zombie\die_
 
 killer_clsids			= Z_MINCER,Z_GALANT,ZS_BFUZZ,ZS_MBALD,ZS_GALAN,ZS_MINCE
@@ -197,9 +197,9 @@ idle_sound_delay		= 20000
 eat_sound_delay			= 3000
 attack_sound_delay		= 24000
 
-sound_distant_idle			= monsters\zombie\idle_
-distant_idle_sound_delay	= 80000
-distant_idle_sound_range	= 100.0	
+sound_distant_idle			= monsters\zombie\distant_
+distant_idle_sound_delay	= 30000
+distant_idle_sound_range	= 100.0
 
 DamagedThreshold		= 0.5
 critical_wound_threshold		= -1
@@ -649,3 +649,44 @@ $spawn				= "monsters\zombies\zombie_plague_strong"
 visual				= monsters\corpus\corpus_zombie
 icon				 = ui_npc_u_unknown
 ph_mass 		     = 240;380						; also it's the food
+
+
+[m_zomby]:m_zombie_e
+$spawn				= "monsters\zomby"
+visual				= monsters\zombie\zomby
+icon				 = ui_npc_u_unknown
+step_params			= m_zomby_step_params
+immunities_sect		= m_zomby_immunities
+
+rank				= 401
+spec_rank			= normal
+community			= zombie
+panic_threshold		= 0.05
+
+Spawn_Inventory_Item_Probability = 0
+
+; speed factors			linear | angular_real | angular_path | min |  max
+Velocity_Stand			= 0,		1.4,			1.4,		1,		1
+Velocity_WalkFwdNormal	= 1.5,		1.2,			1.5,		0.02,	2.0	
+Velocity_RunFwdNormal	= 2.75,		3.0,			3.0,		0.4,	3	
+Velocity_WalkFwdDamaged	= 0.85,		3.0,			0.8,		0.2,	2.0	
+Velocity_RunFwdDamaged	= 1.8,  	3.0,			3.0,		0.2,	1
+
+[m_zomby_step_params]
+;---------------------------------------------------------------------------
+;	anim			| Cycles | time1 | power1 | time2 | power2 |
+;---------------------------------------------------------------------------
+stand_walk_fwd_0 	=	1,	   0.2,     0.5,     0.7,    1,   
+stand_walk_fwd_1 	=	1,	   0.2,     0.5,     0.7,    1,   
+stand_run_0	 		=	2,	   0.4,     1,	    0.25,    1, 
+
+[m_zomby_immunities]
+burn_immunity			= 0.3
+strike_immunity			= 0.8
+shock_immunity			= 0.8
+wound_immunity			= 0.3
+radiation_immunity		= 0.0	;0.5
+telepatic_immunity		= 1.0
+chemical_burn_immunity	= 0.3
+explosion_immunity		= 0.3
+fire_wound_immunity		= 0.3

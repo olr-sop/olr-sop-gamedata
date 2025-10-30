@@ -1,7 +1,7 @@
 --Oblivion Lost Remake (2014-2015)
---(c) proger_Dencheek
+--(c) proger_Dencheek - базовая логика с игнором, скриптовое окно со своим интерфейсом
 --Общение через КПК
--- edit hi_flyer 28.10.18
+-- Hrust: скрипт переписан и используется только для проверок доступности диалогов через движковое окно, скриптовое окно убрано (29.10.2025)
 
 local ignore_ini = ini_file("pda_dialogs\\ignore_npc.ltx") --НПЦ, которые не участвуют в диалогах
 
@@ -15,12 +15,8 @@ function on_press(actor, npc)
 	--news_manager.send_tip(db.actor, "on_press_check")
 	if (npc:relation(db.actor) == game_object.enemy) then
 		local rnd = math.random(1,4)
-		if rnd == 1 then
-			news_manager.send_tip(db.actor, game.translate_string("on_press_1"))
-		elseif rnd == 1 then
-			news_manager.send_tip(db.actor, game.translate_string("on_press_2"))
-		elseif rnd == 2 then
-			news_manager.send_tip(db.actor, game.translate_string("on_press_3"))
+		if rnd < 4 then
+			news_manager.send_tip(db.actor, game.translate_string("on_press_"..tostring(rnd)))
 		end
 		return false
 	end
@@ -67,7 +63,7 @@ function on_press(actor, npc)
 	return true
 end
 
---Условия для диалогов (сейчас только они используются движком)
+--Условия для диалогов
 function is_pda_dialog()
 return level.is_shown_pda()
 end

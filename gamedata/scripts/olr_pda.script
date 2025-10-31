@@ -13,49 +13,42 @@ local zombies_names = {
 --Коллбек на нажатие по элементу в списке контактов
 function on_press(actor, npc)
 	--news_manager.send_tip(db.actor, "on_press_check")
-	if (npc:relation(db.actor) == game_object.enemy) then
-		local rnd = math.random(1,4)
-		if rnd < 4 then
-			news_manager.send_tip(db.actor, game.translate_string("on_press_"..tostring(rnd)))
-		end
-		return false
-	end
 
 	if zombies_names[npc:name()] or npc:character_community() == "zombied" then
-		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "zombied", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_1"), nil, "zombied", 5000)
 		return false
 	end
 
 
 	if npc:name() == "lvl4_darkdolina_staler_undead_olr_0001" then
-		news_manager.send_tip(db.actor, game.translate_string("on_press_5"), nil, "default", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_2"), nil, "default", 5000)
 		return false
 	end
 
 	if db.actor:has_info("olr_blowout_phase_2") then
-		news_manager.send_tip(db.actor, game.translate_string("on_press_6"))
+		news_manager.send_tip(db.actor, game.translate_string("on_press_3"))
 		return false
 	end
 
 	if npc:name() == "bar_barman" and has_alife_info("olr_traders_night") then
-		news_manager.send_tip(db.actor, game.translate_string("on_press_7"), nil, "barman", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "barman", 5000)
 		return false
 	end
 	
 	if (npc:name() == "escape_trader_0000" or npc:name() == "lvl9_military_m_trader") and has_alife_info("olr_traders_night") then
-		news_manager.send_tip(db.actor, game.translate_string("on_press_7"), nil, "jaba", 5000)
+		news_manager.send_tip(db.actor, game.translate_string("on_press_4"), nil, "jaba", 5000)
 		return false
 	end	
 
 	if level.name() == "lvl16_generators" then
-		news_manager.send_tip(db.actor, game.translate_string("on_press_8"))
+		news_manager.send_tip(db.actor, game.translate_string("on_press_5"))
 		return false
 	end
 	
 	for i=0, ignore_ini:line_count("main") - 1 do
 		local _, val = ignore_ini:r_line("main", i, "", "")
 		if npc:profile_name() == val then
-			news_manager.send_tip(db.actor, game.translate_string("on_press_9"))
+			news_manager.send_tip(db.actor, game.translate_string("on_press_6"))
 			return false
 		end
 	end

@@ -1,1 +1,1 @@
-start bin\Editors\LevelEditor.exe -editor -local_backup -asset_tracking
+start bin\Editors\LevelEditor.exe -editor

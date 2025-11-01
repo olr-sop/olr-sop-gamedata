@@ -1,1 +1,1 @@
-start bin\Editors\ShaderEditor.exe -editor -local_backup -asset_tracking
+start bin\Editors\ShaderEditor.exe -editor

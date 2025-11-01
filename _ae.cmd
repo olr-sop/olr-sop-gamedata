@@ -1,1 +1,1 @@
-start bin\Editors\ActorEditor.exe -editor -local_backup -asset_tracking
+start bin\Editors\ActorEditor.exe -editor

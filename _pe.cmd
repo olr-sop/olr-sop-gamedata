@@ -1,1 +1,1 @@
-start bin\Editors\ParticleEditor.exe -editor -local_backup -asset_tracking
+start bin\Editors\ParticleEditor.exe -editor

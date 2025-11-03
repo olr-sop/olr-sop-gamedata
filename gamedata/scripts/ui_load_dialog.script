@@ -37,15 +37,6 @@ function load_item:__init() super()
 	self.fage:SetFont				(GetFontLetterica16())
 	self.fage:SetTextColor			(cr,cg,cb,ca)
 	self.fage:AdjustWidthToText		()
-
-	self.flevel						= CUIStatic	()
-	self.flevel:SetAutoDelete		(true)
-	self:AttachChild				(self.flevel)
-	self.flevel:SetWndRect			(self.fage:GetWidth() + fileage_pos_x + 25,0,150,22)
-	self.flevel:SetTextColoringMode	(false)
-	self.flevel:SetText				("fileage")
-	self.flevel:SetFont				(GetFontLetterica16())
-	self.flevel:SetTextColor		(cr,cg,cb,ca)
 end
 
 
@@ -76,7 +67,7 @@ function load_dialog:FillList()
 		local sg 		= CSavedGameWrapper(file_name)
 		local date_time = "[" .. file:ModifDigitOnly() .. "]"
 		--menu_item =  .. 
-		self:AddItemToList(file_name, date_time, game.translate_string(sg:level_name()))
+		self:AddItemToList(file_name, date_time)
 	end
 	
 end
@@ -103,6 +94,8 @@ function load_dialog:InitControls()
 	
 	ctrl = xml_init:InitStatic("form:picture",		self.form)
 	ctrl:SetWindowName("static_pict")	
+	
+	xml_init:InitFrame("form:list_frame",			self.form)	
 	
 	xml_init:InitStatic("form:file_info",			self.form)
 	
@@ -367,11 +360,10 @@ function load_dialog:OnKeyboard(dik, keyboard_action)  --virtual function
 	return true
 end
 
-function load_dialog:AddItemToList(file_name, date_time, name_level)
+function load_dialog:AddItemToList(file_name, date_time)
 	local _itm				= load_item()
 	_itm.fn:SetText			(file_name)
 	_itm.fage:SetText		(date_time)
-	_itm.flevel:SetText		(name_level)
 	
 	local list_box			= self:GetListWnd("list_window")
 	list_box:AddItem		(_itm, 0)

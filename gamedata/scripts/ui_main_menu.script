@@ -67,8 +67,8 @@ function main_menu:InitControls()
 	self.btn_stalker	= xml:Init3tButton("shniaga_wnd:btn_stalker",	self.main_frame)
 	self.btn_veteran	= xml:Init3tButton("shniaga_wnd:btn_veteran",	self.main_frame)
 	self.btn_master		= xml:Init3tButton("shniaga_wnd:btn_master",	self.main_frame)
-	self.btn_back		= xml:Init3tButton("shniaga_wnd:btn_back",	self.main_frame)
-	self.btn_ret		= xml:Init3tButton("shniaga_wnd:btn_ret",	self.main_frame)
+	self.btn_back		= xml:Init3tButton("shniaga_wnd:btn_back",		self.main_frame)
+	self.btn_ret		= xml:Init3tButton("shniaga_wnd:btn_ret",		self.main_frame)
 	
 	self.btn_novice:SetWindowName("btn_novice")
 	self.btn_stalker:SetWindowName("btn_stalker")
@@ -81,6 +81,7 @@ function main_menu:InitControls()
 	self:Register(self.btn_stalker)
 	self:Register(self.btn_veteran)
 	self:Register(self.btn_master)
+	self:Register(self.btn_back)
 	self:Register(self.btn_ret)
 	if level.present() then
 		self:ShowTabs("main_loaded")
@@ -111,15 +112,31 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_master:Show(false)
 		self.btn_back:Show(false)
 
+		self.btn_novice:Enable(false)
+		self.btn_stalker:Enable(false)
+		self.btn_veteran:Enable(false)
+		self.btn_master:Enable(false)
+		self.btn_back:Enable(false)
+
 		self.btn_new_game:Show(menu_type == "main")
 		self.btn_quit_to_mm:Show(menu_type == "main_loaded")
 		self.btn_ret:Show(menu_type == "main_loaded")
+
+		self.btn_new_game:Enable(menu_type == "main")
+		self.btn_quit_to_mm:Enable(menu_type == "main_loaded")
+		self.btn_ret:Enable(menu_type == "main_loaded")
 
 		self.btn_load:Show(true)
 		self.btn_lastsave:Show(true)
 		self.btn_save:Show(true)
 		self.btn_options:Show(true)
 		self.btn_quit:Show(true)
+
+		self.btn_load:Enable(true)
+		self.btn_lastsave:Enable(true)
+		self.btn_save:Enable(menu_type == "main_loaded")
+		self.btn_options:Enable(true)
+		self.btn_quit:Enable(true)
 	else
 		self.btn_novice:Show(true)
 		self.btn_stalker:Show(true)
@@ -130,6 +147,16 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_quit_to_mm:Show(false)
 		self.btn_ret:Show(false)
 		self.btn_quit:Show(false)
+
+		self.btn_novice:Enable(true)
+		self.btn_stalker:Enable(true)
+		self.btn_veteran:Enable(true)
+		self.btn_master:Enable(true)
+		self.btn_back:Enable(true)
+		self.btn_options:Enable(false)
+		self.btn_quit_to_mm:Enable(false)
+		self.btn_ret:Enable(false)
+		self.btn_quit:Enable(false)
 	end
 end
 
@@ -388,7 +415,7 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
     local console = get_console()
 
     if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-		if not level.present() then
+		if not level.present() and dik == DIK_keys.DIK_ESCAPE then
 			self:ShowTabs("main")
 		end
 	end

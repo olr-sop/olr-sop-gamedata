@@ -53,11 +53,16 @@ tips_icons = {
 	killer_volkodav	= { 0, 200},
 	new_task		= { 150, 100},	-- 486, 486 в фл€роскриптах на старом атласе
 	jaba			= { 0, 100},	-- 332,950 в фл€роскриптах на старом атласе (жаба в зелЄной рамке щас)
-	kill_messer		= { 0, 0}		-- вообще не используетс€
+	kill_messer		= { 0, 0},		-- вообще не используетс€
+	-- дл€ амк типсов
+	trade     = { 450, 50},
+	uniq     =  {498, 47}, -- не используетс€, похуй, в јћ  это был "общий канал"
+	gen_info  = { 350, 150},
+	death     = { 250, 200},	
 }
 
 
-function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, show_tip_top)
+function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, show_tip_top, sender_name)
 	if news_id == nil then return false end
 
 	printf("try to send tips for [%s]", tostring(sender_id))
@@ -122,10 +127,15 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 	if show_tip_top ~= false then
 		news_text = "%c[255,160,181,169]"..game.translate_string("st_tip")..":".."\\n".."%c[255,245,240,218]"..game.translate_string(news_id)
 	else
-		news_text = "%c[255,255,255,255]"..game.translate_string(news_id)
+		news_text = "%c[255,255,255,255]"..game.translate_string(news_id) -- дл€ сообщений где всЄ сформировано в одну строку
 	end
 	
-	actor:give_game_news(news_text, "", "ui\\icons\\icons_task", Frect():set(x,y,50,50), timeout_msg, showtime)
+	if sender_name then
+		actor:give_game_news(news_text, game.translate_string(sender_name), "ui\\icons\\icons_task", Frect():set(x,y,50,50), timeout_msg, showtime)
+	else
+		actor:give_game_news(news_text, "", "ui\\icons\\icons_task", Frect():set(x,y,50,50), timeout_msg, showtime)
+	end
+	
 	return true
 end
 

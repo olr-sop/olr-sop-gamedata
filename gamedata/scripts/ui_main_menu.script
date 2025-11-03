@@ -30,20 +30,28 @@ function main_menu:InitControls()
 	xml:InitStatic("fire_ugli_new", self)
 	xml:InitStatic("fire_movie", self)
 	xml:InitStatic("back_shniaga", self)
+	if xml:NavigateToNode("back_left", 0) then
+		xml:InitStatic("back_left", self)
+	end
+	if xml:NavigateToNode("back_right", 0) then
+		xml:InitStatic("back_right", self)
+	end
 	self.main_frame = 	xml:InitStatic("shniaga_wnd", self)
 
-	self.btn_new_game 	= xml:Init3tButton("shniaga_wnd:btn_new_game",	self.main_frame)
-	self.btn_load		= xml:Init3tButton("shniaga_wnd:btn_load",		self.main_frame)
-	self.btn_lastsave	= xml:Init3tButton("shniaga_wnd:btn_lastsave",	self.main_frame)
-	self.btn_save		= xml:Init3tButton("shniaga_wnd:btn_save",		self.main_frame)
-	self.btn_options	= xml:Init3tButton("shniaga_wnd:btn_options",	self.main_frame)
-	self.btn_quit		= xml:Init3tButton("shniaga_wnd:btn_quit",		self.main_frame)
+	self.btn_new_game 		= xml:Init3tButton("shniaga_wnd:btn_new_game",	self.main_frame)
+	self.btn_load			= xml:Init3tButton("shniaga_wnd:btn_load",		self.main_frame)
+	self.btn_lastsave		= xml:Init3tButton("shniaga_wnd:btn_lastsave",	self.main_frame)
+	self.btn_save			= xml:Init3tButton("shniaga_wnd:btn_save",		self.main_frame)
+	self.btn_options		= xml:Init3tButton("shniaga_wnd:btn_options",	self.main_frame)
+	self.btn_quit			= xml:Init3tButton("shniaga_wnd:btn_quit",		self.main_frame)
+	self.btn_quit_to_mm		= xml:Init3tButton("shniaga_wnd:btn_quit_to_mm",		self.main_frame)
 	
 	self.btn_new_game:SetWindowName("btn_new_game")
 	self.btn_load:SetWindowName("btn_load")
 	self.btn_lastsave:SetWindowName("btn_lastsave")
 	self.btn_save:SetWindowName("btn_save")
 	self.btn_options:SetWindowName("btn_options")
+	self.btn_quit_to_mm:SetWindowName("btn_quit_to_mm")
 	self.btn_quit:SetWindowName("btn_quit")
 
 	-- регистрация обработчика (как раньше)
@@ -52,6 +60,7 @@ function main_menu:InitControls()
 	self:Register(self.btn_lastsave)
 	self:Register(self.btn_save)
 	self:Register(self.btn_options)
+	self:Register(self.btn_quit_to_mm)
 	self:Register(self.btn_quit)
 
 	self.btn_novice 	= xml:Init3tButton("shniaga_wnd:btn_novice",	self.main_frame)
@@ -59,21 +68,28 @@ function main_menu:InitControls()
 	self.btn_veteran	= xml:Init3tButton("shniaga_wnd:btn_veteran",	self.main_frame)
 	self.btn_master		= xml:Init3tButton("shniaga_wnd:btn_master",	self.main_frame)
 	self.btn_back		= xml:Init3tButton("shniaga_wnd:btn_back",	self.main_frame)
+	self.btn_ret		= xml:Init3tButton("shniaga_wnd:btn_ret",	self.main_frame)
 	
 	self.btn_novice:SetWindowName("btn_novice")
 	self.btn_stalker:SetWindowName("btn_stalker")
 	self.btn_veteran:SetWindowName("btn_veteran")
 	self.btn_master:SetWindowName("btn_master")
 	self.btn_back:SetWindowName("btn_back")
+	self.btn_ret:SetWindowName("btn_ret")
 
 	self:Register(self.btn_novice)
 	self:Register(self.btn_stalker)
 	self:Register(self.btn_veteran)
 	self:Register(self.btn_master)
-	self:Register(self.btn_back)
-	self:ShowTabs(false)
+	self:Register(self.btn_ret)
+	if level.present() then
+		self:ShowTabs("main_loaded")
+	else
+		self:ShowTabs("main")
+	end
 	self.btn_save:Enable(level.present())
 
+	self.shniaga = xml:InitMMShniaga("shniaga_wnd",self)
 
 	self.message_box = CUIMessageBoxEx()
 	self:Register(self.message_box, "msg_box")
@@ -87,19 +103,34 @@ end
 function main_menu:Show(f)
 end
 
-function main_menu:ShowTabs(f)
-	self.btn_novice:Show(f)
-	self.btn_stalker:Show(f)
-	self.btn_veteran:Show(f)
-	self.btn_master:Show(f)
-	self.btn_back:Show(f)
+function main_menu:ShowTabs(menu_type)
+	if menu_type == "main" or menu_type == "main_loaded" then
+		self.btn_novice:Show(false)
+		self.btn_stalker:Show(false)
+		self.btn_veteran:Show(false)
+		self.btn_master:Show(false)
+		self.btn_back:Show(false)
 
-	self.btn_new_game :Show(not f)
-	self.btn_load	:Show(not f)
-	self.btn_lastsave:Show(not f)
-	self.btn_save	:Show(not f)
-	self.btn_options:Show(not f)
-	self.btn_quit	:Show(not f)
+		self.btn_new_game:Show(menu_type == "main")
+		self.btn_quit_to_mm:Show(menu_type == "main_loaded")
+		self.btn_ret:Show(menu_type == "main_loaded")
+
+		self.btn_load:Show(true)
+		self.btn_lastsave:Show(true)
+		self.btn_save:Show(true)
+		self.btn_options:Show(true)
+		self.btn_quit:Show(true)
+	else
+		self.btn_novice:Show(true)
+		self.btn_stalker:Show(true)
+		self.btn_veteran:Show(true)
+		self.btn_master:Show(true)
+		self.btn_back:Show(true)
+		self.btn_options:Show(false)
+		self.btn_quit_to_mm:Show(false)
+		self.btn_ret:Show(false)
+		self.btn_quit:Show(false)
+	end
 end
 
 
@@ -160,11 +191,15 @@ function main_menu:LoadLastSave()
 end
 
 function main_menu:OnButton_new_game_clicked()
-	self:ShowTabs(true)
+	self:ShowTabs("new_game")
 end
 
 function main_menu:OnButton_new_btn_back()
-	self:ShowTabs(false)
+	if level.present() then
+		self:ShowTabs("main_loaded")
+	else
+		self:ShowTabs("main")
+	end
 end
 
 function main_menu:OnButton_last_save()
@@ -241,7 +276,7 @@ function main_menu:StartGame()
 	local console = get_console()
 	
 	if (alife() ~= nil) then
-		console:execute	("ehit")	
+		console:execute	("ehit")
 	end
 	
 	console:execute("start server(olr/single/alife/new) client(localhost)")
@@ -352,6 +387,11 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
     local bind = dik_to_bind(dik)
     local console = get_console()
 
+    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if not level.present() then
+			self:ShowTabs("main")
+		end
+	end
     if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
         if level.present() and (db.actor ~= nil) and db.actor:alive() then
             if dik == DIK_keys.DIK_ESCAPE then

@@ -30,6 +30,7 @@ function main_menu:InitControls()
 	xml:InitStatic("fire_ugli_new", self)
 	xml:InitStatic("fire_movie", self)
 	xml:InitStatic("back_shniaga", self)
+	self.changed_pos = false
 	if xml:NavigateToNode("back_left", 0) then
 		xml:InitStatic("back_left", self)
 	end
@@ -133,26 +134,30 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_ret:Enable(menu_type == "main_loaded")
 		
 		if menu_type == "main_dead" then
-			local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_load:GetWndPosY()
-			y_pos = y_pos + self.btn_offset_y
-			self.btn_load:SetWndPos(x_pos, y_pos)
+			if self.changed_pos == false then
+				local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_load:GetWndPosY()
+				y_pos = y_pos + self.btn_offset_y
+				self.btn_load:SetWndPos(x_pos, y_pos)
 
-			x_pos, y_pos = self.btn_lastsave:GetWndPosX(), self.btn_lastsave:GetWndPosY()
-			y_pos = y_pos + self.btn_offset_y
-			self.btn_lastsave:SetWndPos(x_pos, y_pos)
+				x_pos, y_pos = self.btn_lastsave:GetWndPosX(), self.btn_lastsave:GetWndPosY()
+				y_pos = y_pos + self.btn_offset_y
+				self.btn_lastsave:SetWndPos(x_pos, y_pos)
 
-			x_pos, y_pos = self.btn_options:GetWndPosX(), self.btn_options:GetWndPosY()
-			y_pos = y_pos + self.btn_offset_y * 2
-			self.btn_options:SetWndPos(x_pos, y_pos)
-			self.btn_save:Show(false)
-			self.btn_save:Enable(false)
+				x_pos, y_pos = self.btn_options:GetWndPosX(), self.btn_options:GetWndPosY()
+				y_pos = y_pos + self.btn_offset_y * 2
+				self.btn_options:SetWndPos(x_pos, y_pos)
+				self.btn_save:Show(false)
+				self.btn_save:Enable(false)
+				self.changed_pos = true
+			end
 		else
 			self.btn_save:Show(menu_type == "main_loaded")
 			self.btn_save:Enable(menu_type == "main_loaded")
-			if menu_type == "main" then
+			if menu_type == "main" and self.changed_pos == false then
 				local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_options:GetWndPosY()
 				y_pos = y_pos + self.btn_offset2_y
 				self.btn_options:SetWndPos(x_pos, y_pos)
+				self.changed_pos = true
 			end
 		end
 		self.btn_load:Show(true)
@@ -188,6 +193,10 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_load:Enable(false)
 		self.btn_lastsave:Enable(false)
 		self.btn_save:Enable(false)
+
+		self.btn_load:Show(false)
+		self.btn_lastsave:Show(false)
+		self.btn_save:Show(false)
 	end
 end
 
@@ -232,7 +241,7 @@ end
 function main_menu:OnMsgYes()
 	
 	if 	self.mbox_mode == 1 then
-		self:LoadLastSave()	
+		self:LoadLastSave()
 	end
 
 	self.mbox_mode = 0
@@ -253,15 +262,7 @@ function main_menu:OnButton_new_game_clicked()
 end
 
 function main_menu:OnButton_new_btn_back()
-	if level.present() then
-		if db.actor and db.actor:alive() then
-			self:ShowTabs("main_loaded")
-		else
-			self:ShowTabs("main_dead")
-		end
-	else
-		self:ShowTabs("main")
-	end
+	self:ShowTabs("main")
 end
 
 function main_menu:OnButton_last_save()

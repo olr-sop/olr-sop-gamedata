@@ -85,6 +85,7 @@ function main_menu:InitControls()
 	self:Register(self.btn_master)
 	self:Register(self.btn_back)
 	self:Register(self.btn_ret)
+	self.shniaga = xml:InitMMShniaga("shniaga_wnd",self)
 	if level.present() then
 		if db.actor ~= nil and db.actor:alive() then
 			self:ShowTabs("main_loaded")
@@ -96,7 +97,6 @@ function main_menu:InitControls()
 	end
 	self.btn_save:Enable(level.present())
 
-	self.shniaga = xml:InitMMShniaga("shniaga_wnd",self)
 
 	self.message_box = CUIMessageBoxEx()
 	self:Register(self.message_box, "msg_box")
@@ -161,7 +161,7 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_quit:Show(true)
 
 		self.btn_load:Enable(true)
-		self.btn_lastsave:Enable(true)
+		self.btn_lastsave:Enable(self.shniaga:HasLastSave())
 		self.btn_options:Enable(true)
 		self.btn_quit:Enable(true)
 	else

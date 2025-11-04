@@ -71,55 +71,59 @@ local items_prob = {
 }
 
 function job_desctiption()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    if npc then
-        --log1("talker is - "..npc:name().."")
-        if xvars.npc_jobs_foractor_status[npc:name()] == "ready" then
-            local text_phrase = {"job_try_give_1", "job_try_give_2"}
-
-            local target = xvars.npc_jobs_foractor_target[npc:name()]
-            --log1(" 1 "..target.."")
-            --local text_find_obj = game.translate_string(target)
-            --log1("2 "..text_find_obj.."")
-            local known_inf = system_ini():r_string(target, "inv_name")
-            --log1("3 "..known_inf.."")
-            local obj_inf_desc = game.translate_string(known_inf)
-            --log1("4 "..obj_inf_desc.."")
-            local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
-
-            local lm_where = ""..text_find.." "..obj_inf_desc..""
-            db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
-            local _s = CUIStatic()
-            local bos = level.object_by_id(level.get_second_talker():id())
-            _s:InitTexture(bos:character_icon())
-            local str = lm_where
-            local who = bos:character_name()
-            db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
-        end
-    end
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			--log1("talker is - "..npc:name().."")
+			if xvars.npc_jobs_foractor_status[npc:name()] == "ready" then
+				local text_phrase = {"job_try_give_1", "job_try_give_2"}
+	
+				local target = xvars.npc_jobs_foractor_target[npc:name()]
+				--log1(" 1 "..target.."")
+				--local text_find_obj = game.translate_string(target)
+				--log1("2 "..text_find_obj.."")
+				local known_inf = system_ini():r_string(target, "inv_name")
+				--log1("3 "..known_inf.."")
+				local obj_inf_desc = game.translate_string(known_inf)
+				--log1("4 "..obj_inf_desc.."")
+				local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
+	
+				local lm_where = ""..text_find.." "..obj_inf_desc..""
+				db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
+				local _s = CUIStatic()
+				local bos = level.object_by_id(level.get_second_talker():id())
+				_s:InitTexture(bos:character_icon())
+				local str = lm_where
+				local who = bos:character_name()
+				db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
+			end
+		end
+	end
 end
 
 function job_desctiption_in_progress()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    if npc then
-        if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-            local text_phrase = {"job_try_has_1", "job_try_has_2"}
-
-            local target = xvars.npc_jobs_foractor_target[npc:name()]
-            local known_inf = system_ini():r_string(target, "inv_name")
-            local obj_inf_desc = game.translate_string(known_inf)
-            local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
-
-            local lm_where = ""..text_find.." "..obj_inf_desc..""
-            db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
-            local _s = CUIStatic()
-            local bos = level.object_by_id(level.get_second_talker():id())
-            _s:InitTexture(bos:character_icon())
-            local str = lm_where
-            local who = bos:character_name()
-            db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
-        end
-    end
+	if level.get_second_talker()
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+				local text_phrase = {"job_try_has_1", "job_try_has_2"}
+	
+				local target = xvars.npc_jobs_foractor_target[npc:name()]
+				local known_inf = system_ini():r_string(target, "inv_name")
+				local obj_inf_desc = game.translate_string(known_inf)
+				local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
+	
+				local lm_where = ""..text_find.." "..obj_inf_desc..""
+				db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
+				local _s = CUIStatic()
+				local bos = level.object_by_id(level.get_second_talker():id())
+				_s:InitTexture(bos:character_icon())
+				local str = lm_where
+				local who = bos:character_name()
+				db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
+			end
+		end
+	end
 end
 
 -- стартовое задания
@@ -136,139 +140,151 @@ function add_new_job_for_npc(obj)
 end
 
 function take_quest()
-	local npc = level.object_by_id(level.get_second_talker():id())
-	if npc then
-		local sobj = alife():object(npc:name())
-		xvars.npc_jobs_foractor_status[npc:name()] = "in_progress"
-		local prosba_text = game.translate_string("job_try_give_sms")
-		local prosba_textfind = game.translate_string("job_try_give_sms_find")
-
-		local target = xvars.npc_jobs_foractor_target[npc:name()]
-		--local text_find_obj = game.translate_string(target)
-		local inv_name = system_ini():r_string(target, "inv_name")
-		--if system_ini():line_exist(target, "known_info") then
-		--	local inv_known_info = system_ini():r_string(target, "known_info")
-		--	if not has_alife_info(inv_known_info) then
-		--		olr.info(inv_known_info)
-		--	end
-		--end
-		local obj_inf_name = game.translate_string(inv_name)
-
-		local fulltext = ""..prosba_text.." "..npc:character_name().." "..prosba_textfind.." "..obj_inf_name..""
-		amk.send_tip(""..fulltext.."", nil, nil, 10, "item", "tips", true)
-
-		olr.add_spot_on_map(sobj.id, "find_item_location", fulltext)
-		local tmr = math.random(1200, 3000)
-		olr_timers.st_timer("npc_job_fail"..tostring(npc:name()).."", tmr, "olr_npc_jobs.quest_timer_fail("..tostring(npc:id())..")")
-    end
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			local sobj = alife():object(npc:name())
+			xvars.npc_jobs_foractor_status[npc:name()] = "in_progress"
+			local prosba_text = game.translate_string("job_try_give_sms")
+			local prosba_textfind = game.translate_string("job_try_give_sms_find")
+	
+			local target = xvars.npc_jobs_foractor_target[npc:name()]
+			--local text_find_obj = game.translate_string(target)
+			local inv_name = system_ini():r_string(target, "inv_name")
+			--if system_ini():line_exist(target, "known_info") then
+			--	local inv_known_info = system_ini():r_string(target, "known_info")
+			--	if not has_alife_info(inv_known_info) then
+			--		olr.info(inv_known_info)
+			--	end
+			--end
+			local obj_inf_name = game.translate_string(inv_name)
+	
+			local fulltext = ""..prosba_text.." "..npc:character_name().." "..prosba_textfind.." "..obj_inf_name..""
+			amk.send_tip(""..fulltext.."", nil, nil, 10, "item", "tips", true)
+	
+			olr.add_spot_on_map(sobj.id, "find_item_location", fulltext)
+			local tmr = math.random(1200, 3000)
+			olr_timers.st_timer("npc_job_fail"..tostring(npc:name()).."", tmr, "olr_npc_jobs.quest_timer_fail("..tostring(npc:id())..")")
+		end
+	end
 end
 
 function precond_quest()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    if npc then
-        if xvars.npc_jobs_foractor_status[npc:name()] == "ready" and xvars.npc_jobs_foractor_target[npc:name()] ~= nil then
-            return true
-        end
-    end
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			if xvars.npc_jobs_foractor_status[npc:name()] == "ready" and xvars.npc_jobs_foractor_target[npc:name()] ~= nil then
+				return true
+			end
+		end
+	end
 end
 
 function precond_quest_done()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    if npc then
-        local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-        local notart = db.actor:object(obj_targ)
-        if notart and not notart:is_artefact() then
-            if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and nik_dialog.item_much(obj_targ, 1) ~= false then
-                return true
-            end
-        end
-    end
-    return false
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+			local notart = db.actor:object(obj_targ)
+			if notart and not notart:is_artefact() then
+				if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and nik_dialog.item_much(obj_targ, 1) ~= false then
+					return true
+				end
+			end
+		end
+	end
+	return false
 end
 
 function precond_quest_done_art()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    if npc then
-        local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-        if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-            local art = db.actor:object(obj_targ)
-            if art and art:is_artefact() then
-                local ini = system_ini()
-                return nik_dialog.item_much(obj_targ, 1) ~= false
-            end
-        end
-    end
-    return false
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+				local art = db.actor:object(obj_targ)
+				if art and art:is_artefact() then
+					local ini = system_ini()
+					return nik_dialog.item_much(obj_targ, 1) ~= false
+				end
+			end
+		end
+	end
+	return false
 end
 
 function precond_quest_done_has_pre()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    if npc then
-        if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-            return true
-        end
-    end
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		if npc then
+			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+				return true
+			end
+		end
+	end
 end
 
 function take_reward()
-    local npc = level.object_by_id(level.get_second_talker():id())
-    local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-    local objinv = db.actor:object(obj_targ)
-    db.actor:transfer_item(objinv, npc)
-    xr_sound.set_sound_play(npc, "trade_yes")
+	if level.get_second_talker() then
+		local npc = level.object_by_id(level.get_second_talker():id())
+		local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+		local objinv = db.actor:object(obj_targ)
+		db.actor:transfer_item(objinv, npc)
+		xr_sound.set_sound_play(npc, "trade_yes")
 
-    --local bw = npc:best_weapon()
-    --if bw then
-    --	log1(" bw -  "..bw:name().." ")
-    --	--npc:move_to_ruck(bw)
-    --	--npc:drop_item(bw)
-    --	npc:transfer_item(bw, npc)
-    --end
+		--local bw = npc:best_weapon()
+		--if bw then
+		--	log1(" bw -  "..bw:name().." ")
+		--	--npc:move_to_ruck(bw)
+		--	--npc:drop_item(bw)
+		--	npc:transfer_item(bw, npc)
+		--end
 
-    if objinv:is_weapon_magazined() then
-        local wait_time = 0
-        wait_time = time_global() + 1500
-        level.add_call(
-            function()
-                return time_global() > wait_time
-            end,
-            function()
-                npc:move_to_slot(objinv)
-            end
-            --function() npc:set_item(object.idle,objinv) end
-        )
-    end
+		if objinv:is_weapon_magazined() then
+			local wait_time = 0
+			wait_time = time_global() + 1500
+			level.add_call(
+				function()
+					return time_global() > wait_time
+				end,
+				function()
+					npc:move_to_slot(objinv)
+				end
+				--function() npc:set_item(object.idle,objinv) end
+			)
+		end
 
-    local flg = false
-    npc:iterate_inventory(
-        function(_, item)
-            if item then
-                if item:is_ammo() and flg == false and item:get_ammo_box_curr() ~= item:get_ammo_box_size() then
-                    flg = true
-                    npc:transfer_item(item, db.actor)
-					news_manager.relocate_item(db.actor, "in", item:section())
-                end
-            end
-        end
-    )
+		local flg = false
+		npc:iterate_inventory(
+			function(_, item)
+				if item then
+					if item:is_ammo() and flg == false and item:get_ammo_box_curr() ~= item:get_ammo_box_size() then
+						flg = true
+						npc:transfer_item(item, db.actor)
+						news_manager.relocate_item(db.actor, "in", item:section())
+					end
+				end
+			end
+		)
 
-    db.actor:change_character_reputation(5)
+		db.actor:change_character_reputation(5)
 
-    local target = xvars.npc_jobs_foractor_target[npc:name()]
-    --local text_find_obj = game.translate_string(target)
-    local known_inf = system_ini():r_float(target, "cost")
-    local to_give = known_inf + math.random(1, known_inf / 3)
+		local target = xvars.npc_jobs_foractor_target[npc:name()]
+		--local text_find_obj = game.translate_string(target)
+		local known_inf = system_ini():r_float(target, "cost")
+		local to_give = known_inf + math.random(1, known_inf / 3)
 
-    news_manager.relocate_money(db.actor, "in", to_give)
-    db.actor:give_money(to_give)
-    game_stats.money_quest_update(to_give)
-    xvars.npc_jobs_foractor_status[npc:name()] = "done"
-    xvars.npc_jobs_foractor_target[npc:name()] = "donenonetarget"
-    level.map_remove_object_spot(npc:id(), "find_item_location")
+		news_manager.relocate_money(db.actor, "in", to_give)
+		db.actor:give_money(to_give)
+		game_stats.money_quest_update(to_give)
+		xvars.npc_jobs_foractor_status[npc:name()] = "done"
+		xvars.npc_jobs_foractor_target[npc:name()] = "donenonetarget"
+		level.map_remove_object_spot(npc:id(), "find_item_location")
 
-    if olr_timers.has_timer("npc_job_fail" .. tostring(npc:name()) .. "") then
-        olr_timers.del_timer("npc_job_fail" .. tostring(npc:name()) .. "")
-    end
+		if olr_timers.has_timer("npc_job_fail" .. tostring(npc:name()) .. "") then
+			olr_timers.del_timer("npc_job_fail" .. tostring(npc:name()) .. "")
+		end
+	end
 end
 
 function quest_timer_fail(id)

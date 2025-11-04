@@ -38,13 +38,15 @@ function main_menu:InitControls()
 	end
 	self.main_frame = 	xml:InitStatic("shniaga_wnd", self)
 
-	self.btn_new_game 		= xml:Init3tButton("shniaga_wnd:btn_new_game",	self.main_frame)
-	self.btn_load			= xml:Init3tButton("shniaga_wnd:btn_load",		self.main_frame)
-	self.btn_lastsave		= xml:Init3tButton("shniaga_wnd:btn_lastsave",	self.main_frame)
-	self.btn_save			= xml:Init3tButton("shniaga_wnd:btn_save",		self.main_frame)
-	self.btn_options		= xml:Init3tButton("shniaga_wnd:btn_options",	self.main_frame)
-	self.btn_quit			= xml:Init3tButton("shniaga_wnd:btn_quit",		self.main_frame)
+	self.btn_new_game 		= xml:Init3tButton("shniaga_wnd:btn_new_game",			self.main_frame)
+	self.btn_load			= xml:Init3tButton("shniaga_wnd:btn_load",				self.main_frame)
+	self.btn_lastsave		= xml:Init3tButton("shniaga_wnd:btn_lastsave",			self.main_frame)
+	self.btn_save			= xml:Init3tButton("shniaga_wnd:btn_save",				self.main_frame)
+	self.btn_options		= xml:Init3tButton("shniaga_wnd:btn_options",			self.main_frame)
+	self.btn_quit			= xml:Init3tButton("shniaga_wnd:btn_quit",				self.main_frame)
 	self.btn_quit_to_mm		= xml:Init3tButton("shniaga_wnd:btn_quit_to_mm",		self.main_frame)
+	self.btn_offset_y		= xml:ReadAttribFlt("shniaga_wnd", 0, "btn_offset_y", 22)
+	self.btn_offset2_y		= xml:ReadAttribFlt("shniaga_wnd", 0, "btn_offset2_y", 22)
 	
 	self.btn_new_game:SetWindowName("btn_new_game")
 	self.btn_load:SetWindowName("btn_load")
@@ -84,7 +86,11 @@ function main_menu:InitControls()
 	self:Register(self.btn_back)
 	self:Register(self.btn_ret)
 	if level.present() then
-		self:ShowTabs("main_loaded")
+		if db.actor ~= nil and db.actor:alive() then
+			self:ShowTabs("main_loaded")
+		else
+			self:ShowTabs("main_dead")
+		end
 	else
 		self:ShowTabs("main")
 	end
@@ -105,7 +111,7 @@ function main_menu:Show(f)
 end
 
 function main_menu:ShowTabs(menu_type)
-	if menu_type == "main" or menu_type == "main_loaded" then
+	if menu_type == "main" or menu_type == "main_loaded" or menu_type == "main_dead" then
 		self.btn_novice:Show(false)
 		self.btn_stalker:Show(false)
 		self.btn_veteran:Show(false)
@@ -119,22 +125,43 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_back:Enable(false)
 
 		self.btn_new_game:Show(menu_type == "main")
-		self.btn_quit_to_mm:Show(menu_type == "main_loaded")
+		self.btn_quit_to_mm:Show(menu_type == "main_loaded" or menu_type == "main_dead")
 		self.btn_ret:Show(menu_type == "main_loaded")
 
 		self.btn_new_game:Enable(menu_type == "main")
-		self.btn_quit_to_mm:Enable(menu_type == "main_loaded")
+		self.btn_quit_to_mm:Enable(menu_type == "main_loaded" or menu_type == "main_dead")
 		self.btn_ret:Enable(menu_type == "main_loaded")
+		
+		if menu_type == "main_dead" then
+			local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_load:GetWndPosY()
+			y_pos = y_pos + self.btn_offset_y
+			self.btn_load:SetWndPos(x_pos, y_pos)
 
+			x_pos, y_pos = self.btn_lastsave:GetWndPosX(), self.btn_lastsave:GetWndPosY()
+			y_pos = y_pos + self.btn_offset_y
+			self.btn_lastsave:SetWndPos(x_pos, y_pos)
+
+			x_pos, y_pos = self.btn_options:GetWndPosX(), self.btn_options:GetWndPosY()
+			y_pos = y_pos + self.btn_offset_y * 2
+			self.btn_options:SetWndPos(x_pos, y_pos)
+			self.btn_save:Show(false)
+			self.btn_save:Enable(false)
+		else
+			self.btn_save:Show(menu_type == "main_loaded")
+			self.btn_save:Enable(menu_type == "main_loaded")
+			if menu_type == "main" then
+				local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_options:GetWndPosY()
+				y_pos = y_pos + self.btn_offset2_y
+				self.btn_options:SetWndPos(x_pos, y_pos)
+			end
+		end
 		self.btn_load:Show(true)
 		self.btn_lastsave:Show(true)
-		self.btn_save:Show(true)
 		self.btn_options:Show(true)
 		self.btn_quit:Show(true)
 
 		self.btn_load:Enable(true)
 		self.btn_lastsave:Enable(true)
-		self.btn_save:Enable(menu_type == "main_loaded")
 		self.btn_options:Enable(true)
 		self.btn_quit:Enable(true)
 	else
@@ -157,7 +184,7 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_quit_to_mm:Enable(false)
 		self.btn_ret:Enable(false)
 		self.btn_quit:Enable(false)
-		
+
 		self.btn_load:Enable(false)
 		self.btn_lastsave:Enable(false)
 		self.btn_save:Enable(false)
@@ -227,7 +254,11 @@ end
 
 function main_menu:OnButton_new_btn_back()
 	if level.present() then
-		self:ShowTabs("main_loaded")
+		if db.actor and db.actor:alive() then
+			self:ShowTabs("main_loaded")
+		else
+			self:ShowTabs("main_dead")
+		end
 	else
 		self:ShowTabs("main")
 	end

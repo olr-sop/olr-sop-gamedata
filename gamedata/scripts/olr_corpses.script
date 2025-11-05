@@ -6,47 +6,44 @@ local ini = system_ini()
 local nodelflag = false
 
 function del_corpse(obj)
-	if obj and xvars.npc_actor_use and not olr_protected.is_no_offline_alife_obj(obj:name()) then
-		if xvars.npc_actor_use[obj:name()] == true then
+	if obj and not olr_protected.is_no_offline_alife_obj(obj:name()) then
+		local dist = obj:position():distance_to(db.actor:position())
 
-			local dist = obj:position():distance_to(db.actor:position())
-
-			if dist > 25 then
-
-				-- жабы доска
-				local esobj = game.translate_string(xvars.quest_two_target)
-				if esobj then
-     				local eobj = alife():object(esobj)
+		if dist > 25 then
+			-- жабы доска
+			local esobj = game.translate_string(xvars.quest_two_target)
+			if esobj then
+				local eobj = alife():object(esobj)
 				if eobj then
-				if tostring(eobj:name()) == tostring(obj:name()) then
-					return
+					if tostring(eobj:name()) == tostring(obj:name()) then
+						return
+					end
 				end
-				end
-				end
+			end
 
-				-- бар доска
-				local esobj = game.translate_string(xvars.quest_two_target_bar)
-				if esobj then
-     				local eobj = alife():object(esobj)
+			-- бар доска
+			local esobj = game.translate_string(xvars.quest_two_target_bar)
+			if esobj then
+				local eobj = alife():object(esobj)
 				if eobj then
-				if tostring(eobj:name()) == tostring(obj:name()) then
-					return
+					if tostring(eobj:name()) == tostring(obj:name()) then
+						return
+					end
 				end
-				end
-				end
+			end
 
-				-- если пустой труп
-				if obj:ruck_count() == 0 then
-					--log1("dead without habar "..obj:name().." DEL ")
-					this.spawn_rotten(obj)
-					this.del_now(obj)
-					return
-				end
+			-- если пустой труп
+			if obj:ruck_count() == 0 then
+				--log1("dead without habar "..obj:name().." DEL ")
+				this.spawn_rotten(obj)
+				this.del_now(obj)
+				return
+			end
 
-				-- прошёл выброс - по флагу удаляем труп со всем хабаром кроме трупов с квестов итем
-				if xvars.npc_del_afterblow[obj:name()] == true then
-					obj:iterate_inventory(
-					function(obj, item) 
+			-- прошёл выброс - по флагу удаляем труп со всем хабаром кроме трупов с квестов итем
+			if xvars.npc_del_afterblow[obj:name()] == true then
+				obj:iterate_inventory(
+					function(obj, item)
 						if item then
 							--log1("deadmen "..obj:name().." with habar - "..item:name().." ")
 							if olr.bad_items[item:section()] and olr.bad_items[item:section()] == true then
@@ -58,24 +55,23 @@ function del_corpse(obj)
 								--news_manager.send_tip(db.actor, "АХТУНГ в трупе есть важный quest_item "..item:name().." ", nil, "dolg", 9000)
 								nodelflag = true
 								return -- сразу заканчиваем, если итем есть нефиг дальше ковырять
-							end	
+							end
 						end
-					end
-					, obj)
-					if nodelflag == false then
-						this.spawn_rotten(obj)
-						this.del_now(obj)
-					end
+					end,
+					obj
+				)
+				if nodelflag == false then
+					this.spawn_rotten(obj)
+					this.del_now(obj)
 				end
-
 			end
-
 		end
 	end
 end
 
 function del_now(obj)
 	xvars.npc_actor_use[obj:name()] = nil
+
 	if xvars.npc_seeing_news[obj:name()] ~= nil then
 		xvars.npc_seeing_news[obj:name()] = nil
 	end
@@ -88,6 +84,7 @@ function del_now(obj)
 	if xvars.npc_jobs_foractor_target[obj:name()] ~= nil then
 		xvars.npc_jobs_foractor_target[obj:name()] = nil
 	end
+	
 	local wait_time = 0
 	wait_time = time_global() + 900
 	level.add_call(
@@ -107,9 +104,7 @@ function spawn_rotten(obj)
 	local rnd = math.random(1, 8)
 	if rnd == 1 then
 		local bobj2 = alife():create("dead_body_skelet", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
-		level.client_spawn_manager():add(
-			bobj2.id,
-			0,
+		level.client_spawn_manager():add(bobj2.id, 0,
 			function(id, obj)
 				if obj then
 					local h = hit()
@@ -125,9 +120,7 @@ function spawn_rotten(obj)
 		)
 	elseif rnd == 2 then
 		local bobj2 = alife():create("dead_body_skelet2", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
-		level.client_spawn_manager():add(
-			bobj2.id,
-			0,
+		level.client_spawn_manager():add(bobj2.id, 0,
 			function(id, obj)
 				if obj then
 					local h = hit()

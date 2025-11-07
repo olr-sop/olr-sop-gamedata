@@ -12,60 +12,63 @@ pda_tips = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])
 pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 
 tips_icons = {
-	-- общие типсы, нужны как дл€ јћ  так и в целом
-	act         	= { 100, 0},
-	ohranik         = { 450, 0},
-	default         = { 350, 150},
-	item        	= { 400, 100},
-	heli        	= { 150, 200},
-	dok        		= { 350, 200},
-	artefact        = { 50, 0},
-	unknown         = { 100, 200},
-	sos       		= { 100, 100},
-	zombied       	= { 250, 150},
-	flash       	= { 200, 100},
-	medkit       	= { 250, 0},
-	vagon       	= { 200, 0},
-	military       	= { 250, 50},
-	exo_neutral     = { 100, 150},
-	bandits       	= { 50, 50},
-	treasure       	= { 50, 200},
-	af_merger       = { 350, 0},
-	volna_plots     = { 400, 0},
-	novice			= { 400, 150},
-	trader			= { 50, 100},
-	dolg			= { 150, 0},
-	dolg_mask1		= { 150, 0},
-	dolg_prapor		= { 150, 0},
-	dolg_voronin	= { 150, 0},
-	freedom			= { 0, 150},
-	freedom_max		= { 150, 150},
-	freedom_cap		= { 0, 150},
-	freedom_lukash	= { 0, 150},
-	freedom_bydlo	= { 0, 150},
-	ecolog			= { 450, 100},
-	ecolog_red		= { 450, 100},
-	arena			= { 400, 150},
-	stalker			= { 400, 150},
-	krot			= { 200, 50},
-	hellcar			= { 0, 50},
-	barman			= { 400, 50},
-	wolf			= { 0, 50},
-	o_soznanie		= { 350, 50},
-	monolith		= { 300, 150},
-	saharov			= { 450, 150},
-	prizrak			= { 350, 50},
-	money			= { 450, 50},
-	fanat			= { 400, 150},
-	killer			= { 0, 200},
-	killer_volkodav	= { 0, 200},
-	new_task		= { 150, 100}, -- 486, 486 в фл€роскриптах на старом атласе
-	jaba			= { 0, 100}, -- 332,950 в фл€роскриптах на старом атласе (жаба в зелЄной рамке щас)
-	-- дл€ амк типсов
-	trade     = { 450, 50},
-	uniq     =  {498, 47}, -- не используетс€, похуй, в јћ  это был "общий канал"
-	gen_info  = { 350, 150},
-	death     = { 250, 200},
+	default     = 						{ 3, 215},
+	
+	money_found     = 					{ 3, 3},
+	task_update     = 					{ 56, 3},
+	military_stalker     = 				{ 109, 3},
+	helicopter     = 					{ 162, 3},
+	novice     = 						{ 215, 3},
+	security    = 						{ 268, 3},	
+	
+	money_lost    = 					{ 3, 56},
+	trade    = 							{ 56, 56},
+	hero    = 							{ 109, 56},
+	documents    = 						{ 162, 56},
+	flash     = 						{ 215, 56},
+	major     = 						{ 268, 56},		
+	
+	item    = 							{ 3, 109},
+	professor    = 						{ 56, 109},
+	unknown    = 						{ 109, 109},
+	kill_stalker    = 					{ 162, 109},
+	artifact_merger     = 				{ 215, 109},
+	lone_wolf     = 				    { 268, 109},		
+	
+	item_lost    = 						{ 3, 162},
+	freedom    = 						{ 56, 162},
+	neutral    = 						{ 109, 162},
+	sos    = 							{ 162, 162},
+	freedom_leader    = 				{ 215, 162},
+
+	death    = 							{ 3, 215},
+	clear_sky    = 						{ 56, 215},
+	trader    = 						{ 109, 215},
+	info    = 							{ 162, 215},
+	dolg_leader    = 					{ 215, 215},
+
+	news    = 							{ 3, 268},
+	dolg    = 							{ 56, 268},
+	killer    = 						{ 109, 268},
+	money_update    = 					{ 162, 268},
+	specops    = 						{ 215, 321},
+	
+	task_new    = 						{ 3, 321},
+	barman    = 						{ 56, 321},
+	bandit_leader    = 					{ 109, 321},
+	trader_order    = 					{ 215, 321},
+	
+	task_completed    = 				{ 3, 374},
+	monolith    = 						{ 56, 374},
+	soldier    = 						{ 109, 374},
+	artifact    = 						{ 162, 374},
+	signal_lost    = 					{ 215, 374},
+	
+	task_failed    = 					{ 3, 427},
+	ecolog    = 						{ 56, 427},
+	doctor    = 						{ 109, 427},
+	mutants    = 						{ 162, 427},
+	weapon    = 						{ 215, 427},
 }
 
 --показываем типс (юзать только дл€ новостей оффлайн алайфа)
@@ -116,12 +119,12 @@ function send_tip(news_text, header, timeout, showtime, sender, sound, need_talk
 	local y = tips_icons[sender][2]
 
 	local news_text = "%c[255,160,181,169]"..header..":".. "\\n" .. "%c[255,245,240,218]" .. news_text
-	--db.actor:give_game_news(news_text, "", "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
+	--db.actor:give_game_news(news_text, "", "ui\\icons\\icons_notifications", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
 	
 	if db.actor:is_talking() and need_talking then	
-		db.actor:give_talk_message(news_text, "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), "iconed_answer_item")
+		db.actor:give_talk_message(news_text, "ui\\icons\\icons_notifications", Frect():set(x, y, 50, 50), "iconed_answer_item")
 	else
-		db.actor:give_game_news(news_text, "", "ui\\icons\\icons_task", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
+		db.actor:give_game_news(news_text, "", "ui\\icons\\icons_notifications", Frect():set(x, y, 50, 50), timeout * 1000, showtime * 1000)
 	end		
 	
 	return true

@@ -311,11 +311,11 @@ function zone_dead_zone_now_off()
 end
 
 function precond_dopseif_bar()
-	return nik_dialog.item_much("af_night_star",4) ~= false and db.actor:money() >= 5000
+	return nik_dialog.item_much("af_magnet",4) ~= false and db.actor:money() >= 5000
 end
 
 function dopseif_bar_start()
-	nik_dialog.out_item_much("af_night_star",4)
+	nik_dialog.out_item_much("af_magnet",4)
 	db.actor:give_money(-5000)
 	game_stats.money_quest_update(-5000)
 	news_manager.send_tip(db.actor, game.translate_string("dopseif_bar_start_0"), 1, "money_found", 39000)
@@ -629,7 +629,7 @@ function set_ac_gen_enem()
 end
 
 function zombar_koshak_find_now()
-	olr.spawn_on_obj("af_night_star", "lvl11_deadcity_m_cat_e")
+	olr.spawn_on_obj("af_magnet", "lvl11_deadcity_m_cat_e")
 end
 
 function yan_online_rafik()
@@ -1278,7 +1278,7 @@ function set_vintovka_good_cond()
 end
 
 function daem_golovudead()
-	olr.give_item("af_dummy_glassbeads")
+	olr.give_item("af_deadhead")
 end
 
 function chn_doki_start_online()
@@ -1669,14 +1669,14 @@ function chekart_belt()
 	local artcnt = 0
 	for i = 0, db.actor:belt_count() - 1 do
 		local item = db.actor:item_on_belt(i)
-		if item and item:is_artefact() and item:section() ~= "af_jabiy_glaz_garbage" and item:section() ~= "af_jabiy_glaz_garbage" and item:section() ~= "af_dezintegrator_m1" 
+		if item and item:is_artefact() and item:section() ~= "af_toadeye_garbage" and item:section() ~= "af_toadeye_garbage" and item:section() ~= "af_dezintegrator_m1" 
 				and item:section() ~= "af_dummy_dummy_q1"
 				and item:section() ~= "af_magnet_drop_q2"
 				and item:section() ~= "af_magnet_drop_q1"
 				and item:section() ~= "af_studen_m1"
 				and item:section() ~= "art_mil_jaba"
-				and item:section() ~= "af_random_zakaz"
-				and item:section() ~= "af_banka_s_holodcom"
+				and item:section() ~= "af_artefact_ordered"
+				and item:section() ~= "af_galantine_pot"
 				and item:section() ~= "af_compas"
 				and item:section() ~= "af_dezintegrator_m2" then
 			artcnt=artcnt+1
@@ -1802,7 +1802,7 @@ end
 
 function ty_norm_ne_done_try_spsgo_art()
 	news_manager.send_tip(db.actor, game.translate_string("ty_norm_ne_done_try_spsgo_art_0"), nil, "info", 29000)
-	olr.info("encyclopedy_zone_artifact_af-dummy-glassbeads")
+	olr.info("encyclopedy_zone_artifact_af-deadhead")
 	olr.del_by_name("lvl9_military_stalker_0027")
 	news_manager.send_tip(db.actor, game.translate_string("ty_norm_ne_done_try_spsgo_art_1"), 6, "flash", 9000)
 end
@@ -2290,14 +2290,14 @@ function save_dial_zel(m_where)
 end
 
 function has_smertlampa_swamp()
-	return nik_dialog.item_much("af_art_lampa",1) ~= false and has_alife_info("has_lamp_swapm")
+	return nik_dialog.item_much("af_lamp",1) ~= false and has_alife_info("has_lamp_swapm")
 end
 
 function otdaem_smert_lamp_swamp()
 	news_manager.send_tip(db.actor, game.translate_string("otdaem_smert_lamp_swamp_0"), nil, "money_found", 39000)
 	db.actor:give_money(1100)
 	game_stats.money_quest_update(1100)
-	nik_dialog.out_item_much("af_art_lampa",1)
+	nik_dialog.out_item_much("af_lamp",1)
 end
 
 function deadcity_izlom_about()
@@ -3589,14 +3589,14 @@ function jaba_about_esc_sleep()
 end
 
 function has_death_lamp()
-	return nik_dialog.item_much("af_art_lampa",1) ~= false
+	return nik_dialog.item_much("af_lamp",1) ~= false
 end
 
 function out_death_lamp()
 	news_manager.send_tip(db.actor, game.translate_string("out_death_lamp_0"), nil, "money_found", 39000)
 	get_console():execute("cam_inert 0.35")
 	level.add_pp_effector("black.ppe", 20131, false)
-	nik_dialog.out_item_much("af_art_lampa",1)
+	nik_dialog.out_item_much("af_lamp",1)
 	db.actor:give_money(3000)
 	game_stats.money_quest_update(3000)
 end
@@ -3605,7 +3605,7 @@ function out_death_lamp_osved()
 	news_manager.send_tip(db.actor, game.translate_string("out_death_lamp_osved_0"), nil, "money_found", 39000)
 	get_console():execute("cam_inert 0.35")
 	level.add_pp_effector("black.ppe", 20131, false)
-	nik_dialog.out_item_much("af_art_lampa",1)
+	nik_dialog.out_item_much("af_lamp",1)
 	db.actor:give_money(1500)
 	game_stats.money_quest_update(1500)
 end
@@ -3717,7 +3717,7 @@ function open_hlam_box()
 	game_stats.money_quest_update(-1000)
 	olr.give_item("wpn_walther")
 	olr.give_item("wpn_mp5")
-	olr.give_item("af_gravi")
+	olr.give_item("af_gravi_med")
 	olr.give_item("grenade_rgd5_anom")
 	olr.give_item("grenade_f1_anom")	
 end
@@ -4764,12 +4764,12 @@ function about_kamorka_habar()
 	local obj = alife():object("lvl1_escape_big_safe_box")
 	if math.random(1,2) == 1 then
 		alife():create("af_kolco",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		alife():create("af_studen",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)	
-		alife():create("af_banka_s_holodcom",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)			
+		alife():create("af_galantine",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)	
+		alife():create("af_galantine_pot",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)			
 	else
 		alife():create("af_kolco",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		alife():create("af_fuzz_kolobok",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		alife():create("af_night_star",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+		alife():create("af_needle_heavy",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+		alife():create("af_magnet",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 	end
 	news_manager.send_tip(db.actor, game.translate_string("about_kamorka_habar_0"), nil, "unknown", 10000)
 end
@@ -4991,7 +4991,7 @@ end
 
 function otdaem_studenone2()
 	olr_timers.st_timer("cheking_studen_reserr", 4126, "nick.studen_res_done()")
-	nik_dialog.out_item_much("af_studen",1)
+	nik_dialog.out_item_much("af_galantine",1)
 end
 
 function studen_res_done()
@@ -5011,7 +5011,7 @@ function agr_cheking_studen()
 		local obj = sim:object(id)
 		if obj and obj.parent_id == 65535 then
 			local sect = obj:section_name()
-			if sect == "af_studen" then
+			if sect == "af_galantine" then
 				cnt = cnt + 1 
 				if obj.level_name == "lvl1_escape" or obj.level_name == "lvl2_garbage" or obj.level_name == "lvl3_agroprom" or obj.level_name == "lvl4_darkdolina" or obj.level_name == "lvl6_rostok" or obj.level_name == "lvl7_yantar" then
 					local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(obj.m_game_vertex_id):level_id()), vector():set(obj.position.x,obj.position.y,obj.position.z))
@@ -5035,47 +5035,47 @@ function anihil_shooted()
 end
 
 function precond_jguchipuh()
-	return nik_dialog.item_much("af_electra_flash",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-electra-flash")
+	return nik_dialog.item_much("af_cotton",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-cotton")
 end
 
 function precond_studenone()
-	return nik_dialog.item_much("af_studen",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af_studen")
+	return nik_dialog.item_much("af_galantine",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af_galantine")
 end
 
 function otdaem_jguchipuh()
 	news_manager.send_tip(db.actor, game.translate_string("otdaem_jguchipuh_0"), nil, "money_found", 39000)
 	db.actor:give_money(600)
 	game_stats.money_quest_update(600)
-	nik_dialog.out_item_much("af_electra_flash",1)
+	nik_dialog.out_item_much("af_cotton",1)
 end
 
 function otdaem_studenone()
 	news_manager.send_tip(db.actor, game.translate_string("otdaem_studenone_0"), nil, "money_found", 39000)
 	db.actor:give_money(500)
 	game_stats.money_quest_update(500)
-	nik_dialog.out_item_much("af_studen",1)
+	nik_dialog.out_item_much("af_galantine",1)
 end
 
 function precond_radbolt()
-	return nik_dialog.item_much("af_ameba_slime",1) ~= false
+	return nik_dialog.item_much("af_junk_bolt",1) ~= false
 end
 
 function precond_radoblomok()
-	return nik_dialog.item_much("af_ameba_slug",1) ~= false
+	return nik_dialog.item_much("af_junk_debris",1) ~= false
 end
 
 function otdaem_radbolt()
 	news_manager.send_tip(db.actor, game.translate_string("otdaem_radbolt_0"), nil, "money_found", 39000)
 	db.actor:give_money(300)
 	game_stats.money_quest_update(300)
-	nik_dialog.out_item_much("af_ameba_slime",1)
+	nik_dialog.out_item_much("af_junk_bolt",1)
 end
 
 function otdaem_radoblomok()
 	news_manager.send_tip(db.actor, game.translate_string("otdaem_radoblomok_0"), nil, "money_found", 39000)
 	db.actor:give_money(250)
 	game_stats.money_quest_update(250)
-	nik_dialog.out_item_much("af_ameba_slug",1)
+	nik_dialog.out_item_much("af_junk_debris",1)
 end
 
 function agr_ecols_offl()
@@ -6661,7 +6661,7 @@ end
 function pes_zapas_triday()
 	local obj = olr.give_item("detector_simple")
 	level.client_spawn_manager():add(obj.id, 0, function(id,obj) obj:set_condition((math.random(95,99)/100)) end)
-	olr.give_item("af_banka_s_holodcom")
+	olr.give_item("af_galantine_pot")
 	olr.give_item("battery_change")
 	olr.give_item("medkit")
 	olr.give_item("antirad")
@@ -6974,49 +6974,49 @@ end
 function daem_anom_rgd5()
 	olr.give_item("grenade_rgd5_anom")
 	nik_dialog.out_item_much("grenade_rgd5",1)
-	nik_dialog.out_item_much("af_gravi",1)
+	nik_dialog.out_item_much("af_gravi_med",1)
 end
 
 function daem_anom_f1()
 	olr.give_item("grenade_f1_anom")
 	nik_dialog.out_item_much("grenade_f1",1)
-	nik_dialog.out_item_much("af_gold_fish",1)
+	nik_dialog.out_item_much("af_gravi_heavy",1)
 end
 
 function daem_anom_knife()
 	olr.give_item("wpn_knife_anom")
 	nik_dialog.out_item_much("wpn_knife",1)
-	nik_dialog.out_item_much("af_gold_fish",1)
+	nik_dialog.out_item_much("af_gravi_heavy",1)
 end
 
 function daem_anom_ammo_svd()
 	alife():create_ammo("ammo_7.62x54_7h14_anom", db.actor:position(),db.actor:level_vertex_id(),	db.actor:game_vertex_id(),db.actor:id(),10)
-	nik_dialog.out_item_much("af_gravi",1)
+	nik_dialog.out_item_much("af_gravi_med",1)
 end
 
 function daem_anom_ammo()
 	olr_timers.st_timer("sky_resarch", 935, "nick.sky_resarch()")
-	nik_dialog.out_item_much("af_gravi",2)
+	nik_dialog.out_item_much("af_gravi_med",2)
 end
 
 function has_anom_knife()
-	return nik_dialog.item_much("wpn_knife",1) ~= false and nik_dialog.item_much("af_gold_fish",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gold-fish")
+	return nik_dialog.item_much("wpn_knife",1) ~= false and nik_dialog.item_much("af_gravi_heavy",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi-heavy")
 end
 
 function has_anom_ammo()
-	return nik_dialog.item_much("af_gravi",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi")
+	return nik_dialog.item_much("af_gravi_med",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi-med")
 end
 
 function has_two_gravi_cky()
-	return nik_dialog.item_much("af_gravi",2) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi")
+	return nik_dialog.item_much("af_gravi_med",2) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi-med")
 end
 
 function has_anom_f1()
-	return nik_dialog.item_much("grenade_f1",1) ~= false and nik_dialog.item_much("af_gold_fish",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gold-fish")
+	return nik_dialog.item_much("grenade_f1",1) ~= false and nik_dialog.item_much("af_gravi_heavy",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi-heavy")
 end
 
 function has_anom_rgd()
-	return nik_dialog.item_much("grenade_rgd5",1) ~= false and nik_dialog.item_much("af_gravi",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi")
+	return nik_dialog.item_much("grenade_rgd5",1) ~= false and nik_dialog.item_much("af_gravi_med",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi-med")
 end
 
 function has_exp_paras_all()
@@ -7048,7 +7048,7 @@ function daem_paras_mg_pribor()
 end
 
 function otdaem_psy_golovu()
-	nik_dialog.out_item_much("af_dummy_glassbeads",1)
+	nik_dialog.out_item_much("af_deadhead",1)
 	olr.del_by_name("lvl7_yantar_space_restrictor_0084")
 	olr_timers.st_timer("otdaem_psy_golovu", 135, "nick.daem_otdaem_psy_golovu()")
 end
@@ -8036,11 +8036,11 @@ function the_god_is_seven()
 end
 
 function has_art_koluchka()
-	return nik_dialog.item_much("af_rusty_thorn",1) ~= false 
+	return nik_dialog.item_much("af_thorn",1) ~= false 
 end
 
 function art_koluchka_give()
-	nik_dialog.out_item_much("af_rusty_thorn",1)
+	nik_dialog.out_item_much("af_thorn",1)
 	olr.give_item("conserva")
 end
 
@@ -8862,13 +8862,13 @@ function daem_dezintegrator_m()
 end
 
 function dezintegrator_precond()
-	return nik_dialog.item_much("af_dummy_battery",1) ~= false 
+	return nik_dialog.item_much("af_chipper",1) ~= false 
 end
 
 function otdaem_dezintegrator_f()
 	db.actor:give_money(500)
 	game_stats.money_quest_update(500)
-	nik_dialog.out_item_much("af_dummy_battery",1)
+	nik_dialog.out_item_much("af_chipper",1)
 	olr_timers.st_timer("dezint_two_now", 6000, "nick.has_timer_spacesms()")
 end
 
@@ -8908,7 +8908,7 @@ function jaba_art_zakaz_spawn()
 	local gvtab = GetGameVertexes(lname)
 	local gv_min = math.min(unpack(gvtab))
 	local gv_max = math.max(unpack(gvtab))
-	local objsp = alife():create("af_random_zakaz", level.vertex_position(lv), lv, gv_max)
+	local objsp = alife():create("af_artefact_ordered", level.vertex_position(lv), lv, gv_max)
 	if objsp then
 		local metka = alife():create("treasure_place_metka", level.vertex_position(lv), lv, gv_max)
 		olr.add_spot_on_map(metka.id, "tutorial_artefact_location", game.translate_string("jaba_art_zakaz_spawn_map"))
@@ -9739,7 +9739,7 @@ function give_info_gopl_pda_new()
 end
 
 function has_dead_head_one()
-	return nik_dialog.item_much("af_dummy_glassbeads",1) ~= false 
+	return nik_dialog.item_much("af_deadhead",1) ~= false 
 end
 
 function has_timer_pda_goplit()
@@ -9747,7 +9747,7 @@ function has_timer_pda_goplit()
 end
 
 function otdaem_has_timer_pda_goplit(first_speaker, second_speaker)
-	nik_dialog.out_item_much("af_dummy_glassbeads",1)
+	nik_dialog.out_item_much("af_deadhead",1)
 	dialogs.relocate_item_section(second_speaker, "goplit_pda_dolina_hacked","in")
 	olr_treasure.create_treasure()
 	olr_treasure.create_treasure()
@@ -10198,7 +10198,7 @@ function otdaem_somefood_fix(first_speaker, second_speaker)
 end
 
 function daem_slab_gravi(first_speaker, second_speaker)	
-	dialogs.relocate_item_section(second_speaker, "af_vyvert","in")
+	dialogs.relocate_item_section(second_speaker, "af_gravi_weak","in")
 	olr.snd([[characters_voice\scenario\garbage\newbie_on_garbage\newbie_on_garbage_1]])
 end
 
@@ -10714,25 +10714,25 @@ function start_mag_two_timer()
 end
 
 function has_two_magnet_and_elshar()
-	return nik_dialog.item_much("af_night_star",2) ~= false and nik_dialog.item_much("af_electra_moonlight",1) ~= false
+	return nik_dialog.item_much("af_magnet",2) ~= false and nik_dialog.item_much("af_electrosphere",1) ~= false
 end
 
 function has_mag_accum_gauss()
-	return nik_dialog.item_much("af_night_star",1) ~= false and nik_dialog.item_much("ammo_gauss",1) ~= false
+	return nik_dialog.item_much("af_magnet",1) ~= false and nik_dialog.item_much("ammo_gauss",1) ~= false
 end
 
 function otdaem_mag_accum_gauss()
-	nik_dialog.out_item_much("af_night_star",1)
+	nik_dialog.out_item_much("af_magnet",1)
 	nik_dialog.out_item_much("ammo_gauss",1)
 end
 
 function otdaem_two_magnet_elshar()
-	nik_dialog.out_item_much("af_night_star",2)
-	nik_dialog.out_item_much("af_electra_moonlight",1)
+	nik_dialog.out_item_much("af_magnet",2)
+	nik_dialog.out_item_much("af_electrosphere",1)
 end
 
 function otdaem_two_magnet()
-	nik_dialog.out_item_much("af_night_star",2)
+	nik_dialog.out_item_much("af_magnet",2)
 end
 
 function otdaem_vss_vintorez()
@@ -10744,7 +10744,7 @@ function daem_vss_gravi()
 end
 
 function has_two_magnet()
-	return nik_dialog.item_much("af_night_star",2) ~= false 
+	return nik_dialog.item_much("af_magnet",2) ~= false 
 end
 
 function has_vss_vintorez()
@@ -10752,7 +10752,7 @@ function has_vss_vintorez()
 end
 
 function has_one_magnet()
-	return nik_dialog.item_much("af_night_star",1) ~= false 
+	return nik_dialog.item_much("af_magnet",1) ~= false 
 end
 
 function has_one_magnet_q2()
@@ -10760,7 +10760,7 @@ function has_one_magnet_q2()
 end
 
 function otdaem_one_magnet()
-	nik_dialog.out_item_much("af_night_star",1)
+	nik_dialog.out_item_much("af_magnet",1)
 end
 
 function otdaem_magnet_q2()
@@ -10888,7 +10888,7 @@ function vikup_novika_dolinovskie_now(t1,t2)
 end
 
 function daem_dezintegrator(first_speaker, second_speaker)	
-	dialogs.relocate_item_section(second_speaker, "af_dummy_battery","in")
+	dialogs.relocate_item_section(second_speaker, "af_chipper","in")
 end
 
 function daem_wpn_groza(first_speaker, second_speaker)	
@@ -10993,11 +10993,11 @@ function gg_prec_yasik_blokpost()
 end
 
 function gg_prec_special_artefact_zakaz()
-	return nik_dialog.item_much("af_random_zakaz",1) ~= false	
+	return nik_dialog.item_much("af_artefact_ordered",1) ~= false	
 end
 
 function otdaem_special_artefact_zakaz()
-	nik_dialog.out_item_much("af_random_zakaz",1)
+	nik_dialog.out_item_much("af_artefact_ordered",1)
 end
 
 function gg_ecolog_outfit_has()
@@ -11145,17 +11145,17 @@ function spawen_grav_digeernanii()
 	if level_name == "lvl1_escape" then
 		if bol_var == 1 then
 			local bloodbridge = vector():set( 208.76, -0.17, 318.00 )
-			alife():create("af_gravi", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+			alife():create("af_gravi_med", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 			--news_manager.send_tip(db.actor, game.translate_string("spawen_grav_digeernanii_0"), nil, "default", 9000)
 		end
 		if bol_var == 2 then
 			local bloodafterbridge = vector():set( 249.47, 2.22, 115.03 )
-			alife():create("af_gravi", bloodafterbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+			alife():create("af_gravi_med", bloodafterbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 			--news_manager.send_tip(db.actor, game.translate_string("spawen_grav_digeernanii_1"), nil, "default", 9000)
 		end
 		if bol_var == 3 then
 			local fracunderbridge = vector():set( -94.91, -0.63, 110.13 ) 
-			alife():create("af_gravi", fracunderbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+			alife():create("af_gravi_med", fracunderbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 			--news_manager.send_tip(db.actor, game.translate_string("spawen_grav_digeernanii_2"), nil, "default", 9000)
 		end
 	end
@@ -11281,23 +11281,23 @@ function killlll_max_ros()
 end
 
 function goplit_5_have()
-	return nik_dialog.item_much("af_rusty_thorn",5) ~= false 
+	return nik_dialog.item_much("af_thorn",5) ~= false 
 end
 
 function goplit_2_have()
-	return nik_dialog.item_much("af_rusty_kristall",2) ~= false 
+	return nik_dialog.item_much("af_thorn_black",2) ~= false 
 end
 
 function goplit_5_otdaem()
-	nik_dialog.out_item_much("af_rusty_thorn",5)
+	nik_dialog.out_item_much("af_thorn",5)
 end
 
 function goplit_2_otdaem()
-	nik_dialog.out_item_much("af_rusty_kristall",2)
+	nik_dialog.out_item_much("af_thorn_black",2)
 end
 
 function otdaem_at_glaz_gar()
-	nik_dialog.out_item_much("af_jabiy_glaz_garbage",1)
+	nik_dialog.out_item_much("af_toadeye_garbage",1)
 	olr.del_by_name("lvl2_garbage_staler_undead_olr_0002")
 end
 
@@ -11310,7 +11310,7 @@ function otdaem_arg_jaba_voda_boloto()
 end
 
 function otdaem_jguchaya_vata()
-	nik_dialog.out_item_much("af_electra_flash",1)
+	nik_dialog.out_item_much("af_cotton",1)
 end
 
 function otdaem_wpn_vintorez_gravi()
@@ -11318,7 +11318,7 @@ function otdaem_wpn_vintorez_gravi()
 end
 
 function actor_have_jguchaya_vata()
-	return nik_dialog.item_much("af_electra_flash",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-electra-flash")
+	return nik_dialog.item_much("af_cotton",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-cotton")
 end
 
 function precond_gravi_vintorez()
@@ -11342,11 +11342,11 @@ function ros_kanistra_precond()
 end
 
 function precond_gar_glaz_only()
-	return nik_dialog.item_much("af_jabiy_glaz_garbage",1) ~= false and not has_alife_info("kaban_spawn_first_talk_talked") 
+	return nik_dialog.item_much("af_toadeye_garbage",1) ~= false and not has_alife_info("kaban_spawn_first_talk_talked") 
 end
 
 function precond_gar_glaz()
-	return nik_dialog.item_much("af_jabiy_glaz_garbage",1) ~= false and has_alife_info("kaban_spawn_first_talk_talked") 
+	return nik_dialog.item_much("af_toadeye_garbage",1) ~= false and has_alife_info("kaban_spawn_first_talk_talked") 
 end
 
 function esc_detector_precond()
@@ -11362,11 +11362,11 @@ function precond_garb_miliraty_docs()
 end
 
 function arts_zakaz1_slab_precond()
-    return nik_dialog.item_much("af_vyvert", 1) and not nik_dialog.item_much("af_gravi", 1)
+    return nik_dialog.item_much("af_gravi_weak", 1) and not nik_dialog.item_much("af_gravi_med", 1)
 end
 
 function arts_zakaz1_sred_precond()
-    return nik_dialog.item_much("af_gravi", 1) and not nik_dialog.item_much("af_vyvert", 1)
+    return nik_dialog.item_much("af_gravi_med", 1) and not nik_dialog.item_much("af_gravi_weak", 1)
 end
 
 function spaven_pmka_escape()
@@ -11545,8 +11545,8 @@ function give_konservas(first_speaker, second_speaker)
 	olr.give_item("conserva")
 	olr.give_item("conserva")
 	dialogs.relocate_item_section(second_speaker, "ammo_9x19_pbp","in")
-	dialogs.relocate_item_section(second_speaker, "af_banka_s_holodcom","in")
-	dialogs.relocate_item_section(second_speaker, "af_banka_s_holodcom","in")
+	dialogs.relocate_item_section(second_speaker, "af_galantine_pot","in")
+	dialogs.relocate_item_section(second_speaker, "af_galantine_pot","in")
 	if not has_alife_info("komandir_zdoh_nahui") then
 		news_manager.send_tip(db.actor, game.translate_string("give_konservas_0"), 17, "soldier", 15000)
 	end
@@ -11594,7 +11594,7 @@ function arts_zakaz1_vse_daem_nag(first_speaker, second_speaker)
 end
 
 function mertv_prines_banki()
-	return nik_dialog.item_much("af_banka_s_holodcom",5) ~= false 
+	return nik_dialog.item_much("af_galantine_pot",5) ~= false 
 end
 
 function mertv_vodka_vsk()
@@ -11602,23 +11602,23 @@ function mertv_vodka_vsk()
 end
 
 function arts_zakaz1_vse_precond()
-	return nik_dialog.item_much("af_vyvert",1) ~= false and nik_dialog.item_much("af_gravi",1) ~= false	
+	return nik_dialog.item_much("af_gravi_weak",1) ~= false and nik_dialog.item_much("af_gravi_med",1) ~= false	
 end
 
 function digger_equip_precind()
-	return nik_dialog.item_much("stalker_outfit",1) ~= false and nik_dialog.item_much("af_gravi",1) ~= false	
+	return nik_dialog.item_much("stalker_outfit",1) ~= false and nik_dialog.item_much("af_gravi_med",1) ~= false	
 end
 
 function arts_leader_freedom_door_precond()
-	return nik_dialog.item_much("af_dummy_battery",1) ~= false and nik_dialog.item_much("af_drops",1) ~= false		
+	return nik_dialog.item_much("af_chipper",1) ~= false and nik_dialog.item_much("af_zuda",1) ~= false		
 end
 
 function digger_equip_precind_slab()
-	return nik_dialog.item_much("stalker_outfit",1) ~= false and nik_dialog.item_much("af_vyvert",2) ~= false	
+	return nik_dialog.item_much("stalker_outfit",1) ~= false and nik_dialog.item_much("af_gravi_weak",2) ~= false	
 end
 
 function odtaem_banki_stud()
-	nik_dialog.out_item_much("af_banka_s_holodcom",5)
+	nik_dialog.out_item_much("af_galantine_pot",5)
 end
 
 function odtaem_doki_plot_esc()
@@ -11626,7 +11626,7 @@ function odtaem_doki_plot_esc()
 end
 
 function arts_zakaz1_slab_otdaem()
-	nik_dialog.out_item_much("af_vyvert",1)
+	nik_dialog.out_item_much("af_gravi_weak",1)
 end
 
 function esc_detector_diger_otdaem()
@@ -11636,12 +11636,12 @@ function esc_detector_diger_otdaem()
 end
 
 function arts_zakaz1_sred_otdaem()
-	nik_dialog.out_item_much("af_gravi",1)
+	nik_dialog.out_item_much("af_gravi_med",1)
 end
 
 function arts_zakaz1_vse_otdaem()
-	nik_dialog.out_item_much("af_vyvert",1)
-	nik_dialog.out_item_much("af_gravi",1)
+	nik_dialog.out_item_much("af_gravi_weak",1)
+	nik_dialog.out_item_much("af_gravi_med",1)
 end
 
 function mertv_vodka_vsk_otdaem()
@@ -11651,12 +11651,12 @@ end
 
 function otdaem_digg_cost_slab()
 	nik_dialog.out_item_much("stalker_outfit",1)
-	nik_dialog.out_item_much("af_vyvert",2)
+	nik_dialog.out_item_much("af_gravi_weak",2)
 end
 
 function otdaem_digg_cost()
 	nik_dialog.out_item_much("stalker_outfit",1)
-	nik_dialog.out_item_much("af_gravi",1)
+	nik_dialog.out_item_much("af_gravi_med",1)
 	xvars.naparnik_name = game.translate_string("st_nick_name_digger")
 	local sobj = alife():object("lvl2_garbage_stalker_0037lloh") 
 	if sobj then 
@@ -11683,8 +11683,8 @@ function nap_zob()
 end
 
 function arts_leader_freedom_give_otdaem()
-	nik_dialog.out_item_much("af_dummy_battery",1)
-	nik_dialog.out_item_much("af_drops",1)
+	nik_dialog.out_item_much("af_chipper",1)
+	nik_dialog.out_item_much("af_zuda",1)
 end
 
 function spaven_crow_spawn()
@@ -12103,7 +12103,7 @@ function give_bablo_varka_silgrav(t1,t2)
 end
 
 function daem_silgrav(first_speaker, second_speaker)	
-	dialogs.relocate_item_section(second_speaker, "af_gold_fish","in")
+	dialogs.relocate_item_section(second_speaker, "af_gravi_heavy","in")
 end
 
 function precond_artshar()
@@ -12128,27 +12128,27 @@ function daem_atifact_merger(first_speaker, second_speaker)
 end
 
 function precond_golovi()
-	return nik_dialog.item_much("af_dummy_glassbeads",3) ~= false and has_alife_info("encyclopedy_zone_artifact_af-dummy-glassbeads")		
+	return nik_dialog.item_much("af_deadhead",3) ~= false and has_alife_info("encyclopedy_zone_artifact_af-deadhead")		
 end
 
 function otdaem_golovi()
-	nik_dialog.out_item_much("af_dummy_glassbeads",3)
+	nik_dialog.out_item_much("af_deadhead",3)
 end
 
 function otdaem_golovi2()
-	nik_dialog.out_item_much("af_dummy_glassbeads",1)
+	nik_dialog.out_item_much("af_deadhead",1)
 end
 
 function precond_golovi2()
-	return nik_dialog.item_much("af_dummy_glassbeads",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-dummy-glassbeads")	
+	return nik_dialog.item_much("af_deadhead",1) ~= false and has_alife_info("encyclopedy_zone_artifact_af-deadhead")	
 end
 
 function precond_ribka()
-	return nik_dialog.item_much("af_gold_fish",2) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gold-fish")	
+	return nik_dialog.item_much("af_gravi_heavy",2) ~= false and has_alife_info("encyclopedy_zone_artifact_af-gravi-heavy")	
 end
 
 function otdaem_ribka()
-	nik_dialog.out_item_much("af_gold_fish",2)
+	nik_dialog.out_item_much("af_gravi_heavy",2)
 end
 
 function precond_chdoki()
@@ -13461,7 +13461,7 @@ end
 
 function maxsms_cool4()
 	news_manager.send_tip(db.actor, game.translate_string("st_maxsms_cool4"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", false)
-	olr.spawn_on_obj("af_dummy_glassbeads", "lvl6_rostok_stalker_0021")
+	olr.spawn_on_obj("af_deadhead", "lvl6_rostok_stalker_0021")
 end
 
 function mg_sms_hey_punkass_hrom()
@@ -13611,7 +13611,7 @@ end
 function dofhodi_kvestpat()
 	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_dofhodi_kvestpat"), math.random(1000, 1500), "trader", 15000, nil, "pda_objective", false)
-	local sobj = alife():object("lvl2_garbage_af_jabiy_glaz_garbage") 
+	local sobj = alife():object("lvl2_garbage_af_toadeye_garbage") 
 	if sobj then 
 	local id = sobj.id
 		alife():set_switch_offline (id, false)

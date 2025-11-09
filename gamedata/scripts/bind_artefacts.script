@@ -90,7 +90,7 @@ function CArtBinder:net_spawn(data)
 		local weghper = xvars.arts[s_name .. stng_w]
 		if s_name and weghper then
 			if xvars.arts[s_name .. stng_w] then
-				--if not self.object:section() == "af_ameba_mica" then
+				--if not self.object:section() == "af_mercury_ball" then
 				--log1("abas "..weghper.."")
 				self.object:set_weight(weghper)
 			--log1("bind art "..xvars.arts[self.object:name()].." - set weight - "..xvars.arts[s_name..stng_w].."")
@@ -156,7 +156,7 @@ function CArtBinder:update(delta)
 	--a.trail_light_range = math.random(10,100)
 	--end
 
-	if isec == "af_electra_moonlight" or isec == "af_fuzz_kolobok" or isec == "af_fireball" then
+	if isec == "af_electrosphere" or isec == "af_needle_heavy" or isec == "af_transpsphere" then
 		if not iParent then
 			local shelbone = self.object:get_physics_shell():get_element_by_bone_id(0)
 			shelbone:apply_force(70, math.random(10, 750), math.random(100, 900))
@@ -164,7 +164,7 @@ function CArtBinder:update(delta)
 	end
 
 	--рутный шар
-	if isec == "af_ameba_mica" then
+	if isec == "af_mercury_ball" then
 		self.object:set_condition(self.object:condition() - self:TimeCondLostSh())
 		self.object:set_weight(self.object:condition() * 10 - self:TimeCondLostSh())
 		if self.object:condition() <= 0.01 then
@@ -178,7 +178,7 @@ function CArtBinder:update(delta)
 		end
 
 		-- испаряем эти арты когда кондишн в ноль
-		if isec == "af_night_star" or isec == "af_vyvert" or isec == "af_gravi" or isec == "af_gold_fish" or isec == "af_gold_fish_black" then
+		if isec == "af_magnet" or isec == "af_gravi_weak" or isec == "af_gravi_med" or isec == "af_gravi_heavy" or isec == "af_gravi_black" then
 			if self.object:condition() <= 0.01 then
 				olr.del(self.object)
 			end
@@ -189,7 +189,7 @@ function CArtBinder:update(delta)
 			if device().precache_frame > 1 then
 				for i = 0, db.actor:belt_count() - 1 do
 					local item = db.actor:item_on_belt(i)
-					if item and item:section() == "af_ameba_mica" then
+					if item and item:section() == "af_mercury_ball" then
 						db.actor:drop_item(item)
 						db.actor:transfer_item(item, db.actor)
 						local wait_time = 0
@@ -208,7 +208,7 @@ function CArtBinder:update(delta)
 				end
 			end
 		end
-		if isec == "af_studen" or isec == "af_electra_flash" then
+		if isec == "af_galantine" or isec == "af_cotton" then
 			if iParent then
 				if get_clsid(iParent) == clsid.actor then
 					db.actor.health = -0.001

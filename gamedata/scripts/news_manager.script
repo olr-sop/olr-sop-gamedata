@@ -187,7 +187,12 @@ function send_task(actor, type, task, objective)
 	local texture_name = texture_by_action_type[type] or "ui_iconsTotal_update_task"
 	local task_texture, task_rect = get_texture_info("ui_iconsTotal_" .. task:get_id(), texture_name)
 	
-	local news_text = "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]) .. "\\n" .. "%c[default]" .. game.translate_string(task:get_title())
+	local news_text = ""
+	if db.actor:is_talking() then
+		news_text = "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]) .. "\\n" .. "%c[default]" .. game.translate_string(task:get_title())
+	else
+		news_text =  game.translate_string(task:get_title())
+	end
 	local news_text_static = game.translate_string(action_descr_by_type[type]) .. " " .. game.translate_string(task:get_title())
 
 	-- Обработка нового задания
@@ -213,10 +218,10 @@ function send_task(actor, type, task, objective)
 	elseif type == "complete" then
 		pda_tips:play(db.actor, 0, sound_object.s2d)
 		
-		if db.actor:is_talking() then	 
+		if db.actor:is_talking() then
 			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
 		else
-			db.actor:give_game_news(news_text, "", task_texture, task_rect, 0, 3000)
+			db.actor:give_game_news(news_text, "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
 		end
 		pda_task:play(db.actor, 0, sound_object.s2d)
 
@@ -225,7 +230,7 @@ function send_task(actor, type, task, objective)
 		if db.actor:is_talking() then	 
 			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
 		else
-			db.actor:give_game_news(news_text, "", task_texture, task_rect, 0, 3000)
+			db.actor:give_game_news(news_text, "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
 		end
 		pda_task:play(db.actor, 0, sound_object.s2d)
 	end

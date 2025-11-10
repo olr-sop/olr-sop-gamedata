@@ -8565,9 +8565,12 @@ function punk_ass_mf_svatoy()
 	olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
 	local target = alife():object("lvl12_radar_bunker_staler_undead_olr_0001")
 	if target then
-		local pos = target:bone_position("bip01_head")
-		local vDir = pos:sub(db.actor:position())
-		db.actor:set_actor_direction(-vDir:getH())
+		local cobj = level.object_by_id(target.id)
+		if cobj then
+			local pos = cobj:bone_position("bip01_head")
+			local vDir = pos:sub(db.actor:position())
+			db.actor:set_actor_direction(-vDir:getH())
+		end
 	end
 end
 
@@ -10146,7 +10149,7 @@ function bun_swatoy_rush_sms()
 	if target then
 		local obj = level.object_by_id(target.id)
 		if obj then
-			local pos = target:bone_position("bip01_head")
+			local pos = obj:bone_position("bip01_head")
 			local vDir = pos:sub(db.actor:position())
 			db.actor:set_actor_direction(-vDir:getH())
 			

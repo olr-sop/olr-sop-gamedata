@@ -124,33 +124,11 @@ end
 
 function mil_monsters_qutscene()
 	olr.kill_mon_in_radius(db.actor:position(), 30)
-	olr.blow_add(1000)
-	level.set_weather_fx("surge")
-	level.add_pp_effector("vibros_p.ppe", 231, false)
-	level.add_cam_effector2("mil_mon_volna.anm", 3470, false, "nick.mil_monsters_qutscene_end")
-
-	olr.snd([[ambient\special\generators_kill_zombies]])
-	bind_stalker.hide_weapon()
-	level.add_pp_effector("black.ppe", 281, false)
-	level.add_pp_effector("total_recall.ppe", 176, false)
-	olr.disable_walk()
-	level.disable_input()
-
-	local wait_time = 0
-	wait_time = time_global() + 200
-	level.add_call(
-		function()
-			return time_global() > wait_time
-		end,
-		function()
-			level.hide_indicators()
-		end
-	)
-
-	local se_obj = alife():object("lvl9_military_smart_terrain_0003")
-	local se_obj2 = alife():object("voyaka_mill")
-	local se_obj3 = alife():object("lvl9_military_smart_terrain_0014")
-	local se_obj4 = alife():object("lvl9_military_zone_radioactive_killing_mon")
+	
+	local se_obj = alife():object("polana")
+	local se_obj2 = alife():object("lvl9_military_smart_terrain_0003")
+	local se_obj3 = alife():object("lvl9_military_zone_radioactive_strong_0023")
+	local se_obj4 = alife():object("lvl9_military_smart_terrain_0014")
 
 	if se_obj then
 		for id = 1, 5 do
@@ -295,6 +273,29 @@ function mil_monsters_qutscene()
 			amk.write_monster_params(params, obj)
 		end
 	end
+	
+	olr.blow_add(1000)
+	level.set_weather_fx("surge")
+	level.add_pp_effector("vibros_p.ppe", 231, false)
+	level.add_cam_effector2("mil_mon_volna.anm", 3470, false, "nick.mil_monsters_qutscene_end")
+
+	olr.snd([[ambient\special\generators_kill_zombies]])
+	bind_stalker.hide_weapon()
+	level.add_pp_effector("black.ppe", 281, false)
+	level.add_pp_effector("total_recall.ppe", 176, false)
+	olr.disable_walk()
+	level.disable_input()
+
+	local wait_time = 0
+	wait_time = time_global() + 200
+	level.add_call(
+		function()
+			return time_global() > wait_time
+		end,
+		function()
+			level.hide_indicators()
+		end
+	)
 end
 
 function surge_day_now()
@@ -421,12 +422,6 @@ function osved_bar_band_kill()
 	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("osved_bar_band_kill_0"), nil, "flash", 30000)
 	olr.info("kill_bar_portoshitely")
-end
-
-function garage_tri_bandosa()
-	olr.spawn_on_obj("agr_bandit_respawn_1", "lvl1_escape_blow_hide_restr_0009")
-	olr.spawn_on_obj("agr_bandit_respawn_2", "lvl1_escape_blow_hide_restr_0009")
-	olr.spawn_on_obj("agr_bandit_respawn_1", "lvl1_escape_blow_hide_restr_0009")	
 end
 
 function garage_fedka_bandosi()

@@ -2135,22 +2135,28 @@ function create_detector_esc_zavod()
 end
 
 function set_level_choosen_zombied(level)
-	local montabl = { [clsid.script_stalker] = true }
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if montabl[kill:clsid()] and kill:alive() and kill:community() ~= "neutral" and kill.level_name == level then
-			olr.kill_offline_stalker(kill)
-			local rnd = math.random(1, 5)
-			if rnd == 1 then
-				sim:create("m_zombie_e", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-			elseif rnd == 2 then
-				sim:create("zombie_weak", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-			elseif rnd == 3 then
-				sim:create("zombie_strong", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-			end
-		end
-	end
+    local montabl = { [clsid.script_stalker] = true }
+    local sim = alife()
+    for id = 1, 65534 do
+        local kill = sim:object(id)
+        if kill then
+            if montabl[kill:clsid()] then
+                if kill:alive() and kill:community() ~= "neutral" then
+                    if kill.level_name == level then
+                        olr.kill_offline_stalker(kill)
+                        local rnd = math.random(1, 5)
+                        if rnd == 1 then
+                            alife():create("m_zombie_e", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+                        elseif rnd == 2 then
+                            alife():create("zombie_weak", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+                        elseif rnd == 3 then
+                            alife():create("zombie_strong", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 function pre_aes_antenna_upravlenie()

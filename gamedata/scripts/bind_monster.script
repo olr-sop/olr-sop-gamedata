@@ -299,54 +299,6 @@ function generic_object_binder:update(delta)
 				end
 			end
 
-			-- мозг колба
-			if sec == "brain_lab_nofeet" then
-				if has_alife_info("bun_mosk_start_quest_go_done") then
-					if dist_to_actor < 15 then
-						actor_close_mozg = true
-						if db.actor:alive() and not has_alife_info("start_mosk_figh_go") then
-							db.actor.psy_health = 1
-							db.actor.power = 1
-							db.actor.health = 0.001
-							db.actor.radiation = -0.001
-						end
-						if has_alife_info("start_mosk_figh_go") and self.object:see(act) then
-							db.actor.psy_health = -0.007
-							level.add_pp_effector("dead_zone.ppe", 1501, true)
-							level.set_pp_effector_factor(220701, 0.0005)
-						end
-					else
-						actor_close_mozg = false
-					end
-					if self.object and mozg_light then
-						if mozg_light_flag == false then
-							--alife():teleport_object(mozg_light.id, self.object:game_vertex_id(), self.object:level_vertex_id(), self.object:position()) -- зачем то дублируется
-							mozg_light_flag = true
-							alife():teleport_object(mozg_light.id, self.object:game_vertex_id(), self.object:level_vertex_id(), self.object:position())
-						end
-						local lcobj = level.object_by_id(mozg_light.id)
-						if lcobj then
-							local lamp = lcobj:get_hanging_lamp()
-							if lamp then
-								local brg_var = math.random(45, 55) / 200
-								lamp:set_brightness(brg_var)
-								lamp:set_position(vector():set(self.object:position().x, self.object:position().y + 0.2, self.object:position().z))
-							end
-						end
-					end
-					if not mozg_particle:playing() then
-						mozg_particle:play_at_pos(vector():set(self.object:position().x, self.object:position().y + 0.2, self.object:position().z))
-						local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\xforce2]])
-						snd_obj:play_no_feedback(self.object, sound_object.s2d, 0, vector(), 0.25)
-					end
-					if level.name() == "lvl13_prip" then
-						self.object:set_fov(5)
-					else
-						self.object:set_fov(xvars.cur_fov)
-					end
-				end
-			end
-
 			-- пси от полтера
 			if cls == clsid.poltergeist_s and self.object:see(act) then
 				if dist_to_actor < 8 then
@@ -616,10 +568,6 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 
 	if self.st.hit then
 		xr_logic.issue_event(self.object, self.st.hit, "hit_callback", obj, amount, local_direction, who, bone_index)
-	end
-	
-	if self.object:name() == "lvlobhod_nofeet_rad" then
-		xr_effects.mosk_fight_hitted()
 	end
 	
 end

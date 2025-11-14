@@ -6059,108 +6059,6 @@ function agr_yas_offl()
 	end
 end
 
-function punck_mosk_up()
-	local obj = alife():object("lvlobhod_nofeet_rad")
-	if obj then
-		local h = hit()
-		h.power = 5230.1
-		h.direction = vector():set(0, 100, 0)
-		h.impulse = 2230
-		h.draftsman = db.actor
-		h.type = hit.strike
-		obj:hit(h)
-		local pos = obj:position()
-		particles_object([[anomaly\a-03-flash-sparks_old00]]):play_at_pos(pos)
-		particles_object([[anomaly\a-03-expl-sparks_00]]):play_at_pos(pos)
-		particles_object([[anomaly2\monolith_golo_death_olr]]):play_at_pos(pos)
-		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\sob]])
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	end
-end
-
-function leltwl_actor_away()
-	news_manager.send_tip(db.actor, game.translate_string("leltwl_actor_away_0"), nil, "trader", 29000)
-	olr_timers.st_timer("attakvert", 9, "nick.attakvert()")
-	olr.del_by_name("lvl_lvltw_veh_nis_0001")
-end
-
-function attakvert()
-	news_manager.send_tip(db.actor, game.translate_string("attakvert_0"), nil, "heli", 29000)
-	news_manager.send_tip(db.actor, game.translate_string("attakvert_1"), 9, "heli", 29000)
-	olr_timers.st_timer("attakrpgspawn", 7, "nick.attakrpgspawn()")
-end
-
-function attakrpgspawn()
-	olr.spawn_on_obj("wpn_rpg7", "lvl_level12_space_restrictor_0004", 3)
-	olr.spawn_on_obj("detector_simple", "lvl_level12_space_restrictor_0004")
-	local snd_obj = xr_sound.get_safe_sound_object([[weapons\f1\explode]])
-	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	particles_object([[explosions\expl_benzin_00]]):play_at_pos(vector():set(57.68,-11.15,-164.36))
-	olr.info("lev_heli_atackmosk")
-end
-
-function start_shvatka_mosk_tmrst()
-	db.actor:detach_vehicle()
-	news_manager.send_tip(db.actor, game.translate_string("start_shvatka_mosk_tmrst_0"), nil, "trader", 29000)
-	olr_timers.st_timer("attak1", 2, "nick.tlpmoskfight()")
-	olr_timers.st_timer("attak2", 6, "nick.tlpmoskfight2()")
-	olr_timers.st_timer("attak3", 16, "nick.tlpmoskfight3()")
-end
-
-function tlpmoskfight3()
-	local obj = alife():object("lvlobhod_nofeet_rad")
-	if obj then
-		local h = hit()
-		h.power = 0.1
-		h.direction = vector():set(0, -1, 0)
-		h.impulse = 0
-		h.draftsman = db.actor
-		h.type = hit.strike
-		obj:hit(h)
-	end
-end
-
-function tlpmoskfight2()
-	db.actor:give_info_portion("start_mosk_figh_go")
-	news_manager.send_tip(db.actor, game.translate_string("tlpmoskfight2_0"), nil, "unknown", 49000)
-	news_manager.send_tip(db.actor, game.translate_string("tlpmoskfight2_1"), 12, "unknown", 49000)
-	olr_timers.st_timer("attak3", 366, "nick.kill_mosk_strahovka()")
-	local bsobj = alife():object("lvl_level12_big_container")
-	if bsobj then
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-		alife():create_ammo("ammo_vog-25p", bsobj.position, bsobj.m_level_vertex_id, bsobj.m_game_vertex_id, bsobj.id, 1)
-	end
-end
-
-function kill_mosk_strahovka()
-    local obj = alife():object("lvlobhod_nofeet_rad")
-    if obj then
-        obj:kill(obj)
-	end
-end
-
-function tlpmoskfight()
-	if db.actor:alive() then
-		olr.del_by_name("lvl_level12_space_restrictor_0001")
-		olr.del_by_name("lvl_level12_space_restrictor_0000")
-		local point = patrol("tlpmoskfight_walk")
-		local look = patrol("tlpmoskfight_look")
-		db.actor:set_actor_position(point:point(0))
-		local dir = look:point(0):sub(point:point(0))
-		db.actor:set_actor_direction(-dir:getH())
-		level.add_pp_effector("black.ppe", 20131, false)
-	end
-end
-
 function set_prip_mons()
 	-- ¬р€дли будет сильно быстрее, скорее всего разницы не будет, либо на уровне погрешности, тут чисто дл€ читаемости
 	-- “аблица объектов и их визуалов (nil означает, что visual_name не мен€етс€)
@@ -6447,28 +6345,6 @@ function del_mon_prfriend()
 	olr.del_by_name("lvl13_prip_staler_undead_olr")
 end
 
-function rad_bun_to_mosk_sms()
-	local sobj = alife():object("l10u_radar_bunker_physic_object_0075") 
-	if sobj then 
-		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_part")) 
-	end
-	local sobj = alife():object("lvl12_radar_bunker_physic_object_0020") 
-	if sobj then 
-		olr.add_spot_on_map(sobj.id,"blue_location",game.translate_string("st_nick_location_part")) 
-	end
-	news_manager.send_tip(db.actor, game.translate_string("rad_bun_to_mosk_sms_0"), nil, "unknown", 49000)
-	olr.spawn_on_obj("m_poltergeist_normal_tele", "lvl12_radar_bunker_zone_radioactive_killing_0003", 3)
-	olr.spawn_on_obj("m_burer_green", "lvl12_radar_bunker_zone_radioactive_killing_0003")
-	olr.spawn_on_obj("karlito_yellow", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
-	olr.spawn_on_obj("karlito", "lvl12_radar_bunker_zone_radioactive_killing_0003", 2)
-	olr.spawen_phantoms()
-	olr_timers.st_timer("spawen_phantoms", 15, "olr.spawen_phantoms()")
-	olr_timers.st_timer("spawen_phantoms", 35, "olr.spawen_phantoms()")
-	olr_timers.st_timer("spawen_phantoms", 65, "olr.spawen_phantoms()")
-	olr_timers.st_timer("spawen_phantoms", 95, "olr.spawen_phantoms()")
-	olr_timers.st_timer("spawen_phantoms", 115, "olr.spawen_phantoms()")
-end
-
 function bun_on_nasos()
 	olr.del_by_name("lvl12_radar_bunker_space_restrictor_0017")
 	olr.del_by_name("l10u_radar_bunker_physic_object_0048")
@@ -6513,7 +6389,6 @@ function bun_mosk_start_otkachka()
 	olr.spawn_on_obj("bloodsucker_strong", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 	olr.spawn_on_obj("m_fracture_e", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 	olr.spawn_on_obj("m_pseudodog_e", "lvl12_radar_bunker_zone_radioactive_killing_0002")
-	olr.spawn_on_obj("m_burer_green", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 	olr.spawn_on_obj("af_lichinka", "lvl12_radar_bunker_zone_radioactive_killing_0002")
 
 	--news_manager.send_tip(db.actor, game.translate_string("bun_mosk_start_otkachka_0"), nil, "hero", 5000)
@@ -6560,75 +6435,6 @@ function del_punks_ros_del()
 	olr.del_by_name("bar_bar_visitors_3_3_0000")
 	olr.del_by_name("lvl5_bar_stalker_0031")
 	olr.del_by_name("bar_bar_visitors_3_3_0001")
-end
-
-function rad_bun_to_mosk_prip()
-	olr.kill_mon_in_radius(db.actor:position(), 55)
-	local point = patrol("brain_prip_idl_look")
-	local look = patrol("brain_prip_idl_walk")
-	db.actor:set_actor_position(point:point(0))
-	local dir = look:point(0):sub(point:point(0))
-	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
-	db.actor:give_info_portion("prip_mosk_start_quest_spawn")
-	news_manager.send_tip(db.actor, game.translate_string("rad_bun_to_mosk_prip_0"), 2, "unknown", 60000)
-	olr_timers.st_timer("del_bun_to_mosk_alert", 6, "nick.rad_bun_to_mosk_prip_go_kontrs()")
-	local sobj = alife():object("l10u_radar_bunker_physic_object_0075") 
-	if sobj then 
-		olr.del(sobj)
-	end
-	local sobj = alife():object("lvl12_radar_bunker_physic_object_0020") 
-	if sobj then 
-		olr.del(sobj)
-	end
-end
-
-function rad_bun_to_mosk_prip_go_kontrs()
-	olr.info("mosk_prip_go_sturm")
-	news_manager.send_tip(db.actor, game.translate_string("rad_bun_to_mosk_prip_go_kontrs_0"), 2, "unknown", 30000)
-	news_manager.send_tip(db.actor, game.translate_string("rad_bun_to_mosk_prip_go_kontrs_1"), 8, "unknown", 60000)
-end
-
-function rad_mosk_away_prip()
-	nik_dialog.out_item_much("mosk_part_one",1)
-	nik_dialog.out_item_much("mosk_part_two",1)
-	olr_timers.st_timer("del_bun_to_mosk", 20, "nick.rad_bun_to_mosk_tmr_del()")
-end
-
-function rad_bun_to_mosk_tmr_del()
-	olr.to_offline("lvl12_radar_bunker_brain_lab_nofeet")
-	local wait_time = 0
-	wait_time = time_global() + 111
-	level.add_call(
-		function() return time_global() > wait_time end,
-		function() olr.del_by_name("lvl12_radar_bunker_brain_lab_nofeet") end
-	)
-	olr.del_by_name("lvl12_radar_bunker_space_restrictor_0019")	-- рестриктор который пока не поможешь мозгу не удал€етс€
-	db.actor:give_info_portion("bun_mosk_start_quest_go_done")
-end
-
-function rad_have_mosk_all()
-	return nik_dialog.item_much("mosk_part_one",1) ~= false and nik_dialog.item_much("mosk_part_two",1) ~= false
-end
-
-function bun_mosk_start_ques()
-	olr.del_by_name("lvl12_radar_bunker_physic_object_0005")
-	olr.del_by_name("lvl12_radar_bunker_physic_object_0024")
-	olr_timers.st_timer("bun_to_mosk", 12, "nick.rad_bun_to_mosk_sms()")
-end
-
-function rad_bun_to_mosk_tmr_go()
-	local point = patrol("brain_idl_look")
-	local look = patrol("brain_idl_walk")
-	db.actor:set_actor_position(point:point(0))
-	local dir = look:point(0):sub(point:point(0))
-	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
-	--level.add_cam_effector2("camera_effects\\fatigue.anm", 90, false, "")
-end
-
-function rad_bun_to_mosk_tmr()
-	olr_timers.st_timer("ded_bun_to_mosk_i", 2, "nick.rad_bun_to_mosk_tmr_go()")
 end
 
 function pes_zapas_triday()
@@ -13956,9 +13762,6 @@ function barm_sms_prcpntr()
 	olr.del_by_name("psy_izl")
 	olr.del_by_name("psy_izl_0003_script")
 	news_manager.send_tip(db.actor, game.translate_string("barm_sms_prcpntr"), nil, "trader", 30000, nil, "pda_objective", false)
-	if has_alife_info("bun_mosk_start_quest_go_done") then
-		olr_timers.st_timer("del_bun_to_mosk", 25, "nick.rad_bun_to_mosk_prip()")
-	end
 end
 
 function njvis_oka_sch()

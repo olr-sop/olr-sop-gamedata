@@ -3331,19 +3331,6 @@ function use_nasos_pover()
 	end
 end
 
-function del_mosk_radar_all()
-	olr.del_by_name("rad_start_btr_0001")
-	olr.del_by_name("psy_izl_0003_script")
-	news_manager.send_tip(db.actor, game.translate_string("del_mosk_radar_all_0"), nil, "unknown", 19000)
-	olr.del_by_name("lvl10_radar_space_restrictor_0008")
-	olr.del_by_name("radar_nofeet_rad")
-	olr.del_by_name("lvl12_radar_bunker_brain_lab_nofeet")
-	olr.del_by_name("psy_izl_0000")
-	olr.del_by_name("psy_izl")
-	olr.del_by_name("psy_izl")
-	olr.del_by_name("psy_izl_0001")
-end
-
 function prip_sniper_kill()
 	if db.actor:alive() then
 		db.actor.health = -1
@@ -3373,57 +3360,6 @@ function kill_actor_psy()
 		if not snd_obj:playing() then 
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 		end	
-	end
-end
-
-function fighting_zone_mosk()
-	if has_alife_info("start_mosk_figh_go") then
-		db.actor.health = -0.2
-		local point = patrol("tlpmoskfight_walk")
-		local look = patrol("tlpmoskfight_look")
-		db.actor:set_actor_position(point:point(0))
-		local dir = look:point(0):sub(point:point(0))
-		db.actor:set_actor_direction(-dir:getH())
-		level.add_pp_effector("black.ppe", 20131, false)
-		olr.horror_snd()
-	end
-end
-
-function mosk_dead_now()
-	olr.del_by_name("lvl_level12_space_restrictor_0002")
-	--olr.del_by_name("lvlobhod_nofeet_rad")
-	olr_timers.st_timer("expl_ttftor", 12, "nick.leltwl_actor_away()")
-end
-
-function mosk_fight_hitted()
-	local effect_for_wpn = {
-		["wpn_rg-6"] = true,
-		["wpn_rg6_m1"] = true,
-		["wpn_gauss"] = true,
-		["wpn_rpg7"] = true,
-		grenade_f1 = true,
-		grenade_rgd5 = true
-	}
-
-	local cur_weapon = db.actor:active_item()
-	if cur_weapon then
-		local cur_weapon_sec = cur_weapon:section()
-		if effect_for_wpn[cur_weapon_sec] then
-			xvars.mosk_hits = xvars.mosk_hits + 1
-			olr.spawen_phantoms()
-		end
-	end
-
-	if xvars.mosk_hits > 10 then
-		local target = alife():object("lvlobhod_nofeet_rad")
-		if target then
-			local level_obj = level.object_by_id(target.id)
-			if level_obj then
-				level_obj:kill(level_obj)
-				olr.horror_snd()
-				olr_timers.st_timer("expl_ttftor", 1, "nick.punck_mosk_up()")
-			end
-		end
 	end
 end
 

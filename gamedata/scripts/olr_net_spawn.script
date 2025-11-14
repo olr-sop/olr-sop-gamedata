@@ -9,18 +9,6 @@ function on_netspawn()
 	--olr.info("karlik_gen_rush_goinfo_delkarlik")
 	end
 
-	-- радар
-	if has_alife_info("bun_mosk_go_radar") and alife():object("radar_nofeet_rad") ~= nil and level.name() == "lvl10_radar" then
-		--log1("fix radar")
-		xr_effects.del_mosk_radar_all()
-	end
-	
-	-- радар бункер
-	if has_alife_info("bun_mosk_start_quest_go_done") and alife():object("lvl12_radar_bunker_brain_lab_nofeet") ~= nil and level.name() == "lvl12_radar_bunker" then
-		--log1("fix radar bunker")
-		nick.rad_bun_to_mosk_tmr_del()
-	end
-
 	if not has_alife_info("spawn_jourlalist_monstrs_spawn") and has_alife_info("spawn_jourlalist") and level.name() == "lvl13_prip" then
 		nick.chaes_add_spawn_doki_seven()
 		olr_timers.st_timer("spawn_jourlalist_monstrs_spawn", 9, "nick.spawn_jourlalist_monstrs_spawn_online()")
@@ -86,14 +74,6 @@ function on_netspawn()
 	if has_alife_info("greh_leader_key_info") and not has_alife_info("holmy_expedition_start") and level.name() == "lvl7_yantar" then
 		db.actor:give_info_portion("holmy_expedition_start")
 		olr_timers.st_timer("holmy_expedition_start", 250, "nick.holmy_expedition_start_now()")
-	end
-
-	if not has_alife_info("bun_mosk_go_radar") then
-		if has_alife_info("bun_mosk_start_quest_go_done") and has_alife_info("pre_bun_antenna_off") and level.name() == "lvl10_radar" then
-			db.actor:give_info_portion("bun_mosk_go_radar")
-			news_manager.send_tip(db.actor, game.translate_string("on_netspawn_0"), nil, "unknown", 49000)
-			olr.blow_add(500)
-		end
 	end
 
 	if not has_alife_info("fin_rush_from_sarco_to_warlab") then

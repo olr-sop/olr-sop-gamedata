@@ -6,14 +6,14 @@ function use(obj)
 	
 	--log1("olr_items_use - section = "..section.."")
 
-	-- Мед инжектор и всё с ним связанное
+	-- ћед инжектор и всЄ с ним св€занное
 	if section == "med_injector" then
 		--level.start_stop_menu(olr_items_use.injector_info(),true) -- неиспользуемое на данный момент гуи для инжектора
 		alife():create("med_injector_empty", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end
 	if section == "med_injector_capsule" then
 		if db.actor:object("med_injector_empty") == nil then
-			news_manager.send_tip(db.actor, game.translate_string("use_2")) -- Переписать наверное надо
+			news_manager.send_tip(db.actor, game.translate_string("use_2")) -- ѕереписать
 			return
 		end
 		olr.del(db.actor:object("med_injector_empty"))
@@ -28,7 +28,7 @@ function use(obj)
 		alife():create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end	
 	
-	-- Батарейки
+	-- Ѕатарейки
 	if section == "battery_change_headlamp" then
 		local has_torch = db.actor:item_in_slot(9)
 		if has_torch == nil then
@@ -62,13 +62,13 @@ function use(obj)
 		end
 	end	
 
-	-- Рюкзак тайник
+	-- –юкзак тайник
 	if section == "custom_treasure_rukzak" then
 		local obj = alife():create("box_rukzak_treasure", db.actor:position():add(db.actor:direction():mul(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		clear_useful_for_ai(obj)
 	end
 
-	-- Бутылка для воды с агропрома
+	-- Ѕутыль дл€ воды с агропрома
 	if section == "empty_butilka_arg_zam" then
 		if not xr_conditions.actor_in_zone(nil,nil,{"lvl3_agroprom_space_restrictor_0019"})	 then
 			news_manager.send_tip(db.actor, game.translate_string("use_3"))
@@ -79,7 +79,7 @@ function use(obj)
 		news_manager.send_tip(db.actor, game.translate_string("use_4"))
 	end
 
-	-- Бутылка для сбора холодца
+	-- Ѕутыль дл€ холодца
 	if section == "empty_butilka" then
 		for i=1,65534 do
 			local anom = level.object_by_id(i)
@@ -101,8 +101,8 @@ function use(obj)
 		end
 	end
 	
--- theysani
--- ѕереносим всЄ из худовых функций в обычные юзы
+	-- theysani
+	-- ѕереносим всЄ из худовых функций в обычные юзы
 
 	if section == "water" then
 		local bobj2 = alife():create("ph_food_vater_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -203,14 +203,6 @@ function use(obj)
 		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
 	end
 
-	if section == "bread" then
-		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-	end
-
-	if section == "kolbasa" then
-		--log1(" lost - "..s_cond.." --- add satiety - "..curr_sat.."")
-	end
-
 	local cond = obj:condition()
 	log1("! theysani - переделать на таблицу и вписать всю еду включа€ готовую")
 	if section == "bread" or section == "kolbasa" or section == "conserva" or section == "rat_food" or section == "crow_food" then
@@ -262,39 +254,9 @@ function use(obj)
 
 	if section == "antirad_medpribor" then
 		db.actor:give_info_portion("anti_glob_rad")
-		olr_timers.st_timer("anti_glob_rad_timer", 250, "nick.anti_glob_rad_timer()")
-		olr_timers.st_timer("anti_glob_rad_timer", 265, "nick.anti_glob_rad_timer()")
+		olr_timers.st_timer("anti_glob_rad_timer", 250, "olr_items_use.anti_glob_rad_timer()")
+		olr_timers.st_timer("anti_glob_rad_timer", 265, "olr_items_use.anti_glob_rad_timer()")
 	end
-
--- »зменение параметров актора
-	-------------------------------------------------------------------------
-	local ini = system_ini()
-	local eat_health_val		= 0.0
-	local eat_satiety_val		= 0.0
-	local eat_power_val			= 0.0
-	local eat_alcohol_val		= 0.0
-	local wounds_heal_perc_val	= 0.0
-	local water_power_val		= 0.0
-
-	local cond_new				= cond
-	if cond <= 0.15 then
-		cond_new = 0.15
-	end
-	eat_sleep_val				= cond_new * utils.cfg_get_float(ini, section, "eat_sleep", 0.0)
-	eat_health_val				= cond_new * utils.cfg_get_float(ini, section, "eat_health", 0.0)
-	eat_satiety_val				= cond_new * utils.cfg_get_float(ini, section, "eat_satiety", 0.0)
-	eat_power_val				= cond_new * utils.cfg_get_float(ini, section, "eat_power", 0.0)
-	eat_alcohol_val				= cond_new * utils.cfg_get_float(ini, section, "eat_alcohol", 0.0)
-	wounds_heal_perc_val		= cond_new * utils.cfg_get_float(ini, section, "wounds_heal_perc", 0.0)
-	water_power_val				= cond_new * utils.cfg_get_float(ini, section, "water_power", 0.0)
-
-	db.actor:change_actor_health(eat_health_val)
-	db.actor:change_actor_satiety(eat_satiety_val)
-	db.actor:change_actor_power(eat_power_val)
-	db.actor:change_actor_alcohol(eat_alcohol_val)
-	db.actor:change_actor_sleep(eat_sleep_val)
-	db.actor:change_actor_thirst(water_power_val)
-	db.actor:heal_wounds(wounds_heal_perc_val)
 end
 
 
@@ -305,6 +267,11 @@ end
 function eat_medkit_tmr_timer()
 	db.actor:disable_info_portion("eat_medkit_tmr")
 	db.actor:disable_info_portion("actor_healing_medkit")
+end
+
+function anti_glob_rad_timer()
+	db.actor:disable_info_portion("anti_glob_rad")
+	db.actor.health = -0.1
 end
 
 

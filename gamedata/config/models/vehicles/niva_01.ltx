@@ -3,6 +3,9 @@ linear_factor		= 0.3
 angular_factor		= 0.3
 
 [car_definition]
+ph_mass					= 1850
+time_to_explosion		= 10
+
 camera_pos				= -0.45, 1.43, 0.09
 camera_pos_firsteye		= -0.45, 1.43, 0.09
 camera_pos_lookat		= 0.0, 2.0, -0.8
@@ -38,7 +41,9 @@ bone_for_invbox			= pos_trunk
 fuel_tank				= 42					; объем бензобака (L).
 fuel_consumption		= 16					; базовый расход топлива (преобразуется в m_fuel_consumption /= 100000.f).
 
-;Двигатель
+;Двигатель: используется гауссово распределение, 
+;центрированное вокруг m_b (max_torque_rpm). Ширина распределения определяется m_c.
+;m_c = _sqrt(2.f * m_power_rpm * (m_power_rpm - m_torque_rpm))
 engine_power			= 59					; удельная мощность (кВт = л.с.*0,808)
 max_power_rpm			= 5200					; (RPM) обороты максимальной мощности.
 max_torque_rpm			= 3000					; обороты максимального крутящего момента.
@@ -46,73 +51,74 @@ max_engine_rpm			= 5400					; максимально допустимые обороты двигателя.
 idling_engine_rpm		= 850					; обороты холостого хода.
 
 ;Динамика двигателя
-power_increment_factor	= 0.6					; насколько быстро мощность двигателя увеличивается при увеличении оборотов.
+power_increment_factor	= 0.2					; насколько быстро мощность двигателя увеличивается при увеличении оборотов.
 power_decrement_factor	= 0.7					; насколько быстро мощность двигателя уменьшается при уменьшении оборотов.
-rpm_increment_factor	= 0.5					; насколько быстро обороты двигателя увеличиваются при нажатии на педаль газа.
+rpm_increment_factor	= 0.12					; насколько быстро обороты двигателя увеличиваются при нажатии на педаль газа.
 rpm_decrement_factor	= 0.4					; насколько быстро обороты двигателя уменьшаются при отпускании педали газа.
-m_power_neutral_factor	= 0.2					; какая часть мощности передается на колеса при нейтральной передаче
+m_power_neutral_factor	= 0.08					; какая часть мощности передается на колеса при нейтральной передаче
 
 ;Ходовая часть
 reference_radius		= 0.35					; Эталонный радиус колеса, используемый при просчёте двигателя
-axle_friction			= 8.2					; Трение в осях (применяется при нейтральной передаче) (N*m)
+axle_friction			= 24.2					; Трение в осях (применяется при нейтральной передаче) (N*m)
 
 ;Рулевое управление
 steering_speed			= 1.25					; Скорость поворота рулевых колес. rps (1)
-steering_torque			= 16000					; Сила гидроусилителя руля. (N*m)
+steering_torque			= 1600					; Сила гидроусилителя руля. (N*m)
 
 ;Тормозная система
 break_torque			= 0.8					; Сила тормозных колодок. (N*m)
-break_time				= 1.2					; Время полного задействования тормозов
+break_time				= 1.75					; Время полного задействования тормозов
 hand_break_torque		= 1200					; Момент ручного тормоза
 
 ;Трансмиссия
 main_gear_ratio			= 3.8					; Передаточное отношение
 auto_transmission		= off					; Автоматическая коробка (on/off)
 
+; передаточное число, мин об/мин, макс об/мин для переключения передачи
 [transmission_gear_ratio]						; Передачи трансмиссии
-						; shift down/ shift up. (rpm, необходимое для переключения)
-R						= 5,	0,		0		; Задняя
-N1						= 5.0,	1500,	4500	; 1-я
-N2						= 3.2,	2000,	5000	; 2-я
-N3						= 2.2,	2500,	5500	; 3-я
-N4						= 1.6,	3000,	6000	; 4-я
+						; ratio	min		max
+R						= 15,	0,		0		; Задняя
+N1						= 17.2,	1200,	2000	; 1-я
+N2						= 9.14,	1000,	2800	; 2-я
+N3						= 1.45,	1500,	4000	; 3-я
+N4						= 0.11,	2000,	5500	; 4-я
 
 [air_resistance]
-linear_factor			= 350		; линейное сопротивление
-angular_factor			= 500		; угловое
+linear_factor			= 850		; линейное сопротивление
+angular_factor			= 1200		; угловое
 
 [wheels_params]
-friction_factor			= 2.5		; трение колес с поверхностью
-damping_factor			= 1.9		; демпфирование подвески
-spring_factor			= 1.2		; жесткость пружины подвески
+friction_factor			= 1.6		; трение колес с поверхностью
+damping_factor			= 0.8		; демпфирование подвески
+spring_factor			= 0.9		; жесткость пружины подвески
 
 [front_left_wheel]
 break_torque			= 1.25		; Сила тормозных колодок. (N*m
 hand_break_torque		= 4.015		; сила торможения пробелом (по умолчанию = break_torque)
-friction_factor			= 3.5		; трение между колесом и поверхностью
+friction_factor			= 1.5		; трение между колесом и поверхностью
 damping_factor			= 0.5		; затухание колебания подвески
 spring_factor			= 0.9		; жесткость подвески
 
 [front_right_wheel]
 break_torque			= 1.25		; Сила тормозных колодок. (N*m
 hand_break_torque		= 4.015		; сила торможения пробелом (по умолчанию = break_torque)
-friction_factor			= 3.5		;
-damping_factor			= 0.5		;
-spring_factor			= 0.9		;
+friction_factor			= 1.5		; трение между колесом и поверхностью
+damping_factor			= 0.5		; затухание колебания подвески
+spring_factor			= 0.9		; жесткость подвески
 
 [back_left_wheel]
 break_torque			= 1.25		; Сила тормозных колодок. (N*m
 hand_break_torque		= 4.01		; сила торможения пробелом (по умолчанию = break_torque)
-friction_factor			= 2.0		;
-damping_factor			= 0.5		;
-spring_factor			= 0.9		;
+friction_factor			= 1.5		; трение между колесом и поверхностью
+damping_factor			= 0.5		; затухание колебания подвески
+spring_factor			= 0.9		; жесткость подвески
 
 [back_right_wheel]
 break_torque			= 1.25		; Сила тормозных колодок. (N*m
 hand_break_torque		= 4.01		; сила торможения пробелом (по умолчанию = break_torque)
-friction_factor			= 2.0		;
-damping_factor			= 0.5		;
-spring_factor			= 0.9		;
+friction_factor			= 1.5		; трение между колесом и поверхностью
+damping_factor			= 0.5		; затухание колебания подвески
+spring_factor			= 0.9		; жесткость подвески
 
 [impulse_transition_to_parts]
 random_min				 = 0.1		; величина случайно направленного импульса пропорционально массе нового объекта

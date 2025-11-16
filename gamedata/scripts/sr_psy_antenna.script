@@ -99,7 +99,7 @@ function PsyAntenna:generate_phantoms()
 end
 function PsyAntenna:update_sound()
 	if not self.sound_initialized then
-		self.sound_obj:play_at_pos		(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d + sound_object.looped)
+		self.sound_obj:play_at_pos		(db.actor, vector():set(0, 0, 1), 0, sound_object.s2d + sound_object.looped)
 
 		self.sound_initialized = true
 	end
@@ -212,9 +212,9 @@ function action_psy_antenna:__init( obj, storage )
 	self.state  = state_void -- еще не ясно, в зоне он, или нет
 end
 function action_psy_antenna:reset_scheme( loading )
-	if loading then
-		self.state = xr_logic.pstor_retrieve( self.object, "inside"  )
-	else
+--'	if loading then
+--'		self.state = xr_logic.pstor_retrieve( self.object, "inside"  )
+--'	else
 		if self.state == state_inside then
 			self:zone_leave()
 		end
@@ -222,8 +222,8 @@ function action_psy_antenna:reset_scheme( loading )
 		self.state = state_void
 
 		self:switch_state(db.actor)
-	end
---	printf("[psy_antenna] reset_scheme %s, inside %s", tostring(loading), tostring(self.state))
+--'	end
+--'	printf("[psy_antenna] reset_scheme %s, inside %s", tostring(loading), tostring(self.state))
 end
 function action_psy_antenna:deactivate()
 	if self.state == state_inside then
@@ -295,7 +295,7 @@ function action_psy_antenna:zone_leave()
 	end
 end
 function action_psy_antenna:save()
-	xr_logic.pstor_store( self.object, "inside", self.state )
+	--'xr_logic.pstor_store( self.object, "inside", self.state )
 end
 
 ---------------------------------------------------------------------------------------------------------------------

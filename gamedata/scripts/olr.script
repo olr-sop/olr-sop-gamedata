@@ -286,40 +286,6 @@ function to_slot(obj)
 	end
 end
 
-function to_belt(obj)
-	if db.actor and obj:section() == "af_art460" then
-		local tCount = 0
-		db.actor:iterate_inventory(
-			function(_, item)
-				if item and item:section() == "af_art_3_step_anom_svetim" and db.actor:is_on_belt(item) then
-					level.add_pp_effector("blink.ppe", 141, false)
-					local rnd = math.random(1, 2)
-					if rnd == 1 then
-						db.actor.satiety = 1
-						db.actor.health = 1
-						db.actor.alcohol = 0
-						db.actor.radiation = -1
-					else
-						db.actor.health = -1
-					end
-					local snd_obj = xr_sound.get_safe_sound_object([[actor\heartbeat]])
-					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-					local wait_time = 0
-					wait_time = time_global() + 50
-					level.add_call(
-						function()
-							return time_global() > wait_time
-						end,
-						function()
-							olr.del(obj)
-						end
-					)
-				end
-			end
-		)
-	end
-end
-
 function start_game_vars()
 
 	--------------------ѕеременные задаваемые при первом старте игры-------------------

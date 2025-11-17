@@ -4,77 +4,81 @@
 class "ui_best_stalkers" (CUIScriptWnd)
 
 function ui_best_stalkers:__init() super()
-    self:InitControls()
-    self:InitCallBacks()
+	self:InitControls()
+	self:InitCallBacks()
 end
 
 function ui_best_stalkers:__finalize()
 end
 
 function ui_best_stalkers:InitControls()
-    self:Init(0, 0, 1024, 768)
-    
-    local xml = CScriptXmlInit()
-    local xml_file = xml:is_16_9_mode() and "flyer\\best_stalkers_16.xml" or "flyer\\best_stalkers.xml"
-    xml:ParseFile(xml_file)
+	self:Init(0, 0, 1024, 768)
+	
+	local xml = CScriptXmlInit()
+	local xml_file = xml:is_16_9_mode() and "flyer\\best_stalkers_16.xml" or "flyer\\best_stalkers.xml"
+	xml:ParseFile(xml_file)
 
-    self.back = xml:InitStatic("background", self)
+	self.back = xml:InitStatic("background", self)
 	self.background_top = xml:InitStatic("background_top", self)
 	self.background_bottom = xml:InitStatic("background_bottom", self)
-    self.help_vopros = xml:InitStatic("help_vopros", self.back)
-    self.button_exit = xml:Init3tButton("button_back", self.back)
-    self.main = xml:InitScrollView("list_wnd", self)
-    
-    -- Регистрация кнопки
-    self:Register(self.button_exit, "button_back")
+	self.help_vopros = xml:InitStatic("help_vopros", self.back)
+	self.button_exit = xml:Init3tButton("button_back", self.back)
+	self.main = xml:InitScrollView("list_wnd", self)
+	
+	-- Регистрация кнопки
+	self:Register(self.button_exit, "button_back")
 
-    local sim = alife()
-    local stalkers = {}
-    local maxItems = 35 -- лимит элементов
+	local sim = alife()
+	local stalkers = {}
+	local maxItems = 35 -- лимит элементов
 
-    -- Собираем живых сталкеров
-    for id = 1, 65534 do
-        local sobj = sim:object(id)
-        if sobj and sobj:clsid() == clsid.script_stalker and sobj:alive() then
-            if not olr_protected.is_no_offline_alife_obj(sobj:name()) then
-                table.insert(stalkers, {id = sobj.id, rank = sobj:rank()})
-            end
-        end
-    end
+	-- Собираем живых сталкеров
+	for id = 1, 65534 do
+	local sobj = sim:object(id)
+	if sobj and sobj:clsid() == clsid.script_stalker and sobj:alive() then
+		if not olr_protected.is_no_offline_alife_obj(sobj:name()) then
+			local comm = sobj:community()
+			local profile_name = sobj:profile_name()
+			if comm ~= "voenstals" and comm ~= "monolith" and profile_name ~= "sim_soldier_specnaz" then
+				table.insert(stalkers, { id = sobj.id, rank = sobj:rank() })
+			end
+		end
+	end
+end
 
-    -- Сортируем по рангу (по убыванию)
-    table.sort(stalkers, function(a, b) return a.rank > b.rank end)
+	-- Сортируем по рангу (по убыванию)
+	table.sort(stalkers, function(a, b) return a.rank > b.rank end)
 
-    -- Отображаем топ сталкеров
-    for i = 1, math.min(maxItems, #stalkers) do
-        local sobj = sim:object(stalkers[i].id)
-        if sobj then
-            local pk = get_netpk(sobj, 1)
-            if pk:isOk() then
-                local data = pk:get()
-                local item = xml:InitStatic("static_number", self.main)
-                item:SetText(string.format("%s (%d)", data.character_name, data.rank))
-            end
-        end
-    end
+	-- Отображаем топ сталкеров
+	for i = 1, math.min(maxItems, #stalkers) do
+		local sobj = sim:object(stalkers[i].id)
+		if sobj then
+			local pk = get_netpk(sobj, 1)
+			if pk:isOk() then
+				local data = pk:get()
+				local item = xml:InitStatic("static_number", self.main)
+				item:SetText(string.format("%s (%d)", data.character_name, data.rank))
+			end
+		end
+	end
 end
 
 function ui_best_stalkers:InitCallBacks()
-    self:AddCallback("button_back", ui_events.BUTTON_CLICKED, self.Hide, self)
+	self:AddCallback("button_back", ui_events.BUTTON_CLICKED, self.Hide, self)
 end
 
 function ui_best_stalkers:Hide()
-    self:GetHolder():start_stop_menu(self, false)
+	self:GetHolder():start_stop_menu(self, false)
 end
 
 function ui_best_stalkers:OnKeyboard(dik, keyboard_action)
-    CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
  
-    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-        if dik == DIK_keys.DIK_ESCAPE then
-            self:Hide()
-        end
-    end
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			self:Hide()
+		end
+	end
  
-    return true
+	return true
 end

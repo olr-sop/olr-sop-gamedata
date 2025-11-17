@@ -1,278 +1,262 @@
 [disable]
-linear_factor		= 0.4
-angular_factor		= 0.4
+linear_factor		= 0.5
+angular_factor		= 0.5
 
-;-------------------------------------------------------------------------------
-;------ Общие параметры---------------------------------------------------------
 [car_definition]
+ph_mass					= 1450
 time_to_explosion		= 10
-camera_pos         		= -0.4, 1.3, 0.1                                               ; позиция камеры актора в машине
-camera_pos_firsteye			= -0.4, 1.3, 0.1
-camera_pos_lookat			= 0.0, 2.0, -0.8
+
+camera_pos				= -0.4, 1.3, 0.1
+camera_pos_firsteye		= -0.4, 1.3, 0.1
+camera_pos_lookat		= 0.0, 2.0, -0.8
 camera_pos_free			= 0.0, 2.2, -1.5
-driving_wheels			= back_left_wheel,back_right_wheel   			                        ; ведущие колёса
-steering_wheels			= front_left_wheel,front_right_wheel                                    ; рулевые колёса
-breaking_wheels			= front_left_wheel,front_right_wheel,back_left_wheel,back_right_wheel   ; тормозящие колёса
-doors				= left_door,right_door                                                  ; двери
-steer				= stearing_wheel                                                        ; руль
-driver_place			= seat_01                                                             ; место водителя
-exhausts			= exhaust                                                              ; выхлопная труба
+
+driving_wheels			= back_left_wheel,back_right_wheel										; ведущие колёса
+steering_wheels			= front_left_wheel,front_right_wheel									; рулевые колёса
+breaking_wheels			= front_left_wheel,front_right_wheel,back_left_wheel,back_right_wheel	; тормозящие колёса
+doors					= left_door,right_door													; двери
+steer					= stearing_wheel														; руль
+driver_place			= seat_01																; место водителя
+exhausts				= exhaust																; выхлопная труба
 exhaust_particles		= vehiclefx\exhaust_1
 
-bone_for_invbox         	= pos_trunk
+;Открываемые двери.
+opening_doors			= true					; поддерживаются ли открываемые двери(true/false)
 
-opening_doors			= true ;iiaaa??eaa?ony ee ioe?uaaaiua aaa?e(true/false)
+left_door_bone			= physic_left_door		; имя кости левой открываемой двери
+right_door_bone			= physic_right_door		; имя кости правой открываемой двери
 
-seat_dist			= 2.0 ; aenoaioey n eioi?ie ii?ii nanou a iaoeio
-doors_dist			= 7.0 ; aenoaioey n eioi?ie ii?ii ioe?uaaou aaa?e
+left_door_out_bone		= left_door				; имя кости левой двери		для выхода
+right_door_out_bone		= right_door			; имя кости правой двери	для выхода
 
-left_door_bone			= physic_left_door ; eiy einoe eaaie ioe?uaaaiie aaa?e
-right_door_bone			= physic_right_door ; eiy einoe i?aaie ioe?uaaaiie aaa?e
+seat_bone_left			= root					; имя кости правой двери	для выхода
+seat_bone_right			= roof					; имя кости левой двери		для выхода
 
-left_door_out_bone		= left_door ; 	имя кости левой двери  для выхода
-right_door_out_bone		= right_door ; 	имя кости правой двери  для выхода
+seat_dist				= 2.0					; дистанция с которой можно сесть в машину
+doors_dist				= 7.0					; дистанция с которой можно открывать двери
 
-seat_bone_left			= root ; 	имя кости правой двери  для входа
-seat_bone_right			= roof ; 	имя кости левой двери  для входа
+bone_for_invbox			= pos_trunk
 
+;Топливная система
+fuel_tank				= 39					; объем бензобака (L).
+fuel_consumption		= 6						; базовый расход топлива (преобразуется в m_fuel_consumption /= 100000.f).
 
-;-------------------------------------------------------------------------------
-;------ Factory parameters of Engine -------------------------------------------
-fuel_tank         		= 39         	; L
-fuel_consumption  		= 6;7		    ; L / (100k R); liters per 100 000 rotations
-engine_power      		= 55        	; horse_power (kW=hp*0.808) max power
-max_power_rpm     		= 5400        	; (nominal rpm ) on this rpm value engine power reaches maximum, must be within every diapason 	- shift down/ shift up
-max_torque_rpm    		= 3000       	; on this rpm engine torque reaches maximum
+;Двигатель: используется гауссово распределение, 
+;центрированное вокруг m_b (max_torque_rpm). Ширина распределения определяется m_c.
+;m_c = _sqrt(2.f * m_power_rpm * (m_power_rpm - m_torque_rpm))
+engine_power			= 55					; удельная мощность (кВт = л.с.*0,808)
+max_power_rpm			= 4600					; (RPM) обороты максимальной мощности.
+max_torque_rpm			= 3000					; обороты максимального крутящего момента.
+max_engine_rpm			= 5000					; максимально допустимые обороты двигателя.
+idling_engine_rpm		= 700					; обороты холостого хода.
 
-power_increment_factor		= 0.02
-power_decrement_factor		= 0.01
-rpm_increment_factor		= 0.02
-rpm_decrement_factor		= 0.01
-m_power_neutral_factor		= 0.75
+;Динамика двигателя
+power_increment_factor	= 0.35					; насколько быстро мощность двигателя увеличивается при увеличении оборотов.
+power_decrement_factor	= 0.4					; насколько быстро мощность двигателя уменьшается при уменьшении оборотов.
+rpm_increment_factor	= 0.3					; насколько быстро обороты двигателя увеличиваются при нажатии на педаль газа.
+rpm_decrement_factor	= 0.4					; насколько быстро обороты двигателя уменьшаются при отпускании педали газа.
+m_power_neutral_factor	= 0.08					; какая часть мощности передается на колеса при нейтральной передаче
 
-; additional engine parameters
-max_engine_rpm    		= 5500			; rpm (5000) rpm will never be more
-idling_engine_rpm		= 750       	; rpm (750) min rpm - starts from this rpm value
+;Ходовая часть
+reference_radius		= 0.29					; Эталонный радиус колеса, используемый при просчёте двигателя
+axle_friction			= 11.5					; Трение в осях (применяется при нейтральной передаче) (N*m)
 
-;-------------------------------------------------------------------------------
-;------ Adjustment a wheel -----------------------------------------------------
-reference_radius  		= 0.28		; Радиус колеса, используемый при просчёте двигателя
-axle_friction     		= 0.001      	; Ослабление скорости в неетральной позиции. (N*m)
-steering_speed    		= 0.7         	; Скорость поворота рулевого колеса, в максимум. rps (1)
-steering_torque   		= 900000    	; Сила гидроусилителя руля. (N*m)
-break_torque      		= 0.02        	; Сила тормозных колодок.   (N*m)
-break_time        		= 1.0         	; время нарастания силы торможения до максимума, при подтормаживании (стрелка назад)
-hand_break_torque 		= 0.02        	; сила торможения пробелом (по умолчанию = break_torque)
+;Рулевое управление
+steering_speed			= 0.7					; Скорость поворота рулевых колес. rps (1)
+steering_torque			= 600					; Сила гидроусилителя руля. (N*m)
 
-;-------------------------------------------------------------------------------
-;------ Gearbox ----------------------------------------------------------------
-main_gear_ratio    		= 4.1        	; Передаточное отношение
-auto_transmission  		= off           ; Автоматическая коробка (on/off)
+;Тормозная система
+break_torque			= 0.8					; Сила тормозных колодок. (N*m)
+break_time				= 3.45					; Время полного задействования тормозов
+hand_break_torque		= 1000					; Момент ручного тормоза
 
-[transmission_gear_ratio]
-; shift down/ shift up. (rpm, необходимое для переключения)
-R                  		= 3.34, 2500,4250	
-N1                 		= 3.24, 2500,4250
-N2                 		= 2, 2500,4250
-N3                 		= 1.3, 2500,4250
-N4                 		= 1, 2500,4250
+;Трансмиссия
+main_gear_ratio			= 4.1					; Передаточное отношение
+auto_transmission		= off					; Автоматическая коробка (on/off)
 
-;-------------------------------------------------------------------------------
-;------ Rest Adjustment --------------------------------------------------------
+; передаточное число, мин об/мин, макс об/мин для переключения передачи
+[transmission_gear_ratio]						; Передачи трансмиссии
+						; ratio	min		max
+R						= 3.67,	0,		0		; Задняя
+N1						= 3.66,	1200,	3500	; 1-я
+N2						= 2.10,	1500,	4000	; 2-я
+N3						= 1.36,	1800,	4500	; 3-я
+N4						= 1.01,	2200,	5000	; 4-я
+
+[air_resistance]
+linear_factor			= 400		; линейное сопротивление
+angular_factor			= 1000		; угловое
+
+[wheels_params]
+friction_factor			= 2.1		; трение колес с поверхностью
+damping_factor			= 1.8		; демпфирование подвески
+spring_factor			= 1.5		; жесткость пружины подвески
+
+[front_left_wheel]
+break_torque			= 0.9		; Сила тормозных колодок. (N*m
+hand_break_torque		= 0.0		; сила торможения пробелом (по умолчанию = break_torque)
+friction_factor			= 2.75		; трение между колесом и поверхностью
+damping_factor			= 0.3		; затухание колебания подвески
+spring_factor			= 0.7		; жесткость подвески
+
+[front_right_wheel]
+break_torque			= 0.9		; Сила тормозных колодок. (N*m
+hand_break_torque		= 0.0		; сила торможения пробелом (по умолчанию = break_torque)
+friction_factor			= 2.75		; трение между колесом и поверхностью
+damping_factor			= 0.3		; затухание колебания подвески
+spring_factor			= 0.7		; жесткость подвески
+
+[back_left_wheel]
+break_torque			= 1.1		; Сила тормозных колодок. (N*m
+hand_break_torque		= 1.5		; сила торможения пробелом (по умолчанию = break_torque)
+friction_factor			= 2.75		; трение между колесом и поверхностью
+damping_factor			= 0.3		; затухание колебания подвески
+spring_factor			= 0.7		; жесткость подвески
+
+[back_right_wheel]
+break_torque			= 1.1		; Сила тормозных колодок. (N*m
+hand_break_torque		= 1.5		; сила торможения пробелом (по умолчанию = break_torque)
+friction_factor			= 2.75		; трение между колесом и поверхностью
+damping_factor			= 0.3		; затухание колебания подвески
+spring_factor			= 0.7		; жесткость подвески
+
+[impulse_transition_to_parts]
+random_min				 = 0.1		; величина случайно направленного импульса пропорционально массе нового объекта
+random_hit_imp			 = 1.0		; величина случайно направленного импульса пропорционально разрушающему хиту
+
+;ref_bone				  =			; кость из по которой определяется скорость для частей у который связь не задана, по умолчанию рут
+imp_transition_factor	 = 0.001	; фактор с которым прикладывается хит по исходному объекту ко всем частям 
+lv_transition_factor	 = 0.04		; коэффициент передачи линейной скорости
+av_transition_factor	 = 0.01		; коэффициент передачи угловой скорости
+
 [lights]
-headlights         		= f1,f2
+headlights				= f1,f2
 
 [f1]
-bone               		= left_light
-color              		= 2.9,2.9,2.9,1.0
-range              		= 40
-cone_angle         		= 35
-spot_texture       		= fx\light\spot_05
-glow_texture       		= fx\flares\flare_01_yellow
-glow_radius        		= 1.5
+bone					= left_light
+color					= 1.0,1.0,1.0,1.0
+range					= 25
+cone_angle				= 60
+spot_texture			= fx\light\spot_05
+glow_texture			= fx\flares\flare_01_yellow
+glow_radius				= 1.5
 
 [f2]
-bone               		= right_light
-color              		= 2.9,2.9,2.9,1.0
-range              		= 40
-cone_angle         		= 35
-spot_texture       		= fx\light\spot_05
-glow_texture       		= fx\flares\flare_01_yellow
-glow_radius        		= 1.5
+bone					= right_light
+color					= 1.0,1.0,1.0,1.0
+range					= 25
+cone_angle				= 60
+spot_texture			= fx\light\spot_05
+glow_texture			= fx\flares\flare_01_yellow
+glow_radius				= 1.5
 
-;-------------------------------------------------------------------------------
-;------ Звуки ------------------------------------------------------------------
 [car_sound]
-snd_volume         			= 1.0
-snd_name           			= device\vehicle\uaz_run
-engine_sound_start_dellay		= 0.5
-engine_start				= device\vehicle\uaz_start
-engine_stop					= device\vehicle\uaz_stop
+snd_volume					= 1.0
+snd_name					= device\vehicle\car_run
+engine_sound_start_dellay	= 0.5
+engine_start				= device\vehicle\car_start
+engine_stop					= device\vehicle\car_stop
 transmission_switch			= device\vehicle\car_gearchange
-explosion_sound    			= device\vehicle\explosion
-relative_pos       			= 0.0,0.6,1.2
+explosion_sound				= 
+relative_pos				= 0.0,0.5,1.5.
 
-;-------------------------------------------------------------------------------
-;------ animations params ------------------------------------------------------
 [doors]
-open_torque_factor	    	= 3 		;множитель момента сил для открывания двери (default = 2)
+open_torque_factor		= 3.	;множитель момента сил для открывания двери (default = 2)
 
 [animations]
-driver_animation_type		= 0		;тип анимаций актера для данной машины.
+driver_animation_type	= 0		;тип анимаций актера для данной машины.
 
-;-------------------------------------------------------------------------------
-;------ damage params ----------------------------------------------------------
 [damage_particles]
-explosion_particles	        = explosions\expl_car
-car_damage_particles1	    	= explosions\expl_car_smoke_small
-car_damage_particles2	    	= explosions\expl_car_smoke_big
-wheels_damage_particles1	= vehiclefx\exhaust_1
-wheels_damage_particles2	= vehiclefx\exhaust_1
-particle_bones1		        = trunk
-particle_bones2		        = roof
+explosion_particles		= explosions\expl_car
+car_damage_particles1	= explosions\expl_car_smoke_small
+car_damage_particles2	= explosions\expl_car_smoke_big
+wheels_damage_particles1= vehiclefx\exhaust_1
+wheels_damage_particles2= vehiclefx\exhaust_1
 
-;-------------------------------------------------------------------------------
-;------ particle bones ---------------------------------------------------------
+particle_bones1			= trunk
+particle_bones2			= roof
+
 [particle_bones]
-roof			=   0, 0, 0.5
-back_left_wheel   	=  -0.2,0,0
-back_right_wheel  	=  -0.2,0.2,0
-front_left_wheel  	=  0,0,0
-front_right_wheel 	=  0.2,0,0
+roof				=   0, 0, 0.5
+back_left_wheel		=  -0.2,0,0
+back_right_wheel	=  -0.2,0.2,0
+front_left_wheel	=  0,0,0
+front_right_wheel	=  0.2,0,0
 
-;-------------------------------------------------------------------------------
-;------ damage items -----------------------------------------------------------
+
 [damage_items]
-back_left_wheel   		= 5
-back_right_wheel  		= 5
-front_left_wheel  		= 5
-front_right_wheel 		= 5
-;trunk				= 5000
+back_left_wheel			= 5
+back_right_wheel		= 5
+front_left_wheel		= 5
+front_right_wheel		= 5
+;trunk					= 5000
 
-;-------------------------------------------------------------------------------
-;------ collisiondamage --------------------------------------------------------
+
 [collision_damage]
 root				= 0.00001
 roof				= 0.00001
-back_left_wheel     = 0.00001
-back_right_wheel    = 0.00001
-front_left_wheel    = 0.00001
-front_right_wheel   = 0.00001
+back_left_wheel		= 0.00001
+back_right_wheel	= 0.00001
+front_left_wheel	= 0.00001
+front_right_wheel	= 0.00001
 
-;-------------------------------------------------------------------------------
-;------ damage bones -----------------------------------------------------------
-[damage_bones]          ;аналогично секции в актере, но без анимаций
-;bone_name     			= <hit_scale>,<-1>,<wound_scale>
-;<hit_scale> 			- коэфф. изменения хита (уменьшения здоровья)
-;<wound_scale> 			- коэфф. изменения величины открытой раны - незадействован
-default       			= 0.5, -1, 0.1
-root                    	= 2,-1,0.1
-kapot				= 4, -1, 0.1
 
-;-------------------------------------------------------------------------------
-;------ Иммунитеты -------------------------------------------------------------
+[damage_bones]			;аналогично секции в актере, но без анимаций
+;bone_name				= <hit_scale>,<-1>,<wound_scale>
+;<hit_scale>			- коэфф. изменения хита (уменьшения здоровья)
+;<wound_scale>			- коэфф. изменения величины открытой раны - незадействован
+
+default					= 1, -1, 0.1
+root					= 2,-1,0.1
+kapot					= 4, -1, 0.1
+
 [immunities]
-burn_immunity         	= 0.005
-strike_immunity       	= 0.0001
-shock_immunity        	= 0.0001
-wound_immunity        	= 0.005
-radiation_immunity    	= 0.000001
-telepatic_immunity    	= 0.000001
-chemical_burn_immunity 	= 0.001
-explosion_immunity    	= 0.0001
-fire_wound_immunity   	= 0.005
-wound_2_immunity  	= 0.0
+burn_immunity			= 0.005		  ;коэффициенты иммунитета
+strike_immunity			= 0.0001
+shock_immunity			= 0.0001
+wound_immunity			= 0.005
+radiation_immunity		= 0.000001
+telepatic_immunity		= 0.000001
+chemical_burn_immunity	= 0.001
+explosion_immunity		= 0.0001
+fire_wound_immunity		= 0.005
+wound_2_immunity		= 0.00001
 
-;-------------------------------------------------------------------------------
-;----------------explosion params-----------------------------------------------
+
 [explosion]
-blast			    	= 20
-blast_r			    	= 8
+blast					= 20
+blast_r					= 8
 blast_impulse			= 350
-frags		        	= 44
-frags_r			    	= 20
-frag_hit			= 1.7
+frags					= 44
+frags_r					= 20
+frag_hit				= 1.7
 frag_hit_impulse		= 350
 hit_type_blast			= explosion
 hit_type_frag			= fire_wound
 up_throw_factor			= 0.25
-wm_size             		= 0.1
-explode_particles		= explosions\expl_vehichels
-light_color		    	= 0.6,0.5,0.3
-light_range		    	= 15.0
-light_time 		    	= 0.5
+wm_size					= 0.1
+explode_particles		= explosions\explosion_mine
+light_color				= 0.6,0.5,0.3
+light_range				= 15.0
+light_time				= 0.5
 
 ;трассы от осколков
-fragment_speed		        = 76
+fragment_speed				= 76
 fragment_tracer_max_length	= 3
+explode_duration			= 60			;подолжительность взрыва (с)
 
-explode_duration    	    	= 60     ; подолжительность взрыва (с)
-snd_explode 		        = device\vehicle\explosion
+;звуки
+snd_explode				= device\vehicle\explosion
 wallmark_section		= explosion_marks
 
 [explode_effector]
-effect_sect_name 		= effector_explode_hit
-
-;-------------------------------------------------------------------------------
-;------ Others params ----------------------------------------------------------
-[air_resistance]
-linear_factor           = 500.f		
-angular_factor          = 500.f		
-ph_mass			= 2000
-
-[wheels_params]
-damping_factor          = 2			;
-spring_factor           = 1			;
-friction_factor         = 1.5		;
-
-[front_left_wheel]
-break_torque			= 0.075		; Сила тормозных колодок. (N*m
-hand_break_torque		= 0.05		; сила торможения пробелом (по умолчанию = break_torque)
-damping_factor          	= 2			
-spring_factor           	= 1			
-friction_factor         	= 1.5		
-
-[front_right_wheel]
-break_torque			= 0.075		; Сила тормозных колодок. (N*m
-hand_break_torque		= 0.05		; сила торможения пробелом (по умолчанию = break_torque)
-damping_factor          	= 2			;
-spring_factor           	= 1			;
-friction_factor         	= 1.5		;
-
-[back_left_wheel]
-break_torque			= 0.075		; Сила тормозных колодок. (N*m
-hand_break_torque		= 0.05		; сила торможения пробелом (по умолчанию = break_torque)
-damping_factor          	= 2			;
-spring_factor           	= 1			;
-friction_factor         	= 1.7		;
-
-[back_right_wheel]
-break_torque			= 0.075		; Сила тормозных колодок. (N*m
-hand_break_torque		= 0.05		; сила торможения пробелом (по умолчанию = break_torque)
-damping_factor          	= 2			;
-spring_factor           	= 1			;
-friction_factor         	= 1.7		;
+effect_sect_name		= effector_explode_hit
 
 [collide]
-not_collide_parts		= 0
+not_collide_parts		= 1
 
-;-------------------------------------------------------------------------------
-;------ destroyed part ---------------------------------------------------------
 [destroyed]
 vehicles\lada\lada_dead
 
 [autoremove_parts]
-time					 = 900     ; время удаления обломков (c)
-
-;-------------------------------------------------------------------------------
-;--- part impulse_transition ---------------------------------------------------
-[impulse_transition_to_parts]
-random_min               = 10.0    ; величина случайно направленного импульса пропорционально массе нового объекта
-random_hit_imp           = 1       ; величина случайно направленного импульса пропорционально разрушающему хиту
-;ref_bone                =         ; кость из по которой определяется скорость для частей у который связь не задана, по умолчанию рут
-imp_transition_factor    = 0.5     ; фактор с которым прикладывается хит по исходному объекту ко всем частям 
-lv_transition_factor     = 0.5     ; коэффициент передачи линейной скорости
-av_transition_factor     = 0.5     ; коэффициент передачи угловой скорости
-
-;-------------------------------------------------------------------------------
-;------ End params -------------------------------------------------------------
+time					 = 900

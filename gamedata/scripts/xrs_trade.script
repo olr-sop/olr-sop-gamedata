@@ -235,6 +235,14 @@ function action_trade:execute()
 	local npc = self.object
 	local state = self:get_state()
 	
+	if not self.target then
+		traders[self.st.table_key].data.base_ready = nil
+		self.st.table_key = nil
+		self.st.type = nil
+		nc.del_variable("npc_trade_state")		
+		return
+	end
+	
 	if self.st.type == "base" then
 		if debg == true then olr.add_spot_on_map( npc:id(),"alife_combat_fight", " база "..npc:name().." "  ) end
 		--log1("1")
@@ -287,18 +295,18 @@ function action_trade:execute()
 				self.state = state
 			end
 			
-			local dir = self.target:position():sub(npc:position()):normalize():mul(meet_dist)
+			local dir = self.target and self.target:position():sub(npc:position()):normalize():mul(meet_dist)
 			npc:set_desired_direction(dir)
 			
-			if npc:position():distance_to(self.target:position()) < safe_dist - 1.5 then
+			if self.target and npc:position():distance_to(self.target:position()) < safe_dist - 1.5 then
 				self:change_state()
 			end
 		--log1("4")
 		elseif state==5 then
-			local dir = self.target:position():sub(npc:position()):normalize():mul(meet_dist)
+			local dir = self.target and self.target:position():sub(npc:position()):normalize():mul(meet_dist)
 			npc:set_desired_direction(dir)
 			
-			if npc:position():distance_to(self.target:position()) <= meet_dist then
+			if self.target and npc:position():distance_to(self.target:position()) <= meet_dist then
 				self:change_state()
 			end
 		elseif state == 6 then

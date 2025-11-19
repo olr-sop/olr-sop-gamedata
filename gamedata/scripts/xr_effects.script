@@ -82,6 +82,14 @@ function open_rost_diplomat()
 	olr.del_by_name("lvl6_rostok_physic_object_0286")
 end
 
+function get_real_actor_name()
+	if not has_alife_info("cit_fail_first_task") then
+		return "st_actor_name"
+	else
+		return "st_actor_name_real"
+	end
+end
+
 function doktor_house_nelez()
 	--level.add_pp_effector("teleport.ppe", 200349, false)
 	--db.actor.psy_health = -0.105
@@ -3687,8 +3695,22 @@ end
 function bar_babah_start()
 	olr.del_by_name("lvl5_bar_space_restrictor_0126")
 	olr_timers.st_timer("killin", 15, "nick.barbah()")
-	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_0"), nil, "hero", 5000, nil, nil, false)
-	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_1"), 5, "neutral", 15000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_0"), nil, "hero", 5000, nil, nil, true, get_real_actor_name())
+	news_manager.send_tip(db.actor, game.translate_string("bar_babah_start_1"), 5, "neutral", 15000, nil, nil, true, "st_stalker_general_default_name")
+end
+
+function bar_bbaah_explode()
+	db.actor.health = - 0.1
+	--news_manager.send_tip(db.actor, game.translate_string("bar_bbaah_explode_0"), 5, "hero", 5000, nil, nil, false, get_real_actor_name())
+	olr.hud_tip("", game.translate_string("bar_bbaah_explode_0"), 5000, true)
+	particles_object([[explosions\expl_benzin_00]]):play_at_pos(vector():set(-9.68,-90.15,-309.36))
+	local snd_obj = xr_sound.get_safe_sound_object([[weapons\f1\explode]])
+	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	local obj = alife():object("lvl5_bar_staler_undead_olr_0011")
+	local loh = level.object_by_id(obj.id)
+	if loh then
+		loh:kill(loh)
+	end
 end
 
 function bar_gop_fail()

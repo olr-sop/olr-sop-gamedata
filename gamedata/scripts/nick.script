@@ -3744,19 +3744,6 @@ function bar_bart_to_dead_room()
 	db.actor:set_actor_direction(-dir:getH())
 end
 
-function bar_bbaah_explode()
-	db.actor.health = - 0.1
-	news_manager.send_tip(db.actor, game.translate_string("bar_bbaah_explode_0"), 5, "hero", 5000, nil, nil, false)
-	particles_object([[explosions\expl_benzin_00]]):play_at_pos(vector():set(-9.68,-90.15,-309.36))
-	local snd_obj = xr_sound.get_safe_sound_object([[weapons\f1\explode]])
-	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	local obj = alife():object("lvl5_bar_staler_undead_olr_0011")
-	local loh = level.object_by_id(obj.id)
-	if loh then
-		loh:kill(loh)
-	end
-end
-
 function is_garbage_level()
 	if level.name() == "lvl2_garbage" then
 		return true
@@ -6670,7 +6657,8 @@ function esc_to_bar_start_go_dolina_spawn_fix_enemys_delete()
 	local pos = vector():set(-21,2,6)
 	olr.kill_mon_in_radius(pos, 70)
 	news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_0"), nil, "signal_lost", 5000)
-	news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_1"), nil, "signal_lost", 10000) -- мысль мессера, переделать
+	--news_manager.send_tip(db.actor, game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_1"), nil, "signal_lost", 10000) -- мысль мессера, переделать
+	olr.hud_tip("", game.translate_string("esc_to_bar_start_go_dolina_spawn_fix_enemys_delete_1"), 10000, true)
 	olr.del_by_name("lvl4_darkdolina_space_restrictor_glaz_place_0000")
 end
 

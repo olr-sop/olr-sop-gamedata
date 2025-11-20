@@ -171,19 +171,16 @@ end
 
 function daem_pochinenyy_item_rem()
 	local currep = xvars.cur_rest_wpn
-	log1("Get currep - "..currep.."")
+	--log1("Get currep - "..currep.."")
 	if not system_ini():section_exist(currep) then
 		log1("! ERROR: daem_pochinenyy_item_rem have non existing section!")
 		olr.hud_tip("", "Произошла ошибка, секции записанной в xvars.cur_rest_wpn не существует.".."\\n".."Для исключения вылета используется эта заглушка!", 5)
 		return
 	end
 	local wpn = alife():create(currep, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	local cwpn = level.object_by_id(wpn.id)
 	local task_texture, task_rect = get_texture_info("ui_notification_found_item")
 	if wpn then
-		if cwpn and cwpn:is_weapon() then -- похоже, что это не работает, надо как-то иначе кастовать
-			cwpn:unload_magazine(false) -- при сдаче мы ранее разрядили
-		end
+		level.client_spawn_manager():add(wpn.id, 0, function(id,obj) obj:unload_magazine(false) end)
 		local news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(currep))
 		db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
 	end

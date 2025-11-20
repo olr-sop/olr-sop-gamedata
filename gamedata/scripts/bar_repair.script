@@ -180,7 +180,7 @@ function daem_pochinenyy_item_rem()
 	local wpn = alife():create(currep, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	local task_texture, task_rect = get_texture_info("ui_notification_found_item")
 	if wpn then
-		level.client_spawn_manager():add(wpn.id, 0, function(id,obj) obj:unload_magazine(false) end)
+		level.client_spawn_manager():add(wpn.id, 0, function(id,obj) if obj:is_weapon_magazined() then obj:unload_magazine(false) end end)
 		local news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(currep))
 		db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
 	end

@@ -1,1 +1,1 @@
-start bin\Editors\LevelEditor.exe -editor
+start bin\Editors\LevelEditor.exe -editor -lfs_mode

@@ -2,103 +2,112 @@
 -- hi_flyer 01/12/16
 
 local iskluch_items = {
-    ["device_pda"] = true,
-    ["device_torch"] = true,
-    ["bolt"] = true,
-    ["ecolog_outfit"] = true,
-    ["ammo_og-7b"] = true
+	["device_pda"] = true,
+	["device_torch"] = true,
+	["bolt"] = true,
+	["ecolog_outfit"] = true,
+	["ammo_og-7b"] = true
 }
 
 function sleep_rob()
-    if db.actor:is_actor_outdoors() == false then
-        return
-    end
-    if db.actor.alcohol == 0 then
-        return
-    end
+	if db.actor:is_actor_outdoors() == false then
+		return
+	end
+	if db.actor.alcohol == 0 then
+		return
+	end
 
-    for k, v in pairs(db.storage) do
-        local stalker = level.object_by_id(k)
-        if stalker and (get_clsid(stalker) == clsid.script_stalker) and stalker:alive() then
-            if stalker:position():distance_to(db.actor:position()) < 45 then
-                break
-            end
+	for k, v in pairs(db.storage) do
+		local stalker = level.object_by_id(k)
+		if stalker and (get_clsid(stalker) == clsid.script_stalker) and stalker:alive() then
+			if stalker:position():distance_to(db.actor:position()) < 45 then
+				break
+			end
 
-            local actor = db.actor
-            actor:iterate_inventory(
-                function(actor, obj)
-                    local ini = system_ini()
-                    if ini:line_exist(obj:section(), "quest_item") and ini:r_bool(obj:section(), "quest_item") == true then
-                        return
-                    end
+			local actor = db.actor
+			local stalker_name = stalker:character_name()
+			local stalker_comm = stalker:character_community()
+			local sender_icon = "unknown"
+			if news_manager.tips_icons[stalker_comm] then
+				sender_icon = stalker_comm
+				--log1(string.format("applied sender_icon %s", stalker_comm))
+			else
+				--log1(string.format("applied sender_icon %s", stalker_comm))
+			end
+			local action = string.format("olr_sleep_robers.actor_robbered_timer_sms(%q, %q)", stalker_name, sender_icon)
+			actor:iterate_inventory(
+				function(actor, obj)
+					local ini = system_ini()
+					if ini:line_exist(obj:section(), "quest_item") and ini:r_bool(obj:section(), "quest_item") == true then
+						return
+					end
 
-                    if iskluch_items[obj:section()] then
-                        return
-                    end
+					if iskluch_items[obj:section()] then
+						return
+					end
 
-                    local art_var = math.random(1, 50)
-                    local ammo_var = math.random(1, 150)
-                    local weap_var = math.random(1, 100)
-                    local outfit_var = math.random(1, 150)
-                    local food_var = math.random(1, 100)
+					local art_var = math.random(1, 50)
+					local ammo_var = math.random(1, 150)
+					local weap_var = math.random(1, 100)
+					local outfit_var = math.random(1, 150)
+					local food_var = math.random(1, 100)
+					if art_var == 1 then
+						if obj:is_artefact() then
+							db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
+							if not olr_timers.has_timer("actor_robbered_timer") then
+								local tmr = math.random(200, 250)
+								olr_timers.st_timer("actor_robbered_timer", tmr, action)
+							end
+						end
+					end
 
-                    if art_var == 1 then
-                        if obj:is_artefact() then
-                            db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
-                            if not olr_timers.has_timer("actor_robbered_timer") then
-                                local tmr = math.random(200, 250)
-                                olr_timers.st_timer("actor_robbered_timer", tmr, "olr_sleep_robers.actor_robbered_timer_sms()")
-                            end
-                        end
-                    end
+					if ammo_var == 1 then
+						if obj:is_ammo() then
+							db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
+							if not olr_timers.has_timer("actor_robbered_timer") then
+								local tmr = math.random(200, 250)
+								olr_timers.st_timer("actor_robbered_timer", tmr, action)
+							end
+						end
+					end
 
-                    if ammo_var == 1 then
-                        if obj:is_ammo() then
-                            db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
-                            if not olr_timers.has_timer("actor_robbered_timer") then
-                                local tmr = math.random(200, 250)
-                                olr_timers.st_timer("actor_robbered_timer", tmr, "olr_sleep_robers.actor_robbered_timer_sms()")
-                            end
-                        end
-                    end
+					if weap_var == 1 then
+						if obj:is_weapon() then
+							db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
+							if not olr_timers.has_timer("actor_robbered_timer") then
+								local tmr = math.random(200, 250)
+								olr_timers.st_timer("actor_robbered_timer", tmr, action)
+							end
+						end
+					end
 
-                    if weap_var == 1 then
-                        if obj:is_weapon() then
-                            db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
-                            if not olr_timers.has_timer("actor_robbered_timer") then
-                                local tmr = math.random(200, 250)
-                                olr_timers.st_timer("actor_robbered_timer", tmr, "olr_sleep_robers.actor_robbered_timer_sms()")
-                            end
-                        end
-                    end
+					if outfit_var == 1 then
+						if obj:is_outfit() and not db.actor:is_in_slot(obj) then
+							db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
+							if not olr_timers.has_timer("actor_robbered_timer") then
+								local tmr = math.random(200, 250)
+								olr_timers.st_timer("actor_robbered_timer", tmr, action)
+							end
+						end
+					end
 
-                    if outfit_var == 1 then
-                        if obj:is_outfit() and not db.actor:is_in_slot(obj) then
-                            db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
-                            if not olr_timers.has_timer("actor_robbered_timer") then
-                                local tmr = math.random(200, 250)
-                                olr_timers.st_timer("actor_robbered_timer", tmr, "olr_sleep_robers.actor_robbered_timer_sms()")
-                            end
-                        end
-                    end
-
-                    if food_var == 1 then
-                        if obj:is_food_item() then
-                            db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
-                            if not olr_timers.has_timer("actor_robbered_timer") then
-                                local tmr = math.random(200, 250)
-                                olr_timers.st_timer("actor_robbered_timer", tmr, "olr_sleep_robers.actor_robbered_timer_sms()")
-                            end
-                        end
-                    end
-                end,
-                actor
-            )
-        end
-    end
+					if food_var == 1 then
+						if obj:is_food_item() then
+							db.actor:drop_item_and_teleport(obj, vector():set(0, -1000, 0))
+							if not olr_timers.has_timer("actor_robbered_timer") then
+								local tmr = math.random(200, 250)
+								olr_timers.st_timer("actor_robbered_timer", tmr, action)
+							end
+						end
+					end
+				end,
+				actor
+			)
+		end
+	end
 end
 
 
-function actor_robbered_timer_sms()
-	news_manager.send_tip(db.actor, game.translate_string("actor_robbered_timer_sms_0"), nil, "unknown", 10000)	
+function actor_robbered_timer_sms(stalker_name, sender_icon)
+	news_manager.send_tip(db.actor, "actor_robbered_timer_sms_0", nil, sender_icon, 10000, nil, "pda_tip", true, stalker_name)
 end

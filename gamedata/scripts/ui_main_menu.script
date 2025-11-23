@@ -41,6 +41,7 @@ function main_menu:InitControls()
 	end
 	self.main_frame = 	xml:InitStatic("shniaga_wnd", self)
 
+	self.btn_credits 		= xml:Init3tButton("shniaga_wnd:btn_credits",			self.main_frame)
 	self.btn_new_game 		= xml:Init3tButton("shniaga_wnd:btn_new_game",			self.main_frame)
 	self.btn_load			= xml:Init3tButton("shniaga_wnd:btn_load",				self.main_frame)
 	self.btn_lastsave		= xml:Init3tButton("shniaga_wnd:btn_lastsave",			self.main_frame)
@@ -52,6 +53,7 @@ function main_menu:InitControls()
 	self.btn_offset2_y		= xml:ReadAttribFlt("shniaga_wnd", 0, "btn_offset2_y", 22)
 	
 	self.btn_new_game:SetWindowName("btn_new_game")
+	self.btn_credits:SetWindowName("btn_credits")
 	self.btn_load:SetWindowName("btn_load")
 	self.btn_lastsave:SetWindowName("btn_lastsave")
 	self.btn_save:SetWindowName("btn_save")
@@ -61,6 +63,7 @@ function main_menu:InitControls()
 
 	-- регистрация обработчика (как раньше)
 	self:Register(self.btn_new_game)
+	self:Register(self.btn_credits)
 	self:Register(self.btn_load)
 	self:Register(self.btn_lastsave)
 	self:Register(self.btn_save)
@@ -128,10 +131,12 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_back:Enable(false)
 
 		self.btn_new_game:Show(menu_type == "main")
+		self.btn_credits:Show(true)
 		self.btn_quit_to_mm:Show(menu_type == "main_loaded" or menu_type == "main_dead")
 		self.btn_ret:Show(menu_type == "main_loaded")
 
 		self.btn_new_game:Enable(menu_type == "main")
+		self.btn_credits:Enable(true)
 		self.btn_quit_to_mm:Enable(menu_type == "main_loaded" or menu_type == "main_dead")
 		self.btn_ret:Enable(menu_type == "main_loaded")
 		
@@ -159,6 +164,9 @@ function main_menu:ShowTabs(menu_type)
 				local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_options:GetWndPosY()
 				y_pos = y_pos + self.btn_offset2_y
 				self.btn_options:SetWndPos(x_pos, y_pos)
+				x_pos, y_pos = self.btn_credits:GetWndPosX(), self.btn_credits:GetWndPosY()
+				y_pos = y_pos + self.btn_offset2_y
+				self.btn_credits:SetWndPos(x_pos, y_pos)
 				self.changed_pos = true
 			end
 		end
@@ -181,6 +189,8 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_quit_to_mm:Show(false)
 		self.btn_ret:Show(false)
 		self.btn_quit:Show(false)
+		self.btn_new_game:Show(false)
+		self.btn_credits:Show(false)
 
 		self.btn_novice:Enable(true)
 		self.btn_stalker:Enable(true)
@@ -191,6 +201,8 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_quit_to_mm:Enable(false)
 		self.btn_ret:Enable(false)
 		self.btn_quit:Enable(false)
+		self.btn_new_game:Enable(false)
+		self.btn_credits:Enable(false)
 
 		self.btn_load:Enable(false)
 		self.btn_lastsave:Enable(false)

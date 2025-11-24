@@ -153,6 +153,10 @@ function main_menu:ShowTabs(menu_type)
 				x_pos, y_pos = self.btn_options:GetWndPosX(), self.btn_options:GetWndPosY()
 				y_pos = y_pos + self.btn_offset_y * 2
 				self.btn_options:SetWndPos(x_pos, y_pos)
+
+				x_pos, y_pos = self.btn_credits:GetWndPosX(), self.btn_credits:GetWndPosY()
+				y_pos = y_pos + self.btn_offset_y * 2
+				self.btn_credits:SetWndPos(x_pos, y_pos)
 				self.changed_pos = true
 			end
 			self.btn_save:Show(false)
@@ -160,13 +164,16 @@ function main_menu:ShowTabs(menu_type)
 		else
 			self.btn_save:Show(menu_type == "main_loaded")
 			self.btn_save:Enable(menu_type == "main_loaded")
-			if menu_type == "main" and self.changed_pos == false then
-				local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_options:GetWndPosY()
-				y_pos = y_pos + self.btn_offset2_y
-				self.btn_options:SetWndPos(x_pos, y_pos)
-				x_pos, y_pos = self.btn_credits:GetWndPosX(), self.btn_credits:GetWndPosY()
-				y_pos = y_pos + self.btn_offset2_y
-				self.btn_credits:SetWndPos(x_pos, y_pos)
+			if self.changed_pos == false then
+				if menu_type == "main" then
+					local x_pos, y_pos = self.btn_load:GetWndPosX(), self.btn_options:GetWndPosY()
+					y_pos = y_pos + self.btn_offset2_y
+					self.btn_options:SetWndPos(x_pos, y_pos)
+				elseif menu_type == "main_loaded" then
+					local x_pos, y_pos = self.btn_credits:GetWndPosX(), self.btn_credits:GetWndPosY()
+					y_pos = y_pos + self.btn_offset2_y
+					self.btn_credits:SetWndPos(x_pos, y_pos)
+				end
 				self.changed_pos = true
 			end
 		end
@@ -179,6 +186,23 @@ function main_menu:ShowTabs(menu_type)
 		self.btn_lastsave:Enable(self.shniaga:HasLastSave())
 		self.btn_options:Enable(true)
 		self.btn_quit:Enable(true)
+
+		-- adjust Credits position relative to quit buttons
+		local offset = self.btn_offset2_y
+		if menu_type == "main_dead" then
+			offset = self.btn_offset_y
+		end
+
+		if self.btn_quit_to_mm:IsShown() then
+			local x_pos, y_pos = self.btn_quit_to_mm:GetWndPosX(), self.btn_quit_to_mm:GetWndPosY()
+			y_pos = y_pos + offset
+			self.btn_credits:SetWndPos(x_pos, y_pos)
+		elseif self.btn_quit:IsShown() then
+			local x_pos, y_pos = self.btn_quit:GetWndPosX(), self.btn_quit:GetWndPosY()
+			y_pos = y_pos + offset
+			self.btn_credits:SetWndPos(x_pos, y_pos)
+		end
+
 	else
 		self.btn_novice:Show(true)
 		self.btn_stalker:Show(true)

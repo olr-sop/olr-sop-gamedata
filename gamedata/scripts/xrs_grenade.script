@@ -360,7 +360,9 @@ function action_fire_in_the_hole:execute()
             local snd_sect = snd_grenade_replics[npc:character_community()] or snd_grenade_replics.stalker
             local snd = [[characters_voice\]]..snd_sect[math.random(table.getn(snd_sect))]
             snd = get_safe_sound_object(snd)
-            snd:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 1.0)
+			if not snd:playing() then
+				snd:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 1.0)
+			end
 			
 			self.start_time = time_global()
 			self.throw_time = self.start_time + 1000

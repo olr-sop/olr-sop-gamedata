@@ -213,6 +213,7 @@ function send_task(actor, type, task, objective)
 		pda_task:play(db.actor, 0, sound_object.s2d)
 		
 		xvars.quests_started = xvars.quests_started + 1
+		nick.autosave_quest()
 
 	-- Обработка завершения задания
 	elseif type == "complete" then
@@ -225,6 +226,7 @@ function send_task(actor, type, task, objective)
 		end
 		pda_task:play(db.actor, 0, sound_object.s2d)
 		actor_stats.add_points("quests", task:get_title(), 1, 1)
+		nick.autosave_quest()
 
 	-- Обработка обновления задания
 	elseif type == "update" then
@@ -234,8 +236,8 @@ function send_task(actor, type, task, objective)
 			db.actor:give_game_news(news_text, "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
 		end
 		pda_task:play(db.actor, 0, sound_object.s2d)
+		nick.autosave_quest()
 	end
-	nick.autosave_quest()
 end
 
 function send_encyclopedy(type, title)

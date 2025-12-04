@@ -39,7 +39,7 @@ end
 
 function se_zone_anom:on_unregister()
   cse_anomalous_zone.on_unregister(self)
-  --anomaly_holder.remove_anomaly(self.id)
+  anomaly_holder.remove_anomaly(self.id)
 --  printf("unreg " .. tostring(self.id))  
 end
 
@@ -186,9 +186,9 @@ function se_zone_anom:STATE_Read( packet, size )
   local rad=packet:r_float()
   packet:r_seek(p2)
 --  printf(p1 .. " " .. p2)
-  --if self.id~=65535 then
-  --  anomaly_holder.add_anomaly(self.id,self:clsid(),self:section_name(),rad)
- -- end
+  if self.id~=65535 then
+    anomaly_holder.add_anomaly(self.id,self:clsid(),self:section_name(),rad)
+  end
 --  local pos=self.position
 --  printf("read " .. tostring(self.id) .. " " .. pos.x .. ";" .. pos.y .. ";" .. pos.z)
   

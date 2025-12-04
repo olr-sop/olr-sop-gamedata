@@ -1,0 +1,280 @@
+class "evaluator_anomaly" (property_evaluator)
+
+function evaluator_anomaly:__init(storage, npc, name) super(nil, name)
+    self.st = storage
+    self.npc=npc
+    self.called=false
+end
+
+local holdtime={}
+local stucktime={}
+local laststate={}
+local rdelta={}
+
+function vec2str(v)
+  if v.x and v.y and v.z then
+    return v.x .. ";" .. v.y .. ";" .. v.z
+  else
+    return "not a vector"
+  end
+end
+
+-- Спокойное состояние
+local error_prob={
+  novice={[clsid.zone_bfuzz_s]=5,
+          [clsid.zone_galant_s]=5,
+          [clsid.zone_mbald_s]=1, -- это электра. 1% на слишком любопытных новичков
+          [clsid.zone_mincer_s]=5},
+  experienced={[clsid.zone_bfuzz_s]=2,
+          [clsid.zone_galant_s]=2,
+          [clsid.zone_mbald_s]=1, -- это электра
+          [clsid.zone_mincer_s]=2},
+  veteran={[clsid.zone_bfuzz_s]=1,
+          [clsid.zone_galant_s]=1,
+          [clsid.zone_mbald_s]=1, -- это электра
+          [clsid.zone_mincer_s]=1},
+  master={[clsid.zone_bfuzz_s]=0,
+          [clsid.zone_galant_s]=0,
+          [clsid.zone_mbald_s]=0, -- это электра
+          [clsid.zone_mincer_s]=0}}
+
+-- Бой
+local error_prob_fight={
+  novice={[clsid.zone_bfuzz_s]=20,
+          [clsid.zone_galant_s]=20,
+          [clsid.zone_mbald_s]=5, -- это электра. 1% на слишком любопытных новичков
+          [clsid.zone_mincer_s]=20},
+  experienced={[clsid.zone_bfuzz_s]=8,
+          [clsid.zone_galant_s]=8,
+          [clsid.zone_mbald_s]=2, -- это электра
+          [clsid.zone_mincer_s]=8},
+  veteran={[clsid.zone_bfuzz_s]=4,
+          [clsid.zone_galant_s]=4,
+          [clsid.zone_mbald_s]=1, -- это электра
+          [clsid.zone_mincer_s]=4},
+  master={[clsid.zone_bfuzz_s]=1,
+          [clsid.zone_galant_s]=1,
+          [clsid.zone_mbald_s]=1, -- это электра
+          [clsid.zone_mincer_s]=1}}
+
+
+function evaluator_anomaly:evaluate()
+  local nid=self.npc:id()
+  if laststate[nid]==nil then
+    laststate[nid]=false
+  end
+  if stucktime[nid]==nil then 
+    stucktime[nid]={} 
+  end
+  if rdelta[nid]==nil then
+    rdelta[nid]={}
+  end
+  if self.mgr == nil then
+    self.mgr = self.object:motivation_action_manager()
+  end
+  if self.mgr:evaluator(xr_evaluators_id.sidor_wounded_base) and 
+     self.mgr:evaluator(xr_evaluators_id.sidor_wounded_base):evaluate() then
+--' Чтобы избежать ситуации когда раненый лежит недалеко от аномалии и после лечения начинает её игнорировать
+    return false
+  end
+-------------------------------------------------------------------
+--'  Здесь можно проверить наличие детектора в инвентаре например так
+-- local hasdetector1=false
+-- for i=1,self.npc:object_count,1 do
+--  if self.npc:object(i):section()=="detector_simple" then
+--    hasdetector1=true
+--    break
+--  end
+-- end
+--' Если этого детектора нет, то возвращаем false, т.е. NPC не может определять аномалии
+-- if not hasdetestor1 then
+--    return false
+-- end
+--' Или можно будет проверить это значение после get_nearest_anomaly 
+--' и тогда уже решать видит ли сталкер аномалию или нет. Переменная cls содержит clsid аномалии
+-------------------------------------------------------------------
+  local error_tbl
+  if self.mgr:evaluator(stalker_ids.property_enemy):evaluate() then 
+    error_tbl=error_prob_fight
+  else
+    error_tbl=error_prob
+  end
+--  printf("enter evaluator")
+--' Теперь список аномалий заполняется по-другому
+--  anomaly_holder.enumerate_anoms() 
+--  printf("after enum anom")
+  if holdtime[nid]==nil or time_global()>holdtime[nid] then
+    holdtime[nid]=time_global()+500
+    local hasanom,anomid,pos,cls,dist,radius=anomaly_holder.get_nearest_anomaly(self.npc)
+    local visradius
+--' Если сталкер уже видел аномалию, увеличим радиус обнаружения на 1 метр,
+--' чтобы избежать частого переключения схем
+    if hasanom then
+      if rdelta[nid][anomid]==nil then
+        rdelta[nid][anomid]=1
+      end
+      visradius=radius+rdelta[nid][anomid]
+      if laststate[nid] then
+        visradius=visradius+1
+      end
+    end
+    if hasanom and dist<visradius then
+      printf(self.npc:name()  .. " at " .. dist)
+--' Проверим не болтается ли NPC рядом с аномалией слишком долго.
+      if stucktime[nid][anomid]==nil or stucktime[nid][anomid]<time_global()-120000 then
+  --' даем чуваку 60 секунд чтобы выбраться из аномалии
+        stucktime[nid][anomid]=time_global()+600000
+        rdelta[nid][anomid]=1
+  --' Проверим обнаружил ли сталкер аномалию
+        local errortbl=error_tbl[ranks.get_obj_rank_name(self.npc)]
+        if errortbl then
+          local errorrate=errortbl[cls]
+          if errorrate and math.random(0,100)<errorrate then
+  --' Сталкер облажался. Ставим ему аномалию в игнор
+            printf(self.npc:name()  .. " sucks")
+            stucktime[nid][anomid]=time_global()-1
+          end
+        end
+      end
+      if stucktime[nid][anomid]<time_global() and dist>radius*0.9 then
+  --' Всё чувак. Твое время истекло. Выбирайся как хочешь.
+        laststate[nid]=false
+      else
+        laststate[nid]=true
+      end
+    else
+      laststate[nid]=false
+    end
+  end
+  return laststate[nid]
+end
+
+
+class "action_evade_anomaly" (action_base)
+function action_evade_anomaly:__init (npc_name,action_name, storage, char_ini) super (nil, action_name)
+--  printf("action init")
+  self.a = storage
+end
+
+local can_rethink={}
+local reverse={}
+local npcpostime={}
+
+function action_evade_anomaly:initialize()
+  action_base.initialize(self)
+--  printf("action initialize "..self.object:name())
+--  self.object:set_node_evaluator()
+--  self.object:set_path_evaluator()
+  self.object:set_desired_position()
+  self.object:set_desired_direction()
+  self.object:set_detail_path_type    ( move.line )
+  self.object:set_path_type           ( game_object.level_path )
+  self.object:movement_enabled(true)
+  self.object:set_body_state(move.standing)
+  self.object:set_movement_type(move.walk)
+  self.prefdir=self.object:direction()
+
+  if math.random(0,2)<1 then
+    state_mgr.set_state( self.object, "assault_fire" )
+  else
+    state_mgr.set_state( self.object, "raid_fire" )
+  end
+  npcpostime[self.object:id()]={pos=self.object:position(),time=time_global()+4000}
+end
+
+function veceq(v1,v2)
+  return math.abs(v1.x-v2.x)<0.5 and 
+         math.abs(v1.y-v2.y)<0.5 and
+         math.abs(v1.z-v2.z)<0.5
+end
+
+function action_evade_anomaly:execute ()
+--  printf("action execute " .. self.object:name())
+  action_base.execute(self)
+  local nid=self.object:id()
+--' Реверс привязанный к аномалии работает плохо. Удаляю...
+--  if reverse[nid]==nil then
+--    reverse[nid]={}
+--  end
+--' Объект НЕ пересоздается на каждый чих, но переделывать на использование членов лень
+   if can_rethink[nid]==nil or can_rethink[nid]<time_global() then
+    local flag,anomid,anpos,cls,dist,radius=anomaly_holder.get_nearest_anomaly(self.object,self.prefdir)
+    if flag then
+      if veceq(self.object:position(),npcpostime[nid].pos) and time_global()>npcpostime[nid].time then
+--' Так, чувак застрял... Включаем реверс... И уменьшаем радиус обхода
+--        printf(self.object:name() .. " reversing ")
+--' Реверс привязанный к аномалии работает плохо. Удаляю...
+--        reverse[nid][anomid]=not reverse[nid][anomid]
+        reverse[nid]=not reverse[nid]
+        rdelta[nid][anomid]=rdelta[nid][anomid]+0.1
+      elseif not veceq(self.object:position(),npcpostime[nid].pos) then
+--' Обновим координату и время
+        npcpostime[nid]={pos=self.object:position(),time=time_global()+4000}
+      end
+      local anvec=vector():set(anpos):sub(self.object:position())
+      anvec.y=0
+      anvec:normalize()
+      local mydir=self.prefdir
+-- проверим куда надо поворачивать
+      local newdir
+      local angle=math.random(80,100)
+      if dist<radius*0.9 then
+        angle=math.random(120,240)
+        self.object:set_movement_type(move.run)
+        reverse[nid]=false
+      end
+--' Реверс привязанный к аномалии работает плохо. Удаляю...
+--      if reverse[nid][anomid] then
+      if reverse[nid] then
+        angle=-angle
+      end
+      if mydir.x*anvec.z-mydir.z*anvec.x<0 then
+        newdir=vector_rotate_y(anvec,angle)
+      else
+        newdir=vector_rotate_y(anvec,-angle)
+      end
+      printf(self.object:name() .. " new dir " .. vec2str(newdir))
+      local vertex_id=level.vertex_in_direction(self.object:level_vertex_id(),newdir,1)
+--    printf("rethink "..self.object:name() .. " " .. vertex_id .. " " .. anomid)
+      can_rethink[self.object:id()]=time_global()+500
+      utils.send_to_nearest_accessible_vertex(self.object,vertex_id)
+    end
+--    xr_sound.set_sound_play(self.object, "reac_story")
+  end
+end
+
+function action_evade_anomaly:finalize ()
+  action_base.finalize(self)
+end
+
+function add_to_binder(object, char_ini, scheme, section, st)
+  local manager = object:motivation_action_manager()
+  local properties={}
+  properties["wounded"] = xr_evaluators_id.sidor_wounded_base
+
+  -- Evaluators
+  manager:add_evaluator   (1099, evaluator_anomaly(st,object,"evaluator_amonaly"))
+  
+  -- Actions
+  local action = action_evade_anomaly(object:name(),"action_evade_anomaly", st, char_ini)
+  action:add_precondition   (world_property(stalker_ids.property_alive, true))
+--  action:add_precondition   (world_property(stalker_ids.property_enemy, false))
+  action:add_precondition   (world_property(properties["wounded"],    false))
+  action:add_precondition   (world_property(1099,    true))
+  action:add_effect (world_property(1099, false))
+  manager:add_action (10032, action)
+
+  action = manager:action (xr_actions_id.alife) 
+  action:add_precondition   (world_property(1099,    false))  
+  action = manager:action (stalker_ids.action_combat_planner) 
+  action:add_precondition   (world_property(1099,    false))  
+--  action = manager:action (stalker_ids.action_search_enemy) 
+--  action:add_precondition   (world_property(1099,    false))  
+end
+
+function set_evade(npc, ini, scheme, section)
+  local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+end
+-- Вызывается при переключении на новую секцию. Производит вычитывание настроек из текущей секции.
+function reset_evade(npc, scheme, st, section)
+end

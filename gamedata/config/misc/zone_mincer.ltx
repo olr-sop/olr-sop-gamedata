@@ -13,9 +13,6 @@ enable_effector				= true
 
 script_binding				= bind_anomaly.Init
 
-artefacts					= af_gravi_weak,0.8, af_gravi_med, 0.2, af_gravi_heavy, 0.00
-BirthProbability			= 0.2;0.1
-
 shape_transp_color			= 255, 0, 0, 60
 shape_edge_color			= 32, 32, 32, 255
 
@@ -102,26 +99,25 @@ blowout_wind_time_peak		= 600
 blowout_wind_time_end		= 1200; 2499
 blowout_wind_power			= 0.5			;���� ���������� ����� (�� 0 �� 1), � ������ blowout_wind_time_peak 
 
+;рождение артефактов 
+artefacts					= af_toadeye, 1.0
 
+;во время срабатывания в online
+spawn_blowout_artefacts		= on								; рождение артефактов во время срабатывания, для true принимаются on/yes/true/1, иначе значение будет false
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;�������� ���������� �� ����� ������������
-spawn_blowout_artefacts		= on   ;on
+artefact_spawn_probability	= 0.14								;вероятность, что во время срабатывания аномалии будет рожден артефакт
+artefact_spawn_cycles		= 2									; кол-во проходов при смерти сущности в аномалии, 2 по умолчанию
+artefact_spawn_particles	= anomaly2\gravi_anomaly_shield_00	;партиклы, которые отыграются на месте рождения артефакта (опционально)
+artefact_born_sound			= anomaly\mosquito_bald_hit			;звук, который отыграются на месте рождения артефакта (опционально)
 
-artefact_spawn_probability	= 0.14				;�����������, ��� �� ����� ������������ �������� ����� ������ ��������
-artefact_spawn_particles	= anomaly2\gravi_anomaly_shield_00	;��������, ������� ���������� �� ����� �������� ��������� (�����������)
-artefact_born_soundё		= anomaly\mosquito_bald_hit		;����, ������� ���������� �� ����� �������� ��������� (�����������)
-
-throw_out_power				= 0 ;20			;������� � ������� �������� ����� �������� �� ���� � ������������ �����������
-artefact_spawn_height		= 1		;(�) ������ �� ������� ���� ��� ����� ������ ��������
+throw_out_power				= 15								;импульс с которым артефакт будет выброшен из зоны в произвольном направлении
+artefact_spawn_height		= 3									;(м) высота на центром зоны где будет рожден артефакты
 
 
 [zone_mincer_weak]:zone_mincer
 $spawn 						= "zones\mincer_weak"
 hit_impulse_scale			= 1;0.1
 effective_radius			= 0.7
-BirthProbability			= 0.2
-artefacts					= af_gravi_weak,0.8, af_gravi_med, 0.2, af_gravi_heavy, 0.0
 
 ;----------- Anomaly settings -----------------------
 min_start_power				= 4.9
@@ -170,9 +166,6 @@ artefact_spawn_rnd			= 40  ;����������� ������
 
 actor_blowout_radius_percent=	0.75
 
-BirthProbability			= 0.2
-artefacts					= af_gravi_weak,0.2, af_gravi_med, 0.6, af_gravi_heavy, 0.2
-
 
 [zone_mincer_strong]:zone_mincer
 $spawn 						= "zones\mincer_strong"
@@ -190,8 +183,7 @@ max_artefact_count			= 1
 artefact_spawn_idle			= 24  ;��������� ����� ������� ��������� � �������, � �����
 artefact_spawn_rnd			= 40  ;����������� ���������� �������� � ���������.
 
-BirthProbability			= 0.2
-artefacts					= af_gravi_weak,0.2, af_gravi_med, 0.6, af_gravi_heavy, 0.2
+artefacts					= af_toadeye, 0.8, af_electrosphere, 0.2
 
 idle_particles				= anomaly2\electra_idle ;anomaly\galantine_old00
 blowout_particles			= anomaly2\electra2_blast

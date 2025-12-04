@@ -15,9 +15,6 @@ postprocess					= anomaly_acidfog
 enable_effector				= true
 
 throw_impulse				= 0.1
-	
-artefacts					= af_junk_bolt, 0.8, af_junk_debris, 0.2, af_mercury_ball, 0.0
-BirthProbability			= 0.2
 
 shape_transp_color		= 255, 0, 0, 60
 shape_edge_color		= 32, 32, 32, 255
@@ -80,16 +77,23 @@ blowout_wind_time_end		= 899
 blowout_wind_power			= 0.5			;���� ���������� ����� (�� 0 �� 1), � ������ blowout_wind_time_peak 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;�������� ���������� �� ����� ������������
-spawn_blowout_artefacts = on
-throw_out_power = 0 ;20
-artefact_spawn_height = 3
-artefact_spawn_probability = 0.7
+;рождение артефактов 
+artefacts						= af_galantine, 1.0
+
+;во время срабатывания в online
+spawn_blowout_artefacts			= on					; рождение артефактов во время срабатывания, для true принимаются on/yes/true/1, иначе значение будет false
+
+artefact_spawn_probability		= 0.7					;вероятность, что во время срабатывания аномалии будет рожден артефакт
+artefact_spawn_cycles			= 1						; кол-во проходов при смерти сущности в аномалии, 2 по умолчанию
+artefact_spawn_particles		= anomaly2\pux_blast	;партиклы, которые отыграются на месте рождения артефакта (опционально)
+artefact_born_sound				= anomaly\pux_blast		;звук, который отыграются на месте рождения артефакта (опционально)
+
+throw_out_power					= 3					;импульс с которым артефакт будет выброшен из зоны в произвольном направлении
+artefact_spawn_height			= 5						;(м) высота на центром зоны где будет рожден артефакт
+
 
 [zone_witches_galantine_weak]:zone_witches_galantine
 $spawn 						= "zones\witches galantine weak"
-artefacts					= af_junk_bolt, 0.8, af_junk_debris, 0.2, af_mercury_ball, 0.0
-BirthProbability			= 0.2
 
 script_binding			= bind_anomaly.Init
 ;----------- Anomaly settings -----------------------
@@ -104,8 +108,6 @@ artefact_spawn_rnd	= 20  ;����������� �������
 
 [zone_witches_galantine_average]:zone_witches_galantine
 $spawn 						= "zones\witches galantine average"
-artefacts					= af_junk_bolt, 0.6, af_junk_debris, 0.4, af_mercury_ball, 0.0
-BirthProbability			= 0.2
 script_binding			= bind_anomaly.Init
 ;----------- Anomaly settings -----------------------
 min_start_power		= 1.9
@@ -119,8 +121,6 @@ artefact_spawn_rnd	= 30  ;����������� �������
 
 [zone_witches_galantine_strong]:zone_witches_galantine
 $spawn 						= "zones\witches galantine strong"
-artefacts					= af_junk_bolt, 0.2, af_junk_debris, 0.6, af_mercury_ball, 0.2
-BirthProbability			= 0.2
 script_binding			= bind_anomaly.Init
 ;----------- Anomaly settings -----------------------
 min_start_power		= 2.9
@@ -134,7 +134,6 @@ artefact_spawn_rnd	= 40  ;����������� �������
 
 [zone_witches_galantine_banka]:zone_witches_galantine
 $spawn						= "zones\witches galantine banka"
-BirthProbability			= 0.2
 ef_anomaly_type				= 3
 script_binding				= bind_anomaly.Init
 awaking_time				= 25

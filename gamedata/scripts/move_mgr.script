@@ -256,6 +256,8 @@ function validate_accessibility(npc, ppname)
 				--log1(" [move_mgr] TRY disabling anomaly "..o.name.." for "..npc:name())
 				local anom = level.object_by_id(o.id)
 				if anom and anom:is_anomaly() and montabl[anom:clsid()] then
+				-- туду: добавить проверку на включённость
+				-- прописать все нужные секции
 					if anom:section() ~= "zone_flame_small" and
 							anom:section() ~= "zone_burning_fuzz1" and
 							anom:section() ~= "zone_burning_fuzz" and
@@ -263,8 +265,6 @@ function validate_accessibility(npc, ppname)
 							anom:section() ~= "zone_burning_fuzz_average" and
 							anom:section() ~= "zone_burning_fuzz_strong" then
 						anom:disable_anomaly()
-						ogse_anomaly_evader.remove_restrictions(npc, "", anom:name())
-						bind_anomaly.set_anomaly_status(anom, "off")
 					--olr.add_spot_on_map( anom:id(),"green_location", " movemgr disabled anom - "..anom:name().."" )
 					--news_manager.send_tip(db.actor, "[move_mgr] TRY disabling anomaly "..o.name.." for "..npc:name().."  -- "..npc:character_name().."", nil, "hero", 39000)
 					end

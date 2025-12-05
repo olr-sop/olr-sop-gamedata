@@ -23,7 +23,7 @@ function init()
 		level.client_spawn_manager():add(torch_item.id, 0, function(id,obj) obj:set_condition((math.random(15,45)/100)) end) -- портим сразу фонарик
 	end
 	
-	olr_blowout.set_blow_timer(999) -- ставим таймер выброса
+	olr_blowout.set_blow_timer(23040) -- ставим таймер выброса
 
 	-- далее вместо трёх или сколько там было проходов по 65к объектов
 	-- делается один в котором сразу всё и происходит
@@ -108,20 +108,7 @@ function init()
 				tbl.money = math.random(30, 450)
 				amk.write_stalker_params(tbl, obj)
 			end
-			
-			if not processed and IsAnomaly(obj) then
-				set_anomaly_status(obj, "on")
-			end
 		end
 	end
-	log1("Конец!")
-end
-
--- Дубликат, но что поделать...
-function set_anomaly_status(sobj, status)
-    if sobj then
-        local tbl = amk.get_anomaly_data(sobj)
-        tbl.custom = bind_anomaly.modify_anomaly_custom_data(tbl.custom, status)
-        amk.set_anomaly_data(tbl, sobj)
-    end
+--	log1("Конец!")
 end

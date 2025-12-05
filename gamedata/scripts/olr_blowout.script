@@ -318,7 +318,6 @@ function all_blowend_funcs()
 	set_arts_cond_after_blowout()
 	spawen_arts_random()
 	spawn_esc_mil_group()
-	remove_off_anoms()
 	remove_onl_anoms()
 	ring_timer_1()
 
@@ -786,32 +785,6 @@ end
 
 ---------------------------------------------
 
-function remove_off_anoms()
-	local anomaly_tbl = {
-		[clsid.zone_mosquito_bald] = true,
-		[clsid.zone_acid_fog] = true,
-		[clsid.zone_bfuzz] = true,
-		--[clsid.zone_bfuzz_s] = true,
-		--[clsid.zone_electra_s] = true,
-		[clsid.zone_galant_s] = true,
-		[clsid.zone_galantine] = true,
-		[clsid.zone_mbald_s] = true,
-		[clsid.zone_mincer] = true,
-		[clsid.zone_mincer_s] = true
-		--[clsid.zone_zharka_s] = true,
-	}
-
-	for i = 0, 65534 do
-		local sobj = alife():object(i)
-		if sobj then
-			if anomaly_tbl[sobj:clsid()] then
-				bind_anomaly.set_anomaly_status_offline(sobj, "on")
-				--olr.add_spot_on_map( sobj.id,"green_location",sobj:name() )
-			end
-		end
-	end
-end
-
 function remove_onl_anoms()
 	local anomaly_tbl = {
 		[clsid.zone_mosquito_bald] = true,
@@ -830,11 +803,6 @@ function remove_onl_anoms()
 	for i = 1, 65534 do
 		local obj = level.object_by_id(i)
 		local sobj = alife():object(i)
-		if sobj then
-			if anomaly_tbl[sobj:clsid()] then
-				bind_anomaly.set_anomaly_status(obj, "on")
-			end
-		end
 		if obj then
 			if anomaly_tbl[obj:clsid()] then
 				obj:enable_anomaly()

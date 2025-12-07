@@ -64,58 +64,54 @@ local items_prob = {
     "af_chipper"
 }
 
-function job_desctiption()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
-		if npc then
-			--log1("talker is - "..npc:name().."")
-			if xvars.npc_jobs_foractor_status[npc:name()] == "ready" then
-				local text_phrase = {"job_try_give_1", "job_try_give_2"}
-	
-				local target = xvars.npc_jobs_foractor_target[npc:name()]
-				--log1(" 1 "..target.."")
-				--local text_find_obj = game.translate_string(target)
-				--log1("2 "..text_find_obj.."")
-				local known_inf = system_ini():r_string(target, "inv_name")
-				--log1("3 "..known_inf.."")
-				local obj_inf_desc = game.translate_string(known_inf)
-				--log1("4 "..obj_inf_desc.."")
-				local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
-	
-				local lm_where = ""..text_find.." "..obj_inf_desc..""
-				db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
-				local _s = CUIStatic()
-				local bos = level.object_by_id(level.get_second_talker():id())
-				_s:InitTexture(bos:character_icon())
-				local str = lm_where
-				local who = bos:character_name()
-				db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
-			end
+function job_desctiption(first_speaker, second_speaker)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc then
+		--log1("talker is - "..npc:name().."")
+		if xvars.npc_jobs_foractor_status[npc:name()] == "ready" then
+			local text_phrase = {"job_try_give_1", "job_try_give_2"}
+
+			local target = xvars.npc_jobs_foractor_target[npc:name()]
+			--log1(" 1 "..target.."")
+			--local text_find_obj = game.translate_string(target)
+			--log1("2 "..text_find_obj.."")
+			local known_inf = system_ini():r_string(target, "inv_name")
+			--log1("3 "..known_inf.."")
+			local obj_inf_desc = game.translate_string(known_inf)
+			--log1("4 "..obj_inf_desc.."")
+			local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
+
+			local lm_where = ""..text_find.." "..obj_inf_desc..""
+			db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
+			local _s = CUIStatic()
+			local bos = level.object_by_id(level.get_second_talker():id())
+			_s:InitTexture(bos:character_icon())
+			local str = lm_where
+			local who = bos:character_name()
+			db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
 		end
 	end
 end
 
-function job_desctiption_in_progress()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
-		if npc then
-			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-				local text_phrase = {"job_try_has_1", "job_try_has_2"}
+function job_desctiption_in_progress(first_speaker, second_speaker)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc then
+		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+			local text_phrase = {"job_try_has_1", "job_try_has_2"}
 	
-				local target = xvars.npc_jobs_foractor_target[npc:name()]
-				local known_inf = system_ini():r_string(target, "inv_name")
-				local obj_inf_desc = game.translate_string(known_inf)
-				local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
+			local target = xvars.npc_jobs_foractor_target[npc:name()]
+			local known_inf = system_ini():r_string(target, "inv_name")
+			local obj_inf_desc = game.translate_string(known_inf)
+			local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
 	
-				local lm_where = ""..text_find.." "..obj_inf_desc..""
-				db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
-				local _s = CUIStatic()
-				local bos = level.object_by_id(level.get_second_talker():id())
-				_s:InitTexture(bos:character_icon())
-				local str = lm_where
-				local who = bos:character_name()
-				db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
-			end
+			local lm_where = ""..text_find.." "..obj_inf_desc..""
+			db.actor:give_talk_message(lm_where, "ui\\ui_iconsTotal", Frect():set(0, 0, 10, 10), "simple_answer_item")
+			local _s = CUIStatic()
+			local bos = level.object_by_id(level.get_second_talker():id())
+			_s:InitTexture(bos:character_icon())
+			local str = lm_where
+			local who = bos:character_name()
+			db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
 		end
 	end
 end
@@ -133,9 +129,8 @@ function add_new_job_for_npc(obj)
     --end
 end
 
-function take_quest()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
+function take_quest(first_speaker, second_speaker)
+		local npc = dialogs.who_is_npc(first_speaker, second_speaker)
 		if npc then
 			local sobj = alife():object(npc:name())
 			xvars.npc_jobs_foractor_status[npc:name()] = "in_progress"
@@ -160,67 +155,57 @@ function take_quest()
 			local tmr = math.random(1200, 3000)
 			olr_timers.st_timer("npc_job_fail"..tostring(npc:name()).."", tmr, "olr_npc_jobs.quest_timer_fail("..tostring(npc:id())..")")
 		end
-	end
 end
 
-function precond_quest()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
-		if npc then
-			if xvars.npc_jobs_foractor_status[npc:name()] == "ready" and xvars.npc_jobs_foractor_target[npc:name()] ~= nil then
-				return true
-			end
+function precond_quest(first_speaker, second_speaker)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc then
+		if xvars.npc_jobs_foractor_status[npc:name()] == "ready" and xvars.npc_jobs_foractor_target[npc:name()] ~= nil then
+			return true
 		end
 	end
 end
 
-function precond_quest_done()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
-		if npc then
-			local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-			local notart = db.actor:object(obj_targ)
-			if notart and not notart:is_artefact() then
-				if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and nik_dialog.item_much(obj_targ, 1) ~= false then
-					return true
-				end
+function precond_quest_done(first_speaker, second_speaker)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc then
+		local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+		local notart = db.actor:object(obj_targ)
+		if notart and not notart:is_artefact() then
+			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" and nik_dialog.item_much(obj_targ, 1) ~= false then
+				return true
 			end
 		end
 	end
 	return false
 end
 
-function precond_quest_done_art()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
-		if npc then
-			local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
-			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-				local art = db.actor:object(obj_targ)
-				if art and art:is_artefact() then
-					local ini = system_ini()
-					return nik_dialog.item_much(obj_targ, 1) ~= false
-				end
+function precond_quest_done_art(first_speaker, second_speaker)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc then
+		local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
+		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+			local art = db.actor:object(obj_targ)
+			if art and art:is_artefact() then
+				local ini = system_ini()
+				return nik_dialog.item_much(obj_targ, 1) ~= false
 			end
 		end
 	end
 	return false
 end
 
-function precond_quest_done_has_pre()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
-		if npc then
-			if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
-				return true
-			end
+function precond_quest_done_has_pre(first_speaker, second_speaker)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc then
+		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
+			return true
 		end
 	end
 end
 
-function take_reward()
-	if level.get_second_talker() then
-		local npc = level.object_by_id(level.get_second_talker():id())
+function take_reward(first_speaker, second_speaker)
+		local npc = dialogs.who_is_npc(first_speaker, second_speaker)
 		local obj_targ = game.translate_string(xvars.npc_jobs_foractor_target[npc:name()])
 		local objinv = db.actor:object(obj_targ)
 		db.actor:transfer_item(objinv, npc)
@@ -278,7 +263,6 @@ function take_reward()
 		if olr_timers.has_timer("npc_job_fail" .. tostring(npc:name()) .. "") then
 			olr_timers.del_timer("npc_job_fail" .. tostring(npc:name()) .. "")
 		end
-	end
 end
 
 function quest_timer_fail(id)

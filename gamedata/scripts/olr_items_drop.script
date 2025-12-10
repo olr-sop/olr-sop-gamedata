@@ -68,7 +68,7 @@ function drop_item(obj)
 		for i = 1, 65534 do
 			local anom = level.object_by_id(i)
 			if anom ~= nil and anom:is_monster() and parasits[anom:section()] and anom:position():distance_to(db.actor:position()) < 5 then
-				news_manager.send_tip(db.actor, game.translate_string("drop_item_4"), nil, "default", 39000, nil, "pda_sos", true)
+				news_manager.send_tip(db.actor, game.translate_string("drop_item_4"), nil, "info", 39000, nil, "pda_sos", true)
 				olr_timers.st_timer("pribor_paras", math.random(3, 6), "nick.pribor_paras_inf()")
 				break
 			elseif i == 65534 then
@@ -79,7 +79,7 @@ function drop_item(obj)
 
 	if obj:section() == "pribor_paras_spory_mg" then
 		if xr_conditions.actor_in_zone(nil, nil, {"lvl11_deadcity_space_restrictor_0038"}) then
-			news_manager.send_tip(db.actor, game.translate_string("drop_item_5"), nil, "default", 39000, nil, "pda_sos", true)
+			news_manager.send_tip(db.actor, game.translate_string("drop_item_5"), nil, "info", 39000, nil, "pda_sos", true)
 			olr_timers.st_timer("pribor_paras2", math.random(3, 6), "nick.pribor_paras_mg()")
 		end
 	end
@@ -94,7 +94,7 @@ function drop_item(obj)
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 				local snd_obj = xr_sound.get_safe_sound_object([[anomaly\witches_jelly_hit]])
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-				news_manager.send_tip(db.actor, game.translate_string("drop_item_6"), nil, "hero", 39000)
+				olr.hud_tip("", game.translate_string("drop_item_6"), 10, true)
 				anom:disable_anomaly()
 				olr_timers.st_timer("dezint_qt", math.random(23, 36), "nick.dezint_qt_spawn()")
 				break

@@ -1,0 +1,86 @@
+-- Биндер костра
+-- theysani
+-- 07.12.2025
+
+local actor_near_kampfire = false
+local hud = get_hud()
+local kamp_current_id = 0 -- чисто чтоб апдейт не дёргался почём зря
+
+function init(obj)
+	local new_binder = kampfire_binder(obj)
+	obj:bind_object(new_binder)
+end
+
+class "kampfire_binder"(object_binder)
+
+function kampfire_binder:__init(obj)
+	super(obj)
+end
+
+function kampfire_binder:reinit()
+	object_binder.reinit(self)
+end
+
+function kampfire_binder:net_spawn(data)
+	if not object_binder.net_spawn(self, data) then
+		return false
+	end
+	
+	return true
+end
+
+function kampfire_binder:net_destroy()
+	object_binder.net_destroy(self)
+end
+
+function kampfire_binder:update(delta)
+	object_binder.update(self, delta)
+	if db.actor then
+	
+		if self.object:position():distance_to(db.actor:position()) <= 4 then
+			actor_near_kampfire = true
+		else
+			actor_near_kampfire = false
+		end
+		
+		if (self.object:position():distance_to_sqr(db.actor:position()) <= 1.5) and kamp_current_id ~= self.object:id() then
+			if not db.actor:has_info("cooking_wnd") then
+				kamp_current_id = self.object:id()
+				db.actor:give_info_portion("cooking_wnd")
+				hud:AddCustomStatic("cooking_static", true)
+				hud:GetCustomStatic("cooking_static"):wnd():SetTextST("cooking_use")
+			end
+		elseif (kamp_current_id == self.object:id()) and (self.object:position():distance_to_sqr(db.actor:position()) >= 1.5) then		
+			kamp_current_id = 0
+			if db.actor:has_info("cooking_wnd") then
+				db.actor:disable_info_portion("cooking_wnd")
+				hud:RemoveCustomStatic("cooking_static")
+			end
+		end
+		
+	end
+end
+
+function kampfire_binder:net_save_relevant()
+	return true
+end
+
+--------------------------------------------------------------------------------------
+
+function check_actor_near_kampfire()
+	return actor_near_kampfire
+end
+
+--------------------------------------------------------------------------------------
+
+function on_key_press(dik)
+	local bind = dik_to_bind(dik)
+	
+	if bind == key_bindings.kUSE and db.actor:has_info("cooking_wnd") then
+		init_window()
+	end
+end
+
+function init_window()
+	log1("try init window")
+end

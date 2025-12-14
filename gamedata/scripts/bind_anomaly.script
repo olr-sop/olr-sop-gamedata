@@ -1,8 +1,6 @@
 -- hi_flyer 23.01.17
 
-local actor_u_costra = false
 local actor_in_dead_zone = false
-local CAMP_POS = 4
 local dead_zone_eff = 0
 
 function Init(obj)
@@ -54,13 +52,6 @@ end
 
 function CAnomBinder:update(delta)
 	object_binder.update(self, delta)
-	if db.actor then
-		if self.object:section() == "zone_flame_small" and self.object:position():distance_to(db.actor:position()) < CAMP_POS then
-			actor_u_costra = true
-		else
-			actor_u_costra = false
-		end
-	end
 
 	if self.object:section() == "zone_dead" then 
 		if self.object:position():distance_to(db.actor:position()) < self.object:get_shape_radius() then
@@ -91,12 +82,6 @@ end
 
 
 -----------------------------------------------------------------------------------------------------------------
-
-function u_costra()
-	if actor_u_costra == true then 
-		return true
-	end
-end
 
 function in_dead_zone()
 	if actor_in_dead_zone == true then 

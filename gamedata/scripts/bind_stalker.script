@@ -128,7 +128,7 @@ function actor_binder:net_destroy()
 	self.object:set_callback(callback.on_drop_item_on_item, nil)
 	self.object:set_callback(callback.actor_sleep, nil) 	
 	self.object:set_callback(callback.on_obj_look, nil)	
-	self.object:set_callback(callback.on_obj_not_look, nil) 
+	self.object:set_callback(callback.on_obj_not_look, nil) 		
 	
     ---self.object:set_callback(callback.on_actor_death, nil)
 
@@ -206,7 +206,8 @@ function actor_binder:on_drop_item_on_item(item1, item2)
     local function is_detector(section)
         return section == "detector_simple" or 
                section == "detector_advances" or 
-               section == "detector_elite"
+               section == "detector_elite" or
+			   section == "psivizor_detector"
     end
 
     local function is_torch(section)
@@ -425,15 +426,11 @@ function actor_binder:OnKey(dik)
 	if not alife() then
 		return
 	end
-	--if dik == DIK_keys.DIK_F then
-	--	log1("fff")
-	--end
 
 	bind_car.onKeyPress(dik)
     olr.on_key(dik)
-	bind_coster.onKeyPress(dik)
-	--nnnn.on_button(dik)
-	--event("actor_on_key"):trigger({dik = dik})
+	
+	bind_kampfire.on_key_press(dik)
 end
 
 function actor_binder:on_hit(obj, amount, local_direction, who, bone_index) 

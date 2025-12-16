@@ -9,6 +9,7 @@ local boss_particle_actor = particles_object("zones\\zone_dead_zone_blow")
 
 function update()
 	if db.actor then
+		
 		if level.name() == "lvl7_yantar" then
 			update_yantar_preblow()
 			go_zombied_yantar()
@@ -239,17 +240,20 @@ function swamp_rain()
 		return
 	end
 	local currout = db.actor:item_in_slot(6)
-	if not currout or currout:condition() < 0.6 or not vaild_outfits[currout:section()] then
-		if db.actor:is_actor_outdoors() == true then
-			if level.rain_factor() > 0 then
+	if level.rain_factor() > 0.1 then	-- прям с нуля не надо
+		if not currout or currout:condition() < 0.6 or not vaild_outfits[currout:section()] then
+			local RP = ray_pick(vector():set(device().cam_pos), vector():set(0, 0.1, math.random() * 0.3 - 0.15), 900, rq_target.rqtStatic, nil)
+			-- ранж 900 многовато наверн, таргет статика, без динамики
+			-- для расчёта рандома с дробными можно использовать math.random() * (max - min) + min
+			if db.actor:is_actor_outdoors() or RP:query() then
 				if not has_alife_info("about_swamp_rain") then
 					db.actor:give_info_portion("about_swamp_rain")
 					news_manager.send_tip(db.actor, game.translate_string("swamp_rain_0"), 9, "trader", 35000)
 				end
 				db.actor.health = -0.00045
-				local song_start = xr_sound.get_safe_sound_object([[anomaly\burning_fuzz_hit]])
-				if not song_start:playing() then
-					song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d + sound_object.looped)
+				local hit_snd = xr_sound.get_safe_sound_object([[anomaly\burning_fuzz_hit]])
+				if not hit_snd:playing() then
+					hit_snd:play_at_pos(db.actor, db.actor:position(), sound_object.s3d + sound_object.looped)
 				end
 				--log1("rain hit")
 			end
@@ -524,9 +528,9 @@ function yan_hit_acid()
 
 	local has_boots = db.actor:object("actor_boots")
 
-	local song_start = xr_sound.get_safe_sound_object([[anomaly\burning_fuzz_hit]])
-	if not song_start:playing() and has_boots == nil then
-		song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d + sound_object.looped)
+	local hit_snd = xr_sound.get_safe_sound_object([[anomaly\burning_fuzz_hit]])
+	if not hit_snd:playing() and has_boots == nil then
+		hit_snd:play_at_pos(db.actor, db.actor:position(), sound_object.s3d + sound_object.looped)
 	end
 
 	--news_manager.send_tip(db.actor, game.translate_string("yan_hit_acid_0"), nil, "default", 10000)

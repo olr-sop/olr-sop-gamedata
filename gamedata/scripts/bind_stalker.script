@@ -18,6 +18,7 @@ lasthealth  = 0
 lasttime	= 0
 post_process = 0
 actor_in_sleep = false
+quitting_game = false
 local weapon_hide = false
 
 local loked_obj = nil
@@ -525,6 +526,8 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_item_take (obj)
 
+	if device().precache_frame > 1 then return end -- per NatVac: don't check existing inventory during synchronizing
+
     level_tasks.proceed(self.object)
 
 	olr_ruck_limit.take_item(obj)
@@ -560,6 +563,8 @@ end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_item_drop (obj)
+
+	if quitting_game then return end -- per NatVac: keep game from processing dropped items when quitting game
 
     level_tasks.proceed(self.object)
 

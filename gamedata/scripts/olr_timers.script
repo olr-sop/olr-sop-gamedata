@@ -1,165 +1,449 @@
--- таймеры
--- исходный код by АМК, модификация by hi_flyer
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+-- name: olr_timers.script
+-- desc: Скрипт таймеров реального и игрового времени для отложенного выполнения функции
+-- author: AMK Team, hi_flyer, NLC, theysani
+-- date: 17.12.2025
+-- last edit: 17.12.2025
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 
-local func = nil
+-- Счетчики для игровых таймеров
+if not xvars.game_timers_count then xvars.game_timers_count = 0 end
+if not xvars.game_timers_started then xvars.game_timers_started = 0 end
+if not xvars.game_timers_done then xvars.game_timers_done = 0 end
+
+-- Счетчики для реальных таймеров
+if not xvars.real_timers_count then xvars.real_timers_count = 0 end
+if not xvars.real_timers_started then xvars.real_timers_started = 0 end
+if not xvars.real_timers_done then xvars.real_timers_done = 0 end
+
+-- Переменные для работы с игровым временем
+local time_factor = system_ini():r_float("alife", "time_factor")
+
+-- Инициализация базового игрового времени
+function init_game_time_base()
+	db.game_start_time = game.CTime()
+	db.game_start_time:set(2012, 05, 19, 9, 0, 0, 0)
+end
+
+-- Получение текущего игрового времени в секундах
+local function get_game_seconds()
+	return game.get_game_time():diffSec(db.game_start_time)
+end
+
+-- Получение текущего игрового времени в миллисекундах
+local function get_game_time_ms()
+	return get_game_seconds() * 1000
+end
+
+-- Вспомогательные переменные для обновления
 local tUpd = 0
-local tUpdTime = 1000
-local tUpdz = 0
-local tUpdTimez = 3500
-cnt_st = 0
-local tmt = nil
-local tmp = nil
-
+local tUpdTime = 1000 -- проверка каждую реальную секунду
 local debug_msg = false
 
---старт таймера в реальном времени
-function st_timer(name, delay, action)
+-- Старт таймера на игровом времени
+function st_timer_game(name, delay, action)
 	if not delay then
 		return false
 	end
 	if not action then
 		action = ""
 	end
-	if xvars.timers_count <= 0 then
-		xvars.timers_count = 1
+	
+	if xvars.game_timers_count <= 0 then
+		xvars.game_timers_count = 0
 	end
-	xvars.timers_count = xvars.timers_count + 1
-	if debug_msg then log1("! timer start - "..xvars.timers_count.."") end
-	local time = game.time()
-	save_xvars("xt"..xvars.timers_count, name)
-	save_xvars("xd"..xvars.timers_count, time + delay * 1000 * system_ini():r_float("alife", "time_factor"))
-	save_xvars("xp"..xvars.timers_count, action)
-	xvars.timers_started = xvars.timers_started + 1
-	--news_manager.send_tip(db.actor, "cтарт новый таймер - ["..name.."]", nil, "freedom", 9000)
+	
+	xvars.game_timers_count = xvars.game_timers_count + 1
+	
+	if debug_msg then 
+		log1("! game timer start - "..xvars.game_timers_count.." ["..name.."] delay: "..delay.."s")
+	end
+	
+	-- Получаем текущее игровое время в миллисекундах
+	local current_game_time = get_game_time_ms()
+	
+	-- Рассчитываем время срабатывания (delay в секундах игрового времени)
+	local trigger_time = current_game_time + delay * 1000
+	
+	-- Сохраняем данные таймера с префиксом "gt" (game timer)
+	save_xvars("gt_name_"..xvars.game_timers_count, name)			-- имя таймера
+	save_xvars("gt_time_"..xvars.game_timers_count, trigger_time)	-- время срабатывания (игровое)
+	save_xvars("gt_action_"..xvars.game_timers_count, action)		-- действие
+	
+	xvars.game_timers_started = xvars.game_timers_started + 1
+	
+	return true
 end
 
-function upd()
-	if time_global() > tUpdz then
-		tUpdz = time_global() + tUpdTimez
-		cnt_st = cnt_st + 1
-	end
-	if cnt_st > 4 then
-		if device().precache_frame < 1 then
-			if time_global() > tUpd then
-				tUpd = time_global() + tUpdTime
-				if level.present() then
-					if xvars then
-						for a = 1, xvars.timers_count do
-							tmt = load_xvars("xt"..a, nil)
-							if tmt then
-								if debug_msg then log1("! Call update funct in timers, timer found idx - ["..tostring(tmr).."]") end
-								olr_timers.timer_found(a)
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
-function timer_found(idx)
-	local time = game.time()
-	local timvar = load_xvars("xd"..idx, nil)
-	local name, params
-	if timvar and time then
-		if timvar <= time then
-			name = load_xvars("xt"..idx, nil)
-			params = load_xvars("xp"..idx, nil)
-			amk.oau_reason = "cn do_olr_timer_action - "..name.." "
-			olr_timers.do_timer_action(name, params, idx)
-		end
-	end
-end
-
-function do_timer_action(select_string, params_string, idx)
-	func = loadstring(params_string)
-	if func then
-		pcall(func)
-		del_xvars("xt"..idx)
-		del_xvars("xd"..idx)
-		del_xvars("xp"..idx)
-		xvars.timers_done = xvars.timers_done + 1
-		if debug_msg then 
-			log1("! timers debug execute start")
-			log1("tmr idx ["..idx.."]")
-			log1("tmr execute ["..select_string.."] - ["..params_string.."] ")
-			log1("timers count - "..xvars.timers_count.."")
-			log1("timers ended - "..xvars.timers_done.."")
-			log1("! timers debug execute end")
-		end
-		if tostring(xvars.timers_done) == tostring(xvars.timers_count) then
-			xvars.timers_count = 1
-			xvars.timers_done = 1
-		end
-	end
-end
-
-function has_timer(name)
-	if xvars and xvars.timers_count then
-		for a = 1, xvars.timers_count do
-			tmp = load_xvars("xt"..a, nil)
-			if tmp and tmp == name then
-				if debug_msg then log1("! Call has_timer with name - ["..tostring(name).."] return true") end
-				return true
-			end
-		end
-		if debug_msg then log1("! Call has_timer with name - ["..tostring(name).."] return false") end
+-- Старт таймера в реальном времени
+function st_timer_real(name, delay, action)
+	if not delay then
 		return false
 	end
+	if not action then
+		action = ""
+	end
+	
+	if xvars.real_timers_count <= 0 then
+		xvars.real_timers_count = 0
+	end
+	
+	xvars.real_timers_count = xvars.real_timers_count + 1
+	
+	if debug_msg then 
+		log1("! real timer start - "..xvars.real_timers_count.." ["..name.."] delay: "..delay.."s")
+	end
+	
+	local time = game.time()
+	local trigger_time = time + delay * 1000 * time_factor
+	
+	-- Сохраняем данные таймера с префиксом "rt" (real timer)
+	save_xvars("rt_name_"..xvars.real_timers_count, name)
+	save_xvars("rt_time_"..xvars.real_timers_count, trigger_time)
+	save_xvars("rt_action_"..xvars.real_timers_count, action)
+	
+	xvars.real_timers_started = xvars.real_timers_started + 1
+	
+	return true
 end
 
-function del_timer(name)
-	for a = 1, xvars.timers_count do
-		tmp = load_xvars("xt"..a, nil)
-		if tmp and tmp == name then
-			if debug_msg then log1("! Call forced delete timer - ["..tostring(tmp).."]") end
-			xvars.timers_done = xvars.timers_done + 1
-			del_xvars("xt"..a)
-			del_xvars("xd"..a)
-			del_xvars("xp"..a)
+-- Функция обновления таймеров
+function upd_timers()
+	if not level.present() then return end
+	
+	local current_time = time_global()
+	
+	-- Проверяем таймеры каждую секунду реального времени
+	if current_time > tUpd then
+		tUpd = current_time + tUpdTime
+		
+		-- Проверяем игровые таймеры
+		check_game_timers()
+		
+		-- Проверяем реальные таймеры
+		check_real_timers()
+	end
+end
+
+-- Проверка игровых таймеров
+function check_game_timers()
+	if xvars.game_timers_count <= 0 then return end
+	
+	local current_game_time = get_game_time_ms()
+	
+	for i = 1, xvars.game_timers_count do
+		local timer_name = load_xvars("gt_name_"..i, nil)
+		if timer_name then
+			local trigger_time = load_xvars("gt_time_"..i, 0)
+			
+			if debug_msg and trigger_time > 0 then
+				log1(string.format("! Game Timer %d [%s]: trigger=%d, current=%d, remaining=%dms", 
+					i, timer_name, trigger_time, current_game_time, trigger_time - current_game_time))
+			end
+			
+			if trigger_time > 0 and current_game_time >= trigger_time then
+				local action = load_xvars("gt_action_"..i, "")
+				execute_game_timer_action(i, timer_name, action)
+			end
 		end
 	end
 end
 
--- Дамп текущих таймеров в лог
-function dump_timers()
-    log1("\n***** ДАМП ТАЙМЕРОВ *****")
-    
-    -- Счётчики
-    local active_count = 0
-    
-    for a = 1, 9000 do
-        local timer_name = load_xvars("xt"..a, nil)
-        if timer_name then
-            active_count = active_count + 1
-            local end_time = load_xvars("xd"..a, 0)
-            local action = load_xvars("xp"..a, "нет данных")
-            local current_time = game.time()
-            local time_left = end_time - current_time
-            
-            -- Оригинальный расчёт времени
-            local hours = math.floor(time_left / 3600000)
-            local minutes = math.floor(time_left / 60000 - hours * 60)
-            local seconds = math.floor((time_left % 60000) / 1000)
-            
-            -- Красивый вывод с информацией о таймере
-            log1("----- Таймер #"..a.." -----")
-            log1("> Имя:      "..timer_name)
-            log1("> Осталось: "..hours.."ч "..minutes.."м "..seconds.."с")
-            log1("> Вызовет:  "..action)
-			log1("------------------")
-			log1("> Current time: "..current_time)
-			log1("> Left time: "..time_left)
-            log1("> End time: "..end_time)
-            log1("------------------")
-        end
-    end
-    
-    -- Статистика
-    log1("\nИТОГО:")
-    log1("> Активных таймеров: "..active_count)
-    log1("> Всего таймеров:   "..(xvars.timers_count or "N/A"))
-    log1("> Завершено:       "..(xvars.timers_done or "N/A"))
-    log1("*********************\n")
+-- Проверка реальных таймеров
+function check_real_timers()
+	if xvars.real_timers_count <= 0 then return end
+	
+	local real_current_time = game.time()
+	
+	for i = 1, xvars.real_timers_count do
+		local timer_name = load_xvars("rt_name_"..i, nil)
+		if timer_name then
+			local trigger_time = load_xvars("rt_time_"..i, 0)
+			
+			if debug_msg and trigger_time > 0 then
+				log1(string.format("! Real Timer %d [%s]: trigger=%d, current=%d, remaining=%dms", 
+					i, timer_name, trigger_time, real_current_time, trigger_time - real_current_time))
+			end
+			
+			if trigger_time > 0 and real_current_time >= trigger_time then
+				local action = load_xvars("rt_action_"..i, "")
+				execute_real_timer_action(i, timer_name, action)
+			end
+		end
+	end
+end
+
+-- Выполнение действия игрового таймера
+function execute_game_timer_action(idx, name, action)
+	if debug_msg then
+		log1("! Executing game timer ["..name.."], idx="..idx)
+	end
+	
+	-- Выполняем действие
+	if action and action ~= "" then
+		local func = loadstring(action)
+		if func then
+			local success, error_msg = pcall(func)
+			if not success and debug_msg then
+				log1("! Game Timer error: "..tostring(error_msg))
+			end
+		end
+	end
+	
+	-- Удаляем таймер
+	del_xvars("gt_name_"..idx)
+	del_xvars("gt_time_"..idx)
+	del_xvars("gt_action_"..idx)
+	
+	xvars.game_timers_done = xvars.game_timers_done + 1
+	
+	if debug_msg then
+		log1("! Game Timer ["..name.."] executed, done: "..xvars.game_timers_done.."/"..xvars.game_timers_count)
+	end
+end
+
+-- Выполнение действия реального таймера
+function execute_real_timer_action(idx, name, action)
+	if debug_msg then
+		log1("! Executing real timer ["..name.."], idx="..idx)
+	end
+	
+	-- Выполняем действие
+	if action and action ~= "" then
+		local func = loadstring(action)
+		if func then
+			local success, error_msg = pcall(func)
+			if not success and debug_msg then
+				log1("! Real Timer error: "..tostring(error_msg))
+			end
+		end
+	end
+	
+	-- Удаляем таймер
+	del_xvars("rt_name_"..idx)
+	del_xvars("rt_time_"..idx)
+	del_xvars("rt_action_"..idx)
+	
+	xvars.real_timers_done = xvars.real_timers_done + 1
+	
+	if debug_msg then
+		log1("! Real Timer ["..name.."] executed, done: "..xvars.real_timers_done.."/"..xvars.real_timers_count)
+	end
+end
+
+-- Проверка существования игрового таймера
+function has_game_timer(name)
+	if not xvars or not xvars.game_timers_count then
+		return false
+	end
+	
+	for i = 1, xvars.game_timers_count do
+		local timer_name = load_xvars("gt_name_"..i, nil)
+		if timer_name and timer_name == name then
+			if debug_msg then
+				log1("! Game timer found: "..name)
+			end
+			return true
+		end
+	end
+	
+	return false
+end
+
+-- Проверка существования реального таймера
+function has_real_timer(name)
+	if not xvars or not xvars.real_timers_count then
+		return false
+	end
+	
+	for i = 1, xvars.real_timers_count do
+		local timer_name = load_xvars("rt_name_"..i, nil)
+		if timer_name and timer_name == name then
+			if debug_msg then
+				log1("! Real timer found: "..name)
+			end
+			return true
+		end
+	end
+	
+	return false
+end
+
+-- Проверка существования таймера любого типа (для обратной совместимости)
+function has_timer(name)
+	return has_game_timer(name) or has_real_timer(name)
+end
+
+-- Удаление игрового таймера
+function del_game_timer(name)
+	if not xvars or not xvars.game_timers_count then
+		return
+	end
+	
+	for i = 1, xvars.game_timers_count do
+		local timer_name = load_xvars("gt_name_"..i, nil)
+		if timer_name and timer_name == name then
+			if debug_msg then
+				log1("! Deleting game timer: "..name)
+			end
+			
+			del_xvars("gt_name_"..i)
+			del_xvars("gt_time_"..i)
+			del_xvars("gt_action_"..i)
+			
+			xvars.game_timers_done = xvars.game_timers_done + 1
+		end
+	end
+end
+
+-- Удаление реального таймера
+function del_real_timer(name)
+	if not xvars or not xvars.real_timers_count then
+		return
+	end
+	
+	for i = 1, xvars.real_timers_count do
+		local timer_name = load_xvars("rt_name_"..i, nil)
+		if timer_name and timer_name == name then
+			if debug_msg then
+				log1("! Deleting real timer: "..name)
+			end
+			
+			del_xvars("rt_name_"..i)
+			del_xvars("rt_time_"..i)
+			del_xvars("rt_action_"..i)
+			
+			xvars.real_timers_done = xvars.real_timers_done + 1
+		end
+	end
+end
+
+-- Удаление таймера любого типа (для обратной совместимости)
+function del_timer(name)
+	del_game_timer(name)
+	del_real_timer(name)
+end
+
+-- Получение оставшегося времени игрового таймера (в секундах)
+function get_game_timer_remaining(name)
+	if not xvars or not xvars.game_timers_count then
+		return -1
+	end
+	
+	for i = 1, xvars.game_timers_count do
+		local timer_name = load_xvars("gt_name_"..i, nil)
+		if timer_name and timer_name == name then
+			local trigger_time = load_xvars("gt_time_"..i, 0)
+			local current_game_time = get_game_time_ms()
+			
+			if trigger_time > current_game_time then
+				return (trigger_time - current_game_time) / 1000
+			else
+				return 0 -- Таймер уже сработал
+			end
+		end
+	end
+	
+	return -1 -- Таймер не найден
+end
+
+-- Получение оставшегося времени реального таймера (в секундах)
+function get_real_timer_remaining(name)
+	if not xvars or not xvars.real_timers_count then
+		return -1
+	end
+	
+	for i = 1, xvars.real_timers_count do
+		local timer_name = load_xvars("rt_name_"..i, nil)
+		if timer_name and timer_name == name then
+			local trigger_time = load_xvars("rt_time_"..i, 0)
+			local current_time = game.time()
+			
+			if trigger_time > current_time then
+				return (trigger_time - current_time) / (1000 * time_factor)
+			else
+				return 0 -- Таймер уже сработал
+			end
+		end
+	end
+	
+	return -1 -- Таймер не найден
+end
+
+-- Получение статистики таймеров
+function get_timers_stat()
+	return {
+		game_timers = {
+			total = xvars.game_timers_count or 0,
+			started = xvars.game_timers_started or 0,
+			done = xvars.game_timers_done or 0,
+			active = (xvars.game_timers_count or 0) - (xvars.game_timers_done or 0)
+		},
+		real_timers = {
+			total = xvars.real_timers_count or 0,
+			started = xvars.real_timers_started or 0,
+			done = xvars.real_timers_done or 0,
+			active = (xvars.real_timers_count or 0) - (xvars.real_timers_done or 0)
+		}
+	}
+end
+
+-- Дамп активных таймеров в лог
+function dump_active_timers()
+	local game_seconds = get_game_seconds()
+	local real_time = game.time()
+	
+	log1("=== ACTIVE TIMERS DUMP ===")
+	log1("Current game time: "..game_seconds.." seconds")
+	log1("Current real time: "..real_time.." ms")
+	
+	-- Дамп игровых таймеров
+	log1("\nGAME TIMERS:")
+	log1("Count: "..xvars.game_timers_count..", Started: "..xvars.game_timers_started..", Done: "..xvars.game_timers_done)
+	
+	for i = 1, xvars.game_timers_count do
+		local timer_name = load_xvars("gt_name_"..i, nil)
+		if timer_name then
+			local trigger_time = load_xvars("gt_time_"..i, 0)
+			local current_game_time = get_game_time_ms()
+			local remaining = 0
+			
+			if trigger_time > current_game_time then
+				remaining = (trigger_time - current_game_time) / 1000
+			end
+			
+			log1(string.format("  [%d] %s - trigger in %dms (%.1fs remaining)", 
+				i, timer_name, trigger_time, remaining))
+		end
+	end
+	
+	-- Дамп реальных таймеров
+	log1("\nREAL TIMERS:")
+	log1("Count: "..xvars.real_timers_count..", Started: "..xvars.real_timers_started..", Done: "..xvars.real_timers_done)
+	
+	for i = 1, xvars.real_timers_count do
+		local timer_name = load_xvars("rt_name_"..i, nil)
+		if timer_name then
+			local trigger_time = load_xvars("rt_time_"..i, 0)
+			local current_time = game.time()
+			local remaining = 0
+			
+			if trigger_time > current_time then
+				remaining = (trigger_time - current_time) / (1000 * time_factor)
+			end
+			
+			log1(string.format("  [%d] %s - trigger at %dms (%.1fs real time remaining)", 
+				i, timer_name, trigger_time, remaining))
+		end
+	end
+	
+	log1("=== END DUMP ===")
+end
+
+-- Функция для обратной совместимости (старые скрипты могут использовать st_timer)
+function st_timer(name, delay, action)
+	log1("WARNING: st_timer() is deprecated, use st_timer_real() for real time or st_timer_game() for game time")
+	return st_timer_real(name, delay, action)
 end

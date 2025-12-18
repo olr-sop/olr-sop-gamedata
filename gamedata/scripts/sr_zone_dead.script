@@ -14,6 +14,7 @@ local state_outside = 2 -- актер снаружи
 -- таблица где харним всё нужное для разрядки
 local items_with_batteries = {}
 local time_update = 0
+local actor_inside_zone = false
 
 -- таблица секций и того наскока надо разрядить раз в секунду
 local discharge_rates = {
@@ -106,6 +107,7 @@ function action_zonedead:zone_enter()
 	-- Действия при входе в зону
 	olr.show_minimap(false)
 	db.actor:set_pda_disabled(true)
+	actor_inside_zone = true
 
 	-- Заполняем таблицу предметами из инвентаря
 	db.actor:iterate_inventory(
@@ -134,9 +136,14 @@ function action_zonedead:zone_leave()
 	-- Действия при выходе из зоны
 	olr.show_minimap(true)
 	db.actor:set_pda_disabled(false)
+	actor_inside_zone = false
 	
 	-- Очищаем таблицу при выходе из зоны
 	items_with_batteries = {}
+end
+
+function get_actor_state()
+	return actor_inside_zone
 end
 
 ---------------------------------------------------------------------------------------------------------------------

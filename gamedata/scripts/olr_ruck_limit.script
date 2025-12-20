@@ -16,28 +16,6 @@ local cur_outfit = -1
 function take_item(obj)
 end
 
-function tmr_drop______old(obj)
-	if obj == nil then
-		return
-	end
-	local wait_time = 0
-	wait_time = time_global() + 200
-	level.add_call(
-		function()
-			return time_global() > wait_time
-		end,
-		function()
-			db.actor:drop_item(obj)
-		end
-	)
-	if has_alife_info("ui_car_body") then
-		local inv_window = level.main_input_receiver()
-		if inv_window and inv_window:IsShown() then
-			level.start_stop_menu(inv_window, true)
-		end
-	end
-end
-
 function tmr_drop(obj)
 	if obj == nil then
 		return
@@ -52,27 +30,6 @@ function tmr_drop(obj)
 		xvars.pos_z = db.actor:position().z
 	end
 	xvars.item_drop_inv[obj:name()] = true
-end
-
-local artefact_classes_table = {
-	[clsid.artefact] = true,
-	[clsid.art_gravi] = true,
-	[clsid.art_galantine] = true,
-	[clsid.art_rusty_hair] = true,
-	[clsid.art_electric_ball] = true,
-	[clsid.art_faded_ball] = true,
-	[clsid.art_thorn] = true,
-	[clsid.art_zuda] = true,
-	[clsid.art_dummy] = true,
-	[clsid.art_gravi_black] = true,
-	[clsid.art_bast_artefact] = true,
-	[clsid.art_needles] = true,
-	[clsid.art_black_drops] = true,
-	[clsid.art_mercury_ball] = true
-}
-
-function isArtefact(item)
-	return artefact_classes_table[item:clsid()]
 end
 
 function upd_drop()
@@ -131,7 +88,9 @@ function on_netspawn()
 end
 
 function recheck_limit()
+
 	local outfit = db.actor:get_current_outfit()
+	max_item_amount = bind_stalker.GetBaseWeight()
 	if outfit then
 		cur_outfit = outfit:id()
 		--log1("current cur_outfit id - "..cur_outfit.." ")
@@ -170,8 +129,18 @@ function recheck_limit()
 end
 
 function drop_item_on_inv(obj)
+
 	--log1("called drop_item_on_inv")
-	if db.actor.health == 0 or device().precache_frame > 1 then return end
+	
+	if db.actor.health == 0 then
+		return
+	end
+	if device().precache_frame > 1 then
+		return
+	end
+	if level.get_game_difficulty() < 2 then
+		return	-- ваще просто сразу рубаем в начале
+	end	
 	
 	if obj then
 		if ini:line_exist(obj:section(), "item_amount") then
@@ -205,14 +174,20 @@ end
 
 
 function obj_to_ruck(obj)
+
 	--log1("called obj_to_ruck")
+	
 	if db.actor.health == 0 then
 		return
 	end
 	if device().precache_frame > 1 then
 		return
 	end
-	if obj and level.get_game_difficulty() >= 2 then
+	if level.get_game_difficulty() < 2 then
+		return	-- ваще просто сразу рубаем в начале
+	end	
+	
+	if obj then
 		--log1("obj_to_ruck add - "..obj:name().."")
 		if ini:line_exist(obj:section(), "item_amount") then
 			local val = ini:r_float(obj:section(), "item_amount") or 0
@@ -276,7 +251,19 @@ end
 
 -- кладём в ящик
 function on_to_box(obj)
+
 	--log1("called on_to_box")
+
+	if db.actor.health == 0 then
+		return
+	end
+	if device().precache_frame > 1 then
+		return
+	end
+	if level.get_game_difficulty() < 2 then
+		return	-- ваще просто сразу рубаем в начале
+	end
+
 	if obj:id() == cur_outfit then
 		cur_outfit = -1
 		--log1("on_to_box сняли броню ")
@@ -287,13 +274,19 @@ function on_to_box(obj)
 end
 
 function take_item_on_belt(obj)
+
 	--log1("called take_item_on_belt")
+	
 	if db.actor.health == 0 then
 		return
 	end
 	if device().precache_frame > 1 then
 		return
 	end
+	if level.get_game_difficulty() < 2 then
+		return	-- ваще просто сразу рубаем в начале
+	end
+	
 	if tab_objs_on_slots[tostring(obj:id())] == nil then
 		tab_objs_on_slots[tostring(obj:id())] = true
 		--log1("take_item_on_belt добавляем в таблицу в слоте")
@@ -316,13 +309,18 @@ function take_item_on_belt(obj)
 end
 
 function take_item_on_slot(obj)
+
 	--log1("called take_item_on_slot")
+	
 	if db.actor.health == 0 then
 		return
 	end
 	if device().precache_frame > 1 then
 		return
 	end
+	if level.get_game_difficulty() < 2 then
+		return	-- ваще просто сразу рубаем в начале
+	end	
 
 	if tab_objs_on_slots[tostring(obj:id())] == nil then
 		tab_objs_on_slots[tostring(obj:id())] = true
@@ -355,6 +353,7 @@ end
 
 -- костыль
 function forced_drop_outfit(obj)
+
 	if obj:id() == cur_outfit then
 		-- Уменьшаем объем самого костюма
 		local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
@@ -376,6 +375,7 @@ function forced_drop_outfit(obj)
 end
 
 function check_and_drop_excess()
+
 	local excess = cur_amount - max_item_amount
 	
 	-- Собираем предметы для сброса (кроме экипированных)

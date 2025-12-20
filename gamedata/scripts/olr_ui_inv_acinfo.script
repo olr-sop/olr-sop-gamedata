@@ -122,8 +122,17 @@ function ui_trade:InitControls()
 		self.inv_vol=0
 	end
 	
-	local vol_cur = string.format("%1.1f", self.inv_vol)
-	local vol_cur_max = string.format("%1.0f", self.inv_vol_max)
+	local vol_cur
+	local vol_cur_max
+	
+	if level.get_game_difficulty() < 2 then
+		vol_cur = "--"
+		vol_cur_max = "--"
+	else
+		vol_cur = string.format("%1.1f", self.inv_vol)
+		vol_cur_max = string.format("%1.0f", self.inv_vol_max)
+	end
+	
 	self.vo:SetTextST(string.format("%s: %s / "..vol_cur_max.."", game.translate_string("ui_inv_volume_script"),  vol_cur))
 end
 

@@ -1,168 +1,259 @@
--- hi_flyer	 28/05/15
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+-- name: olr_killer.script
+-- desc: Скрипт проверяющий на убийство нейтралов и объявление Мессера убийцей если он ахуел
+-- author: hi_flyer, theysani
+-- date: 28.05.15
+-- last edit: 20.12.2025
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 
-count = xvars.kill_count
+count = xvars.kill_count or 0
+witnessed_kills = xvars.witnessed_kills or 0
+
+-- Инициализируем случайный порог убийств при первой загрузке
+if not xvars.count_to_declare_killer then
+    -- Случайное число от 3 до 10 (не менее 2, но вы хотите чтобы первое убийство уже было обязательным)
+    -- Сделаем от 3, чтобы было как минимум 2 "промежуточных" убийства между первым и объявлением
+    xvars.count_to_declare_killer = math.random(3, 10)
+end
+count_to_declare = xvars.count_to_declare_killer
+
+-- Функция для получения случайного времени для сообщений
+function get_random_message_times()
+    local time_to_message_from_stalker = math.random(600, 1500) -- От сталкера через 10-25 минут
+    local time_to_message_from_trader = time_to_message_from_stalker + math.random(120, 600) -- +2-10 минут от сталкера
+    local time_to_message_declare_killer = time_to_message_from_stalker + math.random(120, 600) -- +2-10 минут от сталкера
+    return time_to_message_from_stalker, time_to_message_from_trader, time_to_message_declare_killer
+end
 
 function del_count_kills()
-	xvars.kill_count = 0
+    xvars.kill_count = 0
+    xvars.witnessed_kills = 0
+    xvars.count_to_declare_killer = math.random(3, 10) -- Сброс и новый случайный порог
+    count = 0
+    witnessed_kills = 0
+    count_to_declare = xvars.count_to_declare_killer
+end
+
+function jaba_killar_washe() -- Объявляем мессера убийцей
+    news_manager.send_tip(db.actor, game.translate_string("jaba_killar_washe"), math.random(1000, 15000), "trader", 15000, nil, "pda_objective", false)
+end
+
+function jaba_killar_pre() -- Предупреждаем мессера о недопустимости убийства своих в первый раз
+    news_manager.send_tip(db.actor, game.translate_string("jaba_killar_pre"), math.random(1000, 15000), "trader", 15000, nil, "pda_objective", false)
+end
+
+function jaba_killar_pre_again() -- Предупреждаем мессера о недопустимости убийства своих снова
+    news_manager.send_tip(db.actor, game.translate_string("jaba_killar_pre_again"), math.random(1000, 15000), "trader", 15000, nil, "pda_objective", false)
 end
 
 function kill_neutral(victim, who)
-	if who:id() == db.actor:id() then
-		if victim:name() == "lvl5_bar_stalker_0038" then
-			return
-		end
-		if victim:name() == "lvl3_agroprom_stalker_0045" then
-			return
-		end
-		if victim:name() == "lvl13_prip_stalker_0089" then
-			return
-		end
-		if victim:name() == "lvl1_escape_stalker_0038" then
-			return
-		end
-		if victim:name() == "lvl9_military_stalker_0012" then
-			return
-		end
-		if victim:name() == "lvl9_military_stalker_0013" then
-			return
-		end
-		if victim:name() == "lvl9_military_stalker_0014" then
-			return
-		end
-		if victim:name() == "lvl11_deadcity_stalker_0048" then
-			return
-		end
-		if victim:name() == "lvl9_military_stalker_0053" then
-			return
-		end
-		if victim:name() == "lvl9_military_stalker_0054" then
-			return
-		end
-		if victim:name() == "lvl9_military_stalker_0055" then
-			return
-		end
-		if victim:name() == "lvl8_swamp_stalker_0020" then
-			return
-		end
-		local sobj = game.translate_string(xvars.quest_two_target)
-		if sobj and sobj == game.translate_string(victim:name()) then
-			return
-		end
-		local sobj2 = game.translate_string(xvars.quest_two_target_bar)
-		if sobj2 and sobj2 == game.translate_string(victim:name()) then
-			return
-		end
+    if who:id() == db.actor:id() then
+        -- Проверка исключений (оставить как есть)
+        if victim:name() == "lvl5_bar_stalker_0038" then return end
+        if victim:name() == "lvl3_agroprom_stalker_0045" then return end
+        if victim:name() == "lvl13_prip_stalker_0089" then return end
+        if victim:name() == "lvl1_escape_stalker_0038" then return end
+        if victim:name() == "lvl9_military_stalker_0012" then return end
+        if victim:name() == "lvl9_military_stalker_0013" then return end
+        if victim:name() == "lvl9_military_stalker_0014" then return end
+        if victim:name() == "lvl11_deadcity_stalker_0048" then return end
+        if victim:name() == "lvl9_military_stalker_0053" then return end
+        if victim:name() == "lvl9_military_stalker_0054" then return end
+        if victim:name() == "lvl9_military_stalker_0055" then return end
+        if victim:name() == "lvl8_swamp_stalker_0020" then return end
+        
+        local sobj = game.translate_string(xvars.quest_two_target)
+        if sobj and sobj == game.translate_string(victim:name()) then return end
+        local sobj2 = game.translate_string(xvars.quest_two_target_bar)
+        if sobj2 and sobj2 == game.translate_string(victim:name()) then return end
 
-		if has_alife_info("prp_first") then
-			return
-		end
-	end
-	this.kill_neutral11(victim, who)
-	this.kill_neutral22(victim, who)
+        if has_alife_info("prp_first") then return end
+    end
+    
+    this.kill_neutral11(victim, who)
+    this.kill_neutral22(victim, who)
 end
 
 function kill_neutral11(victim, who)
-	if who:id() == db.actor:id() then
-		if victim:name() == xvars.quest_two_target_bar or victim:name() == xvars.quest_two_target then
-			--log1("наш клиент")
-			return
-		end
-		if not has_alife_info("monolit_na_kordone") then
-			local community = victim:character_community()
-			if community == "stalker" or community == "dolg" or community == "freedom" and community ~= "sin" then
-				if not has_alife_info("messer_killar_pre") then
-					if not olr_timers.has_timer("first_killer_timer") then
-						for k, v in pairs(db.storage) do
-							local stalker = level.object_by_id(k)
-							if stalker and stalker:is_stalker() and stalker:alive() then
-								if stalker:see_right_now(db.actor) then
-									--log1("see how kill 1")
-									olr_timers.st_timer("first_killer_timer_sms", 900, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..")")
-									--log1(""..tostring(victim:character_name()).."")
-									olr_timers.st_timer("first_killer_timer", 790, "olr_killer.first_killer_timer()")
-									olr.info("just_kill_the_man")
-									xvars.kill_count = 1000
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+    if who:id() == db.actor:id() then
+        if victim:name() == xvars.quest_two_target_bar or victim:name() == xvars.quest_two_target then
+            return
+        end
+        
+        if not has_alife_info("monolit_na_kordone") then
+            local community = victim:character_community()
+            if community == "stalker" or community == "dolg" or community == "freedom" and community ~= "sin" then
+                local has_witness = false
+                local witness_id = nil
+                
+                -- Поиск свидетеля
+                for k, v in pairs(db.storage) do
+                    local stalker = level.object_by_id(k)
+                    if stalker and stalker:is_stalker() and stalker:alive() then
+                        if stalker:see_right_now(db.actor) then
+                            has_witness = true
+                            witness_id = stalker:id()
+                            break
+                        end
+                    end
+                end
+                
+                if has_witness then
+                    -- Увеличиваем счетчик убийств со свидетелями
+                    xvars.witnessed_kills = (xvars.witnessed_kills or 0) + 1
+                    witnessed_kills = xvars.witnessed_kills
+                    
+                    -- Поршень для плохой концовки (только при первом убийстве со свидетелем)
+                    if witnessed_kills == 1 then
+                        olr.info("just_kill_the_man")
+                    end
+                
+                    local time_to_message_from_stalker, time_to_message_from_trader, time_to_message_declare_killer = get_random_message_times()
+                    
+                    -- 1. Первое убийство - обязательно сообщение от сталкера и торговца
+                    if witnessed_kills == 1 then
+                        -- Сообщение от сталкера
+                        olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                        -- Сообщение от торговца (предупреждение)
+                        olr_timers.st_timer_game("first_killer_timer_"..tostring(witnessed_kills), time_to_message_from_trader, "olr_killer.first_killer_timer()")
+                    
+                    -- 2. Убийства со 2-го до предпоследнего перед объявлением убийцей
+                    elseif witnessed_kills > 1 and witnessed_kills < count_to_declare then
+                        -- Сообщение от сталкера с шансом 70%
+                        if math.random(100) <= 70 then
+                            olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                        end
+                        -- Сообщение от торговца с шансом 60%
+                        if math.random(100) <= 60 then
+                            olr_timers.st_timer_game("first_killer_timer_"..tostring(witnessed_kills), time_to_message_from_trader, "olr_killer.first_killer_timer()")
+                        end
+                    
+                    -- 3. Убийство, которое достигает порога - объявляем убийцей
+                    elseif witnessed_kills == count_to_declare then
+                        -- Сообщение от сталкера обязательно
+                        olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                        -- Объявление убийцей
+                        olr_timers.st_timer_game("declare_killer_timer", time_to_message_declare_killer, "olr_killer.declare_killer()")
+                    
+                    -- 4. Убийства после объявления убийцей
+                    elseif witnessed_kills > count_to_declare then
+                        -- Только сообщение от сталкера с меньшим шансом (30%)
+                        if math.random(100) <= 30 then
+                            olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                        end
+                        -- Торговец больше не реагирует
+                    end
+                end
+            end
+        end
+    end
 end
 
 function kill_neutral22(victim, who)
-	if who:id() == db.actor:id() then
-		if victim:name() == xvars.quest_two_target_bar or victim:name() == xvars.quest_two_target then
-			--log1("наш клиент")
-			return
-		end
-		local community = victim:character_community()
-		if community == "stalker" or community == "dolg" or community == "freedom" and community ~= "sin" then
-			if has_alife_info("messer_killar_washe") then
-				count = count + math.random(550, 1000)
-				xvars.kill_count = count
-				db.actor:change_character_reputation(-500)
-				--news_manager.send_tip(db.actor, "КЛУНТ "..count.." сейчас.", nil, "dolg", 6000)
-			end
-		end
-	end
+    if who:id() == db.actor:id() then
+        if victim:name() == xvars.quest_two_target_bar or victim:name() == xvars.quest_two_target then
+            return
+        end
+        
+        local community = victim:character_community()
+        if community == "stalker" or community == "dolg" or community == "freedom" and community ~= "sin" then
+            -- Увеличиваем штраф только если уже объявлен убийцей
+            if has_alife_info("messer_killar_washe") then
+                count = count + math.random(550, 1000)
+                xvars.kill_count = count
+                db.actor:change_character_reputation(-500)
+            end
+        end
+    end
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
-function first_killer_timer()
-	if not has_alife_info("messer_killar_pre") then
-		db.actor:give_info_portion("messer_killar_pre")
-		db.actor:change_character_reputation(-100)
-	end 
+function declare_killer() -- Объявляем убийцей
+    if not has_alife_info("messer_killar_washe") then
+        db.actor:give_info_portion("messer_killar_washe")
+        jaba_killar_washe()
+        db.actor:set_character_community("actor_killer", 0, 0)
+        db.actor:change_character_reputation(-800)
+        xvars.kill_count = 1000
+        count = 1000
+    end
 end
 
-function first_killer_timer_seen(id)
-	olr.info("messer_killar_washe")
-	db.actor:change_character_reputation(-400)
-	local sobj = alife():object(id)
-	if sobj then
-		local pk = get_netpk(sobj,1)
-		if pk:isOk() then
-			local data = pk:get()
-			local name = data.character_name
-			local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-				news_manager.send_tip(db.actor, game.translate_string("first_killer_timer_seen_0") .." "..name.. game.translate_string("first_killer_timer_seen_1") ..pos.." ".. game.translate_string("first_killer_timer_seen_2"), nil, "unknown", 39000)
-		end
-	end	
+function first_killer_timer() -- Выдаем предупреждение только если его еще нет
+    if not has_alife_info("messer_killar_pre") then
+        db.actor:give_info_portion("messer_killar_pre")
+        jaba_killar_pre()
+        db.actor:change_character_reputation(-100)
+    elseif has_alife_info("messer_killar_pre") and not has_alife_info("messer_killar_washe") then
+        -- Повторное предупреждение, если уже предупреждали
+        jaba_killar_pre_again()
+        db.actor:change_character_reputation(-50)
+    end
+end
+
+function first_killer_timer_seen(victim_id, witness_id) -- Сообщение от свидетеля что он видел убийство
+    db.actor:change_character_reputation(-400)
+    local sobj = alife():object(victim_id)
+    if sobj then
+        local pk = get_netpk(sobj,1)
+        if pk:isOk() then
+            local data = pk:get()
+            local name = data.character_name
+            local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
+            news_manager.send_tip(db.actor, game.translate_string("first_killer_timer_seen_0") .." "..name.. game.translate_string("first_killer_timer_seen_1") ..pos.." ".. game.translate_string("first_killer_timer_seen_2"), nil, "unknown", 39000)
+        end
+    end
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------
+-- Функции для торговца
 
 function trader_check_oplata(trader, actor)
-	local k_oplate_cost = xvars.kill_count
-	if k_oplate_cost > 0 and db.actor:money() >= k_oplate_cost then
-		return true
-	end
-	return false
+    local k_oplate_cost = xvars.kill_count
+    if k_oplate_cost > 0 and db.actor:money() >= k_oplate_cost then
+        return true
+    end
+    return false
 end
 
 function trader_oplata_sama(trader, actor)
-	local k_oplat = math.floor(count)
-	dialogs.relocate_money(actor, k_oplat, "out")
-	xvars.kill_count = 0
+    local k_oplat = math.floor(count)
+    dialogs.relocate_money(actor, k_oplat, "out")
+    xvars.kill_count = 0
+    xvars.witnessed_kills = 0
+    xvars.count_to_declare_killer = math.random(3, 10) -- Новый случайный порог
+    count = 0
+    witnessed_kills = 0
+    count_to_declare = xvars.count_to_declare_killer
+    
+    -- Снимаем поршни если они есть
+    if has_alife_info("messer_killar_washe") then
+        db.actor:disable_info_portion("messer_killar_washe")
+    end
+    if has_alife_info("messer_killar_pre") then
+        db.actor:disable_info_portion("messer_killar_pre")
+    end
+    if has_alife_info("just_kill_the_man") then
+        db.actor:disable_info_portion("just_kill_the_man")
+    end
 end
 
 function rasplata_costs(first_speaker, second_speaker)
-	local task_texture, task_rect = get_texture_info("ui_notification_kill_stalker")
+    local task_texture, task_rect = get_texture_info("ui_notification_kill_stalker")
 
-	local rasplata_costs_price = ""
-	local rasplata_costs_cost = 0
-	if db.actor ~= nil then
-		local rasplata_costsp = count
-		if rasplata_costsp ~= nil then
-			rasplata_costs_cost = count
-			if rasplata_costs_cost > 0 then
-				rasplata_costs_price = game.translate_string("babosy_platit").." %c[255,238,155,23]"..rasplata_costs_cost.."$%c[default]"
-				db.actor:give_talk_message(rasplata_costs_price, task_texture, task_rect, "iconed_answer_item")
-			end
-		end
-	end
+    local rasplata_costs_price = ""
+    local rasplata_costs_cost = 0
+    if db.actor ~= nil then
+        local rasplata_costsp = count
+        if rasplata_costsp ~= nil then
+            rasplata_costs_cost = count
+            if rasplata_costs_cost > 0 then
+                rasplata_costs_price = game.translate_string("babosy_platit").." %c[255,238,155,23]"..rasplata_costs_cost.."$%c[default]"
+                db.actor:give_talk_message(rasplata_costs_price, task_texture, task_rect, "iconed_answer_item")
+            end
+        end
+    end
 end

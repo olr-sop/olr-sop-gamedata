@@ -877,7 +877,9 @@ function show_news(text, from, timeout, showtime, section)
 	table.insert(spammers, from)
 	
 	--amk.send_tip(text, from, timeout, showtime, section)
-	news_manager.send_tip(db.actor, text, timeout, section, showtime*1000, nil, nil, true, from) -- попробуем так
+	--news_manager.send_tip(db.actor, text, timeout, section, showtime*1000, nil, nil, true, from) -- попробуем так
+	-- tip_text, tip_header, sender_icon, sound_name, timeout, showtime
+	news_manager.send_tip_new_offline_alife(text, from, section, nil, timeout * 1000, showtime * 1000) -- текст сообщения, от кого, иконка, звук (стандартный), таймаут и шоутайм множим на 1000 т.к тут они в секундах!!
 	--timer_last_showed = game_minutes()
 end
 
@@ -2316,7 +2318,9 @@ function do_document_timer()
 	m_str = tostring(xvars.doc_message_text_m_str)
 	m_from = tostring(xvars.doc_message_text_m_from)
 	if m_str ~= "" or m_from  ~= "" then
-		amk.send_tip(m_str, m_from, 1, 15, "news", task)
+		--amk.send_tip(m_str, m_from, 1, 15, "news", task)
+		-- tip_text, tip_header, sender_icon, sound_name, timeout, showtime
+		news_manager.send_tip_new_offline_alife(m_str, m_from, "news", "pda_objective", nil, 15000)		
 	end
 	xvars.doc_message_text_m_str = ""
 	xvars.doc_message_text_m_from = ""

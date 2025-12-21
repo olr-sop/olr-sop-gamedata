@@ -35,7 +35,9 @@ function action_tip:update(delta)
 		then
 		    if self.st.tips_sended == false then
 --			   if self.st.type == "tips" then
-  			      news_manager.send_tip( actor, self.st.info, self.st.timeout, self.st.sender, self.st.showtime, nil, "pda_tip", true, self.st.sender_name)
+  			      --news_manager.send_tip( actor, self.st.info, self.st.timeout, self.st.sender, self.st.showtime, nil, "pda_tip", true, self.st.sender_name)
+				  --tip_text, tip_header, sender_icon, sound_name, timeout, showtime
+				  news_manager.send_tip_new(self.st.info,self.st.sender_name,self.st.sender, "pda_tips", self.st.timeout, self.st.showtime)
 --			   elseif self.st.type == "news" then
 --				  news_manager.send_news( actor, self.st.info, self.st.timeout, self.st.showtime )
 --			   end
@@ -70,9 +72,9 @@ function set_scheme(obj, ini, scheme, section, gulag_name)
 	st.type			= utils.cfg_get_string( ini, section, "type",			obj, false, "", "news" )
 	st.sender_name	= utils.cfg_get_string( ini, section, "sender_name",	obj, false, "", "st_tip" )
 	st.sender		= utils.cfg_get_string( ini, section, "sender",			obj, false, "", nil )
-	st.timeout		= utils.cfg_get_number( ini, section, "timeout",		obj, false,     nil )
-	st.showtime		= utils.cfg_get_number( ini, section, "showtime",		obj, false,     nil )
-	st.single		= utils.cfg_get_bool  ( ini, section, "single",			obj, false, false)
+	st.timeout		= utils.cfg_get_number( ini, section, "timeout",		obj, false,     0 )
+	st.showtime		= utils.cfg_get_number( ini, section, "showtime",		obj, false,     5000 )
+	st.single		= utils.cfg_get_bool  ( ini, section, "single",			obj, false, 	false)
 
 	st.conditions = xr_logic.cfg_get_condlist( ini, section, "cond", obj )
 end

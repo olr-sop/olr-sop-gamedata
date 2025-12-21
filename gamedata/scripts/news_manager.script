@@ -4,73 +4,108 @@ pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 pda_sos = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
 
 tips_icons = {
-	default     = 						{ 3, 215},
+	default		=						{ 3, 215},
 	
-	money_found     = 					{ 3, 3},
-	task_update     = 					{ 56, 3},
-	military_stalker     = 				{ 109, 3},
-	helicopter     = 					{ 162, 3},
-	novice     = 						{ 215, 3},
-	security    = 						{ 268, 3},
+	money_found		=					{ 3, 3},
+	task_update		=					{ 56, 3},
+	military_stalker	 =				{ 109, 3},
+	helicopter	   =					{ 162, 3},
+	novice	   =						{ 215, 3},
+	security	=						{ 268, 3},
 	
-	money_lost    = 					{ 3, 56},
-	trade    = 							{ 56, 56},
-	hero    = 							{ 109, 56},
-	documents    = 						{ 162, 56},
-	flash     = 						{ 215, 56},
-	major     = 						{ 268, 56},	
+	money_lost	  =						{ 3, 56},
+	trade	 =							{ 56, 56},
+	hero	=							{ 109, 56},
+	documents	 =						{ 162, 56},
+	flash	  =							{ 215, 56},
+	major	  =							{ 268, 56},	
 	
-	item    = 							{ 3, 109},
-	professor    = 						{ 56, 109},
-	unknown    = 						{ 109, 109},
-	kill_stalker    = 					{ 162, 109},
-	artifact_merger     = 				{ 215, 109},
-	lone_wolf     = 				    { 268, 109},
+	item	=							{ 3, 109},
+	professor	 =						{ 56, 109},
+	unknown	   =						{ 109, 109},
+	kill_stalker	=					{ 162, 109},
+	artifact_merger		=				{ 215, 109},
+	lone_wolf	  =						{ 268, 109},
 	
-	item_lost    = 						{ 3, 162},
-	freedom    = 						{ 56, 162},
-	neutral    = 						{ 109, 162},
-	stalker    = 						{ 109, 162},
-	sos    = 							{ 162, 162},
-	freedom_leader    = 				{ 215, 162},
-	treasure    = 						{ 268, 162},
+	item_lost	 =						{ 3, 162},
+	freedom	   =						{ 56, 162},
+	neutral	   =						{ 109, 162},
+	stalker	   =						{ 109, 162},
+	sos	   =							{ 162, 162},
+	freedom_leader	  =					{ 215, 162},
+	treasure	=						{ 268, 162},
 
-	death    = 							{ 3, 215},
-	clear_sky    = 						{ 56, 215},
-	trader    = 						{ 109, 215},
-	info    = 							{ 162, 215},
-	dolg_leader    = 					{ 215, 215},
+	death	 =							{ 3, 215},
+	clear_sky	 =						{ 56, 215},
+	trader	  =							{ 109, 215},
+	info	=							{ 162, 215},
+	dolg_leader	   =					{ 215, 215},
 
-	news    = 							{ 3, 268},
-	dolg    = 							{ 56, 268},
-	killer    = 						{ 109, 268},
-	money_update    = 					{ 162, 268},
-	specops    = 						{ 215, 321},
+	news	=							{ 3, 268},
+	dolg	=							{ 56, 268},
+	killer	  =							{ 109, 268},
+	money_update	=					{ 162, 268},
+	specops	   =						{ 215, 321},
 	
-	task_new    = 						{ 3, 321},
-	barman    = 						{ 56, 321},
-	bandit_leader    = 					{ 109, 321},
-	bandit    = 						{ 162, 321},
-	trader_order    = 					{ 215, 321},
+	task_new	=						{ 3, 321},
+	barman	  =							{ 56, 321},
+	bandit_leader	 =					{ 109, 321},
+	bandit	  =							{ 162, 321},
+	trader_order	=					{ 215, 321},
 	
-	task_completed    = 				{ 3, 374},
-	monolith    = 						{ 56, 374},
-	soldier    = 						{ 109, 374},
-	artifact    = 						{ 162, 374},
-	signal_lost    = 					{ 215, 374},
+	task_completed	  =					{ 3, 374},
+	monolith	=						{ 56, 374},
+	soldier	   =						{ 109, 374},
+	artifact	=						{ 162, 374},
+	signal_lost	   =					{ 215, 374},
 	
-	task_failed    = 					{ 3, 427},
-	ecolog    = 						{ 56, 427},
-	doctor    = 						{ 109, 427},
-	mutants    = 						{ 162, 427},
-	weapon    = 						{ 215, 427},
+	task_failed	   =					{ 3, 427},
+	ecolog	  =							{ 56, 427},
+	doctor	  =							{ 109, 427},
+	mutants	   =						{ 162, 427},
+	weapon	  =							{ 215, 427},
 	
 }
 
+local debug_who_called = false
 
 function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, show_tip_top, sender_name)
 	if news_id == nil then return false end
 
+	timeout = timeout or 0
+	showtime = showtime or 5000	
+
+	-- Для совместимости с теми сообщениями где таймауты заданы были в секундах
+	-- Для showtime сделано НА ВСЯКИЙ СЛУЧАЙ
+	local timeout_msg
+	local showtime_msg
+	if timeout >= 100 then
+		timeout_msg = timeout -- Если timeout уже в миллисекундах (>=100), используем как есть
+	else
+		timeout_msg = timeout * 1000 -- Иначе конвертируем секунды в миллисекунды
+	end
+
+	if showtime <= 100 then
+		showtime_msg = showtime * 1000 -- Если showtime в секундах переводим в мс
+	else
+		showtime_msg = showtime -- Если showtime в мс то оставляем как есть
+	end
+	
+	-- Мессага на про деприкатед
+	log1("~~~ WARN: Called news_manager.send_tip, plz replace to news_manager.send_tip_new")
+	
+	if debug_who_called then
+		local caller_info = debug.getinfo(2, "Sl")
+		local source = caller_info.source or "unknown"
+		local line = caller_info.currentline or "unknown"
+		log1("~~~ WARN: Called from: " .. source .. ":" .. tostring(line))
+	end
+	
+	--tip_text, tip_header, sender_icon, sound_name, timeout, showtime
+	send_tip_new(news_id, sender_name, sender, kostyl, timeout_msg, showtime_msg)
+	
+	-- Старый код, закомментирован
+	--[[
 	printf("try to send tips for [%s]", tostring(sender_id))
 	if sender_id ~= nil then
 		local sim = alife()
@@ -93,9 +128,9 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 		end
 	end
 
-    -- Настройка параметров по умолчанию
-    timeout = timeout or 0
-    showtime = showtime or 5000
+	-- Настройка параметров по умолчанию
+	timeout = timeout or 0
+	showtime = showtime or 5000
 	show_tip_top = (show_tip_top ~= false)
 	sender = sender or "default"
 	
@@ -113,17 +148,17 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 		pda_sos = pda_sos
 	}
 	
-    -- Определение задержки (в миллисекундах)
-    local timeout_msg
+	-- Определение задержки (в миллисекундах)
+	local timeout_msg
 	local timeout_snd = timeout
-    if timeout >= 100 then
-        -- Если timeout уже в миллисекундах (>=100), используем как есть
-        timeout_msg = timeout
-		timeout_snd = timeout / 1000 -- переводим из мс в сек
-    else
-        -- Иначе конвертируем секунды в миллисекунды
-        timeout_msg = timeout * 1000
-    end		
+	if timeout >= 100 then
+		-- Если timeout уже в миллисекундах (>=100), используем как есть
+		timeout_msg = timeout
+		timeout_snd = timeout / 1000 -- переводим из мс в сек для звука
+	else
+		-- Иначе конвертируем секунды в миллисекунды
+		timeout_msg = timeout * 1000
+	end		
 
 	local sound_to_play = sound_map[kostyl] or pda_tips
 	sound_to_play:play(db.actor, timeout_snd, sound_object.s2d)
@@ -151,6 +186,209 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 	end
 	
 	db.actor:give_game_news(news_text, game.translate_string(sender_text), "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout_msg, showtime)
+	--]]
+	return true
+end
+
+--[[
+	Сильно упрощенный скрипт сенд типсов
+	Нет поддержки отправки сообщений от других сталкеров, де-факто всё в олр отправляется от имени актора
+	поэтому всякие проверки на сендер_ид и актор не нужны, все сообщения будут от актора всегда
+	заодно прибрал всякую фигню тут лишнюю и более явно теперь собираем всё воедино
+	
+	Пояснение по аргументам:
+	tip_text - Сам текст сообщения (типса) ОБЯЗАТЕЛЬНЫЙ АРГУМЕНТ
+	tip_header - Заголовок сообщения (типса), если nil то будет стандартное "Сообщение:" в заголовке
+	sender_icon - иконка отправителя, можно nil, будет "default" иконка
+	sound_name - звук сообщения, не обязательный, если nil то играем стандартный pda_tips
+	timeout - задержка перед отправкой в миллисекундах
+	showtime - время показа в миллисекундах
+--]]
+function send_tip_new(tip_text, tip_header, sender_icon, sound_name, timeout, showtime) -- сильно упрощённый, сугубо для сопа
+	if tip_text == nil then return end
+	
+	-- Настройка параметров по умолчанию
+	timeout = timeout or 0 -- в миллисекундах
+	timeout_sound = timeout / 1000 -- в секундах для задержки звука
+	showtime = showtime or 5000 -- в миллисекундах
+	sender_icon = sender_icon or "default"
+	
+	-- Задаём иконку сообщения
+	-- Проверка существования sender_icon в таблице tips_icons
+	if tips_icons[sender_icon] == nil then
+		log1(string.format("~~~ В sender_icon '%s' отправили ту иконку которой нет в таблице", tostring(sender_icon)))
+		sender_icon = "default"
+	end
+	local x = tips_icons[sender_icon][1]
+	local y = tips_icons[sender_icon][2]
+	
+	-- Проигрывание звука сообщения
+	local sound_map = {
+		pda_news = pda_news,
+		pda_tip = pda_tips,
+		pda_objective = pda_task,
+		pda_sos = pda_sos,
+		tips = pda_tips
+	}
+	local sound_to_play = pda_tips
+	if sound_name and sound_map[sound_name] then
+		sound_to_play = sound_map[sound_name]
+	elseif sound_name then
+		log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
+	end
+	sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
+	
+	
+	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
+	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
+	
+	if tip_header == nil then
+		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
+	else
+		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
+	end
+	
+	-- Отправляем сообщение
+	db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
+	
+	return true
+end
+
+--[[
+	Сильно упрощенный скрипт сенд типсов с диалог версией
+	Нет поддержки отправки сообщений от других сталкеров, де-факто всё в олр отправляется от имени актора
+	поэтому всякие проверки на сендер_ид и актор не нужны, все сообщения будут от актора всегда
+	заодно прибрал всякую фигню тут лишнюю и более явно теперь собираем всё воедино
+	
+	Пояснение по аргументам:
+	tip_text - Сам текст сообщения (типса) ОБЯЗАТЕЛЬНЫЙ АРГУМЕНТ
+	tip_header - Заголовок сообщения (типса), если nil то будет стандартное "Сообщение:" в заголовке
+	sender_icon - иконка отправителя, можно nil, будет "default" иконка
+	sound_name - звук сообщения, не обязательный, если nil то играем стандартный pda_tips
+	timeout - задержка перед отправкой в миллисекундах
+	showtime - время показа в миллисекундах
+--]]
+function send_tip_new_dlg(tip_text, tip_header, sender_icon, sound_name, timeout, showtime) -- сильно упрощённый, сугубо для сопа
+	if tip_text == nil then return end
+	
+	-- Настройка параметров по умолчанию
+	timeout = timeout or 0 -- в миллисекундах
+	timeout_sound = timeout / 1000 -- в секундах для задержки звука
+	showtime = showtime or 5000 -- в миллисекундах
+	sender_icon = sender_icon or "default"
+	
+	-- Задаём иконку сообщения
+	-- Проверка существования sender_icon в таблице tips_icons
+	if tips_icons[sender_icon] == nil then
+		log1(string.format("~~~ В sender_icon '%s' отправили ту иконку которой нет в таблице", tostring(sender_icon)))
+		sender_icon = "default"
+	end
+	local x = tips_icons[sender_icon][1]
+	local y = tips_icons[sender_icon][2]
+	
+	-- Проигрывание звука сообщения
+	local sound_map = {
+		pda_news = pda_news,
+		pda_tip = pda_tips,
+		pda_objective = pda_task,
+		pda_sos = pda_sos,
+		tips = pda_tips
+	}
+	local sound_to_play = pda_tips
+	if sound_name and sound_map[sound_name] then
+		sound_to_play = sound_map[sound_name]
+	elseif sound_name then
+		log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
+	end
+	sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
+	
+	
+	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
+	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
+	
+	if tip_header == nil then
+		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
+	else
+		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
+	end
+	
+	-- Отправляем сообщение
+	if db.actor:is_talking() then
+		local text = tip_header.."\\n"..tip_text
+		db.actor:give_talk_message(text, "ui\\icons\\icons_notifications", Frect():set(x, y, 50, 50), "iconed_answer_item")
+	else	
+		db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
+	end
+	
+	return true
+end
+
+--[[
+	Сильно упрощенный скрипт сенд типсов для оффлайновых месседжей из системы дин новостей АМК
+	Нет поддержки отправки сообщений от других сталкеров, де-факто всё в олр отправляется от имени актора
+	поэтому всякие проверки на сендер_ид и актор не нужны, все сообщения будут от актора всегда
+	заодно прибрал всякую фигню тут лишнюю и более явно теперь собираем всё воедино
+	
+	Пояснение по аргументам:
+	tip_text - Сам текст сообщения (типса) ОБЯЗАТЕЛЬНЫЙ АРГУМЕНТ
+	tip_header - Заголовок сообщения (типса), если nil то будет стандартное "Сообщение:" в заголовке
+	sender_icon - иконка отправителя, можно nil, будет "default" иконка
+	sound_name - звук сообщения, не обязательный, если nil то играем стандартный pda_tips
+	timeout - задержка перед отправкой в миллисекундах
+	showtime - время показа в миллисекундах
+--]]
+function send_tip_new_offline_alife(tip_text, tip_header, sender_icon, sound_name, timeout, showtime) -- сильно упрощённый, сугубо для сопа
+	if tip_text == nil then return end
+	
+	if has_alife_info("monolit_na_kordone") and not has_alife_info("aes_antenna_off_jaba_sms") then return end
+	if level.name() == "lvl16_generators" then return end
+	if nick.is_pda_dead() then 
+		log1("try sms but pda dead - sms - ["..game.translate_string(tip_text).."]")
+		return 
+	end	
+	
+	-- Настройка параметров по умолчанию
+	timeout = timeout or 0 -- в миллисекундах
+	timeout_sound = timeout / 1000 -- в секундах для задержки звука
+	showtime = showtime or 5000 -- в миллисекундах
+	sender_icon = sender_icon or "default"
+	
+	-- Задаём иконку сообщения
+	-- Проверка существования sender_icon в таблице tips_icons
+	if tips_icons[sender_icon] == nil then
+		log1(string.format("~~~ В sender_icon '%s' отправили ту иконку которой нет в таблице", tostring(sender_icon)))
+		sender_icon = "default"
+	end
+	local x = tips_icons[sender_icon][1]
+	local y = tips_icons[sender_icon][2]
+	
+	-- Проигрывание звука сообщения
+	local sound_map = {
+		pda_news = pda_news,
+		pda_tip = pda_tips,
+		pda_objective = pda_task,
+		pda_sos = pda_sos,
+		tips = pda_tips
+	}
+	local sound_to_play = pda_tips
+	if sound_name and sound_map[sound_name] then
+		sound_to_play = sound_map[sound_name]
+	elseif sound_name then
+		log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
+	end
+	sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
+	
+	
+	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
+	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
+	
+	if tip_header == nil then
+		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
+	else
+		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
+	end
+	
+	db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
 	
 	return true
 end
@@ -192,7 +430,7 @@ function send_task(actor, type, task, objective)
 	if db.actor:is_talking() then
 		news_text = "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]) .. "\\n" .. "%c[default]" .. game.translate_string(task:get_title())
 	else
-		news_text =  game.translate_string(task:get_title())
+		news_text = game.translate_string(task:get_title())
 	end
 	local news_text_static = game.translate_string(action_descr_by_type[type]) .. " " .. game.translate_string(task:get_title())
 

@@ -242,7 +242,7 @@ function send_tip_new(tip_text, tip_header, sender_icon, sound_name, timeout, sh
 	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
 	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
 	
-	if tip_header == nil then
+	if not tip_header or tip_header == "" then
 		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
 	else
 		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
@@ -306,7 +306,7 @@ function send_tip_new_dlg(tip_text, tip_header, sender_icon, sound_name, timeout
 	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
 	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
 	
-	if tip_header == nil then
+	if not tip_header or tip_header == "" then
 		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
 	else
 		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
@@ -382,7 +382,7 @@ function send_tip_new_offline_alife(tip_text, tip_header, sender_icon, sound_nam
 	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
 	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
 	
-	if tip_header == nil then
+	if not tip_header or tip_header == "" then
 		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
 	else
 		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
@@ -405,6 +405,14 @@ function send_tip_nosound(actor, news_id, timeout, sender) -- хоть эта функция и
 	return news_sound
 end
 
+--[[
+	Пока переделал так, посмотрим что там по итогу будет далее
+	Привёл к более ТЧ виду, но посмотрим, возможно что-то изменится
+	Думаю упростить немного, убрать обычные типсы, оставить только диалоговые
+	А вне диалога звук + кастом статик онли
+	ТАК ЧТО ВОООООООООООООТ
+--]]
+
 local action_descr_by_type = {
 	new = "general_new_task",
 	update = "general_update_task", 
@@ -421,61 +429,58 @@ local texture_by_action_type = {
 
 function send_task(actor, type, task, objective)
 	if db.actor == nil then return false end
-
+	
 	-- Получаем текстуру для текущего типа действия
 	local texture_name = texture_by_action_type[type] or "ui_iconsTotal_update_task"
 	local task_texture, task_rect = get_texture_info("ui_iconsTotal_" .. task:get_id(), texture_name)
+        
+	-- Играем дефолтный звук
+	pda_task:play(db.actor, 0, sound_object.s2d)
 	
+	-- Формируем текст для типса
 	local news_text = ""
 	if db.actor:is_talking() then
-		news_text = "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]) .. "\\n" .. "%c[default]" .. game.translate_string(task:get_title())
+		news_text = "%c[255,160,181,169]"..game.translate_string(action_descr_by_type[type]).."\\n".."%c[255,245,240,218]"..game.translate_string(task:get_title())
 	else
 		news_text = game.translate_string(task:get_title())
 	end
-	local news_text_static = game.translate_string(action_descr_by_type[type]) .. " " .. game.translate_string(task:get_title())
-
-	-- Обработка нового задания
-	if type == "new" then
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-			if task:get_objectives_cnt() == objective:get_idx() + 1 then
-				return
-			end
-			news_text = game.translate_string(task:get_objective(objective:get_idx() + 1):get_description())
-		end
-		
-		local hud = get_hud()
-		hud:AddCustomStatic("job_task", true)
-		hud:GetCustomStatic("job_task"):wnd():SetTextST(news_text_static)
-		hud:GetCustomStatic("job_task").m_endTime = time_global() / 1000 + 8
-		pda_task:play(db.actor, 0, sound_object.s2d)
-		
-		xvars.quests_started = xvars.quests_started + 1
-		nick.autosave_quest()
-
-	-- Обработка завершения задания
-	elseif type == "complete" then
-		pda_tips:play(db.actor, 0, sound_object.s2d)
-		
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-		else
-			db.actor:give_game_news(news_text, "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
-		end
-		pda_task:play(db.actor, 0, sound_object.s2d)
-		actor_stats.add_points("quests", task:get_title(), 1, 1)
-		nick.autosave_quest()
-
-	-- Обработка обновления задания
-	elseif type == "update" then
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-		else
-			db.actor:give_game_news(news_text, "%c[255,160,181,169]" .. game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
-		end
-		pda_task:play(db.actor, 0, sound_object.s2d)
-		nick.autosave_quest()
+	
+	-- Формируем текст для статика
+	local news_text_static = game.translate_string(action_descr_by_type[type]) .. " - " .. game.translate_string(task:get_title())
+	
+	-- Отправляем типс
+	if db.actor:is_talking() then	
+		db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
+	else
+		db.actor:give_game_news("%c[255,245,240,218]"..news_text, "%c[255,160,181,169]"..game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
 	end
+	
+--	if not db.actor:is_talking() then -- сейвы делаем только ВНЕ диалога
+		-- Делаем сейв
+		save_manager.task_saves(type, task)
+--	end
+	
+	if type == "new" then
+		xvars.quests_started = xvars.quests_started + 1
+	end
+	
+	if type == "complete" then
+		actor_stats.add_points("quests", task:get_title(), 1, 1)
+	end
+
+	if type == "new" or type == "update" then
+		-- Выдать новое подзадание
+		if task:get_objectives_cnt() == objective:get_idx()+1 then
+			return
+		end
+		news_text_static = game.translate_string(action_descr_by_type[type]) .. " - " .. game.translate_string(task:get_objective(objective:get_idx() + 1):get_description())
+	end
+
+	local hud = get_hud()
+	hud:AddCustomStatic("job_task", true)
+	hud:GetCustomStatic("job_task"):wnd():SetTextST(news_text_static)
+	hud:GetCustomStatic("job_task").m_endTime = time_global()/1000 + 8
+
 end
 
 function send_encyclopedy(type, title)

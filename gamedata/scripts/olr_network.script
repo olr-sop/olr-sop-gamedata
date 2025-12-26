@@ -53,6 +53,10 @@ function update()
 			if nick.is_pda_dead() then
 				return
 			end
+			if has_alife_info(last_info_in_table) then
+				--log1("VSE")
+				return
+			end			
 			for key, val in ipairs(text_phrases) do
 				if not has_alife_info(val[2]) then
 					db.actor:give_info_portion(val[2])
@@ -67,22 +71,15 @@ function update()
 				end
 			end
 
-			if has_alife_info(last_info_in_table) then
-				--log1("VSE")
-				return
-			end
-
 			if nick.is_pda_dead() then
 				return
 			end
 
-			local news_text = "%c[255,255,255,255]" .. text_mess .. ""
-			news_manager.send_tip(db.actor, news_text, math.random(1000, 3000), "news", 15000, nil, nil, true)
+			news_manager.send_tip_new(text_mess, "", "news", nil, math.random(1000, 3000), 15000)
 			if text_mess_add ~= "" then
 				local bol_var = math.random(1, 2)
 				if bol_var == 1 then
-					local news_text_add = "%c[255,255,255,255]" .. text_mess_add .. ""
-					news_manager.send_tip(db.actor, news_text_add, math.random(8000, 16000), "news", 10000, nil, nil, true)
+					news_manager.send_tip_new(text_mess_add, "", "news", nil, math.random(1000, 3000), 15000)
 				end
 			end
 			if text_mess_fnc ~= "" then

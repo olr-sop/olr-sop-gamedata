@@ -1,0 +1,192 @@
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+-- name: save_manager.script
+-- desc: Функции создания именных сейвов, автосейвов, квиксейвов
+-- author: theysani
+-- date: 23.12.2025
+-- last edit: 23.12.2025
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+local max_autosaves = 50
+local max_quicksaves = 100
+
+local time_to_autosave = 21600 -- 6 часов в секундах, можно поменять
+
+local console = get_console()
+
+--[[
+
+	В зависимости от локали игры (англ или ру) нейминг будет на англе или ру
+	Постараюсь без сложных спец символов
+	
+	st_new_quest_save - новое задание
+	st_update_quest_save - задание обновлено
+	st_complete_quest_save - задание выполнено
+	st_fail_quest_save - задание провалено
+	st_autosave_period - автосохранение
+	st_quicksave - быстрое сохранение
+	
+	все xvars переменные
+	xvars.saves_count = 0			-- Количество сейвов (для концовки)	
+	xvars.quicksave_count = 0		-- Кол-во текущих квиксейвов
+	xvars.autosave_count = 0		-- Кол-во текущих автосейвов
+	xvars.quicksave_last_name = ""	-- Имя последнего квиксейва
+	
+--]]
+
+-- В type передаём тип таска, fail, new, complete, updated
+-- В desc передаём сам таск
+function task_saves(type, desc)
+	log1("~~~ Called task_saves")
+	
+	local full_savename = ""
+
+	if type == "new" then
+		full_savename = string.lower(
+			user_name() .. " - " .. 
+			game.translate_string("st_new_quest_save") .. " - " .. 
+			game.translate_string(desc:get_title())
+		)
+	elseif type == "update" then
+		full_savename = string.lower(
+			user_name() .. " - " .. 
+			game.translate_string("st_update_quest_save") .. " - " .. 
+			game.translate_string(desc:get_title())
+		)
+	elseif type == "complete" then
+		full_savename = string.lower(
+			user_name() .. " - " .. 
+			game.translate_string("st_complete_quest_save") .. " - " .. 
+			game.translate_string(desc:get_title())
+		)
+	elseif type == "fail" then
+		full_savename = string.lower(
+			user_name() .. " - " .. 
+			game.translate_string("st_fail_quest_save") .. " - " .. 
+			game.translate_string(desc:get_title())
+		)
+	end
+	
+	log1("~~~ Full_savename - " .. tostring(full_savename))
+	
+	if full_savename ~= "" then
+		device():pause(true)
+		console:execute("save " .. full_savename)
+		device():pause(false)
+	end
+end
+
+-- Вызывается при нет-спавне актора, проверяется наличие таймера и его первая выдача
+function check_autosave_timer()
+	log1("~~~ Called check_autosave_timer from actor net spawn function")
+	if not olr_timers.has_game_timer("create_timed_autosave") then
+		log1("~~~ First start game timer for autosave")
+		olr_timers.st_timer_game("create_timed_autosave", time_to_autosave, "save_manager.autosave()") -- раз в 6 игровых часов
+	end
+end
+
+-- Вызывается в первый раз по факту из нет-спавновой функции, далее сама себя перезаводит
+-- Вызывается раз в 6 игровых часов, создаёт сейв
+function autosave()
+	log1("~~~ Called autosave from timer")
+	
+	xvars.autosave_count = (xvars.autosave_count or 0) + 1
+	if xvars.autosave_count > max_autosaves then
+		xvars.autosave_count = 0
+	end	   
+
+	local full_autosave_name = string.lower(
+		user_name() .. " - " .. 
+		game.translate_string("st_autosave_period") .. " - " .. 
+		tostring(xvars.autosave_count)
+	)
+	
+	device():pause(true)
+	log1("~~~ Try make autosave")
+	log1("~~~ autosave name - " .. tostring(full_autosave_name))
+	console:execute("save " .. full_autosave_name)
+	device():pause(false)
+	
+	log1("~~~ Try reload timer for autosave")
+	if olr_timers.has_game_timer("create_timed_autosave") then
+		log1("~~~ Remove game timer from autosave func for autosave")
+		olr_timers.del_game_timer("create_timed_autosave")
+		log1("~~~ Start game timer from autosave func for autosave")
+		olr_timers.st_timer_game("create_timed_autosave", time_to_autosave, "save_manager.autosave()") -- раз в 6 игровых часов
+	end
+end
+
+-- Вызывается из движка, создаёт номерной квиксейв
+function quicksave()
+	log1("~~~ Called quicksave from engine")
+	
+	if not db.actor:is_game_saving_available() then
+		return
+	end		   
+	if db.actor and has_alife_info("start_olr_mod") and db.storage[db.actor:id()].pstor == nil then
+		log1("!!! TRY SAVE - ATTENTION! Actor storage is empty, save is broken. Send logs to the developer.")
+		olr.hud_tip_fatal(game.translate_string("st_corrupt_saves"))
+		return
+	end
+	if amk.oau_watchdog ~= 0 then
+		log1("!!! TRY SAVE - ATTENTION! Actor storage is empty, save is broken. Send logs to the developer.")
+		olr.hud_tip_fatal(game.translate_string("st_corrupt_saves"))
+		return
+	end
+	if olr.is_crush == true then
+		log1("!!! TRY SAVE - ATTENTION! Actor storage is empty, save is broken. Send logs to the developer.")
+		olr.hud_tip_fatal(game.translate_string("st_corrupt_saves"))
+		return
+	end
+	
+	xvars.quicksave_count = (xvars.quicksave_count or 0) + 1
+	if xvars.quicksave_count > max_quicksaves then
+		xvars.quicksave_count = 0
+	end
+	
+	-- Формируем имя файла в нижнем регистре
+	local quicksave_filename = string.lower(
+		user_name() .. " - " .. 
+		game.translate_string("st_quicksave") .. " - " .. 
+		tostring(xvars.quicksave_count)
+	)
+	
+	-- Сохраняем имя файла для последующей загрузки
+	xvars.quicksave_last_name = quicksave_filename
+	log1("Creating quicksave: " .. quicksave_filename)
+	
+	device():pause(true)
+	console:execute(("save %s"):format(quicksave_filename))
+	device():pause(false)
+end
+
+-- Вызывается из движка, загружает последний квиксейв нынешней игровой сессии
+function quickload()
+	log1("~~~ Called quickload from engine")
+	
+	-- Проверяем, есть ли сохраненное имя файла
+	local last_name = xvars.quicksave_last_name
+	if not last_name or last_name == "" then
+		log1("No quicksave name found in xvars")
+		olr.hud_tip("", "Загрузка невозможна, нет быстрых сохранений данной игровой сессии", 10, true)
+		return
+	end
+	
+	-- Формируем имя файла с расширением для проверки существования
+	local save_filename = last_name .. ".sav"
+	
+	-- Проверяем существование файла через FS
+	local fs = getFS()
+	local file_info = fs:exist("$game_saves$", save_filename)
+	
+	if file_info then
+		-- Файл существует, загружаем его
+		log1("Found quicksave file: " .. last_name)
+		console:execute("load " .. last_name)
+	else
+		-- Файл не найден, выводим сообщение
+		log1("Quicksave file not found: " .. save_filename)
+		olr.hud_tip("", "Загрузка невозможна, нет быстрых сохранений данной игровой сессии", 10, true)
+	end
+end

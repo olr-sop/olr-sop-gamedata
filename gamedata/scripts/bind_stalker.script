@@ -91,8 +91,6 @@ function actor_binder:net_spawn(data)
 	olr_ruck_limit.on_netspawn()
 	
 	xvars.cur_fov = device():get_fov() -- заполняем cur_fov на момент нет-спавна актора, если вдруг дадим менять его то надо будет что-то еще придумывать
-	
-	save_manager.check_autosave_timer() -- вызываем проверку на наличие таймера авто-сейва (де-факто нужно один раз, далее он сам себя будет вызывать)
 
 	return true
 end
@@ -693,6 +691,9 @@ function actor_binder:update(delta)
 		if not has_alife_info("level_changer_icons") then
 			self.object:give_info_portion("level_changer_icons")
 		end
+		
+		-- перенёс из нет-спавна в одноразовый апдейт
+		save_manager.check_autosave_timer() -- вызываем проверку на наличие таймера авто-сейва (де-факто нужно один раз, далее он сам себя будет вызывать)
 
 		level_tasks.add_lchanger_location()
 

@@ -4,9 +4,9 @@ local _debug = false
 local prob = 0.4
 local bInit = false
 
-local timer_check_freq 				= 5 	-- Как часто проверять новости и выдавать сгруппированные, в игровых минутах
+local timer_check_freq 				= 10 * 60 	-- Как часто проверять новости и выдавать сгруппированные, в игровых минутах (наши таймеры задаются в секундах, поэтому умножаем на 60)
 
-local timer_stalker_death 			= 2  	-- Сообщение о смерти сталкера
+local timer_stalker_death 			= 7  	-- Сообщение о смерти сталкера
 local timer_corpse 				= 120 -- 40 	-- Сообщение о найденом трупе
 local timer_hear 				= 60  --15	-- Сообщение о услышанном
 local timer_spawn 				= 90  --20 	-- Сообщение о увиденном
@@ -15,10 +15,10 @@ local distance_close 				= 100	-- При каком расстоянии между обьектами считать и
 local timer_weather 				= 60	-- При изменнии погоды
 
 local timer_last_showed 		= 0 	-- Последняя показанная новость
-local timer_show_freq 			= 4		-- Сколько ждать между новостями минимально (игровые минуты)
+local timer_show_freq 			= 7		-- Сколько ждать между новостями минимально (игровые минуты)
 local time_factor 			= 1
 local timer_alife_showed		= 0			-- Последнее событие в оффлайн
-local timer_alife_freq 			= 3 		-- Как часто генерить события в оффлайн (игровые минуты) 10
+local timer_alife_freq 			= 10 		-- Как часто генерить события в оффлайн (игровые минуты)
 local timer_weather_freq 		= 5 	 	-- Как часто новости о погоде показывать (игровые минуты)
 local timer_daytime_showed 		= 0 		-- Последняя новость о времени суток
 local timer_daytime_freq 		= 5 		-- Как часто новости о времени суток показывать (игровые минуты)
@@ -161,6 +161,11 @@ function init()
 		
 		rel_enemy,rel_friend = utils.cfg_get_number(system_ini(), "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(system_ini(), "game_relations", "goodwill_friend", nil, false, 1000)
     
+		if not olr_timers.st_timer_game("news_check") then
+			--log1("~~~ Start news_check timer")
+			olr_timers.st_timer_game("news_check", timer_check_freq, "news_main.check_news()")
+		end		
+	
 		bInit = true
 	end
 end
@@ -871,17 +876,15 @@ function show_news(text, from, timeout, showtime, section)
 	
 	if (text == nil) then text = "nil" end
 	if (from == nil) then from = "nil" end
-	--if (timeout > 1000) then timeout = math.random(timer_general, timer_general * 4) end
+	
+	if (timeout > 1000) then timeout = math.random(timer_general, timer_general * 4) end
 
 	--log1("show_news ==> ["..timeout.."] "..from..": "..text)
 	
 	table.insert(spammers, from)
 	
-	--amk.send_tip(text, from, timeout, showtime, section)
-	--news_manager.send_tip(db.actor, text, timeout, section, showtime*1000, nil, nil, true, from) -- попробуем так
-	-- tip_text, tip_header, sender_icon, sound_name, timeout, showtime
 	news_manager.send_tip_new_offline_alife(text, from, section, nil, timeout * 1000, showtime * 1000) -- текст сообщения, от кого, иконка, звук (стандартный), таймаут и шоутайм множим на 1000 т.к тут они в секундах!!
-	--timer_last_showed = game_minutes()
+	timer_last_showed = game_minutes()
 end
 
 function format_death_by_monster(obj)
@@ -1548,9 +1551,6 @@ function get_object_levelname(obj)
 end
 
 function check_news()
-
-	--log1(" check_news start")
-
 	-- выдать те новости, что успели собраться и сгрупироватся.
 	amk.oau_reason="cn table_spawned"
 	if table_spawned then
@@ -1559,8 +1559,6 @@ function check_news()
 		end
 		_g.clear_table(table_spawned)
 	end
-	
-	--log1(" check_news start 1")
 
 	amk.oau_reason="cn killed_by_actor"
 	if table_killed_by_actor then
@@ -1570,21 +1568,18 @@ function check_news()
 		_g.clear_table(table_killed_by_actor)
 	end
 
-	--log1(" check_news start 2")
-	
 	if (timer_last_showed + timer_show_freq < game_minutes()) then
 		-- Пора показывать, если есть что.
-		--log1(" check_news start 2-1")
 		amk.oau_reason="cn on_news"
 		news_main.on_news()
-		--log1(" check_news start 2-2")
 	end
 
-	--log1(" check_news start 3")
-
 	spammers = {}
-	amk.oau_reason="cn start_timer" 
-	--log1(" check_news end")
+	amk.oau_reason="cn start_timer"
+	if not olr_timers.st_timer_game("news_check") then
+		--log1("~~~ Restart news_check timer")
+		olr_timers.st_timer_game("news_check", timer_check_freq, "news_main.check_news()")
+	end
 end
 
 function add_spawned_object(obj)
@@ -1884,7 +1879,6 @@ end
 
 function on_news()
 	local avail = {}
-	--log1(" on_news 1")
 	if news_stack then 
 		amk.oau_reason="cn on_news first pass"
 		for k,v in pairs(news_stack) do
@@ -1897,7 +1891,7 @@ function on_news()
 					end
 				else -- Новость устарела.
 					--log1("Too old - "..v.from..": "..v.text)
-					--table.remove(news_stack, k)  -- комент HF
+					table.remove(news_stack, k)
 				end
 			else -- Новость уже была.
 				table.remove(news_stack, k)
@@ -1925,8 +1919,6 @@ function on_news()
 			end
 		end
 	end
-
-	--log1(" on_news 2")
 
 	if avail and table.getn(avail) > 0 then
 		amk.oau_reason="cn on_news get available"
@@ -1972,20 +1964,15 @@ function on_news()
 		--log1("on_news [5] - no news ")
 	end
 
-	--log1(" on_news 3")	
-
 	amk.oau_reason="cn on_news continue"
 
-    	local gtime = game_minutes()
-	--log1(" on_news 3-1")
+	local gtime = game_minutes()
+
 	if (gtime - timer_alife_showed > timer_alife_freq) then
-		--log1(" on_news 3-2")
 		amk.oau_reason="cn on_news offline_alife start"
 		amk_offline_alife.offline_alife()
-		--log1(" on_news 3-3")
 		amk.oau_reason="cn on_news offline_alife exit"
 		timer_alife_showed = game_minutes()
-		--log1(" on_news 3-4")
 	end
 
 	--log1(" on_news 4")
@@ -2319,8 +2306,6 @@ function do_document_timer()
 	m_str = tostring(xvars.doc_message_text_m_str)
 	m_from = tostring(xvars.doc_message_text_m_from)
 	if m_str ~= "" or m_from  ~= "" then
-		--amk.send_tip(m_str, m_from, 1, 15, "news", task)
-		-- tip_text, tip_header, sender_icon, sound_name, timeout, showtime
 		news_manager.send_tip_new_offline_alife(m_str, m_from, "news", "pda_objective", nil, 15000)		
 	end
 	xvars.doc_message_text_m_str = ""

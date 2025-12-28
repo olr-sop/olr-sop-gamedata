@@ -7426,30 +7426,6 @@ function item_repair_bar_timer()
 	db.actor:disable_info_portion("ametist_go_to_stanok_info")
 end
 
-function savedgame_exist(fname)
-	local f = getFS()
-	local flist = f:file_list_open_ex("$game_saves$",bit_or(FS.FS_ListFiles,FS.FS_RootOnly) , fname..".sav")
-	local f_cnt = flist:Size()
-	
-	if f_cnt > 0 then
-		return true
-	else
-		return false
-	end	
-end
-
-function autosave_quest()
-	local filename = olr.autosavename().." - "..xvars.autosave_count
-	if not savedgame_exist(filename) then
-		if olr.can_save() then
-			get_console():execute("save "..filename)
-			xvars.autosave_count = xvars.autosave_count + 1
-		else
-			olr_timers.st_timer("autosave_quest", 3, "nick.autosave_quest()")
-		end
-	end
-end
-
 function gen_ka_delkarlikg()
 	news_manager.send_tip(db.actor, game.translate_string("gen_ka_delkarlikg_0"), nil, "hero", 10000)
 	olr.del_by_name("lvl16_generators_karlik")

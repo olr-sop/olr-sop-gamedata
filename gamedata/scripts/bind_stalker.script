@@ -692,8 +692,14 @@ function actor_binder:update(delta)
 			self.object:give_info_portion("level_changer_icons")
 		end
 		
-		if alife() then-- перенёс из нет-спавна в одноразовый апдейт
-			save_manager.check_autosave_timer() -- вызываем проверку на наличие таймера авто-сейва (де-факто нужно один раз, далее он сам себя будет вызывать)
+		if alife() then -- на всякий случай, я хуй знает чё там компиляторам надо не надо
+			-- Один раз запускаем таймер проверки игровых новостей АМК
+			-- Далее он будет сам себя запускать
+			news_main.init_check_news_timer()
+			
+			-- Один раз запускаем таймер автосейвов
+			-- Далее он будет сам себя запускать
+			save_manager.check_autosave_timer()
 		end
 		
 		level_tasks.add_lchanger_location()

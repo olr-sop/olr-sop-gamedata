@@ -1,7 +1,7 @@
 -- copyright © AMK TEAM 2007-2008
 
 local _debug = false
-local prob = 0.4
+local prob = 0.5
 local bInit = false
 
 local timer_check_freq 				= 10 * 60 	-- Как часто проверять новости и выдавать сгруппированные, в игровых минутах (наши таймеры задаются в секундах, поэтому умножаем на 60)
@@ -19,15 +19,11 @@ local timer_show_freq 			= 7		-- Сколько ждать между новостями минимально (игров
 local time_factor 			= 1
 local timer_alife_showed		= 0			-- Последнее событие в оффлайн
 local timer_alife_freq 			= 10 		-- Как часто генерить события в оффлайн (игровые минуты)
-local timer_weather_freq 		= 5 	 	-- Как часто новости о погоде показывать (игровые минуты)
 local timer_daytime_showed 		= 0 		-- Последняя новость о времени суток
 local timer_daytime_freq 		= 5 		-- Как часто новости о времени суток показывать (игровые минуты)
 
-local prob = 0.15
-
 if (_debug == true) then 
 	timer_alife_freq 			= 5 	-- Как часто генерить события в оффлайн
-	timer_weather_freq 			= 30	-- Как часто новости о погоде показывать (игровые минуты)
 	timer_daytime_freq 			= 30	-- Как часто новости о времени суток показывать (игровые минуты)
 	timer_show_freq 			= 1		-- Сколько ждать между новостями минимально (игровые минуты)
 	prob = 0.15
@@ -160,13 +156,15 @@ function init()
 		timer_daytime_showed = game_minutes() - math.random(timer_daytime_freq)
 		
 		rel_enemy,rel_friend = utils.cfg_get_number(system_ini(), "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(system_ini(), "game_relations", "goodwill_friend", nil, false, 1000)
-    
-		if not olr_timers.st_timer_game("news_check") then
-			--log1("~~~ Start news_check timer")
-			olr_timers.st_timer_game("news_check", timer_check_freq, "news_main.check_news()")
-		end		
 	
 		bInit = true
+	end
+end
+
+function init_check_news_timer() -- Вызывается один раз
+	if not olr_timers.st_timer_game("news_check") then
+		--log1("~~~ Start news_check timer from update")
+		olr_timers.st_timer_game("news_check", timer_check_freq, "news_main.check_news()")
 	end
 end
 
@@ -334,14 +332,13 @@ function on_stalker_death(victim_, killer_)
 	end
 	do_news(m_stringsms, game.translate_string("st_stalker_death"), math.random(timer_stalker_death, timer_stalker_death * 3), 10, "death", nil, 1) 
 
-	local rnd_ded = math.random(1,2)
-	if rnd_ded == 1 then
+	if (math.random() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_author = name.." "..sname
 		local m_str = ""
 		local author = nil
-		if rnd_ded == 1 then
-			if rnd_ded == 1 then
+		if (math.random() < 0.5) then
+			if (math.random() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -412,15 +409,14 @@ function on_npc_death(victim_, killer_)
 			--log1("Хм. no killer. "..victim:name())
 		end
 	end
-	local rnd_ded = math.random(1,2)
-	if rnd_ded == 1 then
+	if (math.random() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_from = "" -- name.." "..sname
 		local m_str = ""
 		local author = nil
 		local aid = nil
-		if rnd_ded == 1 then
-			if rnd_ded == 1 then
+		if (math.random() < 0.5) then
+			if (math.random() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -431,7 +427,7 @@ function on_npc_death(victim_, killer_)
 				aid = author.id
 			end
 		else
-			if (rnd_ded == 1 and db.actor and db.actor:id() ~= killer:id()) and (IsNpcStalker(killer)) then
+			if (math.random() < 0.5 and db.actor and db.actor:id() ~= killer:id()) and (IsNpcStalker(killer)) then
 				m_str = format_template_killer_act(victim)
 				s_from = get_npc_name(killer)
 			else
@@ -902,8 +898,7 @@ function format_death_by_monster(obj)
 			m_class = get_monster_name(obj, m_suffid+1)
 			m_postfix = game.translate_string(news_data.rate_postfix[math.random(table.getn(news_data.rate_postfix))])
 		end
-		local rnds = math.random(1,2)
-		if rnds == 1 then
+		if (math.random() < 0.5) then
 			m_s = m_prefix.." "..m_suffix.." "..m_class.."."..m_postfix
 		else
 			m_s = m_suffix.." "..m_class..". "..m_prefix.." "..m_postfix
@@ -923,8 +918,7 @@ function format_death_by_anomaly(obj)
 		m_prefix = game.translate_string(news_data.anomaly_prefix[math.random(table.getn(news_data.anomaly_prefix))])
 		m_class = get_anomaly_name(obj, 2)
 		m_suffix = get_anomaly_name(obj, math.random(3, 4))
-		local rnds = math.random(1,2)
-		if rnds == 1 then
+		if (math.random() < 0.5) then
 			m_s = m_prefix.." "..m_class..". "..m_suffix.."." --..m_postfix.."."
 		else
 			m_s = m_prefix.." "..m_class.."." --..m_postfix.."."
@@ -998,9 +992,9 @@ function format_death_hear_sounds(victim_, killer_, weapon_)
 					local m_weapon = get_weapon_type(m_wpn)
 					if (m_weapon == 0) then return "" end
 					if (m_weapon and news_data.weapon_classes[m_weapon]) then
-						--if (math.random() > news_data.weapon_classes[m_weapon]["hear_p"]) then
-						--	return "" -- Ничего не услышали, слишком тихое оружие...
-						--end
+						if (math.random() > news_data.weapon_classes[m_weapon]["hear_p"]) then
+							return "" -- Ничего не услышали, слишком тихое оружие...
+						end
 						m_hear_a = game.translate_string(news_data.weapon_classes[m_weapon]["hear_a"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_a"]))])
 						m_hear_z = game.translate_string(news_data.weapon_classes[m_weapon]["hear_z"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_z"]))])
 						m_s = format_template_hear(victim_, m_hear_a, m_hear_z)
@@ -1010,9 +1004,9 @@ function format_death_hear_sounds(victim_, killer_, weapon_)
 				local m_weapon = get_weapon_type(weapon_)
 				if (m_weapon ==0) then return "" end
 				if (m_weapon and news_data.weapon_classes[m_weapon]) then
-					--if (math.random() > news_data.weapon_classes[m_weapon]["hear_p"]) then
-					--	return "" -- Ничего не услышали, слишком тихое оружие...
-					--end
+					if (math.random() > news_data.weapon_classes[m_weapon]["hear_p"]) then
+						return "" -- Ничего не услышали, слишком тихое оружие...
+					end
 					m_hear_a = game.translate_string(news_data.weapon_classes[m_weapon]["hear_a"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_a"]))])
 					m_hear_z = game.translate_string(news_data.weapon_classes[m_weapon]["hear_z"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_z"]))])
 					m_s = format_template_hear(victim_, m_hear_a, m_hear_z)
@@ -2096,13 +2090,12 @@ function on_offline_stalker_death(victim_, killer_, weapon_)
 	end
 	do_news(m_stringsofl, game.translate_string("st_stalker_death"), math.random(timer_stalker_death, timer_stalker_death * 5), 10, "death") 
 
-	local rnds = math.random(1,2)
-	if rnds == 1 then
+	if (math.random() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_author = "" --name.." "..sname
 		local m_str = ""
-		if rnds == 1 then
-			if rnds == 1 then
+		if (math.random() < 0.5) then
+			if (math.random() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -2153,14 +2146,13 @@ function on_offline_npc_death(victim_, killer_, weapon_)
 	else
 		log1("Хм. no killer. "..victim_:name())
 	end
-	local rnds = math.random(1,2)
-	if rnds == 1 then
+	if (math.random() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_from = "" --name.." "..sname
 		local s_author = s_from
 		local m_str = ""
-		if rnds == 1 then
-			if rnds == 1 then
+		if (math.random() < 0.5) then
+			if (math.random() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -2223,7 +2215,7 @@ function on_offline_corpse_found(who, object)
 			local s_from = get_npc_name(who)
 			if (s_from and s_corpse and s_corpse ~= "" and s_from ~= "") then
 				do_news(s_corpse, s_from, math.random(timer_corpse, timer_corpse *5), 15, "news")
-				show_news(s_corpse, s_from, math.random(timer_corpse, timer_corpse *5), 15, "news")
+				--show_news(s_corpse, s_from, math.random(timer_corpse, timer_corpse *5), 15, "news")
 			end
 			--log1("Offline: "..get_npc_community(who).." found a corpse. "..s_corpse)
 		end

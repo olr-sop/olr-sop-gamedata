@@ -7,13 +7,15 @@
 -- Version:     0.9
 
 _G.xvars = get_stored_vars()
+local menu_type = "" -- сюда записываем тип меню
 
 class "main_menu" (CUIScriptWnd)
 
 function main_menu:__init() super()
 	self.mbox_mode = 0
-   	self:InitControls()
-   	self:InitCallBacks()
+	self:InitControls()
+	self:InitCallBacks()
+	self:InitMusic()
 end
 
 function main_menu:__finalize()
@@ -92,15 +94,19 @@ function main_menu:InitControls()
 	self:Register(self.btn_back)
 	self:Register(self.btn_ret)
 	self.shniaga = xml:InitMMShniaga("shniaga_wnd",self)
+	
 	if level.present() then
 		if db.actor ~= nil and db.actor:alive() then
-			self:ShowTabs("main_loaded")
+			menu_type = "main_loaded"
 		else
-			self:ShowTabs("main_dead")
+			menu_type = "main_dead"
 		end
 	else
-		self:ShowTabs("main")
+		menu_type = "main"
 	end
+	
+	self:ShowTabs(menu_type)
+	
 	self.btn_save:Enable(level.present())
 
 
@@ -109,8 +115,26 @@ function main_menu:InitControls()
 	
 	local _ver = xml:InitStatic		("static_version",self)
 	local mm						= _G.main_menu.get_main_menu()
+	
 	_ver:SetText					(olr.modver)
 	self:NeedCenterCursor			(true)
+	
+end
+
+function main_menu:InitMusic()
+	--log1("~~~ Get menu type - |"..tostring(menu_type).."|")
+	local mm = _G.main_menu.get_main_menu()
+	if menu_type == "main" then -- при запуске
+		mm:PlayMusic([[music\menu_01]])
+	elseif menu_type == "main_loaded" then -- если живы
+		if xvars.current_music_theme ~= "" then
+			mm:PlayMusic(xvars.current_music_theme)
+		else
+			mm:PlayMusic([[music\menu_01]])
+		end
+	elseif menu_type == "main_dead" then -- если мертвы
+		mm:PlayMusic([[music\menu_01]])
+	end
 end
 
 function main_menu:Show(f)

@@ -7,7 +7,7 @@
 -- Version:     0.9
 
 _G.xvars = get_stored_vars()
-local menu_type = "" -- СЃСЋРґР° Р·Р°РїРёСЃС‹РІР°РµРј С‚РёРї РјРµРЅСЋ
+local menu_type = "" -- сюда записываем тип меню
 
 class "main_menu" (CUIScriptWnd)
 
@@ -63,7 +63,7 @@ function main_menu:InitControls()
 	self.btn_quit_to_mm:SetWindowName("btn_quit_to_mm")
 	self.btn_quit:SetWindowName("btn_quit")
 
-	-- СЂРµРіРёСЃС‚СЂР°С†РёСЏ РѕР±СЂР°Р±РѕС‚С‡РёРєР° (РєР°Рє СЂР°РЅСЊС€Рµ)
+	-- регистрация обработчика (как раньше)
 	self:Register(self.btn_new_game)
 	self:Register(self.btn_credits)
 	self:Register(self.btn_load)
@@ -124,15 +124,15 @@ end
 function main_menu:InitMusic()
 	--log1("~~~ Get menu type - |"..tostring(menu_type).."|")
 	local mm = _G.main_menu.get_main_menu()
-	if menu_type == "main" then -- РїСЂРё Р·Р°РїСѓСЃРєРµ
+	if menu_type == "main" then -- при запуске
 		mm:PlayMusic([[music\menu_01]])
-	elseif menu_type == "main_loaded" then -- РµСЃР»Рё Р¶РёРІС‹
+	elseif menu_type == "main_loaded" then -- если живы
 		if xvars.current_music_theme ~= "" then
 			mm:PlayMusic(xvars.current_music_theme)
 		else
 			mm:PlayMusic([[music\menu_01]])
 		end
-	elseif menu_type == "main_dead" then -- РµСЃР»Рё РјРµСЂС‚РІС‹
+	elseif menu_type == "main_dead" then -- если мертвы
 		mm:PlayMusic([[music\menu_01]])
 	end
 end

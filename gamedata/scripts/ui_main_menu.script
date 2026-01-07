@@ -122,67 +122,33 @@ function main_menu:InitControls()
 end
 
 function main_menu:InitMusic()
-	--log1("~~~ Get menu type - |"..tostring(menu_type).."|")
-	local mm = _G.main_menu.get_main_menu()
+    local mm = _G.main_menu.get_main_menu()
+    
+    xvars.pull = xvars.pull or 0
+    xvars.pull_check = xvars.pull_check or false
+    
+    if xvars.pull_check then
+        return mm:PlayMusic(self:GetMusicByMenuType())
+    end
+    
+    local rate = (xvars.pull > 50) and math.min(2 + (xvars.pull - 50) * 2, 100) or 2
+    
+    if math.random(100) <= rate then
+        mm:PlayMusic([[music\test_both]])
+        xvars.pull = 0
+        xvars.pull_check = true
+        return
+    end
+    
+    xvars.pull = xvars.pull + 1
+    mm:PlayMusic(self:GetMusicByMenuType())
+end
 
-	if xvars.pull == nil then
-		xvars.pull = 0
-	end
-
-	if xvars.pull_check == nil then
-		xvars.pull_check = false
-	end
-
-	if xvars.pull_check then
-		if menu_type == "main" then
-			mm:PlayMusic([[music\menu_01]])
-		elseif menu_type == "main_loaded" then
-			if xvars.current_music_theme ~= "" then
-				mm:PlayMusic(xvars.current_music_theme)
-			else
-				mm:PlayMusic([[music\menu_01]])
-			end
-		elseif menu_type == "main_dead" then
-			mm:PlayMusic([[music\menu_01]])
-		end
-		return
-	end
-
-	local base_rate = 2
-	local rate = base_rate
-
-	if xvars.pull > 50 then
-		rate = base_rate + (xvars.pull - 50) * 2
-		if rate > 100 then
-			rate = 100
-		end
-	end
-
-	--log1("Headhunting: " .. xvars.pull .. " pull, rate: " .. rate .. "%")
-
-	local rnd_val = math.random(100)
-	--log1("val: " .. rnd_val .. " (need <= " .. rate .. ")")
-
-	if rnd_val <= rate then
-		mm:PlayMusic([[music\test_both]])
-		xvars.pull = 0
-		xvars.pull_check = true
-		return
-	else
-		xvars.pull = xvars.pull + 1
-	end
-
-	if menu_type == "main" then -- при запуске
-		mm:PlayMusic([[music\menu_01]])
-	elseif menu_type == "main_loaded" then -- если живы
-		if xvars.current_music_theme ~= "" then
-			mm:PlayMusic(xvars.current_music_theme)
-		else
-			mm:PlayMusic([[music\menu_01]])
-		end
-	elseif menu_type == "main_dead" then -- если мертвы
-		mm:PlayMusic([[music\menu_01]])
-	end
+function main_menu:GetMusicByMenuType()
+    if menu_type == "main_loaded" and xvars.current_music_theme ~= "" then
+        return xvars.current_music_theme
+    end
+    return [[music\menu_01]]
 end
 
 function main_menu:Show(f)

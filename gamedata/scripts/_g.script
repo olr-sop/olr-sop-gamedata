@@ -327,6 +327,34 @@ function set_save_marker(p, mode, check, prefix)
 
 end
 
+-- Новая функция string.truncate
+-- "Обрезает" текст по кол-ву символов, заменяя последние три символа на троеточие (либо то что указано будет в аргументе ellipsis)
+-- Аргументы
+-- text - сам текст
+-- max_length - длина текста в кол-ве символов
+-- ellipsis - что подставить если текст длинее max_length
+string.truncate = function(text, max_length, ellipsis)
+    ellipsis = ellipsis or "..."
+    
+    if #text <= max_length then
+        return text
+    end
+    
+    local truncateLength = max_length - #ellipsis
+    
+    if truncateLength <= 0 then
+        return ellipsis:sub(1, max_length)
+    end
+    
+    -- Обрезаем текст
+    local truncated = text:sub(1, truncateLength)
+    
+    -- Убираем пробелы и дефисы в конце
+    truncated = truncated:gsub("[%s%-]+$", "")
+    
+    return truncated .. ellipsis
+end
+
 ----------------------------------------------------------------------
 
 function IsAnomaly(obj)

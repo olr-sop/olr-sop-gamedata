@@ -629,13 +629,6 @@ local excluded_comms = {
 local flg = false
 
 function on_take(item, npc)
-	if item:is_weapon_magazined() then
-	--news_main.on_find_weapon(npc, item)
-	end
-
-	if item:is_artefact() then
-	--news_main.on_find_artefact(npc, item)
-	end
 
 	if no_levels[level.name()] then
 		return
@@ -644,35 +637,15 @@ function on_take(item, npc)
 	if excluded_comms[npc:character_community()] then
 		return
 	end
-
-	local rndd = math.random(1, 50)
-	if rndd == 25 then
-		text_phrase = {}
-		if item:cost() > 150 and item:cost() < 550 then
-			text_phrase = {
-				game.translate_string("st_watcher_act_found_item_1").." "..item:get_name().."",
-				game.translate_string("st_watcher_act_found_item_2").." "..item:get_name().."",
-				game.translate_string("st_watcher_act_found_item_3").." "..item:get_name()..""
-			}
-		elseif item:cost() > 550 and item:cost() < 1550 then
-			text_phrase = {
-				game.translate_string("st_watcher_act_found_item_good_1").." "..item:get_name().."",
-				game.translate_string("st_watcher_act_found_item_good_2").." "..item:get_name().."",
-				game.translate_string("st_watcher_act_found_item_good_3").." "..item:get_name()..""
-			}
-		elseif item:cost() > 1550 and item:cost() < 9550 then
-			text_phrase = {
-				game.translate_string("st_watcher_act_found_item_great_1").." "..item:get_name().."",
-				game.translate_string("st_watcher_act_found_item_great_2").." "..item:get_name().."",
-				game.translate_string("st_watcher_act_found_item_great_3").." "..item:get_name()..""
-			}
-		end
-		if #text_phrase > 0 then
-			local news_text ="%c[255,160,181,169]"..game.translate_string(npc:character_name())..":\\n".."%c[255,245,240,218]"..game.translate_string(text_phrase[math.random(#text_phrase)])
-			news_manager.send_tip(db.actor, news_text, 5, "item", 15000, nil, nil, false)
-		end
-	end
 	
+	if item:is_weapon_magazined() then
+		news_main.on_find_weapon(npc, item)
+	end
+
+	if item:is_artefact() then
+		news_main.on_find_artefact(npc, item)
+	end	
+
 	local cnt = 0
 	npc:iterate_inventory(
 		function(_, item)
@@ -690,12 +663,9 @@ function on_take(item, npc)
 			if flg == false then
 				flg = true
 				npc:enable_trade()
+				xrs_trade.on_sms_trade_otvet(npc) -- предлагам другим сталкерам поторговать с нами
 				local sobj = alife():object(npc:name())
-				local pos =
-					news_main.get_point_description(
-					alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()),
-					vector():set(sobj.position.x, sobj.position.y, sobj.position.z)
-				)
+				local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x, sobj.position.y, sobj.position.z))
 				local text_phrase = {
 					game.translate_string("st_watcher_act_trade_invite_1").." "..pos.." ",
 					game.translate_string("st_watcher_act_trade_invite_2").." "..pos.." ",
@@ -705,7 +675,6 @@ function on_take(item, npc)
 				news_manager.send_tip(db.actor, news_text, 4, "item", 15000, nil, nil, false)
 			end
 		end
-		xrs_trade.on_sms_trade_otvet(npc) -- предлагам другим сталкерам поторговать с нами
 	end
 	cnt = 0
 end

@@ -2223,12 +2223,12 @@ function on_offline_corpse_found(who, object)
 end
 
 function on_offline_trade(npc, item)
+
 	if olr_protected.is_no_offline_alife_obj(npc:name()) then return end
 	if amk_offline_alife.has_been_spawned(npc.id) then return end
 	if npc.level_name == "lvl13_prip" then return end
-	local rnd = math.random(1,65)
-	if rnd == 4 then
-	if (npc and item) then
+
+	if (npc and item and math.random() < 0.25) then
 		local m_from = get_npc_name(npc)
 		local m_str = game.translate_string(news_data.trade_templates[math.random(table.getn(news_data.trade_templates))])
 		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
@@ -2244,7 +2244,6 @@ function on_offline_trade(npc, item)
 			do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
 			if (_debug == true) then amk.add_spot_on_map(npc.id,"red_location", m_str) end
 		end
-	end
 	end
 end
 
@@ -2263,8 +2262,8 @@ function on_find_artefact(npc, item)
 		end
 		if (m_str ~= "") then
 			--log1("Offline: on_find_artefact "..m_from.." "..m_str)
-			show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1) 
-			--do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
+			--show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1) 
+			do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
 			if (_debug == true) then amk.add_spot_on_map(npc.id,"red_location", m_str) end
 		end
 	end
@@ -2335,8 +2334,8 @@ function on_find_weapon(npc, item)
 			if (m_str ~= "") then
 				--log1("Offline: on_find_weapon "..m_from.." "..m_str)
 				amk.oau_reason="cn on_find_weapon 7" 
-				show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
-				--do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
+				--show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
+				do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
 				amk.oau_reason="cn on_find_weapon 8"
 				if (_debug == true) then amk.add_spot_on_map(npc.id,"red_location", m_str) end
 			end

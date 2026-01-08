@@ -760,16 +760,30 @@ end
 -- Убить сталкера в оффлайне
 function kill_offline_stalker(kill)
 	if kill == nil then return end
+	--[[ -- старая система xStream, заменяем на m_netpk артоса
 	local pk = xs_netpk.monster(kill)
 	if not pk:isOk() then
 		pk = xs_netpk.stalker(kill)
-	end	
+	end
 	local data = pk:get()
 	data.health = 0
 	data.updhealth = 0
 	pk:set(data)
 	smart_terrain.on_death(kill.id)
-	xvars.dead_in_offline[kill:name()] = true
+	xvars.dead_in_offline[kill:name()] = true	
+	--]]
+	local se_obj = alife():object(kill)
+	if se_obj and (IsStalker(se_obj) or IsMonster(se_obj)) then	
+		local pk = get_netpk(se_obj, 1)
+		if pk:isOk() then
+			local data = pk:get()
+			data.health = 0
+			data.updhealth = 0
+			pk:set(data)
+			smart_terrain.on_death(kill.id)
+			xvars.dead_in_offline[kill:name()] = true
+		end
+	end
 end
 
 -- Стреляем из оружия ГГ
@@ -902,6 +916,7 @@ function kill_by_name(name_to_kill)
 		if obj_id then
 			obj_id:kill(obj_id) -- убиваем онлайнового непеся, так как obj_id нам вернул не nil (в данном случае он в онлайне)
 		else 					-- иначе пытаемся убить оффлайного через редактирование нет-пакета непеся
+			--[[ -- -- старая система xStream, заменяем на m_netpk артоса
 			local pk = xs_netpk.monster(se_obj) 		-- сначала проверяем что наш серверный объект монстр
 			if not pk:isOk() then 						-- это не монстр
 				pk = xs_netpk.stalker(se_obj)			-- тогда проверяем что это сталкер
@@ -912,6 +927,16 @@ function kill_by_name(name_to_kill)
 			pk:set(data)								-- устанавливаем новые значения для серверного объекта
 			smart_terrain.on_death(se_obj.id)			-- говорим смарту о том что у нас тут труп
 			xvars.dead_in_offline[se_obj:name()] = true	-- забиваем его в таблицу мёртвых в оффлайне
+			--]]
+			local pk = get_netpk(se_obj, 1)
+			if pk:isOk() then
+				local data = pk:get()						-- получаем пакеты серверного объекта
+				data.health = 0
+				data.updhealth = 0
+				pk:set(data)								-- устанавливаем новые значения для серверного объекта
+				smart_terrain.on_death(se_obj.id)			-- говорим смарту о том что у нас тут труп
+				xvars.dead_in_offline[se_obj:name()] = true	-- забиваем его в таблицу мёртвых в оффлайне			
+			end
 		end
 	end
 end

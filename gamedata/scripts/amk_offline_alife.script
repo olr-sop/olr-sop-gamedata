@@ -2131,20 +2131,19 @@ function get_item_cost(item)
 end
 
 function set_npc_health(obj, health)
-	if (obj and health >= 0 and health <= 2) then
-		local pk = xs_netpk.monster(obj)
-		if not pk:isOk() then
-			pk = xs_netpk.stalker(obj)
-		end
-		local data = pk:get()
-		data.health = health
-		data.updhealth = health
-		pk:set(data)
-		if health == 0 then
-			this.on_death(obj.id)
-			xvars.dead_in_offline[obj:name()] = true
-			--news_manager.send_tip(db.actor, "offline sim death - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
-			obj.offline_dead = 1
+	if (obj and health >= 0 and health <= 2) and (IsStalker(obj) or IsMonster(obj)) then
+		local pk = get_netpk(obj, 1)
+		if pk:isOk() then
+			local data = pk:get()
+			data.health = health
+			data.updhealth = health
+			pk:set(data)
+			if health == 0 then
+				this.on_death(obj.id)
+				xvars.dead_in_offline[obj:name()] = true
+				--news_manager.send_tip(db.actor, "offline sim death - ["..obj:name().."] on ["..obj.level_name.."]", nil, "dolg", 11000)
+				obj.offline_dead = 1
+			end
 		end
 	end
 end

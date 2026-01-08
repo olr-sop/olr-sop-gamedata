@@ -61,7 +61,7 @@ local dolgs_smarts = {
     "lvl5_bar_smart_terrain_united_dolg_stalkers"
 }
 
--- Р¤СѓРЅРєС†РёСЏ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё Р»СЋРґРµР№ (СЃС‚Р°Р»РєРµСЂРѕРІ)
+-- Функция для обработки людей (сталкеров)
 local function process_human_migration(community, smart_terrains_table)
     if not db.actor or (bind_stalker and bind_stalker.actor_in_sleep == true) then
         return
@@ -74,11 +74,11 @@ local function process_human_migration(community, smart_terrains_table)
         
         if npc and npc:clsid() == clsid.script_stalker and not npc.online and npc:alive() then
             if community and npc:community() ~= community then
-                -- РџСЂРѕРїСѓСЃРєР°РµРј РµСЃР»Рё СЃРѕРѕР±С‰РµСЃС‚РІРѕ РЅРµ СЃРѕРІРїР°РґР°РµС‚
+                -- Пропускаем если сообщество не совпадает
             else
                 local strn_id = npc:smart_terrain_id()
                 if strn_id ~= 65535 and math.random(1, 2) == 1 then
-                    -- РћР±СЂР°Р±РѕС‚РєР° СЃС‚Р°Р»РєРµСЂРѕРІ
+                    -- Обработка сталкеров
 					log1("~ olr_offline_task stalkers start")
                     local params = amk.read_stalker_params(npc)
 					log1("~ olr_offline_task get custom from stalker - "..tostring(params.custom).."")
@@ -112,7 +112,7 @@ local function process_human_migration(community, smart_terrains_table)
     end
 end
 
--- Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ С‚Р°Р±Р»РёС†С‹ РІ С‡РёС‚Р°РµРјСѓСЋ СЃС‚СЂРѕРєСѓ
+-- Функция для преобразования таблицы в читаемую строку
 local function table_to_string(t, indent)
     indent = indent or 0
     local spaces = string.rep("  ", indent)
@@ -134,7 +134,7 @@ local function table_to_string(t, indent)
     return table.concat(result)
 end
 
--- Р¤СѓРЅРєС†РёСЏ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РјРѕРЅСЃС‚СЂРѕРІ (СЃРѕР±Р°РєРё Рё Р·РѕРјР±Рё)
+-- Функция для обработки монстров (собаки и зомби)
 local function process_monster_migration(monster_type, smart_terrains_table, extra_condition)
     if not db.actor or (bind_stalker and bind_stalker.actor_in_sleep == true) then
         return
@@ -154,25 +154,25 @@ local function process_monster_migration(monster_type, smart_terrains_table, ext
         local npc = sim:object(id)
         
         if npc and class_ids[npc:clsid()] and not npc.online and npc:alive() then
-            -- РџСЂРѕРІРµСЂРєР° РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… СѓСЃР»РѕРІРёР№
+            -- Проверка дополнительных условий
             if extra_condition and not extra_condition(npc) then
-                -- РџСЂРѕРїСѓСЃРєР°РµРј РµСЃР»Рё СѓСЃР»РѕРІРёРµ РЅРµ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ
+                -- Пропускаем если условие не выполняется
             else
                 local strn_id = npc:smart_terrain_id()
                 if strn_id ~= 65535 and math.random(1, 2) == 1 then
                     log1("~ olr_offline_task mutants start")
-                    -- РћР±СЂР°Р±РѕС‚РєР° РјРѕРЅСЃС‚СЂРѕРІ
+                    -- Обработка монстров
                     smart_terrain.unregister_npc(npc)
                     npc:brain():can_choose_alife_tasks(true)
                     olr.clear_restrictors(npc)
                     
-                    local pk = xs_netpk.monster(npc)
+                    local pk = get_netpk(npc, 1)
                     if pk:isOk() then
                         local data = pk:get()
                         local cd = data.custom_data:getTable()
                         local cd_strng = data.custom_data:getString()
                         
-                        -- РЈР»СѓС‡С€РµРЅРЅС‹Р№ Р»РѕРіРіРёРЅРі С‚Р°Р±Р»РёС†С‹ (Р±РµР· string.format)
+                        -- Улучшенный логгинг таблицы (без string.format)
                         log1("~ olr_offline_task get custom from mutant:")
                         --log1("~ Full custom_data table: " .. table_to_string(cd))
                         log1("~ smart_terrains value: \n" .. table_to_string(cd.smart_terrains or {}))
@@ -194,7 +194,7 @@ local function process_monster_migration(monster_type, smart_terrains_table, ext
     end
 end
 
--- Р¤СѓРЅРєС†РёРё РґР»СЏ РєР°Р¶РґРѕРіРѕ С‚РёРїР° NPC
+-- Функции для каждого типа NPC
 function ecologs_neutral_task_select()
     process_human_migration("ecolog", ecologs_smarts)
 end

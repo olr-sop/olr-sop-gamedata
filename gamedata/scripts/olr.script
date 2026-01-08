@@ -772,16 +772,18 @@ function kill_offline_stalker(kill)
 	smart_terrain.on_death(kill.id)
 	xvars.dead_in_offline[kill:name()] = true	
 	--]]
-	local se_obj = alife():object(kill)
-	if se_obj and (IsStalker(se_obj) or IsMonster(se_obj)) then	
-		local pk = get_netpk(se_obj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			data.health = 0
-			data.updhealth = 0
-			pk:set(data)
-			smart_terrain.on_death(kill.id)
-			xvars.dead_in_offline[kill:name()] = true
+	local se_obj = alife():object(kill.id)
+	if se_obj then
+		if IsStalker(se_obj) or IsMonster(se_obj) then
+			local pk = get_netpk(se_obj, 1)
+			if pk:isOk() then
+				local data = pk:get()
+				data.health = 0
+				data.updhealth = 0
+				pk:set(data)
+				smart_terrain.on_death(kill.id)
+				xvars.dead_in_offline[kill:name()] = true
+			end
 		end
 	end
 end

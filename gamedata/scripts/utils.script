@@ -36,12 +36,17 @@ function stalker_go_to_waypoint(stalker, patrol_path, path_point)
 --end
 
 -- Переводит переменную любого типа (включая nil) в строку. Используется для отладочного вывода информации.
-function to_str(what)
-	if what == nil then
-		return "<nil>"
-	else
-		return tostring(what)
-	end
+function to_str(v)
+    local type_v = type(v)
+    if type_v == "string" then return v end
+    if type_v == "number" then return tostring(v) end
+    if type_v == "boolean" then
+        return v and "<true>" or "<false>"
+    end
+    if type_v == "userdata" then
+        return "userdata"
+    end
+    return "<"..type_v..">"
 end
 
 

@@ -2249,7 +2249,6 @@ end
 
 function on_find_artefact(npc, item)
 	if (npc and item) then
-		if string.find(item:section_name(),"^af_") then
 		--log1(" чувак  "..npc:name().." нашёл арт "..item:name().." ") 
 		local m_from = get_npc_name(npc)
 		local m_str = game.translate_string(news_data.art_templates[math.random(table.getn(news_data.art_templates))])
@@ -2268,7 +2267,6 @@ function on_find_artefact(npc, item)
 		end
 	end
 end
-end
 
 function on_document_find(npc, item)
 	if (npc and item) then
@@ -2282,7 +2280,7 @@ function on_document_find(npc, item)
 			m_str = string.gsub(m_str, "%$"..key0, value)
 		end
 		if (m_str ~= "") then
-			log1("~~~ on_document_find, npc who find:  "..npc:name()..", find doc with name: "..item:name().."") 
+			--log1("~~~ on_document_find, npc who find:  "..npc:name()..", find doc with name: "..item:name().."") 
 			-- тут запомнить айди непися для диалогов итд
 			xvars.doc_message_text_m_str = m_str
 			xvars.doc_message_text_m_from = m_from
@@ -2305,42 +2303,32 @@ end
 
 
 function on_find_weapon(npc, item)
-
-	if not npc then return end
-	amk.oau_reason="cn on_find_weapon 01"
-	if not item then return end
-	amk.oau_reason="cn on_find_weapon 02"
-	if item == nil then return end
-	amk.oau_reason="cn on_find_weapon 03"
-
-	if item ~= nil then
+	if (npc and item) then
 		amk.oau_reason="cn on_find_weapon 1 - item - "..item:name().." level - "..item.level_name.." "
-		if string.find(item:section_name(),"^wpn_") then
-			amk.oau_reason="cn on_find_weapon 2 - item - "..item:name().." level - "..item.level_name.."  - npc - "..npc:name().." "
-			--log1(""чувак  "..npc:name().." нашёл оружие "..item:name().."") 
-			local m_from = get_npc_name(npc)
-			local m_str = game.translate_string(news_data.weapons_templates[math.random(table.getn(news_data.weapons_templates))])
-			local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
-			amk.oau_reason="cn on_find_weapon 3"
-			if (m_level == "") then return end
-			amk.oau_reason="cn on_find_weapon 4"		
-			local m_title = get_object_name(item)
-			local t = {["level"] = m_level, ["item"] = m_title}
-			amk.oau_reason="cn on_find_weapon 5"
-			for key0, value in pairs(t) do
-				m_str = string.gsub(m_str, "%$"..key0, value)
-			end
-			amk.oau_reason="cn on_find_weapon 6"
-			if (m_str ~= "") then
-				--log1("Offline: on_find_weapon "..m_from.." "..m_str)
-				amk.oau_reason="cn on_find_weapon 7" 
-				--show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
-				do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
-				amk.oau_reason="cn on_find_weapon 8"
-				if (_debug == true) then amk.add_spot_on_map(npc.id,"red_location", m_str) end
-			end
-			amk.oau_reason="cn on_find_weapon 9"
+		amk.oau_reason="cn on_find_weapon 2 - item - "..item:name().." level - "..item.level_name.."  - npc - "..npc:name().." "
+		--log1(""чувак  "..npc:name().." нашёл оружие "..item:name().."") 
+		local m_from = get_npc_name(npc)
+		local m_str = game.translate_string(news_data.weapons_templates[math.random(table.getn(news_data.weapons_templates))])
+		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
+		amk.oau_reason="cn on_find_weapon 3"
+		if (m_level == "") then return end
+		amk.oau_reason="cn on_find_weapon 4"		
+		local m_title = get_object_name(item)
+		local t = {["level"] = m_level, ["item"] = m_title}
+		amk.oau_reason="cn on_find_weapon 5"
+		for key0, value in pairs(t) do
+			m_str = string.gsub(m_str, "%$"..key0, value)
 		end
+		amk.oau_reason="cn on_find_weapon 6"
+		if (m_str ~= "") then
+			--log1("Offline: on_find_weapon "..m_from.." "..m_str)
+			amk.oau_reason="cn on_find_weapon 7" 
+			--show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
+			do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
+			amk.oau_reason="cn on_find_weapon 8"
+			if (_debug == true) then amk.add_spot_on_map(npc.id,"red_location", m_str) end
+		end
+		amk.oau_reason="cn on_find_weapon 9"
 	end
 end
 

@@ -4,8 +4,6 @@ local _debug = false
 local prob = 0.5
 local bInit = false
 
-local timer_check_freq 				= 10 * 60 	-- Как часто проверять новости и выдавать сгруппированные, в игровых минутах (наши таймеры задаются в секундах, поэтому умножаем на 60)
-
 local timer_stalker_death 			= 7  	-- Сообщение о смерти сталкера
 local timer_corpse 				= 120 -- 40 	-- Сообщение о найденом трупе
 local timer_hear 				= 60  --15	-- Сообщение о услышанном
@@ -164,7 +162,7 @@ end
 function init_check_news_timer() -- Вызывается один раз
 	if not olr_timers.has_game_timer("news_check") then
 		--log1("~~~ Start news_check timer from update")
-		olr_timers.st_timer_game("news_check", timer_check_freq, "news_main.check_news()")
+		olr_timers.st_timer_game("news_check", 600, "news_main.check_news()")
 	end
 end
 
@@ -1570,9 +1568,11 @@ function check_news()
 
 	spammers = {}
 	amk.oau_reason="cn start_timer"
-	if not olr_timers.st_timer_game("news_check") then
-		--log1("~~~ Restart news_check timer")
-		olr_timers.st_timer_game("news_check", timer_check_freq, "news_main.check_news()")
+	if olr_timers.has_game_timer("news_check") then
+		--log1("~~~ Remove news_check timer")
+		olr_timers.del_game_timer("news_check")
+		--log1("~~~ Create new news_check timer")
+		olr_timers.st_timer_game("news_check", math.random(180, 1980), "news_main.check_news()")
 	end
 end
 

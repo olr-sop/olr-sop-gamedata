@@ -8,10 +8,11 @@
 --------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
 
-local max_autosaves = 50
-local max_quicksaves = 100
+local max_autosaves = utils.cfg_get_float(system_ini(), "save_manager_settings", "max_autosaves", 50)
+local max_quicksaves = utils.cfg_get_float(system_ini(), "save_manager_settings", "max_quicksaves", 100)
 
-local time_to_autosave = 21600 -- 6 часов в секундах, можно поменять
+local time_to_autosave = utils.cfg_get_float(system_ini(), "save_manager_settings", "time_to_autosave", 21600) -- 6 часов в секундах, можно поменять
+local use_device_pause = utils.cfg_get_bool(system_ini(), "save_manager_settings", "use_device_pause", nil, false, false)
 
 local console = get_console()
 
@@ -38,8 +39,7 @@ local console = get_console()
 -- В type передаём тип таска, fail, new, complete, updated
 -- В desc передаём сам таск
 function task_saves(type, desc)
-	--log1("~~~ Called task_saves")
-	
+
 	local full_savename = ""
 
 	if type == "new" then
@@ -67,21 +67,17 @@ function task_saves(type, desc)
 			game.translate_string(desc:get_title())
 		)
 	end
-	
-	--log1("~~~ Full_savename - " .. tostring(full_savename))
-	
+
 	if full_savename ~= "" then
-		device():pause(true)
+		if use_device_pause then device():pause(true) end
 		console:execute("save " .. full_savename)
-		device():pause(false)
+		if use_device_pause then device():pause(false) end
 	end
 end
 
 -- Вызывается при нет-спавне актора, проверяется наличие таймера и его первая выдача
 function check_autosave_timer()
-	--log1("~~~ Called check_autosave_timer from actor update")
 	if not olr_timers.has_game_timer("create_timed_autosave") then
-		--log1("~~~ First start game timer for autosave")
 		olr_timers.st_timer_game("create_timed_autosave", time_to_autosave, "save_manager.autosave()") -- раз в 6 игровых часов
 	end
 end
@@ -89,8 +85,6 @@ end
 -- Вызывается в первый раз по факту из нет-спавновой функции, далее сама себя перезаводит
 -- Вызывается раз в 6 игровых часов, создаёт сейв
 function autosave()
-	--log1("~~~ Called autosave from timer")
-	
 	xvars.autosave_count = (xvars.autosave_count or 0) + 1
 	if xvars.autosave_count > max_autosaves then
 		xvars.autosave_count = 0
@@ -102,25 +96,19 @@ function autosave()
 		tostring(xvars.autosave_count)
 	)
 	
-	device():pause(true)
-	--log1("~~~ Try make autosave")
-	--log1("~~~ autosave name - " .. tostring(full_autosave_name))
+	if use_device_pause then device():pause(true) end
 	console:execute("save " .. full_autosave_name)
-	device():pause(false)
+	if use_device_pause then device():pause(false) end
 	
-	--log1("~~~ Try reload timer for autosave")
 	if olr_timers.has_game_timer("create_timed_autosave") then
-		--log1("~~~ Remove game timer from autosave func for autosave")
 		olr_timers.del_game_timer("create_timed_autosave")
-		--log1("~~~ Start game timer from autosave func for autosave")
 		olr_timers.st_timer_game("create_timed_autosave", time_to_autosave, "save_manager.autosave()") -- раз в 6 игровых часов
 	end
 end
 
 -- Вызывается из движка, создаёт номерной квиксейв
 function quicksave()
-	--log1("~~~ Called quicksave from engine")
-	
+
 	if not db.actor:is_game_saving_available() then
 		return
 	end		   
@@ -154,21 +142,18 @@ function quicksave()
 	
 	-- Сохраняем имя файла для последующей загрузки
 	xvars.quicksave_last_name = quicksave_filename
-	--log1("Creating quicksave: " .. quicksave_filename)
 	
-	device():pause(true)
+	if use_device_pause then device():pause(true) end
 	console:execute(("save %s"):format(quicksave_filename))
-	device():pause(false)
+	if use_device_pause then device():pause(false) end
 end
 
 -- Вызывается из движка, загружает последний квиксейв нынешней игровой сессии
 function quickload()
-	--log1("~~~ Called quickload from engine")
 	
 	-- Проверяем, есть ли сохраненное имя файла
 	local last_name = xvars.quicksave_last_name
 	if not last_name or last_name == "" then
-		--log1("No quicksave name found in xvars")
 		olr.hud_tip("", "Загрузка невозможна, нет быстрых сохранений данной игровой сессии", 10, true)
 		return
 	end
@@ -181,12 +166,8 @@ function quickload()
 	local file_info = fs:exist("$game_saves$", save_filename)
 	
 	if file_info then
-		-- Файл существует, загружаем его
-		--log1("Found quicksave file: " .. last_name)
 		console:execute("load " .. last_name)
 	else
-		-- Файл не найден, выводим сообщение
-		--log1("Quicksave file not found: " .. save_filename)
 		olr.hud_tip("", "Загрузка невозможна, нет быстрых сохранений данной игровой сессии", 10, true)
 	end
 end

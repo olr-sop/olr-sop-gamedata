@@ -8,6 +8,9 @@
 --------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
 
+-- Настройка из конфига
+local debug_who_called = utils.cfg_get_bool(system_ini(), "olr_timers_settings", "use_depricated_debug", nil, false, false)
+
 -- Счетчики для игровых таймеров
 if not xvars.game_timers_count then xvars.game_timers_count = 0 end
 if not xvars.game_timers_started then xvars.game_timers_started = 0 end
@@ -444,6 +447,14 @@ end
 
 -- Функция для обратной совместимости (старые скрипты могут использовать st_timer)
 function st_timer(name, delay, action)
-	log1("WARNING: st_timer() is deprecated, use st_timer_real() for real time or st_timer_game() for game time")
+	log1("~~~ WARN: st_timer() is deprecated, use st_timer_real() for real time or st_timer_game() for game time")
+	
+	if debug_who_called then
+		local caller_info = debug.getinfo(2, "Sl")
+		local source = caller_info.source or "unknown"
+		local line = caller_info.currentline or "unknown"
+		log1("~~~ WARN: Called from: " .. source .. ":" .. tostring(line))
+	end	
+	
 	return st_timer_real(name, delay, action)
 end

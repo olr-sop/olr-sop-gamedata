@@ -4,6 +4,10 @@ local _debug = false
 local prob = 0.5
 local bInit = false
 
+-- Задаём промежуток для рандома проверки игровых новостей
+local min_time_rnd = utils.cfg_get_float(system_ini(), "news_main_settings", "min_time_checknews", 180)
+local max_time_rnd = utils.cfg_get_float(system_ini(), "news_main_settings", "max_time_checknews", 1980)
+
 local timer_stalker_death 			= 7  	-- Сообщение о смерти сталкера
 local timer_corpse 				= 120 -- 40 	-- Сообщение о найденом трупе
 local timer_hear 				= 60  --15	-- Сообщение о услышанном
@@ -1572,7 +1576,7 @@ function check_news()
 		--log1("~~~ Remove news_check timer")
 		olr_timers.del_game_timer("news_check")
 		--log1("~~~ Create new news_check timer")
-		olr_timers.st_timer_game("news_check", math.random(180, 1980), "news_main.check_news()")
+		olr_timers.st_timer_game("news_check", math.random(min_time_rnd, max_time_rnd), "news_main.check_news()")
 	end
 end
 

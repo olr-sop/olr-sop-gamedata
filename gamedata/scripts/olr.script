@@ -274,11 +274,17 @@ function on_use(obj)
 end
 
 function to_slot(obj)
-	if obj and xvars.goodcondweaps and xvars.goodcondweaps[obj:name()] == true then
-		local wpn_ak = engine_object(obj:id())
-		if wpn_ak then
-			wpn_ak.condition_shot_dec = 0.0001
-			--log1("hq set")
+	if obj then
+		if xvars.goodcondweaps and xvars.goodcondweaps[obj:name()] == true then
+			local wpn_ak = engine_object(obj:id())
+			if wpn_ak then
+				wpn_ak.condition_shot_dec = 0.0001
+				--log1("hq set")
+			end
+		end
+		if obj:section() == "exo_outfit" and not has_alife_info("tutor_exo_charge") then
+			game.start_tutorial("tutor_exo_charge")
+			db.actor:give_info_portion("tutor_exo_charge")
 		end
 	end
 end

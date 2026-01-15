@@ -399,6 +399,12 @@ end
 
 
 function actor_binder:obj_to_belt(obj)
+	if obj then
+		local section = obj:section()
+		if (section == "detector_simple" or section == "detector_advances" or section == "detector_elite") and not has_alife_info("tutor_detector_charge") then
+			db.actor:give_info_portion("tutor_detector_charge")
+		end
+	end
 	olr_ruck_limit.take_item_on_belt(obj)
 end
 

@@ -1061,11 +1061,15 @@ function gulag:free_obj( obj_id )
 		self.Job[jobN].object  = nil
 
 		self.ObjectJobPathName[obj_id] = nil
+		
+		local npc = self.npc_info[obj_id].se_obj
 
-		self:setup_job_online( self.npc_info[obj_id].se_obj, nil )
+		if npc then
+			self:setup_job_online( npc, nil )
+		end
 
-		if self:get_stype( obj_id ) == modules.stype_mobile then
-			self.npc_info[obj_id].se_obj:smart_terrain_task_deactivate()
+		if npc and self:get_stype( obj_id ) == modules.stype_mobile then
+			npc:smart_terrain_task_deactivate()
 		end
 
 		if self.Object[obj_id] ~= true and
@@ -1087,7 +1091,7 @@ function gulag:free_obj_and_reinit(obj_id)
 	self:free_obj(obj_id)
 	local t = self.Object[obj_id]
 	if t ~= nil and t ~= true and self.Object_begin_job[obj_id] then
-		if amk.check_game() then -- тут проверяется, запущена ли игра, если ли актор и жив ли он. Если да, делаем по новому.
+		if check_game() then -- тут проверяется, запущена ли игра, если ли актор и жив ли он. Если да, делаем по новому.
 			local s_obj = alife():object(obj_id) -- проверим есть ли у цели разрегистрации валидный серверный объект
 			if s_obj and (IsStalker(s_obj) or IsMonster(s_obj)) and s_obj:alive() then -- если есть, он жив и сталкер или монстр
 				xr_logic.initialize_obj(t, nil, false, db.actor, self:get_stype(obj_id)) -- только тогда инициализируем логику
@@ -1096,6 +1100,14 @@ function gulag:free_obj_and_reinit(obj_id)
 			xr_logic.initialize_obj(t, nil, false, db.actor, self:get_stype(obj_id))
 		end
 	end
+end
+
+-- Проверка, запущена ли игра
+function check_game()
+	if level.present() and (db.actor ~= nil) and db.actor:alive() then
+		return true
+	end
+	return false
 end
 
 -- получить id объекта, выполняющего работу
@@ -1189,11 +1201,23 @@ function setup_gulag_and_logic_on_spawn( obj, st, sobject, stype, loaded )
 		else
 			strn_id = 65535
 		end
-
-		printf( "setup_gulag_and_logic_on_spawn obj=%s, strn_id=%s", obj:name(), tostring(strn_id) )
+		
+		if strn_id == 0 then strn_id = 65535 end
+		
+		local strn                   = sim:object( strn_id )
+		
+		if not strn then
+			log1("!!ERROR: XR_GULAG cannot find SOBJ ["..tostring(strn_id).."] for obj ["..sobject:name().."]")
+			strn_id = 65535
+			-- KD: попробуем перезагрузить логику гулага потеряшкам
+			loaded = false
+		elseif not strn.gulag then	
+			log1("!!ERROR: XR_GULAG cannot find SOBJ GULAG ["..tostring(strn:name()).."] for obj ["..sobject:name().."]")
+			strn_id = 65535
+		end		
 
 		if strn_id ~= 65535 then
-			local strn                   = sim:object( strn_id )
+
 			local need_setup_logic       = strn.gulag.Object_begin_job[obj:id()] and not loaded
 			local need_setup_restrictors = strn.gulag.Object_begin_job[obj:id()]
 
@@ -1202,10 +1226,18 @@ function setup_gulag_and_logic_on_spawn( obj, st, sobject, stype, loaded )
 			strn.gulag:object_setup_online( obj:id(), obj, need_setup_logic, need_setup_restrictors )
 
 			if not need_setup_logic then
-				xr_logic.initialize_obj(obj, st, loaded, db.actor, stype)
+				local flag, err = pcall(xr_logic.initialize_obj,obj,st,loaded,db.actor,stype)
+				if not flag then
+					log1("ERROR: XR_GULAG xr_logic.initialize_obj pcall 1 FAIL "..obj:id().." reason: "..tostring(err))
+					--db.actor:give_game_news(game.translate_string("xr_gulag_debug"), "ui\\ui_iconsTotal", Frect():set(498,47,83,47),7000, 20000)
+				end				
 			end
 		else
-			xr_logic.initialize_obj(obj, st, loaded, db.actor, stype)
+			local flag, err = pcall(xr_logic.initialize_obj,obj,st,loaded,db.actor,stype)
+			if not flag then
+				log1("ERROR: XR_GULAG xr_logic.initialize_obj pcall 2 FAIL "..obj:id().." reason: "..tostring(err))
+				--db.actor:give_game_news(game.translate_string("xr_gulag_debug"), "ui\\ui_iconsTotal", Frect():set(498,47,83,47),7000, 20000)
+			end				
 		end
 	else
 		xr_logic.initialize_obj(obj, st, loaded, db.actor, stype)
@@ -1254,10 +1286,14 @@ function get_npc_gulag( obj )
 
 	obj = sim:object( obj:id() )
 
-	if obj:smart_terrain_id() ~= 65535 then
+	if obj and obj:smart_terrain_id() ~= 65535 then
 		local strn = sim:object( obj:smart_terrain_id() )
 
-		strn:initialize_if_needed()
+		if strn then
+			strn:initialize_if_needed()
+		else	
+			return nil
+		end
 
 		return strn.gulag
 	else

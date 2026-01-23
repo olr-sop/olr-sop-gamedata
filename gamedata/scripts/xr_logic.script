@@ -117,20 +117,20 @@ function generic_scheme_overrides(npc)
 --	gulag_name - имя гулага, если скрипт включается гулагом, а не биндером
 --]]
 function configure_schemes(npc, ini, ini_filename, stype, section_logic, gulag_name)
-	--printf("DEBUG: enable_scripts: npc:name()=%s", npc:name())
-
+	--log1(string.format("DEBUG: configure_schemes: npc:id()=%s", tostring(npc:id())))
+	--log1(string.format("DEBUG: configure_schemes: npc:name()=%s", tostring(npc:name())))
 	local npc_id = npc:id()
 	local st     = db.storage[npc_id]
 
-  	if not st and npc:name() ~= nil then
-		log1(" !!!xr_logic storage nil "..npc:name().." create new storage")
+  	if not st then
+		log1(" !!!xr_logic storage nil "..npc:id().." create new storage")
 		db.storage[npc_id] = {}
 		st = db.storage[npc_id]
   	end
 
 	-- если какая-то схема была до этого активна, деактивировать её
 	if st.active_section then
-		--log1("DEBUG если какая-то схема была до этого активна, деактивировать её "..npc:name().." -  "..st[st.active_scheme].." ")
+		--log1("DEBUG если какая-то схема была до этого активна, деактивировать её "..npc:id().." -  "..tostring(st[st.active_scheme]).." ")
 		issue_event(npc, st[st.active_scheme], "deactivate", npc)
 	end 
 
@@ -148,7 +148,7 @@ function configure_schemes(npc, ini, ini_filename, stype, section_logic, gulag_n
 	else
 		local filename = utils.cfg_get_string(ini, section_logic, "cfg", npc, false, "")
 		if filename then
-			printf("_bp: enable_scripts: object '%s' has external configuration file '%s'", npc:name(), filename)
+			--log1(string.format("_bp: enable_scripts: object '%s' has external configuration file '%s'", npc:name(), filename))
 			-- Рекурсивно обработать конфигурационный файл, на который ссылается поле cfg
 			actual_ini_filename = filename
 			actual_ini = ini_file(filename)
@@ -160,7 +160,7 @@ function configure_schemes(npc, ini, ini_filename, stype, section_logic, gulag_n
 			end
 			--]]
 		else
-			printf("_bp: enable_scripts: object '%s' has NO external configuration file, using '%s'", npc:name(), ini_filename)
+			--log1(string.format("_bp: enable_scripts: object '%s' has NO external configuration file, using '%s'", npc:name(), ini_filename))
 			actual_ini_filename = ini_filename
 			actual_ini = ini
 		end
@@ -1268,14 +1268,19 @@ function pstor_load_all(obj, reader)
 		db.storage[npc_id].pstor = pstor
 	end
 	local ctr = reader:r_u32()
-	if tonumber(ctr) > 20 and tostring(obj:name()) ~= "single_player" and npc_id ~= db.actor:id() then
-		-- максимум 20 итераций - это число ещё уточняется, возможно понадобится больше
-                -- если у вас в пстор что-то свое пишется, ориентируйтесь на свои значения
-		-- и обязательно убираем из проверки актора - у него очень толстый пстор, и к тому же
-                -- если уж поврежденным будет его пстор, то тут точно уже ничего не поможет
-		log1("ОБНАРУЖЕН ОБЪЕКТ С ПОВРЕЖДЕННЫМ PSTOR: "..tostring(obj:name()).." БУДЕТ ПРОИЗВЕДЕНА ПОПЫТКА ВОССТАНОВЛЕНИЯ")
-		ctr = 20 
+	
+	if db.actor then
+		if tonumber(ctr) > 20 and tostring(obj:name()) ~= "single_player" and npc_id ~= db.actor:id() then 
+			log1("ОБНАРУЖЕН ОБЪЕКТ С ПОВРЕЖДЕННЫМ PSTOR: "..tostring(obj:name()).." БУДЕТ ПРОИЗВЕДЕНА ПОПЫТКА ВОССТАНОВЛЕНИЯ")
+			ctr = 20 		
+		end
+	else	
+		if tonumber(ctr) > 20 and tostring(obj:name()) ~= "single_player" then 
+			log1("ОБНАРУЖЕН ОБЪЕКТ С ПОВРЕЖДЕННЫМ PSTOR: "..tostring(obj:name()).." БУДЕТ ПРОИЗВЕДЕНА ПОПЫТКА ВОССТАНОВЛЕНИЯ")
+			ctr = 20 		
+		end		
 	end
+	
 	for i = 1, ctr do
 		local varname = reader:r_stringZ()
 		local tn = reader:r_u8()

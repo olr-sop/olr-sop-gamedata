@@ -327,7 +327,7 @@ end
 
 function mochalka_poezd_online()
 	olr.to_online("lvl1_escape_af_dummy_dummy_q1")
-	news_manager.send_tip(db.actor, game.translate_string("mochalka_poezd_online_0"), 22, "trader", 35000)
+	news_manager.send_tip(db.actor, game.translate_string("mochalka_poezd_online_0"), 22, "trader", 35000, nil, nil, true, "escape_trader_name")
 end
 
 function final_cutscene_start()
@@ -612,6 +612,40 @@ function teleport_actor(actor, npc, p)
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())	
+end
+
+
+function teleport_npc(actor, npc, p)
+	local patrol_point = p[1]
+	local patrol_point_index = p[2] or 0
+	if patrol_point == nil then
+		abort("Wrong parameters in 'teleport_npc' function!!!")
+	end
+	local position = patrol(patrol_point):point(patrol_point_index)
+	--reset_animation(npc)
+
+	npc:set_npc_position(position)
+end
+
+function teleport_npc_by_story_id(actor, npc, p)
+	local story_id = p[1]
+	local patrol_point = p[2]
+	local patrol_point_index = p[3] or 0
+	if story_id == nil or patrol_point == nil then
+		abort("Wrong parameters in 'teleport_npc_by_story_id' function!!!")
+	end
+	local position = patrol(tostring(patrol_point)):point(patrol_point_index)
+	local npc_id = get_story_object_id(story_id)
+	if npc_id == nil then
+		abort("There is no story object with id [%s]", story_id)
+	end
+	local cl_object = level.object_by_id(npc_id)
+	if cl_object then
+		--reset_animation(cl_object)
+		cl_object:set_npc_position(position)
+	else
+		alife():object(npc_id).position = position
+	end
 end
 
 -----------------------------------------------------------------------------

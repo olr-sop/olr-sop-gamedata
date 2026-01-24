@@ -2,7 +2,7 @@
 -- ремонт научника у Жабы
 -------------------------------------------------------------------------------------------------------- 
 
-local armor_profit_margin = 2.5
+local armor_profit_margin = 1.5
 
 function trader_repair_precond(trader, actor)
 	local item_in_slot_6 = db.actor:get_current_outfit()
@@ -14,7 +14,7 @@ end
 function trader_check_money_s6(trader, actor)
 	local item_in_slot = db.actor:get_current_outfit()
 	if item_in_slot and item_in_slot:section() == "stalker_outfit" then 
-		local item_repair_cost = math.floor( (1-item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin )
+		local item_repair_cost = math.floor( (1-item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin ) / 5
 		if item_repair_cost > 0 and db.actor:money() >= item_repair_cost and 1 > item_in_slot:condition() then
 			return true
 		end 
@@ -25,7 +25,7 @@ end
 function trader_repiar_armor_s6(trader, actor)
 	local item_in_slot = db.actor:get_current_outfit()
 	if item_in_slot and item_in_slot:section() == "stalker_outfit" then
-		local item_repair_cost = math.floor( (1-item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin )
+		local item_repair_cost = math.floor( (1-item_in_slot:condition()) * item_in_slot:cost() * armor_profit_margin ) / 5
 		item_in_slot:set_condition(1)
 		dialogs.relocate_money(actor, item_repair_cost, "out")
 	end	
@@ -40,7 +40,7 @@ function repair_costs(first_speaker, second_speaker)
 		local item_in_slot_6 = db.actor:get_current_outfit()
 
 		if item_in_slot_6 ~= nil and item_in_slot_6:section() == "stalker_outfit" then
-			item_repair_cost = math.floor( (1-item_in_slot_6:condition()) * item_in_slot_6:cost() * armor_profit_margin )
+			item_repair_cost = math.floor( (1-item_in_slot_6:condition()) * item_in_slot_6:cost() * armor_profit_margin ) / 5
 			if item_repair_cost > 0 then
 				item_name_and_price = game.translate_string("list_trader_repair_2").." %c[255,238,155,23]"..item_repair_cost.."$%c[default]"
 				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "iconed_answer_item")

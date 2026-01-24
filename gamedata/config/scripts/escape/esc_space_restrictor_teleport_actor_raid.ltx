@@ -1,0 +1,17 @@
+[logic]
+active = sr_idle@task
+
+[sr_idle@task]
+on_info = {+esc_actor_teleport_raid} sr_idle@teleport %=disable_ui() =run_postprocess(fade_in_out)% 
+
+[sr_idle@teleport]
+on_game_timer = 30 | {+esc_digger_go_nii_goo_now_info} sr_idle@out %=teleport_npc_by_story_id(009:esc_nap_tutazdesa_walk) =teleport_actor(esc_actor_teleport_walk:esc_nap_tutazdesa_look)%, {+esc_novic_go_nii_pognali_gogo} sr_idle@out %=teleport_npc_by_story_id(20010:esc_nap_tutazdesa_walk) =teleport_actor(esc_actor_teleport_walk:esc_nap_tutazdesa_look)%
+
+[sr_idle@out]
+on_game_timer = 30 | sr_idle@after %=enable_ui()% 
+
+[sr_idle@after]
+on_info = {+esc_digger_go_nii_goo_now_info} %+esc_digger_go_nii_goo_now_info_blokpost% sr_idle@nil
+on_info2 = {+esc_novic_go_nii_pognali_gogo} %+esc_novic_go_nii_pognali_gogo_done% sr_idle@nil
+
+[sr_idle@nil]

@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "scan_root=Y:\sources\Objects\dynamics"
-set "out=Y:\batch_all.ltx"
+set "scan_root=S:\resources\sources\objects\dynamics"
+set "out=S:\resources\batch_all.ltx"
 set "omf=%scan_root%\anims"
 
 if exist "%out%" del "%out%"

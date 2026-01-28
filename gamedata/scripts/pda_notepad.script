@@ -117,7 +117,7 @@ function OrganizerWnd:__init(owner) super()
 	local lat = [[qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>?!@#$%^&*()-_+=\| 0123456789]]
 	local rus = [[йцукенгшщзхъфывапролджэ€чсмитьбю.…÷” ≈Ќ√Ўў«’Џ‘џ¬јѕ–ќЋƒ∆Ёя„—ћ»“№Ѕё,!"є;%:?*()-_+=\/ 0123456789]]
 	self.translit = {}
-	for i = 1, string.len(rus) do
+	for i = 1, #rus do
 		self.translit[string.sub(lat, i, i)] = string.sub(rus, i, i)
 	end
 	self.strings = {}
@@ -270,11 +270,11 @@ end
 function OrganizerWnd:SetTextPage(text)
 	local k = 0
 	clear_table(self.text)
-	for i = 0, string.len(text) do
+	for i = 0, #text do
 		local s = Symbol(string.sub(text, i + k, i + k))
 		if (string.sub(text, i + k, i + k + 1) == [[\n]]) then s:SetCharacter("") s:SetEndString(true) k = k + 1
 		elseif (string.sub(text, i + k + 1, i + k + 2) == [[\n]]) then s:SetEndString(true) k = k + 2 end
-		table.insert(self.text, s)
+		self.text[#self.text+1] = s
 	end
 	self:ShowTextPage()
 	self.pos = #self.text self:ShowTextPage() -- выравниваем первую страницу, имитиру€ нажатие кнопки End (фикс переноса последнего символа первой строки в ранее сохраненной странице)
@@ -303,11 +303,11 @@ end
 
 function OrganizerWnd:AddInStatic(text)
 	self.text_area = CUIStatic()
-	self.text_area:Init(230,125+30*table.getn(self.strings),10,10)
+	self.text_area:Init(230,125+30*#self.strings,10,10)
 	self.text_area:SetText(text)
 	self.text_area:SetFont(GetFontGraffiti22())
 	self.text_area:SetTextColor(240,217,182, 255)
-	table.insert(self.strings, self.text_area)
+	self.strings[#self.strings+1] = self.text_area
 	self.back:AttachChild(self.text_area)
 end
 

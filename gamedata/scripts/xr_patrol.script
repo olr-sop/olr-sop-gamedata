@@ -68,7 +68,7 @@ function TalesManager:add_npc (npc)
     end
     local id = npc:id ()
     self.npc_list[id] = npc
-    table.insert (self.npc_list_id, id)
+    self.npc_list_id[#self.npc_list_id+1] = id
 end
 
 function TalesManager:remove_npc (npc)
@@ -77,7 +77,7 @@ function TalesManager:remove_npc (npc)
     end
     local id = npc:id ()
     self.npc_list[id] = nil
-    for a = 1, table.getn (self.npc_list_id), 1 do
+    for a = 1, #self.npc_list_id, 1 do
         if self.npc_list_id[a] == id then
            table.remove (self.npc_list_id, a)
            return 
@@ -94,16 +94,16 @@ function TalesManager:stop_tale ()
 end
 
 function TalesManager:start_tale ()
-    if table.getn (self.npc_list_id) < 2 then 
+    if #self.npc_list_id < 2 then 
        return
     end
        
     if self.narrator == -1 then
-       self.narrator = self.npc_list_id[math.random (1, table.getn (self.npc_list_id))]
+       self.narrator = self.npc_list_id[math.random (1, #self.npc_list_id)]
     end
     local c = self.current_tale
     while c == self.current_tale do
-          self.current_tale = math.random (1, table.getn (tales))
+          self.current_tale = math.random (1, #tales)
     end            
     self.tale = tales[self.current_tale]
     if self.tale == nil then
@@ -132,7 +132,7 @@ function TalesManager:update ()
        end
        self:set_next_tale ()
     else
-       for a = 1, table.getn (self.npc_list_id), 1 do
+       for a = 1, #self.npc_list_id, 1 do
            if self.npc_list_id[a] ~= self.narrator then
               if self.npc_list[self.npc_list_id[a]]:active_sound_count () ~= 0 then
                  return
@@ -158,7 +158,7 @@ function TalesManager:set_next_tale ()
        xr_sound.set_sound_play (self.npc_list[self.narrator], self.tale.theme)
     else
        printf ("REACTIONER THEME = %s", self.tale.theme)
-       for a = 1, table.getn (self.npc_list_id), 1 do
+       for a = 1, #self.npc_list_id, 1 do
            if self.npc_list_id[a] ~= self.narrator then
               xr_sound.set_sound_play (self.npc_list[self.npc_list_id[a]], self.tale.theme, math.random (1, 1.5) * 1000)
            end

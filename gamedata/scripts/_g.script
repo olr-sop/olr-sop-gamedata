@@ -400,7 +400,7 @@ function GetLevelVertexes(level)
 			if not lvtab[ ln ] then
 				lvtab[ ln ] = {}
 			end
-			table.insert( lvtab[ ln ], lv )
+			lvtab[ln][#lvtab[ln]+1] = lv
 			i = i + 1
 		end
 		return lvtab[ level ]
@@ -417,7 +417,7 @@ function GetGameVertexes( level )
 			if not gvtab[ ln ] then
 				gvtab[ ln ] = {}
 			end
-			table.insert( gvtab[ ln ], i )
+			gvtab[ln][#gvtab[ln]+1] = i
 			i = i + 1
 		end
 		return gvtab[ level ]
@@ -725,14 +725,14 @@ end
 
 function random_choice(...)
     local arg = {...}
-    local r = math.random(1, table.getn(arg))
+    local r = math.random(1, #arg)
     return arg[r]
 end
 
 function new_action(...)
     local arg = {...}
     local act = entity_action()
-    for i = 1, table.getn(arg) do
+    for i = 1, #arg do
         act:set_action(arg[i])
     end
     return act
@@ -1105,8 +1105,10 @@ end -- end of editor() == false
 
 
 function str_split (str)
+	local schar = string.char
+	local sformat = string.format
 
-    local strlen = string.len (str)
+    local strlen = #str
 
     local parts = {{}, {}, {}, {}}
     local cpart = 1
@@ -1114,7 +1116,7 @@ function str_split (str)
     for a = 1, strlen, 1 do
         local char = string.byte (str, a)
         if char ~= 95 then
-           table.insert (parts[cpart], char)
+           parts[cpart][#parts[cpart]+1] = char
         else
            cpart = cpart + 1
            if cpart > 4 then break end
@@ -1123,29 +1125,29 @@ function str_split (str)
 
     if cpart ~= 4 then return "unknown", "stalker", 0, 0 end
 
-    local str1 = string.char ()
-    local str2 = string.char ()
-    local str3 = string.char ()
-    local str4 = string.char ()
+    local str1 = schar ()
+    local str2 = schar ()
+    local str3 = schar ()
+    local str4 = schar ()
 
     local ref = parts[1]
-    for a = 1, table.getn (ref), 1 do
-        str1 = string.format ("%s%c", str1, ref[a])
+    for a = 1, #ref, 1 do
+        str1 = sformat ("%s%c", str1, ref[a])
     end
 
     ref = parts[2]
-    for a = 1, table.getn (ref), 1 do
-        str2 = string.format ("%s%c", str2, ref[a])
+    for a = 1, #ref, 1 do
+        str2 = sformat ("%s%c", str2, ref[a])
     end
 
     ref = parts[3]
-    for a = 1, table.getn (ref), 1 do
-        str3 = string.format ("%s%c", str3, ref[a])
+    for a = 1, #ref, 1 do
+        str3 = sformat ("%s%c", str3, ref[a])
     end
 
     ref = parts[4]
-    for a = 1, table.getn (ref), 1 do
-        str4 = string.format ("%s%c", str4, ref[a])
+    for a = 1, #ref, 1 do
+        str4 = sformat ("%s%c", str4, ref[a])
     end
 
     printf ("%s %s %d %d", str1, str2, str3, str4)
@@ -1181,7 +1183,7 @@ function parse_names(s)
     
     -- Разбиваем строку по запятым, но учитываем тире как часть имени
     for name in string.gmatch(s, "([%w_\\%-]+)%p*") do
-        table.insert(t, name)
+        t[#t+1] = name
     end
     
     return t
@@ -1224,7 +1226,7 @@ function parse_nums( s )
 	local t = {}
 
 	for entry in string.gfind( s, "([%d%.]+)%,*" ) do
-		table.insert( t, tonumber( entry ) )
+		t[#t+1] = tonumber( entry )
 	end
 
 	return t
@@ -1273,8 +1275,8 @@ end
 
 -- очистка таблицы
 function clear_table (t)
-    while table.getn (t) > 0 do
-          table.remove (t, table.getn (t))
+    while #t > 0 do
+          table.remove (t, #t)
     end
 end
 
@@ -1282,12 +1284,13 @@ end
 -- min_radius от текущей позиции(если это получится). center_id - центр позиции, вокруг которой живем,
 -- position_id - тукущая позиция, radius - в каком радиусе выбирать точку, min_radius - минимальное расстояние, от текущей позиции до новой точки.
 function new_point(center_id, position_id,radius, min_radius)
-    local dir = vector():set(math.random(-1000, 1000)/1000.0, 0.0001, math.random(-1000, 1000)/1000.0)
+    local mrandom = math.random
+    local dir = vector():set(mrandom(-1000, 1000)/1000.0, 0.0001, mrandom(-1000, 1000)/1000.0)
     local pos = level.vertex_in_direction(center_id, dir, radius)
     local i   = 1
 
     while(level.vertex_position(position_id):distance_to(level.vertex_position(pos) ) < min_radius and i < 20) do
-        dir = vector():set(math.random(-1000, 1000)/1000.0, 0.0001, math.random(-1000, 1000)/1000.0)
+        dir = vector():set(mrandom(-1000, 1000)/1000.0, 0.0001, mrandom(-1000, 1000)/1000.0)
         pos = level.vertex_in_direction(center_id, dir, radius)
         i   = i + 1
     end
@@ -1384,14 +1387,14 @@ function point_with_bit(patrol_path, bit, old_point)      -- old_point - индекс 
       if( patrol_path:flag(i, bit)) then
             -- Добавляем точку если old_point == nil или новая точка не совпадает с old_point
             if(old_point == nil) then
-                table.insert(points, patrol_path:point(i))
+                points[#points+1] = patrol_path:point(i)
             elseif(old_point ~= i) then
-                table.insert(points, patrol_path:point(i))
+                points[#points+1] = patrol_path:point(i)
             end
         end
     end
 
-    local number_point = table.getn(points)
+    local number_point = #points
 
     if(number_point == 0) then
         return nil
@@ -1411,14 +1414,14 @@ function point_with_bit_id(patrol_path, bit, old_point)        -- old_point - ин
       if( patrol_path:flag(i, bit)) then
             -- Добавляем точку если old_point == nil или новая точка не совпадает с old_point
             if(old_point == nil) then
-                table.insert(points, i)
+                points[#points+1] = i
             elseif(old_point ~= i) then
-                table.insert(points, i)
+                points[#points+1] = i
             end
         end
     end
 
-    local number_point = table.getn(points)
+    local number_point = #points
 
     if(number_point == 0) then
         return nil
@@ -1451,6 +1454,8 @@ end
 
 -- Рекурсивная распечатка таблицы
 function print_table(table, subs)
+	local tostr = tostring
+	local type_ = type
 	local sub
 	if subs ~= nil then
 		sub = subs
@@ -1458,32 +1463,32 @@ function print_table(table, subs)
 		sub = ""
 	end
 	for k,v in pairs(table) do
-		if type(v) == "table" then
-			printf(sub.."%s:", tostring(k))
+		if type_(v) == "table" then
+			printf(sub.."%s:", tostr(k))
 			print_table(v, sub.."    ")
-		elseif type(v) == "function" then
-			printf(sub.."%s:function", tostring(k))
-		elseif type(v) == "userdata" then
-			printf(sub.."%s:userdata", tostring(k))
-		elseif type(v) == "boolean" then
+		elseif type_(v) == "function" then
+			printf(sub.."%s:function", tostr(k))
+		elseif type_(v) == "userdata" then
+			printf(sub.."%s:userdata", tostr(k))
+		elseif type_(v) == "boolean" then
 			if v == true then
-				if type(k)~="userdata" then
-					printf(sub.."%s:true", tostring(k))
+				if type_(k)~="userdata" then
+					printf(sub.."%s:true", tostr(k))
 				else
 					printf(sub.."userdata:true")
 				end
 			else
-				if type(k)~="userdata" then
-					printf(sub.."%s:false", tostring(k))
+				if type_(k)~="userdata" then
+					printf(sub.."%s:false", tostr(k))
 				else
 					printf(sub.."userdata:false")
 				end
 			end
 		else
 			if v ~= nil then
-				printf(sub.."%s:%s", tostring(k),v)
+				printf(sub.."%s:%s", tostr(k),v)
 			else
-				printf(sub.."%s:nil", tostring(k),v)
+				printf(sub.."%s:nil", tostr(k),v)
 			end
 		end
 	end  
@@ -1491,22 +1496,23 @@ end
 
 -- Рекурсивная распечатка таблицы с использованием log1
 function print_table_log1(table, subs)
+    local type_ = type
     local sub = subs or ""
     
     for k, v in pairs(table) do
         local key_str = tostring(k)
         local output = sub
         
-        if type(v) == "table" then
+        if type_(v) == "table" then
             log1(output .. key_str .. ":")
             print_table(v, sub .. "    ")
         else
             local value_str
-            if type(v) == "function" then
+            if type_(v) == "function" then
                 value_str = "function"
-            elseif type(v) == "userdata" then
+            elseif type_(v) == "userdata" then
                 value_str = "userdata"
-            elseif type(v) == "boolean" then
+            elseif type_(v) == "boolean" then
                 value_str = v and "true" or "false"
             elseif v == nil then
                 value_str = "nil"
@@ -1583,10 +1589,11 @@ function set_inactivate_input_time(delta)
 end
 -- Принимает: позицию положения, позицию куда смотреть, время сна в минутах.
 function set_sleep_relocate(point, look, timeout)
-	db.storage[db.actor:id()].sleep_relocate_time = game.get_game_time()
-	db.storage[db.actor:id()].sleep_relocate_idle = timeout*60
-	db.storage[db.actor:id()].sleep_relocate_point = point
-	db.storage[db.actor:id()].sleep_relocate_look = look
+	local db_actor_id = db.actor:id()
+	db.storage[db_actor_id].sleep_relocate_time = game.get_game_time()
+	db.storage[db_actor_id].sleep_relocate_idle = timeout*60
+	db.storage[db_actor_id].sleep_relocate_point = point
+	db.storage[db_actor_id].sleep_relocate_look = look
 end
 
 -- проверяет целую часть числа на нечётность

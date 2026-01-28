@@ -137,8 +137,8 @@ local snames={
 
 
 function get_strings()
-	local name = game.translate_string(fnames[math.random(table.getn(fnames))])
-	local sname = game.translate_string(snames[math.random(table.getn(snames))])
+	local name = game.translate_string(fnames[math.random(#fnames)])
+	local sname = game.translate_string(snames[math.random(#snames)])
 	return name,sname
 end
 
@@ -171,6 +171,7 @@ function init_check_news_timer() -- Вызывается один раз
 end
 
 function on_spawn_group(community, level, position, count, o_type)
+	local mrandom = math.random
 	if (community and level and position and count and o_type and o_type > 0) then
 		local name, sname = news_main.get_strings()
 		local s_author = name.." "..sname
@@ -192,17 +193,17 @@ function on_spawn_group(community, level, position, count, o_type)
 			elseif (mon == "bloodsucker" or mon == "controller" or mon == "burer" or mon == "pseudo_gigant" or mon == "fracture" or mon == "chimera") then
 				coeff = 0.45				
 			end
-			local rnds = math.random()
+			local rnds = mrandom()
 			if (rnds < (prob + coeff)) then
 				if (count == 1) then
 					m_str = format_template_spawn(level, position, get_monster_name_by_string(mon, 4))
 				else
 					m_str = format_template_spawn_group(level, position, get_monster_name_by_string(mon, 6), count)
 				end
-				do_news(m_str, s_author, math.random(timer_spawn, timer_spawn*5), 15, "news", author.id)
+				do_news(m_str, s_author, mrandom(timer_spawn, timer_spawn*5), 15, "news", author.id)
 			end
 		elseif (o_type == 1) then
-			local rnds = math.random()
+			local rnds = mrandom()
 			if (rnds < prob) then
 				local zz = community
 				local m_who = ""
@@ -224,7 +225,7 @@ function on_spawn_group(community, level, position, count, o_type)
 				else
 					m_str = format_template_spawn_group(level, position, m_who, count)					
 				end
-				do_news(m_str, s_author, math.random(timer_spawn, timer_spawn*5), 15, "news", author.id)
+				do_news(m_str, s_author, mrandom(timer_spawn, timer_spawn*5), 15, "news", author.id)
 			end
 		end
 	end
@@ -265,6 +266,7 @@ end
 -- Собираем инфу о виновнике смерти
 -- Готовим сообщение
 function on_stalker_death(victim_, killer_)
+	local mrandom = math.random
 	if (victim_ == nil) then
 		return
 	end
@@ -326,21 +328,21 @@ function on_stalker_death(victim_, killer_)
 		end
 	end
 	if (m_killer_str==nil or m_killer_str=="") then m_killer_str = game.translate_string("st_unknown_death_reason") end
-	local rnd_dead = math.random(1,2)
+	local rnd_dead = mrandom(1,2)
 	if rnd_dead == 1 then
 		m_stringsms = m_name..". "..m_level..", "..m_killer_str.."."
 	else
 		m_stringsms = m_name..". "..pos..", "..m_killer_str.."."
 	end
-	do_news(m_stringsms, game.translate_string("st_stalker_death"), math.random(timer_stalker_death, timer_stalker_death * 3), 10, "death", nil, 1) 
+	do_news(m_stringsms, game.translate_string("st_stalker_death"), mrandom(timer_stalker_death, timer_stalker_death * 3), 10, "death", nil, 1) 
 
-	if (math.random() < prob) then
+	if (mrandom() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_author = name.." "..sname
 		local m_str = ""
 		local author = nil
-		if (math.random() < 0.5) then
-			if (math.random() < 0.5) then
+		if (mrandom() < 0.5) then
+			if (mrandom() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -361,7 +363,7 @@ function on_stalker_death(victim_, killer_)
 			m_str = format_death_hear_sounds(victim, killer)
 		end
 		if (m_str ~= "") then
-			do_news(m_str, s_author, math.random(timer_corpse*2, timer_corpse *5), 15, "news", author.id)
+			do_news(m_str, s_author, mrandom(timer_corpse*2, timer_corpse *5), 15, "news", author.id)
 		end
 	end
 end
@@ -372,6 +374,7 @@ end
 -- Собираем инфу о виновнике смерти
 -- Готовим сообщение
 function on_npc_death(victim_, killer_)
+	local mrandom = math.random
 	if (victim_ == nil) then
 		return
 	end
@@ -411,14 +414,14 @@ function on_npc_death(victim_, killer_)
 			--log1("Хм. no killer. "..victim:name())
 		end
 	end
-	if (math.random() < prob) then
+	if (mrandom() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_from = "" -- name.." "..sname
 		local m_str = ""
 		local author = nil
 		local aid = nil
-		if (math.random() < 0.5) then
-			if (math.random() < 0.5) then
+		if (mrandom() < 0.5) then
+			if (mrandom() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -429,7 +432,7 @@ function on_npc_death(victim_, killer_)
 				aid = author.id
 			end
 		else
-			if (math.random() < 0.5 and db.actor and db.actor:id() ~= killer:id()) and (IsNpcStalker(killer)) then
+			if (mrandom() < 0.5 and db.actor and db.actor:id() ~= killer:id()) and (IsNpcStalker(killer)) then
 				m_str = format_template_killer_act(victim)
 				s_from = get_npc_name(killer)
 			else
@@ -445,7 +448,7 @@ function on_npc_death(victim_, killer_)
 		end
 		if (m_str ~= "" and s_from ~= "") then
 			if (_debug == true and author) then amk.add_spot_on_map(author.id, "red_location", s_from..": "..m_str) end
-			do_news(m_str, s_from, math.random(timer_corpse*2, timer_corpse * 5), 15, "news", aid)
+			do_news(m_str, s_from, mrandom(timer_corpse*2, timer_corpse * 5), 15, "news", aid)
 		end
 	end
 end
@@ -722,7 +725,7 @@ function get_monster_name_by_string(str, index)
 	if index < 1 then index = 1 end
 	if(str) then
 		for k, v in pairs(news_data.monster_classes) do
-			if (v and table.getn(v)>=index and v[1] == str) then
+			if (v and #v>=index and v[1] == str) then
 				m_n = game.translate_string(v[index])
 			end
 		end
@@ -846,7 +849,7 @@ function add_news(news_text, news_from, news_type, news_timeout, news_showtime, 
 		author_id = tonumber(author_id),
 		priority = priority
 	}
-	table.insert(news_stack, newsitem)
+	news_stack[#news_stack+1] = newsitem
 
 	-- запоминаем новость
 	local npcid = tonumber(author_id)
@@ -879,28 +882,29 @@ function show_news(text, from, timeout, showtime, section)
 
 	--log1("show_news ==> ["..timeout.."] "..from..": "..text)
 	
-	table.insert(spammers, from)
+	spammers[#spammers+1] = from
 	
 	news_manager.send_tip_new_offline_alife(text, from, section, nil, timeout * 1000, showtime * 1000) -- текст сообщения, от кого, иконка, звук (стандартный), таймаут и шоутайм множим на 1000 т.к тут они в секундах!!
 	timer_last_showed = game_minutes()
 end
 
 function format_death_by_monster(obj)
+	local mrandom = math.random
 	local m_s = ""
 	local m_prefix = ""
 	local m_suffix = ""
 	local m_class = ""
 	local m_postfix = ""
 	if (obj) then
-		m_prefix = game.translate_string(news_data.monster_prefix[math.random(table.getn(news_data.monster_prefix))])
-		local m_suffid = math.random(table.getn(news_data.monster_suffix))
+		m_prefix = game.translate_string(news_data.monster_prefix[mrandom(#news_data.monster_prefix)])
+		local m_suffid = mrandom(#news_data.monster_suffix)
 		local m_suff = game.translate_string(news_data.monster_suffix[m_suffid])
 		if (m_suff) then
-			m_suffix = m_suff[math.random(table.getn(m_suff))]
+			m_suffix = m_suff[mrandom(#m_suff)]
 			m_class = get_monster_name(obj, m_suffid+1)
-			m_postfix = game.translate_string(news_data.rate_postfix[math.random(table.getn(news_data.rate_postfix))])
+			m_postfix = game.translate_string(news_data.rate_postfix[mrandom(#news_data.rate_postfix)])
 		end
-		if (math.random() < 0.5) then
+		if (mrandom() < 0.5) then
 			m_s = m_prefix.." "..m_suffix.." "..m_class.."."..m_postfix
 		else
 			m_s = m_suffix.." "..m_class..". "..m_prefix.." "..m_postfix
@@ -917,7 +921,7 @@ function format_death_by_anomaly(obj)
 	--local m_postfix = ""
 	if (obj) then
 	-- anomaly_prefix + anomaly_classes + anomaly_classes[3,4]
-		m_prefix = game.translate_string(news_data.anomaly_prefix[math.random(table.getn(news_data.anomaly_prefix))])
+		m_prefix = game.translate_string(news_data.anomaly_prefix[math.random(#news_data.anomaly_prefix)])
 		m_class = get_anomaly_name(obj, 2)
 		m_suffix = get_anomaly_name(obj, math.random(3, 4))
 		if (math.random() < 0.5) then
@@ -983,6 +987,7 @@ function format_death_monster_corpse(obj)
 end
 
 function format_death_hear_sounds(victim_, killer_, weapon_)
+	local mrandom = math.random
 	local m_s = ""
 	local m_hear_a = ""
 	local m_hear_z = ""
@@ -994,11 +999,11 @@ function format_death_hear_sounds(victim_, killer_, weapon_)
 					local m_weapon = get_weapon_type(m_wpn)
 					if (m_weapon == 0) then return "" end
 					if (m_weapon and news_data.weapon_classes[m_weapon]) then
-						if (math.random() > news_data.weapon_classes[m_weapon]["hear_p"]) then
+						if (mrandom() > news_data.weapon_classes[m_weapon]["hear_p"]) then
 							return "" -- Ничего не услышали, слишком тихое оружие...
 						end
-						m_hear_a = game.translate_string(news_data.weapon_classes[m_weapon]["hear_a"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_a"]))])
-						m_hear_z = game.translate_string(news_data.weapon_classes[m_weapon]["hear_z"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_z"]))])
+						m_hear_a = game.translate_string(news_data.weapon_classes[m_weapon]["hear_a"][mrandom(#news_data.weapon_classes[m_weapon]["hear_a"])])
+						m_hear_z = game.translate_string(news_data.weapon_classes[m_weapon]["hear_z"][mrandom(#news_data.weapon_classes[m_weapon]["hear_z"])])
 						m_s = format_template_hear(victim_, m_hear_a, m_hear_z)
 					end
 				end
@@ -1006,11 +1011,11 @@ function format_death_hear_sounds(victim_, killer_, weapon_)
 				local m_weapon = get_weapon_type(weapon_)
 				if (m_weapon ==0) then return "" end
 				if (m_weapon and news_data.weapon_classes[m_weapon]) then
-					if (math.random() > news_data.weapon_classes[m_weapon]["hear_p"]) then
+					if (mrandom() > news_data.weapon_classes[m_weapon]["hear_p"]) then
 						return "" -- Ничего не услышали, слишком тихое оружие...
 					end
-					m_hear_a = game.translate_string(news_data.weapon_classes[m_weapon]["hear_a"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_a"]))])
-					m_hear_z = game.translate_string(news_data.weapon_classes[m_weapon]["hear_z"][math.random(table.getn(news_data.weapon_classes[m_weapon]["hear_z"]))])
+					m_hear_a = game.translate_string(news_data.weapon_classes[m_weapon]["hear_a"][mrandom(#news_data.weapon_classes[m_weapon]["hear_a"])])
+					m_hear_z = game.translate_string(news_data.weapon_classes[m_weapon]["hear_z"][mrandom(#news_data.weapon_classes[m_weapon]["hear_z"])])
 					m_s = format_template_hear(victim_, m_hear_a, m_hear_z)
 				end			
 			end
@@ -1038,6 +1043,7 @@ function format_death_hear_sounds(victim_, killer_, weapon_)
 end
 
 function format_template_killer_act(obj)
+	local mrandom = math.random
 	local m_s = ""
 	if(obj ~= nil) then
 		local m_class = ""
@@ -1054,16 +1060,16 @@ function format_template_killer_act(obj)
 		local t = {
 			["class"] = m_class,
 			["level"] = m_level,
-			["killed_a"] = game.translate_string(news_data.common["killed_a"][math.random(table.getn(news_data.common["killed_a"]))]),
-			["killed_z"] = game.translate_string(news_data.common["killed_z"][math.random(table.getn(news_data.common["killed_z"]))]),
-			["hard_a"] = game.translate_string(news_data.common["hard_a"][math.random(table.getn(news_data.common["hard_a"]))]),
-			["hard_z"] = game.translate_string(news_data.common["hard_z"][math.random(table.getn(news_data.common["hard_z"]))]),
-			["meet_a"] = game.translate_string(news_data.common["meet_a"][math.random(table.getn(news_data.common["meet_a"]))]),
-			["meet_z"] = game.translate_string(news_data.common["meet_z"][math.random(table.getn(news_data.common["meet_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])			
+			["killed_a"] = game.translate_string(news_data.common["killed_a"][mrandom(#news_data.common["killed_a"])]),
+			["killed_z"] = game.translate_string(news_data.common["killed_z"][mrandom(#news_data.common["killed_z"])]),
+			["hard_a"] = game.translate_string(news_data.common["hard_a"][mrandom(#news_data.common["hard_a"])]),
+			["hard_z"] = game.translate_string(news_data.common["hard_z"][mrandom(#news_data.common["hard_z"])]),
+			["meet_a"] = game.translate_string(news_data.common["meet_a"][mrandom(#news_data.common["meet_a"])]),
+			["meet_z"] = game.translate_string(news_data.common["meet_z"][mrandom(#news_data.common["meet_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])			
 		}
-		local m_string = game.translate_string(news_data.killer_act_templates[math.random(table.getn(news_data.killer_act_templates))])		
+		local m_string = game.translate_string(news_data.killer_act_templates[mrandom(#news_data.killer_act_templates)])		
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1075,23 +1081,24 @@ end
 
 
 function format_template_weapon(weapon_type)
+	local mrandom = math.random
 	local m_s = ""
 	if(weapon_type and news_data.weapon_classes[weapon_type] ~= nil and news_data.weapon_classes[weapon_type]["name"]) then
 		local t = {
 			["weapon_name_2"] = game.translate_string(news_data.weapon_classes[weapon_type]["name"][2]),
 			["weapon_name_3"] = game.translate_string(news_data.weapon_classes[weapon_type]["name"][3]),
-			["weapon_hit_a"] = game.translate_string(news_data.weapon_classes[weapon_type]["hit_a"][math.random(table.getn(news_data.weapon_classes[weapon_type]["hit_a"]))]),
-			["weapon_hit_z"] = game.translate_string(news_data.weapon_classes[weapon_type]["hit_z"][math.random(table.getn(news_data.weapon_classes[weapon_type]["hit_z"]))]),
-			["kill_a"] = game.translate_string(news_data.common["kill_a"][math.random(table.getn(news_data.common["kill_a"]))]),
-			["kill_z"] = game.translate_string(news_data.common["kill_z"][math.random(table.getn(news_data.common["kill_z"]))]),
-			["sad_a"] = game.translate_string(news_data.common["sad_a"][math.random(table.getn(news_data.common["sad_a"]))]),
-			["sad_z"] = game.translate_string(news_data.common["sad_z"][math.random(table.getn(news_data.common["sad_z"]))]),
-			["fun_a"] = game.translate_string(news_data.common["fun_a"][math.random(table.getn(news_data.common["fun_a"]))]),
-			["fun_z"] = game.translate_string(news_data.common["fun_z"][math.random(table.getn(news_data.common["fun_z"]))]),
-			["prob_a"] = game.translate_string(news_data.common["prob_a"][math.random(table.getn(news_data.common["prob_a"]))]),
-			["prob_z"] = game.translate_string(news_data.common["prob_z"][math.random(table.getn(news_data.common["prob_z"]))])
+			["weapon_hit_a"] = game.translate_string(news_data.weapon_classes[weapon_type]["hit_a"][mrandom(#news_data.weapon_classes[weapon_type]["hit_a"])]),
+			["weapon_hit_z"] = game.translate_string(news_data.weapon_classes[weapon_type]["hit_z"][mrandom(#news_data.weapon_classes[weapon_type]["hit_z"])]),
+			["kill_a"] = game.translate_string(news_data.common["kill_a"][mrandom(#news_data.common["kill_a"])]),
+			["kill_z"] = game.translate_string(news_data.common["kill_z"][mrandom(#news_data.common["kill_z"])]),
+			["sad_a"] = game.translate_string(news_data.common["sad_a"][mrandom(#news_data.common["sad_a"])]),
+			["sad_z"] = game.translate_string(news_data.common["sad_z"][mrandom(#news_data.common["sad_z"])]),
+			["fun_a"] = game.translate_string(news_data.common["fun_a"][mrandom(#news_data.common["fun_a"])]),
+			["fun_z"] = game.translate_string(news_data.common["fun_z"][mrandom(#news_data.common["fun_z"])]),
+			["prob_a"] = game.translate_string(news_data.common["prob_a"][mrandom(#news_data.common["prob_a"])]),
+			["prob_z"] = game.translate_string(news_data.common["prob_z"][mrandom(#news_data.common["prob_z"])])
 		}
-		local m_string = game.translate_string(news_data.weapon_templates[math.random(table.getn(news_data.weapon_templates))])			
+		local m_string = game.translate_string(news_data.weapon_templates[mrandom(#news_data.weapon_templates)])			
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1102,6 +1109,7 @@ function format_template_weapon(weapon_type)
 end
 
 function format_template_corpse_stalker(obj)
+	local mrandom = math.random
 	local m_s = ""
 	if(obj ~= nil) then
 		local m_name  = get_npc_name(obj)
@@ -1110,28 +1118,28 @@ function format_template_corpse_stalker(obj)
 		local m_rank  = get_npc_rank(obj)
 		local m_rank_s = ""
 		if (m_rank and news_data.rate_name[m_rank]) then
-			m_rank_s = game.translate_string(news_data.rate_name[m_rank][math.random(2, table.getn(news_data.rate_name[m_rank]))])
+			m_rank_s = game.translate_string(news_data.rate_name[m_rank][mrandom(2, #news_data.rate_name[m_rank])])
 		end
 		local t = {
 			["name"] = m_name,
 			["level"] = m_level,
 			["rate"] = m_rank_s,
-			["kill_a"] = game.translate_string(news_data.common["kill_a"][math.random(table.getn(news_data.common["kill_a"]))]),
-			["kill_z"] = game.translate_string(news_data.common["kill_z"][math.random(table.getn(news_data.common["kill_z"]))]),
-			["sad_a"] = game.translate_string(news_data.common["sad_a"][math.random(table.getn(news_data.common["sad_a"]))]),
-			["sad_z"] = game.translate_string(news_data.common["sad_z"][math.random(table.getn(news_data.common["sad_z"]))]),
-			["fun_a"] = game.translate_string(news_data.common["fun_a"][math.random(table.getn(news_data.common["fun_a"]))]),
-			["fun_z"] = game.translate_string(news_data.common["fun_z"][math.random(table.getn(news_data.common["fun_z"]))]),
-			["prob_a"] = game.translate_string(news_data.common["prob_a"][math.random(table.getn(news_data.common["prob_a"]))]),
-			["prob_z"] = game.translate_string(news_data.common["prob_z"][math.random(table.getn(news_data.common["prob_z"]))]),
-			["corpse_a"] = game.translate_string(news_data.common["corpse_a"][math.random(table.getn(news_data.common["corpse_a"]))]),
-			["corpse_z"] = game.translate_string(news_data.common["corpse_z"][math.random(table.getn(news_data.common["corpse_z"]))]),
-			["seen_a"] = game.translate_string(news_data.common["seen_a"][math.random(table.getn(news_data.common["seen_a"]))]),
-			["seen_z"] = game.translate_string(news_data.common["seen_z"][math.random(table.getn(news_data.common["seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])			
+			["kill_a"] = game.translate_string(news_data.common["kill_a"][mrandom(#news_data.common["kill_a"])]),
+			["kill_z"] = game.translate_string(news_data.common["kill_z"][mrandom(#news_data.common["kill_z"])]),
+			["sad_a"] = game.translate_string(news_data.common["sad_a"][mrandom(#news_data.common["sad_a"])]),
+			["sad_z"] = game.translate_string(news_data.common["sad_z"][mrandom(#news_data.common["sad_z"])]),
+			["fun_a"] = game.translate_string(news_data.common["fun_a"][mrandom(#news_data.common["fun_a"])]),
+			["fun_z"] = game.translate_string(news_data.common["fun_z"][mrandom(#news_data.common["fun_z"])]),
+			["prob_a"] = game.translate_string(news_data.common["prob_a"][mrandom(#news_data.common["prob_a"])]),
+			["prob_z"] = game.translate_string(news_data.common["prob_z"][mrandom(#news_data.common["prob_z"])]),
+			["corpse_a"] = game.translate_string(news_data.common["corpse_a"][mrandom(#news_data.common["corpse_a"])]),
+			["corpse_z"] = game.translate_string(news_data.common["corpse_z"][mrandom(#news_data.common["corpse_z"])]),
+			["seen_a"] = game.translate_string(news_data.common["seen_a"][mrandom(#news_data.common["seen_a"])]),
+			["seen_z"] = game.translate_string(news_data.common["seen_z"][mrandom(#news_data.common["seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])			
 		}
-		local m_string = game.translate_string(news_data.stalker_corpse_templates[math.random(table.getn(news_data.stalker_corpse_templates))])
+		local m_string = game.translate_string(news_data.stalker_corpse_templates[mrandom(#news_data.stalker_corpse_templates)])
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1142,6 +1150,7 @@ function format_template_corpse_stalker(obj)
 end
 
 function format_template_corpse_npc(obj)
+	local mrandom = math.random
 	local m_s = ""
 	if(obj ~= nil) then
 		local m_name  = get_npc_name(obj)
@@ -1150,7 +1159,7 @@ function format_template_corpse_npc(obj)
 			local m_rank  = get_npc_rank(obj)
 			local m_rank_s = ""
 			if (m_rank and news_data.rate_name[m_rank]) then
-				m_rank_s = game.translate_string(news_data.rate_name[m_rank][math.random(2, table.getn(news_data.rate_name[m_rank]))])
+				m_rank_s = game.translate_string(news_data.rate_name[m_rank][mrandom(2, #news_data.rate_name[m_rank])])
 				m_name = m_rank_s
 			end					
 		end
@@ -1165,24 +1174,24 @@ function format_template_corpse_npc(obj)
 			["name"] = m_name,
 			["level"] = m_level,
 			["class"] = m_class,
-			["kill_a"] = game.translate_string(news_data.common["kill_a"][math.random(table.getn(news_data.common["kill_a"]))]),
-			["kill_z"] = game.translate_string(news_data.common["kill_z"][math.random(table.getn(news_data.common["kill_z"]))]),
-			["sad_a"] = game.translate_string(news_data.common["sad_a"][math.random(table.getn(news_data.common["sad_a"]))]),
-			["sad_z"] = game.translate_string(news_data.common["sad_z"][math.random(table.getn(news_data.common["sad_z"]))]),
-			["fun_a"] = game.translate_string(news_data.common["fun_a"][math.random(table.getn(news_data.common["fun_a"]))]),
-			["fun_z"] = game.translate_string(news_data.common["fun_z"][math.random(table.getn(news_data.common["fun_z"]))]),
-			["prob_a"] = game.translate_string(news_data.common["prob_a"][math.random(table.getn(news_data.common["prob_a"]))]),
-			["prob_z"] = game.translate_string(news_data.common["prob_z"][math.random(table.getn(news_data.common["prob_z"]))]),
-			["corpse_a"] = game.translate_string(news_data.common["corpse_a"][math.random(table.getn(news_data.common["corpse_a"]))]),
-			["corpse_z"] = game.translate_string(news_data.common["corpse_z"][math.random(table.getn(news_data.common["corpse_z"]))]),
-			["corpse_name_a"] = game.translate_string(news_data.common["corpse_name_a"][math.random(table.getn(news_data.common["corpse_name_a"]))]),
-			["corpse_name_z"] = game.translate_string(news_data.common["corpse_name_z"][math.random(table.getn(news_data.common["corpse_name_z"]))]),
-			["seen_a"] = game.translate_string(news_data.common["seen_a"][math.random(table.getn(news_data.common["seen_a"]))]),
-			["seen_z"] = game.translate_string(news_data.common["seen_z"][math.random(table.getn(news_data.common["seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])			
+			["kill_a"] = game.translate_string(news_data.common["kill_a"][mrandom(#news_data.common["kill_a"])]),
+			["kill_z"] = game.translate_string(news_data.common["kill_z"][mrandom(#news_data.common["kill_z"])]),
+			["sad_a"] = game.translate_string(news_data.common["sad_a"][mrandom(#news_data.common["sad_a"])]),
+			["sad_z"] = game.translate_string(news_data.common["sad_z"][mrandom(#news_data.common["sad_z"])]),
+			["fun_a"] = game.translate_string(news_data.common["fun_a"][mrandom(#news_data.common["fun_a"])]),
+			["fun_z"] = game.translate_string(news_data.common["fun_z"][mrandom(#news_data.common["fun_z"])]),
+			["prob_a"] = game.translate_string(news_data.common["prob_a"][mrandom(#news_data.common["prob_a"])]),
+			["prob_z"] = game.translate_string(news_data.common["prob_z"][mrandom(#news_data.common["prob_z"])]),
+			["corpse_a"] = game.translate_string(news_data.common["corpse_a"][mrandom(#news_data.common["corpse_a"])]),
+			["corpse_z"] = game.translate_string(news_data.common["corpse_z"][mrandom(#news_data.common["corpse_z"])]),
+			["corpse_name_a"] = game.translate_string(news_data.common["corpse_name_a"][mrandom(#news_data.common["corpse_name_a"])]),
+			["corpse_name_z"] = game.translate_string(news_data.common["corpse_name_z"][mrandom(#news_data.common["corpse_name_z"])]),
+			["seen_a"] = game.translate_string(news_data.common["seen_a"][mrandom(#news_data.common["seen_a"])]),
+			["seen_z"] = game.translate_string(news_data.common["seen_z"][mrandom(#news_data.common["seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])			
 		}
-		local m_string = game.translate_string(news_data.npc_corpse_templates[math.random(table.getn(news_data.npc_corpse_templates))])			
+		local m_string = game.translate_string(news_data.npc_corpse_templates[mrandom(#news_data.npc_corpse_templates)])			
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1193,6 +1202,7 @@ function format_template_corpse_npc(obj)
 end
 
 function format_template_corpse_monster(obj)
+	local mrandom = math.random
 	local m_s = ""
 	if(obj ~= nil) then
 		local m_level = get_point_description(get_object_levelname(obj), get_object_position(obj))
@@ -1204,22 +1214,22 @@ function format_template_corpse_monster(obj)
 			["class"] = m_name2,
 			["c_corpse"] = m_name,
 			["level"] = m_level,
-			["kill_a"] = game.translate_string(news_data.common["kill_a"][math.random(table.getn(news_data.common["kill_a"]))]),
-			["kill_z"] = game.translate_string(news_data.common["kill_z"][math.random(table.getn(news_data.common["kill_z"]))]),
-			["sad_a"] = game.translate_string(news_data.common["sad_a"][math.random(table.getn(news_data.common["sad_a"]))]),
-			["sad_z"] = game.translate_string(news_data.common["sad_z"][math.random(table.getn(news_data.common["sad_z"]))]),
-			["fun_a"] = game.translate_string(news_data.common["fun_a"][math.random(table.getn(news_data.common["fun_a"]))]),
-			["fun_z"] = game.translate_string(news_data.common["fun_z"][math.random(table.getn(news_data.common["fun_z"]))]),
-			["prob_a"] = game.translate_string(news_data.common["prob_a"][math.random(table.getn(news_data.common["prob_a"]))]),
-			["prob_z"] = game.translate_string(news_data.common["prob_z"][math.random(table.getn(news_data.common["prob_z"]))]),
-			["corpse_a"] = game.translate_string(news_data.common["corpse_a"][math.random(table.getn(news_data.common["corpse_a"]))]),
-			["corpse_z"] = game.translate_string(news_data.common["corpse_z"][math.random(table.getn(news_data.common["corpse_z"]))]),
-			["seen_a"] = game.translate_string(news_data.common["seen_a"][math.random(table.getn(news_data.common["seen_a"]))]),
-			["seen_z"] = game.translate_string(news_data.common["seen_z"][math.random(table.getn(news_data.common["seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])			
+			["kill_a"] = game.translate_string(news_data.common["kill_a"][mrandom(#news_data.common["kill_a"])]),
+			["kill_z"] = game.translate_string(news_data.common["kill_z"][mrandom(#news_data.common["kill_z"])]),
+			["sad_a"] = game.translate_string(news_data.common["sad_a"][mrandom(#news_data.common["sad_a"])]),
+			["sad_z"] = game.translate_string(news_data.common["sad_z"][mrandom(#news_data.common["sad_z"])]),
+			["fun_a"] = game.translate_string(news_data.common["fun_a"][mrandom(#news_data.common["fun_a"])]),
+			["fun_z"] = game.translate_string(news_data.common["fun_z"][mrandom(#news_data.common["fun_z"])]),
+			["prob_a"] = game.translate_string(news_data.common["prob_a"][mrandom(#news_data.common["prob_a"])]),
+			["prob_z"] = game.translate_string(news_data.common["prob_z"][mrandom(#news_data.common["prob_z"])]),
+			["corpse_a"] = game.translate_string(news_data.common["corpse_a"][mrandom(#news_data.common["corpse_a"])]),
+			["corpse_z"] = game.translate_string(news_data.common["corpse_z"][mrandom(#news_data.common["corpse_z"])]),
+			["seen_a"] = game.translate_string(news_data.common["seen_a"][mrandom(#news_data.common["seen_a"])]),
+			["seen_z"] = game.translate_string(news_data.common["seen_z"][mrandom(#news_data.common["seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])			
 		}
-		local m_string = game.translate_string(news_data.monster_corpse_templates[math.random(table.getn(news_data.monster_corpse_templates))])			
+		local m_string = game.translate_string(news_data.monster_corpse_templates[mrandom(#news_data.monster_corpse_templates)])			
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1230,6 +1240,7 @@ function format_template_corpse_monster(obj)
 end
 
 function format_template_hear(obj, hear_a, hear_z)
+	local mrandom = math.random
 	local m_s = ""
 	local m_level = ""
 	local m_pos
@@ -1247,12 +1258,12 @@ function format_template_hear(obj, hear_a, hear_z)
 			["level"] = m_level, 
 			["hear_a"] = hear_a,
 			["hear_z"] = hear_z,
-			["carefull_a"] = game.translate_string(news_data.common["carefull_a"][math.random(table.getn(news_data.common["carefull_a"]))]),
-			["carefull_z"] = game.translate_string(news_data.common["carefull_z"][math.random(table.getn(news_data.common["carefull_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])			
+			["carefull_a"] = game.translate_string(news_data.common["carefull_a"][mrandom(#news_data.common["carefull_a"])]),
+			["carefull_z"] = game.translate_string(news_data.common["carefull_z"][mrandom(#news_data.common["carefull_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])			
 		}
-		local m_string = game.translate_string(news_data.hear_sounds_tempates[math.random(table.getn(news_data.hear_sounds_tempates))])		
+		local m_string = game.translate_string(news_data.hear_sounds_tempates[mrandom(#news_data.hear_sounds_tempates)])		
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1263,6 +1274,7 @@ function format_template_hear(obj, hear_a, hear_z)
 end
 
 function format_template_spawn(level_, position, class)
+	local mrandom = math.random
 	local m_s = ""
 	local m_level = ""
 	local m_pos
@@ -1273,14 +1285,14 @@ function format_template_spawn(level_, position, class)
 		local t = {
 			["level"] = m_level, 
 			["class"] = class,
-			["carefull_a"] = game.translate_string(news_data.common["carefull_a"][math.random(table.getn(news_data.common["carefull_a"]))]),
-			["carefull_z"] = game.translate_string(news_data.common["carefull_z"][math.random(table.getn(news_data.common["carefull_z"]))]),
-			["seen_a"] = game.translate_string(news_data.common["spawn_seen_a"][math.random(table.getn(news_data.common["spawn_seen_a"]))]),
-			["seen_z"] = game.translate_string(news_data.common["spawn_seen_z"][math.random(table.getn(news_data.common["spawn_seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])
+			["carefull_a"] = game.translate_string(news_data.common["carefull_a"][mrandom(#news_data.common["carefull_a"])]),
+			["carefull_z"] = game.translate_string(news_data.common["carefull_z"][mrandom(#news_data.common["carefull_z"])]),
+			["seen_a"] = game.translate_string(news_data.common["spawn_seen_a"][mrandom(#news_data.common["spawn_seen_a"])]),
+			["seen_z"] = game.translate_string(news_data.common["spawn_seen_z"][mrandom(#news_data.common["spawn_seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])
 		}
-		local m_string = game.translate_string(news_data.spawn_templates[math.random(table.getn(news_data.spawn_templates))])	
+		local m_string = game.translate_string(news_data.spawn_templates[mrandom(#news_data.spawn_templates)])	
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1291,6 +1303,7 @@ function format_template_spawn(level_, position, class)
 end
 
 function format_template_spawn_group(level_, position, class, count)
+	local mrandom = math.random
 	local m_s = ""
 	local m_level = ""
 	local m_pos
@@ -1317,14 +1330,14 @@ function format_template_spawn_group(level_, position, class, count)
 			["level"] = m_level, 
 			["class"] = class,
 			["count"] = s_count,
-			["carefull_a"] = game.translate_string(news_data.common["carefull_a"][math.random(table.getn(news_data.common["carefull_a"]))]),
-			["carefull_z"] = game.translate_string(news_data.common["carefull_z"][math.random(table.getn(news_data.common["carefull_z"]))]),
-			["seen_a"] = game.translate_string(news_data.common["spawn_seen_a"][math.random(table.getn(news_data.common["spawn_seen_a"]))]),
-			["seen_z"] = game.translate_string(news_data.common["spawn_seen_z"][math.random(table.getn(news_data.common["spawn_seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))])
+			["carefull_a"] = game.translate_string(news_data.common["carefull_a"][mrandom(#news_data.common["carefull_a"])]),
+			["carefull_z"] = game.translate_string(news_data.common["carefull_z"][mrandom(#news_data.common["carefull_z"])]),
+			["seen_a"] = game.translate_string(news_data.common["spawn_seen_a"][mrandom(#news_data.common["spawn_seen_a"])]),
+			["seen_z"] = game.translate_string(news_data.common["spawn_seen_z"][mrandom(#news_data.common["spawn_seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])])
 		}
-		local m_string = game.translate_string(news_data.spawn_templates_group[math.random(table.getn(news_data.spawn_templates_group))])		
+		local m_string = game.translate_string(news_data.spawn_templates_group[mrandom(#news_data.spawn_templates_group)])		
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1335,6 +1348,7 @@ function format_template_spawn_group(level_, position, class, count)
 end
 
 function format_template_actor_seen(level_, position, class)
+	local mrandom = math.random
 	local m_s = ""
 	local m_level = ""
 	local m_pos
@@ -1345,19 +1359,19 @@ function format_template_actor_seen(level_, position, class)
 		local t = {
 			["level"] = m_level, 
 			["class"] = class,
-			["kill_seen_a"] = game.translate_string(news_data.common["kill_seen_a"][math.random(table.getn(news_data.common["kill_seen_a"]))]),
-			["kill_seen_z"] = game.translate_string(news_data.common["kill_seen_z"][math.random(table.getn(news_data.common["kill_seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))]),
-			["fun_a"] = game.translate_string(news_data.common["fun_a"][math.random(table.getn(news_data.common["fun_a"]))]),
-			["fun_z"] = game.translate_string(news_data.common["fun_z"][math.random(table.getn(news_data.common["fun_z"]))]),
-			["killed_a"] = game.translate_string(news_data.common["killed_a"][math.random(table.getn(news_data.common["killed_a"]))]),
-			["killed_z"] = game.translate_string(news_data.common["killed_z"][math.random(table.getn(news_data.common["killed_z"]))]),
-			["cool_a"] = game.translate_string(news_data.common["cool_a"][math.random(table.getn(news_data.common["cool_a"]))]),
-			["cool_z"] = game.translate_string(news_data.common["cool_z"][math.random(table.getn(news_data.common["cool_z"]))])						
+			["kill_seen_a"] = game.translate_string(news_data.common["kill_seen_a"][mrandom(#news_data.common["kill_seen_a"])]),
+			["kill_seen_z"] = game.translate_string(news_data.common["kill_seen_z"][mrandom(#news_data.common["kill_seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])]),
+			["fun_a"] = game.translate_string(news_data.common["fun_a"][mrandom(#news_data.common["fun_a"])]),
+			["fun_z"] = game.translate_string(news_data.common["fun_z"][mrandom(#news_data.common["fun_z"])]),
+			["killed_a"] = game.translate_string(news_data.common["killed_a"][mrandom(#news_data.common["killed_a"])]),
+			["killed_z"] = game.translate_string(news_data.common["killed_z"][mrandom(#news_data.common["killed_z"])]),
+			["cool_a"] = game.translate_string(news_data.common["cool_a"][mrandom(#news_data.common["cool_a"])]),
+			["cool_z"] = game.translate_string(news_data.common["cool_z"][mrandom(#news_data.common["cool_z"])])						
 		}
 		local m_string = ""
-		m_string = game.translate_string(news_data.actor_seen_public_templates[math.random(table.getn(news_data.actor_seen_public_templates))])		
+		m_string = game.translate_string(news_data.actor_seen_public_templates[mrandom(#news_data.actor_seen_public_templates)])		
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1368,6 +1382,7 @@ function format_template_actor_seen(level_, position, class)
 end
 
 function format_template_actor_seen_group(level_, position, class, count)
+	local mrandom = math.random
 	local m_s = ""
 	local m_level = ""
 	local m_pos
@@ -1391,19 +1406,19 @@ function format_template_actor_seen_group(level_, position, class, count)
 			["level"] = m_level, 
 			["class"] = class,
 			["count"] = s_count,
-			["fun_a"] = game.translate_string(news_data.common["fun_a"][math.random(table.getn(news_data.common["fun_a"]))]),
-			["fun_z"] = game.translate_string(news_data.common["fun_z"][math.random(table.getn(news_data.common["fun_z"]))]),
-			["kill_seen_a"] = game.translate_string(news_data.common["kill_seen_a"][math.random(table.getn(news_data.common["kill_seen_a"]))]),
-			["kill_seen_z"] = game.translate_string(news_data.common["kill_seen_z"][math.random(table.getn(news_data.common["kill_seen_z"]))]),
-			["when_a"] = game.translate_string(news_data.common["when_a"][math.random(table.getn(news_data.common["when_a"]))]),
-			["when_z"] = game.translate_string(news_data.common["when_z"][math.random(table.getn(news_data.common["when_z"]))]),
-			["killed_a"] = game.translate_string(news_data.common["killed_a"][math.random(table.getn(news_data.common["killed_a"]))]),
-			["killed_z"] = game.translate_string(news_data.common["killed_z"][math.random(table.getn(news_data.common["killed_z"]))]),
-			["cool_a"] = game.translate_string(news_data.common["cool_a"][math.random(table.getn(news_data.common["cool_a"]))]),
-			["cool_z"] = game.translate_string(news_data.common["cool_z"][math.random(table.getn(news_data.common["cool_z"]))])						
+			["fun_a"] = game.translate_string(news_data.common["fun_a"][mrandom(#news_data.common["fun_a"])]),
+			["fun_z"] = game.translate_string(news_data.common["fun_z"][mrandom(#news_data.common["fun_z"])]),
+			["kill_seen_a"] = game.translate_string(news_data.common["kill_seen_a"][mrandom(#news_data.common["kill_seen_a"])]),
+			["kill_seen_z"] = game.translate_string(news_data.common["kill_seen_z"][mrandom(#news_data.common["kill_seen_z"])]),
+			["when_a"] = game.translate_string(news_data.common["when_a"][mrandom(#news_data.common["when_a"])]),
+			["when_z"] = game.translate_string(news_data.common["when_z"][mrandom(#news_data.common["when_z"])]),
+			["killed_a"] = game.translate_string(news_data.common["killed_a"][mrandom(#news_data.common["killed_a"])]),
+			["killed_z"] = game.translate_string(news_data.common["killed_z"][mrandom(#news_data.common["killed_z"])]),
+			["cool_a"] = game.translate_string(news_data.common["cool_a"][mrandom(#news_data.common["cool_a"])]),
+			["cool_z"] = game.translate_string(news_data.common["cool_z"][mrandom(#news_data.common["cool_z"])])						
 		}
 		local m_string = ""
-		m_string = game.translate_string(news_data.actor_seen_public_templates_group[math.random(table.getn(news_data.actor_seen_public_templates_group))])		
+		m_string = game.translate_string(news_data.actor_seen_public_templates_group[mrandom(#news_data.actor_seen_public_templates_group)])		
 		for key0, value in pairs(t) do
 			m_s = string.gsub(m_string, "%$"..key0, value)
 			m_string = m_s
@@ -1602,7 +1617,7 @@ function add_spawned_object(obj)
 			s_id = obj.id
 		end	
 		-- Проверим, не фильтруется ли он по smart_terrain
-		if (news_data.smart_filters and table.getn(news_data.smart_filters)>0) then
+		if (news_data.smart_filters and #news_data.smart_filters>0) then
 			local m_obj = nil
 			if (obj.smart_terrain_id) then
 				m_obj = obj
@@ -1651,7 +1666,7 @@ function add_spawned_object(obj)
 		end
 		if (b_added == false) then
 			t = {id = s_id, community = s_comm, count = 1, level = lev, position = pos, o_type = obj_type}
-			table.insert(table_spawned, t)
+			table_spawned[#table_spawned+1] = t
 		else
 		end
 	end
@@ -1695,13 +1710,14 @@ function add_killed_by_actor(obj)
 		end
 		if (b_added == false) then
 			t = {id = s_id, community = s_comm, count = 1, level = lev, position = pos, o_type = obj_type}
-			table.insert(table_killed_by_actor, t)
+			table_killed_by_actor[#table_killed_by_actor+1] = t
 		else
 		end
 	end	
 end
 
 function on_daytime()
+	local mrandom = math.random
 -- ночь, рассвет, закат...
 	if (game_minutes() - timer_daytime_showed > timer_daytime_freq) then
 		local m_h = level:get_time_hours()
@@ -1710,28 +1726,28 @@ function on_daytime()
 		local s_text = ""
 		if (m_t >= 4*60+30 and m_t <= 6*60) then 
 			-- 04:30 - 06:00 Рассвет
-			if (math.random() < prob) then
-				s_text = game.translate_string(news_data.morning_templates[math.random(table.getn(news_data.morning_templates))])
+			if (mrandom() < prob) then
+				s_text = game.translate_string(news_data.morning_templates[mrandom(#news_data.morning_templates)])
 				local name, sname = news_main.get_strings()
-				show_news(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news")
+				show_news(s_text, name.." "..sname, mrandom(timer_weather, timer_weather * 5), 15, "news")
 				timer_daytime_showed = game_minutes()
 			end
 		elseif(m_t >= 20*60+30 and m_t <= 22*60) then 
 			-- 20:30 - 22:00 Закат
-			if (math.random() < prob) then
-				s_text = game.translate_string(news_data.evening_templates[math.random(table.getn(news_data.evening_templates))])
+			if (mrandom() < prob) then
+				s_text = game.translate_string(news_data.evening_templates[mrandom(#news_data.evening_templates)])
 				local name, sname = news_main.get_strings()
-				show_news(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news")
+				show_news(s_text, name.." "..sname, mrandom(timer_weather, timer_weather * 5), 15, "news")
 				timer_daytime_showed = game_minutes()
 			end
 		elseif(m_t >= 23*60 and m_t <= 24*60) or (m_t >= 0*60 and m_t <= 4*60) then 
 			--23:00 - 04:00 Ночь			
-			if (math.random() < prob) then
-				local tbl = game.translate_string(news_data.night_templates[math.random(table.getn(news_data.night_templates))])
+			if (mrandom() < prob) then
+				local tbl = game.translate_string(news_data.night_templates[mrandom(#news_data.night_templates)])
 				local texts = tbl.texts
 				local comments = tbl.comments
 				local probl = tonumber(tbl.prob)
-				local base_wait = math.random(timer_weather, timer_weather * 5)
+				local base_wait = mrandom(timer_weather, timer_weather * 5)
 				if (texts) then
 					local name = game.translate_string("st_news_main_unknown_brackets")
 					local i = 0
@@ -1744,8 +1760,8 @@ function on_daytime()
 						show_news(s_text, name, base_wait + k * 2, 10, "news")
 						i = i + 1
 					end
-					if (probl and comments and news_data.comments_templates[comments] and math.random() < probl) then
-						s_text = game.translate_string(news_data.comments_templates[comments][math.random(table.getn(news_data.comments_templates[comments]))])
+					if (probl and comments and news_data.comments_templates[comments] and mrandom() < probl) then
+						s_text = game.translate_string(news_data.comments_templates[comments][mrandom(#news_data.comments_templates[comments])])
 						local name, sname = news_main.get_strings()
 						show_news(s_text, name.." "..sname, base_wait + (i+1) * 3, 15, "news")
 					end
@@ -1759,6 +1775,7 @@ end
 
 -- Видели, как ГГ что-то делал
 function on_hero_seen(community, level, position, count, o_type)
+	local mrandom = math.random
 	if (community and level and position and count and o_type and o_type > 0) then		
 		local name, sname = news_main.get_strings()
 		local s_author = name.." "..sname
@@ -1784,17 +1801,17 @@ function on_hero_seen(community, level, position, count, o_type)
 			elseif (mon == "bloodsucker" or mon == "controller" or mon == "burer" or mon == "pseudo_gigant" or mon == "fracture" or mon == "chimera") then
 				coeff = 0.45				
 			end
-			local rndd = math.random()
+			local rndd = mrandom()
 			if (rndd < (prob + coeff)) then
 				if (count == 1) then
 					m_str = format_template_actor_seen(level, potition, get_monster_name_by_string(mon, 4))
 				else
 					m_str = format_template_actor_seen_group(level, position, get_monster_name_by_string(mon, 6), count)
 				end
-				do_news(m_str, s_author, math.random(timer_corpse*5, timer_corpse*10), 15, "news", aid)
+				do_news(m_str, s_author, mrandom(timer_corpse*5, timer_corpse*10), 15, "news", aid)
 			end
 		elseif(o_type == 1) then
-			local rndds = math.random()
+			local rndds = mrandom()
 			if (rndds < prob) then
 				local zz = community
 				local m_who = ""
@@ -1814,21 +1831,22 @@ function on_hero_seen(community, level, position, count, o_type)
 				else
 					m_str = format_template_actor_seen_group(level, position, m_who, count)
 				end
-				do_news(m_str, s_author, math.random(timer_corpse*5, timer_corpse*10), 15, "news", aid)
+				do_news(m_str, s_author, mrandom(timer_corpse*5, timer_corpse*10), 15, "news", aid)
 			end
 		end
 	end	
 end
 
 function on_wound(obj)
+	local mrandom = math.random
 	if (obj and obj.name) then
 		if (IsNpcStalker(obj)) then
-			if (math.random() < prob) then
+			if (mrandom() < prob) then
 				local stype = "single"
 				local author_id = obj.id
-				local rndw = math.random()
+				local rndw = mrandom()
 				if (rndw < 0.5) then stype = "group" end
-				local stext = game.translate_string(news_data.wound_templates[stype][math.random(table.getn(news_data.wound_templates[stype]))])				
+				local stext = game.translate_string(news_data.wound_templates[stype][mrandom(#news_data.wound_templates[stype])])				
 				local m_pos = get_object_position(obj)
 				local m_level = ""
 				if (m_pos) then
@@ -1854,7 +1872,7 @@ function on_wound(obj)
 					end
 				end
 				--show_news(m_s, sfrom, math.random(timer_stalker_death, timer_stalker_death * 2), 10, "news")
-				do_news(m_s, sfrom, math.random(timer_stalker_death, timer_stalker_death * 2), 10, "news", author_id, 1)
+				do_news(m_s, sfrom, mrandom(timer_stalker_death, timer_stalker_death * 2), 10, "news", author_id, 1)
 				if (isGameObject(obj)) then
 					if (_debug) then amk.add_spot_on_map(obj:id(), "red_location", m_s) end
 				else
@@ -1876,6 +1894,7 @@ end
 
 
 function on_news()
+	local tremove = table.remove
 	local avail = {}
 	if news_stack then 
 		amk.oau_reason="cn on_news first pass"
@@ -1889,10 +1908,10 @@ function on_news()
 					end
 				else -- Новость устарела.
 					--log1("Too old - "..v.from..": "..v.text)
-					table.remove(news_stack, k)
+					tremove(news_stack, k)
 				end
 			else -- Новость уже была.
-				table.remove(news_stack, k)
+				tremove(news_stack, k)
 			end
 		end
 		amk.oau_reason="cn on_news sort"
@@ -1904,21 +1923,21 @@ function on_news()
 			if v.activated == nil then
 				if (v.lifetime > game_minutes()) then
 					if (v.timeout < game_minutes()) then -- Новость актуальна.
-						table.insert(avail, k)
+						avail[#avail+1] = k
 					else
 							--log1("Not ready yet - ".. v.from..": "..v.text) -- Еще не время.
 					end
 				else 	-- Новость устарела.
 					--log1("Too old - "..v.from..": "..v.text)
-					table.remove(news_stack, k)
+					tremove(news_stack, k)
 				end
 			else -- Новость уже была.
-				table.remove(news_stack, k)
+				tremove(news_stack, k)
 			end
 		end
 	end
 
-	if avail and table.getn(avail) > 0 then
+	if avail and #avail > 0 then
 		amk.oau_reason="cn on_news get available"
 		--local t = avail[math.random(table.getn(avail))]
 		local t = avail[1]
@@ -2039,6 +2058,7 @@ function on_offline_death(victim, killer, weapon)
 end
 
 function on_offline_stalker_death(victim_, killer_, weapon_)
+	local mrandom = math.random
 	if (victim_ == nil) then
 		return
 	end
@@ -2085,21 +2105,21 @@ function on_offline_stalker_death(victim_, killer_, weapon_)
 		end
 	end
 	if (m_killer_str==nil or m_killer_str=="") then m_killer_str = game.translate_string("st_news_main_death_reason_unknown") end
-	local rnds = math.random(1,2)
+	local rnds = mrandom(1,2)
 	if rnds == 1 then
 		m_stringsofl = m_name..", "..m_level..", "..m_killer_str.."."
 	else
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(victim_.m_game_vertex_id):level_id()), vector():set(victim_.position.x,victim_.position.y,victim_.position.z))
 		m_stringsofl = m_name..", "..pos..", "..m_killer_str.."."
 	end
-	do_news(m_stringsofl, game.translate_string("st_stalker_death"), math.random(timer_stalker_death, timer_stalker_death * 5), 10, "death") 
+	do_news(m_stringsofl, game.translate_string("st_stalker_death"), mrandom(timer_stalker_death, timer_stalker_death * 5), 10, "death") 
 
-	if (math.random() < prob) then
+	if (mrandom() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_author = "" --name.." "..sname
 		local m_str = ""
-		if (math.random() < 0.5) then
-			if (math.random() < 0.5) then
+		if (mrandom() < 0.5) then
+			if (mrandom() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -2121,12 +2141,13 @@ function on_offline_stalker_death(victim_, killer_, weapon_)
 		end
 		if (m_str ~= "" and s_author ~= "") then
 			--log1("Offline: "..s_author.." "..m_str) 
-			do_news(m_str, s_author, math.random(timer_corpse, timer_corpse *5), 15, "news", aid)
+			do_news(m_str, s_author, mrandom(timer_corpse, timer_corpse *5), 15, "news", aid)
 		end
 	end
 end
 
 function on_offline_npc_death(victim_, killer_, weapon_)
+	local mrandom = math.random
 	if (victim_ == nil) then
 		return
 	end
@@ -2150,13 +2171,13 @@ function on_offline_npc_death(victim_, killer_, weapon_)
 	else
 		log1("Хм. no killer. "..victim_:name())
 	end
-	if (math.random() < prob) then
+	if (mrandom() < prob) then
 		local name, sname = news_main.get_strings()
 		local s_from = "" --name.." "..sname
 		local s_author = s_from
 		local m_str = ""
-		if (math.random() < 0.5) then
-			if (math.random() < 0.5) then
+		if (mrandom() < 0.5) then
+			if (mrandom() < 0.5) then
 				m_str = m_victim.." "..m_killer..""
 			else
 				m_str = m_victim..""
@@ -2180,7 +2201,7 @@ function on_offline_npc_death(victim_, killer_, weapon_)
 		end
 		if (m_str ~= "" and s_from ~= "") then
 			--log1("Offline: "..s_from.." "..m_str) 
-			do_news(m_str, s_from, math.random(timer_corpse, timer_corpse *5), 15, "news", aid)
+			do_news(m_str, s_from, mrandom(timer_corpse, timer_corpse *5), 15, "news", aid)
 		end
 	end
 end
@@ -2234,7 +2255,7 @@ function on_offline_trade(npc, item)
 
 	if (npc and item and math.random() < 0.25) then
 		local m_from = get_npc_name(npc)
-		local m_str = game.translate_string(news_data.trade_templates[math.random(table.getn(news_data.trade_templates))])
+		local m_str = game.translate_string(news_data.trade_templates[math.random(#news_data.trade_templates)])
 		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
 		if (m_level == "") then return end		
 		local m_title = get_object_name(item)
@@ -2255,7 +2276,7 @@ function on_find_artefact(npc, item)
 	if (npc and item) then
 		--log1(" чувак  "..npc:name().." нашёл арт "..item:name().." ") 
 		local m_from = get_npc_name(npc)
-		local m_str = game.translate_string(news_data.art_templates[math.random(table.getn(news_data.art_templates))])
+		local m_str = game.translate_string(news_data.art_templates[math.random(#news_data.art_templates)])
 		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
 		if (m_level == "") then return end		
 		local m_title = get_object_name(item)
@@ -2275,7 +2296,7 @@ end
 function on_document_find(npc, item)
 	if (npc and item) then
 		local m_from = get_npc_name(npc)
-		local m_str = game.translate_string(news_data.docs_templates[math.random(table.getn(news_data.docs_templates))])
+		local m_str = game.translate_string(news_data.docs_templates[math.random(#news_data.docs_templates)])
 		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
 		if (m_level == "") then return end		
 		local m_title = get_object_name(item)
@@ -2312,7 +2333,7 @@ function on_find_weapon(npc, item)
 		amk.oau_reason="cn on_find_weapon 2 - item - "..item:name().." level - "..item.level_name.."  - npc - "..npc:name().." "
 		--log1(""чувак  "..npc:name().." нашёл оружие "..item:name().."") 
 		local m_from = get_npc_name(npc)
-		local m_str = game.translate_string(news_data.weapons_templates[math.random(table.getn(news_data.weapons_templates))])
+		local m_str = game.translate_string(news_data.weapons_templates[math.random(#news_data.weapons_templates)])
 		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
 		amk.oau_reason="cn on_find_weapon 3"
 		if (m_level == "") then return end
@@ -2358,7 +2379,7 @@ function get_nearest_stalker(level, point, dist_max, dist_min)
 	local min_dist = 1000000
 	if (dist_max == nil or dist_max == 0) then dist_max = dist_seen end
 	if (dist_min == nil) then dist_min = 0 end
-	if (map and point and amk_offline_alife.off_npcs[map] and amk_offline_alife.off_npcs[map].stalkers and table.getn(amk_offline_alife.off_npcs[map].stalkers) > 0) then
+	if (map and point and amk_offline_alife.off_npcs[map] and amk_offline_alife.off_npcs[map].stalkers and #amk_offline_alife.off_npcs[map].stalkers > 0) then
 		for k, v in pairs(amk_offline_alife.off_npcs[map].stalkers) do
 			if v then
 				local stalker = alife():object(v.id)
@@ -2375,7 +2396,7 @@ function get_nearest_stalker(level, point, dist_max, dist_min)
 									if (s_dist <= dist_max and s_dist >= dist_min and s_dist < min_dist) then
 										-- А не спамил ли он в последнее время?
 										local b_ok = true
-										if (spammers and table.getn(spammers) > 0) then
+										if (spammers and #spammers > 0) then
 											local sn = get_npc_name(stalker)
 											if (sn ~= "" and sn ~= nil) then
 												for sk, sv in pairs(spammers) do

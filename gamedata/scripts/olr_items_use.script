@@ -14,6 +14,8 @@ local food_sections_table = {
 }
 
 function use(obj)
+	local mrandom = math.random
+	local sim = alife()
 
 	local section = obj:section()
 	
@@ -22,7 +24,7 @@ function use(obj)
 	-- ћед инжектор и всЄ с ним св€занное
 	if section == "med_injector" then
 		--level.start_stop_menu(olr_items_use.injector_info(),true) -- неиспользуемое на данный момент гуи для инжектора
-		alife():create("med_injector_empty", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		sim:create("med_injector_empty", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end
 	if section == "med_injector_capsule" then
 		if db.actor:object("med_injector_empty") == nil then
@@ -30,7 +32,7 @@ function use(obj)
 			return
 		end
 		olr.del(db.actor:object("med_injector_empty"))
-		alife():create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		sim:create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end
 	if section == "med_injector_empty" then
 		if db.actor:object("med_injector_capsule") == nil then
@@ -38,14 +40,14 @@ function use(obj)
 			return
 		end
 		olr.del(db.actor:object("med_injector_capsule"))
-		alife():create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		sim:create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 	end	
 	
 	-- Ѕатарейки
 	if section == "battery_change_headlamp" then
 		local has_torch = db.actor:item_in_slot(9)
 		if has_torch == nil then
-			alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			sim:create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 			news_manager.send_tip(db.actor, game.translate_string("torch_check_0"), nil, "default", 3000)
 		else
 			if has_torch:condition() < 1 then
@@ -54,7 +56,7 @@ function use(obj)
 				local message = game.translate_string("st_olr_item_efs_charge").." ["..has_torch:get_name().."] - 100%"
 				news_manager.send_tip(db.actor, message, nil, "info", 3000)				
 			else
-				alife():create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+				sim:create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 				local message = game.translate_string("st_olr_item_efs_charge").." ["..has_torch:get_name().."] - 100%"
 				news_manager.send_tip(db.actor, message, nil, "info", 3000)
 			end
@@ -64,7 +66,7 @@ function use(obj)
 	if section == "battery_change" then
 		local pdaitm = db.actor:object("device_pda")
 		if pdaitm:condition() == 1 then
-			alife():create("battery_change", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			sim:create("battery_change", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 			local message = game.translate_string("st_olr_item_efs_charge").." ["..pdaitm:get_name().."] - 100%"
 			news_manager.send_tip(db.actor, message, nil, "info", 3000)
 		else
@@ -77,7 +79,7 @@ function use(obj)
 
 	-- –юкзак тайник
 	if section == "custom_treasure_rukzak" then
-		local obj = alife():create("box_rukzak_treasure", db.actor:position():add(db.actor:direction():mul(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		local obj = sim:create("box_rukzak_treasure", db.actor:position():add(db.actor:direction():mul(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		clear_useful_for_ai(obj)
 	end
 
@@ -85,7 +87,7 @@ function use(obj)
 	if section == "empty_butilka_arg_zam" then
 		if not xr_conditions.actor_in_zone(nil,nil,{"lvl3_agroprom_space_restrictor_0019"})	 then
 			news_manager.send_tip(db.actor, game.translate_string("use_3"))
-			alife():create("empty_butilka_arg_zam", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			sim:create("empty_butilka_arg_zam", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 			return
 		end
 		olr.give_item("arg_jaba_voda_boloto")
@@ -97,10 +99,11 @@ function use(obj)
 		for i=1,65534 do
 			local anom = level.object_by_id(i)
 			if anom then
-				if anom:section() == "zone_witches_galantine" or anom:section() == "zone_witches_galantine_weak" or anom:section() == "zone_witches_galantine_strong" or anom:section() == "zone_witches_galantine_average" then
+				local anom_sec = anom:section()
+				if anom_sec == "zone_witches_galantine" or anom_sec == "zone_witches_galantine_weak" or anom_sec == "zone_witches_galantine_strong" or anom_sec == "zone_witches_galantine_average" then
 					if anom:position():distance_to(db.actor:position()) < anom:get_shape_radius() + 1 then
 						olr.give_item("af_galantine_pot")
-						local rnd = math.random(1,5)
+						local rnd = mrandom(1,5)
 						if rnd == 1 then
 							anom:disable_anomaly()
 						end
@@ -109,7 +112,7 @@ function use(obj)
 				end
 			elseif i == 65534 then
 				news_manager.send_tip(db.actor, game.translate_string("use_5"))
-				alife():create("empty_butilka", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+				sim:create("empty_butilka", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 			end
 		end
 	end
@@ -118,14 +121,14 @@ function use(obj)
 	-- ѕереносим всЄ из худовых функций в обычные юзы
 
 	if section == "water" then
-		local bobj2 = alife():create("ph_food_vater_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		local bobj2 = sim:create("ph_food_vater_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		level.client_spawn_manager():add(bobj2.id, 0,
 			function(id,obj)
 				if obj then
 					local h = hit()
 					h.draftsman = obj
 					h.type = hit.strike
-					h.direction = vector():set(math.random(1),0.1,math.random(1))
+					h.direction = vector():set(mrandom(1),0.1,mrandom(1))
 					h.power = 1
 					h.impulse = 2
 					obj:hit(h)
@@ -146,14 +149,14 @@ function use(obj)
 		db.actor:give_info_portion("actor_healing_antirad")
 		olr_timers.st_timer("eat_radiation_tmr_timer", 10, "olr_items_use.eat_radiation_tmr_timer()")
 		db.actor.psy_health = db.actor.psy_health + 0.3
-		local bobj2 = alife():create("vodka_used_empty_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		local bobj2 = sim:create("vodka_used_empty_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		level.client_spawn_manager():add(bobj2.id, 0,
 			function(id,obj)
 				if obj then
 					local h = hit()
 					h.draftsman = obj
 					h.type = hit.strike
-					h.direction = vector():set(math.random(1),0.1,math.random(1))
+					h.direction = vector():set(mrandom(1),0.1,mrandom(1))
 					h.power = 1
 					h.impulse = 2
 					obj:hit(h)
@@ -181,9 +184,9 @@ function use(obj)
 		db.actor:give_info_portion("actor_healing_medkit")
 		olr_timers.st_timer("eat_medkit_tmr_timer", 20, "olr_items_use.eat_medkit_tmr_timer()")
 		--log1("eat medkit")
-		local par_var = math.random(1,3)
+		local par_var = mrandom(1,3)
 		if par_var == 1 then
-			alife():create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			sim:create('energy_drink', db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 		end
 	end
 
@@ -200,14 +203,14 @@ function use(obj)
 	end
 	
 	if section == "conserva" then
-		local bobj2 = alife():create("ph_food_conserv1_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		local bobj2 = sim:create("ph_food_conserv1_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		level.client_spawn_manager():add(bobj2.id, 0,
 			function(id,obj)
 				if obj then
 					local h = hit()
 					h.draftsman = obj
 					h.type = hit.strike
-					h.direction = vector():set(math.random(1),0.1,math.random(1))
+					h.direction = vector():set(mrandom(1),0.1,mrandom(1))
 					h.power = 1
 					h.impulse = 2
 					obj:hit(h)
@@ -296,6 +299,7 @@ function injector_info:__init() super()
 end
 
 function injector_info:InitControls()
+	local sformat = string.format
 	local xml = CScriptXmlInit()
 	self:Init(0,0,1024,768)
 	xml:ParseFile("injector_info.xml")
@@ -318,12 +322,12 @@ function injector_info:InitControls()
 	self.sibyazva = get_sibyazva()
 	self.zombied = get_zombied()
 
-	self.Static11:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_temp"), self.temperatura))
-	self.Static7:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_parasite"), self.paras))
-	self.Static9:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_rabies"), self.beshenstv))
-	self.Static10:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_rat_rabies"), self.ratbezum))
-	self.Static15:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_anthrax"), self.sibyazva))
-	self.Static17:SetTextST(string.format(game.translate_string("st_olr_item_efs_status_zombification"), self.sibyazva))
+	self.Static11:SetTextST(sformat(game.translate_string("st_olr_item_efs_status_temp"), self.temperatura))
+	self.Static7:SetTextST(sformat(game.translate_string("st_olr_item_efs_status_parasite"), self.paras))
+	self.Static9:SetTextST(sformat(game.translate_string("st_olr_item_efs_status_rabies"), self.beshenstv))
+	self.Static10:SetTextST(sformat(game.translate_string("st_olr_item_efs_status_rat_rabies"), self.ratbezum))
+	self.Static15:SetTextST(sformat(game.translate_string("st_olr_item_efs_status_anthrax"), self.sibyazva))
+	self.Static17:SetTextST(sformat(game.translate_string("st_olr_item_efs_status_zombification"), self.sibyazva))
 	self.Static8:SetTextST(game.translate_string("st_olr_item_efs_status_organism"))
 
 	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])

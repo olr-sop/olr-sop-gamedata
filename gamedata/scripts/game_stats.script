@@ -22,7 +22,7 @@ end
 function shutdown   ()
     printf ("GAME STATS START AT LEVEL [%s]", level.name ())
     local l_name = level.name ()
-    for a = 1, table.getn (stats), 1 do
+    for a = 1, #stats, 1 do
         if stats[a].id == actor_position then
            printf ("[stats][%s][%s][%d][%f,%f,%f][%f, %f, %f]", l_name, stats[a].time, stats[a].id, stats[a].position.x, stats[a].position.y, stats[a].position.z, stats[a].health, stats[a].radiation, stats[a].satiety)
         elseif stats[a].id == actor_item_take then
@@ -50,7 +50,7 @@ function update     (delta, actor)
               radiation = actor.radiation,
               satiety = actor.satiety
               }
-    table.insert (stats, t)
+    stats[#stats+1] = t
 end
 ----------------------------------------------------------
 function update_task (id_task, subtask, id_state, actor)
@@ -75,7 +75,7 @@ function update_task (id_task, subtask, id_state, actor)
             position = actor:position (),
             task = string.format ("%s, %s, %s", id_task, subtask, state)
             }
-    table.insert (stats, t)
+    stats[#stats+1] = t
 end
 ----------------------------------------------------------
 function update_take_item (object, actor)
@@ -85,7 +85,7 @@ function update_take_item (object, actor)
               position = actor:position (),
               item_name = object:name ()
               }
-    table.insert (stats, t)
+    stats[#stats+1] = t
 end
 ----------------------------------------------------------
 function update_drop_item (object, actor)
@@ -95,7 +95,7 @@ function update_drop_item (object, actor)
               position = db.actor:position (),
               item_name = object:name ()
               }
-    table.insert (stats, t)
+    stats[#stats+1] = t
 end
 ----------------------------------------------------------
 function money_trade_update (money_i)
@@ -105,14 +105,14 @@ function money_trade_update (money_i)
               position = db.actor:position (),
               money = money_i
               }
-    table.insert (stats, t)
+    stats[#stats+1] = t
     t = {
         time = game.get_game_time ():timeToString (game.CTime.TimeToSeconds), 
         id = actor_money_total, 
         position = db.actor:position (),
         money = db.actor:money ()
         }
-    table.insert (stats, t)        
+    stats[#stats+1] = t        
 end
 ----------------------------------------------------------
 function money_quest_update (money_i)
@@ -122,13 +122,13 @@ function money_quest_update (money_i)
               position = db.actor:position (),
               money = money_i
               }
-    table.insert (stats, t)
+    stats[#stats+1] = t
     t = {
         time = game.get_game_time ():timeToString (game.CTime.TimeToSeconds), 
         id = actor_money_total, 
         position = db.actor:position (),
         money = db.actor:money ()
         }
-    table.insert (stats, t)        
+    stats[#stats+1] = t        
 end
 ----------------------------------------------------------

@@ -45,13 +45,14 @@ end
 
 
 function snd_source:update(delta)
+  local dev = device()
     if self.destructed == true then return end
 
 	if xr_logic.try_switch_to_another_section (self.object, self.st, db.actor) then
 		return
 	end
 
-    if self.st.pause_time - device ():time_global () > 0 then
+    if self.st.pause_time - dev:time_global () > 0 then
         return
     end
        
@@ -77,9 +78,9 @@ function snd_source:update(delta)
 
        
     if self.last_update == 0 then
-       self.last_update = device ():time_global ()
+       self.last_update = dev:time_global ()
     else
-       if device ():time_global () - self.last_update > 50 then
+       if dev:time_global () - self.last_update > 50 then
           self.last_update = 0
        else
           return     
@@ -95,7 +96,7 @@ function snd_source:update(delta)
 			self.st.sound_set = true
 			if self.st.pause_min ~= 0 or self.st.pause_max ~= 0 then
 				local time = math.random (self.st.pause_min, self.st.pause_max)
-				self.st.pause_time = device ():time_global () + time
+				self.st.pause_time = dev:time_global () + time
 			end 
 			self.first_sound = false
 		else

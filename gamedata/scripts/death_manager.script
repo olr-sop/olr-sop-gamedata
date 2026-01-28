@@ -21,6 +21,7 @@ local difficulty_multipliers = {}
 local death_ini = ini_file("misc\\death_generic.ltx")
 
 function init_drop_settings()
+    local tonum = tonumber
     local community_list = {
         "stalker",
         "trader",
@@ -54,7 +55,7 @@ function init_drop_settings()
             local id, value = "", ""
             for i = 0, n - 1 do
                 result, id, value = death_ini:r_line(v, i, "", "")
-                item_by_community[v][id] = 1000 * tonumber(value)
+                item_by_community[v][id] = 1000 * tonum(value)
             end
         end
     end
@@ -82,7 +83,7 @@ function init_drop_settings()
     local id, value = "", ""
     for i = 0, n - 1 do
         result, id, value = death_ini:r_line(level_name, i, "", "")
-        mul_by_level[id] = tonumber(value)
+        mul_by_level[id] = tonum(value)
     end
 
     local item_count_section = "item_count_" .. level.get_game_difficulty()
@@ -104,8 +105,8 @@ function init_drop_settings()
             mul_by_level[id] = 0
         end
 
-        min = tonumber(min) * mul_by_level[id]
-        max = tonumber(max) * mul_by_level[id]
+        min = tonum(min) * mul_by_level[id]
+        max = tonum(max) * mul_by_level[id]
 
         count_by_level[id] = {min = min, max = max}
     end
@@ -134,7 +135,7 @@ function init_drop_settings()
         local n = death_ini:line_count("ammo_base_multiplier")
         for i = 0, n - 1 do
             result, id, value = death_ini:r_line("ammo_base_multiplier", i, "", "")
-            ammo_base_multiplier[id] = tonumber(value) or 0.5
+            ammo_base_multiplier[id] = tonum(value) or 0.5
         end
     end
 
@@ -149,7 +150,7 @@ function init_drop_settings()
         local n = death_ini:line_count("difficulty_multiplier")
         for i = 0, n - 1 do
             result, id, value = death_ini:r_line("difficulty_multiplier", i, "", "")
-            difficulty_multipliers[id] = tonumber(value) or 1.0
+            difficulty_multipliers[id] = tonum(value) or 1.0
         end
     end
     
@@ -162,6 +163,7 @@ function drop_manager:__init(npc)
 end
 
 function drop_manager:create_release_item()
+    local pairs_ = pairs
     -- Спрашиваем у серверного объекта генерились ли предметы
     local se_obj = alife():object(self.npc:id())
     if se_obj.death_droped == true then
@@ -191,7 +193,7 @@ function drop_manager:create_release_item()
         local available_ammo = {}
         local spawn_items = item_by_community[self.npc:character_community()]
         
-        for ammo_section, chance in pairs(spawn_items) do
+        for ammo_section, chance in pairs_(spawn_items) do
             -- Проверяем только патроны
             if ammo_sections[ammo_section] then
                 -- Проверяем зависимости для этого типа патронов
@@ -203,9 +205,9 @@ function drop_manager:create_release_item()
         
         -- Группируем патроны по оружию
         local ammo_by_weapon = {}
-        for ammo_section, _ in pairs(available_ammo) do
+        for ammo_section, _ in pairs_(available_ammo) do
             if item_dependence[ammo_section] then
-                for weapon_section, _ in pairs(item_dependence[ammo_section]) do
+                for weapon_section, _ in pairs_(item_dependence[ammo_section]) do
                     if slot_weapons[weapon_section] then
                         if not ammo_by_weapon[weapon_section] then
                             ammo_by_weapon[weapon_section] = {}
@@ -218,10 +220,10 @@ function drop_manager:create_release_item()
         
         -- Для каждого оружия выбираем только один тип патронов
         local selected_ammo = {}
-        for weapon_section, ammo_types in pairs(ammo_by_weapon) do
+        for weapon_section, ammo_types in pairs_(ammo_by_weapon) do
             local ammo_list = {}
-            for ammo_section, _ in pairs(ammo_types) do
-                table.insert(ammo_list, ammo_section)
+            for ammo_section, _ in pairs_(ammo_types) do
+                ammo_list[#ammo_list+1] = ammo_section
             end
             
             local chosen_ammo = select_ammo_type_for_weapon(self.npc, weapon_section, ammo_list)
@@ -231,13 +233,13 @@ function drop_manager:create_release_item()
         end
         
         -- Спавним выбранные патроны
-        for ammo_section, chance in pairs(selected_ammo) do
+        for ammo_section, chance in pairs_(selected_ammo) do
             local number = math.random(count_by_level[ammo_section].min, count_by_level[ammo_section].max)
             create_items(self.npc, ammo_section, number, chance)
         end
         
         -- Спавним остальные предметы (не патроны)
-        for item_section, chance in pairs(spawn_items) do
+        for item_section, chance in pairs_(spawn_items) do
             if not ammo_sections[item_section] then
                 if check_item_dependence(self.npc, item_section) then
                     local number = math.random(count_by_level[item_section].min, count_by_level[item_section].max)
@@ -359,7 +361,9 @@ end
 
 -- Функция вызывается для каждого предмета, если вернет false то предмет удалится.
 function keep_item(npc, item)
-    local obj = item and item:id() and alife():object(item:id())
+    local mrandom = math.random
+  local sim = alife()
+    local obj = item and item:id() and sim:object(item:id())
     local section = item:section()
     
     if section == "bolt" then
@@ -372,42 +376,42 @@ function keep_item(npc, item)
 
     if obj then
         if section == "device_pda" or section == "binocular_a" or section == "vodka_a" or section == "guitar_a" or section == "bread_a" or section == "yad" or section == "hand_radio" or section == "kolbasa_a" or section == "harmonica_a" or section == "kruglov_flash" then
-            alife():release(obj, true)            
+            sim:release(obj, true)            
             return false
         end
     end
 
-    local medrnd = math.random(1, 10)
+    local medrnd = mrandom(1, 10)
     if obj and medrnd ~= 5 and item:is_medkit() then
-        alife():release(obj, true)
+        sim:release(obj, true)
         return false
     end
 
     if npc:character_community() == "trader" and obj then
-        alife():release(obj, true)
+        sim:release(obj, true)
         return false
     end    
 
     if section == "device_torch" then
-        local rndgood = math.random(1, 40)
+        local rndgood = mrandom(1, 40)
         if rndgood == 1 then
-            item:set_condition((math.random(75) + 87) / 100)
+            item:set_condition((mrandom(75) + 87) / 100)
         else
-            item:set_condition((math.random(25) + 35) / 100)
+            item:set_condition((mrandom(25) + 35) / 100)
         end
         return true
     end
 
     if section == "detector_simple" or section == "detector_advances" or section == "detector_elite" then
-        item:set_condition((math.random(55) + 5) / 100)
+        item:set_condition((mrandom(55) + 5) / 100)
         return true
     end
 
     if item:is_outfit() then
         if section ~= "exo_outfit" then
-            item:set_condition((math.random(15) + 35) / 100)
+            item:set_condition((mrandom(15) + 35) / 100)
         else
-            item:set_condition((math.random(5) + 15) / 100)
+            item:set_condition((mrandom(5) + 15) / 100)
         end
         return true
     end
@@ -416,7 +420,7 @@ function keep_item(npc, item)
     local item_in_slot = npc:item_in_slot(1)
     if item_in_slot ~= nil and item_in_slot:id() == item_id then
         item:unload_magazine(false)
-        item:set_condition((math.random(15) + 35) / 100)
+        item:set_condition((mrandom(15) + 35) / 100)
         set_rad_flag(item)
         return true
     end
@@ -424,17 +428,17 @@ function keep_item(npc, item)
     item_in_slot = npc:item_in_slot(2)
     if item_in_slot ~= nil and item_in_slot:id() == item_id then
         item:unload_magazine(false)
-        item:set_condition((math.random(15) + 35) / 100)
+        item:set_condition((mrandom(15) + 35) / 100)
         set_rad_flag(item)
         return true
     end
 
     if item:is_weapon() then
-        local rndgood = math.random(1, 50)
+        local rndgood = mrandom(1, 50)
         if rndgood == 1 then
-            item:set_condition((math.random(75) + 88) / 100)
+            item:set_condition((mrandom(75) + 88) / 100)
         else
-            item:set_condition((math.random(15) + 55) / 100)
+            item:set_condition((mrandom(15) + 55) / 100)
         end
         return true
     end
@@ -519,6 +523,8 @@ function set_rad_flag(obj)
 end
 
 function dump_drop_tables()
+    local pairs_ = pairs
+    local sformat = string.format
     local output = ""
     
     local function add_line(text)
@@ -537,7 +543,7 @@ function dump_drop_tables()
 
     --=== Заголовок ===--
     add_line("\n=== ПОЛНАЯ КОНФИГУРАЦИЯ СИСТЕМЫ ДРОПА ===")
-    add_line(string.format("Уровень: %s | Сложность: %s", 
+    add_line(sformat("Уровень: %s | Сложность: %s", 
         game.translate_string(level.name()), difficulty_str))
 
     --=== 1. Шансы выпадения ===--
@@ -545,12 +551,12 @@ function dump_drop_tables()
     add_line("Формат: Предмет > Raw/Вероятность/Проценты")
     add_line("-----------------------------------------")
     
-    for comm, items in pairs(item_by_community) do
-        add_line(string.format("\n[Группировка: %s]", comm))
-        for item, chance in pairs(items) do
+    for comm, items in pairs_(item_by_community) do
+        add_line(sformat("\n[Группировка: %s]", comm))
+        for item, chance in pairs_(items) do
             local prob = chance / 1000
             local percent = prob * 100
-            add_line(string.format("  %-25s: %-5d | %-5.3f | %-5.1f%%", 
+            add_line(sformat("  %-25s: %-5d | %-5.3f | %-5.1f%%", 
                 item, chance, prob, percent))
         end
     end
@@ -558,22 +564,22 @@ function dump_drop_tables()
     --=== 3. Зависимости ===--
     add_line("\n\n--- ЗАВИСИМОСТИ ПРЕДМЕТОВ ---")
     add_line("(Предмет выпадет только если есть хотя бы один из зависимых)")
-    for item, deps in pairs(item_dependence) do
+    for item, deps in pairs_(item_dependence) do
         local keys = {}
-        for k, _ in pairs(deps) do
-            table.insert(keys, k)
+        for k, _ in pairs_(deps) do
+            keys[#keys+1] = k
         end
         local deps_str = table.concat(keys, ", ")
-        add_line(string.format("%-20s > Требует: %s", item, deps_str))
+        add_line(sformat("%-20s > Требует: %s", item, deps_str))
     end
 
     --=== 4. Патроны ===--
     add_line("\n\n--- НАСТРОЙКИ ПАТРОНОВ ---")
     add_line("Секция            | Мин  | Макс | Примечание")
     add_line("-------------------------------------------")
-    for item, counts in pairs(count_by_level) do
+    for item, counts in pairs_(count_by_level) do
         if ammo_sections[item] then
-            add_line(string.format("%-18s | %-5d | %-5d | Выпадет если есть оружие для этих патронов", 
+            add_line(sformat("%-18s | %-5d | %-5d | Выпадет если есть оружие для этих патронов", 
                 item, counts.min, counts.max))
         end
     end
@@ -581,12 +587,12 @@ function dump_drop_tables()
     --=== 5. Прочие настройки ===--
     add_line("\n\n--- ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ ---")
     add_line("Множители уровня:")
-    for item, mul in pairs(mul_by_level) do
-        add_line(string.format("%-20s: x%.2f", item, mul))
+    for item, mul in pairs_(mul_by_level) do
+        add_line(sformat("%-20s: x%.2f", item, mul))
     end
 
     add_line("\nНеудаляемые предметы:")
-    for item, _ in pairs(always_keep_item) do
+    for item, _ in pairs_(always_keep_item) do
         add_line("  " .. item)
     end
 

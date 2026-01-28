@@ -211,6 +211,7 @@ function action_rest:initialize ()
 end
 ----------------------
 function action_rest:execute ()
+      local dev = device()
     action_base.execute (self)
         if not self.was_reset then
                 self:reset_scheme()
@@ -220,20 +221,20 @@ function action_rest:execute ()
     if self.eat_enable == true then
        if self.stage == 0 then  
          if hand_object ~= nil and hand_object:id () == self.eat_object:id () then
-            self.time_to_eat = device ():time_global () + 30000
+            self.time_to_eat = dev:time_global () + 30000
             self.object:clear_animations () 
             self.stage = 1
           end   
           --printf ("ENABLE BREAD 1")
           self.object:set_item (object.use, self.eat_object)
-          self.time_to_eat = device ():time_global () + 30000
+          self.time_to_eat = dev:time_global () + 30000
           return
        end   
        --printf ("ENABLE BREAD 2")
-       if device ():time_global () - self.time_to_eat > 0 then
+       if dev:time_global () - self.time_to_eat > 0 then
           self.eat_enable = false
           self.stage = 0
-          self.time_to_eat = device ():time_global () + 20000
+          self.time_to_eat = dev:time_global () + 20000
        end
        return
     end   
@@ -246,11 +247,11 @@ function action_rest:execute ()
           end   
           --printf ("ENABLE VODKA 1")
           self.object:set_item (object.use, self.drink_object)
-          self.time_to_eat = device ():time_global () + 20000
+          self.time_to_eat = dev:time_global () + 20000
           return
        end   
        --printf ("ENABLE VODKA 2")
-       if device ():time_global () - self.time_to_eat > 0 then
+       if dev:time_global () - self.time_to_eat > 0 then
           self.object:set_item (object.deactivate, self.drink_object)
           self.drink_enable = false
           self.state = 2

@@ -58,7 +58,7 @@ function r_2nums( spawn_ini, section, line, def1, def2 )
 	if spawn_ini:line_exist( section, line ) then
 		-- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
 		local t = parse_nums( spawn_ini:r_string( section, line ) )
-		local n = table.getn( t )
+		local n = #t
 
 		if n == 0 then
 			return def1, def2
@@ -800,13 +800,14 @@ function se_smart_terrain:is_gulag_available()
 end
 
 function se_smart_terrain:show_smart_debug_spot(avail)
+    local tostr = tostring
     if ENABLE_SPOTS_SMARTS then
         -- Формируем детальную информационную строку
-        local state_text = "Состояние: " .. tostring(self.gulag.state)
-        local population = "Население: " .. tostring(self.gulag:get_population()) .. " из " .. tostring(self.gulag.capacity)
-        local non_exclusive = "Неэксклюзивные: " .. tostring(self.gulag:get_non_exclusive_population()) .. " из " .. tostring(self.gulag.capacity_non_exclusive)
-        local comedians = "Пришедшие: " .. tostring(self.gulag:get_population_comed())
-        local exclusives = "Эксклюзивные: " .. tostring(self.exclusives or 0)
+        local state_text = "Состояние: " .. tostr(self.gulag.state)
+        local population = "Население: " .. tostr(self.gulag:get_population()) .. " из " .. tostr(self.gulag.capacity)
+        local non_exclusive = "Неэксклюзивные: " .. tostr(self.gulag:get_non_exclusive_population()) .. " из " .. tostr(self.gulag.capacity_non_exclusive)
+        local comedians = "Пришедшие: " .. tostr(self.gulag:get_population_comed())
+        local exclusives = "Эксклюзивные: " .. tostr(self.exclusives or 0)
         
         -- Добавляем информацию о доступности
         local availability = "Доступность: " .. (avail and "ДА" or "НЕТ")
@@ -833,7 +834,7 @@ function se_smart_terrain:show_smart_debug_spot(avail)
         
         -- Формируем итоговую строку
         local str = "Смарт-террейн: " .. self:name() .. "\\n" ..
-                   "ID: " .. tostring(self.id) .. "\\n" ..
+                   "ID: " .. tostr(self.id) .. "\\n" ..
                    "----------------------------\\n" ..
                    state_text .. "\\n" ..
                    population .. "\\n" ..

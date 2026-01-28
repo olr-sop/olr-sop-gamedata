@@ -64,8 +64,9 @@ function update_val()
 end
 
 function upd()
+	local level_name = level.name()
 	if xvars.blowout_timer == 70 then
-		if not no_blow_levels[level.name()] and not has_alife_info("monolit_na_kordone") then
+		if not no_blow_levels[level_name] and not has_alife_info("monolit_na_kordone") then
 			blow_task_actor()
 		end
 	end
@@ -91,7 +92,7 @@ function upd()
 	--news_manager.send_tip(db.actor, "xvars.blowout_timer равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
 
 	if xvars.blowout_timer < blow_max and xvars.blowout_timer >= 60 then
-		if no_blow_levels[level.name()] then
+		if no_blow_levels[level_name] then
 			return
 		end
 
@@ -146,7 +147,7 @@ function upd()
 	if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
 		state_blow = 2
 
-		if no_blow_levels[level.name()] then
+		if no_blow_levels[level_name] then
 			return
 		end
 
@@ -163,7 +164,7 @@ function upd()
 
 			if has_alife_info("olr_blowout_phase_1") then
 				local ini = ini_file("game.ltx")
-				local weather = utils.cfg_get_string(ini, level.name(), "weathers", db.actor, false, "", "default")
+				local weather = utils.cfg_get_string(ini, level_name, "weathers", db.actor, false, "", "default")
 				--log1("olr_blowout: get weather from config " .. tostring(weather) .. "")
 				xvars.blow_cur_weather = string.gsub(weather, "\\", "\\\\")
 
@@ -191,7 +192,7 @@ function upd()
 
 		state_blow = 3
 
-		if no_blow_levels[level.name()] then
+		if no_blow_levels[level_name] then
 			return
 		end
 
@@ -232,7 +233,7 @@ function upd()
 	if xvars.blowout_timer <= 20 then
 		state_blow = 4
 
-		if no_blow_levels[level.name()] then
+		if no_blow_levels[level_name] then
 			return
 		end
 
@@ -405,7 +406,7 @@ function spawen_endgame_posthuman()
 		local kill = sim:object(id)
 		if kill then
 			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local section = sectionsa[math.random(#sectionsa)]
 				if game_graph():valid_vertex_id(kill.m_game_vertex_id) and math.random(1, 15) == 1 then
 					local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 					--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
@@ -474,46 +475,46 @@ function clear_bolts()
 		if trs then
 			if trs:section_name() == "ph_food_conserv1" or trs:section_name() == "ph_food_conserv2" or trs:section_name() == "ph_food_vater" or trs:section_name() == "vodka_used_empty"
 			 then
-				table.insert(tab_hlam, trs)
+				tab_hlam[#tab_hlam+1] = trs
 				--log1("delhlam - add ph foods")
 				--alife():release(trs, true)
 			end
 			if trs:section_name() == "shooting_bolts_objiect" then
-				table.insert(tab_hlam, trs)
+				tab_hlam[#tab_hlam+1] = trs
 				--log1("delhlam - add bolts")
 				--alife():release(trs, true)
 			end
 			if trs:section_name() == "dead_body_skelet" then
-				table.insert(tab_hlam, trs)
+				tab_hlam[#tab_hlam+1] = trs
 				--log1("delhlam - add skelets")
 				--alife():release(trs, true)
 			end
 			if trs:section_name() == "dead_body_skelet2" then
-				table.insert(tab_hlam, trs)
+				tab_hlam[#tab_hlam+1] = trs
 				--log1("delhlam - add skelets 2")
 				--alife():release(trs, true)
 			end
 			if trs:section_name() == "zone_witches_galantine_banka" or trs:section_name() == "zone_buzz_dezint" then
-				table.insert(tab_hlam, trs)
+				tab_hlam[#tab_hlam+1] = trs
 				--log1("delhlam - add banka buzz")
 				--alife():release(trs, true)
 			end
 			if IsMonster(trs) and trs:section_name() == "m_pseudohuman_e" and not trs:alive() then
 				--log1("delhlam - add dead pshum")
 				--alife():release(trs, true)
-				table.insert(tab_hlam, trs)
+				tab_hlam[#tab_hlam+1] = trs
 			end
 			if trs:section_name() == "item_pda_dead_taken" then
-				local pobj = alife():object(trs.parent_id)
+				local pobj = sim:object(trs.parent_id)
 				if not pobj then
 					--log1("delhlam - taken pdas")
 					--alife():release(trs, true)
-					table.insert(tab_hlam, trs)
+					tab_hlam[#tab_hlam+1] = trs
 				end
 			end
 			if trs:section_name() == "device_torch" then
 				--log1("delhlam - add torch HAS ")
-				local pobj = alife():object(trs.parent_id)
+				local pobj = sim:object(trs.parent_id)
 				if not pobj then
 				--log1("delhlam - add torch HAS without parent")
 				--if trs.item_condition < 0.3 then
@@ -635,6 +636,7 @@ end
 ---------------------------------------------
 
 function mg_spawn_zombies()
+	local mrandom = math.random
 	if has_alife_info("sokolov_kvest_dialog_done") then
 		local montabl = {
 			[clsid.respawn] = true
@@ -657,11 +659,11 @@ function mg_spawn_zombies()
 			local kill = sim:object(id)
 			if kill then
 				if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-					local section = sectionsa[math.random(table.getn(sectionsa))]
-					local rndz = math.random(1, 15)
+					local section = sectionsa[mrandom(#sectionsa)]
+					local rndz = mrandom(1, 15)
 
 					if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndz == 1 then
-						local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+						local sobj = sim:create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 						amk.on_REspawn(sobj)
 						--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
 						count = count + 1
@@ -744,8 +746,8 @@ function mg_spawn_zombies()
 		local kill = sim:object(id)
 		if kill then
 			if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
-				local rndzz = math.random(1, 35)
+				local section = sectionsa[mrandom(#sectionsa)]
+				local rndzz = mrandom(1, 35)
 				if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndzz == 1 then
 					local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 					amk.on_REspawn(sobj)
@@ -772,7 +774,7 @@ function fix_escape_restrs()
 				local pk = get_netpk(kill, 1)
 				if pk:isOk() then
 					local data = pk:get()
-					if table.getn(data.dynamic_in_restrictions) > 0 then
+					if #data.dynamic_in_restrictions > 0 then
 						--log1("clear restrictor "..kill:name().." ")
 						data.dynamic_in_restrictions = {}
 						pk:set(data)
@@ -1083,6 +1085,7 @@ function blow_task_actor()
 end
 ---------------------------------------------
 function spawen_rtut_shars()
+	local sim = alife()
 	local level_name = level.name()
 	local noobposition = db.actor:position()
 	local bol_var = math.random(1, 22)
@@ -1090,13 +1093,13 @@ function spawen_rtut_shars()
 	if level_name == "lvl1_escape" then
 		if bol_var == 1 then
 			local bloodbridge = vector():set(-73.76, 2.13, 82.00)
-			alife():create("af_mercury_ball", bloodbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			sim:create("af_mercury_ball", bloodbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 			if bol_var == 2 then
 				local bloodafterbridge = vector():set(137.47, 2.00, 66.03)
-				alife():create("af_mercury_ball", bloodafterbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+				sim:create("af_mercury_ball", bloodafterbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 				if bol_var == 3 then
 					local fracunderbridge = vector():set(25.91, 2.00, 316.13)
-					alife():create("af_mercury_ball", fracunderbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+					sim:create("af_mercury_ball", fracunderbridge, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 				end
 			end
 		end
@@ -1104,10 +1107,10 @@ function spawen_rtut_shars()
 	if level_name == "lvl2_garbage" then
 		if bol_var2 == 1 then
 			local bloodbridge1 = vector():set(15.54, 19.13, -321.68)
-			alife():create("af_mercury_ball", bloodbridge1, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+			sim:create("af_mercury_ball", bloodbridge1, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 			if bol_var2 == 2 then
 				local bloodafterbridg1e = vector():set(8.55, 3.00, 368.84)
-				alife():create("af_mercury_ball", bloodafterbridge1, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+				sim:create("af_mercury_ball", bloodafterbridge1, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 			end
 		end
 	end
@@ -1159,7 +1162,7 @@ function spawen_endgame_zombies()
 		local kill = sim:object(id)
 		if kill and kill.level_name ~= "lvl5_bar" then
 			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local section = sectionsa[math.random(#sectionsa)]
 				local bol_var = math.random(1, 5)
 				if bol_var == 1 then
 					if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
@@ -1167,7 +1170,7 @@ function spawen_endgame_zombies()
 						amk.on_REspawn(sobj)
 						olr.clear_restrictors(sobj)
 						if sobj and IsStalker(sobj) then
-							table.insert(olr_offline_walk.tabst, sobj)
+							olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
 						end
 						count = count + 1
 					end
@@ -1197,7 +1200,7 @@ function spawen_radhlam_random()
 		local kill = sim:object(id)
 		if kill then
 			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local section = sectionsa[math.random(#sectionsa)]
 				local bol_var = math.random(1, 60)
 				if bol_var == 1 then
 					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
@@ -1232,7 +1235,7 @@ function spawen_pseudohuman()
 		local kill = sim:object(id)
 		if kill and kill.level_name ~= "lvl5_bar" then
 			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local section = sectionsa[math.random(#sectionsa)]
 				local bol_var = math.random(1, 580)
 				if bol_var == 1 then
 					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
@@ -1335,7 +1338,7 @@ function spawen_arts_random()
 		local kill = sim:object(id)
 		if kill then
 			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
+				local section = sectionsa[math.random(#sectionsa)]
 				local bol_var = math.random(1, 180)
 				if bol_var == 1 then
 					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
@@ -1350,6 +1353,7 @@ end
 ----------------------------------------------
 
 function bar_alcos()
+	local sim = alife()
 	if level.name() == "lvl5_bar" then
 		return
 	end
@@ -1367,24 +1371,24 @@ function bar_alcos()
 	}
 
 	for _, val in ipairs(bars_alcos) do
-		local sobj = alife():object(val)
+		local sobj = sim:object(val)
 		if sobj then
 			local id = sobj.id
-			alife():set_switch_offline(id, true)
-			alife():set_switch_online(id, false)
-			alife():set_interactive(id, false)
+			sim:set_switch_offline(id, true)
+			sim:set_switch_online(id, false)
+			sim:set_interactive(id, false)
 		--log1("ofl")
 		end
 	end
 
 	for _, val in ipairs(bars_alcos) do
-		local sobj = alife():object(val)
+		local sobj = sim:object(val)
 		if sobj then
 			local id = sobj.id
 			if math.random(1, 2) == 1 then
-				alife():set_switch_offline(id, false)
-				alife():set_switch_online(id, true)
-				alife():set_interactive(id, true)
+				sim:set_switch_offline(id, false)
+				sim:set_switch_online(id, true)
+				sim:set_interactive(id, true)
 			--log1("onl")
 			end
 		end
@@ -1397,7 +1401,7 @@ function bar_alcos()
 	}
 
 	for _, val in ipairs(bars) do
-		local sobj = alife():object(val)
+		local sobj = sim:object(val)
 		if sobj then
 			local pk = get_netpk(sobj)
 			if pk:isOk() then

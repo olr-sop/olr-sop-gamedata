@@ -69,23 +69,25 @@ local pack_val_endtable=5
  valuetype ::= ( 0x1 | 0x2 | 0x3 | 0x4 )
 ]]
 function pack_new(tbl)
+  local schar = string.char
+  local type_ = type
   local ret=""
   for k,v in pairs(tbl) do
-    if type(k)=="number" then
-      ret=ret..string.char(pack_type_num)..k
-    elseif type(k)=="string" then
-      ret=ret..string.char(pack_type_string)..k
+    if type_(k)=="number" then
+      ret=ret..schar(pack_type_num)..k
+    elseif type_(k)=="string" then
+      ret=ret..schar(pack_type_string)..k
     else
-      abort("unsupported key type "..type(k))
+      abort("unsupported key type "..type_(k))
     end
-    if type(v)=="number" then
-      ret=ret..string.char(pack_type_num)..v
-    elseif type(v)=="string" then
-      ret=ret..string.char(pack_type_string)..v
-    elseif type(v)=="boolean" then
-      ret=ret..string.char(pack_type_bool)..v
-    elseif type(v)=="table" then
-      ret=ret..string.char(pack_type_table)..pack_new(v)..string.char(pack_val_endtable)
+    if type_(v)=="number" then
+      ret=ret..schar(pack_type_num)..v
+    elseif type_(v)=="string" then
+      ret=ret..schar(pack_type_string)..v
+    elseif type_(v)=="boolean" then
+      ret=ret..schar(pack_type_bool)..v
+    elseif type_(v)=="table" then
+      ret=ret..schar(pack_type_table)..pack_new(v)..schar(pack_val_endtable)
     end
   end
   return ret
@@ -96,7 +98,7 @@ function parse_new(str,idx)
   idx=idx or 1
   while true do
     local key,value
-    if idx>string.len(str) then
+    if idx>#str then
       return ret,idx
     end
     vtype,idx=get_byte(str,idx)
@@ -130,8 +132,8 @@ function get_byte(str,idx)
 end
 
 function get_string(str,idx)
-  local idx1=string.len(str)+1
-  for i=idx,string.len(str),1 do
+  local idx1=#str+1
+  for i=idx,#str,1 do
     if string.byte(string.sub(str,i,i))<32 then
       idx1=i
       break
@@ -152,21 +154,22 @@ end
 
 
 function _parse(str)
+  local sfind = string.find
   local ret={}
   while str and str~="" do
-    local i1,i2,key=string.find(str,'(.-)=>')
+    local i1,i2,key=sfind(str,'(.-)=>')
     str=string.sub(str,i2+1)
-    i1,i2,val=string.find(str,'"(.-)"|')
+    i1,i2,val=sfind(str,'"(.-)"|')
     if val and i1==1 then
       -- строка
       _assign(ret,key,val)
     else
-      i1,i2,val=string.find(str,'(%b{})|')
+      i1,i2,val=sfind(str,'(%b{})|')
       if val and i1==1 then
         -- таблица
         _assign(ret,key,_parse(string.sub(val,2,-2)))
       else
-        i1,i2,val=string.find(str,'(.-)|')
+        i1,i2,val=sfind(str,'(.-)|')
         -- число или булево значение
         if val=="true" then
           _assign(ret,key,true)
@@ -262,7 +265,7 @@ function update_table(name,id,val)
   return tbl
 end
 
-function sixbit(char) local byte = string.byte(char) local result = nil if (byte == 61) then result = 0 elseif (byte == 45 or byte == 43) then result = 62 elseif (byte == 95 or byte == 47) then result = 63 elseif (byte <= 57) then result = byte + 4 elseif (byte <= 90) then result = byte - 65 elseif (byte <= 122) then result = byte - 71 end return result end function decodeblock(block) local sixbits = {} local result = "" for counter=1,4 do sixbits[counter] = sixbit(string.sub(block,counter,counter)) end result = string.char(sixbits[1]*4 + math.floor(sixbits[2] / 16)) if (string.sub(block,3,3) ~= "=") then result = result .. string.char((sixbits[2] % 16)*16 + math.floor(sixbits[3] / 4)) end if (string.sub(block,4,4) ~= "=") then result = result .. string.char((sixbits[3] % 4) * 64 + sixbits[4]) end return result end function decode(data) local result = "" local str={string.byte("CheckForCheat",1,1000)} local strl=table.getn(str) for c=1,string.len(data),4 do result=result..decodeblock(string.sub(data,c,c+3)) end local result1="" for c=1,string.len(result),1 do local sl=string.byte(string.sub(result,c)) sl=bit_xor(sl,str[1+(c-1)%strl]) result1 = result1 .. string.char(sl) end return result1 end
+function sixbit(char) local byte = string.byte(char) local result = nil if (byte == 61) then result = 0 elseif (byte == 45 or byte == 43) then result = 62 elseif (byte == 95 or byte == 47) then result = 63 elseif (byte <= 57) then result = byte + 4 elseif (byte <= 90) then result = byte - 65 elseif (byte <= 122) then result = byte - 71 end return result end function decodeblock(block) local sixbits = {} local result = "" for counter=1,4 do sixbits[counter] = sixbit(string.sub(block,counter,counter)) end result = string.char(sixbits[1]*4 + math.floor(sixbits[2] / 16)) if (string.sub(block,3,3) ~= "=") then result = result .. string.char((sixbits[2] % 16)*16 + math.floor(sixbits[3] / 4)) end if (string.sub(block,4,4) ~= "=") then result = result .. string.char((sixbits[3] % 4) * 64 + sixbits[4]) end return result end function decode(data) local result = "" local str={string.byte("CheckForCheat",1,1000)} local strl=#str for c=1,#data,4 do result=result..decodeblock(string.sub(data,c,c+3)) end local result1="" for c=1,#result,1 do local sl=string.byte(string.sub(result,c)) sl=bit_xor(sl,str[1+(c-1)%strl]) result1 = result1 .. string.char(sl) end return result1 end
 
 
 
@@ -270,7 +273,7 @@ function readvu32u8(packet)
   local v={}
   local len=packet:r_s32()
   for i=1,len,1 do
-    table.insert(v,packet:r_u8())
+    v[#v+1] = packet:r_u8()
   end
   return v
 end
@@ -279,7 +282,7 @@ function readvu8u8(packet)
   local v={}
   local len=8
   for i=1,len,1 do
-    table.insert(v,packet:r_u8())
+    v[#v+1] = packet:r_u8()
   end
   return v
 end
@@ -288,13 +291,13 @@ function readvu32u16(packet)
   local v={}
   local len=packet:r_s32()
   for i=1,len,1 do
-    table.insert(v,packet:r_u16())
+    v[#v+1] = packet:r_u16()
   end
   return v
 end
 
 function writevu32u8(pk,v)
-  local len=table.getn(v)
+  local len=#v
   pk:w_s32(len)
   for i=1,len,1 do
     pk:w_u8(v[i])
@@ -310,7 +313,7 @@ function writevu8u8(pk,v)
 end
 
 function writevu32u16(pk,v)
-  local len=table.getn(v)
+  local len=#v
   pk:w_s32(len)
   for i=1,len,1 do
     pk:w_u16(v[i])
@@ -506,7 +509,7 @@ function parse_stalker_packet(ret,stpk,updpk,size)
   ret.hellodlg=updpk:r_stringZ()
   ret.stunk1={}
   for i=stpk:r_tell(),size-1,1 do
-    table.insert(ret.stunk1,stpk:r_u8())
+    ret.stunk1[#ret.stunk1+1] = stpk:r_u8()
   end
   return ret
 end
@@ -537,7 +540,7 @@ function parse_se_monster_packet(ret,stpk,updpk,size)
   ret.was_in_smtr=stpk:r_u8()
   ret.stunk1={}
   for i=stpk:r_tell(),size-1,1 do
-    table.insert(ret.stunk1,stpk:r_u8())
+    ret.stunk1[#ret.stunk1+1] = stpk:r_u8()
   end
   return ret
 end
@@ -567,7 +570,7 @@ function dump_table(tbl)
       dump_table(v)
     else
       str="load [[Участник:92.113.172.219|92.113.172.219]] "..tostring(k).." => "..tostring(v)
-      if string.len(str)>200 then
+      if #str>200 then
         str=string.sub(str,1,200)
       end
       log1(str)
@@ -813,7 +816,7 @@ end
 function point_in_poly (pts, x,y)
 	local cnt,k,j
 	local ret = false
-	cnt = table.getn(pts)
+	cnt = #pts
 	j = cnt
 	for k = 1,cnt do
 		if ((pts[k].y <=y) and (y < pts[j].y)) or ((pts[j].y <=y) and (y < pts[k].y)) then
@@ -934,8 +937,8 @@ function parse_shape_packet(t,stpk,uppk)
 end
 
 function fill_shape_packet(t,stpk,updpk)
-	stpk:w_u8(table.getn(t.shapes))
-	for i=1,table.getn(t.shapes) do
+	stpk:w_u8(#t.shapes)
+	for i=1,#t.shapes do
 		stpk:w_u8(t.shapes[i].shtype)
 		if t.shapes[i].shtype == 0 then
 			stpk:w_vec3(t.shapes[i].center)
@@ -969,18 +972,18 @@ function str_explode(div,str,clear)
 	if cpt then
 		repeat
 			if clear then
-				table.insert( t, trim(string.sub(str, 1, cpt-1)) )
+				t[#t+1] = trim(string.sub(str, 1, cpt-1))
 			else
-				table.insert( t, string.sub(str, 1, cpt-1) )
+				t[#t+1] = string.sub(str, 1, cpt-1)
 			end
-			str = string.sub( str, cpt+string.len(div) )
+			str = string.sub( str, cpt+#div )
 			cpt = string.find (str, div, 1, true)
 		until cpt==nil
 	end
 	if clear then
-		table.insert(t, trim(str))
+		t[#t+1] = trim(str)
 	else
-		table.insert(t, str)
+		t[#t+1] = str
 	end
 	return t
 end
@@ -1114,13 +1117,13 @@ end
 function readvu8uN(packet,n)
   local v={}
   for i=1,n,1 do
-    table.insert(v,packet:r_u8())
+    v[#v+1] = packet:r_u8()
   end
   return v
 end
 
 function writevu8uN(pk,v)
-  local len=table.getn(v)
+  local len=#v
   --pk:w_u8(len)
   for i=1,len,1 do
     pk:w_u8(v[i])

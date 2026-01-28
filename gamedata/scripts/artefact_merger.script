@@ -84,7 +84,7 @@ function CButtonData:__init(wind, section, button)
 	self.section = section
 	self.wind = wind
 	self.button = button
-	table.insert(oButtons, self)
+	oButtons[#oButtons+1] = self
 end
 
 -- Destruct
@@ -279,7 +279,7 @@ function MergerMenu:AddArtefactIcon(obj, section)
 		button.OnDoublePress,
 		button
 	)
-	table.insert(reg_ids, reg_id)
+	reg_ids[#reg_ids+1] = reg_id
 	used_section_button[section] = true
 	cells_cnt.x = cells_cnt.x + 1
 	if cells_cnt.x >= 7 then
@@ -607,23 +607,23 @@ function create_artefact()
 	local mer = sim:object(id)
 		if mer then
 			if mer:section_name() == "atifact_merger" then
-			local p_obj = alife():object(mer.parent_id)
+			local p_obj = sim:object(mer.parent_id)
 				if p_obj then
-					alife():create(art_name, p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
+					sim:create(art_name, p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
 					news_manager.send_tip(db.actor, game.translate_string("create_artefact_1"), nil, "artifact_merger", 9000)
 					--log1("atmerger spawn in parentID")
 					xvars.cur_trans_art = ""
 					if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then 
 						news_manager.send_tip(db.actor, game.translate_string("create_artefact_2"), nil, "artifact_merger", 9000)
-						alife():create("af_magnet", p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
+						sim:create("af_magnet", p_obj.position, p_obj.m_level_vertex_id, p_obj.m_game_vertex_id, p_obj.id)
 					end
 				else 
 					--log1("atmerger spawn in merger pos")
 					news_manager.send_tip(db.actor, game.translate_string("create_artefact_1"), nil, "artifact_merger", 9000)
-					alife():create(art_name, mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
+					sim:create(art_name, mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
 					if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then 
 						news_manager.send_tip(db.actor, game.translate_string("create_artefact_3"), nil, "artifact_merger", 9000)
-						alife():create("af_gravi_med", mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
+						sim:create("af_gravi_med", mer.position, mer.m_level_vertex_id, mer.m_game_vertex_id)
 					end
 					xvars.cur_trans_art = ""
 				end

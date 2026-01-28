@@ -289,6 +289,7 @@ function spawn_dead() spawn_anomalies(level_spawn_data.lvl11_deadcity) end
 ---------------------------------------------------------------------------------------------------------------------------
 
 function spawn_obhod()
+    local mrandom = math.random
     local sectionsa = {
         "zone_radioactive",
         "zone_radioactive_weak",
@@ -303,7 +304,7 @@ function spawn_obhod()
         {center = vector():set(65, 1, -82), radius = 70}   -- хата2
     }
     
-    local count = math.random(35, 55)
+    local count = mrandom(35, 55)
     local spawned_count = 0
     local attempts = 0
     local max_attempts = count * 3
@@ -317,7 +318,7 @@ function spawn_obhod()
     while spawned_count < count and attempts < max_attempts do
         attempts = attempts + 1
         
-        local lv = math.random(1, lvx)
+        local lv = mrandom(1, lvx)
         local vl_pos = level.vertex_position(lv)
         
         local is_forbidden = false
@@ -329,8 +330,8 @@ function spawn_obhod()
         end
         
         if not is_forbidden then
-            local section = sectionsa[math.random(#sectionsa)]
-            local obj = olr_anoms_spawn.spawn_anom(section, math.random(3, 6), vl_pos, lv, gv_max, 0.52, bit_not(0))
+            local section = sectionsa[mrandom(#sectionsa)]
+            local obj = olr_anoms_spawn.spawn_anom(section, mrandom(3, 6), vl_pos, lv, gv_max, 0.52, bit_not(0))
             
             if obj then
                 spawned_count = spawned_count + 1

@@ -227,10 +227,11 @@ function ui_cooking_wnd:OnButton_cook_clicked()
 end
 
 function ui_cooking_wnd:OnButton_cook_all_clicked()
+    local tostr = tostring
     local list        = self:GetListWnd        ("list_parts")    
     if list:GetSize()==0 then return end
     
-    log1("~~~ Cooking all items: "..tostring(list:GetSize()).." items in list")
+    log1("~~~ Cooking all items: "..tostr(list:GetSize()).." items in list")
     
     -- Создаем список приготовленных предметов для спавна
     local cooked_items_to_spawn = {}
@@ -241,8 +242,8 @@ function ui_cooking_wnd:OnButton_cook_all_clicked()
         if item_data then
             -- Добавляем в список для спавна
             local cooked_section = item_data.section .. "_coocked"
-            table.insert(cooked_items_to_spawn, cooked_section)
-            log1("Will cook: " .. item_data.section .. " -> " .. cooked_section .. " (ID: " .. tostring(item_data.id) .. ")")
+            cooked_items_to_spawn[#cooked_items_to_spawn+1] = cooked_section
+            log1("Will cook: " .. item_data.section .. " -> " .. cooked_section .. " (ID: " .. tostr(item_data.id) .. ")")
         end
     end
     
@@ -252,7 +253,7 @@ function ui_cooking_wnd:OnButton_cook_all_clicked()
         if item_data then
             local obj = level.object_by_id(item_data.id)
             if obj then
-                log1("Deleting raw item: ID="..tostring(item_data.id)..", section="..tostring(item_data.section))
+                log1("Deleting raw item: ID="..tostr(item_data.id)..", section="..tostr(item_data.section))
                 olr.del(obj)
             end
         end
@@ -342,7 +343,7 @@ function ui_cooking_wnd:AddItemToList(obj, section, condition)
         section = section
     }
     
-    table.insert(self.item_data, item_data)
+    self.item_data[#self.item_data+1] = item_data
     self.items_by_id[item_id] = true
     
     return index

@@ -88,6 +88,7 @@ function on_netspawn()
 end
 
 function recheck_limit()
+	local tostr = tostring
 
 	local outfit = db.actor:get_current_outfit()
 	max_item_amount = bind_stalker.GetBaseWeight()
@@ -109,14 +110,14 @@ function recheck_limit()
 			if obj and db.actor:is_on_belt(obj) or db.actor:is_in_slot(obj) then
 				local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
 				slot_belt_amount = slot_belt_amount + val
-				if tab_objs_on_slots[tostring(obj:id())] == nil then
-					tab_objs_on_slots[tostring(obj:id())] = true
+				if tab_objs_on_slots[tostr(obj:id())] == nil then
+					tab_objs_on_slots[tostr(obj:id())] = true
 					--log1("добавляем с таблицу в СЛОТЕ ПОЯС нетспавн "..obj:name().."")
 				end
 			end
-			if obj and tab_objs_on_slots[tostring(obj:id())] == nil then -- заполняем таблицу предметов в рюкзаке проверяя по отсутствию онных на поясе или слотах
-				if tab_objs_on_ruck[tostring(obj:id())] == nil then
-					tab_objs_on_ruck[tostring(obj:id())] = true
+			if obj and tab_objs_on_slots[tostr(obj:id())] == nil then -- заполняем таблицу предметов в рюкзаке проверяя по отсутствию онных на поясе или слотах
+				if tab_objs_on_ruck[tostr(obj:id())] == nil then
+					tab_objs_on_ruck[tostr(obj:id())] = true
 				end
 			end
 		end
@@ -129,6 +130,7 @@ function recheck_limit()
 end
 
 function drop_item_on_inv(obj)
+	local tostr = tostring
 
 	--log1("called drop_item_on_inv")
 	
@@ -145,7 +147,7 @@ function drop_item_on_inv(obj)
 	if obj then
 		if ini:line_exist(obj:section(), "item_amount") then
 			local val = ini:r_float(obj:section(), "item_amount") or 0
-			if tab_objs_on_slots[tostring(obj:id())] == true then
+			if tab_objs_on_slots[tostr(obj:id())] == true then
 				--log1("drop_item_on_inv кидаем со слота - не уменьшаем объем cur_amount")
 				forced_drop_outfit(obj) -- доп проверка на дроп костюма со слота
 			else
@@ -154,12 +156,12 @@ function drop_item_on_inv(obj)
 			end
 		end
 	end
-	if tab_objs_on_slots[tostring(obj:id())] ~= nil then
-		tab_objs_on_slots[tostring(obj:id())] = nil
+	if tab_objs_on_slots[tostr(obj:id())] ~= nil then
+		tab_objs_on_slots[tostr(obj:id())] = nil
 		--log1("drop_item_on_inv удаляем с таблицы В СЛОТЕ")
 	end
-	if tab_objs_on_ruck[tostring(obj:id())] ~= nil then
-		tab_objs_on_ruck[tostring(obj:id())] = nil
+	if tab_objs_on_ruck[tostr(obj:id())] ~= nil then
+		tab_objs_on_ruck[tostr(obj:id())] = nil
 		--log1("drop_item_on_inv удаляем с таблицы В РЮКЗАКЕ")
 	end
 	
@@ -174,6 +176,7 @@ end
 
 
 function obj_to_ruck(obj)
+	local tostr = tostring
 
 	--log1("called obj_to_ruck")
 	
@@ -191,7 +194,7 @@ function obj_to_ruck(obj)
 		--log1("obj_to_ruck add - "..obj:name().."")
 		if ini:line_exist(obj:section(), "item_amount") then
 			local val = ini:r_float(obj:section(), "item_amount") or 0
-			if tab_objs_on_slots[tostring(obj:id())] == true then
+			if tab_objs_on_slots[tostr(obj:id())] == true then
 				--log1("obj_to_ruck ложим со слота в рюкзак уменьшаем объем")
 				cur_amount = cur_amount + val
 				if cur_amount > max_item_amount then
@@ -216,7 +219,7 @@ function obj_to_ruck(obj)
 
 						olr_ruck_limit.tmr_drop(obj, true)
 						local item_name = obj:get_name()
-						olr.hud_tip("",game.translate_string("st_olr_ruck_limit_not_enough_space").." "..item_name..game.translate_string("st_olr_ruck_limit_not_enough_space_2").." "..drop_cur.." / "..tostring(max_item_amount).."", 6)
+						olr.hud_tip("",game.translate_string("st_olr_ruck_limit_not_enough_space").." "..item_name..game.translate_string("st_olr_ruck_limit_not_enough_space_2").." "..drop_cur.." / "..tostr(max_item_amount).."", 6)
 					end
 				end
 			end
@@ -236,13 +239,13 @@ function obj_to_ruck(obj)
 		
 	end
 	
-	if tab_objs_on_slots[tostring(obj:id())] ~= nil then
-		tab_objs_on_slots[tostring(obj:id())] = nil
+	if tab_objs_on_slots[tostr(obj:id())] ~= nil then
+		tab_objs_on_slots[tostr(obj:id())] = nil
 		--log1("obj_to_ruck удаляем с таблицы В СЛОТЕ")
 	end
 	
-	if tab_objs_on_ruck[tostring(obj:id())] == nil then
-		tab_objs_on_ruck[tostring(obj:id())] = true -- добавляем в таблицу рюкзака предмет
+	if tab_objs_on_ruck[tostr(obj:id())] == nil then
+		tab_objs_on_ruck[tostr(obj:id())] = true -- добавляем в таблицу рюкзака предмет
 		--log1("obj_to_ruck добавляем в таблицу В РЮКЗАК")
 	end	
 
@@ -274,6 +277,7 @@ function on_to_box(obj)
 end
 
 function take_item_on_belt(obj)
+	local tostr = tostring
 
 	--log1("called take_item_on_belt")
 	
@@ -287,12 +291,12 @@ function take_item_on_belt(obj)
 		return	-- ваще просто сразу рубаем в начале
 	end
 	
-	if tab_objs_on_slots[tostring(obj:id())] == nil then
-		tab_objs_on_slots[tostring(obj:id())] = true
+	if tab_objs_on_slots[tostr(obj:id())] == nil then
+		tab_objs_on_slots[tostr(obj:id())] = true
 		--log1("take_item_on_belt добавляем в таблицу в слоте")
 	end
-	if tab_objs_on_ruck[tostring(obj:id())] ~= nil then
-		tab_objs_on_ruck[tostring(obj:id())] = nil
+	if tab_objs_on_ruck[tostr(obj:id())] ~= nil then
+		tab_objs_on_ruck[tostr(obj:id())] = nil
 		--log1("take_item_on_belt удаляем с таблицы рюкзака, перенесли в слот")
 	end		
 	if obj ~= nil then
@@ -309,6 +313,7 @@ function take_item_on_belt(obj)
 end
 
 function take_item_on_slot(obj)
+	local tostr = tostring
 
 	--log1("called take_item_on_slot")
 	
@@ -322,15 +327,15 @@ function take_item_on_slot(obj)
 		return	-- ваще просто сразу рубаем в начале
 	end	
 
-	if tab_objs_on_slots[tostring(obj:id())] == nil then
-		tab_objs_on_slots[tostring(obj:id())] = true
+	if tab_objs_on_slots[tostr(obj:id())] == nil then
+		tab_objs_on_slots[tostr(obj:id())] = true
 		--log1("take_item_on_slot добавляем в таблицу в СЛОТЕ "..obj:name().."")
 	end
 
-	if obj ~= nil and tab_objs_on_ruck[tostring(obj:id())] ~= nil then -- теперь если предмет имеется в таблице рюкзака то мы вычитаем объем предмета
+	if obj ~= nil and tab_objs_on_ruck[tostr(obj:id())] ~= nil then -- теперь если предмет имеется в таблице рюкзака то мы вычитаем объем предмета
 																	   -- если же предмета нет в этой таблице т.е оно вернёт нам nil то мы пропускает этот момент и думаем что мы подняли предмет с земли
 																	   -- просто так надо ибо мы не можем сказать откуда предмет перешёл в пояс, с земли или с рюкзака
-		tab_objs_on_ruck[tostring(obj:id())] = nil -- занилим в таблице рюкзака данный предмет так как мы его перенесли С РЮКЗАКА на пояс
+		tab_objs_on_ruck[tostr(obj:id())] = nil -- занилим в таблице рюкзака данный предмет так как мы его перенесли С РЮКЗАКА на пояс
 		--log1("take_item_on_slot удаляем с таблицы рюкзака, перенесли в слот "..obj:name().."")
 		if ini:line_exist(obj:section(), "item_amount") then
 			local val = ini:r_float(obj:section(), "item_amount") or 0
@@ -356,11 +361,12 @@ function forced_drop_outfit(obj)
 
 	if obj:id() == cur_outfit then
 		-- Уменьшаем объем самого костюма
-		local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+		local obj_sec = obj:section()
+		local val = ini:line_exist(obj_sec, "item_amount") and ini:r_float(obj_sec, "item_amount") or 0
 		cur_amount = math.max(cur_amount - val, 0)
 		
 		-- Убираем бонус костюма
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		local val_add = ini:line_exist(obj_sec, "item_amount_add") and ini:r_float(obj_sec, "item_amount_add") or 0
 		max_item_amount = max_item_amount - val_add
 		
 		cur_outfit = -1

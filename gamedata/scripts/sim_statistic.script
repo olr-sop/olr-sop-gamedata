@@ -192,7 +192,7 @@ function respawn_enabled(obj, enabled)
 	if obj.item_spawn ~= false then
 		return
 	end
-	local gg = table.getn(obj.spawned_obj)
+	local gg = #obj.spawned_obj
 	if reg_objects_respawn[obj.id].enabled == enabled and
 	   reg_objects_respawn[obj.id].count == gg
 	then
@@ -209,12 +209,13 @@ function respawn_enabled(obj, enabled)
 end
 
 function mark_respawn(obj_id)
+	local tostr = tostring
 	local rr = reg_objects_respawn[obj_id]
 	if rr.exist ~= true then
 		-- Детализированная информационная строка
 		local status_text = rr.enabled and "АКТИВЕН" or "НЕАКТИВЕН"
-		local spawn_status = rr.enabled and ("ЗАСПАВНЕНО: " .. tostring(rr.count) .. " из " .. tostring(rr.max_count)) or "РЕСПАВН ОТКЛЮЧЕН"
-		local min_max_info = "ЛИМИТЫ: " .. tostring(rr.min_count) .. "-" .. tostring(rr.max_count)
+		local spawn_status = rr.enabled and ("ЗАСПАВНЕНО: " .. tostr(rr.count) .. " из " .. tostr(rr.max_count)) or "РЕСПАВН ОТКЛЮЧЕН"
+		local min_max_info = "ЛИМИТЫ: " .. tostr(rr.min_count) .. "-" .. tostr(rr.max_count)
 		
 		-- Определяем статус заполненности
 		local capacity_status = ""
@@ -233,7 +234,7 @@ function mark_respawn(obj_id)
 				   spawn_status .. "\\n" ..
 				   capacity_status .. "\\n" ..
 				   min_max_info .. "\\n" ..
-				   "ID: " .. tostring(obj_id) .. "\\n" ..
+				   "ID: " .. tostr(obj_id) .. "\\n" ..
 				   "--- КОНФИГУРАЦИЯ ---\\n" ..
 				   rr.section
 		

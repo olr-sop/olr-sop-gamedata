@@ -67,9 +67,10 @@ function ggun_binder:update(delta)
 	local accuracy = db.actor:accuracy()
 	--позиция партиклов и звуков
 	local pos = vector()
-	pos:mad(device().cam_pos,device().cam_dir,0.75)
-	pos:mad(pos,device().cam_top,-0.3)
-	pos:mad(pos,device().cam_right,0.3)
+	local dev = device()
+	pos:mad(dev.cam_pos,dev.cam_dir,0.75)
+	pos:mad(pos,dev.cam_top,-0.3)
+	pos:mad(pos,dev.cam_right,0.3)
 	self.gun_end_pos = vector():set(pos.x,pos.y,pos.z)
 
 	if self.first_update then
@@ -166,9 +167,10 @@ end
 function ggun_binder:sound_particle_fastcall()
 	if self.rbutton_pressed or self.lbutton_pressed then
 		local pos = vector()
-		pos:mad(device().cam_pos,device().cam_dir,0.75)
-		pos:mad(pos,device().cam_top,-0.3)
-		pos:mad(pos,device().cam_right,0.3)
+		local dev = device()
+		pos:mad(dev.cam_pos,dev.cam_dir,0.75)
+		pos:mad(pos,dev.cam_top,-0.3)
+		pos:mad(pos,dev.cam_right,0.3)
 		self.gun_end_pos = vector():set(pos.x,pos.y,pos.z)
 		
 		if self.sound_hold:playing() then
@@ -294,6 +296,7 @@ function ggun_binder:capture(cone,dist)
 end
 
 function ggun_binder:OnRButtonHold(delta) -- was L
+	local dev = device()
 	--self:UpdateBatteryIndicator(self.object:get_ammo_in_magazine())
 	if self.captured then
 		if not self.sound_pickup:playing() then
@@ -335,10 +338,10 @@ function ggun_binder:OnRButtonHold(delta) -- was L
 		-- сейчас моделируем ситуацию близкого захвата, когда предмет должен бузусловно
 		-- находится в "фокусе" гравипушки
 		--local desired_height = device().cam_pos.y -- высота, на которой будет парить предмет
-		local aim_pos = device().cam_pos:mad(device().cam_dir, 2.0) -- точка назначения
+		local aim_pos = dev.cam_pos:mad(dev.cam_dir, 2.0) -- точка назначения
 		local rvec = aim_pos:sub(self.target:center()) -- вектор от текущей позиции к точке назначения
 		local r = rvec:magnitude() -- его длина
-		if not self.captured and (r < 0.5 or device().cam_pos:distance_to_sqr(self.target:center()) < 5) then -- если объект в первый раз подошел к точке удержания, считаем его захваченным 
+		if not self.captured and (r < 0.5 or dev.cam_pos:distance_to_sqr(self.target:center()) < 5) then -- если объект в первый раз подошел к точке удержания, считаем его захваченным 
 			self.captured = true
 			if not self.sound_pickup:playing() then
 				self.sound_pickup:play_at_pos(db.actor, self.gun_end_pos)
@@ -366,13 +369,13 @@ function ggun_binder:OnRButtonHold(delta) -- was L
 			local vel = vector()
 			ps:get_linear_vel(vel)
 			local vm = vel:magnitude()
-			local vel_n = vector():set(vel.x,vel.y,vel.z):dotproduct(device().cam_dir)
+			local vel_n = vector():set(vel.x,vel.y,vel.z):dotproduct(dev.cam_dir)
 			-- проверка на скорость:  если цель не в фокусе захвата
 			if imp > imp_cap then -- ускоряем, но аккуратно
 				result_impulse:set_length(imp_cap)
 			end
 			if vel_n < -15 then -- ограничение скорости во избежание самовыноса захваченным объектом
-				local break_impulse = device().cam_dir:mul(-1*vel_n*result_impulse:magnitude()/vm)
+				local break_impulse = dev.cam_dir:mul(-1*vel_n*result_impulse:magnitude()/vm)
 				result_impulse:add(break_impulse)
 			end
 			-- проверка на неподвижность: если цель не в фокусе захвата и почти неподвижна, значит, во что-то уперлась.
@@ -445,7 +448,7 @@ function ggun_binder:OnLButtonDown() -- was R
 		self.sound_fire:play_at_pos(db.actor, self.gun_end_pos)
 		self.particle_fire:play_at_pos(self.gun_end_pos)
 	else
-		if table.getn(ggunable) == 0 then
+		if #ggunable == 0 then
 			self:OnRButtonDown(0)
 		end
 		self:capture(0.99,4)
@@ -493,6 +496,7 @@ end
 
 
 function ggun_binder:track_thrown()
+	local sfind = string.find
 	if self.thrown then
 		local obj = level.object_by_id(self.thrown)
 		if obj then
@@ -506,7 +510,7 @@ function ggun_binder:track_thrown()
 				if self.throw_time and (time_global() > self.throw_time + 500) then
 					ggunable[self.thrown] = true -- возвращаем брошенный предмет в список захватываемых
 					self.throw_time = nil
-					if not string.find(obj:section(),"explosive") and not string.find(obj:section(),"af_") then 
+					if not sfind(obj:section(),"explosive") and not sfind(obj:section(),"af_") then 
 					-- если при ударе ничего особенного не должно происходить,то и следить за предметом дальше незачем
 						self.thrown = nil
 						self.throw_time = nil
@@ -543,9 +547,9 @@ function ggun_binder:track_thrown()
 						-- отслеживаем изменения угловой скорости. Либо врашения объекта не было (угловая скорость = 0), но оно появилось
 						-- либо направление угловой скорости заметно изменилось за короткое время ( cos угла между старым вектором угловой скорости и новым  < 0.99)
 						local sect = obj:section()
-						if string.find(sect,"explosive") then
+						if sfind(sect,"explosive") then
 							obj:explode()
-						elseif string.find(sect,"af_") then
+						elseif sfind(sect,"af_") then
 							--af_activate(sect,obj:position(),self.thrown)
 						end
 						self.thrown = nil

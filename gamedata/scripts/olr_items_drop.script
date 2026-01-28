@@ -1,6 +1,7 @@
 -- hi_flyer 07/05/15
 
 function drop_item(obj)
+	local mrandom = math.random
 	if obj:section() == "zameritel_vibrosa" then
 		if device().precache_frame > 1 then
 			return
@@ -69,7 +70,7 @@ function drop_item(obj)
 			local anom = level.object_by_id(i)
 			if anom ~= nil and anom:is_monster() and parasits[anom:section()] and anom:position():distance_to(db.actor:position()) < 5 then
 				news_manager.send_tip(db.actor, game.translate_string("drop_item_4"), nil, "info", 39000, nil, "pda_sos", true)
-				olr_timers.st_timer("pribor_paras", math.random(3, 6), "nick.pribor_paras_inf()")
+				olr_timers.st_timer("pribor_paras", mrandom(3, 6), "nick.pribor_paras_inf()")
 				break
 			elseif i == 65534 then
 				return
@@ -80,7 +81,7 @@ function drop_item(obj)
 	if obj:section() == "pribor_paras_spory_mg" then
 		if xr_conditions.actor_in_zone(nil, nil, {"lvl11_deadcity_space_restrictor_0038"}) then
 			news_manager.send_tip(db.actor, game.translate_string("drop_item_5"), nil, "info", 39000, nil, "pda_sos", true)
-			olr_timers.st_timer("pribor_paras2", math.random(3, 6), "nick.pribor_paras_mg()")
+			olr_timers.st_timer("pribor_paras2", mrandom(3, 6), "nick.pribor_paras_mg()")
 		end
 	end
 
@@ -96,7 +97,7 @@ function drop_item(obj)
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 				olr.hud_tip("", game.translate_string("drop_item_6"), 10, true)
 				anom:disable_anomaly()
-				olr_timers.st_timer("dezint_qt", math.random(23, 36), "nick.dezint_qt_spawn()")
+				olr_timers.st_timer("dezint_qt", mrandom(23, 36), "nick.dezint_qt_spawn()")
 				break
 			elseif i == 65534 then
 				return
@@ -118,7 +119,7 @@ function drop_item(obj)
 				olr.del_by_name("lvl5_bar_physic_object_0120")
 				olr.del_by_name("lvl5_bar_physic_object_0125")
 				olr.disable_walk()
-				olr_timers.st_timer("dezint_qt_two", math.random(8, 12), "nick.dezint_qt_spawn_two()")
+				olr_timers.st_timer("dezint_qt_two", mrandom(8, 12), "nick.dezint_qt_spawn_two()")
 				local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\teleport]])
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 			end

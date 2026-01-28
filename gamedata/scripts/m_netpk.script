@@ -313,15 +313,15 @@ function complex_shape:__init()
 	self.shapes = {}
 end
 function complex_shape:add(shp)
-	table.insert(self.shapes, shp)
+	self.shapes[#self.shapes+1] = shp
 	return self --/>
 end
 function complex_shape:addSphere(radius, offset)
-	table.insert(self.shapes, shape(shape_type.sphere, offset, radius))
+	self.shapes[#self.shapes+1] = shape(shape_type.sphere, offset, radius)
 	return self --/>
 end
 function complex_shape:addBox(axis_x, axis_y, axis_z, offset)
-	table.insert(self.shapes, shape(shape_type.box, axis_x, axis_y, axis_z, offset))
+	self.shapes[#self.shapes+1] = shape(shape_type.box, axis_x, axis_y, axis_z, offset)
 	return self --/>
 end
 function complex_shape:remove(n)
@@ -336,7 +336,7 @@ end
 function complex_shape:getTable()
 	local t = {}
 	for i=1,#self.shapes do
-		table.insert( t, self:get(i):getTable() )
+		t[#t+1] = self:get(i):getTable()
 	end
 	return t --/>
 end
@@ -391,7 +391,7 @@ local _r_chunk = function(pk,len,dt,tbl)
 		if not (tbl and type(tbl) == 'table') then tbl = {} end
 		local func = this["_r_"..(dt or 'u8')]
 		for i=1,len do
-			table.insert( tbl, func(pk) )
+			tbl[#tbl+1] = func(pk)
 		end
 	end
 	return tbl or {} --/>
@@ -592,9 +592,9 @@ _r_uCTime = function(pk,ver)
 		elseif not pk:r_eof() then
 			tbl[1] = tbl[1] + 2000
 			for i=2,6 do
-				table.insert( tbl, pk:r_u8() ) --/< M,D,h,m,s
+				tbl[#tbl+1] = pk:r_u8() --/< M,D,h,m,s
 			end
-			table.insert( tbl, pk:r_u16() ) --/< ms
+			tbl[#tbl+1] = pk:r_u16() --/< ms
 		end
 	end
 	return tbl --/>
@@ -656,7 +656,7 @@ _r_strn1 = function(pk,ver)
 			t.begin                = pk:r_u32()
 			t.fill_idle            = pk:r_u32()
 			t.idle_after_death_end = pk:r_u32()
-			table.insert(tbl.gulag.jobs, t)
+			tbl.gulag.jobs[#tbl.gulag.jobs+1] = t
 		end
 		--/ npc_info (in smart)
 		tbl.npc_info = {}
@@ -1059,7 +1059,7 @@ _r_sf_squads = function(pk,ver)
 	local count = pk:r_u16() --/squads count
 	for i=1,count do
 		local squad = _r_squad(pk,ver)
-		table.insert( tbl, squad )
+		tbl[#tbl+1] = squad
 	end
 	return tbl --/>
 end
@@ -1104,20 +1104,21 @@ function net_base:__init(obj, mode, can, name)
 end
 --/ read ----------
 function net_base:_read(ret,stpk,uppk)
+	local next_ = next
 	if self.dbg then printf("net_base:_read:(%s)~>sub_class=[%s]:mode=[%s]:st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self.bases[1] and self.bases[1].name, self._mode, self._can_st, type(stpk), self._can_up, type(uppk), ">") end --/#~#
-	if next(self.bases) then
+	if next_(self.bases) then
 		self:_read_bases(ret,stpk,uppk)
 	end
 	if self._mode == 0 then --/ 'abstract' part
-		if self.co_props and next(self.co_props) then
+		if self.co_props and next_(self.co_props) then
 			if self.dbg then printf("net_base:_read:(%s)~>co_props:[%s]", ">") end --/#~#
 			self:_read_co_props(ret,stpk)
 		end
 	else --/ 'state'/'update' part(s)
-		if self._can_st and next(self.st_props) then
+		if self._can_st and next_(self.st_props) then
 			self:_read_st_props(ret,stpk)
 		end
-		if self._can_up and next(self.up_props) then
+		if self._can_up and next_(self.up_props) then
 			self:_read_up_props(ret,uppk)
 		end
 	end
@@ -1151,23 +1152,25 @@ function net_base:_read_up_props(ret,pk)
 end
 --/ write ---------
 function net_base:_write(data,stpk,uppk)
-	if self.dbg then printf("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type(stpk), self._can_up, type(uppk), ">") end --/#~#
-	if next(self.bases) then
+	local next_ = next
+	local type_ = type
+	if self.dbg then printf("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type_(stpk), self._can_up, type_(uppk), ">") end --/#~#
+	if next_(self.bases) then
 		self:_write_bases(data,stpk,uppk)
 	end
 	if self._mode == 0 then --/ 'abstract' part
-		if self.co_props and next(self.co_props) then
+		if self.co_props and next_(self.co_props) then
 			self:_write_co_props(data,stpk)
 		end
 	else --/ 'state'/'update' part(s)
-		if self._can_st and next(self.st_props) then
+		if self._can_st and next_(self.st_props) then
 			self:_write_st_props(data,stpk)
 		end
-		if self._can_up and next(self.up_props) then
+		if self._can_up and next_(self.up_props) then
 			self:_write_up_props(data,uppk)
 		end
 	end
-	if self.dbg then printf("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type(stpk), self._can_up, type(uppk), "<") end --/#~#
+	if self.dbg then printf("net_base:_write:(%s):st=[%s/%s]:up=[%s/%s]:[%s]", self.name, self._can_st, type_(stpk), self._can_up, type_(uppk), "<") end --/#~#
 end
 function net_base:_write_bases(data,stpk,uppk)
 	for _,sub_class in ipairs(self.bases) do
@@ -1332,7 +1335,7 @@ function net_base:get_pk2tbl()
 		local r_pos,w_pos = pk:r_tell(),pk:w_tell() --/ begin&end of reading
 		pk:r_seek(0) --/ installation of the beginning of reading
 		while not pk:r_eof() do --/ цикл (до конца читаемого пакета)
-			table.insert( t, string.format("%02x", pk:r_u8()) )
+			t[#t+1] = string.format("%02x", pk:r_u8())
 		end
 		--/ restore of the beginning of reading
 		if r_pos < w_pos then
@@ -1350,7 +1353,7 @@ function net_base:get_pk2tbl()
 		if stpk:r_elapsed() > 2 then
 			stpk:r_seek(2) --/ installation of the beginning (+2) of reading
 			while not stpk:r_eof() do --/ цикл (до конца читаемого пакета)
-				table.insert( t, string.format("%02x", stpk:r_u8()) )
+				t[#t+1] = string.format("%02x", stpk:r_u8())
 			end
 		end
 	end
@@ -1363,7 +1366,7 @@ function net_base:get_pk2tbl()
 			uppk:r_seek(2) --/ installation of the beginning (+2) of reading
 			t.upd = {} --/ sub-table for update-propeties
 			while not uppk:r_eof() do --/ цикл (до конца читаемого пакета)
-				table.insert( t.upd, string.format("%02x", uppk:r_u8()) )
+				t.upd[#t.upd+1] = string.format("%02x", uppk:r_u8())
 			end
 		end
 	end
@@ -1429,7 +1432,7 @@ function tail_data:get()
 	local t = {}
 	if self.pk then
 		while not self.pk:r_eof() do
-			table.insert(t, self.pk:r_u8())
+			t[#t+1] = self.pk:r_u8()
 		end
 	end
 	return t --/>
@@ -1603,7 +1606,7 @@ function net_cse_abstract:_read_data()
 						else --/ for debug (with key-value)
 							tbl.dyn = {}
 							for i=first_dyn,size do
-								table.insert( tbl.dyn, {["offset_"..i] = pk:r_u8()} ) --/ key: смещение байта от начала
+								tbl.dyn[#tbl.dyn+1] = {["offset_"..i] = pk:r_u8()} --/ key: смещение байта от начала
 							end
 						end
 					end
@@ -1695,7 +1698,7 @@ function net_cse_abstract:get_cobj(reader)
 			t.dyn,i = {},0
 			while not pk:r_eof() do
 				i = i +1
-				table.insert( t.dyn, {["offset_"..i] = pk:r_u8()} ) --/ key: смещение байта от начала
+				t.dyn[#t.dyn+1] = {["offset_"..i] = pk:r_u8()} --/ key: смещение байта от начала
 			end
 		end
 	end
@@ -1823,16 +1826,17 @@ function net_cse_ph_skeleton:_read_st_props(ret,pk)
 				for _,prop in ipairs(self.st_props_bone) do
 					bone[prop.name] = this["_r_"..prop.type](pk)
 				end
-				table.insert(ret["bones"], bone)
+				ret["bones"][#ret["bones"]+1] = bone
 			end
 		end
 	end
 end
 function net_cse_ph_skeleton:_write_st_props(data,pk)
+	local ipairs_ = ipairs
 	--/ hook 'skeleton_name' for cars|helicopters
 	local script_clsid = self.obj and self.obj:clsid()
 	local is_technics = script_clsid and (script_clsid == clsid.car_s or script_clsid == clsid.helicopter or script_clsid == clsid.script_heli)
-	for _,prop in ipairs(self.st_props) do
+	for _,prop in ipairs_(self.st_props) do
 		if is_technics and prop.hook and data[prop.name] == prop.default then --/ and prop.name == 'skeleton_name'
 			data[prop.name] = prop.hook --/#!# change '$editor'
 		end
@@ -1840,12 +1844,12 @@ function net_cse_ph_skeleton:_write_st_props(data,pk)
 	end
 	--/ hooks 'bones'
 	if bit_and(data.skeleton_flags, 4) ~= 0 and data.bones_count then --/ check 'bones'
-		for _,prop in ipairs(self.st_props_bones) do --/ write 'bones'
+		for _,prop in ipairs_(self.st_props_bones) do --/ write 'bones'
 			this["_w_"..prop.type](pk, data[prop.name] or prop.default or 0)
 		end
 		if data.bones then --/ write 'bone' ...
-			for _,bone in ipairs(data.bones) do
-				for _,prop in ipairs(self.st_props_bone) do
+			for _,bone in ipairs_(data.bones) do
+				for _,prop in ipairs_(self.st_props_bone) do
 					this["_w_"..prop.type](pk, bone[prop.name] or prop.default or 0)
 				end
 			end
@@ -3233,7 +3237,7 @@ local function initialize()
 				local t = {}
 				if value and value ~= "" then
 					for str in value:gmatch('([^,]+)') do
-						table.insert(t, str:match('^%s*(%S*)')) --/ +trim_w
+						t[#t+1] = str:match('^%s*(%S*)') --/ +trim_w
 					end
 				end
 				--/ [1] = cse_server_object_class, [2] = CLSID, [3] = flag, [4] = server_object_class

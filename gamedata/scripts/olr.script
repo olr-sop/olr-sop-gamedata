@@ -871,7 +871,7 @@ function spawn_on_obj(obj, objpos, count)
         for i = 1, count do
             local sobj = alife():create(obj, base_dir, sobjpos.m_level_vertex_id, sobjpos.m_game_vertex_id)
             clear_useful_for_ai(sobj)
-            table.insert(spawned_objects, sobj)
+            spawned_objects[#spawned_objects+1] = sobj
             --olr.add_spot_on_map(sobj.id, "jaba_spotmap", sobj:name())
         end
         
@@ -914,12 +914,13 @@ end
 -- объект в онлайн (по имени)
 function to_online(obj)
 	if obj then
-		local sobj = alife():object(obj)
+		local sim = alife()
+		local sobj = sim:object(obj)
 		if sobj then
 			local id = sobj.id
-			alife():set_switch_offline (id, false)
-			alife():set_switch_online (id, true)
-			alife():set_interactive (id, true)
+			sim:set_switch_offline (id, false)
+			sim:set_switch_online (id, true)
+			sim:set_interactive (id, true)
 		end
 	end
 end
@@ -927,12 +928,13 @@ end
 -- объект в офлайн (по имени)
 function to_offline(obj)
 	if obj then
-		local sobj = alife():object(obj)
+		local sim = alife()
+		local sobj = sim:object(obj)
 		if sobj then
 			local id = sobj.id
-			alife():set_switch_offline(id, true)
-			alife():set_switch_online(id, false)
-			alife():set_interactive(id, false)
+			sim:set_switch_offline(id, true)
+			sim:set_switch_online(id, false)
+			sim:set_interactive(id, false)
 		end
 	end
 end
@@ -1049,7 +1051,7 @@ local pk = get_netpk(obj,1)
 	if pk:isOk() then
 		local data = pk:get()
 		if data then
-			if table.getn(data.dynamic_in_restrictions) > 0 then
+			if #data.dynamic_in_restrictions > 0 then
 				data.dynamic_in_restrictions = {}
 				pk:set( data )
 				--log1("clear restrictor - "..obj:name().."")
@@ -1359,13 +1361,13 @@ function gta_actor_car()
 		local kill = sim:object(id)
 		if kill and montabl[kill:clsid()] then
 			if xvars.olr[kill.id] then
-				table.insert(tabcars, kill)
+				tabcars[#tabcars+1] = kill
 				--log1("sasa")
 			end
 		end
 	end
 
-	if table.getn(tabcars) == 0 then
+	if #tabcars == 0 then
 		--log1("gta cars - has no cars in table")
 		return
 	end
@@ -1392,7 +1394,7 @@ function gta_actor_car()
 				local obj = sim:object(id)
 				if obj then
 					if rontabl[obj:clsid()] then
-						table.insert(tab, obj)
+						tab[#tab+1] = obj
 					end
 				end
 			end

@@ -50,7 +50,8 @@ function UI_SpawnMenu:InitControls()
 	self:Init(25,25,1024,1024)
 	self:SetAutoDelete(true)
 	
-	self.wide = (device().width/device().height) > ((768.0 / 1024.0) + 0.01)
+	local dev = device()
+	self.wide = (dev.width/dev.height) > ((768.0 / 1024.0) + 0.01)
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_wnd\\ui_spawn_menu.xml")
 	self.background = xml:InitStatic("background", self)
@@ -59,7 +60,7 @@ function UI_SpawnMenu:InitControls()
 	self.title = xml:InitStatic("title", self)
 	--/ picture (texture)
 	self.pic = xml:InitButton("get_equipment_btn", self)
-	local current_kx = (device().height / device().width) / (768.0 / 1024.0)
+	local current_kx = (dev.height / dev.width) / (768.0 / 1024.0)
 	if self.wide then --/ selecting offset and width of pic
 		self.pic:SetWidth(self.pic:GetWidth() * current_kx)
 	end
@@ -448,6 +449,7 @@ function Get_ComName(sSection)
 end
 
 function Make_Spawn(sSection,iDist,bNoMsg)
+	local sim = alife()
 	if this.Check_Game() then --/ spawn only in game
 		local sMsg = string.format("[%s]/(%s)", game.translate_string(this.Get_InvName(sSection)), tostring(sSection))
 		local iClassId = this.Get_ClassId(sSection)
@@ -463,13 +465,13 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 					soObj = this.Create_Ammo( sSection, vPosA, idLvA, idGvA, oActor:id() )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo").." "..sMsg end
 				elseif iClassId == clsid.wpn_knife_s then
-					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					soObj = sim:create( sSection, vPosA, idLvA, idGvA, oActor:id() )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife").." "..sMsg end
 				elseif iClassId == clsid.wpn_akms_s or iClassId == clsid.wpn_automatic_shotgun_s or iClassId == clsid.wpn_lr300_s or iClassId == clsid.wpn_bm16_s or iClassId == clsid.wpn_groza_s or iClassId == clsid.wpn_svd_s or iClassId == clsid.wpn_hpsa_s or iClassId == clsid.wpn_pm_s or iClassId == clsid.wpn_rg6_s or iClassId == clsid.wpn_rpg7_s or iClassId == clsid.wpn_shotgun_s or iClassId == clsid.wpn_svu_s or iClassId == clsid.wpn_usp45_s or iClassId == clsid.wpn_val_s or iClassId == clsid.wpn_vintorez_s or iClassId == clsid.wpn_walther_s then
-					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					soObj = sim:create( sSection, vPosA, idLvA, idGvA, oActor:id() )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon").." "..sMsg end
 				else
-					soObj = alife():create( sSection, vPosA, idLvA, idGvA, oActor:id() )
+					soObj = sim:create( sSection, vPosA, idLvA, idGvA, oActor:id() )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned").." "..sMsg end
 				end
 			else
@@ -482,15 +484,15 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 					soObj = this.Create_Ammo( sSection, vPos, idLvA, idGvA )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned_ammo").." "..sMsg end
 				elseif iClassId == clsid.wpn_knife_s then
-					soObj = alife():create( sSection, vPos, idLvA, idGvA )
+					soObj = sim:create( sSection, vPos, idLvA, idGvA )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned_knife").." "..sMsg end
 					soObj.squad = math.random(64)
 				elseif iClassId == clsid.wpn_akms_s or iClassId == clsid.wpn_automatic_shotgun_s or iClassId == clsid.wpn_lr300_s or iClassId == clsid.wpn_bm16_s or iClassId == clsid.wpn_groza_s or iClassId == clsid.wpn_svd_s or iClassId == clsid.wpn_hpsa_s or iClassId == clsid.wpn_pm_s or iClassId == clsid.wpn_rg6_s or iClassId == clsid.wpn_rpg7_s or iClassId == clsid.wpn_shotgun_s or iClassId == clsid.wpn_svu_s or iClassId == clsid.wpn_usp45_s or iClassId == clsid.wpn_val_s or iClassId == clsid.wpn_vintorez_s or iClassId == clsid.wpn_walther_s then
-					soObj = alife():create( sSection, vPos, idLvA, idGvA )
+					soObj = sim:create( sSection, vPos, idLvA, idGvA )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned_weapon").." "..sMsg end
 					soObj.squad = math.random(64)
 				else
-					soObj = alife():create( sSection, vPos, idLvA, idGvA )
+					soObj = sim:create( sSection, vPos, idLvA, idGvA )
 					if soObj then sMsg = game.translate_string("st_cheater_spawned").." "..sMsg end
 					soObj.squad = math.random(64)
 				end
@@ -592,12 +594,13 @@ function string_split(inputstr, sep)
         end
         local t={}
         for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-                table.insert(t, str)
+                t[#t+1] = str
         end
         return t
 end
 
 function Build_Table()
+	local tonum = tonumber
 	local sini = system_ini()
 	--
 	local function ClearStr(sStr)
@@ -616,7 +619,7 @@ function Build_Table()
 		if idx and value and ClearStr(value) and ClearStr(value) ~= "" then
 			local tS = string_split(value, ",")
 			if ltx:section_exist(idx) then
-				tSpawnMenu[tonumber(idx)] = {inv = tonumber(tS[1])==1, title = tS[2]}
+				tSpawnMenu[tonum(idx)] = {inv = tonum(tS[1])==1, title = tS[2]}
 			end
 		else abort("%s:Build_Tables:Error while parsing at sections line=#%s", sModule, tostring(i+1) )
 		end
@@ -631,7 +634,7 @@ function Build_Table()
 				if idx and value and ClearStr(value) and ClearStr(value) ~= "" then
 					if sini:section_exist(idx) then
 						local tS = string_split(value, ",")
-						table.insert(v.data, {sect = idx, dist = tonumber(tS[1]) or 0, text = tS[2] or ""})
+						table.insert(v.data, {sect = idx, dist = tonum(tS[1]) or 0, text = tS[2] or ""})
 					else
 						abort("Build_Tables:SubMenu=[%s],section=[%s]:[%s]", sSec, idx, "x") --/#~#
 					end
@@ -646,7 +649,7 @@ function Build_Table()
 		for i=0,ltx:line_count("dbg_spawn2slots")-1 do
 			local result,idx,value = ltx:r_line("dbg_spawn2slots",i,"","")
 			local sSection = idx and ClearStr(idx)
-			local iSlot = tonumber(value)
+			local iSlot = tonum(value)
 			if sSection and sini:section_exist(sSection) and iSlot and iSlot < 16 then
 				tMySlots[iSlot] = sSection
 			end
@@ -657,7 +660,7 @@ function Build_Table()
 			local result,idx,value = ltx:r_line("dbg_spawn",i,"","")
 			local sSection = idx and ClearStr(idx)
 			if sSection and sini:section_exist(sSection) then
-				tMyItems[sSection] = tonumber(value) or 1
+				tMyItems[sSection] = tonum(value) or 1
 			end
 		end
 	end

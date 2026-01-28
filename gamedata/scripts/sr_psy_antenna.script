@@ -80,16 +80,17 @@ function PsyAntenna:update_psy_hit(dt)
 	end
 end
 function PsyAntenna:generate_phantoms()
+	local mrandom = math.random
 	if self.phantom_idle == nil then
-		self.phantom_idle = math.random(2000,5000)
+		self.phantom_idle = mrandom(2000,5000)
 	end
 	if time_global() - self.phantom_time > self.phantom_idle then
 		self.phantom_time				= time_global()
-		self.phantom_idle = math.random(5000,10000)
-		if math.random() < self.phantom_spawn_probability then
+		self.phantom_idle = mrandom(5000,10000)
+		if mrandom() < self.phantom_spawn_probability then
 			if phantom_manager:phantom_count() < self.phantom_max then
-				local radius = self.phantom_spawn_radius * ( math.random()/2.0+0.5 )
-				local ang    = self.phantom_fov * math.random() - self.phantom_fov * 0.5
+				local radius = self.phantom_spawn_radius * ( mrandom()/2.0+0.5 )
+				local ang    = self.phantom_fov * mrandom() - self.phantom_fov * 0.5
 				local dir    = vector_rotate_y( db.actor:direction(), ang )
 
 				phantom_manager.spawn_phantom( db.actor:position():add( dir:mul(radius) ) )

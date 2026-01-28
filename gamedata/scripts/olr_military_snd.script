@@ -143,6 +143,7 @@ end
 
 -- Основная функция проверки
 function radio_snd_check(npc)
+	local mrandom = math.random
 	
 	if not IsStalker(npc) then return end
 	
@@ -205,12 +206,12 @@ function radio_snd_check(npc)
     if npc.best_enemy and npc:best_enemy() then return end
     
     -- Проверяем случайное срабатывание основного триггера
-    if math.random() > SOUND_CONFIG.MAIN_TRIGGER_CHANCE then return end
+    if mrandom() > SOUND_CONFIG.MAIN_TRIGGER_CHANCE then return end
     
     -- Выбираем тип звука
     local sound_type, sound_obj
     
-    if math.random(1, 2) == 1 then
+    if mrandom(1, 2) == 1 then
         -- Полная последовательность: включение -> ответ -> выключение
         sound_type = "turn_on"
         sound_obj = sound_objects.turn_on
@@ -233,7 +234,7 @@ function radio_snd_check(npc)
                     end
                     
                     -- Воспроизводим ответ
-                    local answer_index = math.random(1, #SOUND_CONFIG.RADIO_ANSWERS.paths)
+                    local answer_index = mrandom(1, #SOUND_CONFIG.RADIO_ANSWERS.paths)
                     local answer_sound = sound_objects.radio_answers[answer_index]
                     
                     if answer_sound then
@@ -285,7 +286,7 @@ function radio_snd_check(npc)
         end
     else
         -- Шум радио (только с 10% шансом и если прошло достаточно времени)
-        if math.random() <= SOUND_CONFIG.NOISE_CHANCE and 
+        if mrandom() <= SOUND_CONFIG.NOISE_CHANCE and 
            current_time - (state.last_noise_time or 0) >= SOUND_CONFIG.NOISE_MIN_DELAY then
             sound_type = "noise"
             sound_obj = sound_objects.noise

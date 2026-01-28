@@ -47,7 +47,7 @@ local sim = alife()
 						--log1("spawn voenstal")
 						olr.clear_restrictors(sobj)
 						if sobj and IsStalker(sobj) then
-							table.insert(olr_offline_walk.tabst, sobj)
+							olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
 							--olr_ai_tasks.on_spawn_npc(obj)
 							set_params(sobj)
 							set_suppls(sobj) 
@@ -60,15 +60,16 @@ local sim = alife()
 end
 
 function set_params(sobj)
-	local number = tostring(math.random(1,20))
+	local mrandom = math.random
+	local number = tostring(mrandom(1,20))
 	local pk = get_netpk(sobj,1)
 	if pk:isOk() then
     		local data = pk:get()
-    		data.visual_name = visuals_militarys[math.random(#visuals_militarys)]
-        	data.character_name = ""..game.translate_string(name[math.random(#name)]).." "..number..""
+    		data.visual_name = visuals_militarys[mrandom(#visuals_militarys)]
+        	data.character_name = ""..game.translate_string(name[mrandom(#name)]).." "..number..""
       		pk:set( data )
 	end
-	sobj:set_rank(sobj:rank() + math.random(40,320))
+	sobj:set_rank(sobj:rank() + mrandom(40,320))
 end
 
 function set_suppls(obj) 

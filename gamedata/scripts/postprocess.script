@@ -60,7 +60,7 @@ function PPEffector:__init (ini_file, section)
        end
     end
     
-    if table.getn (self.settings) > 1 then
+    if #self.settings > 1 then
        if ini_file:line_exist (section, "init_value") then
           self.settings[1].start_value = ini_file:r_float (section, "init_value")
        end   
@@ -71,13 +71,13 @@ end
 ----------------
 function PPEffector:parse_data (str)
     local t = {}
-    local size = string.len (str)
+    local size = #str
         local pos = 1
     while true do
           local start, finish = string.find (str, ",", pos)
           if start == nil then start = size + 1 end
           local temp = string.sub (str, pos, start - 1)
-          table.insert (t, temp)
+          t[#t+1] = temp
           pos = start + 1
           if finish == nil then break end
     end
@@ -85,29 +85,30 @@ function PPEffector:parse_data (str)
 end
 ----------------
 function PPEffector:parse_fx_data (str, t)
+    local tonum = tonumber
     local temp = self:parse_data (str)
-    if table.getn (temp) < 5 then
+    if #temp < 5 then
        return 0.0
     end
     local ins = {}
     ins.func = temp[1]
-    ins.time = tonumber (temp[2])
-    ins.scale = tonumber (temp[3])
-    ins.init_value = tonumber (temp[4])
-    ins.intensity = tonumber (temp[5])
+    ins.time = tonum (temp[2])
+    ins.scale = tonum (temp[3])
+    ins.init_value = tonum (temp[4])
+    ins.intensity = tonum (temp[5])
     ins.start_value = 0.0
-    if table.getn (temp) == 6 then
-       ins.base_offset = tonumber (temp[6])
+    if #temp == 6 then
+       ins.base_offset = tonum (temp[6])
     else
        ins.base_offset = 0
     end
-    table.insert (t, ins)
+    t[#t+1] = ins
     return ins.time
 end
 ----------------
 function PPEffector:get_work_time ()
     local ftime = 0.0
-    for a = 1, table.getn (self.settings), 1 do
+    for a = 1, #self.settings, 1 do
         ftime = ftime + self.settings[a].time
     end
     return ftime
@@ -131,7 +132,7 @@ function PPEffector:lin_func (delta)
 end
 ----------------
 function PPEffector:update (delta)
-    if table.getn (self.settings) == 0 then
+    if #self.settings == 0 then
        return self.current_value
     end
 
@@ -169,14 +170,14 @@ function PPEffector:update (delta)
 end
 ----------------
 function PPEffector:set_next_function ()
-    if table.getn (self.settings) == 0 then
+    if #self.settings == 0 then
        self.end_func = true
        return
     end
 
     self.current_func = self.current_func + 1
 
-    if self.current_func > table.getn (self.settings) then
+    if self.current_func > #self.settings then
        self.end_func = true
        return
     end

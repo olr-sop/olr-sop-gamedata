@@ -167,6 +167,8 @@ function animation:__init(npc, mgr)
 end
 -- установка нового состо€ни€
 function animation:set_state(id, reset)
+	local pairs_ = pairs
+	local type_ = type
 
 	--printf("[%s] set new animation [%s], current_state [%s]", self.npc:name(), tostring(id), tostring(self.states.target_state))
 
@@ -196,9 +198,9 @@ function animation:set_state(id, reset)
 			if state_mgr_animation_list.animations[self.states.target_state].out ~= nil then
 				anima = self:anim_for_slot(wpn_slot,state_mgr_animation_list.animations[self.states.target_state].out)
 				if anima then
-					if type(anima) == "table" then
-						for k,v in pairs(anima) do
-							if type(v) == "table" and v.d ~= nil then
+					if type_(anima) == "table" then
+						for k,v in pairs_(anima) do
+							if type_(v) == "table" and v.d ~= nil then
 								local obj = self.npc:object(v.d)
 								if obj then
 --									--log1("extra detached ["..obj:name().."] for ["..self.npc:name().."]")
@@ -235,9 +237,9 @@ function animation:set_state(id, reset)
 			if state_mgr_animation_list.animations[self.states.target_state].out ~= nil then
 				anima = self:anim_for_slot(wpn_slot,state_mgr_animation_list.animations[self.states.target_state].out)
 				if anima then
-					if type(anima) == "table" then
-						for k,v in pairs(anima) do
-							if type(v) == "table" then
+					if type_(anima) == "table" then
+						for k,v in pairs_(anima) do
+							if type_(v) == "table" then
 								self:set_anim_callback(v)
 							else
 								add_anim(self.npc, v, true)
@@ -256,7 +258,7 @@ function animation:set_state(id, reset)
 	if self.states.current_state == "_new" then
 --		printf("[%s]", self.npc:name())
 --		print_table(self.states.attach_items)
-		for k,v in pairs(self.states.attach_items) do
+		for k,v in pairs_(self.states.attach_items) do
 			local t = self.npc:object(k)
 			if t then
 				if v.mode == "attach" then
@@ -272,9 +274,9 @@ function animation:set_state(id, reset)
 	if state_mgr_animation_list.animations[id] ~= nil then
 		if state_mgr_animation_list.animations[id].into ~= nil then
 			anima = self:anim_for_slot(wpn_slot,state_mgr_animation_list.animations[id].into)
-			if type(anima) == "table" then
-				for k,v in pairs(anima) do
-					if type(v) == "table" then
+			if type_(anima) == "table" then
+				for k,v in pairs_(anima) do
+					if type_(v) == "table" then
 						self:set_anim_callback(v)
 					else
 						add_anim(self.npc, v, true)
@@ -500,6 +502,7 @@ function animation:update()
 end
 -- ќтыгрыш рандомной анимации
 function animation:play_rnd(state, must_play)
+	local mrandom = math.random
 	--printf("try to add rnd animation [%s] for [%s]", utils.to_str(state), utils.to_str(rnd))
 	-- нельз€ добавл€ть рандом во врем€ лока схемы.
 	if not (self.mgr.planner:evaluator(self.mgr.properties["animation"]):evaluate() and
@@ -518,9 +521,9 @@ function animation:play_rnd(state, must_play)
 	
 	-- ќпределение промежутков времени между анимаци€ми	
 	self.states.begin = time_global()
-	self.states.idle = (math.random(state.prop.maxidle) + 
+	self.states.idle = (mrandom(state.prop.maxidle) + 
 									state.prop.sumidle) * 1000
-	if math.random(100) < state.prop.rnd or must_play then	
+	if mrandom(100) < state.prop.rnd or must_play then	
 		local wpn_slot = self:weapon_slot()
 		local anima = self:anim_for_slot(wpn_slot,state.rnd)
 		if anima == nil then			
@@ -528,11 +531,11 @@ function animation:play_rnd(state, must_play)
 		end
 		
 		local r
-		if table.getn(anima) > 1 then			
+		if #anima > 1 then			
 			if self.states.last_id == nil then
-				r = math.random(table.getn(anima))
+				r = mrandom(#anima)
 			else
-				r = math.random(table.getn(anima)-1)
+				r = mrandom(#anima-1)
 				if r >= self.states.last_id then
 					r = r + 1
 				end
@@ -610,14 +613,14 @@ function animation:set_anim_callback(value)
 	-- Ќужно определить разницу между активным количеством анимаций и размером таблицы
 	-- дополнить таблицами нилами до нужного размера
 	-- в последнюю позицию записать настройки.
-	local table_size = table.getn(self.clb_settings)
+	local table_size = #self.clb_settings
 	local anim_count = self.npc:animation_count()
 	--printf("for debug [%s] [%s]", table_size, anim_count)
 	
 	for key = table_size+1, anim_count do
-		table.insert(self.clb_settings, "nil")
+		self.clb_settings[#self.clb_settings+1] = "nil"
 	end
-	self.clb_settings[table.getn(self.clb_settings)] = {
+	self.clb_settings[#self.clb_settings] = {
 		a = value.a,
 		d = value.d,
 		s = value.s,

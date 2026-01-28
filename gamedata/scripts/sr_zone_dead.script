@@ -16,6 +16,8 @@ local items_with_batteries = {}
 local time_update = 0
 local actor_inside_zone = false
 
+local actor = db.actor
+
 -- таблица секций и того наскока надо разрядить раз в секунду
 local discharge_rates = {
 	["device_pda"] = 0.0055,
@@ -36,11 +38,10 @@ end
 
 function action_zonedead:reset_scheme()
 	self.state = state_nowhere -- еще неясно, в зоне он, или нет
-	self:switch_state(db.actor)
+	self:switch_state(actor)
 end
 
 function action_zonedead:update( delta )
-	local actor = db.actor
 
 	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
 		return
@@ -51,6 +52,14 @@ function action_zonedead:update( delta )
 	if self.state == state_inside then
 		if time_global() > time_update then
 			time_update = time_global() + 1000 -- раз в секунду
+			
+			local outfit = actor:get_current_outfit()
+			if outfit and outfit:is_exo_outfit() then
+				local exo_charge = outfit:get_exo_charge()
+				if exo_charge then
+					outfit:set_exo_charge(exo_charge - 0.0005)
+				end
+			end
 			
 			for i = 1, #items_with_batteries do
 				local item_data = items_with_batteries[i]
@@ -100,28 +109,28 @@ end
 function action_zonedead:zone_enter()
 	self.state = state_inside
 	
-	log1("~~~ sr_zone_dead : actor inside zone")
+	--log1("~~~ sr_zone_dead : actor inside zone")
 	
 	items_with_batteries = {}
 	
 	-- Действия при входе в зону
 	olr.show_minimap(false)
-	db.actor:set_pda_disabled(true)
+	actor:set_pda_disabled(true)
 	actor_inside_zone = true
 
 	-- Заполняем таблицу предметами из инвентаря
-	db.actor:iterate_inventory(
+	actor:iterate_inventory(
 		function(_, obj)
 			if obj then
 				local section = obj:section()
 				local discharge_rate = discharge_rates[section]
 				
 				if discharge_rate then
-					table.insert(items_with_batteries, {
+					items_with_batteries[#items_with_batteries+1] = {
 						id = obj:id(),
 						section = section,
 						discharge_rate = discharge_rate
-					})
+					}
 				end
 			end
 		end
@@ -131,11 +140,11 @@ end
 function action_zonedead:zone_leave()
 	self.state = state_outside
 	
-	log1("~~~ sr_zone_dead : actor outside zone")
+	--log1("~~~ sr_zone_dead : actor outside zone")
 	
 	-- Действия при выходе из зоны
 	olr.show_minimap(true)
-	db.actor:set_pda_disabled(false)
+	actor:set_pda_disabled(false)
 	actor_inside_zone = false
 	
 	-- Очищаем таблицу при выходе из зоны

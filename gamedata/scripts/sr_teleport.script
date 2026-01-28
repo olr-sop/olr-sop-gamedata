@@ -74,6 +74,7 @@ function add_to_binder(npc, ini, scheme, section, storage)
 end
 
 function set_scheme(obj, ini, scheme, section, gulag_name)
+	local tostr = tostring
 	local st = xr_logic.assign_storage_and_bind(obj, ini, scheme, section)
 	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, obj)
 	
@@ -82,17 +83,17 @@ function set_scheme(obj, ini, scheme, section, gulag_name)
 	st.points = {}
 	for i=1,10 do
 		local t = {
-			point = utils.cfg_get_string(ini, section, "point"..tostring(i), obj, false, "", "none"),
-			look = utils.cfg_get_string(ini, section, "look"..tostring(i), obj, false, "", "none"),
-			prob = utils.cfg_get_number(ini, section, "prob"..tostring(i), obj, false, 100)
+			point = utils.cfg_get_string(ini, section, "point"..tostr(i), obj, false, "", "none"),
+			look = utils.cfg_get_string(ini, section, "look"..tostr(i), obj, false, "", "none"),
+			prob = utils.cfg_get_number(ini, section, "prob"..tostr(i), obj, false, 100)
 		}
 		if t.point == "none" or t.look == "none" then
 			break
 		end
-		table.insert(st.points, t)
+		st.points[#st.points+1] = t
 	end
-	if table.getn(st.points) == 0 then
-		abort("Wrong point nums in sr_teleport [%s]", tostring(section))
+	if #st.points == 0 then
+		abort("Wrong point nums in sr_teleport [%s]", tostr(section))
 	end
 end
 

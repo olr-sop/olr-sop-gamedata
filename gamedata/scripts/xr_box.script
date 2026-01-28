@@ -15,6 +15,7 @@ local death_ini = ini_file("misc\\ph_box_generic.ltx")
 class "ph_item_box"
 
 function ph_item_box:__init(obj)
+    local tonum = tonumber
     self.obj = obj
 
     local community_list = {
@@ -38,7 +39,7 @@ function ph_item_box:__init(obj)
             local id, value = "", ""
             for i = 0, n - 1 do
                 result, id, value = death_ini:r_line(v, i, "", "")
-                item_by_community[v][id] = 1000 * tonumber(value)
+                item_by_community[v][id] = 1000 * tonum(value)
                 -- printf("PL : id=%s  value=%s",id, value)
             end
         end
@@ -55,7 +56,7 @@ function ph_item_box:__init(obj)
     local id, value = "", ""
     for i = 0, n - 1 do
         result, id, value = death_ini:r_line(level_name, i, "", "")
-        mul_by_level[id] = tonumber(value)
+        mul_by_level[id] = tonum(value)
     end
 
     local item_count_section = "item_count_" .. level.get_game_difficulty()
@@ -77,8 +78,8 @@ function ph_item_box:__init(obj)
             mul_by_level[id] = 0
         end
 
-        min = tonumber(min) * mul_by_level[id]
-        max = tonumber(max) * mul_by_level[id]
+        min = tonum(min) * mul_by_level[id]
+        max = tonum(max) * mul_by_level[id]
 
         count_by_level[id] = {min = min, max = max}
     end
@@ -125,23 +126,24 @@ end
 
 -- Функция спавнит необходимое число предметов
 function create_items(obj, section, number, rnd)
+    local mrandom = math.random
     if olrflag == 0 then
         olrflag = 1
-        if math.random(1, 4) == 1 then
+        if mrandom(1, 4) == 1 then
             alife():create("m_rat_new", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
         end
-        if math.random(1, 80) == 1 then
+        if mrandom(1, 80) == 1 then
             alife():create("karlik", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
         end
     end
     printf("create %s of %s", tostring(number), tostring(section))
     if ammo_sections[section] == true then
-        if math.random(100) <= rnd then
+        if mrandom(100) <= rnd then
             if number > 0 then
                 local position = vector():set(0, 0, 0)
-                position.x = obj:position().x + math.random(-30, 30) / 100
-                position.z = obj:position().z + math.random(-30, 30) / 100
-                position.y = obj:position().y + math.random(30, 50) / 100
+                position.x = obj:position().x + mrandom(-30, 30) / 100
+                position.z = obj:position().z + mrandom(-30, 30) / 100
+                position.y = obj:position().y + mrandom(30, 50) / 100
 
                 se_respawn.create_ammo(section, position, obj:level_vertex_id(), obj:game_vertex_id(), 65535, number)
             end
@@ -149,11 +151,11 @@ function create_items(obj, section, number, rnd)
     else
         for i = 1, number do
             -- Проверяем вероятность появить каждый объект в отдельности
-            if math.random(1000) <= rnd then
+            if mrandom(1000) <= rnd then
                 local position = vector():set(0, 0, 0)
-                position.x = obj:position().x + math.random(-30, 30) / 100
-                position.z = obj:position().z + math.random(-30, 30) / 100
-                position.y = obj:position().y + math.random(30, 50) / 100
+                position.x = obj:position().x + mrandom(-30, 30) / 100
+                position.z = obj:position().z + mrandom(-30, 30) / 100
+                position.y = obj:position().y + mrandom(30, 50) / 100
 
                 alife():create(section, position, obj:level_vertex_id(), obj:game_vertex_id())
             end
@@ -164,7 +166,7 @@ end
 function parse_names(s)
     local t = {}
     for name in string.gfind(s, "([%w_%-.\\]+)%p*") do
-        table.insert(t, name)
+        t[#t+1] = name
     end
     return t
 end
@@ -173,7 +175,7 @@ function r_items(spawn_ini, section, line)
     if spawn_ini:line_exist(section, line) then
         -- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
         local t = parse_names(spawn_ini:r_string(section, line))
-        local n = table.getn(t)
+        local n = #t
 
         local ret_table = {}
         local k = 1
@@ -197,7 +199,7 @@ function r_items(spawn_ini, section, line)
                 item.count = 1
                 k = k + 1
             end
-            table.insert(ret_table, item)
+            ret_table[#ret_table+1] = item
         end
         return ret_table
     end

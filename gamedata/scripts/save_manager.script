@@ -8,11 +8,12 @@
 --------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
 
-local max_autosaves = utils.cfg_get_float(system_ini(), "save_manager_settings", "max_autosaves", 50)
-local max_quicksaves = utils.cfg_get_float(system_ini(), "save_manager_settings", "max_quicksaves", 100)
+local ini = system_ini()
+local max_autosaves = utils.cfg_get_float(ini, "save_manager_settings", "max_autosaves", 50)
+local max_quicksaves = utils.cfg_get_float(ini, "save_manager_settings", "max_quicksaves", 100)
 
-local time_to_autosave = utils.cfg_get_float(system_ini(), "save_manager_settings", "time_to_autosave", 21600) -- 6 часов в секундах, можно поменять
-local use_device_pause = utils.cfg_get_bool(system_ini(), "save_manager_settings", "use_device_pause", nil, false, false)
+local time_to_autosave = utils.cfg_get_float(ini, "save_manager_settings", "time_to_autosave", 21600) -- 6 часов в секундах, можно поменять
+local use_device_pause = utils.cfg_get_bool(ini, "save_manager_settings", "use_device_pause", nil, false, false)
 
 local console = get_console()
 
@@ -39,29 +40,30 @@ local console = get_console()
 -- В type передаём тип таска, fail, new, complete, updated
 -- В desc передаём сам таск
 function task_saves(type, desc)
+	local slower = string.lower
 
 	local full_savename = ""
 
 	if type == "new" then
-		full_savename = string.lower(
+		full_savename = slower(
 			user_name() .. " - " .. 
 			game.translate_string("st_new_quest_save") .. " - " .. 
 			game.translate_string(desc:get_title())
 		)
 	elseif type == "update" then
-		full_savename = string.lower(
+		full_savename = slower(
 			user_name() .. " - " .. 
 			game.translate_string("st_update_quest_save") .. " - " .. 
 			game.translate_string(desc:get_title())
 		)
 	elseif type == "complete" then
-		full_savename = string.lower(
+		full_savename = slower(
 			user_name() .. " - " .. 
 			game.translate_string("st_complete_quest_save") .. " - " .. 
 			game.translate_string(desc:get_title())
 		)
 	elseif type == "fail" then
-		full_savename = string.lower(
+		full_savename = slower(
 			user_name() .. " - " .. 
 			game.translate_string("st_fail_quest_save") .. " - " .. 
 			game.translate_string(desc:get_title())

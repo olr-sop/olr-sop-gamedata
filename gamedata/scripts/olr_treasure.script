@@ -49,6 +49,7 @@ local items_prob_yoba = {
 local places = {}
 
 function create_treasure()
+	local mrandom = math.random
 	if level.name() == "lvl16_generators" then
 		return
 	end
@@ -59,10 +60,10 @@ function create_treasure()
 
 	--log1("try treasure")
 
-	local bol_var = math.random(1, 3)
-	local bez_var = math.random(1, 5)
-	local yaz_var = math.random(1, 10)
-	local yob_var = math.random(1, 100)
+	local bol_var = mrandom(1, 3)
+	local bez_var = mrandom(1, 5)
+	local yaz_var = mrandom(1, 10)
+	local yob_var = mrandom(1, 100)
 
 	local sim = alife()
 	for id = 1, 65534 do
@@ -71,26 +72,26 @@ function create_treasure()
 			if obj.m_game_vertex_id then
 				if game_graph():valid_vertex_id(obj.m_game_vertex_id) then
 					if obj:section_name() == "treasure_place_obj" then --  treasure_place_obj  box_rukzak_treasure
-						table.insert(places, obj)
+						places[#places+1] = obj
 					end
 				end
 			end
 		end
 	end
 
-	local rand_obj = places[math.random(#places)]
+	local rand_obj = places[mrandom(#places)]
 
 	if rand_obj then
 		if rand_obj.m_game_vertex_id then
 			if game_graph():valid_vertex_id(rand_obj.m_game_vertex_id) then
 				local metka = alife():create("treasure_place_metka", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
 				olr.add_spot_on_map(metka.id, "treasure", game.translate_string("st_olr_treasure_approximation"))
-				alife():create(items_prob[math.random(table.getn(items_prob))], rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
+				alife():create(items_prob[mrandom(#items_prob)], rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id) -- серверный
 				if bol_var == 1 then
 					local apos = rand_obj.position
 					local alvex = rand_obj.m_level_vertex_id
 					local agvex = rand_obj.m_game_vertex_id
-					local aa = alife():create(items_prob[math.random(table.getn(items_prob))], apos, alvex, agvex)
+					local aa = alife():create(items_prob[mrandom(#items_prob)], apos, alvex, agvex)
 					aa.m_level_vertex_id = alvex
 					aa.m_game_vertex_id = agvex
 					aa.position = apos
@@ -112,7 +113,7 @@ function create_treasure()
 					local bpos = rand_obj.position
 					local blvex = rand_obj.m_level_vertex_id
 					local bgvex = rand_obj.m_game_vertex_id
-					local bb = alife():create(items_prob[math.random(table.getn(items_prob))], bpos, blvex, bgvex)
+					local bb = alife():create(items_prob[mrandom(#items_prob)], bpos, blvex, bgvex)
 					bb.m_level_vertex_id = blvex
 					bb.m_game_vertex_id = bgvex
 					bb.position = bpos
@@ -136,7 +137,7 @@ function create_treasure()
 					local cpos = rand_obj.position
 					local clvex = rand_obj.m_level_vertex_id
 					local cgvex = rand_obj.m_game_vertex_id
-					local cc = alife():create(items_prob[math.random(table.getn(items_prob))], cpos, clvex, cgvex)
+					local cc = alife():create(items_prob[mrandom(#items_prob)], cpos, clvex, cgvex)
 					cc.m_level_vertex_id = clvex
 					cc.m_game_vertex_id = cgvex
 					cc.position = cpos
@@ -160,7 +161,7 @@ function create_treasure()
 					local dpos = rand_obj.position
 					local dlvex = rand_obj.m_level_vertex_id
 					local dgvex = rand_obj.m_game_vertex_id
-					local dd = alife():create(items_prob_yoba[math.random(table.getn(items_prob_yoba))], dpos, dlvex, dgvex)
+					local dd = alife():create(items_prob_yoba[mrandom(#items_prob_yoba)], dpos, dlvex, dgvex)
 					dd.m_level_vertex_id = dlvex
 					dd.m_game_vertex_id = dgvex
 					dd.position = dpos

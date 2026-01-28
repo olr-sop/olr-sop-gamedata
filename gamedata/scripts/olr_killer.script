@@ -77,6 +77,7 @@ function kill_neutral(victim, who)
 end
 
 function kill_neutral11(victim, who)
+    local tostr = tostring
     if who:id() == db.actor:id() then
         if victim:name() == xvars.quest_two_target_bar or victim:name() == xvars.quest_two_target then
             return
@@ -115,25 +116,25 @@ function kill_neutral11(victim, who)
                     -- 1. Первое убийство - обязательно сообщение от сталкера и торговца
                     if witnessed_kills == 1 then
                         -- Сообщение от сталкера
-                        olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                        olr_timers.st_timer_game("first_killer_timer_sms_"..tostr(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostr(victim:id())..","..tostr(witness_id)..")")
                         -- Сообщение от торговца (предупреждение)
-                        olr_timers.st_timer_game("first_killer_timer_"..tostring(witnessed_kills), time_to_message_from_trader, "olr_killer.first_killer_timer()")
+                        olr_timers.st_timer_game("first_killer_timer_"..tostr(witnessed_kills), time_to_message_from_trader, "olr_killer.first_killer_timer()")
                     
                     -- 2. Убийства со 2-го до предпоследнего перед объявлением убийцей
                     elseif witnessed_kills > 1 and witnessed_kills < count_to_declare then
                         -- Сообщение от сталкера с шансом 70%
                         if math.random(100) <= 70 then
-                            olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                            olr_timers.st_timer_game("first_killer_timer_sms_"..tostr(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostr(victim:id())..","..tostr(witness_id)..")")
                         end
                         -- Сообщение от торговца с шансом 60%
                         if math.random(100) <= 60 then
-                            olr_timers.st_timer_game("first_killer_timer_"..tostring(witnessed_kills), time_to_message_from_trader, "olr_killer.first_killer_timer()")
+                            olr_timers.st_timer_game("first_killer_timer_"..tostr(witnessed_kills), time_to_message_from_trader, "olr_killer.first_killer_timer()")
                         end
                     
                     -- 3. Убийство, которое достигает порога - объявляем убийцей
                     elseif witnessed_kills == count_to_declare then
                         -- Сообщение от сталкера обязательно
-                        olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                        olr_timers.st_timer_game("first_killer_timer_sms_"..tostr(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostr(victim:id())..","..tostr(witness_id)..")")
                         -- Объявление убийцей
                         olr_timers.st_timer_game("declare_killer_timer", time_to_message_declare_killer, "olr_killer.declare_killer()")
                     
@@ -141,7 +142,7 @@ function kill_neutral11(victim, who)
                     elseif witnessed_kills > count_to_declare then
                         -- Только сообщение от сталкера с меньшим шансом (30%)
                         if math.random(100) <= 30 then
-                            olr_timers.st_timer_game("first_killer_timer_sms_"..tostring(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostring(victim:id())..","..tostring(witness_id)..")")
+                            olr_timers.st_timer_game("first_killer_timer_sms_"..tostr(witnessed_kills), time_to_message_from_stalker, "olr_killer.first_killer_timer_seen("..tostr(victim:id())..","..tostr(witness_id)..")")
                         end
                         -- Торговец больше не реагирует
                     end

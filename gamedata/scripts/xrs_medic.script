@@ -384,6 +384,7 @@ function death_callback(npc)
 end
 
 function npc_update(binder)
+	local sim = alife()
 	local npc = binder.object
 	
 	if not npc:alive() then 
@@ -404,7 +405,7 @@ function npc_update(binder)
 	end
 	
 	if not npc:object("yad") then
-		alife():create("yad",npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+		sim:create("yad",npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
 	end
 	
 	if not binder.medkit_update_time then binder.medkit_update_time=time_global()+5000 end
@@ -413,13 +414,13 @@ function npc_update(binder)
 		  npc:name()=="yantar_ecolog_general" then return end
 	if time_global()>binder.medkit_update_time then
 		if not npc:object("medkit") then
-			local sobj = alife():object(npc:id())
+			local sobj = sim:object(npc:id())
 			if sobj and sobj.rank and sobj:rank()~=0 then
-				if math.random()>0.2 then alife():create(mk_types[3%math.ceil(sobj:rank()/1000)+1],npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id()) end
+				if math.random()>0.2 then sim:create(mk_types[3%math.ceil(sobj:rank()/1000)+1],npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id()) end
 			end
 		end
 		if not npc:object("bandage") then
-			if math.random()>0.05 then alife():create("bandage",npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id()) end
+			if math.random()>0.05 then sim:create("bandage",npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id()) end
 		end
 		binder.medkit_update_time=time_global()+300000
 	end

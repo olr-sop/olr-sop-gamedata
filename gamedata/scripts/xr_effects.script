@@ -1611,7 +1611,7 @@ function sar2_scene_start(actor, npc)
 	sar2_hero_next_free_id = 1
 	for i = 1, sar2_heroes_number do
 		if has_alife_info("sar2_death_" .. i) then
-			table.insert(sar2_heroes_sel, i)
+			sar2_heroes_sel[#sar2_heroes_sel+1] = i
 			sar2_heroes_sel_number = sar2_heroes_sel_number + 1
 		end
 	end
@@ -2127,14 +2127,15 @@ function dol_kumiry_20(actor, npc)
 end
 
 function dol_kumiry_21(actor, npc)
+	local sim = alife()
 	news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_message_kumiry21"), math.random(3000, 4000), "unknown", 15000, nil, "pda_objective", false)
-	local se_obj = alife():object("lvl4_darkdolina_staler_undead_olr_0000")
+	local se_obj = sim:object("lvl4_darkdolina_staler_undead_olr_0000")
 	if se_obj then
-		alife():release(se_obj, true)
+		sim:release(se_obj, true)
 	end
-	local se_obj = alife():object("lvl4_darkdolina_physic_object_0027_tomb")
+	local se_obj = sim:object("lvl4_darkdolina_physic_object_0027_tomb")
 	if se_obj then
-		alife():release(se_obj, true)
+		sim:release(se_obj, true)
 	end
 	news_manager.send_tip(db.actor, game.translate_string("dol_kumiry_21_0"), 5, "signal_lost", 15000, nil, nil, true, "device-PDA")
 	news_manager.send_tip(db.actor, game.translate_string("dol_kumiry_21_1"), 11, "hero", 15000, nil, nil, true, xr_effects.get_real_actor_name())
@@ -2147,7 +2148,7 @@ function del_obossanetz(actor)
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n".."lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		table.insert(olr_offline_walk.tabst, sobj)
+		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
 	end
 end
 
@@ -2173,14 +2174,15 @@ function del_mechenyy_swapm(actor)
 end
 
 function del_bar_dudoed(actor)
-	local se_obj = alife():object("lvl5_bar_staler_undead_olr_0000")
+	local sim = alife()
+	local se_obj = sim:object("lvl5_bar_staler_undead_olr_0000")
 	if se_obj then
-		alife():release(se_obj, true)
+		sim:release(se_obj, true)
 		db.actor:give_info_portion("mg_spawen_ludoed_now")
 	end
-	local se_obj = alife():object("lvl11_deadcity_physic_object_0747")
+	local se_obj = sim:object("lvl11_deadcity_physic_object_0747")
 	if se_obj then
-		alife():release(se_obj, true)
+		sim:release(se_obj, true)
 	end
 end
 
@@ -2587,6 +2589,7 @@ function yan_labirint_telep_5()
 end
 
 function esc_prizrak_hitted()
+	local mrandom = math.random
 
 	if not has_alife_info("jaba_start_phanrom_spawen_agressive") then
 		xr_effects.kill_actor()
@@ -2600,7 +2603,7 @@ function esc_prizrak_hitted()
 	db.actor.psy_health = -0.05
 
 	-- Случайные эффекты
-	local rnd = math.random(1, 5)
+	local rnd = mrandom(1, 5)
 	if rnd == 1 then
 		olr.horror_snd()
 	elseif rnd == 2 then
@@ -2608,13 +2611,13 @@ function esc_prizrak_hitted()
 	elseif rnd == 3 or rnd == 4 then
 		olr.spawn_crows(2, 22)
 	elseif rnd == 5 then
-		for id = 1, math.random(1, 2) do
+		for id = 1, mrandom(1, 2) do
 			local sectionsa = {
 				"zombie_weak",
 				"zombie_normal",
 				"zombie_strong",
 			}
-			local section = sectionsa[math.random(#sectionsa)]
+			local section = sectionsa[mrandom(#sectionsa)]
 			alife():create(section, db.actor:position():add(db.actor:direction():mul(-24)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		end
 	end
@@ -2638,7 +2641,7 @@ function esc_prizrak_hitted()
 				vector():set(56, -0.36, 157) -- позиция 5
 			}
 			
-			local new_pos = teleport_positions[math.random(1, 5)]
+			local new_pos = teleport_positions[mrandom(1, 5)]
 			level_obj:set_position(new_pos)
 		end
 	end
@@ -3026,14 +3029,15 @@ end
 function greh_pris_11()
 	olr.blow_add(250)
 	olr.hud_tip("", game.translate_string("greh_pris_11_0"), 10) -- мысль мессера
-	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("rad_soldier_master", db.actor:position():add(db.actor:direction():mul(-42)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("rad_soldier_master", db.actor:position():add(db.actor:direction():mul(42)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	local sim = alife()
+	sim:create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(-142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("rad_soldier_master", db.actor:position():add(db.actor:direction():mul(-42)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("esc_soldier_respawn_specnaz", db.actor:position():add(db.actor:direction():mul(142)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("rad_soldier_master", db.actor:position():add(db.actor:direction():mul(42)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function use_greh_save()
@@ -3272,20 +3276,21 @@ function del_fil_swamp()
 end
 
 function take_psyhead_yan()
+	local mrandom = math.random
 	if has_alife_info("yan_doc_psy_start_has") then
 		olr.del_by_name("lvl7_yantar_physic_object_0708")
 		nik_dialog.out_item_much("proto_psy_shap",1)
-		if math.random(2) == 1 then
-			db.actor.health = -db.actor.health/math.random(2,5)
+		if mrandom(2) == 1 then
+			db.actor.health = -db.actor.health/mrandom(2,5)
 		end
-		if math.random(2) == 1 then
-			db.actor.power = -db.actor.power/math.random(2,5)
+		if mrandom(2) == 1 then
+			db.actor.power = -db.actor.power/mrandom(2,5)
 		end
-		if math.random(2) == 1 then
-			db.actor.psy_health = -db.actor.psy_health/math.random(2,5)
+		if mrandom(2) == 1 then
+			db.actor.psy_health = -db.actor.psy_health/mrandom(2,5)
 		end
-		if math.random(2) == 1 then
-			db.actor.radiation = -db.actor.radiation/math.random(2,5)
+		if mrandom(2) == 1 then
+			db.actor.radiation = -db.actor.radiation/mrandom(2,5)
 		end
 		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\low_base]])
 		if not snd_obj:playing() then 
@@ -3687,10 +3692,11 @@ end
 function rat_spawn_rats(actor,obj)
 	olr.info("rat_can_spawn")
 	olr.del(obj)
-	alife():create("m_rat_e", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("m_rat_e2", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("m_rat_e3", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	alife():create("m_rat_e4", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	local sim = alife()
+	sim:create("m_rat_e", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("m_rat_e2", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("m_rat_e3", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+	sim:create("m_rat_e4", db.actor:position():add(db.actor:direction():add(15)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function use_agr_anihilator()
@@ -4009,9 +4015,10 @@ function enable_level_changer(actor, npc, p)
 	if(p[1]~=nil) then
 		local obj = level_object_by_sid(tonumber(p[1]))
 		if(obj) then
-			if db.storage[obj:id()] and db.storage[obj:id()].s_obj then
-				db.storage[obj:id()].s_obj.enabled = true
-				db.storage[obj:id()].s_obj.hint = "level_changer_invitation"
+			local obj_id = obj:id()
+			if db.storage[obj_id] and db.storage[obj_id].s_obj then
+				db.storage[obj_id].s_obj.enabled = true
+				db.storage[obj_id].s_obj.hint = "level_changer_invitation"
 			else
 				return
 			end

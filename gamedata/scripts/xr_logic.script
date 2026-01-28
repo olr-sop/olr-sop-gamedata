@@ -826,13 +826,14 @@ function parse_func_params(str)
 	local n
 	for par in string.gfind(str, "%s*([^:]+)%s*") do
 		n = tonumber(par)
-		if n then table.insert(lst, n)
-		else table.insert(lst, par) end
+		if n then lst[#lst+1] = n
+		else lst[#lst+1] = par end
 	end
 	return lst
 end
 
 function parse_infop(rslt, str)
+	local ssub = string.sub
 	--printf("_bp: parse_infop1: %s", utils.to_str(str))
 	if str then
 		local infop_name, sign
@@ -840,22 +841,22 @@ function parse_infop(rslt, str)
 		local at, params
 		for s in string.gfind(str, "%s*([%-%+%~%=%!][^%-%+%~%=%!%s]+)%s*") do
 			--printf("_bp: parse_infop: s=%s", utils.to_str(s))
-			sign = string.sub(s, 1, 1)
-			infop_name = string.sub(s, 2)
+			sign = ssub(s, 1, 1)
+			infop_name = ssub(s, 2)
 			params = nil
 
 			-- ïàğñèì ïàğàìåòğû ôóíêöèé
 			at = string.find(infop_name, "%(")
 			if at then
-				if string.sub(infop_name, -1) ~= ")" then
+				if ssub(infop_name, -1) ~= ")" then
 					abort("wrong condlist %s", str)
 				end
-				if at < string.len(infop_name) - 1 then
-					params = parse_func_params(string.sub(infop_name, at + 1, -2))
+				if at < #infop_name - 1 then
+					params = parse_func_params(ssub(infop_name, at + 1, -2))
 				else
 					params = {}
 				end
-				infop_name = string.sub(infop_name, 1, at - 1)
+				infop_name = ssub(infop_name, 1, at - 1)
 			end
 
 			if sign == "+" then
@@ -886,6 +887,7 @@ end
 --   2 = { infop_check = { 1 = {"infop3" = true}, 2 = {"infop4" = false} }, infop_set = {}, section = "section2" },
 -- }
 function parse_condlist(npc, section, field, src)
+	local ssub = string.sub
 	local lst = {}
 
 	-- 1) Ğàçáèâàåì íà ğàçäåëåííûå çàïÿòûìè ÷àñòè:
@@ -905,7 +907,7 @@ function parse_condlist(npc, section, field, src)
 			--printf("_bp: infop_check_lst: [%s]", infop_check_lst)
 
 			-- Âûäåëÿåì îñòàâøóşñÿ ÷àñòü ïîëÿ, ò.å. èìÿ ñåêöèè ïëşñ ñïèñîê infoportions äëÿ óñòàíîâêè:
-			remainings = string.sub(fld, 1, at - 1) .. string.sub(fld, to + 1)
+			remainings = ssub(fld, 1, at - 1) .. ssub(fld, to + 1)
 		else
 			-- Ñïèñîê infoportions äëÿ ïğîâåğêè íå áûë çàäàí, ñëåäîâàòåëüíî, íè÷åãî íå óäàëÿåì:
 			remainings = fld
@@ -916,7 +918,7 @@ function parse_condlist(npc, section, field, src)
 		at, to, infop_set_lst = string.find(remainings, "%%%s*(.*)%s*%%")
 		if infop_set_lst then
 			-- Âûäåëÿåì îñòàâøóşñÿ ÷àñòü ïîëÿ, ò.å. èìÿ ñåêöèè:
-			newsect = string.sub(remainings, 1, at - 1) .. string.sub(remainings, to + 1)
+			newsect = ssub(remainings, 1, at - 1) .. ssub(remainings, to + 1)
 		else
 			-- Ñïèñîê infoportions äëÿ óñòàíîâêè íå áûë çàäàí, ñëåäîâàòåëüíî, remainings è åñòü èìÿ ñåêöèè.
 			newsect = remainings
@@ -1261,6 +1263,7 @@ function pstor_save_all(obj, packet)
 end
 
 function pstor_load_all(obj, reader)
+	local tostr = tostring
 	local npc_id = obj:id()
 	local pstor = db.storage[npc_id].pstor
 	if not pstor then
@@ -1270,13 +1273,13 @@ function pstor_load_all(obj, reader)
 	local ctr = reader:r_u32()
 	
 	if db.actor then
-		if tonumber(ctr) > 20 and tostring(obj:name()) ~= "single_player" and npc_id ~= db.actor:id() then 
-			log1("ÎÁÍÀĞÓÆÅÍ ÎÁÚÅÊÒ Ñ ÏÎÂĞÅÆÄÅÍÍÛÌ PSTOR: "..tostring(obj:name()).." ÁÓÄÅÒ ÏĞÎÈÇÂÅÄÅÍÀ ÏÎÏÛÒÊÀ ÂÎÑÑÒÀÍÎÂËÅÍÈß")
+		if tonumber(ctr) > 20 and tostr(obj:name()) ~= "single_player" and npc_id ~= db.actor:id() then 
+			log1("ÎÁÍÀĞÓÆÅÍ ÎÁÚÅÊÒ Ñ ÏÎÂĞÅÆÄÅÍÍÛÌ PSTOR: "..tostr(obj:name()).." ÁÓÄÅÒ ÏĞÎÈÇÂÅÄÅÍÀ ÏÎÏÛÒÊÀ ÂÎÑÑÒÀÍÎÂËÅÍÈß")
 			ctr = 20 		
 		end
 	else	
-		if tonumber(ctr) > 20 and tostring(obj:name()) ~= "single_player" then 
-			log1("ÎÁÍÀĞÓÆÅÍ ÎÁÚÅÊÒ Ñ ÏÎÂĞÅÆÄÅÍÍÛÌ PSTOR: "..tostring(obj:name()).." ÁÓÄÅÒ ÏĞÎÈÇÂÅÄÅÍÀ ÏÎÏÛÒÊÀ ÂÎÑÑÒÀÍÎÂËÅÍÈß")
+		if tonumber(ctr) > 20 and tostr(obj:name()) ~= "single_player" then 
+			log1("ÎÁÍÀĞÓÆÅÍ ÎÁÚÅÊÒ Ñ ÏÎÂĞÅÆÄÅÍÍÛÌ PSTOR: "..tostr(obj:name()).." ÁÓÄÅÒ ÏĞÎÈÇÂÅÄÅÍÀ ÏÎÏÛÒÊÀ ÂÎÑÑÒÀÍÎÂËÅÍÈß")
 			ctr = 20 		
 		end		
 	end

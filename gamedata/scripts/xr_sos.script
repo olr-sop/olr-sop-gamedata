@@ -242,6 +242,7 @@ function action_help:initialize ()
 end    
 -----------------------
 function action_help:execute ()
+     local dev = device()
     action_base.execute (self)
     
     --если мы в процессе болтовни, то ничего не делаем
@@ -271,13 +272,13 @@ function action_help:execute ()
     if distance_between (self.object, self.a.npc) < 1 then
        if self.dialog_first == false then
           self.dialog_first = true
-          self.see_time = device ():time_global ()
+          self.see_time = dev:time_global ()
           self.object:enable_talk ()
           self.a.npc:run_talk_dialog (self.object)
        end
        self.object:set_movement_type (move.stand)
        self:wait_for_player2 ()
-       if device ():time_global () - self.see_time > 10000 then
+       if dev:time_global () - self.see_time > 10000 then
           self.a.npc = nil
           self.object:set_start_dialog ("hello_dialog")
           printf ("FUCK YOU 2 !!!")
@@ -293,7 +294,7 @@ function action_help:execute ()
        if self.see_time == 0 then
           if dist < 15 then 
              printf ("Initialize time on %f distance", dist)
-             self.see_time = device ():time_global ()
+             self.see_time = dev:time_global ()
           end   
        end   
     else
@@ -302,13 +303,13 @@ function action_help:execute ()
           self:wait_for_player ()
           if self.see_time == 0 then 
              xr_sounds.play_sound (self.object, 0, "sos", 2)
-             self.see_time = device ():time_global ()
+             self.see_time = dev:time_global ()
           end   
        end
     end        
     
     if self.see_time ~= 0 then
-       if device ():time_global () - self.see_time > timeout then
+       if dev:time_global () - self.see_time > timeout then
           printf ("FUCK YOU !!!")
           self.a.npc = nil
           self.object:set_start_dialog ("hello_dialog")
@@ -479,13 +480,14 @@ function add_to_binder (obj, char_ini)
 	operators["follow"]             = xr_actions_id.sidor_act_sos + 3
 	
 	local manager  = obj:motivation_action_manager ()
-  	manager:add_evaluator (properties["enabled"], this.evaluator_enabled ("property_enabled", db.storage[obj:id()].sos))
-  	manager:add_evaluator (properties["pda"],     this.evaluator_pda     ("property_pda", db.storage[obj:id()].sos))
-  	manager:add_evaluator (properties["init"],    this.evaluator_init    ("property_init", db.storage[obj:id()].sos))
-  	manager:add_evaluator (properties["action"],  this.evaluator_action  ("property_action", db.storage[obj:id()].sos))
-  	manager:add_evaluator (properties["follow"],  this.evaluator_follow  ("property_follow", db.storage[obj:id()].sos))
+  	local obj_id = obj:id()
+  	manager:add_evaluator (properties["enabled"], this.evaluator_enabled ("property_enabled", db.storage[obj_id].sos))
+  	manager:add_evaluator (properties["pda"],     this.evaluator_pda     ("property_pda", db.storage[obj_id].sos))
+  	manager:add_evaluator (properties["init"],    this.evaluator_init    ("property_init", db.storage[obj_id].sos))
+  	manager:add_evaluator (properties["action"],  this.evaluator_action  ("property_action", db.storage[obj_id].sos))
+  	manager:add_evaluator (properties["follow"],  this.evaluator_follow  ("property_follow", db.storage[obj_id].sos))
 
-  	local action = this.action_initialize ("action_initialize", db.storage[obj:id()].sos)
+  	local action = this.action_initialize ("action_initialize", db.storage[obj_id].sos)
    	action:add_precondition     	(world_property (stalker_ids.property_alive,    true))
    	action:add_precondition     	(world_property (stalker_ids.property_enemy,    false))
    	action:add_precondition     	(world_property (properties["enabled"],         true))
@@ -494,7 +496,7 @@ function add_to_binder (obj, char_ini)
    	action:add_effect           	(world_property (properties["init"],            true))
    	manager:add_action              (operators["init"], action)
 
-  	action = this.action_help       ("action_help", db.storage[obj:id()].sos)
+  	action = this.action_help       ("action_help", db.storage[obj_id].sos)
    	action:add_precondition     	(world_property (stalker_ids.property_alive,    true))
    	action:add_precondition     	(world_property (stalker_ids.property_enemy,    false))
    	action:add_precondition     	(world_property (properties["enabled"],         true))
@@ -505,7 +507,7 @@ function add_to_binder (obj, char_ini)
 	action:add_effect           	(world_property (properties["pda"],             false))
    	manager:add_action              (operators["help"], action)
 
-  	action = this.action_follow_npc ("action_follow", db.storage[obj:id()].sos)
+  	action = this.action_follow_npc ("action_follow", db.storage[obj_id].sos)
    	action:add_precondition     	(world_property (stalker_ids.property_alive,    true))
    	action:add_precondition     	(world_property (stalker_ids.property_enemy,    false))
    	action:add_precondition     	(world_property (properties["enabled"],         true))

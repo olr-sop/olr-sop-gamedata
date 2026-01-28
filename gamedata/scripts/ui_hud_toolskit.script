@@ -413,6 +413,7 @@ function UI_TabController:OnBtnCheck2()
 	self:OnBtnChange2()
 end
 function UI_TabController:OnBtnAction2()
+	local sformat = string.format
 --	log1(string.format("OnBtnAction2:[>]")) --/#~#
 	self.note2:SetText("")
 	local sStr = self.box2:GetText() or ""
@@ -442,7 +443,7 @@ function UI_TabController:OnBtnAction2()
 --					log1(string.format("OnBtnAction2:name=[%s],id=[%s]%s", soObj:name(), i, "")) --/#~#
 					if not id then id = i end
 					local iDist = soObj.position:distance_to(vPosA)
-					table.insert(tFound, {id=i, dist=iDist})
+					tFound[#tFound+1] = {id=i, dist=iDist}
 				end
 			end
 		end
@@ -455,35 +456,35 @@ function UI_TabController:OnBtnAction2()
 		soObj = sim:object(id)
 		local sMap = soObj and Get_ObjectCurentLevel(soObj)
 		if not sMap then
-			log1(string.format("OnBtnAction2:Obj=[%s],Id=[%s],Map=[%s]~?:<%s>", soObj and soObj:name(), id, sMap, "Warning!"))
+			log1(sformat("OnBtnAction2:Obj=[%s],Id=[%s],Map=[%s]~?:<%s>", soObj and soObj:name(), id, sMap, "Warning!"))
 			self.note2:SetText("Error! Object=["..sStr.."] not found or no on locations!")
 			return --/>
 		end
 		local sObjSection = soObj:section_name()
-		local sTxt = string.format( "Obj=[%s],id=[%d]", sObjSection, id, sObjSection )
+		local sTxt = sformat( "Obj=[%s],id=[%d]", sObjSection, id, sObjSection )
 
 		local sCharName = IsHuman(soObj) and soObj:character_name()
 		if sCharName and sCharName ~= "NoName" then
-			sTxt = string.format( "%s,CharName=[%s]", sTxt, sCharName )
+			sTxt = sformat( "%s,CharName=[%s]", sTxt, sCharName )
 		end
 		local iStoryId = soObj.m_story_id
 		if iStoryId and iStoryId ~= db.iMax_s32 then
-			sTxt = string.format( "%s,SID=[%d]", sTxt, iStoryId )
+			sTxt = sformat( "%s,SID=[%d]", sTxt, iStoryId )
 		end
 		local idOwner = soObj.parent_id
 		if idOwner and idOwner ~= 65535 then
 			local soOwner = sim:object(idOwner)
 			if soOwner and soOwner.name then
-				sTxt = string.format( "%s\\nOwner=[%s/%d]", sTxt, soOwner:name(), idOwner )
+				sTxt = sformat( "%s\\nOwner=[%s/%d]", sTxt, soOwner:name(), idOwner )
 			end
 		end
-		sTxt = string.format( "%s\\nLevel=[%s]", sTxt, game.translate_string(sMap) )
+		sTxt = sformat( "%s\\nLevel=[%s]", sTxt, game.translate_string(sMap) )
 		if sMap == level.name() then
-			sTxt = string.format( "%s,idLv=[%d],idGv=[%d]", sTxt, soObj.m_level_vertex_id, soObj.m_game_vertex_id )
+			sTxt = sformat( "%s,idLv=[%d],idGv=[%d]", sTxt, soObj.m_level_vertex_id, soObj.m_game_vertex_id )
 			local vPosA,vPos = oActor:position(),soObj.position
-			sTxt = string.format( "%s\\nPos=[%.3f:%.3f:%.3f]", sTxt, vPos.x, vPos.y, vPos.z)
+			sTxt = sformat( "%s\\nPos=[%.3f:%.3f:%.3f]", sTxt, vPos.x, vPos.y, vPos.z)
 			local iDist,iDistSqr = vPosA:distance_to(vPos),vPosA:distance_to_sqr(vPos)
-			sTxt = string.format( "%s\\nDist=[%.3f]/%.3f", sTxt, iDist, iDistSqr )
+			sTxt = sformat( "%s\\nDist=[%.3f]/%.3f", sTxt, iDist, iDistSqr )
 			--if db.m_news then
 			--	local sWhere = m_news.Get_WhereDesc(sMap, vPos) or ""
 			--	sTxt = string.format( "%s\\n%s", sTxt, string.gsub(sWhere, "%s+", "\160") )
@@ -497,7 +498,7 @@ function UI_TabController:OnBtnAction2()
 				local sInvName = sObjSection
 				Add_MapSpot(id, "red_location", "Found_Obj: "..sInvName)
 			end
-			log1(string.format("OnBtnAction2:Obj=[%s]:%s", soObj and soObj:name(), sTxt or "")) --/#~#
+			log1(sformat("OnBtnAction2:Obj=[%s]:%s", soObj and soObj:name(), sTxt or "")) --/#~#
 		else
 			if level.map_has_object_spot(id, "debug_stalker") then
 				level.map_remove_object_spot(id, "debug_stalker")
@@ -1040,6 +1041,7 @@ function Del_Teleport()
 end
 
 function Get_Teleport(tLC)
+	local sformat = string.format
 	if type(get_netpk) ~= 'function' then return end --/#!?#> disabled
 	local oActor = db.actor
 	
@@ -1047,7 +1049,7 @@ function Get_Teleport(tLC)
 	if lvch then this.Del_Teleport() end
 	local idMapTo,idGvTo,idLvTo = la_helper.Get_IdsByLevelName(tLC.map or "none")
 	if oActor and idGvTo and idLvTo and tLC.pos then
-		log1(string.format("Get_Teleport:MapTo(%s)=>idMap=[%s],idGv=[%s],idLv=[%s]:[%s]", tLC.map, idMapTo, idGvTo, idLvTo, "?")) --/#~#
+		log1(sformat("Get_Teleport:MapTo(%s)=>idMap=[%s],idGv=[%s],idLv=[%s]:[%s]", tLC.map, idMapTo, idGvTo, idLvTo, "?")) --/#~#
 		local soObj = alife():create("level_changer", oActor:position(), oActor:level_vertex_id(), oActor:game_vertex_id())
 		local pk = get_netpk(soObj,1)
 		if pk:isOk() then
@@ -1065,17 +1067,18 @@ function Get_Teleport(tLC)
 			xr_logic.pstor_store(oActor, "dbg_lvch", soObj.id)
 
 			--Add_MapSpot(soObj.id, "red_location", "LvChanger(dbg): "..soObj.id) --/#~# for debug
-			log1(string.format("Get_Teleport:(%s):MapTo(%s)=[%s],idGvTo=[%s],idLvTo=[%s]:[%s]", soObj.id, idMapTo, tLC.map, idGvTo, idLvTo, "+")) --/#~#
+			log1(sformat("Get_Teleport:(%s):MapTo(%s)=[%s],idGvTo=[%s],idLvTo=[%s]:[%s]", soObj.id, idMapTo, tLC.map, idGvTo, idLvTo, "+")) --/#~#
 			--table.print( pk:get(), sModule..":NetPacket|(2):"..soObj:name() ) --/#~# for debug
-		else log1(string.format("Get_Teleport:LvChg=[%s]~?:<%s>", soObj:name(), "Error!"))
+		else log1(sformat("Get_Teleport:LvChg=[%s]~?:<%s>", soObj:name(), "Error!"))
 		end
-	else log1(string.format("Get_Teleport:MapTo(%s)=[%s],idGvTo=[%s],idLv=[%s],Pos=[%s]:<%s>", idMapTo, tLC.map, idGvTo, idLv, tLC.pos, "Error!"))
+	else log1(sformat("Get_Teleport:MapTo(%s)=[%s],idGvTo=[%s],idLv=[%s],Pos=[%s]:<%s>", idMapTo, tLC.map, idGvTo, idLv, tLC.pos, "Error!"))
 	end
 end
 --/ ------------------------------------------------------------------------------------------------
 --/ Name of restrictor on PDA map
 --/ ------------------------------------------------------------------------------------------------
 function Get_RestrNames(bLog)
+	local tostr = tostring
 	for id=1,65534 do
 		local oObj = level.object_by_id(id)
 		local iClassId = oObj and oObj:clsid()
@@ -1088,10 +1091,10 @@ function Get_RestrNames(bLog)
 				iRestType = data.restrictor_type or -1
 				iRadius   = data.shapes:getRadius() or -1
 			end
-			local sTxt = "Restrictor:["..oObj:name().."]".."\\nClassId= "..tostring(iClassId)
+			local sTxt = "Restrictor:["..oObj:name().."]".."\\nClassId= "..tostr(iClassId)
 			sTxt = sTxt.."\\nx= "..string.short(p.x).."\\ny= "..string.short(p.y).."\\nz= "..string.short(p.z)
-			sTxt = sTxt.."\\nidLv= "..tostring(idLv).."\\nidGv= "..tostring(idGv)
-			sTxt = sTxt.."\\nRadius= "..string.short(iRadius).."\\nType= "..tostring(iRestType)
+			sTxt = sTxt.."\\nidLv= "..tostr(idLv).."\\nidGv= "..tostr(idGv)
+			sTxt = sTxt.."\\nRadius= "..string.short(iRadius).."\\nType= "..tostr(iRestType)
 			Add_MapSpot(id,"red_location",sTxt)
 			if bLog then
 				local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,ClassId=%d,Radius=%d,Type=%d,Restr=", p.x, p.y, p.z, idLv, idGv, iClassId, iRadius or -1, iRestType or -1, oObj:name() )
@@ -1104,6 +1107,7 @@ end
 --/ Name of smarts on PDA map
 --/ ------------------------------------------------------------------------------------------------
 function Get_SmartNames(bLog)
+	local tostr = tostring
 	local tSmartNames = {}
 	local ltx = ini_file("lost_alpha\\debug.ltx")
 	if ltx and ltx:section_exist("smart_names") then
@@ -1119,21 +1123,21 @@ function Get_SmartNames(bLog)
 			local idLv,idGv = oObj:level_vertex_id(), oObj:game_vertex_id()
 			if tSmartNames[sName] then
 				local sTxt = game.translate_string("st_name_"..sName)
-				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
-				sTxt = sTxt.."\\nlvid= "..tostring(idLv).."\\ngvid= "..tostring(idGv)
+				sTxt = sTxt.."\\nx= "..tostr(p.x).."\\ny= "..tostr(p.y).."\\nz= "..tostr(p.z)
+				sTxt = sTxt.."\\nlvid= "..tostr(idLv).."\\ngvid= "..tostr(idGv)
 				Add_MapSpot(i,"alife_presentation_smart_on",sTxt)
 				--
 				if bLog then
-					local sText = "x= "..tostring(p.x)..", y= "..tostring(p.y)..", z= "..tostring(p.z)
-					sText = sText..",   lvid= "..tostring(idLv)..", gvid= "..tostring(idGv)
+					local sText = "x= "..tostr(p.x)..", y= "..tostr(p.y)..", z= "..tostr(p.z)
+					sText = sText..",   lvid= "..tostr(idLv)..", gvid= "..tostr(idGv)
 					sText = sText..";--/ "..game.translate_string("st_name_"..sName)
 					log1(string.format("Smart:%s", sText))
 				end
 				--
 			else
-				local sTxt = "["..tostring(sName).."]"
-				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
-				sTxt = sTxt.."\\nidLv= "..tostring(idLv).."\\nidGv= "..tostring(idGv)
+				local sTxt = "["..tostr(sName).."]"
+				sTxt = sTxt.."\\nx= "..tostr(p.x).."\\ny= "..tostr(p.y).."\\nz= "..tostr(p.z)
+				sTxt = sTxt.."\\nidLv= "..tostr(idLv).."\\nidGv= "..tostr(idGv)
 				if soObj:is_gulag_available() then
 					if soObj.gulag_working then
 						Add_MapSpot(i,"alife_presentation_smart_on",sTxt)
@@ -1185,6 +1189,7 @@ end
 --/ Name of boxes on PDA map
 --/ ------------------------------------------------------------------------------------------------
 function Get_BoxNames(bLog,bDrop)
+	local tostr = tostring
 	local tBoxNames = Get_IniSection("debug\\debug.ltx","invbox_names","true") --/#?#
 	for i=1,65534 do
 		local oObj = level.object_by_id(i)
@@ -1193,16 +1198,16 @@ function Get_BoxNames(bLog,bDrop)
 			local sName = oObj:name()
 			local idLv,idGv = oObj:level_vertex_id(), oObj:game_vertex_id()
 			local iStoryId = oObj:story_id()
-			local sStoryId = (iStoryId ~= db.iMax_s32 and tostring(iStoryId)) or ""
+			local sStoryId = (iStoryId ~= db.iMax_s32 and tostr(iStoryId)) or ""
 			if tBoxNames[sName] then
 				local sTxt = "InvBox("..sStoryId.."):"..sName
-				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
-				sTxt = sTxt.."\\nlvid= "..tostring(idLv).."\\ngvid= "..tostring(idGv)
+				sTxt = sTxt.."\\nx= "..tostr(p.x).."\\ny= "..tostr(p.y).."\\nz= "..tostr(p.z)
+				sTxt = sTxt.."\\nlvid= "..tostr(idLv).."\\ngvid= "..tostr(idGv)
 				Add_MapSpot(i,"treasure",sTxt)
 			else
 				local sTxt = "InvBox("..sStoryId.."):"..sName
-				sTxt = sTxt.."\\nx= "..tostring(p.x).."\\ny= "..tostring(p.y).."\\nz= "..tostring(p.z)
-				sTxt = sTxt.."\\nidLv= "..tostring(idLv).."\\nidGv= "..tostring(idGv)
+				sTxt = sTxt.."\\nx= "..tostr(p.x).."\\ny= "..tostr(p.y).."\\nz= "..tostr(p.z)
+				sTxt = sTxt.."\\nidLv= "..tostr(idLv).."\\nidGv= "..tostr(idGv)
 				Add_MapSpot(i,"treasure",sTxt)
 				if bLog then
 					local sText = string.format("x=%d,y=%d,z=%d,idLv=%d,idGv=%d,Sid=%s,InvBox=", p.x, p.y, p.z, idLv, idGv, sStoryId, sName )
@@ -1225,8 +1230,10 @@ end
 --/ [sDiv]  - разделитель (nil - ',')
 --/ [sDiv2] - разделитель (не ',')
 function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
+	local tonum = tonumber
+	local type_ = type
 	local ltx,bLtx = ini,nil
-	if ltx and type(ltx) == 'string' then
+	if ltx and type_(ltx) == 'string' then
 		if ltx:match('(.+)%.(%w+)') then
 			ltx = ini_file(ltx)
 		end
@@ -1237,7 +1244,7 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 		bLtx = true
 	end
 	local bType = nil
-	if type(sType) == 'string' then
+	if type_(sType) == 'string' then
 		if sType == "all2num" or sType == "val2num" then
 			bType = false --/ дополнительно перевод значений в числа
 		elseif sType == "key2num" and (sMode == nil or sMode == "list") then
@@ -1255,29 +1262,29 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 				result,idx,value = ltx:r_line(sSection,i,"","")
 				key = result and string.trim(idx)
 				if key and key ~= "" and value then
-					if sMode and sMode ~= "list" and type(sType) == 'string' and (sType == "key2num" or sType == "all2num") then
-						key = tonumber(key) --/ переводим ключ в число
+					if sMode and sMode ~= "list" and type_(sType) == 'string' and (sType == "key2num" or sType == "all2num") then
+						key = tonum(key) --/ переводим ключ в число
 					end
 					if sMode == nil or sMode == "list" then --/ простая таблица-список: (из одиночных значений или таблиц с ними)
-						if sDiv and type(key) == 'string' then
-							table.insert(tRet, string.split(key,sDiv,bType)) --/> {{a11,a12,...,a1n}, {a21,a22,...,a2n}, ..., {an1,an2,...,ann}}
+						if sDiv and type_(key) == 'string' then
+							tRet[#tRet+1] = string.split(key,sDiv,bType) --/> {{a11,a12,...,a1n}, {a21,a22,...,a2n}, ..., {an1,an2,...,ann}}
 						else
 							if bType == false then
-								key = tonumber(key) --/ переводим ключ в число
+								key = tonum(key) --/ переводим ключ в число
 							end
 							if key ~= nil then
-								table.insert(tRet, key) --/> {arg1, arg2, ..., argn}
+								tRet[#tRet+1] = key --/> {arg1, arg2, ..., argn}
 							end
 						end
 					elseif sMode == 'string' then --/ простая таблица:
 						tRet[key] = string.trim(value) --/> {[k1]=v1, [k2]=v2, ..., [kn]=vn} (key,val - строки)
 					elseif sMode == "number" then --/ таблица (val=>число):
-						tRet[key] = tonumber(string.trim(value)) --/> {[k1]=num1, [k2]=num2, ..., [kn]=numn}
+						tRet[key] = tonum(string.trim(value)) --/> {[k1]=num1, [k2]=num2, ..., [kn]=numn}
 					elseif sMode == "bool" then --/ таблица с bool: {[k1]=boolean, [k2]=boollean, ..., [kn]=boollean}}
 						local val = string.trim(value)
-						if     (val == "true" or val == "1") and not (type(sType) == 'string' and sType == "false") then
+						if     (val == "true" or val == "1") and not (type_(sType) == 'string' and sType == "false") then
 							tRet[key] = true
-						elseif val == "false" or val == "0" and not (type(sType) == 'string' and sType == "true") then
+						elseif val == "false" or val == "0" and not (type_(sType) == 'string' and sType == "true") then
 							tRet[key] = false
 						end
 					elseif sMode == "true" then --/ таблица с 'true' (исключаем значения == false/0)
@@ -1287,12 +1294,12 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 						end
 					elseif sMode == "matrix" then --/ матрица:
 						if not sDiv then --/ субтаблицы - простые таблицы-списки
-							if bType == false then value = tonumber(string.trim(value)) end
-							table.insert(tRet,{key, string.trim(value)}) --/> { {k1,v1}, {k2,v2}, ..., {kn,vn} }
+							if bType == false then value = tonum(string.trim(value)) end
+							tRet[#tRet+1] = {key, string.trim(value)} --/> { {k1,v1}, {k2,v2}, ..., {kn,vn} }
 						elseif not (sDiv2 and sDiv2 ~= sDiv) then --/ разделяем 'value' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
 							local tValue = string.split(value,sDiv,bType)
 							tRet[key] = {}
-							table.insert( tRet[key], tValue ) --/> {k1={v11,v12,...,v1n}, k2={v21,v22,...,v2n}, ..., kn={vn1,vn2,...,vnn}}
+							tRet[key][#tRet[key]+1] = tValue --/> {k1={v11,v12,...,v1n}, k2={v21,v22,...,v2n}, ..., kn={vn1,vn2,...,vnn}}
 						else
 							local tValue = string.split(value,sDiv)
 							tRet[key] = {}
@@ -1301,8 +1308,8 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 							for _,v in pairs(tValue) do
 								Key,Val = v:match(sPattern)
 								if Key and Val then
-									if bType == false then Val = tonumber(Val) end
-									table.insert( tRet[key], {Key, Val} ) --/> {k1={k11,v11,...,kn,v1n}, k2={k21,v21,...,v2n}, ..., kn={kn1,vn1,...,knn,vnn}}
+									if bType == false then Val = tonum(Val) end
+									tRet[key][#tRet[key]+1] = {Key, Val} --/> {k1={k11,v11,...,kn,v1n}, k2={k21,v21,...,v2n}, ..., kn={kn1,vn1,...,knn,vnn}}
 								end
 							end
 						end
@@ -1320,7 +1327,7 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 							for _,v in pairs(tValue) do
 								Key,Val = v:match(sPattern)
 								if Key and Val then
-									if bType == false then Val = tonumber(Val) end
+									if bType == false then Val = tonum(Val) end
 									tRet[key][Key] = Val
 								end
 							end
@@ -1335,7 +1342,7 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 		end
 		if bLtx then ltx = nil end
 	elseif db.is_dbg1 then
-		callstack("fGet_IniSection:ini=["..type(ini).."],NOT_found_Section=["..tostring(sSection).."],Type=["..tostring(sMode).."]:<Error!>")
+		callstack("fGet_IniSection:ini=["..type_(ini).."],NOT_found_Section=["..tostring(sSection).."],Type=["..tostring(sMode).."]:<Error!>")
 	else
 		printf("fGet_IniSection:ini=[%s],NOT_found_Section=[%s],Type=[%s]:<%s>", ini, sSection, sMode, "Error!")
 	end

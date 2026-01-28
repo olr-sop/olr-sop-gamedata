@@ -37,9 +37,9 @@ function update(delta)
 						if kill and kill ~= nil and not kill.online and kill.m_game_vertex_id and game_graph():valid_vertex_id(kill.m_game_vertex_id) and kill.health and kill:alive() then
 							local strn_id = kill:smart_terrain_id()
 							if strn_id ~= 65535 then
-								if alife():object(kill.id).level_name ~= level.name() then
+								if sim:object(kill.id).level_name ~= level.name() then
 									--olr.add_spot_on_map( kill.id,"green_location", kill:name() )
-									table.insert(tabst, kill)
+									tabst[#tabst+1] = kill
 									loadedsim = true
 								end
 							end
@@ -102,25 +102,26 @@ function update(delta)
 end
 
 function procees(val)
+	local tostr = tostring
 	if val then
-		amk.oau_reason = "offline_walk chp3 " .. tostring(val and val:name())
+		amk.oau_reason = "offline_walk chp3 " .. tostr(val and val:name())
 		if val.id then
-			amk.oau_reason = "offline_walk chp4 " .. tostring(val and val:name())
+			amk.oau_reason = "offline_walk chp4 " .. tostr(val and val:name())
 			if alife():object(val.id) then
-				amk.oau_reason = "offline_walk chp5 " .. tostring(val and val:name())
+				amk.oau_reason = "offline_walk chp5 " .. tostr(val and val:name())
 				if val.brain then
-					amk.oau_reason = "offline_walk chp6 " .. tostring(val and val:name())
+					amk.oau_reason = "offline_walk chp6 " .. tostr(val and val:name())
 					if val:brain() then
-						amk.oau_reason = "offline_walk chp7 " .. tostring(val and val:name())
+						amk.oau_reason = "offline_walk chp7 " .. tostr(val and val:name())
 
 						--local pt = profile_timer()
 						--pt:start()
 
 						if spots == true then
 							if IsMonster(val) then
-								olr.add_spot_on_map(val.id, "red_location", ""..tostring(val:name()).."	 ")
+								olr.add_spot_on_map(val.id, "red_location", ""..tostr(val:name()).."	 ")
 							else
-								olr.add_spot_on_map(val.id, "green_location",""..tostring(val:name()).." -- "..tostring(xvars.npcs_tasks_rndway[val:name()]).." ")
+								olr.add_spot_on_map(val.id, "green_location",""..tostr(val:name()).." -- "..tostr(xvars.npcs_tasks_rndway[val:name()]).." ")
 							end
 						end
 

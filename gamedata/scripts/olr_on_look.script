@@ -11,6 +11,8 @@ function look_item(obj)
 end
 
 function look_change(obj)
+    local mrandom = math.random
+    local level_name = level.name()
     if obj then
         if get_clsid(obj) == clsid.zombie or get_clsid(obj) == clsid.zombie_s then
             if obj:alive() == false and not has_alife_info("zombie_first_checkup") then
@@ -18,9 +20,9 @@ function look_change(obj)
                 olr.hud_tip("", game.translate_string("st_olr_on_look_tip_zombie"), 10)
             end
             if obj:alive() == false then
-                if math.random(1, 10) == 1 then
+                if mrandom(1, 10) == 1 then
                     local shelbone = obj:get_physics_shell():get_element_by_bone_id(0)
-                    shelbone:apply_force(math.random(14, 75), math.random(14, 75), math.random(10, 90))
+                    shelbone:apply_force(mrandom(14, 75), mrandom(14, 75), mrandom(10, 90))
                     local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\zombie_mute_5]])
                     if not snd_obj:playing() then
                         snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -31,7 +33,7 @@ function look_change(obj)
 
         if get_clsid(obj) == clsid.controller or get_clsid(obj) == clsid.controller_s then
             if obj:alive() == false then
-                if math.random(1, 100) == 1 then
+                if mrandom(1, 100) == 1 then
                     olr.rnd_camera_direction()
                 end
             end
@@ -51,23 +53,23 @@ function look_change(obj)
             end
         end
 
-        if level.name() == "lvl9_military" then
+        if level_name == "lvl9_military" then
             nick.look_military(obj)
         end
 
-        if level.name() == "lvl2_garbage" then
+        if level_name == "lvl2_garbage" then
             nick.look_garbage(obj)
         end
 
-        if level.name() == "lvl7_yantar" then
+        if level_name == "lvl7_yantar" then
             nick.look_yantar(obj)
         end
 
-        if level.name() == "lvl5_bar" then
+        if level_name == "lvl5_bar" then
             this.look_bar(obj)
         end
 
-        if level.name() == "lvl3_agroprom" then
+        if level_name == "lvl3_agroprom" then
             if obj:name() == "lvl3_agroprom_physic_object_0381" then
                 olr.hud_tip(game.translate_string("st_olr_on_look_tip_hmm"), game.translate_string("st_olr_on_look_tip_some_book"), 2)
 				--olr.beep()

@@ -80,7 +80,7 @@ function r_2nums( spawn_ini, section, line, def1, def2 )
 	if spawn_ini:line_exist( section, line ) then
 		-- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
 		local t = parse_names( spawn_ini:r_string( section, line ) )
-		local n = table.getn( t )
+		local n = #t
 
 		if n == 0 then
 			return def1, def2
@@ -97,7 +97,7 @@ end
 function parse_names( s )
     local t = {}
     for name in string.gfind( s, "([%w_%-.\\]+)%p*" ) do
-        table.insert( t, name )
+        t[#t+1] = name
     end
     return t
 end
@@ -106,7 +106,7 @@ function r_spawns( spawn_ini, section, line, sectSpawnProps)
 	if spawn_ini:line_exist( section, line ) then
 		-- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
 		local t = parse_names( spawn_ini:r_string( section, line ) )
-		local n = table.getn( t )
+		local n = #t
 		
 		local ret_table = {}
 		local k = 1
@@ -130,7 +130,7 @@ function r_spawns( spawn_ini, section, line, sectSpawnProps)
 				spawn.prob = 1
 				k = k + 1
 			end
-			table.insert(ret_table, spawn)
+			ret_table[#ret_table+1] = spawn
 	
 			-- ¬ычитываем настройки секций респавна и кешируем их.
 			if sectSpawnProps[spawn.section] == nil then
@@ -179,7 +179,7 @@ end
 function se_respawn:STATE_Write( packet )
 	cse_alife_smart_zone.STATE_Write( self, packet )
 
-	local table_size = table.getn(self.spawned_obj)
+	local table_size = #self.spawned_obj
 --	printf("SPAWNER SAVE table_size[%d]", table_size)
 --	print_table(self.spawned_obj)
 	
@@ -204,7 +204,7 @@ function se_respawn:STATE_Read( packet, size )
 
 	local table_size = packet:r_u8()
 	for i=1,table_size do
-		table.insert(self.spawned_obj, packet:r_u16())
+		self.spawned_obj[#self.spawned_obj+1] = packet:r_u16()
 	end
 	
     if not packet:r_eof() then
@@ -297,6 +297,7 @@ function se_respawn:on_register()
 end
 -- —оздаем объект
 function se_respawn:create(prob)
+	local sim = alife()
 
 	if tostring(prob) == "nil" then		
 		print_table(self.conditions)
@@ -350,7 +351,7 @@ function se_respawn:create(prob)
 		
 		local parent_id = nil
 		if self.parent ~= nil then
-			local s_obj = alife():story_object(self.parent)
+			local s_obj = sim:story_object(self.parent)
 			if s_obj == nil then
 				abort("SPAWNING [%s], cant find parent with SID [%s]", self:name(), self.parent)
 				return
@@ -360,11 +361,11 @@ function se_respawn:create(prob)
 		
 		local obj
 		if parent_id == nil then
-			obj = alife():create(spawn_section,	self.position, self.m_level_vertex_id, self.m_game_vertex_id)
+			obj = sim:create(spawn_section,	self.position, self.m_level_vertex_id, self.m_game_vertex_id)
 			--log1("smart_terain name: "..self:name().." spawn object: "..obj:name().."")
 			--olr.add_spot_on_map( obj.id,"red_location",obj:name() )
 		else
-			obj = alife():create(spawn_section,	self.position, self.m_level_vertex_id, self.m_game_vertex_id, parent_id)
+			obj = sim:create(spawn_section,	self.position, self.m_level_vertex_id, self.m_game_vertex_id, parent_id)
 			--log1("smart_terain name: "..self:name().." spawn object: "..obj:name().."")
 			--olr.add_spot_on_map( obj.id,"red_location",obj:name() )
 		end
@@ -386,30 +387,30 @@ function se_respawn:create(prob)
 				local smart_terrain_id = obj:smart_terrain_id()
           			--log1("SPAWN [%s] move_offline [%s], interactive [%s], smart_terrain_id [%s]", tostring(self:name()), tostring(self:move_offline()), tostring(self:interactive()), smart_terrain_id)
 				if smart_terrain_id ~= 65535 then		
-					table.insert(self.spawned_obj ,obj.id)
+					self.spawned_obj[#self.spawned_obj+1] = obj.id
 					local pos = obj.position
 					--log1("SPAWNING [%s] -> [%s], position [%s][%s][%s]", tostring(self:name()), spawn_section, pos.x, pos.y, pos.z)
-					local sm_obj = alife():object(smart_terrain_id)
+					local sm_obj = sim:object(smart_terrain_id)
 					--log1("SPAWNING for SMART [%s] : [%s] -> [%s]", self:name(), obj:name(), sm_obj:name())
 					if obj and IsStalker(obj) then
-						table.insert(olr_offline_walk.tabst, obj)
+						olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = obj
 						olr_newnpc_eqp.on_spawn(obj)
 						olr_ai_tasks.on_spawn_npc(obj)
 					end
 					if obj and IsMonster(obj) then
-						table.insert(olr_offline_walk.tabst, obj)
+						olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = obj
 					end
 					return true
 				else
 					--news_manager.send_tip(db.actor, "se_respawn DEL - "..obj:name().." on "..obj.level_name.." ", nil, "trader", 29000)
 					--log1("SPAWNING [%s] -> [%s], CANT SPAWN. NO SMART_TERRAIN AVAILABLE!!!", tostring(self:name()), spawn_section)
-					alife():release(obj, true)
+					sim:release(obj, true)
 					return false
 				end
 			end
 		end
 
-		table.insert(self.spawned_obj ,obj.id)
+		self.spawned_obj[#self.spawned_obj+1] = obj.id
 		return true
 	end
 end
@@ -457,7 +458,7 @@ function se_respawn:spawn()
 	
 	-- делаем несколько попыток заспаунить объект.
 	for i=1,self.max_spawn do		
-		if self.max_count ~= -1 and table.getn(self.spawned_obj) >= self.max_count then
+		if self.max_count ~= -1 and #self.spawned_obj >= self.max_count then
 --			printf("SPAWNING [%s], CANT SPAWN. MAX COUNT REACHED!!!", tostring(self:name()))
 			return
 		end		
@@ -537,7 +538,7 @@ function spawn(name)
 	end
 	
 	for i=1,spawner.max_spawn do
-		if spawner.max_count ~= -1 and table.getn(spawner.spawned_obj) >= spawner.max_count then
+		if spawner.max_count ~= -1 and #spawner.spawned_obj >= spawner.max_count then
 --			printf("SPAWNING [%s], CANT SPAWN. MAX COUNT REACHED!!!", tostring(spawner:name()))
 			return
 		end		
@@ -561,7 +562,7 @@ function stats()
 		local s = xr_logic.pick_section_from_condlist(db.actor_proxy, v, v.conditions)
 		local pops = "DISABLE"
 		if s ~= "nil" and s ~= "0" then
-			pops = table.getn(v.spawned_obj)
+			pops = #v.spawned_obj
 		end
 		local str_pops
 		if v.max_count == pops then
@@ -589,17 +590,18 @@ end
 
 -- —бор продвинутой статистики статистики по лимитам
 function lstats()
+	local pairs_ = pairs
 	local can_spawn = {}
 	printf("***************** LIMITS STATISTIC *********************")
-	for k,v in pairs(respawners) do
+	for k,v in pairs_(respawners) do
 		-- «апоминаем максимальное количество весов дл€ данного респавнера
 		local wage = 0
-		for kk,vv in pairs(v.respawn_section) do
+		for kk,vv in pairs_(v.respawn_section) do
 			wage = wage + vv.prob
 		end
 		
 		-- «аносим максимальное количество всех типов чуваков, которые данный респавнер может наспаунить.
-		for kk,vv in pairs(v.respawn_section) do
+		for kk,vv in pairs_(v.respawn_section) do
 			local tt = v.sectSpawnProps[vv.section]
 			local community_rank = tt.community.."_"..tt.rank
 			if can_spawn[community_rank] == nil then
@@ -609,7 +611,7 @@ function lstats()
 	end	
 	-- ¬ыводим все это в общей статистике
 	local total_max, total_prob, total_current, total_limit = 0,0,0,0
-	for k,v in pairs(can_spawn) do
+	for k,v in pairs_(can_spawn) do
 		local cs = sim_statistic.simNpcCount(v.community, v.rank)
 		local gl = simMaxCount[k]
 		if gl == nil then gl = 0 end

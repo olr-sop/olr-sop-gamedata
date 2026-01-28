@@ -122,15 +122,15 @@ local function table_to_string(t, indent)
         return tostring(t)
     end
     
-    table.insert(result, "{\n")
+    result[#result+1] = "{\n"
     
     for k, v in pairs(t) do
         local key_str = type(k) == "number" and "["..k.."]" or tostring(k)
         local value_str = type(v) == "table" and table_to_string(v, indent + 1) or tostring(v)
-        table.insert(result, spaces.."  "..key_str.." = "..value_str..",\n")
+        result[#result+1] = spaces.."  "..key_str.." = "..value_str..",\n"
     end
     
-    table.insert(result, spaces.."}")
+    result[#result+1] = spaces.."}"
     return table.concat(result)
 end
 

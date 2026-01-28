@@ -162,6 +162,7 @@ end
 
 -- execute of action
 function action_go_trade:execute()
+	local mrandom = math.random
 	action_base.execute(self)
 	
 	local npc = self.object
@@ -186,7 +187,7 @@ function action_go_trade:execute()
 				xr_sound.set_sound_play(self.object, "talk_hello")
 			end
 			if self.trade_tmr == 50 then
-				local rnd = math.random(1, 3)
+				local rnd = mrandom(1, 3)
 				if rnd == 1 then
 					xr_sound.set_sound_play(self.object, "talk_accept")
 				elseif rnd == 2 then
@@ -214,7 +215,7 @@ function action_go_trade:execute()
 				local pre_money = npc:money()
 				--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
 				npc:give_money(-npc:money())
-				npc:give_money(math.random(4, 30))
+				npc:give_money(mrandom(4, 30))
 				self.sms_lalk = 0
 				xr_sound.set_sound_play(self.object, "talk_bye")
 				--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
@@ -251,7 +252,7 @@ function action_go_trade:execute()
 				xr_sound.set_sound_play(self.object, "talk_hello")
 			end
 			if self.trade_tmr == 50 then
-				local rnd = math.random(1, 3)
+				local rnd = mrandom(1, 3)
 				if rnd == 1 then
 					xr_sound.set_sound_play(self.object, "talk_accept")
 				elseif rnd == 2 then
@@ -279,7 +280,7 @@ function action_go_trade:execute()
 				local pre_money = npc:money()
 				--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
 				npc:give_money(-npc:money())
-				npc:give_money(math.random(4, 30))
+				npc:give_money(mrandom(4, 30))
 				self.sms_lalk = 0
 				xr_sound.set_sound_play(self.object, "talk_bye")
 				--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
@@ -312,7 +313,7 @@ function action_go_trade:execute()
 				xr_sound.set_sound_play(self.object, "talk_hello")
 			end
 			if self.trade_tmr == 50 then
-				local rnd = math.random(1, 3)
+				local rnd = mrandom(1, 3)
 				if rnd == 1 then
 					xr_sound.set_sound_play(self.object, "talk_accept")
 				elseif rnd == 2 then
@@ -340,7 +341,7 @@ function action_go_trade:execute()
 				local pre_money = npc:money()
 				--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
 				npc:give_money(-npc:money())
-				npc:give_money(math.random(4, 40))
+				npc:give_money(mrandom(4, 40))
 				self.sms_lalk = 0
 				xr_sound.set_sound_play(self.object, "talk_bye")
 				--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
@@ -490,42 +491,43 @@ end
 
 local flgo = false
 function create_trading_escape(npc, pre_money)
+	local sim = alife()
 	if flgo == false then
 	flgo = true
 	if pre_money >= 5000 then
-		alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		alife():create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("wpn_vintorez", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("scientific_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("wpn_vintorez", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("scientific_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 		se_respawn.create_ammo("ammo_9x39_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
 		--log1("bying high")	
 	elseif pre_money < 5000 and pre_money > 2500 then
-		alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("ecolog_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		alife():create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		alife():create("wpn_lr300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("ecolog_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+		sim:create("wpn_lr300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 		se_respawn.create_ammo("ammo_5.56x45_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
 		--log1("bying med")
 	elseif pre_money < 2500 and pre_money > 100 then
 		local rnd = math.random(1,2)
 		if rnd == 1 then
-			alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("wpn_toz34", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("wpn_toz34", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
 		else
-			alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			alife():create("grenade_f1", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+			sim:create("grenade_f1", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
 		end
 		--log1("bying low")
@@ -536,39 +538,40 @@ end
 
 local flgt = false
 function create_trading_barman(npc, pre_money)
+	local sim = alife()
 	if flgt == false then
 	flgt = true
 	if pre_money >= 5000 then
-		alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		alife():create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("wpn_val", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("exo_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("wpn_val", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("exo_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 		se_respawn.create_ammo("ammo_9x39_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
 		--log1("bying high")	
 	elseif pre_money < 5000 and pre_money > 2500 then
-		alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("ecolog_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		alife():create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		alife():create("wpn_g36", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("ecolog_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+		sim:create("wpn_g36", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 		se_respawn.create_ammo("ammo_5.56x45_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
 		--log1("bying med")
 	elseif pre_money < 2500 and pre_money > 100 then
 		local rnd = math.random(1,2)
 		if rnd == 1 then
-			alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			alife():create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+			sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
 		else
-			alife():create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			alife():create("grenade_f1", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			alife():create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
+			sim:create("grenade_f1", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+			sim:create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
 		end
 		--log1("bying low")

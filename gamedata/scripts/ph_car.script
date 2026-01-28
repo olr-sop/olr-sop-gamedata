@@ -52,6 +52,7 @@ function action_car:__init(obj, storage)
 end
 
 function action_car:reset_scheme(loading)
+	local tonum = tonumber
 	printf("car <state>: START INITIALIZING ======================================================")
     printf("car <state>: action_car:reset_scheme: self.object:name()='%s'", self.object:name())
 
@@ -194,7 +195,7 @@ function action_car:reset_scheme(loading)
 	                self.target_obj = db.actor
 	                self.state_firetarget = state_firetarget_enemy
 	            else
-	                n = tonumber(self.st.fire_target)
+	                n = tonum(self.st.fire_target)
 	                if n then
 	                    obj = level_object_by_sid(n)
 	                    if obj and obj:alive() then
@@ -216,7 +217,7 @@ function action_car:reset_scheme(loading)
 	                self.on_target_vis = vis
 	                printf("car <vis>: target actor")
 	            else
-	                n = tonumber(vis.v1)
+	                n = tonum(vis.v1)
 	                if n then
 	                    obj = level_object_by_sid(n)
 	                    if obj and obj:alive() then
@@ -234,7 +235,7 @@ function action_car:reset_scheme(loading)
 	                self.on_target_nvis = nvis
 	                printf("car <nvis>: target actor")
 	            else
-	                n = tonumber(nvis.v1)
+	                n = tonum(nvis.v1)
 	                if n then
 	                    obj = level_object_by_sid(n)
 	                    if obj and obj:alive() then
@@ -255,7 +256,7 @@ function action_car:reset_scheme(loading)
 	            if self.st.fire_rep == "inf" then
 	                self.def_fire_rep = -1
 	            else
-	                local c = tonumber(self.st.fire_rep)
+	                local c = tonum(self.st.fire_rep)
 		            self.def_fire_rep = if_then_else(c > 0, c, 0)
 		        end
 		    else
@@ -519,6 +520,7 @@ function action_car:stop_car()
 end
 
 function action_car:walk_arrival_callback(index)
+	local tonum = tonumber
 	printf("car <move>: action_car:walk_arrival_callback(%d)", index)
 	if index == -2 then return end
 
@@ -532,7 +534,7 @@ function action_car:walk_arrival_callback(index)
 
 	local suggested_spd = self.path_walk_info[index]["spd"]
 	if suggested_spd then
-		self.speed = tonumber(suggested_spd)
+		self.speed = tonum(suggested_spd)
 	else
 		self.speed = def_moving_speed
 	end
@@ -547,14 +549,14 @@ function action_car:walk_arrival_callback(index)
 
 	local suggested_dps = self.path_walk_info[index]["dps"]
 	if suggested_dps then
-		self.min_delta_per_sec = tonumber(suggested_dps)
+		self.min_delta_per_sec = tonum(suggested_dps)
 	else
 		self.min_delta_per_sec = def_min_delta_per_sec
 	end
 
 	local suggested_exptm = self.path_walk_info[index]["exptm"]
 	if suggested_exptm then
-		self.min_car_explode_time = tonumber(suggested_exptm)
+		self.min_car_explode_time = tonum(suggested_exptm)
 	else
 		self.min_car_explode_time = def_min_car_explode_time
 	end
@@ -583,7 +585,7 @@ function action_car:walk_arrival_callback(index)
 	            if fr == "inf" then
 	                self.fire_rep = -1
 	            else
-	                local c = tonumber(fr)
+	                local c = tonum(fr)
 		            self.fire_rep = if_then_else(c > 0, c, 0)
 		        end
 	        else
@@ -662,13 +664,13 @@ function action_car:change_fire_pts()
 	    for fire_idx = 0, self.path_fire:count() - 1 do
 		    this_val = self.path_fire_info[fire_idx].flags
 		    if this_val:equal(fire_flags) then
-			    table.insert(self.fire_pt_arr, fire_idx)
+			    self.fire_pt_arr[#self.fire_pt_arr+1] = fire_idx
 			    self.fire_pt_count = self.fire_pt_count + 1
 		    end
 	    end
 	else
 	    for fire_idx = 0, self.path_fire:count() - 1 do
-			table.insert(self.fire_pt_arr, fire_idx)
+			self.fire_pt_arr[#self.fire_pt_arr+1] = fire_idx
 	    end
 	    self.fire_pt_count = self.path_fire:count()
 	end

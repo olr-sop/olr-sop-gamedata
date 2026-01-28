@@ -10,6 +10,7 @@ local start_snds={
 
 
 function trading_start(id)
+	local sim = alife()
 
 	local obj = level.object_by_id(id)
 
@@ -22,10 +23,10 @@ function trading_start(id)
 	end
 
 	if obj:name() == "lvl7_yantar_stalker_sakharov" then
-		local safeobj = alife():object("lvl7_yantar_arts_box_profa")   -- ящик профессора
+		local safeobj = sim:object("lvl7_yantar_arts_box_profa")   -- ящик профессора
 		if safeobj then
 			local bosx = level.object_by_id(safeobj.id)
-			local jan_profesor = alife():object("lvl7_yantar_stalker_sakharov")
+			local jan_profesor = sim:object("lvl7_yantar_stalker_sakharov")
 			local prof = level.object_by_id(jan_profesor.id)	
 			for i = 0, bosx:inv_box_count() - 1 do
 				local obj = bosx:object_from_inv_box(i)
@@ -35,10 +36,10 @@ function trading_start(id)
 	end
 
 	if obj:name() == "bar_barman" then
-		local safeobj = alife():object("lvl5_bar_box_barmena")   -- ящик бармена
+		local safeobj = sim:object("lvl5_bar_box_barmena")   -- ящик бармена
 		if safeobj then
 			local bosx = level.object_by_id(safeobj.id)
-			local jan_profesor = alife():object("bar_barman")
+			local jan_profesor = sim:object("bar_barman")
 			local prof = level.object_by_id(jan_profesor.id)	
 			for i = 0, bosx:inv_box_count() - 1 do
 				local obj = bosx:object_from_inv_box(i)
@@ -68,7 +69,7 @@ function trading_start(id)
 	
 	if not obj_istrader(obj) then
 		if obj:active_sound_count() ~= 0 then return end
-		local snd_obj = xr_sound.get_safe_sound_object(start_snds[math.random(table.getn(start_snds))])
+		local snd_obj = xr_sound.get_safe_sound_object(start_snds[math.random(#start_snds)])
 		snd_obj:play_at_pos(db.actor, db.actor:position())
 	end
 

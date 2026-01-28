@@ -760,6 +760,7 @@ end
 local warn_check_timer = {}
 
 function check_sound(self, who, sound_type, sound_position, sound_power)
+	local mrandom = math.random
 	
 	if not self or
 		not who or
@@ -832,13 +833,13 @@ function check_sound(self, who, sound_type, sound_position, sound_power)
 				if who_dist > check_dist then
 					if not silent_level() then
 						if not warn_check_timer[self:id()] or warn_check_timer[self:id()] < time_global() then
-							local snd_name = nothing_there[math.random(1,7)]
+							local snd_name = nothing_there[mrandom(1,7)]
 							if snd_name and self:character_community() ~= "zombied" then
 								local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 								if snd_obj and not snd_obj:playing() then
 									self:set_sight(look.point,sound_position)
 									snd_obj:play_no_feedback(self, sound_object.s3d, 0, self:position(), 1.0)
-									warn_check_timer[self:id()] = time_global() + math.random(15000, 25000) 
+									warn_check_timer[self:id()] = time_global() + mrandom(15000, 25000) 
 									--news_manager.send_tip(db.actor, game.translate_string("check_sound_0"))
 									--log1("try snd nothin_there stalker enemy")
 								end
@@ -849,13 +850,13 @@ function check_sound(self, who, sound_type, sound_position, sound_power)
 				else
 					if not silent_level() then
 						if not warn_check_timer[self:id()] or warn_check_timer[self:id()] < time_global() then
-							local snd_name = hear_something[math.random(1,9)]
+							local snd_name = hear_something[mrandom(1,9)]
 							if snd_name and self:character_community() ~= "zombied" then
 								local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 								if snd_obj and not snd_obj:playing() then
 									self:set_sight(look.point,sound_position)
 									snd_obj:play_no_feedback(self, sound_object.s3d, 0, self:position(), 1.0)
-									warn_check_timer[self:id()] = time_global() + math.random(5000, 10000) 
+									warn_check_timer[self:id()] = time_global() + mrandom(5000, 10000) 
 									--news_manager.send_tip(db.actor, game.translate_string("check_sound_1"))
 									--log1("try snd hear_soething")
 								end
@@ -885,13 +886,13 @@ function check_sound(self, who, sound_type, sound_position, sound_power)
 			if who_dist > check_dist then
 				if not silent_level() then
 					if not warn_check_timer[self:id()] or warn_check_timer[self:id()] < time_global() then
-						local snd_name = nothing_there[math.random(1,7)]
+						local snd_name = nothing_there[mrandom(1,7)]
 						if snd_name and self:character_community() ~= "zombied" then
 							local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 							if snd_obj and not snd_obj:playing() then
 								self:set_sight(look.point,sound_position)
 								snd_obj:play_no_feedback(self, sound_object.s3d, 0, self:position(), 1.0)
-								warn_check_timer[self:id()] = time_global() + math.random(15000, 25000) 
+								warn_check_timer[self:id()] = time_global() + mrandom(15000, 25000) 
 								--news_manager.send_tip(db.actor, game.translate_string("check_sound_2"))
 								--log1("try snd nothin_there monster -- "..who:name().." ")
 							end

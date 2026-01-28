@@ -123,7 +123,7 @@ function ui_capsule:add_cap_arts()
 				self:AddCallback(reg_id,ui_events.BUTTON_CLICKED,button.OnPressCap,button)
 				self:AddCallback(reg_id,ui_events.WINDOW_LBUTTON_DB_CLICK,button.OnDoublePressCap,button)
 
-				table.insert(cap_reg_ids, reg_id)
+				cap_reg_ids[#cap_reg_ids+1] = reg_id
 				printf("%s", reg_id)
 				st_id = st_id + 1
 				wth = wth + 25
@@ -141,7 +141,8 @@ function ui_capsule:add_inv_arts()
 	-- перебор и заполнение инвентори
 	local calc = function(npc, obj)
 		if obj ~= nil and isArtefact(obj) and db.actor:is_in_ruck(obj) then
-			if obj:section() == "af_galantine" or obj:section() == "af_junk_bolt" or obj:section() == "af_junk_debris" or obj:section() == "af_knot" or obj:section() == "af_cotton" then
+			local obj_sec = obj:section()
+			if obj_sec == "af_galantine" or obj_sec == "af_junk_bolt" or obj_sec == "af_junk_debris" or obj_sec == "af_knot" or obj_sec == "af_cotton" then
 				--local cond = obj:condition() * 100 
 				--local condname = ""..string.format("%1.0f", cond).."%"
 
@@ -172,7 +173,7 @@ function ui_capsule:add_inv_arts()
 				self:AddCallback(reg_id,ui_events.BUTTON_CLICKED,button.OnPress,button)
 				self:AddCallback(reg_id,ui_events.WINDOW_LBUTTON_DB_CLICK,button.OnDoublePress,button)
 
-				table.insert(reg_ids, reg_id)
+				reg_ids[#reg_ids+1] = reg_id
 
 				st_id = st_id + 1
 				wth = wth + 25
@@ -219,7 +220,7 @@ function CButtonDataCap:__init(wind, obj, button)
 	self.obj = obj
 	self.wind = wind
 	self.button = button
-	table.insert(oButtons, self)
+	oButtons[#oButtons+1] = self
 end
 
 -- Destruct
@@ -276,7 +277,7 @@ function CButtonData:__init(wind, obj, button)
 	self.obj = obj
 	self.wind = wind
 	self.button = button
-	table.insert(oButtonsCap, self)
+	oButtonsCap[#oButtonsCap+1] = self
 end
 
 -- Destruct

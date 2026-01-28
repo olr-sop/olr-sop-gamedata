@@ -22,6 +22,7 @@ local probabilities = {
 local ini = system_ini()
 
 function sleep_rob()
+	local mrandom = math.random
 	if db.actor:is_actor_outdoors() == false then
 		return
 	end
@@ -63,24 +64,24 @@ function sleep_rob()
 
 		-- Для каждого типа предмета генерируем свой случайный процент
 		if obj:is_artefact() then
-			if math.random(1, 100) <= probabilities.artefact then
-				table.insert(items_to_steal, obj)
+			if mrandom(1, 100) <= probabilities.artefact then
+				items_to_steal[#items_to_steal+1] = obj
 			end
 		elseif obj:is_ammo() then
-			if math.random(1, 100) <= probabilities.ammo then
-				table.insert(items_to_steal, obj)
+			if mrandom(1, 100) <= probabilities.ammo then
+				items_to_steal[#items_to_steal+1] = obj
 			end
 		elseif obj:is_weapon() then
-			if math.random(1, 100) <= probabilities.weapon then
-				table.insert(items_to_steal, obj)
+			if mrandom(1, 100) <= probabilities.weapon then
+				items_to_steal[#items_to_steal+1] = obj
 			end
 		elseif obj:is_outfit() and not db.actor:is_in_slot(obj) then
-			if math.random(1, 100) <= probabilities.outfit then
-				table.insert(items_to_steal, obj)
+			if mrandom(1, 100) <= probabilities.outfit then
+				items_to_steal[#items_to_steal+1] = obj
 			end
 		elseif obj:is_food_item() then
-			if math.random(1, 100) <= probabilities.food then
-				table.insert(items_to_steal, obj)
+			if mrandom(1, 100) <= probabilities.food then
+				items_to_steal[#items_to_steal+1] = obj
 			end
 		end
 	end, db.actor)
@@ -99,7 +100,7 @@ function sleep_rob()
 		
 		if not olr_timers.has_timer("actor_robbered_timer") then
 			local action = string.format("olr_sleep_robbers.actor_robbered_timer_sms(%q, %q)", stalker_name, sender_icon)
-			local tmr = math.random(200, 250)
+			local tmr = mrandom(200, 250)
 			olr_timers.st_timer("actor_robbered_timer", tmr, action)
 		end
 	end

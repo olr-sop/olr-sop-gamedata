@@ -84,6 +84,7 @@ end
 function ui_trade:__finalize() end
 
 function ui_trade:InitControls()
+	local sformat = string.format
 	self:Init(0,0,1024,768)
 
 	local xml = CScriptXmlInit()
@@ -98,13 +99,13 @@ function ui_trade:InitControls()
 	self.actor_name:SetTextST(xr_effects.get_real_actor_name())
 
 	self.yess = xml:InitStatic("rank_wnd", self.main)
-	self.yess:SetTextST(string.format("%s %s", game.translate_string("ui_st_pda_talk_rank"), ""..db.actor:character_rank().." : "..self.rank..""))
+	self.yess:SetTextST(sformat("%s %s", game.translate_string("ui_st_pda_talk_rank"), ""..db.actor:character_rank().." : "..self.rank..""))
 
 	self.no = xml:InitStatic("community_wnd", self.main)
-	self.no:SetTextST(string.format("%s %s", game.translate_string("ui_st_pda_talk_community"), self.comm))
+	self.no:SetTextST(sformat("%s %s", game.translate_string("ui_st_pda_talk_community"), self.comm))
 
 	self.rep = xml:InitStatic("reputation_wnd", self.main)
-	self.rep:SetTextST(string.format("%s: %s", game.translate_string("pda_btn_reputation"), ""..db.actor:character_reputation().." ("..self.repa..")"))
+	self.rep:SetTextST(sformat("%s: %s", game.translate_string("pda_btn_reputation"), ""..db.actor:character_reputation().." ("..self.repa..")"))
 
 	self.vo = xml:InitStatic("volume_wnd", self.main)
 
@@ -112,11 +113,11 @@ function ui_trade:InitControls()
 	--self.vt:SetTextST(string.format("%s: %s", game.translate_string("ui_inv_water_script"), self.vater))
 
 	self.so = xml:InitStatic("sleep_wnd", self.main)
-	self.so:SetTextST(string.format("%s: %s", game.translate_string("ui_inv_sleeping"),  self.sleep))
+	self.so:SetTextST(sformat("%s: %s", game.translate_string("ui_inv_sleeping"),  self.sleep))
 
 	-- 
 	self.bw = xml:InitStatic("blowouts_wnd", self.main)
-	self.bw:SetTextST(string.format("%s: %s", game.translate_string("ui_inv_survived_blowouts"),  self.blows))
+	self.bw:SetTextST(sformat("%s: %s", game.translate_string("ui_inv_survived_blowouts"),  self.blows))
 
 	if self.inv_vol < 0 then
 		self.inv_vol=0
@@ -129,11 +130,11 @@ function ui_trade:InitControls()
 		vol_cur = "--"
 		vol_cur_max = "--"
 	else
-		vol_cur = string.format("%1.1f", self.inv_vol)
-		vol_cur_max = string.format("%1.0f", self.inv_vol_max)
+		vol_cur = sformat("%1.1f", self.inv_vol)
+		vol_cur_max = sformat("%1.0f", self.inv_vol_max)
 	end
 	
-	self.vo:SetTextST(string.format("%s: %s / "..vol_cur_max.."", game.translate_string("ui_inv_volume_script"),  vol_cur))
+	self.vo:SetTextST(sformat("%s: %s / "..vol_cur_max.."", game.translate_string("ui_inv_volume_script"),  vol_cur))
 end
 
 

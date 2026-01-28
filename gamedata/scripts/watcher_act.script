@@ -23,17 +23,18 @@ function do_not_touch(item)
 end
 
 function cannot_take_that(npc)
+	local sfind = string.find
 	if npc then
 		if npc:character_community() == "zombied" or npc:character_community() == "trader" or
 				npc:character_community() == "neutral" or
-				string.find(npc:name(), "doctor") or
-				string.find(npc:name(), "doktor") or
-				string.find(npc:name(), "mil_stalker") or
-				string.find(npc:name(), "ecolog") or
-				string.find(npc:name(), "scientist") or
-				string.find(npc:name(), "lvl16_generators_staler_undead_olr_0002") or
-				string.find(npc:name(), "lvl1_escape_stalker_0038") or
-				string.find(npc:name(), "mil_freedom_member0021") then
+				sfind(npc:name(), "doctor") or
+				sfind(npc:name(), "doktor") or
+				sfind(npc:name(), "mil_stalker") or
+				sfind(npc:name(), "ecolog") or
+				sfind(npc:name(), "scientist") or
+				sfind(npc:name(), "lvl16_generators_staler_undead_olr_0002") or
+				sfind(npc:name(), "lvl1_escape_stalker_0038") or
+				sfind(npc:name(), "mil_freedom_member0021") then
 			return true
 		else
 			return false
@@ -515,6 +516,7 @@ function act_grab_body:initialize()
 end
 
 function act_grab_body:execute()
+	local mrandom = math.random
 	action_base.execute(self)
 	local npc = self.object
 	local gi = getGObject(self.st)
@@ -542,7 +544,7 @@ function act_grab_body:execute()
 		-- попробуем поставить проигрывание фразы вот сюда, будет ли она снова на апдейте висеть как не нормальная
 		if gi and gi:is_stalker() then
 			if npc:relation(gi) == game_object.enemy then
-				local snd_name = dead_enemy_reac[math.random(1, 5)]
+				local snd_name = dead_enemy_reac[mrandom(1, 5)]
 				if snd_name then
 					local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 					if snd_obj and not snd_obj:playing() then
@@ -552,7 +554,7 @@ function act_grab_body:execute()
 			--news_manager.send_tip(db.actor, " snd obisk SND 1 ENEMY -	 "..npc:name().."  to "..gi:name().."  ")
 			end
 			if npc:relation(gi) == game_object.neutral then
-				local snd_name = dead_neutral_reac[math.random(1, 4)]
+				local snd_name = dead_neutral_reac[mrandom(1, 4)]
 				if snd_name then
 					local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 					if snd_obj and not snd_obj:playing() then
@@ -562,7 +564,7 @@ function act_grab_body:execute()
 			--news_manager.send_tip(db.actor, " snd obisk SND 1 neutral -  "..npc:name().."	 to "..gi:name().."	 ")
 			end
 			if npc:relation(gi) == game_object.friend then
-				local snd_name = dead_friend_reac[math.random(1, 3)]
+				local snd_name = dead_friend_reac[mrandom(1, 3)]
 				if snd_name then
 					local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 					if snd_obj and not snd_obj:playing() then
@@ -573,7 +575,7 @@ function act_grab_body:execute()
 			end
 		end
 		if gi and gi:is_custom_monster() and not gi:is_stalker() then
-			local snd_name = mutant_reac[math.random(1, 3)]
+			local snd_name = mutant_reac[mrandom(1, 3)]
 			if snd_name then
 				local snd_obj = xr_sound.get_safe_sound_object(snd_name)
 				if snd_obj and not snd_obj:playing() then

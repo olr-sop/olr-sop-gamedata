@@ -83,9 +83,10 @@ function generic_object_binder:use_callback(obj, who)
 	}
 
 	if not self.object:alive() then
-		if not is_rat_variant[self.object:section()] then
-            if system_ini():line_exist(self.object:section(), "known_info") then
-                local known_inf = system_ini():r_string(self.object:section(), "known_info") or ""
+		local self_object_sec = self.object:section()
+		if not is_rat_variant[self_object_sec] then
+            if system_ini():line_exist(self_object_sec, "known_info") then
+                local known_inf = system_ini():r_string(self_object_sec, "known_info") or ""
                 local known_inf_desc = game.translate_string(known_inf)
                 if not has_alife_info(known_inf_desc) then
                     --olr.hud_tip("", "У меня нет информации о этом мутанте...", 2)
@@ -144,7 +145,7 @@ function generic_object_binder:use_callback(obj, who)
     end
 
     if not self.object:alive() then
-        if is_rat_variant[self.object:section()] then
+        if is_rat_variant[self_object_sec] then
             local bol_var = math.random(1, 2)
             if bol_var == 1 then
                 local objj = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
@@ -164,6 +165,7 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 
 function generic_object_binder:update(delta)
+	local mrandom = math.random
 	object_binder.update(self, delta)
 
 	local cls = self.object:clsid()
@@ -215,7 +217,7 @@ function generic_object_binder:update(delta)
 				if not self.object:action() then
 					self.object:set_custom_panic_threshold(1)
 					local snds = {sound.take_damage, sound.panic, sound.idle}
-					local snd = snds[math.random(1, table.getn(snds))]
+					local snd = snds[mrandom(1, #snds)]
 					action(self.object, anim(anim.lie_idle, 0), sound(snd), cond(cond.sound_end))
 				end
 			elseif self.control_override and not blowout then
@@ -272,7 +274,7 @@ function generic_object_binder:update(delta)
 								self.object:set_default_panic_threshold()
 							end
 							self.object:set_custom_panic_threshold(1)
-							local bol_var = math.random(1, 3000)
+							local bol_var = mrandom(1, 3000)
 							if bol_var == 1 then
 								alife():create("m_controller_e", act:position():add(act:direction():add(140)), act:level_vertex_id(), act:game_vertex_id())
 							end
@@ -306,7 +308,7 @@ function generic_object_binder:update(delta)
 				end
 				if dist_to_actor < 3 then
 					local aitem = db.actor:active_item()
-					if aitem and math.random() < 0.5 and (db.actor:active_slot() == 1 or db.actor:active_slot() == 2) then
+					if aitem and mrandom() < 0.5 and (db.actor:active_slot() == 1 or db.actor:active_slot() == 2) then
 						local wobj = level.object_by_id(aitem:id())
 						db.actor:drop_item(aitem)
 						local wait_time = 0
@@ -331,7 +333,7 @@ function generic_object_binder:update(delta)
 					if dist <= 4 then
 						if not self.get_hit then
 							self.object:set_invisible(true)
-							self.get_hit = time_global() + math.random(3000, 6500)
+							self.get_hit = time_global() + mrandom(3000, 6500)
 						elseif self.get_hit <= time_global() then
 							self.object:set_invisible(false)
 						end
@@ -346,11 +348,11 @@ function generic_object_binder:update(delta)
 					level.set_pp_effector_factor(1001, 12 - dist_to_actor * 10)
 					local actorpos = db.actor:position()
 					db.actor.health = -0.00085
-					local par_varb = math.random(1, 22)
+					local par_varb = mrandom(1, 22)
 					if par_varb == 1 then
 						--zarazjenie_parazitom() -- пока уберём обработку заражения паразитом вообще
 					end
-					local par_var = math.random(1, 35)
+					local par_var = mrandom(1, 35)
 					if par_var == 1 then
 						olr.partice_on_obj(self.object:name(), [[anomaly2\group_items\pux_attack_00]])
 						olr.cough()
@@ -401,7 +403,7 @@ function generic_object_binder:update(delta)
 						return
 					end
 					-- харакири
-					local bol_var = math.random(1, 6)
+					local bol_var = mrandom(1, 6)
 					if bol_var == 1 then
 						get_actor_obj():block_action(32)
 					end
@@ -428,7 +430,7 @@ function generic_object_binder:update(delta)
 						get_actor_obj():hold_action(9)
 					end
 				end
-				controller_timer2 = time_global() + math.random(1000, 9550)
+				controller_timer2 = time_global() + mrandom(1000, 9550)
 				get_actor_obj():unblock_action(4)
 				get_actor_obj():unblock_action(36)
 				get_actor_obj():unblock_action(32)
@@ -577,15 +579,16 @@ function generic_object_binder:net_spawn(sobject)
         return false
     end
 
-	if self.object:clsid() == clsid.fracture or self.object:clsid() == clsid.fracture_s or
-		self.object:clsid() == clsid.flesh_s or
-		self.object:clsid() == clsid.flesh or
-		self.object:clsid() == clsid.dog or
-		self.object:clsid() == clsid.dog_s or
-		self.object:clsid() == clsid.zombie_s or
-		self.object:clsid() == clsid.zombie or
-		self.object:clsid() == clsid.tushkano or
-		self.object:clsid() == clsid.tushkano_s
+	local self_object_cls = self.object:clsid()
+	if self_object_cls == clsid.fracture or self_object_cls == clsid.fracture_s or
+		self_object_cls == clsid.flesh_s or
+		self_object_cls == clsid.flesh or
+		self_object_cls == clsid.dog or
+		self_object_cls == clsid.dog_s or
+		self_object_cls == clsid.zombie_s or
+		self_object_cls == clsid.zombie or
+		self_object_cls == clsid.tushkano or
+		self_object_cls == clsid.tushkano_s
 	then
 		self.object:disable_trade()
     end

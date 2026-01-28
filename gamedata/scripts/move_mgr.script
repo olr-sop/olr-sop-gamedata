@@ -540,6 +540,7 @@ function move_mgr:turn_end_callback()
 end
 
 function move_mgr:waypoint_callback(obj, action_type, index)
+	local tonum = tonumber
 	printf("move_mgr:waypoint_callback(): name=%s, index=%d", self.object:name(), index)
 	
 	if index == -1 or index == nil then
@@ -558,7 +559,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 	if suggested_snd then
 		local snd_prob = self.path_walk_info[index]["sp"]
 		if snd_prob then
-			snd_prob = tonumber(snd_prob)
+			snd_prob = tonum(snd_prob)
 		else
 			snd_prob = 100
 		end
@@ -582,7 +583,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 
 	local retv = self.path_walk_info[index]["ret"]
 	if retv then
-		local retv_num = tonumber(retv)
+		local retv_num = tonum(retv)
 		
 		if not self.move_cb_info then
 			abort("object '%s': path_walk '%s': ret flag is set, but " ..
@@ -602,7 +603,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 	local stop_probability = self.path_walk_info[index]["p"]
 	
 	if not self.patrol_look or
-	   (stop_probability and tonumber(stop_probability) < math.random(1, 100)) then
+	   (stop_probability and tonum(stop_probability) < math.random(1, 100)) then
 		self:update_movement_state() -- идти дальше
 		return
 	end
@@ -630,7 +631,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 			if suggested_wait_time == '*' then
 				self.pt_wait_time = nil -- -1
 			else
-				local tm = tonumber(suggested_wait_time)
+				local tm = tonum(suggested_wait_time)
 				if tm ~= 0 and (tm < 1000 or tm > 30000) then
 					abort("object '%s': path_look '%s': flag 't': incorrect time specified (* or number in interval [1000, 30000] is expected)",
 						self.object:name(), self.path_look)
@@ -643,7 +644,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 
 		local retv = self.path_look_info[pt_chosen_idx]["ret"]
 		if retv then
-			self.retval_after_rotation = tonumber(retv)
+			self.retval_after_rotation = tonum(retv)
 		else
 			self.retval_after_rotation = nil
 		end
@@ -653,7 +654,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 			if suggested_snd then
 				local snd_prob = self.path_look_info[pt_chosen_idx]["sp"]
 				if snd_prob then
-					snd_prob = tonumber(snd_prob)
+					snd_prob = tonum(snd_prob)
 				else
 					snd_prob = 100
 				end

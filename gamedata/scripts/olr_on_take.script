@@ -1,6 +1,7 @@
 -- hi_flyer 18.06.16
 
 function on_take(obj)
+	local sim = alife()
 	if level.name() == "lvl5_bar" then
 		if device().precache_frame > 1 then
 			return
@@ -22,7 +23,7 @@ function on_take(obj)
 	end
 
 	if obj:section() == "yad" then
-		alife():release(alife():object(obj:id()))
+		sim:release(sim:object(obj:id()))
 	end -- !! ai_medic
 
 	if obj:section() == "device_pda" then
@@ -34,7 +35,7 @@ function on_take(obj)
 		end
 		olr.del(obj)
 		local cond = obj:condition()
-		local bobj3445 = alife():create("item_pda_dead_taken", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		local bobj3445 = sim:create("item_pda_dead_taken", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 		level.client_spawn_manager():add(bobj3445.id, 0,
 			function(id, obj)
 				obj:set_condition(cond)
@@ -66,7 +67,7 @@ function on_take(obj)
 	if obj:section() == "item_pda_dead" then
 		local cond = obj:condition()
 		olr.del(obj)
-		local bobj3445 = alife():create("item_pda_dead_taken", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		local bobj3445 = sim:create("item_pda_dead_taken", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 		level.client_spawn_manager():add(bobj3445.id, 0,
 			function(id, obj)
 				obj:set_condition(cond)

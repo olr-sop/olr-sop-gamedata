@@ -149,7 +149,7 @@ function update(npc)
 		return
 	end
 
-	if table.getn(db.sound[npc_id].snd) == 0 then
+	if #db.sound[npc_id].snd == 0 then
 		return
 	end
 	
@@ -169,6 +169,7 @@ end
 
 
 function play_sound(npc, themes, timeout)
+	local mrandom = math.random
 	-- нужно составить список тем
 	local snd_table = {}
 	local t = 0		
@@ -186,14 +187,14 @@ function play_sound(npc, themes, timeout)
 	--print_table(snd_table)
 	if t == 0 then return end
 	-- из списка тем выбираем одну.	
-	local snd = snd_table[math.random(0, t-1)]
+	local snd = snd_table[mrandom(0, t-1)]
 	if snd ~= nil then
 		--printf("!")
 		--print_table(snd)
 		if snd.min_snd == nil then return end
 		local npc_id = npc:id()
 		local group_table = xr_sound.group_idle[get_key(npc)]
-		group_table.idle = math.random(snd.min_snd, snd.max_snd)*1000
+		group_table.idle = mrandom(snd.min_snd, snd.max_snd)*1000
 		if group_table.last_snd	== nil then
 			group_table.last_snd = {}
 		end
@@ -231,10 +232,10 @@ function play_sound(npc, themes, timeout)
 				-- то учитывать последний звук дл€ группы.
 --				if db.sound[npc_id].last_snd[snd.rnd_id] ~= nil then
 				if group_table.last_snd[snd.rnd_id] ~= nil then
-					s = math.random(0, snd.rnd_max-2)
+					s = mrandom(0, snd.rnd_max-2)
 					if s >= group_table.last_snd[snd.rnd_id] then s = s + 1 end
 				else
-					s = math.random(0, snd.rnd_max-1)					
+					s = mrandom(0, snd.rnd_max-1)					
 				end	
 			end			
 
@@ -295,7 +296,7 @@ function update_actor()
 	local theme = sound_theme.actor_theme[actor_sound.theme]
 	if theme == nil then return end
 	
-	if table.getn(theme.sounds) == 0 then
+	if #theme.sounds == 0 then
 		return
 	end
 
@@ -305,7 +306,7 @@ function update_actor()
 		actor_sound.begin = time_global()
 		
 		-- “ут надо отыграть звук
-		local sound = theme.sounds[math.random(table.getn(theme.sounds))]
+		local sound = theme.sounds[math.random(#theme.sounds)]
 		if sound ~= nil then
 			sound:play(db.actor, 0, sound_object.s2d)
 		end
@@ -320,8 +321,9 @@ end
 sound_object_by_theme = {}
 -- type = [random|seq|looped]
 function get_sound_object(theme, t_type, stereo)
+	local tostr = tostring
 	if sound_theme.ph_snd_themes[theme] == nil then
-		abort("ph_snd_themes for theme %s", tostring(theme))
+		abort("ph_snd_themes for theme %s", tostr(theme))
 		return
 	end
 
@@ -335,7 +337,7 @@ function get_sound_object(theme, t_type, stereo)
 
 	-- ¬ыбор следующего айдишника
 	local play_id = -1
-	local table_size = table.getn(sound_theme.ph_snd_themes[theme])
+	local table_size = #sound_theme.ph_snd_themes[theme]
 	if sound_object_by_theme[theme].last_id == nil then
 		if t_type == "random" then
 			if table_size >= 2 then
@@ -365,7 +367,7 @@ function get_sound_object(theme, t_type, stereo)
 		end		
 	end
 
-	printf("SOUND_OBJECT: selected id [%s] for theme [%s], type [%s], size [%s]", tostring(play_id), tostring(theme), tostring(type), table_size)
+	printf("SOUND_OBJECT: selected id [%s] for theme [%s], type [%s], size [%s]", tostr(play_id), tostr(theme), tostr(type), table_size)
 
 	if play_id == -1 then
 		return

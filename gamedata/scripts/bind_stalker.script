@@ -466,7 +466,19 @@ function actor_binder:info_callback(npc, info_id)
 
 	-- Отметки на карте
 	level_tasks.process_info_portion(info_id)
-    --olr_inv_actor_desc.on_info(info_id)
+
+	if info_id == "ui_talk_hide" then
+		local new = xvars.quest_new_count or 0
+		local complete = xvars.quest_complete_count or 0
+		
+		if new > 0 and complete > 0 then
+			save_manager.create_quest_save("both")
+		elseif complete > 0 then
+			save_manager.create_quest_save("complete", complete)
+		elseif new > 0 then
+			save_manager.create_quest_save("new", new)
+		end
+	end
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:on_trade(item, sell_bye, money)

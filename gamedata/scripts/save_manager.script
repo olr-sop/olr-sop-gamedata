@@ -4,7 +4,7 @@
 -- desc: Функции создания именных сейвов, автосейвов, квиксейвов
 -- author: theysani
 -- date: 23.12.2025
--- last edit: 27.12.2025
+-- last edit: 07.02.2026
 --------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
 
@@ -15,6 +15,10 @@ local time_to_autosave = utils.cfg_get_float(ini_sys, "save_manager_settings", "
 local use_device_pause = utils.cfg_get_bool(ini_sys, "save_manager_settings", "use_device_pause", nil, false, false)
 
 local console = get_console()
+local slower = string.lower
+local full_savename = ""
+local quicksave_filename = ""
+local full_autosave_name = ""
 
 --[[
 
@@ -22,9 +26,9 @@ local console = get_console()
 	Постараюсь без сложных спец символов
 	
 	st_new_quest_save - новое задание
-	st_update_quest_save - задание обновлено
 	st_complete_quest_save - задание выполнено
-	st_fail_quest_save - задание провалено
+	st_complete_quest_save_many - задания выполнены
+	st_new_quest_save_many - получены новые задания	
 	st_autosave_period - автосохранение
 	st_quicksave - быстрое сохранение
 	
@@ -33,47 +37,38 @@ local console = get_console()
 	xvars.quicksave_count = 0		-- Кол-во текущих квиксейвов
 	xvars.autosave_count = 0		-- Кол-во текущих автосейвов
 	xvars.quicksave_last_name = ""	-- Имя последнего квиксейва
+	xvars.quest_complete_count = 0	-- Счётчик выполненных заданий
+	xvars.quest_new_count = 0		-- Счётчик новых заданий
 	
 --]]
 
--- В type передаём тип таска, fail, new, complete, updated
--- В desc передаём сам таск
-function task_saves(type, desc)
-	local slower = string.lower
+-- Вызывается после закрытия диалогового окна
+-- В зависимости от значений счётчиков вызывается свой вариант для создания сейва
+function create_quest_save(type, count)
 
-	local full_savename = ""
-
-	if type == "new" then
-		full_savename = slower(
-			user_name() .. " - " .. 
-			game.translate_string("st_new_quest_save") .. " - " .. 
-			game.translate_string(desc:get_title())
-		)
-	elseif type == "update" then
-		full_savename = slower(
-			user_name() .. " - " .. 
-			game.translate_string("st_update_quest_save") .. " - " .. 
-			game.translate_string(desc:get_title())
-		)
-	elseif type == "complete" then
-		full_savename = slower(
-			user_name() .. " - " .. 
-			game.translate_string("st_complete_quest_save") .. " - " .. 
-			game.translate_string(desc:get_title())
-		)
-	elseif type == "fail" then
-		full_savename = slower(
-			user_name() .. " - " .. 
-			game.translate_string("st_fail_quest_save") .. " - " .. 
-			game.translate_string(desc:get_title())
-		)
+	if type == "compelte" then
+		if count > 1 then
+			full_savename = slower(user_name().." - "..game.translate_string("st_complete_quest_save_many"))
+		else
+			full_savename = slower(user_name().." - "..game.translate_string("st_complete_quest_save"))
+		end
+	elseif type == "new" then
+		if count > 1 then
+			full_savename = slower(user_name().." - "..game.translate_string("st_new_quest_save_many"))
+		else
+			full_savename = slower(user_name().." - "..game.translate_string("st_new_quest_save"))
+		end
+	elseif type == "both" then
+		full_savename = slower(user_name().." - "..game.translate_string("st_quest_both_type"))
 	end
-
-	if full_savename ~= "" then
-		if use_device_pause then device():pause(true) end
-		console:execute("save " .. full_savename)
-		if use_device_pause then device():pause(false) end
-	end
+	
+	if use_device_pause then device():pause(true) end
+	console:execute("save " .. full_savename)
+	if use_device_pause then device():pause(false) end	
+	
+	-- Сбрасываем оба счётчика
+	xvars.quest_complete_count = 0
+	xvars.quest_new_count = 0
 end
 
 -- Вызывается при нет-спавне актора, проверяется наличие таймера и его первая выдача
@@ -91,7 +86,7 @@ function autosave()
 		xvars.autosave_count = 0
 	end	   
 
-	local full_autosave_name = string.lower(
+	full_autosave_name = slower(
 		user_name() .. " - " .. 
 		game.translate_string("st_autosave_period") .. " - " .. 
 		tostring(xvars.autosave_count)
@@ -112,7 +107,7 @@ function quicksave()
 
 	if not db.actor:is_game_saving_available() then
 		return
-	end		   
+	end
 	if db.actor and has_alife_info("start_olr_mod") and db.storage[db.actor:id()].pstor == nil then
 		log1("!!! TRY SAVE - ATTENTION! Actor storage is empty, save is broken. Send logs to the developer.")
 		olr.hud_tip_fatal(game.translate_string("st_corrupt_saves"))
@@ -135,7 +130,7 @@ function quicksave()
 	end
 	
 	-- Формируем имя файла в нижнем регистре
-	local quicksave_filename = string.lower(
+	quicksave_filename = slower(
 		user_name() .. " - " .. 
 		game.translate_string("st_quicksave") .. " - " .. 
 		tostring(xvars.quicksave_count)
@@ -155,7 +150,7 @@ function quickload()
 	-- Проверяем, есть ли сохраненное имя файла
 	local last_name = xvars.quicksave_last_name
 	if not last_name or last_name == "" then
-		olr.hud_tip("", "Загрузка невозможна, нет быстрых сохранений данной игровой сессии", 10, true)
+		olr.hud_tip("", game.translate_string("st_quickload_not_saves"), 10, true)
 		return
 	end
 	
@@ -169,6 +164,6 @@ function quickload()
 	if file_info then
 		console:execute("load " .. last_name)
 	else
-		olr.hud_tip("", "Загрузка невозможна, нет быстрых сохранений данной игровой сессии", 10, true)
+		olr.hud_tip("", game.translate_string("st_quickload_file_not_found"), 10, true)
 	end
 end

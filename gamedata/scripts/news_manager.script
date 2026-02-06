@@ -459,10 +459,16 @@ function send_task(actor, type, task, objective)
 		db.actor:give_game_news("%c[255,245,240,218]"..news_text, "%c[255,160,181,169]"..game.translate_string(action_descr_by_type[type]), task_texture, task_rect, 0, 3000)
 	end
 	
---	if not db.actor:is_talking() then -- сейвы делаем только ВНЕ диалога
-		-- Делаем сейв
-		save_manager.task_saves(type, task)
---	end
+	-- В диалоге не делаем сейвы, только считаем сколько получили-выполнили заданий
+	-- На выходе из диалога будет сделан сейв
+	if db.actor:is_talking() then
+		if type == "new" then
+			xvars.quest_new_count = (xvars.quest_new_count or 0) + 1
+		end
+		if type == "complete" then
+			xvars.quest_complete_count = (xvars.quest_complete_count or 0) + 1
+		end
+	end
 	
 	if type == "new" then
 		xvars.quests_started = xvars.quests_started + 1

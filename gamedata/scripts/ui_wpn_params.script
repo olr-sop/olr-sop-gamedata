@@ -18,10 +18,9 @@ function read_if_exist(ltx, section, value, default)
 end
 
 function GetRPM(section)
-	local ltx = system_ini()
-	
-	local rpm = ltx:r_float(section,"rpm")
-	local mag_size = ltx:r_float(section,"ammo_mag_size")
+
+	local rpm = ini_sys:r_float(section,"rpm")
+	local mag_size = ini_sys:r_float(section,"ammo_mag_size")
 	
 	if rpm > 200 then
 		rpm = math.pow((rpm - 200)/720,2)*100 + 15
@@ -37,8 +36,7 @@ function GetRPM(section)
 end
 
 function GetDamage(section)
-	local ltx = system_ini()
-	local val = ltx:r_float(section,"hit_power")
+	local val = ini_sys:r_float(section,"hit_power")
 	 
 	
 --	if val < 1.36 then
@@ -51,8 +49,7 @@ function GetDamage(section)
 end
 
 function GetDamageMP(section)
-	local ltx = system_ini()
-	local val = ltx:r_float(section,"hit_power")
+	local val = ini_sys:r_float(section,"hit_power")
 		
 	if val < 1.05 then
 		val = val*100-30
@@ -64,18 +61,17 @@ function GetDamageMP(section)
 end
 
 function GetHandling(section)
-	local ltx = system_ini()
 	local val	
 	local control_inertion_factor
 	
-	if ltx:line_exist(section,"control_inertion_factor") then
-		control_inertion_factor = ltx:r_float(section,"control_inertion_factor")
+	if ini_sys:line_exist(section,"control_inertion_factor") then
+		control_inertion_factor = ini_sys:r_float(section,"control_inertion_factor")
 	else
 		control_inertion_factor = 1
 	end
 	
-	local PDM_disp_base 		= read_if_exist(ltx, section, "PDM_disp_base", 1) 	
-	local PDM_disp_vel_factor	= read_if_exist(ltx, section, "PDM_disp_vel_factor", 1) 
+	local PDM_disp_base 		= read_if_exist(ini_sys, section, "PDM_disp_base", 1) 	
+	local PDM_disp_vel_factor	= read_if_exist(ini_sys, section, "PDM_disp_vel_factor", 1) 
 	
 	if control_inertion_factor < 2 and PDM_disp_base < 1.5 then
 		val = (1 - math.pow(PDM_disp_vel_factor - 0.5, 2) + math.pow(2 - control_inertion_factor,2))*50	
@@ -87,23 +83,22 @@ function GetHandling(section)
 end
 
 function GetAccuracy(section)
-	local ltx = system_ini()
 			
-	local fire_dispersion_base	= ltx:r_float(section,"fire_dispersion_base")
-	local cam_dispersion		= ltx:r_float(section,"cam_dispersion")
-	local cam_dispersion_inc 	= read_if_exist(ltx, section, "cam_dispersion_inc", 0) 	
-	local cam_dispersion_frac 	= read_if_exist(ltx, section, "cam_dispersion_frac", 1) 
-	local cam_step_angle_horz	= ltx:r_float(section,"cam_step_angle_horz")
-	local rpm 			= ltx:r_float(section,"rpm")
-	local ammo_list			= ltx:r_string(section,"ammo_class")
+	local fire_dispersion_base	= ini_sys:r_float(section,"fire_dispersion_base")
+	local cam_dispersion		= ini_sys:r_float(section,"cam_dispersion")
+	local cam_dispersion_inc 	= read_if_exist(ini_sys, section, "cam_dispersion_inc", 0) 	
+	local cam_dispersion_frac 	= read_if_exist(ini_sys, section, "cam_dispersion_frac", 1) 
+	local cam_step_angle_horz	= ini_sys:r_float(section,"cam_step_angle_horz")
+	local rpm 			= ini_sys:r_float(section,"rpm")
+	local ammo_list			= ini_sys:r_string(section,"ammo_class")
 	
 	local pos  = string.find(ammo_list,",",1)
 	local k_disp
 	if nil ~= pos then
 		local ammo = string.sub(ammo_list,1,pos - 1)
-		k_disp				= ltx:r_float(ammo, "k_disp")
+		k_disp				= ini_sys:r_float(ammo, "k_disp")
 	else
-		k_disp				= ltx:r_float(ammo_list, "k_disp")
+		k_disp				= ini_sys:r_float(ammo_list, "k_disp")
 	end
 	
 	if k_disp > 3.5 then	

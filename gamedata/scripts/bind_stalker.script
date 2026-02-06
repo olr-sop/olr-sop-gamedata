@@ -34,7 +34,7 @@ function actor_binder:__init (obj) super(obj)
 	self.weather_manager = level_weathers.WeatherManager()
 	self.actor_detector = xr_detector.actor_detector()
 	_G.xvars = get_stored_vars()
-	max_item_amount = system_ini():r_float("actor", "item_amount_base")
+	max_item_amount = ini_sys:r_float("actor", "item_amount_base")
 end
 
 function GetBaseWeight()
@@ -543,8 +543,8 @@ function actor_binder:on_item_take (obj)
 	------ Обработчик выдачи поршня с конфига
 	if obj then
 		if device().precache_frame < 1 then
-			if system_ini():line_exist(obj:section(), "take_info") then
-				local known_inf = system_ini():r_string(obj:section(), "take_info") or ""
+			if ini_sys:line_exist(obj:section(), "take_info") then
+				local known_inf = ini_sys:r_string(obj:section(), "take_info") or ""
 				local known_inf_desc = game.translate_string(known_inf)
 				if not has_alife_info(known_inf_desc) then
 					--log1("give info from item - " .. known_inf_desc .. "")
@@ -707,6 +707,14 @@ function actor_binder:update(delta)
 			-- Один раз запускаем таймер автосейвов
 			-- Далее он будет сам себя запускать
 			save_manager.check_autosave_timer()
+			
+			-- Проверка на мини-карту
+			-- Если пда не сдох то включим принудительно на первом апдейте
+			if not nick.is_pda_dead() then
+				olr.show_minimap(true)
+			else
+				olr.show_minimap(false)
+			end
 		end
 		
 		level_tasks.add_lchanger_location()
@@ -724,10 +732,9 @@ function actor_binder:update(delta)
 		local hud = get_hud()
 		local StatCS = hud:GetCustomStatic("debug_time")
 		local current_time = game.time()
-		local sys_ini = system_ini()
 
 		-- Получаем time_factor из конфига
-		local alife_time_factor = sys_ini:r_float("alife", "time_factor")
+		local alife_time_factor = ini_sys:r_float("alife", "time_factor")
 
 		-- Расчет времени из game.time()
 		local hours_from_game = math.floor(current_time / 3600000)

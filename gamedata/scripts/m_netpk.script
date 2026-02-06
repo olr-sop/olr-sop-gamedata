@@ -3212,7 +3212,6 @@ function net_MAIN_MNU:__init(obj) end
 --/------------------------------------------------------------------------------------------------
 local function initialize()
 	if not sim then sim = alife() end
-	local sini = system_ini() --/ cache function 'system_ini'
 	--/ читаем конфиг-файл модуля
 	local ltx = ini_file(""..sModule..".ltx") --/ объект конфиг-файла (из папки мода)
 	if not ltx:section_exist("clsid_to_class") then
@@ -3244,12 +3243,12 @@ local function initialize()
 				if t[1] then --/ exist cse_server_object_class ?
 					if iBitMode == 15 then --/ for release-mode
 						str_clsid2class[scr_clsid] = t
-					elseif sini:section_exist(scr_clsid) then --/ for any mods
-						if sini:line_exist(scr_clsid,"class") and t[2] then
-							if shit_dbg then printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:(%s)", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Info") end --/#~#
-							if sini:r_string(scr_clsid,"class") == t[2] or t[2] == 'unknown' then --/ not use(!): 'r_clsid'
+					elseif ini_sys:section_exist(scr_clsid) then --/ for any mods
+						if ini_sys:line_exist(scr_clsid,"class") and t[2] then
+							if shit_dbg then printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:(%s)", scr_clsid, ini_sys:r_string(scr_clsid,"class"), t[2], "Info") end --/#~#
+							if ini_sys:r_string(scr_clsid,"class") == t[2] or t[2] == 'unknown' then --/ not use(!): 'r_clsid'
 								str_clsid2class[scr_clsid] = t
-							else printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:<%s>", scr_clsid, sini:r_string(scr_clsid,"class"), t[2], "Warning!") --/#~#
+							else printf("initialize:scr_clsid=[%s],CLSID=[%s]<?>[%s]:<%s>", scr_clsid, ini_sys:r_string(scr_clsid,"class"), t[2], "Warning!") --/#~#
 							end
 						end
 					elseif t[3] then --/ for debug and mixed-mode

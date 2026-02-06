@@ -1,7 +1,6 @@
 -- арты с описанием свойств при наличии информации об артефакте, динамические параметры и прочие диздоковские фичи
 -- hi_flyer 25.03.16
 
-local ini = system_ini()
 local ltx = ini_file("misc\\artefacts.ltx")
 local loaded = false
 
@@ -62,7 +61,7 @@ function CArtBinder:net_spawn(data)
 				end
 
 				local cost = "cost"
-				local val_cost = ini:r_float(self.object:section(), "cost")
+				local val_cost = ini_sys:r_float(self.object:section(), "cost")
 				local val_cost_fin = val_cost + ((val_cost / 100) * mrandom(-10, 10))
 				local stng_c = game.translate_string(cost)
 				xvars.arts[s_name .. stng_c] = val_cost_fin
@@ -72,7 +71,7 @@ function CArtBinder:net_spawn(data)
 				end
 
 				-- TODO ???
-				--local val_health_restore_speed = ini:r_float(self.object:section(), "health_restore_speed")
+				--local val_health_restore_speed = ini_sys:r_float(self.object:section(), "health_restore_speed")
 				--local StatText_health = string.format("%1.0f", val_health_restore_speed * 1000000)
 				--local stng_h = game.translate_string(StatText_health)
 				--xvars.arts[s_name..stng_h] = stng_h
@@ -125,7 +124,7 @@ function CArtBinder:net_spawn(data)
 		end
 		if not costper then
 			local cost = "cost"
-			local val_cost = ini:r_float(self.object:section(), "cost")
+			local val_cost = ini_sys:r_float(self.object:section(), "cost")
 			local val_cost_fin = val_cost + ((val_cost / 100) * mrandom(-10, 10))
 			local stng_c = game.translate_string(cost)
 			xvars.arts[s_name .. stng_c] = val_cost_fin
@@ -225,9 +224,9 @@ function CArtBinder:update(delta)
 			end
 		end
 
-		if ini:line_exist(self.object:section(), "known_info") then
+		if ini_sys:line_exist(self.object:section(), "known_info") then
 			-- свойства
-			local known_inf = ini:r_string(self.object:section(), "known_info") or ""
+			local known_inf = ini_sys:r_string(self.object:section(), "known_info") or ""
 			if not has_alife_info(known_inf) then
 			--	db.actor:give_info_portion(known_inf) -- дебаг
 			end

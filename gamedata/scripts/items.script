@@ -10,19 +10,18 @@ unique_items = {}
 
 cached_loot_classes = {}
 
-local sini = system_ini()
 --local npc_ignore_items_ltx = nil
 
 function get_loot_class(section)
 	if cached_loot_classes[section] == nil then
-		cached_loot_classes[section] = sini:line_exist(section, "script_loot_class") and sini:r_string(section, "script_loot_class")
+		cached_loot_classes[section] = ini_sys:line_exist(section, "script_loot_class") and ini_sys:r_string(section, "script_loot_class")
 	end
 	return cached_loot_classes[section]
 end
 
 function is_quest_item(section)
 	if quest_items[section] == nil then
-		quest_items[section] = sini:line_exist(section, "quest_item") and sini:r_bool(section, "quest_item")
+		quest_items[section] = ini_sys:line_exist(section, "quest_item") and ini_sys:r_bool(section, "quest_item")
 	end
 	
 	--log(section.." is quest item "..tostring(quest_items[section] == true))
@@ -32,7 +31,7 @@ end
 
 function is_unique_item(section)
 	if unique_items[section] == nil then
-		unique_items[section] = sini:line_exist(section, "unique_item") and sini:r_bool(section, "unique_item")
+		unique_items[section] = ini_sys:line_exist(section, "unique_item") and ini_sys:r_bool(section, "unique_item")
 	end
 	return (unique_items[section] == true)
 end

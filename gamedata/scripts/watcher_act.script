@@ -12,8 +12,6 @@ actid_grab_item = evid_see_stuff + 1
 actid_grab_body = evid_see_stuff + 2
 actid_correct_position = evid_see_stuff + 3
 
-local ini = system_ini()
-
 function do_not_touch(item)
 	if item and olr.bad_items[item:section()] and olr.bad_items[item:section()] == true then
 		return true
@@ -50,7 +48,7 @@ function max_weight(npc)
 		function(dummy, item)
 			if item then
 				local section = item:section()
-				local item_wt = ini:r_float(section, "inv_weight")
+				local item_wt = ini_sys:r_float(section, "inv_weight")
 				total_weight = total_weight + item_wt
 			end
 		end, nil
@@ -208,8 +206,8 @@ function objValue(obj)
 	elseif sec == "vodka" then
 		multiplier = 20
 	end
-	if ini:section_exist(sec) and ini:line_exist(sec, "cost") then
-		return ini:r_float(sec, "cost") * multiplier
+	if ini_sys:section_exist(sec) and ini_sys:line_exist(sec, "cost") then
+		return ini_sys:r_float(sec, "cost") * multiplier
 	end
 	return 0
 end

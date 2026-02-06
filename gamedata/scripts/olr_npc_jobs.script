@@ -75,7 +75,7 @@ function job_desctiption(first_speaker, second_speaker)
 			--log1(" 1 "..target.."")
 			--local text_find_obj = game.translate_string(target)
 			--log1("2 "..text_find_obj.."")
-			local known_inf = system_ini():r_string(target, "inv_name")
+			local known_inf = ini_sys:r_string(target, "inv_name")
 			--log1("3 "..known_inf.."")
 			local obj_inf_desc = game.translate_string(known_inf)
 			--log1("4 "..obj_inf_desc.."")
@@ -100,7 +100,7 @@ function job_desctiption_in_progress(first_speaker, second_speaker)
 			local text_phrase = {"job_try_has_1", "job_try_has_2"}
 	
 			local target = xvars.npc_jobs_foractor_target[npc:name()]
-			local known_inf = system_ini():r_string(target, "inv_name")
+			local known_inf = ini_sys:r_string(target, "inv_name")
 			local obj_inf_desc = game.translate_string(known_inf)
 			local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
 	
@@ -139,9 +139,9 @@ function take_quest(first_speaker, second_speaker)
 	
 			local target = xvars.npc_jobs_foractor_target[npc:name()]
 			--local text_find_obj = game.translate_string(target)
-			local inv_name = system_ini():r_string(target, "inv_name")
-			--if system_ini():line_exist(target, "known_info") then
-			--	local inv_known_info = system_ini():r_string(target, "known_info")
+			local inv_name = ini_sys:r_string(target, "inv_name")
+			--if ini_sys:line_exist(target, "known_info") then
+			--	local inv_known_info = ini_sys:r_string(target, "known_info")
 			--	if not has_alife_info(inv_known_info) then
 			--		olr.info(inv_known_info)
 			--	end
@@ -189,7 +189,6 @@ function precond_quest_done_art(first_speaker, second_speaker)
 		if xvars.npc_jobs_foractor_status[npc:name()] == "in_progress" then
 			local art = db.actor:object(obj_targ)
 			if art and art:is_artefact() then
-				local ini = system_ini()
 				return nik_dialog.item_much(obj_targ, 1) ~= false
 			end
 		end
@@ -252,8 +251,8 @@ function take_reward(first_speaker, second_speaker)
 
 		local target = xvars.npc_jobs_foractor_target[npc:name()]
 		--local text_find_obj = game.translate_string(target)
-		local known_inf = system_ini():r_float(target, "cost")
-		local to_give = known_inf + math.random(1, known_inf / 3)
+		local item_cost = ini_sys:r_float(target, "cost")
+		local to_give = item_cost + math.random(1, item_cost / 3)
 
 		news_manager.relocate_money(db.actor, "in", to_give)
 		db.actor:give_money(to_give)

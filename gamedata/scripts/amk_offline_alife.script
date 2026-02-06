@@ -304,12 +304,11 @@ end
 
 --строим таблицу неписей, монстров и оружия
 function build_tables()
-	local ini = system_ini()
 	--local pt = profile_timer()
 	--pt:start()
 
-	rel_enemy, rel_friend = utils.cfg_get_number(ini, "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(ini, "game_relations", "goodwill_friend", nil, false, 1000)
-	local s_comm_list = utils.cfg_get_string(ini, "game_relations", "communities", nil, false, "", "")
+	rel_enemy, rel_friend = utils.cfg_get_number(ini_sys, "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(ini_sys, "game_relations", "goodwill_friend", nil, false, 1000)
+	local s_comm_list = utils.cfg_get_string(ini_sys, "game_relations", "communities", nil, false, "", "")
 	local comm_list = {}
 	local s_value = amk.str_explode(",", amk.trim(s_comm_list), true)
 	for a = 1, #s_value, 2 do
@@ -319,8 +318,8 @@ function build_tables()
 
 	local tmp = {}
 	local result, id, value = nil, nil, nil
-	for a = 0, ini:line_count("communities_relations") - 1 do
-		result, id, value = ini:r_line("communities_relations", a, "", "")
+	for a = 0, ini_sys:line_count("communities_relations") - 1 do
+		result, id, value = ini_sys:r_line("communities_relations", a, "", "")
 		if id ~= nil and trim(id) ~= "" and trim(id) ~= nil then
 			relation_matrix[trim(id)] = {}
 			tmp[#tmp+1] = trim(id)
@@ -328,7 +327,7 @@ function build_tables()
 	end
 
 	for a = 1, #tmp do
-		local value = utils.cfg_get_string(ini, "communities_relations", tmp[a], nil, false, "", "")
+		local value = utils.cfg_get_string(ini_sys, "communities_relations", tmp[a], nil, false, "", "")
 		local idx = tmp[a]
 		local m_value = amk.str_explode(",", amk.trim(value), true)
 		for i = 1, #m_value do
@@ -2096,8 +2095,8 @@ function get_weapon_firepower(wpn)
 	if (wpn and isWeapon(wpn)) then
 		local sect = wpn:section_name()
 		if not (sect == "grenade_f1" or sect == "grenade_rgd5" or sect == "wpn_addon_grenade_launcher" or sect == "wpn_addon_grenade_launcher_aks_old" or sect == "wpn_addon_grenade_launcher_m203") then
-			local priority = utils.cfg_get_number(system_ini(), wpn:section_name(), "ef_weapon_type", wpn, false, 1)
-			local priority2 = utils.cfg_get_number(system_ini(), wpn:section_name(), "ef_main_weapon_type", wpn, false, 0)
+			local priority = utils.cfg_get_number(ini_sys, wpn:section_name(), "ef_weapon_type", wpn, false, 1)
+			local priority2 = utils.cfg_get_number(ini_sys, wpn:section_name(), "ef_main_weapon_type", wpn, false, 0)
 			local GetRPM = ui_wpn_params.GetRPM(wpn:section_name())
 			local GetDamage = ui_wpn_params.GetDamage(wpn:section_name())
 			local GetHandling = ui_wpn_params.GetHandling(wpn:section_name())
@@ -2130,7 +2129,7 @@ end
 function get_weapon_cost(weapon)
 	local result = 0
 	if (weapon and isWeapon(weapon)) then
-		result = utils.cfg_get_number(system_ini(), weapon:section_name(), "cost", weapon, false, 0)
+		result = utils.cfg_get_number(ini_sys, weapon:section_name(), "cost", weapon, false, 0)
 	end
 	return result
 end
@@ -2138,7 +2137,7 @@ end
 function get_item_cost(item)
 	local result = 0
 	if (item and item.section_name) then
-		result = utils.cfg_get_number(system_ini(), item:section_name(), "cost", item, false, 0)
+		result = utils.cfg_get_number(ini_sys, item:section_name(), "cost", item, false, 0)
 	end
 	return result
 end
@@ -2360,7 +2359,7 @@ function process_trade(npc)
 						bOk = true
 					end
 					if bOk == true then
-						local ac = utils.cfg_get_string(system_ini(), sect, "ammo_class", v, false, "")
+						local ac = utils.cfg_get_string(ini_sys, sect, "ammo_class", v, false, "")
 						if ac and ac ~= "" then
 							local vvv = amk.str_explode(",", ac, true)
 							local ammo_classes = {}
@@ -2705,28 +2704,27 @@ function get_monster_params(obj)
 			return monster_params[obj:section_name()]
 		else
 			amk.oau_reason = "get_monster_params chp4"
-			local ini = system_ini()
-			local speed = utils.cfg_get_number(ini, obj:section_name(), "MaxSpeed", obj, false, 5)
+			local speed = utils.cfg_get_number(ini_sys, obj:section_name(), "MaxSpeed", obj, false, 5)
 			amk.oau_reason = "get_monster_params chp5"
-			local dist = utils.cfg_get_number(ini, obj:section_name(), "MaxAttackDist", obj, false, 3)
+			local dist = utils.cfg_get_number(ini_sys, obj:section_name(), "MaxAttackDist", obj, false, 3)
 			amk.oau_reason = "get_monster_params chp6"
 			local imm_sect =
-				utils.cfg_get_string(ini, obj:section_name(), "immunities_sect", obj, false, "", "")
+				utils.cfg_get_string(ini_sys, obj:section_name(), "immunities_sect", obj, false, "", "")
 			amk.oau_reason = "get_monster_params chp7"
-			local immunity = utils.cfg_get_number(ini, imm_sect, "fire_wound_immunity", obj, false, 1)
+			local immunity = utils.cfg_get_number(ini_sys, imm_sect, "fire_wound_immunity", obj, false, 1)
 			amk.oau_reason = "get_monster_params chp8"
-			local att_sect = utils.cfg_get_string(ini, obj:section_name(), "attack_params", obj, false, "", "")
+			local att_sect = utils.cfg_get_string(ini_sys, obj:section_name(), "attack_params", obj, false, "", "")
 			amk.oau_reason = "get_monster_params chp9"
 			local attack = 0
 			amk.oau_reason = "get_monster_params chp10 " .. tostring(att_sect)
-			if (ini:section_exist(att_sect)) then
+			if (ini_sys:section_exist(att_sect)) then
 				amk.oau_reason = "get_monster_params chp11"
 				local result, id, value = nil, nil, nil
 				local max_attack = 0
 				amk.oau_reason = "get_monster_params chp12"
-				for a = 0, ini:line_count(att_sect) - 1 do
+				for a = 0, ini_sys:line_count(att_sect) - 1 do
 					amk.oau_reason = "get_monster_params chp13"
-					result, id, value = ini:r_line(att_sect, a, "", "")
+					result, id, value = ini_sys:r_line(att_sect, a, "", "")
 					amk.oau_reason = "get_monster_params chp14"
 					if id ~= nil and trim(id) ~= "" and trim(id) ~= nil and value ~= nil then
 						amk.oau_reason = "get_monster_params chp15"
@@ -2780,7 +2778,7 @@ end
 function have_ammo(npc, weapon)
 	local result = false
 	if npc and weapon and IsStalker(npc) and isWeapon(weapon) then
-		local ammo_str = utils.cfg_get_number(system_ini(), weapon:section_name(), "ammo_class", weapon, false, "")
+		local ammo_str = utils.cfg_get_number(ini_sys, weapon:section_name(), "ammo_class", weapon, false, "")
 		if ammo_str == "" then -- Болт или граната
 			return false
 		end

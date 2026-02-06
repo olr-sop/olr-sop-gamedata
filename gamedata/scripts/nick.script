@@ -1654,7 +1654,6 @@ end
 
 function chekart_belt()
 	local art = nil
-	local ini = system_ini()
 	local artcnt = 0
 	for i = 0, db.actor:belt_count() - 1 do
 		local item = db.actor:item_on_belt(i)
@@ -1683,7 +1682,7 @@ function chekart_belt()
 		return
 	end
 	if artcnt == 1 then
-		local known_inf = ini:r_string(art:section(), "known_info")
+		local known_inf = ini_sys:r_string(art:section(), "known_info")
 		local known_inf_desc = game.translate_string(known_inf)
 		if has_alife_info(known_inf_desc) then
 			local m_where = game.translate_string("chekart_belt_2")
@@ -8785,8 +8784,7 @@ function now_iremember_delhlam()
 	}
 	db.actor:iterate_inventory(
 		function(_, obj)
-			local ini = system_ini()
-			if ini:line_exist(obj:section(), "quest_item") and ini:r_bool(obj:section(), "quest_item") == true then
+			if ini_sys:line_exist(obj:section(), "quest_item") and ini_sys:r_bool(obj:section(), "quest_item") == true then
 				return nil
 			end
 			if iskluch_items[obj:section()] then

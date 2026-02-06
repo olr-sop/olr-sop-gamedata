@@ -3,7 +3,6 @@
 local drop_cur = 0
 cur_amount = 0
 max_item_amount = bind_stalker.GetBaseWeight()
-local ini = system_ini()
 
 local tup10000 = 0
 local tmerup10000 = 1250
@@ -95,7 +94,7 @@ function recheck_limit()
 	if outfit then
 		cur_outfit = outfit:id()
 		--log1("current cur_outfit id - "..cur_outfit.." ")
-		local val_add = ini:line_exist(outfit:section(), "item_amount_add") and ini:r_float(outfit:section(), "item_amount_add") or 0
+		local val_add = ini_sys:line_exist(outfit:section(), "item_amount_add") and ini_sys:r_float(outfit:section(), "item_amount_add") or 0
 		max_item_amount = max_item_amount + val_add
 	end
 	--log1("пересчитывем всё по норме")
@@ -104,11 +103,11 @@ function recheck_limit()
 	db.actor:iterate_inventory(
 		function(actor, obj)
 			if obj then
-				local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+				local val = ini_sys:line_exist(obj:section(), "item_amount") and ini_sys:r_float(obj:section(), "item_amount") or 0
 				all_amount = all_amount + val
 			end
 			if obj and db.actor:is_on_belt(obj) or db.actor:is_in_slot(obj) then
-				local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+				local val = ini_sys:line_exist(obj:section(), "item_amount") and ini_sys:r_float(obj:section(), "item_amount") or 0
 				slot_belt_amount = slot_belt_amount + val
 				if tab_objs_on_slots[tostr(obj:id())] == nil then
 					tab_objs_on_slots[tostr(obj:id())] = true
@@ -145,8 +144,8 @@ function drop_item_on_inv(obj)
 	end	
 	
 	if obj then
-		if ini:line_exist(obj:section(), "item_amount") then
-			local val = ini:r_float(obj:section(), "item_amount") or 0
+		if ini_sys:line_exist(obj:section(), "item_amount") then
+			local val = ini_sys:r_float(obj:section(), "item_amount") or 0
 			if tab_objs_on_slots[tostr(obj:id())] == true then
 				--log1("drop_item_on_inv кидаем со слота - не уменьшаем объем cur_amount")
 				forced_drop_outfit(obj) -- доп проверка на дроп костюма со слота
@@ -192,8 +191,8 @@ function obj_to_ruck(obj)
 	
 	if obj then
 		--log1("obj_to_ruck add - "..obj:name().."")
-		if ini:line_exist(obj:section(), "item_amount") then
-			local val = ini:r_float(obj:section(), "item_amount") or 0
+		if ini_sys:line_exist(obj:section(), "item_amount") then
+			local val = ini_sys:r_float(obj:section(), "item_amount") or 0
 			if tab_objs_on_slots[tostr(obj:id())] == true then
 				--log1("obj_to_ruck ложим со слота в рюкзак уменьшаем объем")
 				cur_amount = cur_amount + val
@@ -229,7 +228,7 @@ function obj_to_ruck(obj)
 	if obj:id() == cur_outfit then
 		cur_outfit = -1
 		--log1("obj_to_ruck сняли броню ")
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		local val_add = ini_sys:line_exist(obj:section(), "item_amount_add") and ini_sys:r_float(obj:section(), "item_amount_add") or 0
 		max_item_amount = max_item_amount - val_add
 		
 		-- Немедленная проверка превышения
@@ -270,7 +269,7 @@ function on_to_box(obj)
 	if obj:id() == cur_outfit then
 		cur_outfit = -1
 		--log1("on_to_box сняли броню ")
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		local val_add = ini_sys:line_exist(obj:section(), "item_amount_add") and ini_sys:r_float(obj:section(), "item_amount_add") or 0
 		max_item_amount = max_item_amount - val_add
 	end
 	olr_ui_inv_acinfo.repaint()
@@ -300,8 +299,8 @@ function take_item_on_belt(obj)
 		--log1("take_item_on_belt удаляем с таблицы рюкзака, перенесли в слот")
 	end		
 	if obj ~= nil then
-		if ini:line_exist(obj:section(), "item_amount") then
-			local val = ini:r_float(obj:section(), "item_amount") or 0
+		if ini_sys:line_exist(obj:section(), "item_amount") then
+			local val = ini_sys:r_float(obj:section(), "item_amount") or 0
 			cur_amount = cur_amount - val
 			if cur_amount < 0 then
 				--cur_amount = 0
@@ -337,8 +336,8 @@ function take_item_on_slot(obj)
 																	   -- просто так надо ибо мы не можем сказать откуда предмет перешёл в пояс, с земли или с рюкзака
 		tab_objs_on_ruck[tostr(obj:id())] = nil -- занилим в таблице рюкзака данный предмет так как мы его перенесли С РЮКЗАКА на пояс
 		--log1("take_item_on_slot удаляем с таблицы рюкзака, перенесли в слот "..obj:name().."")
-		if ini:line_exist(obj:section(), "item_amount") then
-			local val = ini:r_float(obj:section(), "item_amount") or 0
+		if ini_sys:line_exist(obj:section(), "item_amount") then
+			local val = ini_sys:r_float(obj:section(), "item_amount") or 0
 			cur_amount = cur_amount - val
 			if cur_amount < 0 then
 				--cur_amount = 0
@@ -350,7 +349,7 @@ function take_item_on_slot(obj)
 	if obj:is_outfit() then
 		cur_outfit = obj:id()
 		--log1("take_item_on_slot надели броню ")
-		local val_add = ini:line_exist(obj:section(), "item_amount_add") and ini:r_float(obj:section(), "item_amount_add") or 0
+		local val_add = ini_sys:line_exist(obj:section(), "item_amount_add") and ini_sys:r_float(obj:section(), "item_amount_add") or 0
 		max_item_amount = max_item_amount + val_add
 	end
 	olr_ui_inv_acinfo.repaint()
@@ -362,11 +361,11 @@ function forced_drop_outfit(obj)
 	if obj:id() == cur_outfit then
 		-- Уменьшаем объем самого костюма
 		local obj_sec = obj:section()
-		local val = ini:line_exist(obj_sec, "item_amount") and ini:r_float(obj_sec, "item_amount") or 0
+		local val = ini_sys:line_exist(obj_sec, "item_amount") and ini_sys:r_float(obj_sec, "item_amount") or 0
 		cur_amount = math.max(cur_amount - val, 0)
 		
 		-- Убираем бонус костюма
-		local val_add = ini:line_exist(obj_sec, "item_amount_add") and ini:r_float(obj_sec, "item_amount_add") or 0
+		local val_add = ini_sys:line_exist(obj_sec, "item_amount_add") and ini_sys:r_float(obj_sec, "item_amount_add") or 0
 		max_item_amount = max_item_amount - val_add
 		
 		cur_outfit = -1
@@ -387,7 +386,7 @@ function check_and_drop_excess()
 	-- Собираем предметы для сброса (кроме экипированных)
 	db.actor:iterate_inventory(function(_, obj)
 		if obj and tab_objs_on_slots[tostring(obj:id())] == nil then
-			local val = ini:line_exist(obj:section(), "item_amount") and ini:r_float(obj:section(), "item_amount") or 0
+			local val = ini_sys:line_exist(obj:section(), "item_amount") and ini_sys:r_float(obj:section(), "item_amount") or 0
 			if val > 0 and excess > 0 then
 				tmr_drop(obj)
 				excess = excess - val

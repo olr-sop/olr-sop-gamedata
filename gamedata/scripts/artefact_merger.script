@@ -93,7 +93,6 @@ function CButtonData:__finalize()
 end
 
 function CButtonData:OnPress()
-	local ini = system_ini()
 	local line_to_pos = {
 		inv_name = {
 			11170, 400, 50, 50, nil, true
@@ -126,20 +125,20 @@ function CButtonData:OnPress()
 		
 		if val[5] == nil then
 			if val[6] == true then
-				oStatic:SetTextST(ini:r_string(self.section, key))
+				oStatic:SetTextST(ini_sys:r_string(self.section, key))
 			else
-				oStatic:SetText(ini:r_string(self.section, key))
+				oStatic:SetText(ini_sys:r_string(self.section, key))
 			end
 		elseif val[6] == true then
 			oStatic:SetTextST(
 				("%s %s"):format(
-					ini:r_string(self.section, key), val[5]
+					ini_sys:r_string(self.section, key), val[5]
 				)
 			)
 		else
 			oStatic:SetText(
 				("%s %s"):format(
-					ini:r_string(self.section, key), val[5]
+					ini_sys:r_string(self.section, key), val[5]
 				)
 			)
 		end
@@ -149,7 +148,7 @@ function CButtonData:OnPress()
 			af_info_statics[key] = oStatic
 		end
 		
-		--self.wind.description:SetTextST(ini:r_string(self.section, "description"))
+		--self.wind.description:SetTextST(ini_sys:r_string(self.section, "description"))
 		self.wind:ClearStaticIcon()
 	end
 end
@@ -587,9 +586,8 @@ end
 
 -- Icons data
 function GetInvPos(section)
-	local ini = system_ini()
-	local x = ini:r_s32(section, "inv_grid_x")*50
-	local y = ini:r_s32(section, "inv_grid_y")*50
+	local x = ini_sys:r_s32(section, "inv_grid_x")*50
+	local y = ini_sys:r_s32(section, "inv_grid_y")*50
 	return x, y
 end
 ---------------------------------------------------------------------------------------------

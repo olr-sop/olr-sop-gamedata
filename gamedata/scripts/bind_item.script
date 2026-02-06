@@ -3,7 +3,6 @@
 
 local time_apdeyta = 0
 local timerup = 1000
-local ini = system_ini()
 
 function Init(obj)
 	local oNewBinder = CItemBinder(obj)
@@ -127,7 +126,7 @@ function CItemBinder:update(delta)
 	-- тут на апдейте портим еду раз в секунду
 	if time_global() > time_apdeyta then
 		time_apdeyta = time_global() + timerup
-		if ini:line_exist(self.object:section(), "cor_time") and cond > 0.01 then
+		if ini_sys:line_exist(self.object:section(), "cor_time") and cond > 0.01 then
 			if not (self.object:parent() ~= nil and trader_sections[self.object:parent():section()]) then
 				self.object:set_condition(cond - (self:TimeCondLost()*0.25)) -- у торговецв еда портится в 4 раза дольше
 				--log1("! Меняем состояние еды в апдейте у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
@@ -145,7 +144,7 @@ function CItemBinder:update(delta)
 end
 
 function CItemBinder:TimeCondLost()
-	local skis = ini:r_float(self.object:section(), "cor_time")
+	local skis = ini_sys:r_float(self.object:section(), "cor_time")
 	if skis < 0 then
 		return 0
 	end

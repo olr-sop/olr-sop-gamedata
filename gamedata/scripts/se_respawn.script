@@ -134,12 +134,11 @@ function r_spawns( spawn_ini, section, line, sectSpawnProps)
 	
 			-- Вычитываем настройки секций респавна и кешируем их.
 			if sectSpawnProps[spawn.section] == nil then
-				local respawn_ini = system_ini()
 
-				local community = r_str(respawn_ini, spawn.section, "community", "nil")
-				local rank = r_str(respawn_ini, spawn.section, "spec_rank", "nil")
+				local community = r_str(ini_sys, spawn.section, "community", "nil")
+				local rank = r_str(ini_sys, spawn.section, "spec_rank", "nil")
 				local check = true
-				local custom_data = r_str(respawn_ini, spawn.section, "custom_data")
+				local custom_data = r_str(ini_sys, spawn.section, "custom_data")
 				if custom_data ~= nil then
 					local custom_data_ltx = ini_file(custom_data)
 					if custom_data_ltx:section_exist("smart_terrains") then
@@ -643,9 +642,8 @@ end
 
 
 function create_ammo(section, position, lvi, gvi, pid, num)
-	local ini = system_ini()
 
-	local num_in_box = ini:r_u32(section, "box_size")
+	local num_in_box = ini_sys:r_u32(section, "box_size")
 
 	while num > num_in_box do
 		alife():create_ammo(section, position, lvi,	gvi, pid, num_in_box)

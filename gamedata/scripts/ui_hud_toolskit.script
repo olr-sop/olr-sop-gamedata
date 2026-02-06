@@ -524,7 +524,7 @@ function UI_TabController:OnBtnChange3()
 	local sSection = self.box3:GetText() or ""
 	sSection = string.gsub(sSection, '%W+', "_")
 	if sSection:len() >= 3 then
-		if system_ini():section_exist(sSection) then
+		if ini_sys:section_exist(sSection) then
 			self.chk3:SetTextColor(128,255,128, 255)
 		else
 			self.chk3:SetTextColor(255,255,128,255)
@@ -569,14 +569,13 @@ function UI_TabController:OnBtnAction3()
 			return --/>
 		end
 	end
-	local sini = system_ini()
-	if sini:section_exist(sSection) then
+	if ini_sys:section_exist(sSection) then
 		local soObj
 		if bToActor and not bMob then
 			local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
 			local vPosA = oActor:position()
 			if items.is_ammo(sSection) then
-				local iCnt = sini:line_exist(sSection,"box_size") and sini:r_float(sSection,"box_size") or 10
+				local iCnt = ini_sys:line_exist(sSection,"box_size") and ini_sys:r_float(sSection,"box_size") or 10
 				for i=1,iNum do
 					soObj = Spawn_ItemsInv(sSection,iCnt)
 				end
@@ -812,13 +811,12 @@ function Debug_Spawn(e) --/ for tests and debug
 		end
 		--
 		local tMySlots,tMyItems = {},{}
-		local sini = system_ini()
 		if ltx:section_exist("dbg_spawn2slots") then
 			for i=0,ltx:line_count("dbg_spawn2slots")-1 do
 				local result,idx,value = ltx:r_line("dbg_spawn2slots",i,"","")
 				local sSection = idx and ClearStr(idx)
 				local iSlot = tonumber(value)
-				if sSection and sini:section_exist(sSection) and iSlot and iSlot < 15 then
+				if sSection and ini_sys:section_exist(sSection) and iSlot and iSlot < 15 then
 					tMySlots[iSlot] = sSection
 				end
 			end
@@ -827,7 +825,7 @@ function Debug_Spawn(e) --/ for tests and debug
 			for i=0,ltx:line_count("dbg_spawn")-1 do
 				local result,idx,value = ltx:r_line("dbg_spawn",i,"","")
 				local sSection = idx and ClearStr(idx)
-				if sSection and sini:section_exist(sSection) then
+				if sSection and ini_sys:section_exist(sSection) then
 					tMyItems[sSection] = tonumber(value) or 1
 				end
 			end
@@ -896,10 +894,9 @@ end
 
 function Get_ClassId(sSection)
 	local iClassId = nil
-	local sini = system_ini()
-	if sSection and sini:section_exist(sSection) then
-		if sini:line_exist(sSection,"class") then
-			iClassId = sini:r_clsid(sSection,"class")
+	if sSection and ini_sys:section_exist(sSection) then
+		if ini_sys:line_exist(sSection,"class") then
+			iClassId = ini_sys:r_clsid(sSection,"class")
 		end
 	end
 	if not iClassId then
@@ -918,7 +915,7 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 		local oActor = db.actor
 		local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
 		local vPosA,vDirA = oActor:position(), oActor:direction()
-		local bToActor = not (iDist and iDist ~= 0) and system_ini():line_exist(sSection, "cost")
+		local bToActor = not (iDist and iDist ~= 0) and ini_sys:line_exist(sSection, "cost")
 		if bToActor then --/ spawn to actor
 			if iClassId == clsid.wpn_ammo and items.is_ammo(sSection) then --/ ammo spawn differently
 				soObj = this.Create_Ammo( sSection, vPosA, idLvA, idGvA, oActor:id() )
@@ -958,9 +955,8 @@ end
 function Create_Ammo(sSection, vPos, idLv, idGv, idOwner)
 	if not idOwner then idOwner = 65535 end
 	local iBoxSize = 1
-	local sini = system_ini()
-	if sini:line_exist(sSection,"box_size") then
-		iBoxSize = sini:r_u32(sSection,"box_size") or 1
+	if ini_sys:line_exist(sSection,"box_size") then
+		iBoxSize = ini_sys:r_u32(sSection,"box_size") or 1
 	end
 	return alife():create_ammo(sSection, vPos, idLv, idGv, idOwner, iBoxSize) --/>
 end

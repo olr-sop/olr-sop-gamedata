@@ -5,8 +5,8 @@ local prob = 0.5
 local bInit = false
 
 -- Задаём промежуток для рандома проверки игровых новостей
-local min_time_rnd = utils.cfg_get_float(system_ini(), "news_main_settings", "min_time_checknews", 180)
-local max_time_rnd = utils.cfg_get_float(system_ini(), "news_main_settings", "max_time_checknews", 1980)
+local min_time_rnd = utils.cfg_get_float(ini_sys, "news_main_settings", "min_time_checknews", 180)
+local max_time_rnd = utils.cfg_get_float(ini_sys, "news_main_settings", "max_time_checknews", 1980)
 
 local timer_stalker_death 			= 7  	-- Сообщение о смерти сталкера
 local timer_corpse 				= 120 -- 40 	-- Сообщение о найденом трупе
@@ -146,7 +146,7 @@ end
 function init()
 	if (bInit == false) then
 		news_data.Init()
-		time_factor = system_ini():r_float("alife","time_factor")	    
+		time_factor = ini_sys:r_float("alife","time_factor")	    
 		math.randomseed (device():time_global())
 
 		-- Реально в игре проходит timer_check_freq * 1000 * 60 * time_factor секунд
@@ -157,7 +157,7 @@ function init()
 		timer_alife_showed = game_minutes() - math.random(timer_alife_freq)
 		timer_daytime_showed = game_minutes() - math.random(timer_daytime_freq)
 		
-		rel_enemy,rel_friend = utils.cfg_get_number(system_ini(), "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(system_ini(), "game_relations", "goodwill_friend", nil, false, 1000)
+		rel_enemy,rel_friend = utils.cfg_get_number(ini_sys, "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(ini_sys, "game_relations", "goodwill_friend", nil, false, 1000)
 	
 		bInit = true
 	end
@@ -560,14 +560,14 @@ function get_object_name(obj)
 	local s_name = ""
 	local value	= ""
 	if (isGameObject(obj) and obj.section) then
-		value	= utils.cfg_get_string(system_ini(), obj:section(), "inv_name", obj, false, "", "")
+		value	= utils.cfg_get_string(ini_sys, obj:section(), "inv_name", obj, false, "", "")
 		s_name = value
 		s_name = game.translate_string(s_name)
 		if string.find(obj:section(),"^af_") then
 			s_name = game.translate_string("st_news_manager_main_artifact").." "..s_name
 		end
 	elseif (obj.section_name) then
-		value	= utils.cfg_get_string(system_ini(), obj:section_name(), "inv_name", obj, false, "", "")
+		value	= utils.cfg_get_string(ini_sys, obj:section_name(), "inv_name", obj, false, "", "")
 		s_name = value
 		s_name = game.translate_string(s_name)
 		if string.find(obj:section_name(),"^af_") then
@@ -2457,8 +2457,8 @@ end
 
 function is_creature_day(obj_section)
 	--проверка на дневной/ночной режим
-	local day_begin = utils.cfg_get_number(system_ini(), obj_section, "DayTime_Begin", nil, false, -1)
-	local day_end = utils.cfg_get_number(system_ini(), obj_section, "DayTime_End", nil, false, -1)
+	local day_begin = utils.cfg_get_number(ini_sys, obj_section, "DayTime_Begin", nil, false, -1)
+	local day_end = utils.cfg_get_number(ini_sys, obj_section, "DayTime_End", nil, false, -1)
 	if day_begin~=-1 and day_end~=-1 then
 		local hrs = level.get_time_hours()
 		local de = day_end

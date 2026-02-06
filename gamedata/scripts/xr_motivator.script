@@ -445,10 +445,14 @@ function motivator_binder:update(delta)
                 level.map_remove_object_spot(self.object:id(), "find_item_location")
             end
         end
-
+		
+		-- уменьшает ночью поле зрения у непесей, и вроде бы при еще каких то условиях
         ogse_night.npc_update(self.object, self.st)
+		
+		-- фиксит залипание менталки непесей, когда они в панике чтоб не слишком долго там были
         ogse_mental_fix.check_mental(self.object)
-
+		
+		-- кривое "переодевание" сталкерни и бандюков
         olr_npc_eqp.upd(self.object)
 
         if self.object:character_community() == "trader" then
@@ -459,7 +463,11 @@ function motivator_binder:update(delta)
             end
         end
 
-        -- патроны с пояса
+        -- херню какую то тут флаер написал
+		-- вкратце поясню
+		-- если мы живы и у нас есть враг и нет активного итема в руках, то проверяем наличие ранения
+		-- далее проходимся по инвентарю, ищем оружие, проверяем что ему не спавнили патроны
+		-- спавним ему патроны и если мы не зомби то проиграем спец звук (в данном случае "БЛИН ПАТРОНЫ")
         local best_enemy = self.object:best_enemy()
         if self.object:alive() and best_enemy and not self.object:active_item() then
             if xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
@@ -473,7 +481,7 @@ function motivator_binder:update(delta)
                 function(selfob, obj)
                     if obj and obj:is_weapon() then
                         if self.ammo_create == false then
-                            local wname = utils.cfg_get_string(system_ini(), obj:section(), "ammo_class", obj, false, "", "")
+                            local wname = utils.cfg_get_string(ini_sys, obj:section(), "ammo_class", obj, false, "", "")
                             local sectamm = amk.str_explode(",", wname)
                             local sectammo = sectamm[1]
                             local strammo = game.translate_string(sectammo)

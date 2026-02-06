@@ -378,10 +378,9 @@ end
 
 function Get_ClassId(sSection)
 	if tClassId[sSection] == nil then
-		local sini = system_ini()
-		if sSection and sini:section_exist(sSection) then
-			if sini:line_exist(sSection,"class") then
-				tClassId[sSection] = sini:r_clsid(sSection,"class")
+		if sSection and ini_sys:section_exist(sSection) then
+			if ini_sys:line_exist(sSection,"class") then
+				tClassId[sSection] = ini_sys:r_clsid(sSection,"class")
 			else
 				printf("Get_ClassId:Section=[%s]~Not_found_ClassId:<%s>", sSection, "Warning!") --/#~#
 				tClassId[sSection] = false
@@ -418,9 +417,9 @@ end
 
 function Get_InvName(sSection)
 	if not tInvName[sSection] then
-		local sInvName = utils.cfg_get_string(system_ini(), sSection, "inv_name", nil, false, "", nil)
+		local sInvName = utils.cfg_get_string(ini_sys, sSection, "inv_name", nil, false, "", nil)
 		if sInvName then
-			local sInvNameShort = utils.cfg_get_string(system_ini(), sSection, "inv_name_short", nil, false, "", nil)
+			local sInvNameShort = utils.cfg_get_string(ini_sys, sSection, "inv_name_short", nil, false, "", nil)
 			tInvName[sSection] = sInvNameShort or sInvName
 		end
 	end
@@ -429,9 +428,9 @@ end
 
 function Get_ComName(sSection)
 	if not tComName[sSection] then
-		local sCommunity = utils.cfg_get_string(system_ini(), sSection, "community", nil, false, "", nil)
+		local sCommunity = utils.cfg_get_string(ini_sys, sSection, "community", nil, false, "", nil)
 		if sCommunity then
-			local sRank    = utils.cfg_get_string(system_ini(), sSection, "spec_rank", nil, false, "", nil)
+			local sRank    = utils.cfg_get_string(ini_sys, sSection, "spec_rank", nil, false, "", nil)
 			if sRank then
 				local sName = sCommunity.."_"..sRank
 				local sNameST = game.translate_string(sName)
@@ -459,7 +458,7 @@ function Make_Spawn(sSection,iDist,bNoMsg)
 			local oActor = db.actor
 			local idLvA,idGvA = oActor:level_vertex_id(), oActor:game_vertex_id()
 			local vPosA,vDirA = oActor:position(), oActor:direction()
-			local bToActor = not (iDist and iDist ~= 0) and system_ini():line_exist(sSection, "cost")
+			local bToActor = not (iDist and iDist ~= 0) and ini_sys:line_exist(sSection, "cost")
 			if bToActor then --/ spawn to actor
 				if iClassId == clsid.wpn_ammo then --/ ammo we spawn differently
 					soObj = this.Create_Ammo( sSection, vPosA, idLvA, idGvA, oActor:id() )
@@ -512,9 +511,8 @@ end
 function Create_Ammo(sSection, vPos, idLv, idGv, idOwner)
 	if not idOwner then idOwner = 65535 end
 	local iBoxSize = 1
-	local sini = system_ini()
-	if sini:line_exist(sSection,"box_size") then
-		iBoxSize = sini:r_u32(sSection,"box_size") or 1
+	if ini_sys:line_exist(sSection,"box_size") then
+		iBoxSize = ini_sys:r_u32(sSection,"box_size") or 1
 	end
 	return alife():create_ammo(sSection, vPos, idLv, idGv, idOwner, iBoxSize) --/>
 end
@@ -601,7 +599,6 @@ end
 
 function Build_Table()
 	local tonum = tonumber
-	local sini = system_ini()
 	--
 	local function ClearStr(sStr)
 		return sStr:match('%s*(.*%S)') or '' --/>
@@ -632,7 +629,7 @@ function Build_Table()
 			for i=0,ltx:line_count(sSec)-1 do
 				local result,idx,value = ltx:r_line(sSec,i,"","")
 				if idx and value and ClearStr(value) and ClearStr(value) ~= "" then
-					if sini:section_exist(idx) then
+					if ini_sys:section_exist(idx) then
 						local tS = string_split(value, ",")
 						table.insert(v.data, {sect = idx, dist = tonum(tS[1]) or 0, text = tS[2] or ""})
 					else
@@ -650,7 +647,7 @@ function Build_Table()
 			local result,idx,value = ltx:r_line("dbg_spawn2slots",i,"","")
 			local sSection = idx and ClearStr(idx)
 			local iSlot = tonum(value)
-			if sSection and sini:section_exist(sSection) and iSlot and iSlot < 16 then
+			if sSection and ini_sys:section_exist(sSection) and iSlot and iSlot < 16 then
 				tMySlots[iSlot] = sSection
 			end
 		end
@@ -659,7 +656,7 @@ function Build_Table()
 		for i=0,ltx:line_count("dbg_spawn")-1 do
 			local result,idx,value = ltx:r_line("dbg_spawn",i,"","")
 			local sSection = idx and ClearStr(idx)
-			if sSection and sini:section_exist(sSection) then
+			if sSection and ini_sys:section_exist(sSection) then
 				tMyItems[sSection] = tonum(value) or 1
 			end
 		end

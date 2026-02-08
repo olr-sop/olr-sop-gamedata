@@ -38,18 +38,17 @@ function on_point_bar(obj)
 	alife():create(tostring(second_tab[rndpos].name), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 	alife():create("medkit", obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 	se_respawn.create_ammo(tostring(second_tab[rndpos].ammo), obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id, 10)
-
+	local boflsname = "neizvestnyy_stalker"
 	if obj then
 		local pk = get_netpk(obj)
-        	if pk:isOk() then
-         		local data = pk:get()
+        if pk:isOk() then
+         	local data = pk:get()
 			boflsname = data.character_name
-         		pk:set(data)
 		end
 	end
 	local rnd = math.random(1,5)
 	if rnd == 1 then
-		news_manager.send_tip(db.actor, ""..boflsname..game.translate_string("olr_ofl_trade_buy_gun"), 2, "default", 25000)
+		news_manager.send_tip(db.actor, game.translate_string("olr_ofl_trade_buy_gun"), 2, "weapon", 25000, nil, nil, true, boflsname)
 	end
 	this.buy_new_armor(obj)
 end

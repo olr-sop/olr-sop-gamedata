@@ -331,7 +331,6 @@ function all_blowend_funcs()
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
 	olr_timers.st_timer("mg_spawn_zombies", 36, "olr_blowout.mg_spawn_zombies()")
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
-	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- всех локацций
 	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()")
 	olr_timers.st_timer("create_mil_stk", 69, "olr_voenstals.create_mil_stk()")
 	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()")
@@ -762,31 +761,6 @@ end
 
 ---------------------------------------------
 
-function fix_escape_restrs()
-	if xvars.blow_count < 2 then
-		return
-	end
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if IsStalker(kill) or IsMonster(kill) then
-				local pk = get_netpk(kill, 1)
-				if pk:isOk() then
-					local data = pk:get()
-					if #data.dynamic_in_restrictions > 0 then
-						--log1("clear restrictor "..kill:name().." ")
-						data.dynamic_in_restrictions = {}
-						pk:set(data)
-					end
-				end
-			end
-		end
-	end
-end
-
----------------------------------------------
-
 function remove_onl_anoms()
 	local anomaly_tbl = {
 		[clsid.zone_mosquito_bald] = true,
@@ -1168,7 +1142,6 @@ function spawen_endgame_zombies()
 					if game_graph():valid_vertex_id(kill.m_game_vertex_id) then
 						local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
 						amk.on_REspawn(sobj)
-						olr.clear_restrictors(sobj)
 						if sobj and IsStalker(sobj) then
 							olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
 						end

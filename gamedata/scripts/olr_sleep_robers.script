@@ -97,9 +97,13 @@ function sleep_rob()
 		local sender_icon = news_manager.tips_icons[stalker_comm] and stalker_comm or "unknown"
 		
 		if not olr_timers.has_timer("actor_robbered_timer") then
-			local action = string.format("actor_robbered_timer_sms(%q, %q)", stalker_name, sender_icon)
-			local tmr = mrandom(200, 250)
-			olr_timers.st_timer("actor_robbered_timer", tmr, action)
+			local action = string.format("olr_sleep_robers.actor_robbered_timer_sms(%q, %q)", stalker_name, sender_icon)
+			local tmr = mrandom(600, 3600) -- через 10 минут - 1 час (игровой)
+			olr_timers.st_timer_game("actor_robbered_timer", tmr, action)
 		end
 	end
+end
+
+function actor_robbered_timer_sms(stalker_name, sender_icon)
+	news_manager.send_tip(db.actor, "actor_robbered_timer_sms_0", nil, sender_icon, 10000, nil, "pda_tip", true, stalker_name)
 end

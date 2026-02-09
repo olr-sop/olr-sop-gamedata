@@ -127,7 +127,8 @@ function actor_binder:net_destroy()
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, nil)
-	self.object:set_callback(callback.actor_sleep, nil) 	
+	self.object:set_callback(callback.actor_sleep, nil)
+	self.object:set_callback(callback.actor_wake_up, nil)
 	self.object:set_callback(callback.on_obj_look, nil)	
 	self.object:set_callback(callback.on_obj_not_look, nil) 		
 	
@@ -185,7 +186,8 @@ function actor_binder:reinit()
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, self.on_drop_item_on_item, self)
-	self.object:set_callback(callback.actor_sleep, self.actor_sleep, self) 	
+	self.object:set_callback(callback.actor_sleep, self.actor_in_sleep, self)
+	self.object:set_callback(callback.actor_wake_up, self.actor_after_sleep, self)	
 	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
 	self.object:set_callback(callback.on_obj_not_look, self.on_not_look, self) 
 	
@@ -281,14 +283,18 @@ function actor_binder:on_drop_item_on_item(item1, item2)
     end
 end
 
-function actor_binder:actor_sleep()
-	log1("actor in sleeeep")
+function actor_binder:actor_in_sleep()
+	-- Заглушка на будущее
+end
+
+function actor_binder:actor_after_sleep()
+	log1("### [INFO] Actor after sleep")
 	olr_sleep.spawen_izlom_rand()
 	olr_sleep_robers.sleep_rob()
 	nick.clear_drinked_vodka()
 	olr_sleep.unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
 	olr_sleep.yan_dead_call() -- Странные сообщения на янтаре
-	olr_sleep.set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
+	olr_sleep.set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна (по идее не нужно, биндер и так обновляет + меж дневные-ночные тоже портят)
 	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
 	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
 	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне

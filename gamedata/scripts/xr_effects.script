@@ -1435,20 +1435,6 @@ function mil_set_alarm (actor, npc)
 	this.set_stalker_enemy (732, skull)		-- hit to Sniper3
 end
 
-function sar2_monolith_explode (actor, npc)
-	local monolith = level_object_by_sid (1305)
-	if monolith == nil then
-	   abort ("Object MONOLITH with SID 1305 not found")
-	end	   
-	local h = hit ()
-	h.power = 1000
-	h.direction = vector():set( 1, 0, 0 )
-	h.impulse = 1
-	h.draftsman = actor
-	h.type = hit.chemical_burn
-	monolith:hit (h)
-end
-
 function set_stalker_enemy (sid, draftsman)
 	local npc = level_object_by_sid (sid)
 	if npc == nil or npc:alive () == false then
@@ -1593,58 +1579,6 @@ end
 ---------------------------------------------------------
 function osoznanie_call(actor, npc)
 	news_manager.send_tip(db.actor, "o_soznanie_text", 0, "o_soznanie")
-end
-
----------------------------------------------------------
--- Sarcofag2
----------------------------------------------------------
-local sar2_heroes_sel_number, sar2_heroes_number = 0, 60
-local sar2_heroes_count, sar2_heroes_max_count = 0, 6
-local sar2_hero_next_free_id = 1
-local sar2_heroes_sel = {}
-
-function sar2_scene_start(actor, npc)
-	printf("effects <sar2>: scene start initializing.")
-	local i = 0
-	sar2_heroes_sel = {}
-	sar2_heroes_sel_number = 0
-	sar2_hero_next_free_id = 1
-	for i = 1, sar2_heroes_number do
-		if has_alife_info("sar2_death_" .. i) then
-			sar2_heroes_sel[#sar2_heroes_sel+1] = i
-			sar2_heroes_sel_number = sar2_heroes_sel_number + 1
-		end
-	end
-	print_table(sar2_heroes_sel)
-	printf("effects <sar2>: scene end initializing.")
-end
-
-function sar_hero_dead(actor, npc)
-	actor:give_info_portion("sar2_monolith_rock")
-	if sar2_heroes_count > 0 then
-		sar2_heroes_count = sar2_heroes_count - 1
-	end
-	if sar2_heroes_count == 0 and sar2_hero_next_free_id > sar2_heroes_sel_number then
-		actor:give_info_portion("sar2_monolith_end")
-	end
-	printf("effects <sar2>: hero dead.")
-end
-
-function sar2_hero_spawn(actor, npc)
-	printf("effects <sar2>: hero count - %d, max - %d.", sar2_heroes_count, sar2_heroes_max_count)
-	local c = sar2_heroes_max_count - sar2_heroes_count
-	-- check if we need to spawn stalkers
-	if sar2_hero_next_free_id <= sar2_heroes_sel_number and c > 0 then
-		local i, n = 0, math.min(sar2_hero_next_free_id + c - 1, sar2_heroes_sel_number)
-		for i = sar2_hero_next_free_id, n do
-			actor:give_info_portion("sar2_spawn_" .. sar2_heroes_sel[i])
-		end
-		if n >= sar2_hero_next_free_id then
-			printf("effects <sar2>: hero spawn.")
-		end
-		sar2_heroes_count = sar2_heroes_count + (n - sar2_hero_next_free_id + 1)
-		sar2_hero_next_free_id = n + 1
-	end
 end
 
 -------------------------------------------------------------------------------------

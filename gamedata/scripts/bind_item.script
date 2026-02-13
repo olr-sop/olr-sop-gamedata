@@ -53,46 +53,9 @@ local trader_sections = { -- секции торговцев для исключения заражения, хорошего
 	stalker_sakharov = true
 }
 
-local food_sections = { -- все секции еды
-    kolbasa = true,
-    bread = true,
-    conserva = true,
-	rat_food = true,
-	rat_food_coocked = true,
-	crow_food = true,
-	crow_food_coocked = true,
-	mutant_flesh_eye = true,
-	mutant_flesh_eye_coocked = true,
-	mutant_boar_leg = true,
-	mutant_boar_leg_coocked = true,
-	mutant_dog_tail = true,
-	mutant_dog_tail_coocked = true,
-	mutant_psevdodog_tail = true,
-	mutant_psevdodog_tail_coocked = true,
-	mutant_krovosos_jaw = true,
-	mutant_krovosos_jaw_coocked = true,
-	mutant_burer_hand = true,
-	mutant_burer_hand_coocked = true,
-	mutant_zombie_hand = true,
-	mutant_zombie_hand_coocked = true
-    -- остальные секции еды
-}
-
 local food_sections_neportit = { -- еда которая не должна портится (по крайней мере очень быстро)
 								 -- не используется на данный момент
 	conserva = true
-}
-
-local food_sections_coocked = { -- приготовленная еда портится медленее
-	rat_food_coocked = true,
-	crow_food_coocked = true,
-	mutant_flesh_eye_coocked = true,
-	mutant_boar_leg_coocked = true,
-	mutant_dog_tail_coocked = true,
-	mutant_psevdodog_tail_coocked = true,
-	mutant_krovosos_jaw_coocked = true,
-	mutant_burer_hand_coocked = true,
-	mutant_zombie_hand_coocked = true
 }
 
 function CItemBinder:update(delta)
@@ -113,7 +76,7 @@ function CItemBinder:update(delta)
 	
 	-- состояние еды у торговцев будет всегда от 90 до 99%
 	local cond = self.object:condition()
-	if cond == 1 and food_sections[self.object:section()] then
+	if cond == 1 and g_food_table[self.object:section()] then
 		if self.object:parent() ~= nil and trader_sections[self.object:parent():section()] then
 			--log1("! Меняем состояние еды у торговца: name = "..self.object:name().." id = "..self.object:id().."")
 			self.object:set_condition((math.random(90, 99) / 100)) -- у торговцев еда всегда почти идеальна
@@ -131,7 +94,7 @@ function CItemBinder:update(delta)
 				self.object:set_condition(cond - (self:TimeCondLost()*0.25)) -- у торговецв еда портится в 4 раза дольше
 				--log1("! Меняем состояние еды в апдейте у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
 			else
-				if food_sections_coocked[self.object:section()] then
+				if g_monster_parts_cooked_table[self.object:section()] then
 					self.object:set_condition(cond - (self:TimeCondLost()*0.5)) -- приготовленная будет в два раза медленее чем сырая
 					--log1("! Меняем состояние приготовленной еды в апдейте не у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
 				else

@@ -655,27 +655,6 @@ function load_job(sj, gname, type, squad, groups)
 		}
 		sj[#sj+1] = t
 	end
-	
-	if type == "gar_psevdowounded" then
-		t = { section = "logic@gar_psevdowounded_2",
-			idle = 0,
-			prior = 3, state = {0},
-			in_rest = "", out_rest = "gar_sniper_in_restrictor",
-			predicate = function(obj_info) 
-        					return obj_info.name == "gar_sniper_bandit"			           
-						end
-		}
-		sj[#sj+1] = t
-		t = { section = "logic@gar_psevdowounded_1",
-			idle = 0,
-			prior = 3, state = {0},
-			in_rest = "", out_rest = "",
-			predicate = function(obj_info) 
-        					return obj_info.name == "gar_wounded_bandit"			           
-						end
-		}
-		sj[#sj+1] = t
-	end	
 end
 
 
@@ -767,13 +746,6 @@ function load_states(gname, type)
 		end
 	end
 	
-	
-	if type == "gar_psevdowounded" then        
-		return function(gulag)
-			return 0
-		end
-	end
-	
 	if type == "gar_dolg_blokpost" then
 		return function(gulag)
 			if has_alife_info("gar_test_info2") then
@@ -837,10 +809,6 @@ function checkStalker(npc_community, gulag_type, npc_rank, se_obj)
 	
 	if gulag_type == "gar_bandit_ambush" then
 		return npc_community == "bandit"
-	end
-	
-	if gulag_type == "gar_psevdowounded" then
-		return se_obj:name() == "gar_wounded_bandit" or se_obj:name() == "gar_sniper_bandit"
 	end
 	
 	return false

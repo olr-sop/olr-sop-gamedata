@@ -166,7 +166,7 @@ end
 function parse_names(s)
     local t = {}
     for name in string.gfind(s, "([%w_%-.\\]+)%p*") do
-        t[#t+1] = name
+        table.insert(t, name)
     end
     return t
 end
@@ -175,7 +175,7 @@ function r_items(spawn_ini, section, line)
     if spawn_ini:line_exist(section, line) then
         -- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
         local t = parse_names(spawn_ini:r_string(section, line))
-        local n = #t
+        local n = table.getn(t)
 
         local ret_table = {}
         local k = 1
@@ -199,7 +199,7 @@ function r_items(spawn_ini, section, line)
                 item.count = 1
                 k = k + 1
             end
-            ret_table[#ret_table+1] = item
+            table.insert(ret_table, item)
         end
         return ret_table
     end

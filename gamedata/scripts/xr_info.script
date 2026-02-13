@@ -596,13 +596,13 @@ function loadInfo(npc, char_ini)
 		for kk, vv in pairs(rank_info) do
 			if v == vv then
 				-- Добавляем в список доступных знаний
-				tt[#tt+1] = v
+				table.insert(tt, v)
 				break
 			end
 		end
 	end
 
-	local size = #tt
+	local size = table.getn(tt)
 	for k = 1, math.min(size, 3) do
 		if math.random(100) >= 90 then
 			local ii = tt[math.random(size)]
@@ -623,6 +623,6 @@ function give_npc_info(npc, info)
 			db.story_by_id[npc:id()] = {}
 		end
 
-		db.story_by_id[npc:id()][#db.story_by_id[npc:id()]+1] = info
+		table.insert(db.story_by_id[npc:id()], info)
 	end
 end

@@ -57,7 +57,7 @@ function dialog_mgr:reset( npc, team )
 
 			self.a = teams[team]
 --			self.a.npcs[npc:id()] = npc
-			self.a.npcs[#self.a.npcs+1] = npc
+			table.insert( self.a.npcs, npc )
 
 --			printf( "[dialogs] adding %s to dlgteam %s", npc:name(), team )
 		end
@@ -77,7 +77,7 @@ function dialog_mgr:finalize()
 		self.team = nil
 
 		-- если никого не осталось, сбросить диалог
-		if #self.a.npcs == 0 then
+		if table.getn( self.a.npcs ) == 0 then
 			self:reset_dialog()
 		end
 	end
@@ -105,8 +105,8 @@ end
 -- начало нового диалога
 function dialog_mgr:new_dialog()
 	-- выбор нового диалога
-	if #self.a.dlgs > 1 then
-		local r = math.random( 1, #self.a.dlgs - 1 )
+	if table.getn( self.a.dlgs ) > 1 then
+		local r = math.random( 1, table.getn( self.a.dlgs ) - 1 )
 		if self.a.dlgs[r] == self.a.last_dlg then
 			r = r + 1
 		end
@@ -150,7 +150,6 @@ end
 
 -- подготовка новой фразы
 function dialog_mgr:new_phrase()
-	local mrandom = math.random
 	clear_table( avail )
 
 	-- если диалог уже был начат (т.е. есть текущий говорящий)
@@ -158,20 +157,20 @@ function dialog_mgr:new_phrase()
 		-- выбрать того, кто ответит. он должен быть недалеко от предыдущего говорящего
 		for i, v in pairs(self.a.npcs) do
 			if v:id() ~= self.a.cur_npc:id() and self.a.cur_npc:position():distance_to_sqr( v:position() ) <= dist_max then
-				avail[#avail+1] = v
+				table.insert( avail, v )
 			end
 		end
 
-		if #avail == 0 then
+		if table.getn( avail ) == 0 then
 			-- если отвечать некому, то фраза не выбрана
 			return false
 		end
 
 		-- выбор нового говорящего
-		self.a.cur_npc = avail[mrandom( 1, #avail )]
+		self.a.cur_npc = avail[math.random( 1, table.getn( avail ) )]
 	else
 		-- попытка выбора нового говорящего
-		self.a.cur_npc = self.a.npcs[mrandom( 1, #self.a.npcs )]
+		self.a.cur_npc = self.a.npcs[math.random( 1, table.getn( self.a.npcs ) )]
 
 		-- посмотреть, может ли кто-то потенциально продолжить диалог
 		local flg
@@ -201,14 +200,14 @@ function dialog_mgr:new_phrase()
 		end
 
 		if type( p ) == "table" then
-			p = p[mrandom( 1, #p )]
+			p = p[math.random( 1, table.getn( p ) )]
 		end
 
 		self.a.cur_phrase = dialogs[self.a.cur_dlg][p]
 	end
 
 	-- установить задержку перед новой фразой
-	self.a.phrase_delay_end = time_global() + mrandom( pause_min, pause_max ) * 1000
+	self.a.phrase_delay_end = time_global() + math.random( pause_min, pause_max ) * 1000
 	self.a.phrase_playing   = false
 
 --	printf( "phrase selected" )
@@ -243,7 +242,7 @@ function dialog_mgr:update()
 		end
 	else
 		-- если можно, начать диалог и у нас не один говорящий
-		if self.a.dlgs and self.a.idle_end < time_global() and #self.a.npcs > 1 then
+		if self.a.dlgs and self.a.idle_end < time_global() and table.getn( self.a.npcs ) > 1 then
 			self:new_dialog()
 		end
 	end

@@ -402,7 +402,7 @@ function GetLevelVertexes(level)
 			if not lvtab[ ln ] then
 				lvtab[ ln ] = {}
 			end
-			lvtab[ln][#lvtab[ln]+1] = lv
+			table.insert( lvtab[ ln ], lv )
 			i = i + 1
 		end
 		return lvtab[ level ]
@@ -419,7 +419,7 @@ function GetGameVertexes( level )
 			if not gvtab[ ln ] then
 				gvtab[ ln ] = {}
 			end
-			gvtab[ln][#gvtab[ln]+1] = i
+			table.insert( gvtab[ ln ], i )
 			i = i + 1
 		end
 		return gvtab[ level ]
@@ -727,14 +727,14 @@ end
 
 function random_choice(...)
     local arg = {...}
-    local r = math.random(1, #arg)
+    local r = math.random(1, table.getn(arg))
     return arg[r]
 end
 
 function new_action(...)
     local arg = {...}
     local act = entity_action()
-    for i = 1, #arg do
+    for i = 1, table.getn(arg) do
         act:set_action(arg[i])
     end
     return act
@@ -1107,10 +1107,8 @@ end -- end of editor() == false
 
 
 function str_split (str)
-	local schar = string.char
-	local sformat = string.format
 
-    local strlen = #str
+    local strlen = string.len (str)
 
     local parts = {{}, {}, {}, {}}
     local cpart = 1
@@ -1118,7 +1116,7 @@ function str_split (str)
     for a = 1, strlen, 1 do
         local char = string.byte (str, a)
         if char ~= 95 then
-           parts[cpart][#parts[cpart]+1] = char
+           table.insert (parts[cpart], char)
         else
            cpart = cpart + 1
            if cpart > 4 then break end
@@ -1127,29 +1125,29 @@ function str_split (str)
 
     if cpart ~= 4 then return "unknown", "stalker", 0, 0 end
 
-    local str1 = schar ()
-    local str2 = schar ()
-    local str3 = schar ()
-    local str4 = schar ()
+    local str1 = string.char ()
+    local str2 = string.char ()
+    local str3 = string.char ()
+    local str4 = string.char ()
 
     local ref = parts[1]
-    for a = 1, #ref, 1 do
-        str1 = sformat ("%s%c", str1, ref[a])
+    for a = 1, table.getn (ref), 1 do
+        str1 = string.format ("%s%c", str1, ref[a])
     end
 
     ref = parts[2]
-    for a = 1, #ref, 1 do
-        str2 = sformat ("%s%c", str2, ref[a])
+    for a = 1, table.getn (ref), 1 do
+        str2 = string.format ("%s%c", str2, ref[a])
     end
 
     ref = parts[3]
-    for a = 1, #ref, 1 do
-        str3 = sformat ("%s%c", str3, ref[a])
+    for a = 1, table.getn (ref), 1 do
+        str3 = string.format ("%s%c", str3, ref[a])
     end
 
     ref = parts[4]
-    for a = 1, #ref, 1 do
-        str4 = sformat ("%s%c", str4, ref[a])
+    for a = 1, table.getn (ref), 1 do
+        str4 = string.format ("%s%c", str4, ref[a])
     end
 
     printf ("%s %s %d %d", str1, str2, str3, str4)
@@ -1185,7 +1183,7 @@ function parse_names(s)
     
     -- Разбиваем строку по запятым, но учитываем тире как часть имени
     for name in string.gmatch(s, "([%w_\\%-]+)%p*") do
-        t[#t+1] = name
+        table.insert(t, name)
     end
     
     return t
@@ -1228,7 +1226,7 @@ function parse_nums( s )
 	local t = {}
 
 	for entry in string.gfind( s, "([%d%.]+)%,*" ) do
-		t[#t+1] = tonumber( entry )
+		table.insert( t, tonumber( entry ) )
 	end
 
 	return t
@@ -1277,8 +1275,8 @@ end
 
 -- очистка таблицы
 function clear_table (t)
-    while #t > 0 do
-          table.remove (t, #t)
+    while table.getn (t) > 0 do
+          table.remove (t, table.getn (t))
     end
 end
 
@@ -1389,14 +1387,14 @@ function point_with_bit(patrol_path, bit, old_point)      -- old_point - индекс 
       if( patrol_path:flag(i, bit)) then
             -- Добавляем точку если old_point == nil или новая точка не совпадает с old_point
             if(old_point == nil) then
-                points[#points+1] = patrol_path:point(i)
+                table.insert(points, patrol_path:point(i))
             elseif(old_point ~= i) then
-                points[#points+1] = patrol_path:point(i)
+                table.insert(points, patrol_path:point(i))
             end
         end
     end
 
-    local number_point = #points
+    local number_point = table.getn(points)
 
     if(number_point == 0) then
         return nil
@@ -1416,14 +1414,14 @@ function point_with_bit_id(patrol_path, bit, old_point)        -- old_point - ин
       if( patrol_path:flag(i, bit)) then
             -- Добавляем точку если old_point == nil или новая точка не совпадает с old_point
             if(old_point == nil) then
-                points[#points+1] = i
+                table.insert(points, i)
             elseif(old_point ~= i) then
-                points[#points+1] = i
+                table.insert(points, i)
             end
         end
     end
 
-    local number_point = #points
+    local number_point = table.getn(points)
 
     if(number_point == 0) then
         return nil

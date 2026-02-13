@@ -871,7 +871,7 @@ function spawn_on_obj(obj, objpos, count)
         for i = 1, count do
             local sobj = alife():create(obj, base_dir, sobjpos.m_level_vertex_id, sobjpos.m_game_vertex_id)
             clear_useful_for_ai(sobj)
-            spawned_objects[#spawned_objects+1] = sobj
+            table.insert(spawned_objects, sobj)
             --olr.add_spot_on_map(sobj.id, "jaba_spotmap", sobj:name())
         end
         
@@ -1346,13 +1346,13 @@ function gta_actor_car()
 		local kill = sim:object(id)
 		if kill and montabl[kill:clsid()] then
 			if xvars.olr[kill.id] then
-				tabcars[#tabcars+1] = kill
+				table.insert(tabcars, kill)
 				--log1("sasa")
 			end
 		end
 	end
 
-	if #tabcars == 0 then
+	if table.getn(tabcars) == 0 then
 		--log1("gta cars - has no cars in table")
 		return
 	end
@@ -1379,7 +1379,7 @@ function gta_actor_car()
 				local obj = sim:object(id)
 				if obj then
 					if rontabl[obj:clsid()] then
-						tab[#tab+1] = obj
+						table.insert(tab, obj)
 					end
 				end
 			end

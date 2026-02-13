@@ -17,13 +17,13 @@ function play_sound_rnd (obj, min_delay, max_delay, theme, sub_theme, phrase_set
 
     if obj == nil or theme == nil then return end
 --    printf ("Theme %s", theme)
-    if sub_theme == nil or #themes[theme] < sub_theme then
+    if sub_theme == nil or table.getn (themes[theme]) < sub_theme then
        sub_theme = this.get_random_subtheme (theme)
        if sub_theme == 0 then return end
     end
 --    printf ("Sub_theme %d", sub_theme)
-    if phrase_set == nil or #themes[theme][sub_theme] < (phrase_set - 1) then
-       phrase_set = math.random (1, #themes[theme][sub_theme] - 1)
+    if phrase_set == nil or table.getn (themes[theme][sub_theme]) < (phrase_set - 1) then
+       phrase_set = math.random (1, table.getn (themes[theme][sub_theme]) - 1)
     end
 --    printf ("Phrase_set %d", phrase_set)
     if sub_phrase == nil or this.get_num_subphrases (theme, sub_theme, phrase_set) < sub_phrase then
@@ -49,17 +49,17 @@ function play_sound_rnd (obj, min_delay, max_delay, theme, sub_theme, phrase_set
 end
 -----------------------------------------------------------------------------------------------------------------------------------
 function get_num_themes ()
-    return #themes
+    return table.getn (themes)
 end
 -----------------------------------------------------------------------------------------------------------------------------------
 function get_num_sub_themes (theme)
     if theme == nil then return 0 end
-    return #themes[theme]
+    return table.getn (themes[theme])
 end
 -----------------------------------------------------------------------------------------------------------------------------------
 function get_num_phrases (theme, sub_theme)
     if theme == nil or sub_theme == nil then return 0 end
-    return #themes[theme][sub_theme] - 1
+    return table.getn (themes[theme][sub_theme]) - 1
 end
 -----------------------------------------------------------------------------------------------------------------------------------
 function get_num_subphrases (theme, sub_theme, phrases)
@@ -68,7 +68,7 @@ function get_num_subphrases (theme, sub_theme, phrases)
 end
 -----------------------------------------------------------------------------------------------------------------------------------
 function get_random_subtheme (theme)
-    local num = #themes[theme]
+    local num = table.getn (themes[theme])
     if num == 0 then
        printf ("No subthemes in %s theme", theme)
        return
@@ -78,7 +78,7 @@ function get_random_subtheme (theme)
 end
 -----------------------------------------------------------------------------------------------------------------------------------
 function get_random_phrases_set (theme, sub_theme)
-    local num = #themes[theme][sub_theme]
+    local num = table.getn (themes[theme][sub_theme])
     if num == 0 then
        printf ("No phrases set in %s theme, %d sub theme", theme, sub_theme)
        return
@@ -102,8 +102,8 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------
 function create_sound_constructor (theme, sub_theme)
     if theme == nil then return nil end
-    if sub_theme == nil or #themes[theme] < sub_theme then
-       sub_theme = math.random (1, #themes[theme])
+    if sub_theme == nil or table.getn (themes[theme]) < sub_theme then
+       sub_theme = math.random (1, table.getn (themes[theme]))
     end
     local t = {
               idle = 0,
@@ -163,9 +163,9 @@ function set_sound(npc, sound, now)
         if mrandom(100) < sound.rnd or now == true then
             local r
             if sound.lastsound == nil then
-                r = mrandom(#sound.sounds)
+                r = math.random(table.getn(sound.sounds))
             else
-                r = mrandom(#sound.sounds-1)
+                r = math.random(table.getn(sound.sounds)-1)
                 if r >= sound.lastsound then
                     r = r + 1
                 end

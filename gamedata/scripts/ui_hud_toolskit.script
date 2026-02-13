@@ -443,7 +443,7 @@ function UI_TabController:OnBtnAction2()
 --					log1(string.format("OnBtnAction2:name=[%s],id=[%s]%s", soObj:name(), i, "")) --/#~#
 					if not id then id = i end
 					local iDist = soObj.position:distance_to(vPosA)
-					tFound[#tFound+1] = {id=i, dist=iDist}
+					table.insert(tFound, {id=i, dist=iDist})
 				end
 			end
 		end
@@ -1262,14 +1262,14 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 						key = tonum(key) --/ переводим ключ в число
 					end
 					if sMode == nil or sMode == "list" then --/ простая таблица-список: (из одиночных значений или таблиц с ними)
-						if sDiv and type_(key) == 'string' then
-							tRet[#tRet+1] = string.split(key,sDiv,bType) --/> {{a11,a12,...,a1n}, {a21,a22,...,a2n}, ..., {an1,an2,...,ann}}
+						if sDiv and type(key) == 'string' then
+							table.insert(tRet, string.split(key,sDiv,bType)) --/> {{a11,a12,...,a1n}, {a21,a22,...,a2n}, ..., {an1,an2,...,ann}}
 						else
 							if bType == false then
 								key = tonum(key) --/ переводим ключ в число
 							end
 							if key ~= nil then
-								tRet[#tRet+1] = key --/> {arg1, arg2, ..., argn}
+								table.insert(tRet, key) --/> {arg1, arg2, ..., argn}
 							end
 						end
 					elseif sMode == 'string' then --/ простая таблица:
@@ -1290,12 +1290,12 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 						end
 					elseif sMode == "matrix" then --/ матрица:
 						if not sDiv then --/ субтаблицы - простые таблицы-списки
-							if bType == false then value = tonum(string.trim(value)) end
-							tRet[#tRet+1] = {key, string.trim(value)} --/> { {k1,v1}, {k2,v2}, ..., {kn,vn} }
+							if bType == false then value = tonumber(string.trim(value)) end
+							table.insert(tRet,{key, string.trim(value)}) --/> { {k1,v1}, {k2,v2}, ..., {kn,vn} }
 						elseif not (sDiv2 and sDiv2 ~= sDiv) then --/ разделяем 'value' по маске 'sDiv' и 'чистим' от пробелов [и переводим в числа]
 							local tValue = string.split(value,sDiv,bType)
 							tRet[key] = {}
-							tRet[key][#tRet[key]+1] = tValue --/> {k1={v11,v12,...,v1n}, k2={v21,v22,...,v2n}, ..., kn={vn1,vn2,...,vnn}}
+							table.insert( tRet[key], tValue ) --/> {k1={v11,v12,...,v1n}, k2={v21,v22,...,v2n}, ..., kn={vn1,vn2,...,vnn}}
 						else
 							local tValue = string.split(value,sDiv)
 							tRet[key] = {}
@@ -1304,8 +1304,8 @@ function Get_IniSection(ini,sSection,sMode,sType,sDiv,sDiv2)
 							for _,v in pairs(tValue) do
 								Key,Val = v:match(sPattern)
 								if Key and Val then
-									if bType == false then Val = tonum(Val) end
-									tRet[key][#tRet[key]+1] = {Key, Val} --/> {k1={k11,v11,...,kn,v1n}, k2={k21,v21,...,v2n}, ..., kn={kn1,vn1,...,knn,vnn}}
+									if bType == false then Val = tonumber(Val) end
+									table.insert( tRet[key], {Key, Val} ) --/> {k1={k11,v11,...,kn,v1n}, k2={k21,v21,...,v2n}, ..., kn={kn1,vn1,...,knn,vnn}}
 								end
 							end
 						end

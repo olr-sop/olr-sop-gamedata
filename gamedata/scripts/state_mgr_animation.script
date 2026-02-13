@@ -502,7 +502,6 @@ function animation:update()
 end
 -- ќтыгрыш рандомной анимации
 function animation:play_rnd(state, must_play)
-	local mrandom = math.random
 	--printf("try to add rnd animation [%s] for [%s]", utils.to_str(state), utils.to_str(rnd))
 	-- нельз€ добавл€ть рандом во врем€ лока схемы.
 	if not (self.mgr.planner:evaluator(self.mgr.properties["animation"]):evaluate() and
@@ -521,9 +520,9 @@ function animation:play_rnd(state, must_play)
 	
 	-- ќпределение промежутков времени между анимаци€ми	
 	self.states.begin = time_global()
-	self.states.idle = (mrandom(state.prop.maxidle) + 
+	self.states.idle = (math.random(state.prop.maxidle) + 
 									state.prop.sumidle) * 1000
-	if mrandom(100) < state.prop.rnd or must_play then	
+	if math.random(100) < state.prop.rnd or must_play then	
 		local wpn_slot = self:weapon_slot()
 		local anima = self:anim_for_slot(wpn_slot,state.rnd)
 		if anima == nil then			
@@ -531,11 +530,11 @@ function animation:play_rnd(state, must_play)
 		end
 		
 		local r
-		if #anima > 1 then			
+		if table.getn(anima) > 1 then			
 			if self.states.last_id == nil then
-				r = mrandom(#anima)
+				r = math.random(table.getn(anima))
 			else
-				r = mrandom(#anima-1)
+				r = math.random(table.getn(anima)-1)
 				if r >= self.states.last_id then
 					r = r + 1
 				end
@@ -613,14 +612,14 @@ function animation:set_anim_callback(value)
 	-- Ќужно определить разницу между активным количеством анимаций и размером таблицы
 	-- дополнить таблицами нилами до нужного размера
 	-- в последнюю позицию записать настройки.
-	local table_size = #self.clb_settings
+	local table_size = table.getn(self.clb_settings)
 	local anim_count = self.npc:animation_count()
 	--printf("for debug [%s] [%s]", table_size, anim_count)
 	
 	for key = table_size+1, anim_count do
-		self.clb_settings[#self.clb_settings+1] = "nil"
+		table.insert(self.clb_settings, "nil")
 	end
-	self.clb_settings[#self.clb_settings] = {
+	self.clb_settings[table.getn(self.clb_settings)] = {
 		a = value.a,
 		d = value.d,
 		s = value.s,

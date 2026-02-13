@@ -751,7 +751,7 @@ function engame_fun_monolitc()
 
 	local count = mrandom(8, 12)
 	for ind = 1, count do
-		local section = sectionsa[mrandom(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
 	end
 
@@ -864,7 +864,7 @@ function fantasm_den_man_start_fun()
 	}
 
 	if math.random(1, 5) == 1 then
-		local section = sectionsa[math.random(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		alife():create(section, db.actor:position():add(db.actor:direction():mul(-2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	else
 		nick.phantasms_zombies()
@@ -926,7 +926,7 @@ function mg_ph_spawn_boloto()
 		"ph_konteyner_01"
 	}
 
-	local section = sectionsa[math.random(#sectionsa)]
+	local section = sectionsa[math.random(table.getn(sectionsa))]
 	alife():create(section, db.actor:position():add(db.actor:direction():mul(-2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	olr_timers.st_timer("mg_ph_spawn_boloto", 14, "nick.mg_ph_spawn_boloto()")
 end
@@ -975,7 +975,7 @@ function phantasms_zombies()
 		local xnoob = mrandom(10, 20 + i)
 		local znoob = mrandom(10, 20 + i)
 		local nmpos = vector():set(noobposition.x + xnoob - i, noobposition.y - 2, noobposition.z - znoob)
-		local section = sectionsa[mrandom(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		local zom = alife():create(section, nmpos, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 
 		level.client_spawn_manager():add(zom.id, 0,
@@ -1058,7 +1058,7 @@ function upd_cond_foods_serv()
         if obj and obj.level_name ~= current_level then
             local flag = LEVEL_CHECKS[obj.level_name]
             if flag and has_alife_info(flag) and food_sections[obj:section_name()] then
-                foods[#foods+1] = obj
+                table.insert(foods, obj)
             end
         end
     end
@@ -2322,7 +2322,7 @@ function spawn_mons_rozd_sarco()
 		local gvtab = GetGameVertexes(lname)
 		local gv_min = math.min(unpack(gvtab))
 		local gv_max = math.max(unpack(gvtab))
-		local section = sectionsa[math.random(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
 	end
 end
@@ -3713,7 +3713,7 @@ function gar_lamb_zombs()
 	}
 
 	for id = 1, math.random(1, 5) do
-		local section = sectionsa[math.random(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		alife():create(section, db.actor:position():add(db.actor:direction():mul(-19)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	end
 end
@@ -7947,7 +7947,7 @@ function bar_first_del_bar_alcoholics()
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	end
 
 	if level.name() == "lvl5_bar" then
@@ -7965,7 +7965,7 @@ function bar_first_del_bar_alcoholics()
 			local data = pk:get()
 			data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 			pk:set(data)
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+			table.insert(olr_offline_walk.tabst, sobj)
 		end
 
 		local sobj = sim:object("lvl5_bar_stalker_0021")
@@ -7974,7 +7974,7 @@ function bar_first_del_bar_alcoholics()
 			local data = pk:get()
 			data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 			pk:set(data)
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+			table.insert(olr_offline_walk.tabst, sobj)
 		end
 
 		local sobj = sim:object("lvl5_bar_stalker_0022")
@@ -7983,7 +7983,7 @@ function bar_first_del_bar_alcoholics()
 			local data = pk:get()
 			data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 			pk:set(data)
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+			table.insert(olr_offline_walk.tabst, sobj)
 		end
 
 		local sobj = sim:object("lvl5_bar_stalker_0041")
@@ -7992,7 +7992,7 @@ function bar_first_del_bar_alcoholics()
 			local data = pk:get()
 			data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 			pk:set(data)
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+			table.insert(olr_offline_walk.tabst, sobj)
 		end
 
 		local sobj = sim:object("lvl5_bar_stalker_0042")
@@ -8001,7 +8001,7 @@ function bar_first_del_bar_alcoholics()
 			local data = pk:get()
 			data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 			pk:set(data)
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+			table.insert(olr_offline_walk.tabst, sobj)
 		end
 
 		local sobj = sim:object("lvl5_bar_stalker_0043")
@@ -8010,7 +8010,7 @@ function bar_first_del_bar_alcoholics()
 			local data = pk:get()
 			data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 			pk:set(data)
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+			table.insert(olr_offline_walk.tabst, sobj)
 		end
 	end
 end
@@ -8029,7 +8029,7 @@ function to_prip_alc_gaaway()
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl13_prip_smart_terrain_0005 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 		olr.add_spot_on_map(sobj.id, "green_location", game.translate_string("to_prip_alc_gaaway_map"))
 	end
 end
@@ -8138,7 +8138,7 @@ function jaba_bigbrotha_remind()
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	--level.map_add_object_spot_ser( sobj.id, "green_location", "fff" )
 	end
 
@@ -8148,7 +8148,7 @@ function jaba_bigbrotha_remind()
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	end
 
 	local sobj = sim:object("lvl1_escape_stalker_0001")
@@ -8157,7 +8157,7 @@ function jaba_bigbrotha_remind()
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	end
 end
 
@@ -8906,7 +8906,7 @@ function give_treasure_brain_docs()
 		if obj then
 			local sect = obj:section_name()
 			if sect == "box_rukzak_treasure" then
-				tab[#tab+1] = obj
+				table.insert(tab, obj)
 			end
 		end
 	end
@@ -8954,7 +8954,7 @@ function osved_about_docstalker()
 						then
 							local strn_id = kill:smart_terrain_id()
 							if strn_id ~= 65535 then
-								rand_stlk[#rand_stlk+1] = kill
+								table.insert(rand_stlk, kill)
 							end
 						end
 					end
@@ -9206,7 +9206,7 @@ function greh_enable_newui(actor)
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	end
 	local sobj = alife():object("lvl5_bar_stalker_0001")
 	if sobj and IsStalker(sobj) and sobj:alive() then
@@ -9214,7 +9214,7 @@ function greh_enable_newui(actor)
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	end
 	local sobj = alife():object("lvl5_bar_stalker_0000")
 	if sobj and IsStalker(sobj) and sobj:alive() then
@@ -9222,7 +9222,7 @@ function greh_enable_newui(actor)
 		local data = pk:get()
 		data.custom_data:setString("[smart_terrains]\n" .. "lvl3_agroprom_smart_terrain_0020 = true\n")
 		pk:set(data)
-		olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = sobj
+		table.insert(olr_offline_walk.tabst, sobj)
 	end
 end
 
@@ -9413,7 +9413,7 @@ function spawn_yaroslav_garbage()
 		if obj then
 			olr_timers.st_timer("jar_toprip_durak", 1500, "nick.jar_toprip_durak(" .. tostring(obj.id) .. ")")
 			olr.add_spot_on_map(obj.id, "green_location", game.translate_string("spawn_yaroslav_garbage_map"))
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = obj
+			table.insert(olr_offline_walk.tabst, obj)
 		end
 	end
 end
@@ -9620,7 +9620,7 @@ function create_tihonov_zakaz(target_name, map_string, xvar_id)
 		if obj then
 			olr.add_spot_on_map(obj.id, "green_location", game.translate_string(map_string))
 			xvars[xvar_id] = obj.id
-			olr_offline_walk.tabst[#olr_offline_walk.tabst+1] = obj
+			table.insert(olr_offline_walk.tabst, obj)
 			xvars.npc_ofl_trade_yan[obj:name()] = true
 		end
 	end
@@ -10212,7 +10212,7 @@ function sarcofag_dead_stalkers_teleport()
 		local gvtab	= GetGameVertexes(lname)
 		local gv_min = math.min( unpack(gvtab))
 		local gv_max = math.max( unpack(gvtab))
-		local section = sectionsa[math.random(#sectionsa)] 
+		local section = sectionsa[math.random(table.getn(sectionsa))] 
 		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
 	end
 end
@@ -10565,7 +10565,7 @@ function spawn_random_rats_on_level()
 		local gv_min = math.min(unpack(gvtab))
 		local gv_max = math.max(unpack(gvtab))
 
-		local section = sectionsa[math.random(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
 	end
 end
@@ -13753,9 +13753,9 @@ function tele()
 	local sim = alife()
 
 	local container_ids = {}
-	if bobj then container_ids[#container_ids+1] = bobj.id end
-	if bobj2 then container_ids[#container_ids+1] = bobj2.id end
-	if bobj3 then container_ids[#container_ids+1] = bobj3.id end
+	if bobj then table.insert(container_ids, bobj.id) end
+	if bobj2 then table.insert(container_ids, bobj2.id) end
+	if bobj3 then table.insert(container_ids, bobj3.id) end
 
 	for id = 1, 65534 do
 		local kill = sim:object(id)
@@ -13843,7 +13843,7 @@ function chaes_add_spawn_doki_seven()
 		local gv_min = math.min(unpack(gvtab))
 		local gv_max = math.max(unpack(gvtab))
 
-		local section = sectionsa[math.random(#sectionsa)]
+		local section = sectionsa[math.random(table.getn(sectionsa))]
 		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
 		if obj and obj.position:distance_to_xz(db.actor:position()) < 50 then --- ваяки
 			alife():release(obj, true)

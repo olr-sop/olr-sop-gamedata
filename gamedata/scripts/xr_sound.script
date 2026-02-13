@@ -149,7 +149,7 @@ function update(npc)
 		return
 	end
 
-	if #db.sound[npc_id].snd == 0 then
+	if table.getn(db.sound[npc_id].snd) == 0 then
 		return
 	end
 	
@@ -296,7 +296,7 @@ function update_actor()
 	local theme = sound_theme.actor_theme[actor_sound.theme]
 	if theme == nil then return end
 	
-	if #theme.sounds == 0 then
+	if table.getn(theme.sounds) == 0 then
 		return
 	end
 
@@ -306,7 +306,7 @@ function update_actor()
 		actor_sound.begin = time_global()
 		
 		-- Тут надо отыграть звук
-		local sound = theme.sounds[math.random(#theme.sounds)]
+		local sound = theme.sounds[math.random(table.getn(theme.sounds))]
 		if sound ~= nil then
 			sound:play(db.actor, 0, sound_object.s2d)
 		end
@@ -337,7 +337,7 @@ function get_sound_object(theme, t_type, stereo)
 
 	-- Выбор следующего айдишника
 	local play_id = -1
-	local table_size = #sound_theme.ph_snd_themes[theme]
+	local table_size = table.getn(sound_theme.ph_snd_themes[theme])
 	if sound_object_by_theme[theme].last_id == nil then
 		if t_type == "random" then
 			if table_size >= 2 then

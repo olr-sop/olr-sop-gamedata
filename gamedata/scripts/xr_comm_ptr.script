@@ -30,7 +30,7 @@ end
 -------------
 function evaluator_escape:evaluate ()
     if self.a.escape_path == nil then return false end
-    local size = #db.storage[self.object:id()].followers
+    local size = table.getn (db.storage[self.object:id()].followers)
     if size == 0 then return false end
     for count = 1, size, 1 do
         local npc_id = db.storage[self.object:id()].followers[count].npc_id
@@ -224,7 +224,7 @@ function action_patrol:process_radio ()
 end
 -------------
 function action_patrol:set_soldier_positions ()
-    local size = #db.storage[self.object:id()].followers
+    local size = table.getn (db.storage[self.object:id()].followers)
     if size == 0 then return end
     local dir = self.object:direction ()
     dir.y = 0.0
@@ -241,7 +241,7 @@ function action_patrol:set_soldier_positions ()
 end
 -------------
 function action_patrol:set_soldier_positions_raid ()
-    local size = #db.storage[self.object:id()].followers
+    local size = table.getn (db.storage[self.object:id()].followers)
     if size == 0 then return end
     local dir = self.object:direction ()
     dir.y = 0.0
@@ -267,7 +267,7 @@ function action_patrol:set_soldier_positions_raid ()
 end
 -------------
 function action_patrol:set_command (command)
-    local size = #db.storage[self.object:id()].followers
+    local size = table.getn (db.storage[self.object:id()].followers)
     if size == 0 then return end
     for a = 1, size, 1 do
         db.storage[self.object:id()].followers[a].leader_command = command
@@ -330,7 +330,7 @@ function action_escape:move_callback (obj, action_type, index)
 end
 ----------------------------------------------------------------------------------------
 function action_escape:set_command (command)
-    local size = #db.storage[self.object:id()].followers
+    local size = table.getn (db.storage[self.object:id()].followers)
     if size == 0 then return end
     for a = 1, size, 1 do
         db.storage[self.object:id()].followers[a].leader_command = command
@@ -384,7 +384,7 @@ function action_raid:reset_scheme ()
 	end   
 	self.move_mgr:reset(self.a.raid_path, self.a.raid_walk_info, self.a.raid_look, self.a.raid_look_info, self.a.team, nil, {obj = self, func = self.callback})
 	local id = self.object:id()
-    local size = #db.storage[id].followers
+    local size = table.getn (db.storage[id].followers)
     if size == 0 then return end
     for a = 1, size, 1 do
         db.storage[id].followers[a].raid_process = true

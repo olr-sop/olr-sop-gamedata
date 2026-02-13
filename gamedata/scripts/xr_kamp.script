@@ -400,7 +400,7 @@ function CKampManager:__init(path)
 		-- если есть 1 флажок - создать место дл€ сидени€ в точке пути
 		if self.patrol:flag(k,1) then
 			-- создать точку дл€ сидени€
-			self.position[#self.position+1] = {vertex = self.patrol:level_vertex_id(k)}
+			table.insert(self.position, {vertex = self.patrol:level_vertex_id(k)})
 		end		
 	end
 	--print_table(self.position)
@@ -482,7 +482,7 @@ function CKampManager:selectPosition(npc_id)
     local free = {}
     for k,v in pairs(self.position) do
         if v.used == nil then
-            free[#free+1] = k
+            table.insert(free, k)
         end
     end
     --log1(string.format("xr_camp : [CKampManager:selectPosition] Found %d free positions", #free))
@@ -653,20 +653,20 @@ function CKampManager:proceedRole(npc, director)
 		local temp = {}
 		for k,v in pairs(states) do
 			if self.npc[npc_id].states[v] == true then
-				temp[#temp+1] = v
+				table.insert(temp, v)
 			end
 		end
 		
 		-- ≈сли мы решили говорить историю, надо выбрать какую именно говорить.
 		if sound == "play_story" and self.selected_story == nil and db.story_by_id[npc_id] ~= nil then
-			local story_num = #db.story_by_id[npc_id]
+			local story_num = table.getn(db.story_by_id[npc_id])
 			if story_num > 0 then
 				self.selected_story = db.story_by_id[npc_id][math.random(story_num)]
 			end			
 		end
 
 		self.npc[npc_id].begin = time_global()
-		state = temp[math.random(#temp)]
+		state = temp[math.random(table.getn(temp))]
 		self.npc[npc_id].state_selected = state
 		self.npc[npc_id].state_idle = math.random(15000,20000)		
 	else

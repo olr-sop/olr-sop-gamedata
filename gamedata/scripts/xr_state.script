@@ -301,7 +301,6 @@ function body_state:weapon_slot()
 	return 0
 end
 function body_state:anim_update(type)
-	local mrandom = math.random
 	-- Определяем - это у нас включение новой анимации или продолжение старой
 	if type ~= self.states.current_state then
 		if type ~= nil then
@@ -354,15 +353,15 @@ function body_state:anim_update(type)
 	then
 		-- Определение промежутков времени между анимациями
 		self.states.begin = time_global()
-		self.states.idle = (mrandom(self.animations[self.states.current_state].prop.maxidle) + 
+		self.states.idle = (math.random(self.animations[self.states.current_state].prop.maxidle) + 
 										self.animations[self.states.current_state].prop.sumidle) * 1000
-		if mrandom(100) < self.animations[self.states.current_state].prop.rnd then
+		if math.random(100) < self.animations[self.states.current_state].prop.rnd then
 			local r
-			if #self.animations[self.states.current_state].rnd[self:weapon_slot()] > 1 then			
+			if table.getn(self.animations[self.states.current_state].rnd[self:weapon_slot()]) > 1 then			
 				if self.states.last_id == nil then
-					r = mrandom(#self.animations[self.states.current_state].rnd[self:weapon_slot()])
+					r = math.random(table.getn(self.animations[self.states.current_state].rnd[self:weapon_slot()]))
 				else
-					r = mrandom(#self.animations[self.states.current_state].rnd[self:weapon_slot()]-1)
+					r = math.random(table.getn(self.animations[self.states.current_state].rnd[self:weapon_slot()])-1)
 					if r >= self.states.last_id then
 						r = r + 1
 					end
@@ -377,7 +376,7 @@ function body_state:anim_update(type)
 				self.npc:add_animation (self.animations[self.states.current_state].rnd[self:weapon_slot()][r], true, false)
 			else
 				printf("ANIM ERROR: Select wrong animation %d of %d, type: %s, weapon_slot: %d", r,
-							#self.animations[self.states.current_state].rnd[self:weapon_slot()],
+							table.getn(self.animations[self.states.current_state].rnd[self:weapon_slot()]),
 							self.states.current_state, self:weapon_slot() )
 			end
 			if self.animations[type].idle ~= nil then

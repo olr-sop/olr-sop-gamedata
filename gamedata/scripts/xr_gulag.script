@@ -89,7 +89,7 @@ function gulag:load_jobs()
 
 	for i, job in ipairs( self.Job ) do
 		if self:job_exists_in_state_0( job ) then
-			self.Job_avail_in_state_0[#self.Job_avail_in_state_0+1] = job
+			table.insert( self.Job_avail_in_state_0, job )
 			capacity = capacity + 1
 		end
 
@@ -197,7 +197,7 @@ function gulag:prepare_jobs_for_new_state()
 
 	for i, job in ipairs( self.Job ) do
 		if self:availState(job.state, self.state) then
-			Job_avail_in_state[#Job_avail_in_state+1] = job
+			table.insert( Job_avail_in_state, job )
 		else
 			if job.object then
 				self:free_obj_and_reinit( job.object )
@@ -281,7 +281,7 @@ function gulag:save_common( packet )
 	packet:w_u8(self.population_comed)
 	packet:w_u8(self.population_non_exclusive)
 
-	packet:w_u8( #self.Job )
+	packet:w_u8( table.getn( self.Job ) )
 
 	for i, job in ipairs( self.Job ) do
 		packet:w_u32( job.begin            or 0 )
@@ -306,7 +306,7 @@ function gulag:load_common( packet )
 
 	for i = 1, n do
 		job = {}
-		self.JobLoaded[#self.JobLoaded+1] = job
+		table.insert( self.JobLoaded, job )
 
 		job.begin            = packet:r_u32()
 		job.fill_idle        = packet:r_u32()
@@ -604,7 +604,7 @@ function gulag:prepare_available_jobs()
 				self:free_obj_and_reinit( job.object )
 			end
 
-			Job_avail[#Job_avail+1] = job
+			table.insert( Job_avail, job )
 		else
 			--printf( "job unavailable: %d %s", job.num, job.section )
 		end
@@ -684,7 +684,7 @@ function gulag:calc_distance_table( jobs, objs, prior_block_start )
 	local t
 	local i              = prior_block_start
 
-	while i <= #jobs and jobs[i].prior == block_priority do
+	while i <= table.getn( jobs ) and jobs[i].prior == block_priority do
 		if jobs[i].object == nil then
 			predicate = jobs[i].predicate
 
@@ -698,7 +698,7 @@ function gulag:calc_distance_table( jobs, objs, prior_block_start )
 					t.dist   = dist
 
 
-					dists[#dists+1] = t
+					table.insert( dists, t )
 				end
 			end
 		end
@@ -722,7 +722,7 @@ end
 -- найти занятых персонажей, которые могут занять заданную работу.
 -- поиск ведётся начиная с самых низкоприоритетных работ
 function gulag:find_obj_on_jobLow_for_jobHigh( Job_avail, job_high )
-	local n = #Job_avail
+	local n = table.getn( Job_avail )
 	local i = n
 
 	local job_low
@@ -781,7 +781,7 @@ function gulag:updateJob()
 	local prior_block_start = 1
 	local prior_block_end
 
-	while prior_block_start <= #Job_avail do
+	while prior_block_start <= table.getn( Job_avail ) do
 		dists, prior_block_end = self:calc_distance_table( Job_avail, obj_avail, prior_block_start )
 
 		table.sort( dists, function(a,b) return a.dist < b.dist end )

@@ -263,7 +263,7 @@ function action_follow:calculate_position ()
     local l_vid = leader:level_vertex_id ()
     local l_dir = leader:direction ()
     -- а также количество народу.
-    local size = #db.storage[self.st.leader_id].followers
+    local size = table.getn (db.storage[self.st.leader_id].followers)
     
     local dir = vector ():set (0, 0, 0)
     local dist = self.st.distance
@@ -327,21 +327,21 @@ function action_follow:check_list ()
     -- и занесем туда себя любимого под номером 1
     if storage.followers == nil then
        storage.followers = {}
-       storage.followers[#storage.followers+1] = self.object:id ()
+       table.insert (storage.followers, self.object:id ())
        --printf ("SET OBJECT %s AS FOLLOWER 1", self.object:name ())
        self.index = 1
        return
     end
     -- иначе шаримся в таблице и ищем себя
-    for a = 1, #storage.followers, 1 do
+    for a = 1, table.getn (storage.followers), 1 do
         if storage.followers[a] == id then
            self.index = a
            return 
         end
     end
     -- не нашли... добавим.
-    storage.followers[#storage.followers+1] = self.object:id ()
-    self.index = #storage.followers
+    table.insert (storage.followers, self.object:id ())
+    self.index = table.getn (storage.followers)
     --printf ("SET OBJECT %s AS FOLLOWER %d", self.object:name (), self.index)
 end
 --------

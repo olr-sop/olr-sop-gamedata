@@ -25,7 +25,7 @@ function add_member (obj)
     end       
     
     local zone_id = ini:r_u32 ("zone_spawner", "id")
-    for a = 1, #zones, 1 do
+    for a = 1, table.getn (zones), 1 do
         if zones[a].id == zone_id then
            printf ("Object %s attached to zone with id %d", obj:name (), zones[a].id)
            zones[a]:add_member (obj)
@@ -35,15 +35,15 @@ function add_member (obj)
     
     local t = {id = obj.id, id_spawner = zone_id}
     printf ("Object %s include to temporary store", obj:name ())
-    temporary_store[#temporary_store+1] = t
+    table.insert (temporary_store, t)
     this.switch_offline (t.id)
     
 end
 -------------------------------------------------------------------------
 function activate_by_infoportion (info)
-    for a = 1, #zones, 1 do
-        if #zones[a].infoportions ~= 0 then
-           for b = 1, #zones[a].infoportions, 1 do
+    for a = 1, table.getn (zones), 1 do
+        if table.getn (zones[a].infoportions) ~= 0 then
+           for b = 1, table.getn (zones[a].infoportions), 1 do
                if info == zones[a].infoportions[b] then
                   zones[a]:on_infoportion (info)  
                 end
@@ -76,12 +76,12 @@ function zone_spawner:__init (zone, ini)
        end
     end   
     
-    zones[#zones+1] = self
+    table.insert (zones, self)
     printf ("Zone %s is added to binder", zone:name ())
     self.members = {}
-    for a = 1, #temporary_store, 1 do
+    for a = 1, table.getn (temporary_store), 1 do
         if temporary_store[a].id_spawner == self.id then
-           self.members[#self.members+1] = temporary_store[a]
+           table.insert (self.members,  temporary_store[a])
            this.switch_offline (temporary_store[a].id)
         end
     end
@@ -95,7 +95,7 @@ function zone_spawner:on_enter (obj)
     if self.activated == true then return end
     
     local founded = false
-    local size = #self.infoportions
+    local size = table.getn (self.infoportions)
     if size ~= 0 then
        for a = 1, size, 1 do
           if has_alife_info(self.infoportions[a]) == true then
@@ -112,8 +112,8 @@ function zone_spawner:on_enter (obj)
     if founded == false then return end
     
     self.activated = true
-    if #self.members == 0 then return end
-    for a = 1, #self.members, 1 do
+    if table.getn (self.members) == 0 then return end
+    for a = 1, table.getn (self.members), 1 do
         this.switch_online (self.members[a].id)
     end
 end
@@ -121,13 +121,13 @@ end
 function zone_spawner:add_member (obj)
     if self.activated == true then return end
     local t = {id = obj.id, id_spawner = zone_id}    
-    self.members[#self.members+1] = t
+    table.insert (self.members, t)
     this.switch_offline (obj.id)
 end
 -----------------------
 function zone_spawner:on_infoportion (info)
     local founded = false
-    local size = #self.infoportions
+    local size = table.getn (self.infoportions)
     if size ~= 0 then
        for a = 1, size, 1 do
           if info == self.infoportions[a] then
@@ -144,8 +144,8 @@ function zone_spawner:on_infoportion (info)
     if founded == false then return end
     
     self.activated = true
-    if #self.members == 0 then return end
-    for a = 1, #self.members, 1 do
+    if table.getn (self.members) == 0 then return end
+    for a = 1, table.getn (self.members), 1 do
         this.switch_online (self.members[a].id)
     end
 end

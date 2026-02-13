@@ -2,7 +2,7 @@
 	-- Script name: olr_newnpc_eqp.script
 	-- Description: Скрипт раздаёт оружие непесям (Только для респавновых, не для тех кто заранее заспавнен)
 	-- Author: theysani
-	-- Last edit: 09.02.26
+	-- Last edit: 12.02.26
 --]]
 
 --[[
@@ -935,6 +935,10 @@ local weapon_tables = {
     }
 }
 
+local skip_npc_names = {
+    bar_barman = true,
+}
+
 -- функция для получения первого класса патронов
 local function get_ammo_class(weapon_section)
 	local weapon_ammo_class = utils.cfg_get_string(ini_sys, weapon_section, "ammo_class", weapon_section, false, "", "")
@@ -948,7 +952,6 @@ local faction_groups = {
     deads = "bandit", sin = "bandit", lastday = "bandit",
     stranger = "stalker", neutral = "stalker", zombied = "stalker",
     sky = "ecolog", iskateli = "ecolog", voenstals = "military",
-    -- Основные группировки
     bandit = "bandit", stalker = "stalker", ecolog = "ecolog", 
     military = "military", sliznyaki = "sliznyaki", dolg = "dolg",
     freedom = "freedom", killer = "killer", monolith = "monolith", 
@@ -983,6 +986,11 @@ end
 -- Основная функция
 function on_spawn(obj)
     if not obj then return end
+	
+	if skip_npc_names[obj:name()] then
+		log1("### [INFO] olr_newnpc_eqp: skip npc - "..tostring(obj:name).."")
+		return
+	end
 	
 	log1("### [INFO] olr_newnpc_eqp: Called euqip: name - "..tostring(obj:name())..", faction - "..tostring(obj:community())..", rank - "..tostring(get_rank_key(obj:rank())).."")
     

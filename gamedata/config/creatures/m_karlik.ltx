@@ -32,10 +32,10 @@ Anomaly_Detect_Time_Remember	= 20000
 ef_creature_type	 = 2							; option for evaluation functions
 ef_weapon_type		 = 2
 ef_detector_type	 = 1
-panic_threshold		= 0.16
+panic_threshold		= 0.08
 
 cform                = skeleton					; collision class
-class                = SM_TUSHK ;AI_TUSH		; AI class
+class                = SM_DOG_S					; AI class
 
 bone_torso			 = bip01_spine1 			; bone name
 bone_head			 = bip01_head				; bone name
@@ -49,21 +49,45 @@ ph_box1_size 		 = 0.40, 0.6,  0.40
 ph_crash_speed_min			= 10
 ph_crash_speed_max			= 30
 ph_collision_damage_factor	= 0.1
-ph_mass 		     = 20
+ph_mass 			= 20
 
 destroyed_vis_name	 = physics\Dead_Body\trupik_crash
 
 script_binding  	 = bind_monster.bind
 
 ;---------------------------------------------------------------------
-ph_skeleton_airr_lin_factor   = 1.1 ;550.0 (изменно из-за того, что убрано домножение коэффициент 0.002 из кода)
-ph_skeleton_airr_ang_factor   = 0.0 ;0.0 (изменно из-за того, что убрано домножение на коэффициент 0.3 из кода (0.0*0.3=0.0))
-ph_skeleton_hinger_factor1    = 5.0 ;1.0 (изменно из-за того, что убрано домножение на коэффициент 5.0 из кода)
-ph_skeleton_ddelay	     	  = 5.0 ;Время изменения значения трения в суставе с момента создания шелла, сек
+; Physics
+;---------------------------------------------------------------------
+ph_box0_center 						 = 0.0,  0.2,  0.0	;0.0,  0.9,  0.0
+ph_box0_size 						 = 0.35, 0.4,  0.35	;0.35, 0.9,  0.35
+ph_box1_center 						 = 0.0,  0.2,  0.0
+ph_box1_size 						 = 0.35, 0.4,  0.35
+ph_crash_speed_min					= 16
+ph_crash_speed_max					= 30
+ph_collision_damage_factor			= 0.1
+ph_mass 							= 30
+ph_mass_rnd							= 30, 50
 
-ph_skel_fatal_impulse_factor  = 8.0
-ph_after_death_velocity_factor= 0.75
-ph_skel_shot_up_factor        = 0.25
+ph_after_death_velocity_factor		= 0.75
+ph_skeleton_skin_friction_start		= 1
+
+ph_skeleton_mass_factor			= 1.5
+ph_skeleton_airr_lin_factor		= 1.0
+ph_skeleton_airr_ang_factor		= 1.0
+ph_skeleton_hinger_factor		=15.
+ph_skeleton_hinger_factor1		=0
+ph_skeleton_hinger_factor2		=0
+ph_skeleton_hinge_vel			=10
+ph_skeleton_ddelay				 =20
+ph_skel_fatal_impulse_factor	=7.0
+ph_after_death_velocity_factor	=1.25
+ph_shot_up_factor				=.9f
+ph_friction_air					= 0.05
+ph_friction_ground				= 8
+ph_friction_wall				= 4.0
+
+actor_restrictor	 = medium_monster ;medium_monster,stalker,none
+destroyed_vis_name	 = physics\dead_body\skelet_crash_monster
 ;---------------------------------------------------------------------
 
 SoundThreshold		 = 0.06             ; range [0..1]
@@ -80,23 +104,24 @@ ImpulseMax			 = 35.0
 ; speed factors			linear | angular_real | angular_path | min |  max
 Velocity_Stand			= 0,		3.5,			3.5,		1,		1
 Velocity_WalkFwdNormal	= 1.0,		7.5,			7.5,		0.02,	1.8	
-Velocity_RunFwdNormal	= 5.0,		3.5,			3.5,		0.3,	1	
-Velocity_WalkFwdDamaged	= 1.0,		4.5,			4.5,		0.2,	1.8	
-Velocity_RunFwdDamaged	= 3.0,  	3.0,			3.0,		0.5,	1
+Velocity_RunFwdNormal	= 3.0,		3.5,			3.5,		0.3,	1	
+Velocity_WalkFwdDamaged	= 0.7,		4.5,			4.5,		0.2,	1.8	
+Velocity_RunFwdDamaged	= 2.4,  	3.0,			3.0,		0.5,	1
 Velocity_Drag			= 1.0,		3.0,			3.0,		1,		1
 Velocity_Steal			= 1.5,		3.0,			3.0,		1,		1
 
 ; acceleration
 Accel_Generic			= 1.5
 Accel_Calm				= 2.5
-Accel_Aggressive		= 7.5
+Accel_Aggressive		= 14.0
 
 ;attack parameters
-MinAttackDist		= 1.2	;0.5
-MaxAttackDist		= 1.8	;3.8
+MinAttackDist			= 1.9
+MaxAttackDist			= 2.4
+hit_type = wound
 
-as_min_dist				= 0.25
-as_step					= 0.25
+as_min_dist				= 1.2
+as_step					= 0.4
 
 DayTime_Begin		= 0			; эрўрыр фэ  фы  ьюэёЄЁр
 DayTime_End			= 21		; ъюэхЎ фэ  фы  ьюэёЄЁр
@@ -118,8 +143,6 @@ transparency_threshold		= 0.25
 
 
 terrain				 = tushkan_terrain
-
-hit_type = wound
 
 ;entity condition
 
@@ -152,6 +175,10 @@ eat_freq			=	5.0		; ўрёЄюЄр єъєёют т ёхъ
 eat_slice			=	0.01	; єтхышўхэшх ёvЄюёЄш яЁш 1 єъєёх
 eat_slice_weight	=	10.0	; єьхэ№°хэшх хфv є ЄЁєяр
 
+EatMemberCorpses	 = 1			; range {0,1}
+Cannibalism			 = 1			; range {0,1}
+EatCorpseInterval	 = 60000		; milliseconds
+
 satiety_threshold	= 0.5							; below this value monster fill hunger
 
 
@@ -163,14 +190,21 @@ Morale_Despondent_Speed			= 0.1
 Morale_Stable_Speed				= 0.05
 Morale_Despondent_Threashold	= 0.5
 
+
 sound_idle				= monsters\karlik\idle_
 sound_eat				= monsters\karlik\eat_
 sound_aggressive		= monsters\karlik\aggressive_
 sound_attack_hit		= monsters\karlik\attack_hit_
 sound_take_damage		= monsters\karlik\hurt_
 sound_die				= monsters\karlik\die_
+sound_bkgnd				= monsters\karlik\steal_
+sound_threaten			= monsters\karlik\threaten_
+sound_landing			= monsters\biting\def_
+sound_steal				= monsters\karlik\steal_
 sound_panic				= monsters\karlik\panic_
-sound_die_in_anomaly 	= monsters\karlik\panic_
+sound_growling			= monsters\karlik\aggressive_
+sound_die_in_anomaly	= monsters\karlik\die_
+sound_distant_idle		= monsters\karlik\steal_
 
 killer_clsids			= Z_MINCER,Z_GALANT
 
@@ -179,11 +213,11 @@ idle_sound_delay		= 80000
 eat_sound_delay			= 4000
 attack_sound_delay		= 8000
 
-sound_distant_idle			= monsters\karlik\steal_
 distant_idle_sound_delay	= 80000
 distant_idle_sound_range	= 100.0	
 
 DamagedThreshold		= 0.4
+damage					= m_karlik_damage
 critical_wound_threshold		= -1
 critical_wound_decrease_quant	= 0.
 
@@ -193,30 +227,21 @@ DynamicObjectsCount		= 32
 
 squad_attack_algorithm	= 1
 attack_effector			= small_monster_attack_effector
-
 LegsCount				= 2
 
-attack_params			= m_tushkano_attack_params
-step_params				= m_tushkano_step_params
-damage					= m_tushkano_damage
-
 ;species of monster
-species					= tushkano
+species				= tushkano
 rank				= 401
 spec_rank			= normal
 community			= tushkano
-
-[m_karlik_protections]
-skin_armor				= 0.2
-hit_fraction_monster	= 0.5
 
 [m_karlik_attack_params]
 ;--------------------------------------------------------------------------------------------------------------------
 ;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;-------------------------------------------------------------------------------------------------------------------
-stand_attack_0 = 0.35, 0.30, 20, 0.0, 1.0, 0.0, -1.2, 1.2, -1.6, 1.6, 1.0
-stand_attack_1 = 0.35, 0.30, 30, 0.0, 1.0, 0.0, -1.2, 1.2, -1.6, 1.6, 1.0
-stand_attack_2 = 0.35, 0.30, 35, 0.0, 1.0, 0.0,	-1.2, 1.2, -1.6, 1.6, 1.0
+stand_attack_0 = 0.35, 0.08, 5, 0.0, 1.0, 0.0, -1.2, 1.2, -1.6, 1.6, 3.0
+stand_attack_1 = 0.35, 0.10, 8, 0.0, 1.0, 0.0, -1.2, 1.2, -1.6, 1.6, 3.0
+stand_attack_2 = 0.35, 0.12, 12, 0.0, 1.0, 0.0,	-1.2, 1.2, -1.6, 1.6, 3.0
 
 [m_karlik_immunities]
 burn_immunity			= 1
@@ -234,4 +259,23 @@ fire_wound_immunity		= 0.62
 ;	anim			| Cycles | time1 | power1 | time2 | power2 |
 ;---------------------------------------------------------------------------
 stand_walk_fwd_0 	=	1,	   0.1,     0.5,     0.7,    1,   
+stand_walk_dmg_0 	=	1,	   0.1,     0.5,     0.7,    1,   
 stand_run_0	 		=	1,	   0.35,     1,	    0.25,    1,    
+stand_run_1	 		=	1,	   0.35,     1,	    0.25,    1,    
+
+[m_karlik_damage]
+;bone_name		 = <hit_scale>,-1,<wound_scale>
+;<hit_scale>	- коэфф. изменения хита (уменьшения здоровья) 
+;<wound_scale>	- коэфф. изменения величины открытой раны
+
+default				= 0.5,	-1,	0.2
+
+bip01_pelvis 		= 1.0, -1, 0.5
+bip01_spine 		= 1.0, -1, 0.5
+bip01_spine1 		= 1.0, -1, 0.5
+bip01_neck 			= 1.0, -1, 1.5
+bip01_head 			= 2.0, -1, 0.5, 10
+
+[m_karlik_protections]
+skin_armor				= 0.2
+hit_fraction_monster	= 0.5

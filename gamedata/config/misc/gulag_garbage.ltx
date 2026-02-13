@@ -1112,26 +1112,6 @@ path_look = 2_look
 danger = danger_condition@stroyka
 
 
-[logic@gar_bandit_stroyka_3]
-active = walker@gar_bandit_stroyka_3
-wounded = wounded@bandit_wounded
-
-[walker@gar_bandit_stroyka_3]
-path_walk = 3_walk
-path_look = 3_look
-danger = danger_condition@stroyka
-
-[wounded@bandit_wounded]
-hp_state = 30|help_me@help|10|wounded_heavy@help_heavy
-hp_state_see = 30|wounded@help_see|10|wounded_heavy@help_heavy
-psy_state = 50|{=best_pistol}psy_armed,psy_pain@wounded_psy|20| {=best_pistol}psy_shoot,psy_pain@{=best_pistol}wounded_psy_shoot,wounded_psy
-hp_victim = 30|nil|10|nil
-hp_cover = 30|true|10|false
-hp_fight = 30|true|10|false
-syndata = wounded@help
-help_start_dialog = gar_wounded_bandit
-
-
 [logic@gar_bandit_stroyka_4]
 active = walker@gar_bandit_stroyka_4
 
@@ -1640,79 +1620,6 @@ active = walker@gar_bandit_ambush_3
 [walker@gar_bandit_ambush_3]
 path_walk = walk3
 path_look = look3
-
-
-;************************
-;ѕсевдо раненый
-;************************
-
-[logic@gar_psevdowounded_1]
-active = walker@normal_gar_psevdowounded_1
-on_death = death@gar_psevdowounded_1
-on_hit = hit@gar_psevdowounded_1
-
-[walker@normal_gar_psevdowounded_1]
-path_walk = gar_way_spy
-path_look = gar_look_spy
-on_actor_dist_le_nvis = 100| walker@wounded_gar_psevdowounded_1 %+gar_wounded_help%
-danger = danger_condition
-
-[walker@wounded_gar_psevdowounded_1]
-on_actor_dist_le_nvis = 10| walker@fight_gar_psevdowounded_1 %+gar_wounded_fight =actor_enemy%
-wounded = wounded@gar_psevdowounded_1
-path_walk = gar_way_spy
-path_look = gar_look_spy
-danger = danger_condition@gar_psevdowounded_1
-on_info = {+gar_wounded_fight} walker@fight_gar_psevdowounded_1 %=actor_enemy%
-
-[wounded@gar_psevdowounded_1]
-hp_state = 130|help_me@help|90|wounded_heavy@help_heavy
-hp_state_see = 130|wounded@help_see|90|wounded_heavy@help_heavy
-psy_state = 50|{=best_pistol}psy_armed,psy_pain@wounded_psy|20| {=best_pistol}psy_shoot,psy_pain@{=best_pistol}wounded_psy_shoot,wounded_psy
-hp_victim = 130|nil|90|nil
-hp_cover = 130|false|90|false
-hp_fight = 130|true|90|true
-syndata = wounded@help
-
-[walker@fight_gar_psevdowounded_1]
-path_walk = gar_way_spy
-path_look = gar_look_spy
-danger = danger_condition
-
-[danger_condition@gar_psevdowounded_1]
-ignore_distance = 25
-
-[death@gar_psevdowounded_1]
-on_info = %+gar_wounded_fight%
-
-[hit@gar_psevdowounded_1]
-on_info = %+gar_wounded_fight%
-
-
-
-[logic@gar_psevdowounded_2]
-active = camper@gar_psevdowounded_2
-combat_ignore = combat_ignore
-on_hit = hit@gar_psevdowounded_2
-
-[camper@gar_psevdowounded_2]
-path_walk = gar_way_spy2
-path_look = gar_look_spy2
-combat_ignore_cond = {-gar_wounded_fight}
-radius = 2
-on_info = {+gar_wounded_fight} walker@gar_psevdowounded_2
-show_spot = {-gar_wounded_fight} false
-on_actor_in_zone = gar_sniper_in_restrictor| walker@gar_psevdowounded_2
-
-[walker@gar_psevdowounded_2]
-path_walk = gar_way_spy2
-path_look = gar_look_spy2
-
-[hit@gar_psevdowounded_2]
-on_info = %+gar_wounded_fight%
-
-[danger_condition@gar_psevdowounded_2]
-ignore_distance = 10
 
 
 

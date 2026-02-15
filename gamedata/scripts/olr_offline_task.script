@@ -79,9 +79,9 @@ local function process_human_migration(community, smart_terrains_table)
                 local strn_id = npc:smart_terrain_id()
                 if strn_id ~= 65535 and math.random(1, 2) == 1 then
                     -- Обработка сталкеров
-					log1("~ olr_offline_task stalkers start")
+					--log1("~ olr_offline_task stalkers start")
                     local params = amk.read_stalker_params(npc)
-					log1("~ olr_offline_task get custom from stalker - "..tostring(params.custom).."")
+					--log1("~ olr_offline_task get custom from stalker - "..tostring(params.custom).."")
                     params.custom = ""
                     amk.write_stalker_params(params, npc)
                     
@@ -102,9 +102,9 @@ local function process_human_migration(community, smart_terrains_table)
                     amk.write_stalker_params(params, npc)
 					
 					params = amk.read_stalker_params(npc)
-					log1("~ olr_offline_task get custom from stalker after editing - "..tostring(params.custom).."")
+					--log1("~ olr_offline_task get custom from stalker after editing - "..tostring(params.custom).."")
 					
-					log1("~ olr_offline_task end")
+					--log1("~ olr_offline_task end")
                 end
             end
         end
@@ -159,7 +159,7 @@ local function process_monster_migration(monster_type, smart_terrains_table, ext
             else
                 local strn_id = npc:smart_terrain_id()
                 if strn_id ~= 65535 and math.random(1, 2) == 1 then
-                    log1("~ olr_offline_task mutants start")
+                    --log1("~ olr_offline_task mutants start")
                     -- Обработка монстров
                     smart_terrain.unregister_npc(npc)
                     npc:brain():can_choose_alife_tasks(true)
@@ -168,24 +168,23 @@ local function process_monster_migration(monster_type, smart_terrains_table, ext
                     if pk:isOk() then
                         local data = pk:get()
                         local cd = data.custom_data:getTable()
-                        local cd_strng = data.custom_data:getString()
+                        --local cd_strng = data.custom_data:getString()
                         
-                        -- Улучшенный логгинг таблицы (без string.format)
-                        log1("~ olr_offline_task get custom from mutant:")
+                        --log1("~ olr_offline_task get custom from mutant:")
                         --log1("~ Full custom_data table: " .. table_to_string(cd))
-                        log1("~ smart_terrains value: \n" .. table_to_string(cd.smart_terrains or {}))
+                        --log1("~ smart_terrains value: \n" .. table_to_string(cd.smart_terrains or {}))
                         
                         local rand_smart = smart_terrains_table[math.random(#smart_terrains_table)]
                         cd.smart_terrains = { [rand_smart] = "true" }
                         data.custom_data:set(cd)
                         pk:set(data)
                         
-                        local cd_strng_after = data.custom_data:getTable()
-                        log1("~ olr_offline_task get custom from mutant after editing:")
-                        log1("~ Updated smart_terrains: \n" .. table_to_string(cd_strng_after.smart_terrains or {}))
+                        --local cd_strng_after = data.custom_data:getTable()
+                        --log1("~ olr_offline_task get custom from mutant after editing:")
+                        --log1("~ Updated smart_terrains: \n" .. table_to_string(cd_strng_after.smart_terrains or {}))
                     end
                     
-                    log1("~ olr_offline_task mutants end")
+                    --log1("~ olr_offline_task mutants end")
                 end
             end
         end

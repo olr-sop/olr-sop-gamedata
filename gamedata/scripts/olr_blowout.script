@@ -108,8 +108,8 @@ function upd()
 			if has_alife_info("olr_blowout_phase_0") then
 				--news_manager.send_tip(db.actor, game.translate_string("upd_1"))
 
-				local curwweth = game.translate_string(xvars.blow_cur_weather)
-				if curwweth ~= nil then
+				local curwweth = xvars.blow_cur_weather
+				if curwweth ~= "" then
 					level.set_weather(curwweth, true)
 				end
 
@@ -164,9 +164,9 @@ function upd()
 
 			if has_alife_info("olr_blowout_phase_1") then
 				local ini = ini_file("game.ltx")
-				local weather = utils.cfg_get_string(ini, level_name, "weathers", db.actor, false, "", "default")
+				local weather = utils.cfg_get_string(ini, level_name, "weathers", db.actor, false, "", "[default]")
 				--log1("olr_blowout: get weather from config " .. tostring(weather) .. "")
-				xvars.blow_cur_weather = string.gsub(weather, "\\", "\\\\")
+				xvars.blow_cur_weather = weather
 
 				level.set_weather_fx("surge")
 				level.add_cam_effector("camera_effects\\shell_shock.anm", 1975, false, "")

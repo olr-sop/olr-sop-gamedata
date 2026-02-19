@@ -8,7 +8,8 @@ local snd_open = sound_object([[device\vehicle\door_open]])
 local snd_close = sound_object([[device\vehicle\door_close]])
 local hud = get_hud()
 local st_call = false
-local i_in_car = false
+local actor_in_car_check = false
+local actor_current_car_name = ""
 local obj_for_reload = nil
 local is_help_shown = false
 
@@ -747,7 +748,8 @@ end
 
 -- Коллбек на вход в авто
 function on_input(actor, obj)
-	i_in_car = true
+	actor_in_car_check = true
+	actor_current_car_name = obj:name()
 	if not xvars.olr[obj:id()] then
 		xvars.olr[obj:id()] = math.random(32,89)
 		local stfuel = math.random(6,14)
@@ -765,11 +767,12 @@ end
 
 -- Коллбек на выход из авто
 function on_output(actor, obj)
-	i_in_car = false
+	actor_in_car_check = false
+	actor_current_car_name = ""
 	this.actor_in_car[obj:id()] = false
 	hud:RemoveCustomStatic("hud_acum_background")
 	hud:RemoveCustomStatic("hud_fuel_background")
-        hud:RemoveCustomStatic("hud_bak_background")
+	hud:RemoveCustomStatic("hud_bak_background")
 	hud:RemoveCustomStatic("hud_speedometer_background")
 end
 
@@ -778,11 +781,13 @@ function on_press_open_door()
 	----update_doors = true
 end
 
-
+-- Проверка на то что мы в авто
 function act_in_car_now()
-	if i_in_car == true then
-		return true
-	end
+    return actor_in_car_check == true
+end
+
+function actor_car_name(name_car)
+    return actor_current_car_name == name_car
 end
 
 -------------------------------------------------------------

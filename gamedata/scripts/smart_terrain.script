@@ -755,7 +755,25 @@ function se_smart_terrain:kick_someone_non_exclusive( new_npc_info )
 	abort( "[smart_terrain %s] can't add npc, all are exclusive or there are no suitable jobs", self:name() )
 end
 
+--- Перезапуск логики NPC
+function se_smart_terrain:reset_npc_logic(obj)
+	if obj then
+		local npc = level.object_by_id(obj.id)
+		local npc_id = obj.id
+		if npc then
+			xr_logic.reset_generic_schemes_on_scheme_switch(npc, "nil", "nil")
+		end
+		if db.storage[npc_id] then
+			db.storage[npc_id].overrides = nil
+			db.storage[npc_id].active_section = nil
+			db.storage[npc_id].active_scheme = nil	
+		end
+	end
+end
 -- выдать объекту задание.
+-- вызывается движком после включения непися в состав смарта
+-- задание в оффлайне заключается попросту топать к смарту, где непись 
+-- выйдет в онлайн и будет подхвачен уже логикой гулага
 function se_smart_terrain:task( obj )
 
 	if IsStalker(obj) and olr_ai_tasks.has_task(obj) == true then

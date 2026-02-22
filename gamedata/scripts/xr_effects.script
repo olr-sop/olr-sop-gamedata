@@ -2810,74 +2810,6 @@ function del_na_kordone_komandira()
 	end
 end
 
-function use_spat_hata()
-	if not has_alife_info("lonewolf_bar_spawn") then
-		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_0"), nil, "info", 30000)
-		return
-	end
-	if has_alife_info("sleeped_in_shlkola_done") then
-		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_1"), nil, "info", 30000)
-		return
-	end
-	olr_sleep.sleep_main(6)
-	db.actor:give_info_portion("sleeped_in_shlkola_done")
-end
-
-function use_spat_hata_esc()
-	-- проверка на выброс
-	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
-		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_0"), nil, "info")
-		return
-	end
-	-- проверка что на улице ночь
-	if not has_alife_info("olr_traders_day") then
-		this.go_sleep_place()
-		return
-	end
-	-- если день то проверяем нашу сониловость
-	local sleep_level = db.actor:get_actor_sleep()
-	-- при сонливости менее 0.3 идём спать, иначе не спать
-	if sleep_level < 0.3 then
-		this.go_sleep_place()
-		return
-	else
-		local random_num = math.random(2)
-		local message
-		if random_num == 1 then
-			message = "use_spat_hata_esc_1"
-		else
-			message = "use_spat_hata_esc_2"
-		end
-		news_manager.send_tip(db.actor, game.translate_string(message), nil, "info", 30000)
-	end
-end
-
-function go_sleep_place()
-	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
-		news_manager.send_tip(db.actor, game.translate_string("go_sleep_place_0"))
-		return false
-	end
-	for k, v in pairs(db.storage) do
-		local stalker = level.object_by_id(k)
-		if stalker and (get_clsid(stalker) == clsid.script_stalker) and stalker:alive() and stalker:relation(db.actor) == game_object.enemy then
-			if stalker:position():distance_to(db.actor:position()) < 45 then
-				local hud = get_hud()
-				hud:AddCustomStatic("cant_sleep_near_enemies", true)
-				hud:GetCustomStatic("cant_sleep_near_enemies").m_endTime = time_global() / 1000 + 5
-				return
-			end
-		end
-	end
-	local rnd = math.random(10, 14)
-	olr_sleep.sleep_main(rnd)
-	if db.actor.satiety < 0.05 then
-		db.actor.satiety = 0.1
-	end
-	if db.actor.health < 0.1 then
-		db.actor.health = 0.1
-	end
-end
-
 function del_bar_wolfy()
 	local se_obj = alife():object("lvl5_bar_staler_undead_olr_0003_lonewolf")
 	if se_obj then
@@ -3011,19 +2943,6 @@ function use_tip_press_button_gar()
 		olr.spawn_on_obj("kanistra_benz", "lvl2_garbage_physic_object_0017")	
 	end
 	olr.del_by_name("lvl2_garbage_physic_object_0110")
-end
-
-function use_spat_hata_yan()
-	if not has_alife_info("laborant_otpravlaet_spat_gg_finished") then
-		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_yan_0"), nil, "info", 30000)
-		return
-	end
-	if has_alife_info("otpravlaet_spat_gg_done") then
-		return
-	end
-	olr_sleep.sleep_main(6)
-	db.actor:change_actor_sleep(1)
-	olr_timers.st_timer("dedsmert", 10, "nick.ded_pomeraet_yan()")
 end
 
 function first_doska_use_start_1()
@@ -3966,4 +3885,81 @@ end
 
 function check_actor_in_kamaz(actor, npc)
 	return bind_car.act_in_car_now() and bind_car.actor_car_name("lvl5_bar_m_car_0004")
+end
+
+-- Функции сна закину тут
+
+-- Основная функция для проверок, используется во всех местах сна
+function sleep_check()
+	-- проверка на выброс
+	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_esc_0"), nil, "info")
+		return false
+	end
+	-- проверка что на улице ночь
+	if not has_alife_info("olr_traders_day") then
+		return true
+	end
+	-- если день то проверяем нашу сониловость
+	local sleep_level = db.actor:get_actor_sleep()
+	-- при сонливости менее 0.3 идём спать, иначе не спать
+	if sleep_level < 0.3 then
+		return true
+	else
+		local random_num = math.random(2)
+		local message
+		if random_num == 1 then
+			message = "use_spat_hata_esc_1"
+		else
+			message = "use_spat_hata_esc_2"
+		end
+		news_manager.send_tip(db.actor, game.translate_string(message), nil, "info", 30000)
+		return false
+	end
+	return false
+end
+
+-- Янтарь, бункер учёных
+function use_spat_hata_yan()
+	-- Оставлю пока старый код, ибо я запутался нах
+	--[[
+	if not has_alife_info("laborant_otpravlaet_spat_gg_finished") then
+		news_manager.send_tip(db.actor, game.translate_string("use_spat_hata_yan_0"), nil, "info", 30000)
+		return
+	end
+	if has_alife_info("otpravlaet_spat_gg_done") then
+		return
+	end
+	olr_sleep.sleep_main(6)
+	db.actor:change_actor_sleep(1)
+	olr_timers.st_timer("dedsmert", 10, "nick.ded_pomeraet_yan()")
+	--]]
+	if has_alife_info("laborant_otpravlaet_spat_gg_finished") and not has_alife_info("otpravlaet_spat_gg_done") then -- Если у нас есть поршень что нас отправили поспать и нет поршня что поспали
+		olr_sleep.sleep_main(8) -- Основная функция сна, спим 8 часов
+		olr_timers.st_timer_game("dedsmert", 1, "nick.ded_pomeraet_yan()") -- Запускаем самоубийство деда через 1 игровую секунду, ну не сразу короче (пока оставим так)
+		return -- уходим отсюда сразу, проверок не делаем
+	end
+	if sleep_check() then
+		olr_sleep.sleep_main(8) -- Основная функция сна, спим 8 часов
+	end	
+end
+
+-- Бар, в школе
+function use_spat_hata()
+    if has_alife_info("lonewolf_bar_spawn") and not has_alife_info("sleeped_in_shlkola_done") then -- проверяем на поршни спавна одинокого волка в баре и что мы не поспали в школе
+        db.actor:give_info_portion("sleeped_in_shlkola_done")
+		olr_sleep.sleep_main(8) -- Основная функция сна, спим 8 часов
+		return -- уходим отсюда сразу, проверок не делаем
+    end
+	if sleep_check() then
+		olr_sleep.sleep_main(8) -- Основная функция сна, спим 8 часов
+	end
+end
+
+-- Кордон, подвал недалеко от Жабы
+-- Бар дом Мессера
+function use_spat_hata_esc()
+	if sleep_check() then
+		olr_sleep.sleep_main(8) -- Основная функция сна, спим 8 часов
+	end
 end

@@ -17,7 +17,7 @@ max_item_amount = 0
 lasthealth  = 0
 lasttime	= 0
 post_process = 0
-actor_in_sleep = false
+
 quitting_game = false
 local weapon_hide = false
 
@@ -25,6 +25,11 @@ local loked_obj = nil
 local loked_obj_name = ""
 
 local dbg_time = false -- выводит время на худ используя статик debug_time
+
+-- Переменные для сна
+actor_sleep_full = false -- для восстановление сонливости на фулл
+local sleep_start_time = 0 -- время в начале сна
+local sleep_duration_sec = 0 -- время в конце сна, получаем через диффсек
 
 ----------------------------------------------------------------------------------------------------------------------
 class "actor_binder" (object_binder)
@@ -186,8 +191,8 @@ function actor_binder:reinit()
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, self.on_drop_item_on_item, self)
-	self.object:set_callback(callback.actor_sleep, self.actor_in_sleep, self)
-	self.object:set_callback(callback.actor_wake_up, self.actor_after_sleep, self)
+	self.object:set_callback(callback.actor_sleep, self.actor_start_sleep, self)
+	self.object:set_callback(callback.actor_wake_up, self.actor_end_sleep, self)
 	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
 	self.object:set_callback(callback.on_obj_not_look, self.on_not_look, self)
 	
@@ -283,22 +288,47 @@ function actor_binder:on_drop_item_on_item(item1, item2)
     end
 end
 
-function actor_binder:actor_in_sleep()
-	-- Заглушка на будущее
+function actor_binder:actor_start_sleep()
+	log1("### [INFO] Actor start sleep")
+	olr.switch_torch(false) -- Отключаем фонарик
+	sleep_start_time = game.get_game_time() -- Запоминаем время начала сна
 end
 
-function actor_binder:actor_after_sleep()
-	log1("### [INFO] Actor after sleep")
-	olr_sleep.spawen_izlom_rand()
-	olr_sleep_robers.sleep_rob()
-	nick.clear_drinked_vodka()
+function actor_binder:actor_end_sleep()
+	log1("### [INFO] Actor end sleep")
+	
+    -- Измеряем продолжительность сна
+    local sleep_end_time = game.get_game_time()
+    if sleep_start_time then
+        sleep_duration_sec = sleep_end_time:diffSec(sleep_start_time)
+		log1("sleep_duration_sec - "..tostring(sleep_duration_sec).."")
+        sleep_start_time = nil
+    else
+        log1("### [WARN] actor_end_sleep - проебали sleep_start_time")
+    end
+	
+	if actor_sleep_full then
+		db.actor.sleep = 1 -- это короче считается точно подходящим местом для сна и гарантировано высыпаемся
+	end
+
+	olr_sleep.blow_sleep_timer_low((sleep_duration_sec / 3600) * 1325) -- Задаём время по scale до выброса (sleep_duration_sec в секундах поэтому и делим на 3600)
+	
+	if not actor_sleep_full then
+		olr_sleep.spawen_izlom_rand() -- Спавн излома (а то и двух) возле Мессера если тот спал на улице
+		olr_sleep_robers.sleep_rob() -- Ограбление Мессера во сне
+	end
+	
+	nick.clear_drinked_vodka() -- Обнуляет кол-во выпитых бутылок водки
 	olr_sleep.unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
 	olr_sleep.yan_dead_call() -- Странные сообщения на янтаре
 	olr_sleep.set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
 	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
 	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
 	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне
-	xrs_trade.on_item_drop() -- продажа покупка между непесями
+	
+	actor_sleep_full = false -- сбрасываем actor_sleep_full
+	sleep_start_time = 0
+	sleep_duration_sec = 0
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -637,12 +667,15 @@ function actor_binder:update(delta)
 	
 	game_stats.update (delta, self.object)
 	
-	if actor_in_sleep then
-		if db.actor.satiety < 0.25 then
-                   db.actor.satiety = 0.25
+	if db.actor:is_actor_sleeping() then
+		if db.actor.satiety < 0.1 then
+			db.actor.satiety = 0.1
+		end
+		if db.actor.thirst < 0.1 then
+			db.actor.thirst = 0.1
 		end
 	end
-
+	
 	-- апдейт погоды
 	self.weather_manager:update()
 	

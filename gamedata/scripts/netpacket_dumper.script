@@ -1,0 +1,330 @@
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+-- name: netpacket_dumper.script
+-- desc: Быстрый (нет) дамп нет-пакетов объектов с опциональной защитой от ошибок
+-- author: Deepseek, theysani
+-- date: 25.02.2026
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+-- Кэшируем глобальные функции и таблицы
+local sim = alife()
+local log1 = log1
+local amk = amk
+local nc = nc
+local get_netpk = get_netpk
+local clsid = clsid
+local type, next, pairs, ipairs, tostring = type, next, pairs, ipairs, tostring
+local table_concat = table.concat
+local string_rep = string.rep
+local string_format = string.format
+
+-- Быстрая проверка наличия в списке (для малых списков линейный поиск быстрее, чем множество)
+local function has_value(tab, val)
+	for _, v in ipairs(tab) do
+		if v == val then return true end
+	end
+	return false
+end
+
+-- -----------------------------------------------------------------
+-- Безопасное преобразование в строку
+-- -----------------------------------------------------------------
+local function safe_tostring(val)
+    if val == nil then return "nil" end
+    local ok, res = pcall(tostring, val)
+    if ok then return res else return "[" .. type(val) .. "]" end
+end
+
+-- -----------------------------------------------------------------
+-- Быстрая версия value_to_string
+-- -----------------------------------------------------------------
+local function value_to_string_fast(val, indent, visited, path)
+	indent = indent or 0
+	visited = visited or {}
+	path = path or ""
+	local spaces = string_rep("	   ", indent)  -- 4 пробела вместо табуляции
+
+	if val == nil then return "nil" end
+	local tp = type(val)
+
+	if tp == "number" or tp == "boolean" then
+		return tostring(val)
+	end
+
+	if tp == "string" then
+		return '"' .. val .. '"'
+	end
+
+	if tp == "userdata" then
+		-- Попробуем так, тут чисто переменная пустая
+		local str = ""
+		-- Проверка на вектор через поля x,y,z
+		if val.x and val.y and val.z then
+			return string_format("(%s, %s, %s)", tostring(val.x), tostring(val.y), tostring(val.z))
+		end
+		-- Проверка на вектор через индексы
+		if val[1] and val[2] and val[3] then
+			return string_format("(%s, %s, %s)", tostring(val[1]), tostring(val[2]), tostring(val[3]))
+		end
+		-- Объекты с методом getTable (например, custom_data из m_netpk)
+		if val.getTable then
+			local tbl = val:getTable()
+			if type(tbl) == "table" then
+				return value_to_string_fast(tbl, indent, visited, path .. ".getTable")
+			end
+		end
+		-- Объекты с методом getString
+		if val.getString then
+			local str2 = val:getString()
+			if type(str2) == "string" then
+				return value_to_string_fast(str2, indent, visited, path .. ".getString")
+			end
+		end
+		-- Объекты с методом get
+		if val.get then
+			local res = val:get()
+			return value_to_string_fast(res, indent, visited, path .. ".get")
+		end
+		-- Если ничего не подошло, возвращаем безопасный тустринг
+		return safe_tostring(str)
+	end
+
+	if tp == "table" then
+		if visited[val] then return "{...}" end
+		visited[val] = true
+
+		local result = { "{\n" }
+		for k, v in pairs(val) do
+			local key_str
+			if type(k) == "number" then
+				key_str = "[" .. k .. "]"
+			elseif type(k) == "string" then
+				key_str = k
+			else
+				key_str = "[" .. value_to_string_fast(k, 0, visited, path .. ".key") .. "]"
+			end
+			local value_str = value_to_string_fast(v, indent + 1, visited, path .. "." .. key_str)
+			result[#result+1] = spaces .. "	   " .. key_str .. " = " .. value_str .. ",\n"
+		end
+		result[#result+1] = spaces .. "}"
+		visited[val] = nil
+		return table_concat(result)
+	end
+
+	return "[" .. tp .. "]"
+end
+
+-- -----------------------------------------------------------------
+-- Безопасная версия value_to_string
+-- -----------------------------------------------------------------
+local function value_to_string_safe(val, indent, visited, path)
+	indent = indent or 0
+	visited = visited or {}
+	path = path or ""
+	local spaces = string_rep("	   ", indent)
+
+	if val == nil then return "nil" end
+	local tp = type(val)
+
+	if tp == "number" or tp == "boolean" then
+		return tostring(val)
+	end
+
+	if tp == "string" then
+		-- Больше не пытаемся распаковывать через nc
+		return '"' .. val .. '"'
+	end
+
+	if tp == "userdata" then
+		local ok, str = pcall(tostring, val)
+		if not ok then str = "[userdata]" end
+
+		local has_xyz, x, y, z = pcall(function() return val.x, val.y, val.z end)
+		if has_xyz and x and y and z then
+			return string_format("(%s, %s, %s)", tostring(x), tostring(y), tostring(z))
+		end
+
+		local has_indices, i1, i2, i3 = pcall(function() return val[1], val[2], val[3] end)
+		if has_indices and i1 and i2 and i3 then
+			return string_format("(%s, %s, %s)", tostring(i1), tostring(i2), tostring(i3))
+		end
+
+		if val.getTable and type(val.getTable) == "function" then
+			local ok2, tbl = pcall(val.getTable, val)
+			if ok2 and type(tbl) == "table" then
+				return value_to_string_safe(tbl, indent, visited, path .. ".getTable")
+			end
+		end
+
+		if val.getString and type(val.getString) == "function" then
+			local ok2, str2 = pcall(val.getString, val)
+			if ok2 and type(str2) == "string" then
+				return value_to_string_safe(str2, indent, visited, path .. ".getString")
+			end
+		end
+
+		if val.get and type(val.get) == "function" then
+			local ok2, res = pcall(val.get, val)
+			if ok2 then
+				return value_to_string_safe(res, indent, visited, path .. ".get")
+			end
+		end
+
+		return str
+	end
+
+	if tp == "table" then
+		if visited[val] then return "{...}" end
+		visited[val] = true
+
+		local result = { "{\n" }
+		for k, v in pairs(val) do
+			local key_str
+			if type(k) == "number" then
+				key_str = "[" .. k .. "]"
+			elseif type(k) == "string" then
+				key_str = k
+			else
+				key_str = "[" .. value_to_string_safe(k, 0, visited, path .. ".key") .. "]"
+			end
+			local new_path = path .. "." .. key_str
+			local ok, value_str = pcall(value_to_string_safe, v, indent + 1, visited, new_path)
+			if ok then
+				result[#result+1] = spaces .. "	   " .. key_str .. " = " .. value_str .. ",\n"
+			else
+				result[#result+1] = spaces .. "	   " .. key_str .. " = !!ERROR!!,  -- при обработке: " .. tostring(value_str) .. "\n"
+				log1("!!! Ошибка в value_to_string по пути: " .. new_path .. " : " .. tostring(value_str))
+			end
+		end
+		result[#result+1] = spaces .. "}"
+		visited[val] = nil
+		return table_concat(result)
+	end
+
+	return "[" .. tp .. "]"
+end
+
+-- -----------------------------------------------------------------
+-- Основная функция дампа
+-- -----------------------------------------------------------------
+-- options:
+--	 data_sources = {"amk", "nc", "m_netpk", "raw"} (по умолчанию все, nc можно оставить)
+--	 clsid_filter = { [clsid.script_stalker] = true, ... }
+--	 safe_mode	 = false (если true — использовать pcall везде)
+function netpacket_dump(options)
+	options = options or {}
+	local sources = options.data_sources or {"amk", "nc", "m_netpk", "raw"}
+	local clsid_filter = options.clsid_filter
+	local safe_mode = options.safe_mode or false -- Если не указываем в аргументах то считаем что надо быстро
+
+	-- Флаги источников
+	local use_amk = amk and has_value(sources, "amk")
+	local use_nc = nc and has_value(sources, "nc")
+	local use_m_netpk = has_value(sources, "m_netpk")
+	local use_raw = has_value(sources, "raw")
+
+	-- Выбираем нужные версии функций
+	local value_to_string = safe_mode and value_to_string_safe or value_to_string_fast
+
+	for id = 1, 65534 do
+		local obj = sim:object(id)
+		if obj then
+			local clsid_val = obj:clsid()
+			-- Фильтр по clsid
+			if clsid_filter and not clsid_filter[clsid_val] then
+				-- Пропускаем
+			else
+				local function process_object()
+					local obj_name = obj:name() or "unnamed"
+					local header = string_format("=== Объект [%s] id=%d clsid=%s ===", obj_name, id, tostring(clsid_val))
+					log1("=== Начало дампа ===")
+					log1(header)
+
+					-- 1. Данные от AMK
+					if use_amk then
+						local amk_data = nil
+						if clsid_val == clsid.script_stalker or clsid_val == clsid.stalker then
+							amk_data = amk.read_stalker_params(obj)
+						elseif clsid_val == clsid.script_monster or clsid_val == clsid.monster then
+							amk_data = amk.read_monster_params(obj)
+						elseif clsid_val == clsid.anom then
+							amk_data = amk.get_anomaly_data(obj)
+						elseif clsid_val == clsid.trader then
+							amk_data = amk.get_trader_data(obj)
+						elseif clsid_val == clsid.weapon then
+							amk_data = amk.get_weapon_data(obj)
+						elseif clsid_val == clsid.ammo then
+							amk_data = amk.get_ammo_params(obj)
+						elseif clsid_val == clsid.inventory_box then
+							amk_data = amk.get_invbox_data(obj)
+						elseif clsid_val == clsid.space_restrictor then
+							amk_data = amk.get_restrictor_data(obj)
+						end
+						if amk_data then
+							log1("=== Разбор через парсер от AMK ===")
+							log1(value_to_string(amk_data, 1, {}, "AMK"))
+						end
+					end
+
+					-- 2. Данные от NC
+					if use_nc then
+						local nc_data = nil
+						if clsid_val == clsid.script_stalker or clsid_val == clsid.stalker then
+							nc_data = nc.read_stalker_params(obj)
+						elseif clsid_val == clsid.script_monster or clsid_val == clsid.monster then
+							nc_data = nc.read_monster_params(obj)
+						elseif clsid_val == clsid.anom then
+							nc_data = nc.get_anomaly_data(obj)
+						elseif clsid_val == clsid.trader then
+							nc_data = nc.get_trader_data(obj)
+						elseif clsid_val == clsid.weapon then
+							nc_data = nc.get_weapon_data(obj)
+						elseif clsid_val == clsid.ammo then
+							nc_data = nc.get_ammo_params(obj)
+						elseif clsid_val == clsid.inventory_box then
+							nc_data = nc.get_invbox_data(obj)
+						elseif clsid_val == clsid.space_restrictor then
+							nc_data = nc.get_restrictor_data(obj)
+						end
+						if nc_data then
+							log1("=== Разбор через парсер от NC ===")
+							log1(value_to_string(nc_data, 1, {}, "NC"))
+						end
+					end
+
+					-- 3. Данные из m_netpk
+					if use_m_netpk or use_raw then
+						local pk = get_netpk(obj, 3)
+						if pk and pk:isOk() then
+							local data = pk:get()
+
+							if use_m_netpk then
+								log1("=== Разбор через m_netpk ===")
+								log1(value_to_string(data, 1, {}, "m_netpk"))
+							end
+
+							if use_raw then
+								log1("=== Сырой дамп нет-пакета без разбора таблиц и т.д ===")
+								for k, v in pairs(data) do
+									log1("	  " .. safe_tostring(k) .. " => " .. safe_tostring(v))
+								end
+							end
+						end
+					end
+
+					log1("=== Конец дампа ===")
+				end
+
+				if safe_mode then
+					local ok, err = pcall(process_object)
+					if not ok then
+						log1("!!! [ERROR] Ошибка при обработке объекта id = " .. id .. ": " .. tostring(err))
+					end
+				else
+					process_object()
+				end
+			end
+		end
+	end
+end

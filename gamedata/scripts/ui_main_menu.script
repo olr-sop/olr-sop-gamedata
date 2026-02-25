@@ -541,12 +541,30 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
                 self:OnButton_show_toolskit_menu()
             elseif dik == DIK_keys.DIK_F3 then
                 self:OnButton_show_spawn_menu()
-            end
+			elseif dik == DIK_keys.DIK_G then
+				local function error_handler(err)
+					log1("!!! [ERROR] netpacket_dump - " .. tostring(err))
+					log1(debug.traceback())
+				end
+				xpcall(function()
+				netpacket_dumper.netpacket_dump({
+					data_sources = {"m_netpk"}, -- только дамп используя артосовский m_netpk как наиболее точный по описанию
+					clsid_filter = { [clsid.script_stalker] = true, [clsid.space_restrictor] = true },	-- сталкеры и спейс рестрикторы
+					safe_mode = false -- быстрая обработка, минимум pcall вызовов
+				})
+				end, error_handler)
+			elseif dik == DIK_keys.DIK_F then
+				netpacket_dumper.netpacket_dump({
+					data_sources = {"m_netpk"}, -- только дамп используя артосовский m_netpk как наиболее точный по описанию
+					clsid_filter = { [clsid.script_stalker] = true, [clsid.space_restrictor] = true },	-- сталкеры и спейс рестрикторы
+					safe_mode = false -- быстрая обработка, минимум pcall вызовов
+				})
+			end				
         end
 
         if dik == DIK_keys.DIK_Q then
             self:OnMessageQuitWin()
-        end
+        end		
 
         if olr.olrdbg == true then
             if dik == DIK_keys.DIK_F then

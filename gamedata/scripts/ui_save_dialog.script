@@ -10,12 +10,12 @@ local xml_init
 
 function save_item:__init() super()
 	self:SetWndRect		(0,0,430,22)
-	
+
 	local ca = 255
 	local cr = 216
 	local cg = 186
 	local cb = 140
-	
+
 	local fn_size_x 				= xml_init:ReadAttribFlt("filename", 0, "size_x", 230)
 	local fn_size_y 				= xml_init:ReadAttribFlt("filename", 0, "size_y", 22)
 	self.fn							= CUIStatic	()
@@ -43,7 +43,7 @@ end
 
 class "save_dialog" (CUIScriptWnd)
 
-function save_dialog:__init() super()		
+function save_dialog:__init() super()
 	self:InitControls()
 	self:InitCallBacks()
 	self:FillList()
@@ -56,11 +56,11 @@ end
 function save_dialog:FillList()
 	local flist = getFS():file_list_open_ex("$game_saves$",FS.FS_ListFiles,"*.sav")
 	local f_cnt = flist:Size()
-	
+
 	flist:Sort(FS.FS_sort_by_modif_down)
-	
+
 	for	it=0, f_cnt-1 	do
-		local file		=	flist:GetAt(it)			
+		local file		=	flist:GetAt(it)
 		local file_name = string.sub(file:NameFull(), 0, (string.len(file:NameFull()) - 4))
 		local date_time = "[" .. file:ModifDigitOnly() .. "]"
 		--menu_item =  .. 
@@ -70,19 +70,19 @@ end
 
 function save_dialog:InitControls()
 	self:Init(0,0,1024,768)
-	
+
 	self.list_file_font = GetFontMicron12()
 	self.list_date_font = GetFontMicron12()
-	
+
 	xml_init = CScriptXmlInit()
 	xml_init:ParseFile("ui_mm_save_dlg.xml")
-	
+
 	local ctrl
-	
+
 	xml_init:InitStatic("back_video", self)
-	
+
 	xml_init:InitStatic("background",				self)
-	
+
 	if xml_init:NavigateToNode("back_left", 0) then
 		xml_init:InitStatic("back_left", self)
 	end
@@ -91,31 +91,31 @@ function save_dialog:InitControls()
 	end
 	xml_init:InitStatic("newspaper_video",			self)
 	self.form = xml_init:InitStatic("form",			self)
-	
+
 	xml_init:InitStatic("form:caption",				self.form)
-	
+
 	ctrl = xml_init:InitEditBox("form:edit", 		self.form, true)
 	self:Register(ctrl, "edit_filename")
-	
+
 	xml_init:InitFrame("form:list_frame",			self.form)
 
 	ctrl = xml_init:InitList("form:list", 			self.form)
 	ctrl:ShowSelectedItem(true)
 	self:Register(ctrl, "list_window")
-		
-	ctrl = xml_init:Init3tButton("form:btn_save",	self)	
+
+	ctrl = xml_init:Init3tButton("form:btn_save",	self)
 	self:Register(ctrl, "button_ok")
 
-	ctrl = xml_init:Init3tButton("form:btn_delete",	self)	
+	ctrl = xml_init:Init3tButton("form:btn_delete",	self)
 	self:Register(ctrl, "button_del")
-	
+
 	ctrl = xml_init:Init3tButton("form:btn_cancel",	self)
-	self:Register(ctrl, "button_cancel")	
-	
+	self:Register(ctrl, "button_cancel")
+
 	self.message_box = CUIMessageBoxEx()
 	self:Register(self.message_box,"message_box")
 
-	self.mbox_mode	= 0	
+	self.mbox_mode	= 0
 end
 
 function save_dialog:InitCallBacks()
@@ -135,9 +135,9 @@ function save_dialog:OnListItemClicked()
 	local edit_box		= self:GetEditBox("edit_filename")
 	local item_id		= list_box:GetFocusedItem()
 	local item			= list_box:GetItem(item_id)
-	
+
 	if item==nil then return end
-	
+
 	local item_text		= item.fn:GetText()
 	edit_box:SetText	(item_text)
 end
@@ -145,42 +145,42 @@ end
 function save_dialog:OnMsgYes()
 	if self.mbox_mode == 1 then
 		self:SaveFile(self.new_save)
-		
+
 		self:GetHolder():start_stop_menu	(self.owner, true) --new
 		self:GetHolder():start_stop_menu	(self,true)
 		self.owner:Show						(true)
-		
+
 	elseif self.mbox_mode == 2 then
 		self:delete_selected_file()
-	end	
+	end
 end
 
 function save_dialog:OnButton_del_clicked()
 
-	local list		= self:GetListWnd		("list_window")	
+	local list		= self:GetListWnd		("list_window")
 	if list:GetSize()==0 then return end
 
 	local index		= list:GetSelectedItem	()
-	
+
 	if index == -1 then return end
 
 	self.mbox_mode = 2
-	self.message_box:Init("message_box_delete_file_name")		
+	self.message_box:Init("message_box_delete_file_name")
 	self:GetHolder():start_stop_menu(self.message_box, true)
 end
 
 function save_dialog:delete_selected_file()
-	local list		= self:GetListWnd		("list_window")	
+	local list		= self:GetListWnd		("list_window")
 	if list:GetSize()==0 then return end
 	local index		= list:GetSelectedItem	()
-	
+
 	if index == -1 then return end
 
 	local item				= list:GetItem(index)
 	local filename			= item.fn:GetText()
-	
+
 	ui_load_dialog.delete_save_game(filename)
-	
+
 	list:RemoveItem			(index)
 	self:OnListItemClicked	()
 end
@@ -188,20 +188,20 @@ end
 function save_dialog:OnButton_ok_clicked()
 	-- prepare message box
 	local message_box	= self.message_box
-	local main_frame	= self:GetFrameWindow("main_frame")	
-	
+	local main_frame	= self:GetFrameWindow("main_frame")
+
 	-- Get file name
 	local edit_box		= self:GetEditBox("edit_filename")
 	self.new_save		= edit_box:GetText()
-	
+
 	-- check for empty name
 	if string.len(self.new_save) == 0 then
 		self.mbox_mode = 0
-		self.message_box:Init("message_box_empty_file_name")		
+		self.message_box:Init("message_box_empty_file_name")
 		self:GetHolder():start_stop_menu(self.message_box, true)
 		return
 	end
-	
+
 	-- check for match name
 	local f = getFS()
 	local flist = f:file_list_open("$game_saves$",FS.FS_ListFiles)
@@ -211,11 +211,11 @@ function save_dialog:OnButton_ok_clicked()
 		self.mbox_mode = 1
 		self.message_box:Init("message_box_file_already_exist")
 		self:GetHolder():start_stop_menu(self.message_box, true)
-		
-		flist:Free()	
+
+		flist:Free()
 		return
 	end
-	flist:Free()	
+	flist:Free()
 	self:SaveFile(self.new_save)
 
 	self:GetHolder():start_stop_menu	(self.owner, true) --new
@@ -243,14 +243,14 @@ function save_dialog:OnKeyboard(dik, keyboard_action)  --virtual function
 	return true
 end
 
-function save_dialog:AddItemToList(file_name, date_time)	
-	
+function save_dialog:AddItemToList(file_name, date_time)
+
 	local _itm			= save_item()
 	_itm.fn:SetText	(file_name)
 	_itm.fage:SetText	(date_time)
 	local list_box		= self:GetListWnd("list_window")
-	list_box:AddItem	(_itm, 0)	
-	
+	list_box:AddItem	(_itm, 0)
+
 end
 
 function save_dialog:SaveFile(fileName)

@@ -79,7 +79,7 @@ function options_dialog:InitControls()
 	self.dlg_gameplay:Show		(true)
 	self.tab:SetActiveTab("gameplay")
 
-	self.message_box 			= CUIMessageBoxEx()
+	self.message_box			= CUIMessageBoxEx()
 	self:Register				(self.message_box, "mb")
 
 	self.b_restart_system_shown	= false
@@ -199,7 +199,7 @@ function options_dialog:OnBtnAccept()
 	local opt = COptionsManager()
 	local console = get_console()
 
-   	console:execute("cfg_save tmp")
+	console:execute("cfg_save tmp")
 
 	opt:SaveValues("mm_opt_video_preset")
 	opt:SaveValues("key_binding")
@@ -316,31 +316,34 @@ function options_dialog:OnApplyChanges()
 
 	if false==self.b_restart_system_shown then
 		local opt = COptionsManager()
-		if opt:NeedSystemRestart() then
+		if opt:NeedSystemRestart() or opt:NeedCleanSCache() then
 			self.b_restart_system_shown = true
 			self.message_box:Init("message_box_restart_game")
+			if opt:NeedCleanSCache() then
+				self.message_box:SetText(game.translate_string("ui_mm_need_restart_clean_scache"))
+			end
 			self.owner:GetHolder():start_stop_menu(self.message_box,true)
 		end
 	end
 end
 
 function options_dialog:OnDiscardChanges()
-    self.timer = nil
-    _G.b_discard_settings_shown = false
+	self.timer = nil
+	_G.b_discard_settings_shown = false
 
 	local c = get_console()
-   	c:execute("cfg_load tmp")
+	c:execute("cfg_load tmp")
 
 	self:SetCurrentValues()
 
 	c:execute("vid_restart")
-   	c:execute("cfg_save")
+	c:execute("cfg_save")
 end
 
 function options_dialog:OnMenuReloaded()
 	if(_G.b_discard_settings_shown) then
-	    self.message_box:Init("message_box_accept_vid_restart")
-	    self.message_box:SetText(string.format("%s %d% s", game.translate_string("ui_mm_confirm_changes"), 15, game.translate_string("ui_st_secs")))
+		self.message_box:Init("message_box_accept_vid_restart")
+		self.message_box:SetText(string.format("%s %d% s", game.translate_string("ui_mm_confirm_changes"), 15, game.translate_string("ui_st_secs")))
 		self:GetHolder():start_stop_menu(self.message_box,true)
 	end
 end

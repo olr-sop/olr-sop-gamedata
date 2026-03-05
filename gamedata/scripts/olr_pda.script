@@ -5,16 +5,11 @@
 
 local ignore_ini = ini_file("pda_dialogs\\ignore_npc.ltx") --НПЦ, которые не участвуют в диалогах
 
-local zombies_names = {
-["lvl4u_darklab_stalker_0023"] = true,
-["lvl4u_darklab_stalker_0026"] = true
-}
-
 --Коллбек на нажатие по элементу в списке контактов
 function on_press(actor, npc)
 	--news_manager.send_tip(db.actor, "on_press_check")
 
-	if zombies_names[npc:name()] or npc:character_community() == "zombied" then
+	if npc:character_community() == "zombied" then
 		news_manager.send_tip(db.actor, game.translate_string("on_press_1"), nil, "signal_lost", 5000)
 		return false
 	end

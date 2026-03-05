@@ -2890,19 +2890,19 @@ end
 
 function swatoy_wtf1()
 	olr.kill_mon_in_radius(db.actor:position(), 120)
-	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf1_0"), nil, "default", 31000)
+	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf1_0"), nil, "unknown", 31000, nil, nil, true, "st_sim_test_000_name")
 end
 
 function swatoy_wtf2()
-	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf2_0"), nil, "default", 31000)
+	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf2_0"), nil, "unknown", 31000, nil, nil, true, "st_sim_test_000_name")
 end
 
 function swatoy_wtf3()
-	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf3_0"), nil, "default", 31000)
+	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf3_0"), nil, "unknown", 31000, nil, nil, true, "st_sim_test_000_name")
 end
 
 function swatoy_wtf4()
-	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf4_0"), nil, "default", 31000)
+	news_manager.send_tip(db.actor, game.translate_string("swatoy_wtf4_0"), nil, "unknown", 31000, nil, nil, true, "st_sim_test_000_name")
 	level.show_indicators()
 	level.enable_input()
 	db.actor:restore_weapon()
@@ -2974,11 +2974,12 @@ end
 
 function use_yanprib_hata()
 	if not has_alife_info("prof_uletel_gde_laborant_start_talked") then
-		news_manager.send_tip(db.actor, game.translate_string("use_yanprib_hata_0"), nil, "default", 30000)
+		--news_manager.send_tip(db.actor, game.translate_string("use_yanprib_hata_0"), nil, "default", 30000)
+		olr.hud_tip("", game.translate_string("use_yanprib_hata_0"), 3, true)
 		return
 	end
 	if not has_alife_info("yan_dot_start_zamery") then
-		news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_psi_measurer_1")..xvars.yan_phase_zam_quest..game.translate_string("st_xr_effects_psi_measurer_2"))
+		news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_psi_measurer_1").." "..xvars.yan_phase_zam_quest.." "..game.translate_string("st_xr_effects_psi_measurer_2"), nil, "info", 5000, nil, nil, true, "st_xr_effects_psi_measurer")
 		db.actor:give_info_portion("yan_dot_start_zamery")
 		xvars.yan_phase_zam_quest_flag = false
 		olr_timers.st_timer("omsffsss3", 25, "xr_effects.yan_phase_zam_quest_on()")
@@ -2993,10 +2994,11 @@ function use_yanprib_hata()
 			olr_timers.st_timer("omsffsss3", 25, "xr_effects.yan_phase_zam_quest_on()")
 		end
 		xvars.yan_phase_zam_quest_flag = false
-		news_manager.send_tip(db.actor, game.translate_string("use_yanprib_hata_1"))
+		
+		news_manager.send_tip(db.actor, game.translate_string("use_yanprib_hata_1"), nil, "info", 5000, nil, nil, true, "st_xr_effects_psi_measurer")
 		if xvars.yan_phase_zam_quest >= 5 then
 			db.actor:give_info_portion("yan_dot_start_zamery_done")
-			news_manager.send_tip(db.actor, game.translate_string("use_yanprib_hata_2"))
+			news_manager.send_tip(db.actor, game.translate_string("use_yanprib_hata_2"), nil, "info", 5000, nil, nil, true, "st_xr_effects_psi_measurer")
 		end
 	end
 end
@@ -3011,7 +3013,7 @@ end
 
 function yan_phase_zam_quest_off()
 	if xvars.yan_phase_zam_quest < 5 then
-		news_manager.send_tip(db.actor, "st_xr_effects_psi_measurer_3"..xvars.yan_phase_zam_quest..game.translate_string("st_xr_effects_psi_measurer_4"))
+		news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_psi_measurer_3")..xvars.yan_phase_zam_quest.." "..game.translate_string("st_xr_effects_psi_measurer_4"), nil, "info", nil, nil, true, "st_xr_effects_psi_measurer")
 		xvars.yan_phase_zam_quest_flag = false
 		olr_timers.st_timer("omsffsss3", math.random(35,90), "xr_effects.yan_phase_zam_quest_on()")
 	end

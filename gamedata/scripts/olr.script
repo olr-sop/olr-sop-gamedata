@@ -201,38 +201,44 @@ end
 -- Но и по db.storage не запилить, либо надо сделать это позже, например на первом апдейте актора
 -- Нужно думать
 function zombie_fake_death()
+
+	local exclude_sections = {
+		["korpus"] = true,
+		["korpus_strong"] = true,
+		["korpus_gas"] = true,
+		["zombie_plague"] = true,
+	}
+
 	for i = 1, 65534 do -- пока что придётся обходить все объекты
 		local zombie = alife():object(i) -- и получать его вот так
-		if zombie and (zombie:clsid() == clsid.zombie or zombie:clsid() == clsid.zombie_s) then -- проверяем что зомбу
-			if zombie:alive() and zombie.alive then -- проверяем что жив только после проверки что это зомбу, иначе срёт в лог
-				local pk = get_netpk(zombie, 1) -- получаем нет-пакет
-				if pk:isOk() then
-					local data = pk:get()
-					local cd = data.custom_data:getTable() -- получаем кастом дату
+		if zombie and (zombie:clsid() == clsid.zombie or zombie:clsid() == clsid.zombie_s) and (not exclude_sections[zombie:section_name()]) and zombie:alive() and zombie.alive then -- проверяем что зомбу
+			local pk = get_netpk(zombie, 1) -- получаем нет-пакет
+			if pk:isOk() then
+				local data = pk:get()
+				local cd = data.custom_data:getTable() -- получаем кастом дату
 
-					--log1("### [INFO] zombie_fake_death получили нет-пакет")
-					--log1("### [INFO] zombie_fake_death данные из кастом даты:")
-					--log1(table_to_string(cd))
-					
-					-- тут обязательна проверка на налчие cfg в логике что бы не записывать туда active при наличии логики из конфигов
-					local has_cfg = cd.logic and cd.logic.cfg ~= nil
+				--log1("### [INFO] zombie_fake_death получили нет-пакет")
+				--log1("### [INFO] zombie_fake_death данные из кастом даты:")
+				--log1(table_to_string(cd))
+				
+				-- тут обязательна проверка на налчие cfg в логике что бы не записывать туда active при наличии логики из конфигов
+				local has_cfg = cd.logic and cd.logic.cfg ~= nil
 
-					if not has_cfg and math.random() > 0.5 then -- Тут будет как и у декса с шансом 0.5
-						if not cd.logic then cd.logic = {} end
-						cd.logic.active = "mob_fake_death"
+				if not has_cfg and math.random() > 0.5 then -- Тут будет как и у декса с шансом 0.5
+					if not cd.logic then cd.logic = {} end
+					cd.logic.active = "mob_fake_death"
 
-						if not cd.mob_fake_death then cd.mob_fake_death = {} end
-						cd.mob_fake_death.on_actor_dist_le = "10 | nil"
-					end					
-					
-					data.custom_data:set(cd) -- заполняем таблицу с кастом датой
-					pk:set(data) -- записываем её обратно в зомбу		
+					if not cd.mob_fake_death then cd.mob_fake_death = {} end
+					cd.mob_fake_death.on_actor_dist_le = "10 | nil"
+				end					
+				
+				data.custom_data:set(cd) -- заполняем таблицу с кастом датой
+				pk:set(data) -- записываем её обратно в зомбу		
 
-					--local cd_after = data.custom_data:getTable()
-					--log1("### [INFO] zombie_fake_death проверяем что там по итогу")
-					--log1("### [INFO] full custom_data table:")
-					--log1(table_to_string(cd_after))
-				end
+				--local cd_after = data.custom_data:getTable()
+				--log1("### [INFO] zombie_fake_death проверяем что там по итогу")
+				--log1("### [INFO] full custom_data table:")
+				--log1(table_to_string(cd_after))
 			end
 		end
 	end

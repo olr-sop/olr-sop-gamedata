@@ -213,14 +213,17 @@ function zombie_fake_death()
 					--log1("### [INFO] zombie_fake_death получили нет-пакет")
 					--log1("### [INFO] zombie_fake_death данные из кастом даты:")
 					--log1(table_to_string(cd))
+					
+					-- тут обязательна проверка на налчие cfg в логике что бы не записывать туда active при наличии логики из конфигов
+					local has_cfg = cd.logic and cd.logic.cfg ~= nil
 
-					if math.random() > 0.5 then -- тут будет как и у декса с шансом 0.5
+					if not has_cfg and math.random() > 0.5 then -- Тут будет как и у декса с шансом 0.5
 						if not cd.logic then cd.logic = {} end
 						cd.logic.active = "mob_fake_death"
 
 						if not cd.mob_fake_death then cd.mob_fake_death = {} end
 						cd.mob_fake_death.on_actor_dist_le = "10 | nil"
-					end
+					end					
 					
 					data.custom_data:set(cd) -- заполняем таблицу с кастом датой
 					pk:set(data) -- записываем её обратно в зомбу		

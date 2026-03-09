@@ -181,6 +181,7 @@ function change_level()
 	end
 	olr_anoms_spawn.on_spawn()
 	olr_monsters_sim.sim_location_traveling()
+	zombie_fake_death() -- Укладываем зомбу в фейк смерть чтоб вставали при приближении к актору
 	--olr_ai_follower_agree.naparnik_teleport()
 	xvars.bar_base_shot = 0 
 	xvars.dolg_base_shot = 0
@@ -193,6 +194,44 @@ function change_level()
 		olr_timers.st_timer("surge", 29, "nick.surge_day_now()")
 		olr_timers.st_timer("surge", 59, "nick.surge_day_now()")
 		olr_timers.st_timer("surge", 99, "nick.surge_day_now()")
+	end
+end
+
+-- На данный момент крайне не оптимально
+-- Но и по db.storage не запилить, либо надо сделать это позже, например на первом апдейте актора
+-- Нужно думать
+function zombie_fake_death()
+	for i = 1, 65534 do -- пока что придётся обходить все объекты
+		local zombie = alife():object(i) -- и получать его вот так
+		if zombie and (zombie:clsid() == clsid.zombie or zombie:clsid() == clsid.zombie_s) then -- проверяем что зомбу
+			if zombie:alive() and zombie.alive then -- проверяем что жив только после проверки что это зомбу, иначе срёт в лог
+				local pk = get_netpk(zombie, 1) -- получаем нет-пакет
+				if pk:isOk() then
+					local data = pk:get()
+					local cd = data.custom_data:getTable() -- получаем кастом дату
+
+					--log1("### [INFO] zombie_fake_death получили нет-пакет")
+					--log1("### [INFO] zombie_fake_death данные из кастом даты:")
+					--log1(table_to_string(cd))
+
+					if math.random() > 0.5 then -- тут будет как и у декса с шансом 0.5
+						if not cd.logic then cd.logic = {} end
+						cd.logic.active = "mob_fake_death"
+
+						if not cd.mob_fake_death then cd.mob_fake_death = {} end
+						cd.mob_fake_death.on_actor_dist_le = "10 | nil"
+					end
+					
+					data.custom_data:set(cd) -- заполняем таблицу с кастом датой
+					pk:set(data) -- записываем её обратно в зомбу		
+
+					--local cd_after = data.custom_data:getTable()
+					--log1("### [INFO] zombie_fake_death проверяем что там по итогу")
+					--log1("### [INFO] full custom_data table:")
+					--log1(table_to_string(cd_after))
+				end
+			end
+		end
 	end
 end
 

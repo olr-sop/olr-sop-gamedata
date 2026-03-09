@@ -394,39 +394,40 @@ function del_xvars(name)
 end
 
 function GetLevelVertexes(level)
-	local lvtab ={}
+	local lvtab = {}
 	if alife() then
 		local i = 0
-		while game_graph():valid_vertex_id( i ) do
-			local lv = game_graph():vertex( i ):level_vertex_id()
-			local ln = alife():level_name( game_graph():vertex( i ):level_id() )
-			if not lvtab[ ln ] then
-				lvtab[ ln ] = {}
+		while game_graph():valid_vertex_id(i) do
+			local lv = game_graph():vertex(i):level_vertex_id()
+			local ln = alife():level_name(game_graph():vertex(i):level_id())
+			if not lvtab[ln] then
+				lvtab[ln] = {}
 			end
-			table.insert( lvtab[ ln ], lv )
+			table.insert(lvtab[ln], lv)
 			i = i + 1
 		end
-		return lvtab[ level ]
+		return lvtab[level]
 	end
 	return lvtab[0]
 end
 
-function GetGameVertexes( level )
-	local gvtab ={}
+function GetGameVertexes(level)
+	local gvtab = {}
 	if alife() then
 		local i = 0
-			while game_graph():valid_vertex_id( i ) do
-			local ln = alife():level_name( game_graph():vertex( i ):level_id() )
-			if not gvtab[ ln ] then
-				gvtab[ ln ] = {}
+		while game_graph():valid_vertex_id(i) do
+			local ln = alife():level_name(game_graph():vertex(i):level_id())
+			if not gvtab[ln] then
+				gvtab[ln] = {}
 			end
-			table.insert( gvtab[ ln ], i )
+			table.insert(gvtab[ln], i)
 			i = i + 1
 		end
-		return gvtab[ level ]
+		return gvtab[level]
 	end
 	return gvtab[0]
 end
+
 ----------------------------------------------------------------------
 
 function insert_to_table(tbl, section)
@@ -1497,33 +1498,66 @@ end
 
 -- Рекурсивная распечатка таблицы с использованием log1
 function print_table_log1(table, subs)
-    local type_ = type
-    local sub = subs or ""
+	local tostr = tostring
+	local type_ = type
+	local sub
+	if subs ~= nil then
+		sub = subs
+	else
+		sub = ""
+	end
+	for k,v in pairs(table) do
+		if type_(v) == "table" then
+			log1(sub .. tostr(k) .. ":")
+			print_table_log1(v, sub.."    ")
+		elseif type_(v) == "function" then
+			log1(sub .. tostr(k) .. ":function")
+		elseif type_(v) == "userdata" then
+			log1(sub .. tostr(k) .. ":userdata")
+		elseif type_(v) == "boolean" then
+			if v == true then				
+				if type_(k)~="userdata" then
+					log1(sub .. tostr(k) .. ":true")
+				else
+					log1(sub .. "userdata:true")
+				end
+			else
+				if type_(k)~="userdata" then
+					log1(sub .. tostr(k) .. ":false")
+				else
+					log1(sub .. "userdata:false")
+				end
+			end
+		else
+			if v ~= nil then
+				log1(sub .. tostr(k) .. ":" .. tostring(v))
+			else
+				log1(sub .. tostr(k) .. ":nil")
+			end
+		end
+	end  
+end
+
+-- Функция для преобразования таблицы в читаемую строку
+function table_to_string(t, indent)
+    indent = indent or 0
+    local spaces = string.rep("  ", indent)
+    local result = {}
     
-    for k, v in pairs(table) do
-        local key_str = tostring(k)
-        local output = sub
-        
-        if type_(v) == "table" then
-            log1(output .. key_str .. ":")
-            print_table(v, sub .. "    ")
-        else
-            local value_str
-            if type_(v) == "function" then
-                value_str = "function"
-            elseif type_(v) == "userdata" then
-                value_str = "userdata"
-            elseif type_(v) == "boolean" then
-                value_str = v and "true" or "false"
-            elseif v == nil then
-                value_str = "nil"
-            else
-                value_str = tostring(v)
-            end
-            
-            log1(output .. key_str .. ":" .. value_str)
-        end
-    end  
+    if type(t) ~= "table" then
+        return tostring(t)
+    end
+    
+    result[#result+1] = "{\n"
+    
+    for k, v in pairs(t) do
+        local key_str = type(k) == "number" and "["..k.."]" or tostring(k)
+        local value_str = type(v) == "table" and table_to_string(v, indent + 1) or tostring(v)
+        result[#result+1] = spaces.."  "..key_str.." = "..value_str..",\n"
+    end
+    
+    result[#result+1] = spaces.."}"
+    return table.concat(result)
 end
 
 -------------------------------------------------------------------------------------------

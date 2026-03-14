@@ -1,1 +1,1 @@
-@start bin\Win32\Release\xr_3da.exe -simple_script_lua_debug -simple_lua_debug  -i -avoid_library_crash
+@start bin\Win32\Release\xr_3da.exe -simple_script_lua_debug -simple_lua_debug

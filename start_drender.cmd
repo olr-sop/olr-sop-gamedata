@@ -1,1 +1,1 @@
-@start bin\Win32\ReleaseDebugRender\xr_3da.exe -simple_script_lua_debug -simple_lua_debug -i
+@start bin\Win32\ReleaseDebugRender\xr_3da.exe -simple_script_lua_debug -simple_lua_debug

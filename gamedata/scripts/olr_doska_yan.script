@@ -40,15 +40,15 @@ end
 
 function ui_quests_table:bt_find_item_button_clicked()
 	job_selected_kill = false 
-	local textdesc = game.translate_string(""..xvars.quest_one_text_yan.." - "..xvars.quest_one_text_name_yan..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost_yan.." ")
+	local textdesc = game.translate_string(""..xvars.quest_one_text_yan.." - "..game.translate_string(xvars.quest_one_text_name_yan)..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost_yan.." ")
 	if not has_alife_info("doska_one_taken_yan") then
 		self.static_desc_quest:SetText(textdesc)
 		job_selected = true
 	elseif xvars.quest_one_target_yan == "" and has_alife_info("doska_one_taken_yan") then
 		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
-		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_retrieve_item")..xvars.quest_one_text_name_yan..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost_yan.." ")
-	end  
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_retrieve_item")..game.translate_string(xvars.quest_one_text_name_yan)..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost_yan.." ")
+	end
 end
 
 function ui_quests_table:bt_kill_stalker_button_clicked()
@@ -65,14 +65,14 @@ function ui_quests_table:bt_kill_stalker_button_clicked()
 	if xvars.quest_two_target_yan == "" then
 		nm = "empty"
 	end
-	local textdesc = game.translate_string(game.translate_string("st_olr_doska_need_kill_strong_mutant")..pos.."")
+	local textdesc = game.translate_string(game.translate_string("st_olr_doska_need_kill_strong_mutant").." "..pos..game.translate_string("st_olr_doska_payment").." "..xvars.quest_two_cost_yan)
 	if not has_alife_info("doska_two_taken_yan") then
 		self.static_desc_quest:SetText(textdesc)
 		job_selected_kill = true
 	elseif xvars.quest_two_target_yan == "" and has_alife_info("doska_two_taken_yan") then
 		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
-		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_need_kill_strong_mutant_accepted"))
+		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_need_kill_strong_mutant_accepted").." "..xvars.quest_two_cost_yan)
 	end  
 end
 
@@ -95,7 +95,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		level.remove_cam_effector(30)
 		olr.info("doska_one_taken_yan")
 		olr.info("doska_one_working_yan")
-		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_yan_task_1").." "..xvars.quest_one_text_name_yan..game.translate_string("st_olr_doska_yan_task_2"), 1, "item", 9000)
+		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_yan_task_1").." "..game.translate_string(xvars.quest_one_text_name_yan)..game.translate_string("st_olr_doska_yan_task_2"), 1, "item", 9000)
 		olr_timers.st_timer("doska_one_gen_timer_fail_yan", 8500, "olr_doska_yan.doska_one_gen_timer_fail_yan()")
 	else
 		--log1("cannot take quest")
@@ -114,6 +114,8 @@ function ui_quests_table:button_take_quest_button_clicked()
 		news_manager.send_tip(db.actor, game.translate_string("ui_quests_tablebutton_take_quest_button_clicked_yantar"), 1, "mutants", 9000)
 		local sobj = game.translate_string(xvars.quest_two_target_yan)
 		local obj = alife():object(sobj)
+		xvars.quest_two_cost_yan = 350
+		
 		olr.add_spot_on_map( obj.id,"monster_part_location", "Заказ от Профессора на Янтаре: убить мутанта" )
 		olr_timers.st_timer("doska_two_gen_timer_fail_yan", 8500, "olr_doska_yan.doska_two_gen_timer_fail_yan()")
 	else
@@ -255,8 +257,8 @@ end
 
 -- таймер на провал задания 
 function doska_two_gen_timer_fail_yan()
-     	local sobj = game.translate_string(xvars.quest_two_target_yan)
-     	local obj = alife():object(sobj)
+	local sobj = game.translate_string(xvars.quest_two_target_yan)
+	local obj = alife():object(sobj)
 	level.map_remove_object_spot(obj.id, "monster_part_location")
 	olr_doska_yan.clear_find_kill()
 	olr_timers.st_timer("gen_kill_monster", 26, "olr_doska_yan.gen_kill_stalker()")
@@ -276,22 +278,23 @@ function gen_kill_stalker()
 	}
 	local places = {}
 	for _, kill in ipairs(olr_offline_walk.tabst) do
-	--local sim = alife()
 	--for id=1, 65534 do
-	--local kill = sim:object(id)
-	if kill then
-			if montabl[kill:clsid()] then
-                	if kill.alive and kill:alive() and kill.level_name == "lvl3_agroprom" or kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl4_darkdolina" or kill.level_name == "lvl6_rostok"
-					or kill.level_name == "lvl7_yantar" or kill.level_name == "lvl9_military" or kill.level_name == "lvl11_deadcity" then
-					if not olr_protected.is_no_offline_alife_obj(kill:name()) then
-						table.insert(places, kill)
+		--local kill = sim:object(id)
+		--local sim = alife()
+		if kill then
+				if montabl[kill:clsid()] then
+					if kill.alive and kill:alive() and kill.level_name == "lvl3_agroprom" or kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl4_darkdolina" or kill.level_name == "lvl6_rostok"
+						or kill.level_name == "lvl7_yantar" or kill.level_name == "lvl9_military" or kill.level_name == "lvl11_deadcity" then
+						if not olr_protected.is_no_offline_alife_obj(kill:name()) then
+							table.insert(places, kill)
+						end
 					end
-				end
+			end
 		end
-	end	
 	end
 	local rand_kill = places[math.random(#places)]
 	xvars.quest_two_target_yan = rand_kill:name()
+	xvars.quest_two_cost_yan = 350
 	--olr.add_spot_on_map( rand_kill.id,"crlc_big", "килл" )
 	--news_manager.send_tip(db.actor, "есть rand_kill "..rand_kill:name().." -- "..rand_kill.level_name.." ")
 end
@@ -311,13 +314,12 @@ end
 
 -- сдаём квест на мутанта
 function two_complete_func_kill()
-	local mon = 350
      	local sobj = game.translate_string(xvars.quest_two_target_yan)
      	local obj = alife():object(sobj)
 	level.map_remove_object_spot(obj.id, "monster_part_location")
-	db.actor:give_money(mon)
-	game_stats.money_quest_update(mon)
-	news_manager.relocate_money(db.actor, "in", mon)
+	db.actor:give_money(xvars.quest_two_cost_yan)
+	game_stats.money_quest_update(xvars.quest_two_cost_yan)
+	news_manager.relocate_money(db.actor, "in", xvars.quest_two_cost_yan)
 	db.actor:disable_info_portion("doska_two_working_yan")
 	local time = math.random(90,160)
 	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_yan.gen_kill_stalker()")
@@ -328,6 +330,7 @@ end
 -- отчистка текущего убитого для поиска
 function clear_find_kill()
 	xvars.quest_two_target_yan = ""
+	xvars.quest_two_cost_yan = 0
 end
 
 

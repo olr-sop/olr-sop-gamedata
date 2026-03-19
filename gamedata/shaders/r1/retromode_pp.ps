@@ -1,0 +1,62 @@
+// PS1 Post-processing (https://godotshaders.com/shader/ps1-post-processing/)
+// Автор: Mighty Duke
+// Порт на хрей: theysani, дипсик, чатгпт
+
+#include "common.h"
+
+struct v2p {
+    float2 tc0 : TEXCOORD0;
+    float4 HPos : POSITION;
+};
+
+uniform sampler2D s_image : register(s0);        // исходный экранный рендер-таргет
+uniform float4 screen_res;                       // (width, height, 1/width, 1/height)
+uniform float4 inv_shift : register(c1);         // 1 / 2^(8 - color_depth)
+uniform float4 inv_max : register(c2);           // 1 / 2^color_depth
+uniform float4 resolution_scale : register(c3);  // множитель разрешения (>0)
+uniform float4 dithering : register(c4);         // 1.0 – включить дизеринг, 0.0 – выключить
+
+// ---
+// Доступные консольные команды для контроля
+// rs_retromode_resolution_scale - Принимает значение от 1 до 8
+// rs_retromode_dithering - Принимает 0 или 1
+// rs_retromode_color_depth -- Принимание от 1 до 8
+// Информация про color_depth и его команду rs_retromode_color_depth которая используется для расчёта inv_shift и inv_max
+// Уменьшить глубину цвета до X бит на цвет. PS1 поддерживала множество режимов, в том числе 24 - битный(8 бит на цвет) и 15 - битный(5 бит на цвет); 
+// Последний(5 бит на цвет) использовался в большинстве 3D - игр и являлся режимом по умолчанию.
+
+static const float dither_pattern[16] = {
+    -4.0, 0.0, -3.0, 1.0,
+    2.0, -2.0, 3.0, -1.0,
+    -3.0, 1.0, -4.0, 0.0,
+    3.0, -1.0, 2.0, -2.0
+};
+
+float4 main(v2p I) : COLOR {
+    // Координаты текущего пикселя в экранном пространстве
+    float2 pixel = I.tc0 * screen_res.xy;                     // 2 mul
+
+    // Индекс блока низкого разрешения (округляем вниз)
+    float2 block = floor(pixel / resolution_scale.x);         // 2 div + 2 floor
+
+    // Координаты для выборки из исходной текстуры (центр пикселя блока)
+    float2 uv2 = (block * resolution_scale.x + 0.5) * screen_res.zw; // 2 mul + 2 add + 2 mul
+
+    // Цвет из экрана
+    float3 color = tex2D(s_image, uv2).rgb;
+
+    // Перевод в 8-битный диапазон [0,255] с округлением
+    float3 c = floor(color * 255.0 + 0.5);                     // 3 mul + 3 add + 3 floor
+
+    // Дизеринг (без ветвлений)
+    int x = (int)block.x % 4;                                  // 1 остаток
+    int y = (int)block.y % 4;                                  // 1 остаток
+    int idx = y * 4 + x;                                        // 1 mul + 1 add
+    float d = dither_pattern[idx] * dithering.x;                // 1 mul (чтение константы не считается)
+    c += d;                                                      // 3 add
+
+    // Квантование и нормализация
+    c = floor(c * inv_shift.x) * inv_max.x;                    // 3 mul + 3 floor + 3 mul
+
+    return float4(c, 1.0);
+}

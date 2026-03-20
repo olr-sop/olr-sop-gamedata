@@ -177,13 +177,6 @@ function use(obj)
 		end
 	end
 
-	if section == "sigaret" then
-		db.actor.psy_health = db.actor.psy_health + 0.1
-		db.actor.alcohol = db.actor.alcohol + 0.01
-		db.actor.power = 0.05
-		--log1("eat sigaret")
-	end
-
 	if section == "crow_food" then
 		--log1("eat crow_food")
 		db.actor.radiation = 0.02315
@@ -259,6 +252,23 @@ function use(obj)
 	end
 end
 
+-- TODO: разбить хрень выше на свои мелкие функции(подобно on_use_sigaret), если есть копипаст,
+-- то использовать у предметов одну и ту же функцию, но проверять по секции для
+-- отличающегося функционала
+function on_use_sigaret(itm, eater) -- eater всегда актор(entity alive), у других сущностей эта функция не вызывается
+	db.actor.psy_health = db.actor.psy_health + 0.1
+	db.actor.alcohol = db.actor.alcohol + 0.01
+	db.actor.power = 0.05
+	local head_pos = eater:bone_position("bip01_head")
+	local smoke_particle = particles_object("weapons\\generic_sigarets")
+	-- надо получить направление куда смотрит актор, а то дым за актором спавнит
+
+	--smoke_particle:set_direction
+	--smoke_particle:set_orientation
+	smoke_particle:play_at_pos(vector():set(head_pos.x, head_pos.y, head_pos.z))
+	-- можно повесить на таймеры, чтобы дым отыгрывался после звука(сейчас одновременно), также вызывать постпроцесс
+	return true
+end
 
 function eat_radiation_tmr_timer()
 	db.actor:disable_info_portion("actor_healing_antirad")

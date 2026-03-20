@@ -1986,7 +1986,9 @@ function pick_item_box(npc, obj)
 			local ObjForNpc = sim:create(obj:section_name(), npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id)
 			if ObjForNpc then
 				local ToDel = sim:object(obj.id)
-				sim:release(ToDel)
+				if ToDel then
+					sim:release(ToDel)
+				end
 			end
 		end
 	end
@@ -2066,7 +2068,10 @@ function pick_item_old(npc, obj)
 					end
 				end
 			end
-			alife():release(alife():object(obj.id), true)
+			local sobj = alife():object(obj.id)
+			if sobj then
+				alife():release(sobj, true)
+			end
 		end
 	end
 	return new

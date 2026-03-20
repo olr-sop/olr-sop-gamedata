@@ -554,7 +554,7 @@ function clear_deadinoffline_wars()
 end
 
 function clear_dead_monsters()
-	local cnt = 0
+	--local cnt = 0
 	local sim = alife()
 	for id = 1, 65534 do
 		local kill = sim:object(id)
@@ -562,9 +562,11 @@ function clear_dead_monsters()
 			if IsMonster(kill) and not kill:alive() and not olr_protected.is_no_offline_alife_obj(kill:name()) then
 				if not xvars.dead_in_offline[kill:name()] == true then
 					if kill.level_name ~= level.name() then
-						cnt = cnt + 1
+						--cnt = cnt + 1
 						--log1("dell - "..kill:name().."   "..kill.level_name.."   ")
-						alife():release(kill, true)
+						if kill then
+							alife():release(kill, true)
+						end
 					end
 				end
 			end
@@ -625,7 +627,9 @@ function del_rnd_anoms()
 					cnta = cnta + 1
 					xvars.rnd_anoms_count = xvars.rnd_anoms_count - 1
 					--log1("удаляем аномалию "..sobj:name().."	"..cnta.."	"..sobj.level_name.." ")
-					alife():release(sobj, true)
+					if sobj then
+						alife():release(sobj, true)
+					end
 				end
 			end
 		end
@@ -891,7 +895,9 @@ function del_vidrosovie_arts()
 			if sect == "af_mercury_ball" or sect == "af_junk_bolt" or sect == "af_magnet" or sect == "af_junk_debris" then
 				local bol_var = math.random(1, 35)
 				if bol_var == 1 then
-					sim:release(obj)
+					if obj then
+						sim:release(obj)
+					end
 					count = count + 1
 				end
 			end

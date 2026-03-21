@@ -14,20 +14,9 @@ local anim_time = 10000
 -- ENABLE SCHEME
 ----------------------------------------------------------------------------------------------------------------------
 function enable_scheme(npc, ini, scheme, section)
-	--log1(npc:name())
 	xr_logic.pstor_store(npc,"active_npc_section_trade",db.storage[npc:id()].active_section)
-	reset_npc_logic(npc)
 	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 	st.enabled = true
-end
-function reset_npc_logic(obj)
-	if obj then
-		local npc_id = obj:id()
-		db.storage[npc_id].overrides = nil
-		xr_logic.reset_generic_schemes_on_scheme_switch(obj, "nil", "nil")
-		db.storage[npc_id].active_section = nil
-		db.storage[npc_id].active_scheme = nil
-	end
 end
 
 ----------------------------------------------------------------------------------------------------------------------

@@ -247,6 +247,15 @@ function UI_SpawnDlg:Update()
 	end
 end
 
+-- Icons data
+function GetIconRect(section)
+	local x = ini_sys:r_s32(section, "inv_grid_x")*50
+	local y = ini_sys:r_s32(section, "inv_grid_y")*50
+	local width = ini_sys:r_s32(section, "inv_grid_width")
+	local height = ini_sys:r_s32(section, "inv_grid_height")
+	return x, y, width, height
+end
+
 function UI_SpawnDlg:__finalize() end
 
 function UI_SpawnDlg:InitControls()
@@ -265,6 +274,18 @@ function UI_SpawnDlg:InitControls()
 		x = tP.x + 120*math.floor((i-1)/iMaxRows)
 		y = tP.y + 35*math.fmod((i-1), iMaxRows) -- здесь отступы между €чейками
 		btn = this.Get_Button(x,y,tP.w,tP.h)
+		--if ini_sys:line_exist(tD[i].sect, "inv_grid_x") then
+		--	local itm_icon = CUIStatic()
+		--	itm_icon:Init("ui\\icons\\icons_equipment", btn:GetWidth() / 2, btn:GetHeight() / 2 - 2, 25, 25)
+		--	btn:AttachChild(itm_icon)
+		--	--local icon_x = ini_sys:r_s32(tD[i].sect, "inv_grid_x")*50
+		--	--local icon_y = ini_sys:r_s32(tD[i].sect, "inv_grid_y")*50
+		--	local icon_x, icon_y, icon_width, icon_height = this.GetIconRect(tD[i].sect)
+		--	itm_icon:SetWidth(25 * icon_width)
+		--	itm_icon:SetHeight(25 * icon_height)
+		--	itm_icon:SetOriginalRect(icon_x, icon_y, icon_width * 50, icon_height * 50)
+		--	itm_icon:SetStretchTexture(true)
+		--end
 		if not (tD[i].text and tD[i].text ~= "") then
 			tD[i].text = this.Get_Name(tD[i].sect)
 		end

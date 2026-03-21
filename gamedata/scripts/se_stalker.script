@@ -164,6 +164,16 @@ function se_stalker:on_register()
 	--	self:brain():update()
 	--end
 
+	local pk = get_netpk(self,1)
+  	if pk:isOk() then
+    		local data = pk:get()
+    		if #data.dynamic_in_restrictions > 0 then
+			--log1("clear restrictor SE "..self:name().." ")
+      			data.dynamic_in_restrictions = {}
+      			pk:set(data)
+    		end
+	end
+
 	-- Нарисовать мапспот с собой
 	if ENABLE_SPOTS_STALKERS and self:alive() then
 		local community, rank = sim_statistic.getNpcType(self)

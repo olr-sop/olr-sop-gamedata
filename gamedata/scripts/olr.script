@@ -211,7 +211,7 @@ function zombie_fake_death()
 
 	for i = 1, 65534 do -- пока что придётся обходить все объекты
 		local zombie = alife():object(i) -- и получать его вот так
-		if zombie and (zombie:clsid() == clsid.zombie or zombie:clsid() == clsid.zombie_s) and (not exclude_sections[zombie:section_name()]) and zombie:alive() and zombie.alive then -- проверяем что зомбу
+		if zombie and (zombie:clsid() == clsid.zombie or zombie:clsid() == clsid.zombie_s) and not exclude_sections[zombie:section_name()] and zombie:alive() and zombie.alive then -- проверяем что зомбу
 			local pk = get_netpk(zombie, 1) -- получаем нет-пакет
 			if pk:isOk() then
 				local data = pk:get()
@@ -221,10 +221,13 @@ function zombie_fake_death()
 				--log1("### [INFO] zombie_fake_death данные из кастом даты:")
 				--log1(table_to_string(cd))
 				
-				-- тут обязательна проверка на налчие cfg в логике что бы не записывать туда active при наличии логики из конфигов
+				-- проверка на logic и cfg внутри
 				local has_cfg = cd.logic and cd.logic.cfg ~= nil
-
-				if not has_cfg and math.random() > 0.5 then -- Тут будет как и у декса с шансом 0.5
+				-- проверка на spawner и cond внутри
+				local has_spawner = cd.spawner and cd.spawner.cond ~= nil
+				
+				-- условие выполнится только при условии что у нас нет ни logic ни spawner в кастом дате
+				if not (has_cfg or has_spawner) and math.random() > 0.5 then -- Тут будет как и у декса с шансом 0.5
 					if not cd.logic then cd.logic = {} end
 					cd.logic.active = "mob_fake_death"
 

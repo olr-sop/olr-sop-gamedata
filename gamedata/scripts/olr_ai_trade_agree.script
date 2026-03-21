@@ -24,8 +24,8 @@ function xrs_load_scheme()
 end
 
 function enable_scheme(npc, ini, scheme, section)
-    local st = xr_logic.assign_storage_and_bind(npc, ini, "trade_agree", "trade_agree")
-    st.enabled = true
+	local st = xr_logic.assign_storage_and_bind(npc, ini, "trade_agree", "trade_agree")
+	st.enabled = true
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -33,10 +33,10 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 
 function disable_scheme(npc, scheme)
-    local st = db.storage[npc:id()]["trade_agree"]
-    if st then
-        st.enabled = false
-    end
+	local st = db.storage[npc:id()]["trade_agree"]
+	if st then
+		st.enabled = false
+	end
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -112,6 +112,10 @@ function shake_hand:execute()
 
 	if npc:position():distance_to(db.actor:position()) < 6 then
 		level.map_remove_object_spot(npc:id(), "alife_combat_fight")
+		if self.storage and self.storage.timer_name then
+			olr_timers.del_timer(self.storage.timer_name)
+			self.storage.timer_name = nil
+		end
 	end
 
 	if self.timer and self.timer <= cur_time then

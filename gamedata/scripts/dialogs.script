@@ -5,8 +5,10 @@ function allow_break_dialog(first_speaker, second_speaker, id)
 	return true
 end
 
-function precond_pda_trade()
-	if olr_timers.has_timer("remove_timer_spot_wanan_trade") then
+function precond_pda_trade(first_speaker, second_speaker)
+	local npc = who_is_npc(first_speaker, second_speaker)
+	local timer_name = "trade_agree_remove_spot_" .. tostring(npc:id())
+	if olr_timers.has_timer(timer_name) then
 		return false
 	else
 		return true

@@ -24,22 +24,6 @@ if not xvars.real_timers_done then xvars.real_timers_done = 0 end
 -- ѕеременные дл€ работы с игровым временем
 local time_factor = ini_sys:r_float("alife", "time_factor")
 
--- »нициализаци€ базового игрового времени
-function init_game_time_base()
-	db.game_start_time = game.CTime()
-	db.game_start_time:set(2012, 05, 19, 5, 50, 0, 0) -- int year, int month, int day, int hour, int minutes, int seconds, int ms
-end
-
--- ѕолучение текущего игрового времени в секундах
-local function get_game_seconds()
-	return game.get_game_time():diffSec(db.game_start_time)
-end
-
--- ѕолучение текущего игрового времени в миллисекундах
-local function get_game_time_ms()
-	return get_game_seconds() * 1000
-end
-
 -- ¬спомогательные переменные дл€ обновлени€
 local tUpd = 0
 local tUpdTime = 1000 -- проверка каждую реальную секунду
@@ -65,7 +49,7 @@ function st_timer_game(name, delay, action)
 	end
 	
 	-- ѕолучаем текущее игровое врем€ в миллисекундах
-	local current_game_time = get_game_time_ms()
+	local current_game_time = get_game_mseconds()
 	
 	-- –ассчитываем врем€ срабатывани€ (delay в секундах игрового времени)
 	local trigger_time = current_game_time + delay * 1000
@@ -134,7 +118,7 @@ end
 function check_game_timers()
 	if xvars.game_timers_count <= 0 then return end
 	
-	local current_game_time = get_game_time_ms()
+	local current_game_time = get_game_mseconds()
 	
 	for i = 1, xvars.game_timers_count do
 		local timer_name = load_xvars("gt_name_"..i, nil)
@@ -339,7 +323,7 @@ function get_game_timer_remaining(name)
 		local timer_name = load_xvars("gt_name_"..i, nil)
 		if timer_name and timer_name == name then
 			local trigger_time = load_xvars("gt_time_"..i, 0)
-			local current_game_time = get_game_time_ms()
+			local current_game_time = get_game_mseconds()
 			
 			if trigger_time > current_game_time then
 				return (trigger_time - current_game_time) / 1000
@@ -410,7 +394,7 @@ function dump_active_timers()
 		local timer_name = load_xvars("gt_name_"..i, nil)
 		if timer_name then
 			local trigger_time = load_xvars("gt_time_"..i, 0)
-			local current_game_time = get_game_time_ms()
+			local current_game_time = get_game_mseconds()
 			local remaining = 0
 			
 			if trigger_time > current_game_time then

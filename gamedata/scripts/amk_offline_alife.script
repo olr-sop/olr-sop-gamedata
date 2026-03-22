@@ -89,7 +89,7 @@ local smart_filters = {
 
 local rel_enemy, rel_friend
 local look_radius_arts = 40
-local look_radius_anom = 15 --радиус "обзора" аномалий
+local look_radius_anom = 30 --радиус "обзора" аномалий
 local look_radius = 50 --радиус "обзора"
 local search_intensivity = 100 --интенсивность поиска (количество отрабатываемых неписей)
 local max_rounds = 10 -- продолжительность боев
@@ -113,7 +113,7 @@ local look_radius_document = 50
 function init()
 	if (initialized == false) then
 		this.build_tables()
-		iTime = (game_minutes() - iFreq) + 3
+		iTime = (get_game_minutes() - iFreq) + 3
 		initialized = true
 	--log1("Updating offline-ALife initialized")
 	end
@@ -126,7 +126,7 @@ function update()
 	--end
 
 	if (bFlag == false and iTime ~= -1) then
-		if (game_minutes() - iTime > iFreq) then
+		if (get_game_minutes() - iTime > iFreq) then
 			bFlag = true
 			off_npcs = {}
 			items = {}
@@ -138,7 +138,7 @@ function update()
 		if (iCounter >= 65535) then
 			--log1("Updating offline-ALife finished")
 			bFlag = false
-			iTime = game_minutes()
+			iTime = get_game_minutes()
 			iCounter = 1
 		else
 			--log1("Updating offline-ALife add_fresh_meat "..iCounter.." ")
@@ -398,7 +398,7 @@ function update_npc_tables()
 		end
 	end
 	bFlag = false
-	iTime = game_minutes()
+	iTime = get_game_minutes()
 	iCounter = 1
 end
 
@@ -544,13 +544,6 @@ function offline_alife(lvl)
 						this.on_inv_boxes_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть контейнеры. Надо обыскать.!!!!! "..victim:name().."  сейчас.", nil, "default", 9000)
 						break --прерываем цикл - событие отработано
-					elseif table.getn(vdata.anoms) > 0 then
-						--log1(" CRASH fr offline_alife 7")
-						--log1("есть аномалии!")
-						amk.oau_reason = "cn offline_alife chp11 " .. tostr(victim and victim:name())
-						this.on_anoms_found(victim, vdata)
-						--news_manager.send_tip(db.actor, "!!!!!!сть аномалии!!!!! "..victim:name().."	сейчас.", nil, "default", 9000)
-						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.monsters) > 0 then
 						--log1(" CRASH fr offline_alife 8")
 						--log1("есть монстрятина - видели, слышали, убили, сдохли...")
@@ -565,6 +558,13 @@ function offline_alife(lvl)
 						--news_manager.send_tip(db.actor, "!!!!!!есть арты!!!!! "..victim:name().."	  сейчас.", nil, "default", 9000)
 						--log1(" CRASH fr offline_alife 9")
 						break --прерываем цикл - событие отработано
+					elseif table.getn(vdata.anoms) > 0 then
+						--log1(" CRASH fr offline_alife 7")
+						--log1("есть аномалии!")
+						amk.oau_reason = "cn offline_alife chp11 " .. tostr(victim and victim:name())
+						this.on_anoms_found(victim, vdata)
+						--news_manager.send_tip(db.actor, "!!!!!!сть аномалии!!!!! "..victim:name().."	сейчас.", nil, "default", 9000)
+						break --прерываем цикл - событие отработано						
 					elseif table.getn(vdata.enemies) > 0 then
 						--log1("есть вражина воюем нах!")
 						amk.oau_reason = "cn offline_alife chp9 " .. tostr(victim and victim:name())
@@ -711,7 +711,7 @@ function collect_info(victim, map)
 			for a = 1, table.getn(off_npcs[map].anoms) do
 				if off_npcs[map].anoms[a] then
 					local anom = sim:object(off_npcs[map].anoms[a].id)
-					if (anom and anom.can_switch_online and anom:can_switch_online() and anom:name() == off_npcs[map].anoms[a].name and victim.position:distance_to(anom.position) < look_radius_anom and sobj_is_far(anom, to_actor)) then
+					if (anom and anom.can_switch_online and anom:can_switch_online() and anom:name() == off_npcs[map].anoms[a].name and victim.position:distance_to_sqr(anom.position) < look_radius_anom and sobj_is_far(anom, to_actor)) then
 						table.insert(vdata.anoms, {id = anom.id, name = anom:name()})
 						--log1("составляем список anom в зоне  видимости "..anom:name().." ")
 						--news_manager.send_tip(db.actor, "составляем список артов в зоне  видимости "..artefact:name().."", nil, "default", 9000)
@@ -1720,7 +1720,7 @@ function on_anoms_found(victim, vdata)
 		if (v_obj) then
 			object = alife():object(v_obj.id)
 			if (object and object:name() == v_obj.name) then
-				if IsStalker(victim) and victim:alive() then
+				if IsStalker(victim) and victim:alive() and math.random() > 0.25 then -- теперь только с 25% шансом убиваемся в аномалии, а то как маленькие, возможно можно сделать по ранговости еще 
 					--log1("cталкер "..victim:name().." умер в аномалии "..object:name().." на уровне "..object.level_name.."")
 					--olr.add_spot_on_map( victim.id,"esc_stalker_fox_location",victim:name() )
 					--this.on_death(victim.id) -- зачем еще раз если мы и так в olr.kill_offline_stalker это делаем
@@ -2773,11 +2773,6 @@ function sobj_is_far(obj, distance)
 		end
 	end
 	return result
-end
-
-function game_minutes()
-	local gtime = level.get_time_days() * 60 * 24 + level.get_time_hours() * 60 + level.get_time_minutes() --time in game minutes
-	return gtime
 end
 
 function have_ammo(npc, weapon)

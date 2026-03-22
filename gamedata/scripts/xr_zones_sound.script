@@ -112,15 +112,15 @@ function zone_sound:__init( zone, binder, ini )
 
 --	printf( table.concat( self.sound_names, "  " ) )
 	self.delay   = r_num( ini, sect, "delay", 0 )
-	self.idle    = r_num( ini, sect, "idle",  0 ) * 1000 -- секунды->мс
+	self.idle    = r_num( ini, sect, "idle",  0 ) -- секунды
 	self.rnd     = r_num( ini, sect, "rnd", 100 )
 
 	self.idle_end = 0
 end
 
 function zone_sound:on_enter( obj )
-	if self.idle_end < game.time() then
-		self.idle_end = game.time() + self.idle
+	if self.idle_end < get_game_seconds() then
+		self.idle_end = get_game_seconds() + self.idle
 
 		if get_clsid( obj ) == clsid.actor and math.random( 100 ) <= self.rnd then
 			pos = obj:position()

@@ -35,12 +35,16 @@ function drop_item(obj)
 	if obj:section() == "af_magnet_drop_q1" then
 		for i = 1, 65534 do
 			local anom = level.object_by_id(i)
-			if anom ~= nil and anom:is_anomaly() and anom:clsid() == clsid.zone_mincer_s and anom:position():distance_to_sqr(db.actor:position()) < 10 then
-				level.add_pp_effector("blink.ppe", 20131, false)
-				olr.del(obj)
-				alife():create("af_magnet_drop_q2", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-				--alife():create("af_magnet_drop_q2", anom:position(), anom:level_vertex_id(), anom:game_vertex_id())
-				break
+			if anom ~= nil then
+				local anom_sect = anom:section()
+				local has_htype_str = ini_sys:line_exist(anom_sect, "hit_type") and anom_sect ~= "zone_rusty_hair"
+				if anom:is_anomaly() and has_htype_str and ini_sys:r_string(anom_sect, "hit_type") == "shock" and anom:position():distance_to_sqr(db.actor:position()) < 10 then
+					level.add_pp_effector("blink.ppe", 20131, false)
+					olr.del(obj)
+					alife():create("af_magnet_drop_q2", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+					--alife():create("af_magnet_drop_q2", anom:position(), anom:level_vertex_id(), anom:game_vertex_id())
+					break
+				end
 			elseif i == 65534 then
 				return
 			end

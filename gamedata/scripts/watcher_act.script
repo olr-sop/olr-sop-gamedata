@@ -275,6 +275,13 @@ function bad_danger(npc)
 end
 
 function ev_see_stuff:evaluate()
+
+    local mgr = self.object:motivation_action_manager()
+    local anom_eval = mgr:evaluator(1099)
+    if anom_eval and anom_eval:evaluate() then
+        return false
+    end
+	
 	if self.object:best_enemy() then
 		return false
 	end
@@ -768,88 +775,78 @@ function act_reach_item:execute()
 end
 
 function add_to_binder(object, char_ini, scheme, section, st)
-	local npc = object
-	st.disabled_objects = {}
-	local manager = object:motivation_action_manager()
+    local npc = object
+    st.disabled_objects = {}
+    local manager = object:motivation_action_manager()
 
-	local zombi = npc:character_community() == "zombied" or npc:character_community() == "trader" or
-		npc:character_community() == "neutral" or
-		npc:name() == "mil_stalker0012" or
-		npc:name() == "yantar_ecolog_general" or -- сумашедший на милитари и Сахаров
-		npc:name() == "lvl16_generators_staler_undead_olr" -- ген. напарник
+    local zombi = npc:character_community() == "zombied" or npc:character_community() == "trader" or
+                  npc:character_community() == "neutral" or
+                  npc:name() == "mil_stalker0012" or
+                  npc:name() == "yantar_ecolog_general" or
+                  npc:name() == "lvl16_generators_staler_undead_olr"
 
-	local prop_idlecombat = xr_evaluators_id.state_mgr + 3
-	local prop_contact = xr_evaluators_id.stohe_meet_base + 1
-	-- Evaluators
-	if npc:story_id() ~= 4294967296 or zombi then
-		manager:add_evaluator(evid_see_stuff, property_evaluator_const(false))
-		manager:add_evaluator(evid_see_body, property_evaluator_const(false))
-		manager:add_evaluator(evid_near_stuff, property_evaluator_const(false))
-		manager:add_evaluator(evid_position_corrected, property_evaluator_const(false))
-	else
-		--	  action:add_precondition(world_property(evid_near_stuff,false))
-		--	  action = manager:action(xr_actions_id.stohe_kamp_base + 1)
-		--	  action:add_precondition(world_property(evid_see_stuff,false))
-		--	  action = manager:action(xr_actions_id.stohe_kamp_base + 3)
-		--	  action:add_precondition(world_property(evid_see_stuff,false))
-		--	  action = manager:action(xr_actions_id.stohe_meet_base+1)
-		--	  action:add_precondition(world_property(evid_see_stuff,false))
-		manager:add_evaluator(evid_see_stuff, ev_see_stuff(st, "ev_see_stuff"))
-		manager:add_evaluator(evid_see_body, ev_see_body(st))
-		manager:add_evaluator(evid_position_corrected, ev_position_corrected(st))
-		manager:add_evaluator(evid_near_stuff, ev_near_stuff(st, "ev_near_stuff"))
-		-- Actions
-		local action = act_grab_item("act_grab_item", st)
-		action:add_precondition(world_property(stalker_ids.property_alive, true))
-		action:add_precondition(world_property(stalker_ids.property_enemy, false))
-		--		action:add_precondition(world_property(stalker_ids.property_danger,false))
-		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
-		--	  action:add_precondition(world_property(blowout_scheme.evid_anomaly,false))
-		--	  action:add_precondition(world_property(blowout_scheme.evid_blowout,false))
-		action:add_precondition(world_property(evid_see_stuff, true))
-		action:add_precondition(world_property(evid_near_stuff, true))
-		action:add_precondition(world_property(evid_see_body, false))
-		action:add_precondition(world_property(prop_idlecombat, true)) -- отключим стэйт менеджер
-		action:add_effect(world_property(evid_near_stuff, false))
-		action:add_effect(world_property(evid_see_stuff, false))
-		action:add_effect(world_property(evid_see_body, true)) -- для переключения на обыск трупа
-		manager:add_action(actid_grab_item, action)
+    local prop_idlecombat = xr_evaluators_id.state_mgr + 3
+    local prop_contact = xr_evaluators_id.stohe_meet_base + 1
 
-		action = act_grab_body(st)
-		action:add_precondition(world_property(stalker_ids.property_alive, true))
-		action:add_precondition(world_property(stalker_ids.property_enemy, false))
-		--		action:add_precondition(world_property(stalker_ids.property_danger,false))
-		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
-		--	  action:add_precondition(world_property(blowout_scheme.evid_anomaly,false))
-		--	  action:add_precondition(world_property(blowout_scheme.evid_blowout,false))
-		action:add_precondition(world_property(evid_see_stuff, true))
-		action:add_precondition(world_property(evid_see_body, true))
-		action:add_precondition(world_property(evid_near_stuff, true))
-		--	  action:add_precondition(world_property(evid_position_corrected,true))
-		action:add_effect(world_property(evid_near_stuff, false))
-		action:add_effect(world_property(evid_see_stuff, false))
-		action:add_effect(world_property(evid_see_body, false)) -- переключаемся на подъём вещички
-		manager:add_action(actid_grab_body, action)
+    if npc:story_id() ~= 4294967296 or zombi then
+        manager:add_evaluator(evid_see_stuff, property_evaluator_const(false))
+        manager:add_evaluator(evid_see_body, property_evaluator_const(false))
+        manager:add_evaluator(evid_near_stuff, property_evaluator_const(false))
+        manager:add_evaluator(evid_position_corrected, property_evaluator_const(false))
+    else
+        manager:add_evaluator(evid_see_stuff, ev_see_stuff(st, "ev_see_stuff"))
+        manager:add_evaluator(evid_see_body, ev_see_body(st))
+        manager:add_evaluator(evid_position_corrected, ev_position_corrected(st))
+        manager:add_evaluator(evid_near_stuff, ev_near_stuff(st, "ev_near_stuff"))
 
-		action = act_reach_item("act_reach_item", st)
-		action:add_precondition(world_property(stalker_ids.property_alive, true))
-		action:add_precondition(world_property(stalker_ids.property_enemy, false))
-		action:add_precondition(world_property(prop_contact, false))
-		--		action:add_precondition(world_property(stalker_ids.property_danger,false))
-		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
-		--	  action:add_precondition(world_property(blowout_scheme.evid_anomaly,false))
-		--	  action:add_precondition(world_property(blowout_scheme.evid_blowout,false))
-		action:add_precondition(world_property(evid_see_stuff, true))
-		action:add_precondition(world_property(evid_near_stuff, false))
-		action:add_precondition(world_property(prop_idlecombat, true))
-		action:add_effect(world_property(evid_near_stuff, true))
-		manager:add_action(actid_reach_item, action)
+        -- Действие поднять предмет
+        local action = act_grab_item("act_grab_item", st)
+        action:add_precondition(world_property(stalker_ids.property_alive, true))
+        action:add_precondition(world_property(stalker_ids.property_enemy, false))
+        action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+        action:add_precondition(world_property(evid_see_stuff, true))
+        action:add_precondition(world_property(evid_near_stuff, true))
+        action:add_precondition(world_property(evid_see_body, false))
+        action:add_precondition(world_property(prop_idlecombat, true))
+        action:add_precondition(world_property(1099, false)) -- <-- Добавлено
+        action:add_effect(world_property(evid_near_stuff, false))
+        action:add_effect(world_property(evid_see_stuff, false))
+        action:add_effect(world_property(evid_see_body, true))
+        manager:add_action(actid_grab_item, action)
 
-		action = manager:action(xr_actions_id.alife)
-		action:add_precondition(world_property(evid_see_stuff, false))
-		action = manager:action(stalker_ids.action_danger_planner)
-		action:add_precondition(world_property(evid_see_stuff, false))
-	end
+        -- Действие обыскать труп
+        action = act_grab_body(st)
+        action:add_precondition(world_property(stalker_ids.property_alive, true))
+        action:add_precondition(world_property(stalker_ids.property_enemy, false))
+        action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+        action:add_precondition(world_property(evid_see_stuff, true))
+        action:add_precondition(world_property(evid_see_body, true))
+        action:add_precondition(world_property(evid_near_stuff, true))
+        action:add_precondition(world_property(1099, false)) -- <-- Добавлено
+        action:add_effect(world_property(evid_near_stuff, false))
+        action:add_effect(world_property(evid_see_stuff, false))
+        action:add_effect(world_property(evid_see_body, false))
+        manager:add_action(actid_grab_body, action)
+
+        -- Действие дойти до предмета
+        action = act_reach_item("act_reach_item", st)
+        action:add_precondition(world_property(stalker_ids.property_alive, true))
+        action:add_precondition(world_property(stalker_ids.property_enemy, false))
+        action:add_precondition(world_property(prop_contact, false))
+        action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+        action:add_precondition(world_property(evid_see_stuff, true))
+        action:add_precondition(world_property(evid_near_stuff, false))
+        action:add_precondition(world_property(prop_idlecombat, true))
+        action:add_precondition(world_property(1099, false)) -- <-- Добавлено
+        action:add_effect(world_property(evid_near_stuff, true))
+        manager:add_action(actid_reach_item, action)
+
+        -- Корректируем стандартные действия
+        action = manager:action(xr_actions_id.alife)
+        action:add_precondition(world_property(evid_see_stuff, false))
+        action = manager:action(stalker_ids.action_danger_planner)
+        action:add_precondition(world_property(evid_see_stuff, false))
+    end
 end
 
 function set_scheme(npc, ini, scheme, section)

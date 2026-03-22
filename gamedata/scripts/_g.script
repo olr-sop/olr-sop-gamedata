@@ -1719,6 +1719,30 @@ function get_texture_info(id_name, id_default)
 	return task_info:get_file_name(), r
 end
 
+-- Инициализация базового игрового времени
+function init_game_time_base()
+	local t = amk.str_explode(":", system_ini():r_string("alife", "start_time"), true)
+	local d = amk.str_explode(".", system_ini():r_string("alife", "start_date"), true)
+	db.game_start_time = game.CTime()
+	--/ формат установки времени = (Y,M,D, h,m,s,ms)
+	db.game_start_time:set(tonumber(d[3]),tonumber(d[2]),tonumber(d[1]), tonumber(t[3]),tonumber(t[2]),tonumber(t[1]),0)	
+end
+
+-- Получение текущего игрового времени в минутах
+function get_game_minutes()
+	return math.floor(game.get_game_time():diffSec(db.game_start_time) / 60) -- Артос округлял, тоже буду
+end
+
+-- Получение текущего игрового времени в секундах
+function get_game_seconds()
+	return game.get_game_time():diffSec(db.game_start_time)
+end
+
+-- Получение текущего игрового времени в миллисекундах
+function get_game_mseconds()
+	return game.get_game_time():diffSec(db.game_start_time) * 1000
+end
+
 function start_game_callback()
 	log1("### [INFO] start_game_callback called")
 	
@@ -1729,7 +1753,7 @@ function start_game_callback()
 	core.core_init()
 	m_netpk.attach()
 	
-	olr_timers.init_game_time_base() -- инит для таймера, пишет в db.чётототам время начала игры
+	init_game_time_base() -- инит для таймера, пишет в db.чётототам время начала игры
 end
 
 -- Ебанутые таблицы с секциями итемов, оружия, мутантов, жрачки и т.д

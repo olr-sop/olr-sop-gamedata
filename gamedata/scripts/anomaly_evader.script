@@ -4,10 +4,10 @@
 class "evaluator_anomaly" (property_evaluator)
 
 function evaluator_anomaly:__init(storage, npc, name) 
-    super(nil, name)
-    self.st = storage
-    self.npc = npc
-    self.called = false
+	super(nil, name)
+	self.st = storage
+	self.npc = npc
+	self.called = false
 end
 
 -- Хранилище временных данных для каждого NPC
@@ -15,190 +15,206 @@ local holdtime = {}
 local stucktime = {}
 local laststate = {}
 local rdelta = {}
+local next_check_time = {}	 -- время следующей проверки
 
 function vec2str(v)
-    if v.x and v.y and v.z then
-        return v.x .. ";" .. v.y .. ";" .. v.z
-    else
-        return "not a vector"
-    end
+	if v.x and v.y and v.z then
+		return v.x .. ";" .. v.y .. ";" .. v.z
+	else
+		return "not a vector"
+	end
 end
 
 -- Спокойное состояние: вероятности ошибки (для разных типов аномалий)
 local error_prob = {
-    novice = {
-        [clsid.zone_bfuzz_s] = 5,
-        [clsid.zone_galant_s] = 5,
-        [clsid.zone_mbald_s] = 1,
-        [clsid.zone_mincer_s] = 5
-    },
-    experienced = {
-        [clsid.zone_bfuzz_s] = 2,
-        [clsid.zone_galant_s] = 2,
-        [clsid.zone_mbald_s] = 1,
-        [clsid.zone_mincer_s] = 2
-    },
-    veteran = {
-        [clsid.zone_bfuzz_s] = 1,
-        [clsid.zone_galant_s] = 1,
-        [clsid.zone_mbald_s] = 1,
-        [clsid.zone_mincer_s] = 1
-    },
-    master = {
-        [clsid.zone_bfuzz_s] = 0,
-        [clsid.zone_galant_s] = 0,
-        [clsid.zone_mbald_s] = 0,
-        [clsid.zone_mincer_s] = 0
-    }
+	novice = {
+		[clsid.zone_bfuzz_s] = 5,
+		[clsid.zone_galant_s] = 5,
+		[clsid.zone_mbald_s] = 1,
+		[clsid.zone_mincer_s] = 5
+	},
+	experienced = {
+		[clsid.zone_bfuzz_s] = 2,
+		[clsid.zone_galant_s] = 2,
+		[clsid.zone_mbald_s] = 1,
+		[clsid.zone_mincer_s] = 2
+	},
+	veteran = {
+		[clsid.zone_bfuzz_s] = 1,
+		[clsid.zone_galant_s] = 1,
+		[clsid.zone_mbald_s] = 1,
+		[clsid.zone_mincer_s] = 1
+	},
+	master = {
+		[clsid.zone_bfuzz_s] = 0,
+		[clsid.zone_galant_s] = 0,
+		[clsid.zone_mbald_s] = 0,
+		[clsid.zone_mincer_s] = 0
+	}
 }
 
 -- Бой: вероятности ошибки выше
 local error_prob_fight = {
-    novice = {
-        [clsid.zone_bfuzz_s] = 20,
-        [clsid.zone_galant_s] = 20,
-        [clsid.zone_mbald_s] = 5,
-        [clsid.zone_mincer_s] = 20
-    },
-    experienced = {
-        [clsid.zone_bfuzz_s] = 8,
-        [clsid.zone_galant_s] = 8,
-        [clsid.zone_mbald_s] = 2,
-        [clsid.zone_mincer_s] = 8
-    },
-    veteran = {
-        [clsid.zone_bfuzz_s] = 4,
-        [clsid.zone_galant_s] = 4,
-        [clsid.zone_mbald_s] = 1,
-        [clsid.zone_mincer_s] = 4
-    },
-    master = {
-        [clsid.zone_bfuzz_s] = 1,
-        [clsid.zone_galant_s] = 1,
-        [clsid.zone_mbald_s] = 1,
-        [clsid.zone_mincer_s] = 1
-    }
+	novice = {
+		[clsid.zone_bfuzz_s] = 20,
+		[clsid.zone_galant_s] = 20,
+		[clsid.zone_mbald_s] = 5,
+		[clsid.zone_mincer_s] = 20
+	},
+	experienced = {
+		[clsid.zone_bfuzz_s] = 8,
+		[clsid.zone_galant_s] = 8,
+		[clsid.zone_mbald_s] = 2,
+		[clsid.zone_mincer_s] = 8
+	},
+	veteran = {
+		[clsid.zone_bfuzz_s] = 4,
+		[clsid.zone_galant_s] = 4,
+		[clsid.zone_mbald_s] = 1,
+		[clsid.zone_mincer_s] = 4
+	},
+	master = {
+		[clsid.zone_bfuzz_s] = 1,
+		[clsid.zone_galant_s] = 1,
+		[clsid.zone_mbald_s] = 1,
+		[clsid.zone_mincer_s] = 1
+	}
 }
 
 -- Радиус уклонения в зависимости от ранга (метры)
 local rank_radius = {
-    novice = 5,
-    experienced = 10,
-    veteran = 15,
-    master = 20
+	novice = 5,
+	experienced = 10,
+	veteran = 15,
+	master = 20
 }
 
+-- Настройки интервалов проверки аномалий (в миллисекундах)
+local ANOM_CHECK_INTERVAL_DANGER   = 500	-- если NPC в опасной зоне (dist < visradius)
+local ANOM_CHECK_INTERVAL_MEDIUM   = 1500	-- если NPC на среднем расстоянии (visradius <= dist < FAR_DISTANCE)
+local ANOM_CHECK_INTERVAL_FAR	   = 5000	-- если NPC далеко от аномалий (dist >= FAR_DISTANCE)
+local FAR_DISTANCE				   = 50	-- метров, после которого считается "далеко"
+
 function evaluator_anomaly:evaluate()
-    local nid = self.npc:id()
-    --log1("=== [ANOM_EVAL] STEP1: evaluator started for " .. self.npc:name() .. " (id=" .. nid .. ") ===")
+	local nid = self.npc:id()
+	--log1("=== [ANOM_EVAL] STEP1: evaluator started for " .. self.npc:name() .. " (id=" .. nid .. ") ===")
 
-    if laststate[nid] == nil then
-        laststate[nid] = false
-        --log1("[ANOM_EVAL] STEP2: init laststate[" .. nid .. "] = false")
-    end
-    if stucktime[nid] == nil then 
-        stucktime[nid] = {} 
-        --log1("[ANOM_EVAL] STEP3: init stucktime[" .. nid .. "]")
-    end
-    if rdelta[nid] == nil then
-        rdelta[nid] = {}
-        --log1("[ANOM_EVAL] STEP4: init rdelta[" .. nid .. "]")
-    end
-    if self.mgr == nil then
-        self.mgr = self.object:motivation_action_manager()
-        --log1("[ANOM_EVAL] STEP5: init motivation_action_manager")
-    end
+	if laststate[nid] == nil then
+		laststate[nid] = false
+		--log1("[ANOM_EVAL] STEP2: init laststate[" .. nid .. "] = false")
+	end
+	if stucktime[nid] == nil then 
+		stucktime[nid] = {} 
+		--log1("[ANOM_EVAL] STEP3: init stucktime[" .. nid .. "]")
+	end
+	if rdelta[nid] == nil then
+		rdelta[nid] = {}
+		--log1("[ANOM_EVAL] STEP4: init rdelta[" .. nid .. "]")
+	end
+	if self.mgr == nil then
+		self.mgr = self.object:motivation_action_manager()
+		--log1("[ANOM_EVAL] STEP5: init motivation_action_manager")
+	end
 
-    -- Защита от отсутствия evaluator'а ранения (если NPC ранен – не реагируем)
-    local wounded_eval = self.mgr:evaluator(xr_evaluators_id.sidor_wounded_base)
-    if wounded_eval and wounded_eval:evaluate() then
-        --log1("[ANOM_EVAL] STEP6: NPC is wounded, skip anomaly avoidance")
-        return false
-    end
+	local wounded_eval = self.mgr:evaluator(xr_evaluators_id.sidor_wounded_base)
+	if wounded_eval and wounded_eval:evaluate() then
+		--log1("[ANOM_EVAL] STEP6: NPC is wounded, skip anomaly avoidance")
+		return false
+	end
 
-    -- Определяем, в бою ли NPC
-    local in_combat = self.mgr:evaluator(stalker_ids.property_enemy):evaluate()
-    --log1("[ANOM_EVAL] STEP7: in_combat = " .. tostring(in_combat))
+	local in_combat = self.mgr:evaluator(stalker_ids.property_enemy):evaluate()
+	--log1("[ANOM_EVAL] STEP7: in_combat = " .. tostring(in_combat))
 
-    local error_tbl
-    if in_combat then 
-        error_tbl = error_prob_fight
-    else
-        error_tbl = error_prob
-    end
+	local error_tbl = in_combat and error_prob_fight or error_prob
+	local rank_name = ranks.get_obj_rank_name(self.npc)
+	local extra_radius = (rank_radius[rank_name] or 0)
+	if in_combat then extra_radius = extra_radius / 2 end
+	--log1(string.format("[ANOM_EVAL] STEP8: rank=%s, extra_radius=%.2f", rank_name, extra_radius))
 
-    -- Получаем ранг NPC и дополнительный радиус
-    local rank_name = ranks.get_obj_rank_name(self.npc)
-    local extra_radius = rank_radius[rank_name] or 0
-    if in_combat then
-        extra_radius = extra_radius / 2
-    end
-    --log1(string.format("[ANOM_EVAL] STEP8: rank=%s, extra_radius=%.2f", rank_name, extra_radius))
+	local cur_time = time_global()
+	if next_check_time[nid] == nil or cur_time > next_check_time[nid] then
+		--log1("[ANOM_EVAL] STEP9: check interval passed, searching anomalies...")
 
-    if holdtime[nid] == nil or time_global() > holdtime[nid] then
-        holdtime[nid] = time_global() + 500
-        --log1("[ANOM_EVAL] STEP9: holdtime passed, searching anomalies...")
+		local hasanom, anomid, pos, cls, dist, radius = anomaly_holder.get_nearest_anomaly(self.npc)
+		local dynamic_interval = ANOM_CHECK_INTERVAL_FAR
+		
+		if hasanom then
 
-        local hasanom, anomid, pos, cls, dist, radius = anomaly_holder.get_nearest_anomaly(self.npc)
-        local visradius
+			-- Проверяем, активна ли аномалия
+			local anom_obj = level.object_by_id(anomid)
+			if anom_obj and not anom_obj:is_anom_enabled() then
+				--log1("[ANOM_EVAL] STEP10a: anomaly id=" .. anomid .. " is disabled, ignoring")
+				hasanom = false
+			end
+		end		
 
-        if hasanom then
-            --log1(string.format("[ANOM_EVAL] STEP10: found anomaly id=%s, cls=%s, dist=%.2f, base_radius=%.2f", anomid, cls, dist, radius))
-            if rdelta[nid][anomid] == nil then
-                rdelta[nid][anomid] = 1
-                --log1("[ANOM_EVAL] STEP11: init rdelta for anom " .. anomid .. " = 1")
-            end
-            -- Итоговый радиус = базовый радиус аномалии + динамическая поправка + ранговая надбавка
-            visradius = radius + rdelta[nid][anomid] + extra_radius
-            --log1(string.format("[ANOM_EVAL] STEP12: visradius = %.2f (rad=%.2f + rdelta=%.2f + extra=%.2f)", visradius, radius, rdelta[nid][anomid], extra_radius))
+		if hasanom then
+			--log1(string.format("[ANOM_EVAL] STEP10: found anomaly id=%s, cls=%s, dist=%.2f, base_radius=%.2f", anomid, cls, dist, radius))
+			if rdelta[nid][anomid] == nil then
+				rdelta[nid][anomid] = 1
+				--log1("[ANOM_EVAL] STEP11: init rdelta for anom " .. anomid .. " = 1")
+			end
+			local visradius = radius + rdelta[nid][anomid] + extra_radius
+			if laststate[nid] then
+				visradius = visradius + 1
+				--log1("[ANOM_EVAL] STEP13: laststate was true, visradius increased to " .. visradius)
+			end
+			--log1(string.format("[ANOM_EVAL] STEP12: visradius = %.2f", visradius))
 
-            if laststate[nid] then
-                visradius = visradius + 1
-                --log1("[ANOM_EVAL] STEP13: laststate was true, visradius increased to " .. visradius)
-            end
-        end
+			-- Выбор интервала в зависимости от дистанции
+			if dist < visradius then
+				dynamic_interval = ANOM_CHECK_INTERVAL_DANGER
+			elseif dist < FAR_DISTANCE then
+				dynamic_interval = ANOM_CHECK_INTERVAL_MEDIUM
+			else
+				dynamic_interval = ANOM_CHECK_INTERVAL_FAR
+			end
+			--log1("[ANOM_EVAL] STEP9a: dynamic_interval = " .. dynamic_interval .. " ms")
 
-        if hasanom and dist < visradius then
-            --log1("[ANOM_EVAL] STEP14: NPC is inside danger zone (dist < visradius)")
-            -- Проверяем, нужно ли обновить stucktime (периодичность 2 минуты)
-            if stucktime[nid][anomid] == nil or stucktime[nid][anomid] < time_global() - 120000 then
-                stucktime[nid][anomid] = time_global() + 600000
-                rdelta[nid][anomid] = 1
-                --log1("[ANOM_EVAL] STEP15: reset stucktime & rdelta for anom " .. anomid)
+			if dist < visradius then
+				--log1("[ANOM_EVAL] STEP14: NPC is inside danger zone (dist < visradius)")
+				if stucktime[nid][anomid] == nil or stucktime[nid][anomid] < time_global() - 120000 then
+					stucktime[nid][anomid] = time_global() + 600000
+					rdelta[nid][anomid] = 1
+					--log1("[ANOM_EVAL] STEP15: reset stucktime & rdelta for anom " .. anomid)
 
-                local errortbl = error_tbl[rank_name]
-                if errortbl then
-                    local errorrate = errortbl[cls]
-                    if errorrate and math.random(0,100) < errorrate then
-                        --log1("[ANOM_EVAL] STEP16: NPC failed to avoid anomaly (errorrate=" .. errorrate .. "%)")
-                        stucktime[nid][anomid] = time_global() - 1
-                    else
-                        --log1("[ANOM_EVAL] STEP17: NPC successfully avoided anomaly (errorrate check passed)")
-                    end
-                end
-            end
+					local errortbl = error_tbl[rank_name]
+					if errortbl then
+						local errorrate = errortbl[cls]
+						if errorrate and math.random(0,100) < errorrate then
+							--log1("[ANOM_EVAL] STEP16: NPC failed to avoid anomaly (errorrate=" .. errorrate .. "%)")
+							stucktime[nid][anomid] = time_global() - 1
+						else
+							--log1("[ANOM_EVAL] STEP17: NPC successfully avoided anomaly (errorrate check passed)")
+						end
+					end
+				end
 
-            if stucktime[nid][anomid] < time_global() and dist > radius * 0.9 then
-                laststate[nid] = false
-                --log1("[ANOM_EVAL] STEP18: stucktime expired, set laststate=false")
-            else
-                laststate[nid] = true
-                --log1("[ANOM_EVAL] STEP19: set laststate=true (NPC must evade)")
-            end
-        else
-            laststate[nid] = false
-            if hasanom then
-                --log1("[ANOM_EVAL] STEP20: dist >= visradius, no need to evade")
-            else
-                --log1("[ANOM_EVAL] STEP21: no anomaly found")
-            end
-        end
-    else
-        --log1("[ANOM_EVAL] STEP22: holdtime not yet passed, skip check")
-    end
+				if stucktime[nid][anomid] < time_global() and dist > radius * 0.9 then
+					laststate[nid] = false
+					--log1("[ANOM_EVAL] STEP18: stucktime expired, set laststate=false")
+				else
+					laststate[nid] = true
+					--log1("[ANOM_EVAL] STEP19: set laststate=true (NPC must evade)")
+				end
+			else
+				laststate[nid] = false
+				--log1("[ANOM_EVAL] STEP20: dist >= visradius, no need to evade")
+			end
+		else
+			laststate[nid] = false
+			dynamic_interval = ANOM_CHECK_INTERVAL_FAR
+			--log1("[ANOM_EVAL] STEP21: no anomaly found")
+		end
 
-    --log1("[ANOM_EVAL] STEP23: returning laststate = " .. tostring(laststate[nid]))
-    return laststate[nid]
+		next_check_time[nid] = cur_time + dynamic_interval
+		--log1("[ANOM_EVAL] STEP9b: next check at " .. next_check_time[nid])
+	else
+		--log1("[ANOM_EVAL] STEP22: check interval not yet passed, skip")
+	end
+
+	--log1("[ANOM_EVAL] STEP23: returning laststate = " .. tostring(laststate[nid]))
+	return laststate[nid]
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -206,8 +222,8 @@ end
 class "action_evade_anomaly" (action_base)
 
 function action_evade_anomaly:__init (npc_name, action_name, storage, char_ini) 
-    super (nil, action_name)
-    self.a = storage
+	super (nil, action_name)
+	self.a = storage
 end
 
 local can_rethink = {}
@@ -215,148 +231,157 @@ local reverse = {}
 local npcpostime = {}
 
 function action_evade_anomaly:initialize()
-    action_base.initialize(self)
-    local npc = self.object
-    local nid = npc:id()
-    --log1("[ANOM_ACT] STEP1: initialize evade action for " .. npc:name() .. " (id=" .. nid .. ")")
+	action_base.initialize(self)
+	local npc = self.object
+	local nid = npc:id()
+	--log1("[ANOM_ACT] STEP1: initialize evade action for " .. npc:name() .. " (id=" .. nid .. ")")
 
-    self.object:set_desired_position()
-    self.object:set_desired_direction()
-    self.object:set_detail_path_type( move.line )
-    self.object:set_path_type( game_object.level_path )
-    self.object:movement_enabled(true)
-    self.object:set_body_state(move.standing)
-    self.object:set_movement_type(move.walk)
-    self.prefdir = self.object:direction()
+	self.object:set_desired_position()
+	self.object:set_desired_direction()
+	self.object:set_detail_path_type( move.line )
+	self.object:set_path_type( game_object.level_path )
+	self.object:movement_enabled(true)
+	self.object:set_body_state(move.standing)
+	self.object:set_movement_type(move.walk)
+	self.prefdir = self.object:direction()
 
-    -- Устанавливаем состояние "рейд" (можно заменить на "assault_fire" по желанию)
-    state_mgr.set_state(self.object, "raid")
-    
-    npcpostime[nid] = {pos = self.object:position(), time = time_global() + 4000}
-    --log1("[ANOM_ACT] STEP2: initial npcpostime set")
+	-- Устанавливаем состояние "рейд" (можно заменить на "assault_fire" по желанию)
+	state_mgr.set_state(self.object, "raid")
+	
+	npcpostime[nid] = {pos = self.object:position(), time = time_global() + 4000}
+	--log1("[ANOM_ACT] STEP2: initial npcpostime set")
 end
 
 function veceq(v1, v2)
-    return math.abs(v1.x - v2.x) < 0.5 and 
-           math.abs(v1.y - v2.y) < 0.5 and
-           math.abs(v1.z - v2.z) < 0.5
+	return math.abs(v1.x - v2.x) < 0.5 and 
+		   math.abs(v1.y - v2.y) < 0.5 and
+		   math.abs(v1.z - v2.z) < 0.5
 end
 
 function action_evade_anomaly:execute ()
-    action_base.execute(self)
-    local nid = self.object:id()
-    local npc = self.object
+	action_base.execute(self)
+	local nid = self.object:id()
+	local npc = self.object
 
-    if can_rethink[nid] == nil or can_rethink[nid] < time_global() then
-        --log1("[ANOM_ACT] STEP3: can_rethink passed, looking for anomaly direction...")
+	if can_rethink[nid] == nil or can_rethink[nid] < time_global() then
+		--log1("[ANOM_ACT] STEP3: can_rethink passed, looking for anomaly direction...")
 
-        -- Используем текущее направление NPC, а не сохранённое (более актуально)
-        local cur_dir = self.object:direction()
-        local flag, anomid, anpos, cls, dist, radius = anomaly_holder.get_nearest_anomaly(self.object, cur_dir)
+		-- Используем текущее направление NPC, а не сохранённое (более актуально)
+		local cur_dir = self.object:direction()
+		local flag, anomid, anpos, cls, dist, radius = anomaly_holder.get_nearest_anomaly(self.object, cur_dir)
+		
+		if flag then
+			-- Проверяем активность аномалии
+			local anom_obj = level.object_by_id(anomid)
+			if anom_obj and not anom_obj:is_anom_enabled() then
+				--log1("[ANOM_ACT] STEP4a: anomaly id=" .. anomid .. " is disabled, ignoring")
+				flag = false
+			end
+		end
 
-        if flag then
-            --log1(string.format("[ANOM_ACT] STEP4: found anomaly id=%s, dist=%.2f, radius=%.2f", anomid, dist, radius))
+		if flag then
+			--log1(string.format("[ANOM_ACT] STEP4: found anomaly id=%s, dist=%.2f, radius=%.2f", anomid, dist, radius))
 
-            -- Проверяем, застрял ли NPC
-            if veceq(self.object:position(), npcpostime[nid].pos) and time_global() > npcpostime[nid].time then
-                --log1("[ANOM_ACT] STEP5: NPC stuck, reversing direction")
-                reverse[nid] = not reverse[nid]
-                -- Увеличиваем rdelta, но не более 5
-                if rdelta[nid] and rdelta[nid][anomid] then
-                    rdelta[nid][anomid] = math.min(rdelta[nid][anomid] + 0.1, 5)
-                    --log1("[ANOM_ACT] STEP6: rdelta increased to " .. rdelta[nid][anomid])
-                else
-                    if rdelta[nid] == nil then rdelta[nid] = {} end
-                    rdelta[nid][anomid] = 1.1
-                end
-            elseif not veceq(self.object:position(), npcpostime[nid].pos) then
-                npcpostime[nid] = {pos = self.object:position(), time = time_global() + 4000}
-                --log1("[ANOM_ACT] STEP7: NPC moved, reset stuck timer")
-            end
+			-- Проверяем, застрял ли NPC
+			if veceq(self.object:position(), npcpostime[nid].pos) and time_global() > npcpostime[nid].time then
+				--log1("[ANOM_ACT] STEP5: NPC stuck, reversing direction")
+				reverse[nid] = not reverse[nid]
+				-- Увеличиваем rdelta, но не более 5
+				if rdelta[nid] and rdelta[nid][anomid] then
+					rdelta[nid][anomid] = math.min(rdelta[nid][anomid] + 0.1, 5)
+					--log1("[ANOM_ACT] STEP6: rdelta increased to " .. rdelta[nid][anomid])
+				else
+					if rdelta[nid] == nil then rdelta[nid] = {} end
+					rdelta[nid][anomid] = 1.1
+				end
+			elseif not veceq(self.object:position(), npcpostime[nid].pos) then
+				npcpostime[nid] = {pos = self.object:position(), time = time_global() + 4000}
+				--log1("[ANOM_ACT] STEP7: NPC moved, reset stuck timer")
+			end
 
-            local anvec = vector():set(anpos):sub(self.object:position())
-            anvec.y = 0
-            anvec:normalize()
-            local mydir = cur_dir
-            local newdir
-            local angle = math.random(80,100)
+			local anvec = vector():set(anpos):sub(self.object:position())
+			anvec.y = 0
+			anvec:normalize()
+			local mydir = cur_dir
+			local newdir
+			local angle = math.random(80,100)
 
-            if dist < radius * 0.9 then
-                angle = math.random(120,240)
-                self.object:set_movement_type(move.run)
-                reverse[nid] = false
-                --log1("[ANOM_ACT] STEP8: very close to anomaly, run away, angle=" .. angle)
-            end
+			if dist < radius * 0.9 then
+				angle = math.random(120,240)
+				self.object:set_movement_type(move.run)
+				reverse[nid] = false
+				--log1("[ANOM_ACT] STEP8: very close to anomaly, run away, angle=" .. angle)
+			end
 
-            if reverse[nid] then
-                angle = -angle
-                --log1("[ANOM_ACT] STEP9: reversed direction, angle=" .. angle)
-            end
+			if reverse[nid] then
+				angle = -angle
+				--log1("[ANOM_ACT] STEP9: reversed direction, angle=" .. angle)
+			end
 
-            -- Определяем сторону для поворота (влево/вправо)
-            if mydir.x * anvec.z - mydir.z * anvec.x < 0 then
-                newdir = vector_rotate_y(anvec, angle)
-            else
-                newdir = vector_rotate_y(anvec, -angle)
-            end
+			-- Определяем сторону для поворота (влево/вправо)
+			if mydir.x * anvec.z - mydir.z * anvec.x < 0 then
+				newdir = vector_rotate_y(anvec, angle)
+			else
+				newdir = vector_rotate_y(anvec, -angle)
+			end
 
-            --log1("[ANOM_ACT] STEP10: new direction = " .. vec2str(newdir))
+			--log1("[ANOM_ACT] STEP10: new direction = " .. vec2str(newdir))
 
-            local vertex_id = level.vertex_in_direction(self.object:level_vertex_id(), newdir, 1)
-            can_rethink[nid] = time_global() + 500
-            utils.send_to_nearest_accessible_vertex(self.object, vertex_id)
-        else
-            --log1("[ANOM_ACT] STEP11: no anomaly found nearby, nothing to evade")
-        end
-    else
-        --log1("[ANOM_ACT] STEP12: can_rethink not yet passed")
-    end
+			local vertex_id = level.vertex_in_direction(self.object:level_vertex_id(), newdir, 1)
+			can_rethink[nid] = time_global() + 500
+			utils.send_to_nearest_accessible_vertex(self.object, vertex_id)
+		else
+			--log1("[ANOM_ACT] STEP11: no anomaly found nearby, nothing to evade")
+		end
+	else
+		--log1("[ANOM_ACT] STEP12: can_rethink not yet passed")
+	end
 end
 
 function action_evade_anomaly:finalize ()
-    action_base.finalize(self)
-    --log1("[ANOM_ACT] STEP13: finalize evade action for " .. self.object:name())
+	action_base.finalize(self)
+	--log1("[ANOM_ACT] STEP13: finalize evade action for " .. self.object:name())
 end
 
 function add_to_binder(object, char_ini, scheme, section, st)
-    --log1("[ANOM_EVAL] add_to_binder called for " .. object:name())
-    local manager = object:motivation_action_manager()
-    local properties = {}
-    properties["wounded"] = xr_evaluators_id.sidor_wounded_base
+	--log1("[ANOM_EVAL] add_to_binder called for " .. object:name())
+	local manager = object:motivation_action_manager()
+	local properties = {}
+	properties["wounded"] = xr_evaluators_id.sidor_wounded_base
 
-    -- Добавляем evaluator аномалий под ID 1099
-    manager:add_evaluator(1099, evaluator_anomaly(st, object, "evaluator_amonaly"))
-    --log1("[ANOM_EVAL] evaluator 1099 added")
+	-- Добавляем evaluator аномалий под ID 1099
+	manager:add_evaluator(1099, evaluator_anomaly(st, object, "evaluator_amonaly"))
+	--log1("[ANOM_EVAL] evaluator 1099 added")
 
-    -- Создаём действие уклонения
-    local action = action_evade_anomaly(object:name(), "action_evade_anomaly", st, char_ini)
-    action:add_precondition   (world_property(stalker_ids.property_alive, true))
-    action:add_precondition   (world_property(properties["wounded"], false))
-    action:add_precondition   (world_property(1099, true))
-    action:add_effect         (world_property(1099, false))
-    manager:add_action(10032, action)
-    --log1("[ANOM_EVAL] action 10032 added")
+	-- Создаём действие уклонения
+	local action = action_evade_anomaly(object:name(), "action_evade_anomaly", st, char_ini)
+	action:add_precondition	  (world_property(stalker_ids.property_alive, true))
+	action:add_precondition	  (world_property(properties["wounded"], false))
+	action:add_precondition	  (world_property(1099, true))
+	action:add_effect		  (world_property(1099, false))
+	manager:add_action(10032, action)
+	--log1("[ANOM_EVAL] action 10032 added")
 
-    -- Корректируем preconditions для стандартных действий (alife и combat_planner)
-    -- чтобы они не выполнялись, пока активен evaluator 1099
-    local alife_action = manager:action(xr_actions_id.alife) 
-    if alife_action then
-        alife_action:add_precondition(world_property(1099, false))
-        --log1("[ANOM_EVAL] precondition added to alife action")
-    end
-    local combat_action = manager:action(stalker_ids.action_combat_planner) 
-    if combat_action then
-        combat_action:add_precondition(world_property(1099, false))
-        --log1("[ANOM_EVAL] precondition added to combat_planner action")
-    end
+	-- Корректируем preconditions для стандартных действий (alife и combat_planner)
+	-- чтобы они не выполнялись, пока активен evaluator 1099
+	local alife_action = manager:action(xr_actions_id.alife) 
+	if alife_action then
+		alife_action:add_precondition(world_property(1099, false))
+		--log1("[ANOM_EVAL] precondition added to alife action")
+	end
+	local combat_action = manager:action(stalker_ids.action_combat_planner) 
+	if combat_action then
+		combat_action:add_precondition(world_property(1099, false))
+		--log1("[ANOM_EVAL] precondition added to combat_planner action")
+	end
 end
 
 function set_evade(npc, ini, scheme, section)
-    --log1("[ANOM_EVAL] set_evade called for " .. npc:name())
-    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
-    return st
+	--log1("[ANOM_EVAL] set_evade called for " .. npc:name())
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	return st
 end
 
 function reset_evade(npc, scheme, st, section)
-    --log1("[ANOM_EVAL] reset_evade called for " .. npc:name())
+	--log1("[ANOM_EVAL] reset_evade called for " .. npc:name())
 end

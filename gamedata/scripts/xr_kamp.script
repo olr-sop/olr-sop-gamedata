@@ -140,6 +140,7 @@ class "action_go_position" (action_base)
 function action_go_position:__init (npc_name,action_name,storage) super (nil,action_name)
 	self.a = storage
 end
+
 function action_go_position:initialize()
 	action_base.initialize(self)
 --	self.object:set_node_evaluator()
@@ -149,33 +150,49 @@ function action_go_position:initialize()
 	
 	self.a.pos_vertex = nil
 end
-function action_go_position:execute ()
-	action_base.execute (self)
 
-	if db.actor then
-		if xr_logic.try_switch_to_another_section(self.object, self.a, db.actor) then
-			return
-		end
-	end	
-	
-	local tmp_pos_vertex = kamps[self.a.center_point]:getDestVertex(self.object, self.a.radius)
-	if self.a.pos_vertex ~= tmp_pos_vertex then
-		self.a.pos_vertex = tmp_pos_vertex
-		
-		if not self.object:accessible(self.a.pos_vertex) then
-			--log1(string.format("xr_camp : [%s] KAMP NODE NOT ACCESSIBLE. Get accessible nearest", self.object:name()))
-			local ttp = vector():set(0,0,0)
-			self.a.pos_vertex = self.object:accessible_nearest(level.vertex_position(self.a.pos_vertex), ttp)
-		end
-		
-		self.a.pp = patrol(self.a.center_point):level_vertex_id(0)
-		self.a.pp = level.vertex_in_direction(self.a.pp, vector():set(math.random(-1,1), 0, math.random(-1,1)), math.random(0,0.5))
-		self.object:set_dest_level_vertex_id(self.a.pos_vertex)
-		self.object:set_desired_direction(vector():sub(level.vertex_position(self.a.pp),level.vertex_position(self.a.pos_vertex)))
-		self.object:set_path_type(game_object.level_path)
-		state_mgr.set_state(self.object, self.a.def_state_moving)
-	end
+function action_go_position:execute()
+    action_base.execute(self)
+
+    if db.actor then
+        if xr_logic.try_switch_to_another_section(self.object, self.a, db.actor) then
+            return
+        end
+    end
+
+    local tmp_pos_vertex, npc_position_num = kamps[self.a.center_point]:getDestVertex(self.object, self.a.radius)
+    if self.a.npc_position_num ~= npc_position_num then
+        self.a.npc_position_num = npc_position_num
+        self.a.pos_vertex = tmp_pos_vertex
+
+        -- Если вершина всё ещё невалидна (0 или nil), используем центр лагеря
+        if not self.a.pos_vertex or self.a.pos_vertex == 0 or self.a.pos_vertex == 4294967295 then
+            log(string.format("xr_camp : [%s] WARNING: dest_vertex invalid (%s), using center point", self.object:name(), tostring(self.a.pos_vertex)))
+            local center_point = patrol(self.a.center_point):point(0)
+            self.a.pos_vertex = self.object:accessible_nearest(center_point, vector():set(0,0,0))
+        end
+
+        -- Вычисляем точку, куда смотреть (центр лагеря + случайное смещение)
+        self.a.pp = patrol(self.a.center_point):point(0)
+        local dir = vector():set(math.random(-1,1), 0, math.random(-1,1))
+        dir:normalize()
+        local delta_dist = math.random(0, 50) / 100  -- 0..0.5
+        self.a.pp.x = self.a.pp.x + dir.x * delta_dist
+        self.a.pp.z = self.a.pp.z + dir.z * delta_dist
+
+        self.object:set_dest_level_vertex_id(self.a.pos_vertex)
+
+        local desired_direction = vector():sub(self.a.pp, level.vertex_position(self.a.pos_vertex))
+        if desired_direction and not utils.vector_cmp(desired_direction, vector():set(0,0,0)) then
+            desired_direction:normalize()
+            self.object:set_desired_direction(desired_direction)
+        end
+
+        self.object:set_path_type(game_object.level_path)
+        state_mgr.set_state(self.object, self.a.def_state_moving)
+    end
 end
+
 function action_go_position:finalize ()
 	action_base.finalize (self)
 end
@@ -507,36 +524,61 @@ function CKampManager:selectPosition(npc_id)
 end
 
 function CKampManager:getDestVertex(npc, radius)
-	local npc_id = npc:id()
-	if self.npc == nil or self.npc[npc_id] == nil then
-		--log1(string.format("xr_camp : NPC with id [%s] called [%s] not found in npc table", npc_id, obbbj:name()))
-		return nil
-	end
-	if self.position == nil then
-		--log1("Position table is nil")
-		return nil
-	end
-	--log1(string.format("xr_camp : get dest Vertex called [%s]", npc_id))
-	if self.npc[npc_id].position == nil then
-		--log1(string.format("xr_camp : -------debug_info-------------"))
-		print_table(self.npc)
-		--log1(string.format("xr_camp : -------debug_info-------------"))
-		print_table(self.position)
-		--log1(string.format("xr_camp : -------debug_info-------------"))
-		abort("get dest Vertex: nil [%s]", npc_id)
-		return nil
-	end
-	
-	local position = self.position[self.npc[npc_id].position]
-	if position.vertex ~= nil then
-		--log1(string.format("xr_camp : vertex preselected [%s]", npc_id))
-		return position.vertex
-	end
-	-- высчитываем вертех по направлению
-   	local pp = level.vertex_in_direction(self.center, self.position[self.npc[npc_id].position].dir, radius)
-   	pp = level.vertex_in_direction(pp, vector():set(math.random(-1,1), 0, math.random(-1,1)), math.random(0,0.5))
-	--log1(string.format("xr_camp : vertex selected [%s]", npc_id)   	)
-	return pp		
+    local npc_id = npc:id()
+    if self.npc == nil or self.npc[npc_id] == nil then
+        log(string.format("xr_camp : NPC with id [%s] not found in npc table", npc_id))
+        return nil, nil
+    end
+    if self.position == nil then
+        log("xr_camp : Position table is nil")
+        return nil, nil
+    end
+    if self.npc[npc_id].position == nil then
+        abort("get dest Vertex: nil [%s]", npc_id)
+        return nil, nil
+    end
+
+    local position_index = self.npc[npc_id].position
+    local position = self.position[position_index]
+    if position.vertex ~= nil then
+        return position.vertex, position_index
+    end
+
+    -- Новый расчёт вершины
+    local pp = self.patrol:point(0)  -- точка центра
+    local dir = self.position[position_index].dir
+
+    -- Случайное отклонение направления
+    dir.x = dir.x + math.random(-1, 1) / 5
+    dir.z = dir.z + math.random(-1, 1) / 5
+    dir:normalize()
+
+    local cur_radius = radius + math.random(-0.3, 0.3)
+
+    local dest_vertex = 4294967295  -- невалидный ID
+    while dest_vertex == 4294967295 do
+        local tmp_pos = vector():set(0, 0, 0)
+        tmp_pos.x = pp.x + dir.x * cur_radius
+        tmp_pos.z = pp.z + dir.z * cur_radius
+        tmp_pos.y = pp.y
+        dest_vertex = level.vertex_id(tmp_pos)
+        if dest_vertex == 4294967295 then
+            if cur_radius < 1 then
+                abort("Invalid AI map at kamp point [%s]", self.kamp_name)
+                return nil, nil
+            else
+                cur_radius = cur_radius - 0.5
+            end
+        end
+    end
+
+    if not npc:accessible(dest_vertex) then
+        local vp = level.vertex_position(dest_vertex)
+        local nearest_vertex = npc:accessible_nearest(vp, vector():set(0,0,0))
+        return nearest_vertex, position_index
+    end
+
+    return dest_vertex, position_index
 end
 
 function CKampManager:proceedState(npc)

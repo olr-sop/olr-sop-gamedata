@@ -2,7 +2,6 @@
 -- менеджер заданий для НПС (оффлайн)
 -- hi_flyer 01.03.2019
 -- olr_ai_tasks.script
--- с добавленным логированием через log1
 ----------------------------------------------------------------------------------
 
 -- 1.	Добраться до Монолита, чтобы исполнилось желание
@@ -257,23 +256,23 @@ end
 function get_task_walk(obj)
     -- офл торговля бар
     if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true then
-        log1(string.format("[get_task_walk] NPC %s (trade bar) -> serogas_look", obj:name()))
+        --olr.add_spot_on_map( obj.id,"red_location"," идёт торговать в бар офлайн "..obj:name().."")
+        --news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в бар в оффлайне", nil, "dolg", 15000)
         return "serogas_look"
     end
     -- офл торговля янтарь
     if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true then
-        log1(string.format("[get_task_walk] NPC %s (trade yantar) -> proff_prilavok_look", obj:name()))
+        --olr.add_spot_on_map( obj.id,"red_location"," идёт торговать в янтарь офлайн "..obj:name().."")
+        --news_manager.send_tip(db.actor, "сталкер "..obj:name().." идёт торговать в янтарь в оффлайне", nil, "dolg", 15000)
         return "proff_prilavok_look"
     end
 
     -- глоб задачи
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_monolit" then
-        log1(string.format("[get_task_walk] NPC %s (find_monolit) -> sarkoy_cutscene_walk", obj:name()))
         return "sarkoy_cutscene_walk"
     end
 
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "reason_zone" then
-        log1(string.format("[get_task_walk] NPC %s (reason_zone) -> gen_find_exit_look", obj:name()))
         return "gen_find_exit_look"
     end
 
@@ -283,12 +282,12 @@ function get_task_walk(obj)
             if waycash then
                 local waycashname = game.translate_string(waycash)
                 if waycashname then
-                    log1(string.format("[get_task_walk] NPC %s (revenge) rnd way -> %s", obj:name(), waycashname))
+                    --printf("has tourism rnd way - "..waycashname.." ")
                     return waycashname
                 end
             end
         else
-            log1(string.format("[get_task_walk] NPC %s (revenge) target dead -> esc_garage_out_look", obj:name()))
+            --printf("цель убита - тикаем из зоны")
             return "esc_garage_out_look" -- тикаем из зоны на кордоне
         end
     end
@@ -298,7 +297,7 @@ function get_task_walk(obj)
         if waycash then
             local waycashname = game.translate_string(waycash)
             if waycashname then
-                log1(string.format("[get_task_walk] NPC %s (cash) rnd way -> %s", obj:name(), waycashname))
+                --printf("has cash rnd way - "..waycashname.." ")
                 return waycashname
             end
         end
@@ -309,7 +308,7 @@ function get_task_walk(obj)
         if waycash then
             local waycashname = game.translate_string(waycash)
             if waycashname then
-                log1(string.format("[get_task_walk] NPC %s (tourism) rnd way -> %s", obj:name(), waycashname))
+                --printf("has tourism rnd way - "..waycashname.." ")
                 return waycashname
             end
         end
@@ -321,17 +320,19 @@ function get_task_walk(obj)
             if waycash then
                 local waycashname = game.translate_string(waycash)
                 if waycashname then
-                    log1(string.format("[get_task_walk] NPC %s (find_himself) rnd way -> %s", obj:name(), waycashname))
+                    --printf("has find_himself rnd way - "..waycashname.." ")
                     return waycashname
                 end
             end
         else
-            log1(string.format("[get_task_walk] NPC %s (find_himself) precondition met -> esc_garage_out_look", obj:name()))
             return "esc_garage_out_look" -- тикаем из зоны на кордоне
         end
     end
 
-    log1(string.format("[get_task_walk] NPC %s default -> escccc_cutscene_walk", obj:name()))
+    --printf(" !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().." set new ")
+    --news_manager.send_tip(db.actor, " !AHTUNG - go to [escccc_cutscene_walk]  "..obj:name().."  идёт под смарт  "..obj.level_name.."  ", nil, "dolg", 15000)
+    --olr.add_spot_on_map( obj.id,"green_location",obj:name() )
+    --this.set_obj_rndway(obj)
     --return "escccc_cutscene_walk"  -- default Jaba's place
 end
 
@@ -344,7 +345,7 @@ function check_complete_main(obj)
     if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true and obj.level_name == "lvl5_bar" then
         local bar_pos = vector():set(-107, -90, -231)
         if obj.position:distance_to(bar_pos) < 20 then
-            log1(string.format("[check_complete_main] NPC %s reached bar trade point", obj:name()))
+            --news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в бар и торгует сейчас", nil, "dolg", 15000)
             olr_ofl_trade.on_point_bar(obj)
             amk_offline_alife.now_trade_ofl_bar(obj)
         end
@@ -353,7 +354,7 @@ function check_complete_main(obj)
     if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true and obj.level_name == "lvl7_yantar" then
         local yan_pos = vector():set(-177, 6, 177)
         if obj.position:distance_to(yan_pos) < 10 then
-            log1(string.format("[check_complete_main] NPC %s reached yantar trade point", obj:name()))
+            --news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в янтарь и торгует сейчас", nil, "dolg", 15000)
             xvars.npc_ofl_trade_yan[obj:name()] = nil
             olr_ofl_trade.on_point_yan(obj)
         end
@@ -364,7 +365,6 @@ function check_complete_main(obj)
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_monolit" then
         local monolit_pos = vector():set(20, 51, 25)
         if obj.level_name == "lvl15_sarcofag" and obj.position:distance_to(monolit_pos) < 20 then
-            log1(string.format("[check_complete_main] NPC %s (find_monolit) at monolith, random roll", obj:name()))
             local rndm = math.random(1, 10)
             if rndm == 3 then
                 local bos = level.object_by_id(obj.id)
@@ -387,14 +387,12 @@ function check_complete_main(obj)
                         flgmond = true
                     end
                 end
-                log1(string.format("[check_complete_main] NPC %s killed by monolith (wish)", obj:name()))
             end
         end
     end
     -- Найти причину возникновения Зоны и добиться ее исчезновения (добраться на генераторы)
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "reason_zone" then
         if obj.level_name == "lvl16_generators" then
-            log1(string.format("[check_complete_main] NPC %s (reason_zone) at generators, random roll", obj:name()))
             local rndstn = math.random(1, 4)
             if rndstn == 2 then
                 local bos = level.object_by_id(obj.id)
@@ -417,47 +415,49 @@ function check_complete_main(obj)
                         flgmondr = true
                     end
                 end
-                log1(string.format("[check_complete_main] NPC %s killed at generators", obj:name()))
             end
         end
     end
     -- Месть сталкеру
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "revenge" then
         if this.precondition_revenge_is_dead(obj) then
-            log1(string.format("[check_complete_main] NPC %s revenge target dead, leaving zone", obj:name()))
+            --olr.add_spot_on_map( obj.id,"green_location", " revenge go out "..obj:name().."" )
+            --news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  месть мертва - уходим из зоны сейчас на уровне - "..obj.level_name.."   "..obj.position.x.." - "..obj.position.y.." - "..obj.position.z.."  ", nil, "dolg", 15000)
             this.away_from_zone_revenge(obj)
         else
-            log1(string.format("[check_complete_main] NPC %s revenge target alive, set rnd way walk", obj:name()))
+            -- ищем дальше - устанавливаем рнд путь гуляния
             this.set_rnd_way_walk(obj)
         end
     end
     -- Поднял бабла
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "cash" then
         if xvars.cash_need_summa_has[obj:name()] == true then
-            log1(string.format("[check_complete_main] NPC %s cash goal reached, leaving zone", obj:name()))
+            -- собрали нужное колво денег - валим с зоны
+            --news_manager.send_tip(db.actor, "у сталкера Поднял бабла "..obj:name().."  Поднял бабла- уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 15000)
             this.away_from_zone_cash(obj)
         else
-            log1(string.format("[check_complete_main] NPC %s cash goal not reached, set rnd way walk", obj:name()))
+            -- собираем бабки дальше - устанавливаем рнд путь гуляния
             this.set_rnd_way_walk(obj)
         end
     end
     -- Туризм
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "tourism" then
         if this.precondition_tourism(obj) then
-            log1(string.format("[check_complete_main] NPC %s tourism precondition met, leaving zone", obj:name()))
+            --news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  натуристился - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 15000)
             this.away_from_zone_tourism(obj)
         else
-            log1(string.format("[check_complete_main] NPC %s tourism not met, set rnd way walk", obj:name()))
+            -- туристим дальше - устанавливаем рнд путь гуляния
             this.set_rnd_way_walk(obj)
         end
     end
     -- Нашли себя
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_himself" then
         if this.precondition_find_himself(obj) then
-            log1(string.format("[check_complete_main] NPC %s find_himself precondition met, leaving zone", obj:name()))
+            --news_manager.send_tip(db.actor, "у сталкера "..obj:name().."  нашёл себя - уходим из зоны сейчас на уровне - "..obj.level_name.." ", nil, "dolg", 15000)
+            --olr.add_spot_on_map( obj.id,"green_location", obj:name() )
             this.away_from_zone(obj)
         else
-            log1(string.format("[check_complete_main] NPC %s find_himself not met, set rnd way walk", obj:name()))
+            -- ищем себя дальше - устанавливаем рнд путь гуляния
             this.set_rnd_way_walk(obj)
         end
     end
@@ -470,25 +470,25 @@ function set_rnd_way_walk(obj)
         local rnd_path = patrol(xpath)
         local rnd_path_vert = rnd_path:level_vertex_id(0)
         if tostring(obj.m_level_vertex_id) == tostring(rnd_path_vert) then
-            log1(string.format("[set_rnd_way_walk] NPC %s reached its current path (%s), assigning new random way", obj:name(), xpath))
+            --olr.add_spot_on_map( obj.id,"green_location", obj:name() )
+            --local itms = table.getn(amk_offline_alife.items[obj.id]) or 0  ставим новый итемов - "..itms.."
+            --news_manager.send_tip(db.actor, " "..obj:name().." -- "..xvars.npcs_tasks[obj:name()].."  пришёл на свой путь - "..xpath.."  на "..obj.level_name.."  ", nil, "dolg", 15000)
+            -- todo если можем (есть экипировка) то гуляем дальше, если нет идём в бар
             this.set_obj_rndway(obj)
             amk_offline_alife.process_trade(obj) -- переберем свой хабар
             amk_offline_alife.offline_alife(tostring(obj.level_name))
             local rndrank = math.random(10, 60)
             obj:set_rank(obj:rank() + rndrank)
         else
-            log1(string.format("[set_rnd_way_walk] NPC %s moving towards path %s (current vertex %s, target vertex %s)", obj:name(), xpath, tostring(obj.m_level_vertex_id), tostring(rnd_path_vert)))
+            --printf(" stalker идёт "..tostring(obj.m_level_vertex_id).."  на "..tostring(rnd_path_vert).." ")
         end
-    else
-        log1(string.format("[set_rnd_way_walk] NPC %s has no xpath assigned, assigning random way", obj:name()))
-        this.set_obj_rndway(obj)
     end
 end
 
 function set_obj_rndway(obj)
     local rndway = math.random(#global_task_rnd_way)
     local rnd_task_way = global_task_rnd_way[rndway].name
-    log1(string.format("[set_obj_rndway] NPC %s assigned random way: %s (index %d)", obj:name(), rnd_task_way, rndway))
+    --printf(" set_obj_rndway "..obj:name().." set rndway - "..rnd_task_way.." ")
     xvars.npcs_tasks_rndway[obj:name()] = game.translate_string(rnd_task_way)
     --olr.add_spot_on_map( obj.id,"red_location"," идёт на новый путь  "..obj:name().." --- "..game.translate_string(rnd_task_way).." ")
 end
@@ -497,7 +497,6 @@ function away_from_zone_cash(obj)
     if obj:alive() and obj.level_name == "lvl1_escape" then
         local rnd = math.random(1, 12)
         if rnd == 2 then
-            log1(string.format("[away_from_zone_cash] NPC %s leaving zone (cash goal)", obj:name()))
             xvars.cash_need_summa_has[obj:name()] = nil
             local wait_time = 0
             wait_time = time_global() + 500
@@ -528,7 +527,6 @@ function away_from_zone_tourism(obj)
     if obj:alive() and obj.level_name == "lvl14_stancia" then
         local rnd = math.random(1, 10)
         if rnd == 3 then
-            log1(string.format("[away_from_zone_tourism] NPC %s leaving zone (tourism goal)", obj:name()))
             local wait_time = 0
             wait_time = time_global() + 500
             level.add_call(
@@ -558,7 +556,6 @@ function away_from_zone_revenge(obj)
     if obj and obj.level_name == "lvl1_escape" then
         local yan_pos = vector():set(147, 0, -13)
         if obj.position:distance_to(yan_pos) < 20 then
-            log1(string.format("[away_from_zone_revenge] NPC %s leaving zone (revenge complete)", obj:name()))
             local wait_time = 0
             wait_time = time_global() + 200
             level.add_call(
@@ -588,7 +585,6 @@ function away_from_zone(obj)
     if obj and obj.level_name == "lvl1_escape" then
         local yan_pos = vector():set(147, 0, -13)
         if obj.position:distance_to(yan_pos) < 20 then
-            log1(string.format("[away_from_zone] NPC %s leaving zone (find_himself)", obj:name()))
             local wait_time = 0
             wait_time = time_global() + 200
             level.add_call(
@@ -632,7 +628,6 @@ function set_maintask_substates(obj, rnd_quest)
 		if #places > 0 then
 			local rand_kill = places[math.random(#places)]
 			xvars.npcs_tasks_revenge_targets[obj:name()] = rand_kill:name()
-			log1(string.format("[set_maintask_substates] NPC %s revenge target set to %s", obj:name(), rand_kill:name()))
 		end
 	--printf("revenge "..obj:name().." - set revenge target "..rand_kill:name().." ")
 	end
@@ -707,19 +702,19 @@ function set_walkers_rndways()
         if kill and IsStalker(kill) and kill:alive() then
             if xvars.npcs_tasks[kill:name()] == "cash" or xvars.npcs_tasks[kill:name()] == "tourism" or xvars.npcs_tasks[kill:name()] == "revenge" or xvars.npcs_tasks[kill:name()] == "find_himself" then
                 cnt = cnt + 1
+                --olr.add_spot_on_map( kill.id,"controller_spotmap",kill:name() )
                 local rndway = math.random(#global_task_rnd_way)
                 local rnd_task_way = global_task_rnd_way[rndway].name
-                log1(string.format("[set_walkers_rndways] NPC %s (task %s) assigned random way: %s (index %d)", kill:name(), xvars.npcs_tasks[kill:name()], rnd_task_way, rndway))
+                --printf(" "..kill:name().." set rndway - "..rnd_task_way.." ")
                 xvars.npcs_tasks_rndway[kill:name()] = game.translate_string(rnd_task_way)
                 local rnd = math.random(1, 2)
                 if rnd == 1 then
-                    log1(string.format("[set_walkers_rndways] NPC %s forced to go to base (rnd=1), clearing rndway", kill:name()))
+                    --printf(" SET no RND WAY "..kill:name().." go to base ")
+                    --olr.add_spot_on_map( kill.id,"red_location"," идёт в лагерь  "..kill:name().."")
                     xvars.npcs_tasks_rndway[kill:name()] = nil
                 end
             end
         end
     end
-    local msg = string.format("olr_ai_tasks.set_walkers_rndways count = %d", cnt)
-    printf(msg)
-    log1(msg)
+    printf("olr_ai_tasks.set_walkers_rndways count = " .. tostring(cnt) .. "")
 end

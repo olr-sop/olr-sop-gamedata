@@ -770,6 +770,7 @@ function se_smart_terrain:reset_npc_logic(obj)
 		end
 	end
 end
+
 -- выдать объекту задание.
 -- вызывается движком после включения непися в состав смарта
 -- задание в оффлайне заключается попросту топать к смарту, где непись 
@@ -779,14 +780,13 @@ function se_smart_terrain:task( obj )
 	if IsStalker(obj) and olr_ai_tasks.has_task(obj) == true then
 		olr_ai_tasks.check_complete_main(obj)
 		local get_task_walk = olr_ai_tasks.get_task_walk(obj)
-		--log1(" se_smart_terrain: !has_task! npc - ["..obj:name().."] task - ["..get_task_walk.."] ")
-		--olr.add_spot_on_map( obj.id,"red_location"," olr_ai_tasks has stask "..obj:name().."")
+		log1(string.format("se_smart_terrain:task NPC %s has_task -> %s", obj:name(), get_task_walk))
 		return CALifeSmartTerrainTask(get_task_walk)
 	end
 
 	local path_name = self.gulag:get_obj_job_path_name( obj.id )
 	if not path_name then
-		log1("!!WARNING: NO PATH ["..obj.id.."] ["..obj:name().."] ["..self:name().."] PATH ["..tostring(path_name).."]")
+		log1(string.format("!!WARNING: NO PATH [%d] [%s] [%s] PATH [%s]", obj.id, obj:name(), self:name(), tostring(path_name)))
 		--self.gulag:free_obj( obj.id )
 		self:unregister_npc(obj) --'Затычка против вылета.
 		--self:reset_npc_logic(obj)

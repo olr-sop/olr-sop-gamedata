@@ -1,5 +1,6 @@
 -- Movement manager
 -- Created by: Andrey Fidrya (Zmey), af@svitonline.com
+-- Modified by: added level validation to prevent patrol path errors
 
 local dist_walk = 10 -- < dist_run
 local dist_run = 2500
@@ -23,6 +24,12 @@ local state_moving = 1
 local state_standing = 2
 
 local sync = {}
+
+-- Helper: log with formatting (use existing log1 if available, otherwise define)
+local function log_fmt(...)
+	log1(string.format(...))
+end
+
 -------------------------------------------------------------------------------------------------------------------------
 function choose_look_point(patrol_look, path_look_info, search_for)
 	local this_val -- значение флагов текущей точки
@@ -70,6 +77,7 @@ function move_mgr:initialize(npc)
 
 	self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
 end
+
 -- Удостоверяется, что пути и флажки на них проставлены корректно
 function move_mgr:validate_paths()
 	if self.no_validation then
@@ -91,14 +99,13 @@ function move_mgr:extrapolate_callback(npc)
 end
 
 function move_mgr:standing_on_terminal_waypoint()
-	if self.patrol_walk ~= nil then 
 	for idx = 0, self.patrol_walk:count() - 1 do
 		if utils.stalker_at_waypoint(self.object, self.patrol_walk, idx) and
 		   self.patrol_walk:terminal(idx) then
 			return true, idx
 		end
 	end
-	end
+	
 	return false
 end
 
@@ -106,6 +113,31 @@ end
 -- Возвращает true, если персонаж прибыл в конечную точку пути
 function move_mgr:at_terminal_waypoint()
 	return self.at_terminal_waypoint_flag
+end
+
+-- Проверяет, принадлежит ли путь текущему уровню объекта
+function move_mgr:is_path_on_current_level(path_name)
+	local pp = patrol(path_name)
+	if not pp then
+		log_fmt("[move_mgr] Path '%s' not found", path_name)
+		return false
+	end
+	
+	-- Получаем текущий уровень объекта
+	local obj_game_vertex = self.object:game_vertex_id()
+	local obj_level = game_graph():vertex(obj_game_vertex):level_id()
+	
+	-- Проверяем каждую точку пути
+	for i = 0, pp:count() - 1 do
+		local point_game_vertex = pp:game_vertex_id(i)
+		local point_level = game_graph():vertex(point_game_vertex):level_id()
+		if point_level ~= obj_level then
+			log_fmt("[move_mgr] Path '%s' point %d is on level %d, but object '%s' is on level %d",
+				path_name, i, point_level, self.object:name(), obj_level)
+			return false
+		end
+	end
+	return true
 end
 
 -- Из move_cb вернуть true, чтобы приостановить работу схемы. Чтобы продолжить движение,
@@ -160,7 +192,7 @@ function move_mgr:reset(path_walk, path_walk_info, path_look, path_look_info, te
 
 		self.no_validation = no_validation
 		
-		self.path_walk = path_walk	
+		self.path_walk = path_walk		
 		self.patrol_walk = patrol(path_walk)
 		if not self.patrol_walk then
 			abort("object '%s': unable to find path_walk '%s' on the map",
@@ -217,70 +249,6 @@ function move_mgr:reset(path_walk, path_walk_info, path_look, path_look_info, te
 	self:setup_movement_by_patrol_path()
 end
 
--- Red75 +
--- Очищаем патрульный путь от аномалий.
-local pp_validated = {}
-
-function invalidate_pp_accessibility()
-	pp_validated = {}
-end
-
-local montabl = {
-	[clsid.zone_mosquito_bald] = true,
-	[clsid.zone_acid_fog] = true,
-	[clsid.zone_bfuzz] = true,
-	--[clsid.zone_bfuzz_s] = true,
-	--[clsid.zone_electra_s] = true,
-	[clsid.zone_galant_s] = true,
-	[clsid.zone_galantine] = true,
-	[clsid.zone_mbald_s] = true,
-	[clsid.zone_mincer] = true,
-	--[clsid.zone_zharka_s] = true,
-	[clsid.zone_mincer_s] = true
-}
-
-function validate_accessibility(npc, ppname)
-	local pp = patrol(ppname)
-	local valid = false
-	if pp_validated[ppname] then
-		return true, ppname
-	end
-	pp_validated[ppname] = true
-	if pp then
-		--log1(" [move_mgr] validating "..ppname.." for "..npc:name())
-		for i = 0, pp:count() - 1 do
-			local alist = bind_anomaly.get_anomaly_list_for_pos(pp:point(i), 1)
-			for j, o in ipairs(alist) do
-				-- Отключаем аномалию. И немедленно убираем её из рестрикторов непися.
-				-- Для остальных неписей она удалится на следующем апдейте
-				--log1(" [move_mgr] TRY disabling anomaly "..o.name.." for "..npc:name())
-				local anom = level.object_by_id(o.id)
-				if anom and anom:is_anomaly() and montabl[anom:clsid()] and anom:is_anom_enabled() then
-				-- туду: добавить проверку на включённость
-				-- прописать все нужные секции
-					if anom:section() ~= "zone_flame_small" and
-							anom:section() ~= "zone_burning_fuzz1" and
-							anom:section() ~= "zone_burning_fuzz" and
-							anom:section() ~= "zone_burning_fuzz_weak" and
-							anom:section() ~= "zone_burning_fuzz_average" and
-							anom:section() ~= "zone_burning_fuzz_strong" then
-						anom:disable_anomaly()
-					--olr.add_spot_on_map( anom:id(),"green_location", " movemgr disabled anom - "..anom:name().."" )
-					--news_manager.send_tip(db.actor, "[move_mgr] TRY disabling anomaly "..o.name.." for "..npc:name().."  -- "..npc:character_name().."", nil, "hero", 39000)
-					end
-				end
-			end
-		end
-		for i = 0, pp:count() - 1 do
-			if npc:accessible(pp:level_vertex_id(i)) then
-				return true, ppname
-			end
-		end
-	end
-	return false, ppname
-end
--- Red75 -
-
 -- продолжить движение со следующей точки, а не с ближайшей.
 -- состояние move manager-a не сбрасывается.
 function move_mgr:continue()
@@ -289,57 +257,51 @@ function move_mgr:continue()
 end
 
 function move_mgr:setup_movement_by_patrol_path()
-    -- Red75 --
-    local valid = validate_accessibility(self.object, self.path_walk)
-    if valid then
-        --log1("[move_mgr] - !valid path for - "..self.object:name().." ")
-        self.object:set_path_type(game_object.patrol_path)
-    else
-        log1("[move_mgr] - not valid path for - " .. self.object:name() .. " ")
-        self.object:set_path_type(game_object.level_path)
-    end
-    self.object:set_detail_path_type(move.line)
+	-- Проверяем, принадлежит ли путь текущему уровню
+	local path_on_current_level = self:is_path_on_current_level(self.path_walk)
+	if not path_on_current_level then
+		log_fmt("[move_mgr] Path '%s' not on current level of object '%s', disabling patrol path",
+			self.path_walk, self.object:name())
+		-- Отключаем патрульный путь, чтобы не вызывать ошибки движка
+		self.object:set_path_type(game_object.level_path)
+		-- Можно также сбросить состояние, чтобы объект стоял или переключился на другую схему
+		-- Здесь просто выходим, не устанавливая патрульный путь
+		return
+	end
+	
+	-- Если путь подходит, продолжаем как обычно
+	self.object:set_path_type(game_object.patrol_path)
+	self.object:set_detail_path_type(move.line)
 
-    if valid then
-        if self.current_point_index then
-            self.object:set_start_point(self.current_point_index)
-            self.object:set_patrol_path(self.path_walk, patrol.next, patrol.continue, true)
-        else
-            self.object:set_patrol_path(self.path_walk, patrol.nearest, patrol.continue, true)
-        end
-    else
-        -- путь недоступен. отправляем в ближайшую доступную точку
-        pp = patrol(self.path_walk)
-        if pp and pp:count() > 0 then
-            --log1("[move_mgr] - путь недоступен. отправляем в ближайшую доступную точку - "..self.object:name().." ")
-            utils.send_to_nearest_accessible_vertex(self.object, pp:level_vertex_id(0))
-        end
-    end
-    -- Red75 -
+	if self.current_point_index then
+		self.object:set_start_point(self.current_point_index)
+		self.object:set_patrol_path(self.path_walk, patrol.next,	patrol.continue, true)
+	else
+		self.object:set_patrol_path(self.path_walk, patrol.nearest, patrol.continue, true)
+	end
 
-    self.state = state_moving
+	self.state = state_moving
 
-    local is_term, idx = self:standing_on_terminal_waypoint()
-    if is_term then
-        printf("_bp: object '%s': TERMINAL WAYPOINT", self.object:name())
-        -- Стоим на терминальной вершине пути  - сразу иммитировать прибытие
-        self:waypoint_callback(self.object, nil, idx)
-    else
-        -- Реально идем в вершину
-        self:update_movement_state()
-    end
+	local is_term, idx = self:standing_on_terminal_waypoint()
+	if is_term then
+		printf("_bp: object '%s': TERMINAL WAYPOINT", self.object:name())
+		-- Стоим на терминальной вершине пути  - сразу иммитировать прибытие
+		self:waypoint_callback(self.object, nil, idx)
+	else
+		-- Реально идем в вершину
+		self:update_movement_state()
+	end
 
-    local sect = self.object:section()
+	local sect = self.object:section()
 
-    if self.use_default_sound then
-        self.default_sound = "state"
+	if self.use_default_sound then
+		self.default_sound = "state"
 
-        xr_sound.set_sound(self.object, self.default_sound)
-    else
-        self.default_sound = nil
-    end
+		xr_sound.set_sound(self.object, self.default_sound)
+	else
+		self.default_sound = nil
+	end
 end
-
 
 function move_mgr:arrived_to_first_waypoint()
 	return self.last_index ~= nil
@@ -475,7 +437,7 @@ function move_mgr:scheme_set_signal(sig)
 		local signals = stor[stor.active_scheme].signals
 		if signals ~= nil then
 		   signals[sig] = true
-		end   
+		end	  
 	end	
 end
 
@@ -540,11 +502,10 @@ function move_mgr:turn_end_callback()
 end
 
 function move_mgr:waypoint_callback(obj, action_type, index)
-	local tonum = tonumber
 	printf("move_mgr:waypoint_callback(): name=%s, index=%d", self.object:name(), index)
 	
 	if index == -1 or index == nil then
-		printf(" !ERROR move_mgr: move_mgr: waypoint_callback: index is -1 or nil")
+		printf("ERROR: move_mgr: waypoint_callback: index is -1 or nil")
 		return
 	end
 
@@ -559,7 +520,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 	if suggested_snd then
 		local snd_prob = self.path_walk_info[index]["sp"]
 		if snd_prob then
-			snd_prob = tonum(snd_prob)
+			snd_prob = tonumber(snd_prob)
 		else
 			snd_prob = 100
 		end
@@ -583,7 +544,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 
 	local retv = self.path_walk_info[index]["ret"]
 	if retv then
-		local retv_num = tonum(retv)
+		local retv_num = tonumber(retv)
 		
 		if not self.move_cb_info then
 			abort("object '%s': path_walk '%s': ret flag is set, but " ..
@@ -603,7 +564,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 	local stop_probability = self.path_walk_info[index]["p"]
 	
 	if not self.patrol_look or
-	   (stop_probability and tonum(stop_probability) < math.random(1, 100)) then
+	   (stop_probability and tonumber(stop_probability) < math.random(1, 100)) then
 		self:update_movement_state() -- идти дальше
 		return
 	end
@@ -631,7 +592,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 			if suggested_wait_time == '*' then
 				self.pt_wait_time = nil -- -1
 			else
-				local tm = tonum(suggested_wait_time)
+				local tm = tonumber(suggested_wait_time)
 				if tm ~= 0 and (tm < 1000 or tm > 30000) then
 					abort("object '%s': path_look '%s': flag 't': incorrect time specified (* or number in interval [1000, 30000] is expected)",
 						self.object:name(), self.path_look)
@@ -644,7 +605,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 
 		local retv = self.path_look_info[pt_chosen_idx]["ret"]
 		if retv then
-			self.retval_after_rotation = tonum(retv)
+			self.retval_after_rotation = tonumber(retv)
 		else
 			self.retval_after_rotation = nil
 		end
@@ -654,7 +615,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 			if suggested_snd then
 				local snd_prob = self.path_look_info[pt_chosen_idx]["sp"]
 				if snd_prob then
-					snd_prob = tonum(snd_prob)
+					snd_prob = tonumber(snd_prob)
 				else
 					snd_prob = 100
 				end
@@ -682,4 +643,3 @@ function move_mgr:waypoint_callback(obj, action_type, index)
 			self.object:name(), tostring(self.path_walk), tostring(index), tostring(self.path_look))
 	end
 end
-

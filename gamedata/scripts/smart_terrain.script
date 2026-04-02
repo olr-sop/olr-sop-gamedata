@@ -1194,8 +1194,21 @@ function se_smart_terrain:update()
 
 			-- проверять, не собрался ли кто-то к этому времени уже уходить
 			for id, npc_info in pairs( self.npc_info ) do
-				if npc_info.cond and xr_logic.pick_section_from_condlist( db.actor_proxy, npc_info.se_obj, npc_info.cond ) == nil then
-					printf("[smart_terrain %s] leaving %s", self:name(), npc_info.name)
+				local should_leave = false
+				local reason = ""
+
+				-- Проверка времени пребывания
+				if npc_info.stay_end < game.get_game_time() then
+					should_leave = true
+					reason = "stay time expired"
+				-- Проверка дополнительных условий (если заданы)
+				elseif npc_info.cond and xr_logic.pick_section_from_condlist( db.actor_proxy, npc_info.se_obj, npc_info.cond ) == nil then
+					should_leave = true
+					reason = "condition failed"
+				end
+
+				if should_leave then
+					printf("[smart_terrain %s] %s leaving, reason: %s", self:name(), npc_info.name, reason)
 					self:unregister_npc( npc_info.se_obj )
 				end
 			end

@@ -1,0 +1,25 @@
+#include "common.h"
+
+struct v2p
+{
+	float2 tc0	: TEXCOORD0;		// base0
+	float4 c	: COLOR0;			// color
+	float	fog	: FOG;
+		float3 fog_pos : TEXCOORD6;
+	float	fog_y	: TEXCOORD7;
+};
+
+uniform sampler2D s_base0;
+
+float4 main(v2p I) : COLOR
+{
+	float4 base0 = tex2D(s_base0, I.tc0);
+	float4 base = base0 * I.c;
+
+	float3 color = base * 2 * 0.5;
+	color = r1a_apply_fog(color, distance(I.fog_pos, eye_position), I.fog_y);
+	return float4(color, base.a);
+}
+
+
+

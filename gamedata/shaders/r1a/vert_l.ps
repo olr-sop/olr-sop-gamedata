@@ -1,0 +1,22 @@
+#include "common.h"
+
+struct 	v2p
+{
+  	float4	c0:	COLOR0;
+	float	fog:	FOG;
+		float3 fog_pos : TEXCOORD6;
+	float	fog_y:	TEXCOORD7;
+};
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+float4 	main	( v2p I )	: COLOR
+{
+	float4 color = I.c0;
+	color.rgb = r1a_apply_fog(color.rgb, distance(I.fog_pos, eye_position), I.fog_y);
+	return color;
+}
+
+
+

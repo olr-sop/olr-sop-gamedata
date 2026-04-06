@@ -1,0 +1,64 @@
+#include "common.h"
+
+struct v2p
+{
+	float2 tc0 : TEXCOORD0;
+};
+
+uniform sampler2D s_image;
+uniform float4 c_bloom_params;
+uniform float4 c_bloom_params2;
+
+float3 sample_scene(float2 uv)
+{
+	return tex2D(s_image, uv).rgb;
+}
+
+float3 apply_antiflicker(float2 uv, float mode, float strength)
+{
+	float2 texel = c_bloom_params2.xy;
+	float3 c = sample_scene(uv);
+
+	float3 cx = sample_scene(uv + float2(texel.x, 0.0f));
+	float3 cy = sample_scene(uv + float2(-texel.x, 0.0f));
+	float3 cz = sample_scene(uv + float2(0.0f, texel.y));
+	float3 cw = sample_scene(uv + float2(0.0f, -texel.y));
+
+	float3 avg4 = (cx + cy + cz + cw) * 0.25f;
+
+	// Kino-like: preserve detail with neighborhood clamp
+	float3 nmin = min(min(cx, cy), min(cz, cw));
+	float3 nmax = max(max(cx, cy), max(cz, cw));
+	float3 clamped = clamp(c, nmin, nmax);
+
+	float aw_mode = step(0.5f, mode) * (1.0f - step(1.5f, mode));
+	float kino_mode = step(1.5f, mode);
+	float s = saturate(strength);
+
+	float3 aw_value = lerp(c, (c + avg4) * 0.5f, s);
+	float3 kino_value = lerp(c, clamped, s);
+
+	float3 out_color = c;
+	out_color = lerp(out_color, aw_value, aw_mode);
+	out_color = lerp(out_color, kino_value, kino_mode);
+	return out_color;
+}
+
+float4 main(v2p I) : COLOR
+{
+	float3 color = tex2D(s_image, I.tc0).rgb;
+	float threshold = c_bloom_params.x;
+	float soft = max(c_bloom_params.y, 0.001f);
+	float mode = c_bloom_params2.z;
+	float strength = saturate(c_bloom_params2.w);
+
+	color = apply_antiflicker(I.tc0, mode, strength);
+
+	float lum = dot(color, float3(0.30f, 0.59f, 0.11f));
+	float t0 = threshold - soft;
+	float t1 = threshold + soft;
+	float mask = smoothstep(t0, t1, lum);
+	mask *= mask;
+
+	return float4(color * mask, 1.0f);
+}

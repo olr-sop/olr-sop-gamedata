@@ -1,0 +1,41 @@
+#include "common.h"
+
+struct v2p
+{
+	float2 tc0 : TEXCOORD0;
+};
+
+uniform sampler2D s_image;
+uniform float4 c_blur_dir;
+
+float4 main(v2p I) : COLOR
+{
+	float2 d = c_blur_dir.xy;
+	float quality = c_blur_dir.z;
+	float3 c = tex2D(s_image, I.tc0).rgb * 0.2013f;
+	c += tex2D(s_image, I.tc0 + d * 1.3366f).rgb * 0.2185f;
+	c += tex2D(s_image, I.tc0 - d * 1.3366f).rgb * 0.2185f;
+	c += tex2D(s_image, I.tc0 + d * 3.4295f).rgb * 0.0821f;
+	c += tex2D(s_image, I.tc0 - d * 3.4295f).rgb * 0.0821f;
+	c += tex2D(s_image, I.tc0 + d * 5.4264f).rgb * 0.0461f;
+	c += tex2D(s_image, I.tc0 - d * 5.4264f).rgb * 0.0461f;
+	c += tex2D(s_image, I.tc0 + d * 7.4359f).rgb * 0.0262f;
+	c += tex2D(s_image, I.tc0 - d * 7.4359f).rgb * 0.0262f;
+	c += tex2D(s_image, I.tc0 + d * 9.4436f).rgb * 0.0162f;
+	c += tex2D(s_image, I.tc0 - d * 9.4436f).rgb * 0.0162f;
+	c += tex2D(s_image, I.tc0 + d * 11.4401f).rgb * 0.0102f;
+	c += tex2D(s_image, I.tc0 - d * 11.4401f).rgb * 0.0102f;
+
+	if (quality > 0.5f)
+	{
+		c += tex2D(s_image, I.tc0 + d * 13.4366f).rgb * 0.0070f;
+		c += tex2D(s_image, I.tc0 - d * 13.4366f).rgb * 0.0070f;
+		c += tex2D(s_image, I.tc0 + d * 15.4366f).rgb * 0.0040f;
+		c += tex2D(s_image, I.tc0 - d * 15.4366f).rgb * 0.0040f;
+		c += tex2D(s_image, I.tc0 + d * 17.4366f).rgb * 0.0020f;
+		c += tex2D(s_image, I.tc0 - d * 17.4366f).rgb * 0.0020f;
+		c *= (1.0f / 1.026f);
+	}
+
+	return float4(c, 1.0f);
+}

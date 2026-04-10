@@ -1,0 +1,23 @@
+function l_special	(shader, t_base, t_second, t_detail)
+	shader:begin	("lod","lod")
+			: blend	(false, blend.one, blend.zero)
+			: aref	(true,  128)
+			: zb	(true,  true)
+			: fog	(true)
+	shader:sampler	("s_base0")      :texture	(t_base)
+--	shader:sampler	("s_base1")      :texture	(t_base)
+--	shader:sampler	("s_hemi0")      :texture	(t_base .. "_nm")
+--	shader:sampler	("s_hemi1")      :texture	(t_base .. "_nm")
+end
+
+function normal		(shader, t_base, t_second, t_detail)
+	shader:begin	("lod","lod")
+			: blend	(true,blend.one,blend.zero)
+			: aref	(true,128)
+			: zb	(true,false)
+			: fog	(true)
+	shader:sampler	("s_base0")      :texture	(t_base)
+--	shader:sampler	("s_base1")      :texture	(t_base)
+--	shader:sampler	("s_hemi0")      :texture	(t_base .. "_nm")
+--	shader:sampler	("s_hemi1")      :texture	(t_base .. "_nm")
+end

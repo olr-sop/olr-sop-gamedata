@@ -1,0 +1,63 @@
+// PS1 Post-processing (https://godotshaders.com/shader/ps1-post-processing/)
+// Автор: Mighty Duke
+// Порт на хрей: theysani, дипсик, чатгпт
+
+#include "common.h"
+
+struct v2p {
+    float2 tc0 : TEXCOORD0;
+    float4 HPos : POSITION;
+};
+
+uniform sampler2D s_image : register(s0);        // исходный экранный рендер-таргет
+uniform float4 screen_res : register(c0);        // (width, height, 1/width, 1/height)
+uniform float4 inv_shift : register(c1);         // 1 / 2^(8 - color_depth)
+uniform float4 inv_max : register(c2);           // 1 / 2^color_depth
+uniform float4 res_scale : register(c3);         // resolution_scale для изображения (>0)
+uniform float4 dither_scale : register(c4);      // resolution_scale для дизеринга (>0)
+uniform float4 inv_res_scale : register(c5);     // 1 / res_scale
+uniform float4 inv_dither_scale : register(c6);  // 1 / dither_scale
+uniform float4 dithering : register(c7);         // 1.0 – вкл., 0.0 – выкл.
+
+// ---
+// Доступные консольные команды для контроля
+// rs_retromode_resolution_scale - Принимает значение от 1 до 8
+// rs_retromode_dithering - Принимает 0 или 1
+// rs_retromode_color_depth -- Принимание от 1 до 8
+// Информация про color_depth и его команду rs_retromode_color_depth которая используется для расчёта inv_shift и inv_max
+// Уменьшить глубину цвета до X бит на цвет. PS1 поддерживала множество режимов, в том числе 24 - битный(8 бит на цвет) и 15 - битный(5 бит на цвет); 
+// Последний(5 бит на цвет) использовался в большинстве 3D - игр и являлся режимом по умолчанию.
+
+static const float dither_pattern[16] = {
+    -4.0, 0.0, -3.0, 1.0,
+    2.0, -2.0, 3.0, -1.0,
+    -3.0, 1.0, -4.0, 0.0,
+    3.0, -1.0, 2.0, -2.0
+};
+
+float4 main(v2p I) : COLOR {
+    // Координаты пикселя
+    float2 px = I.tc0 * screen_res.xy;                  // 2 mul
+
+    // --- Понижение разрешения ---
+    float2 block = floor(px * inv_res_scale.x);         // 2 mul + 2 floor
+    float2 uv = (block * res_scale.x + 0.5) * screen_res.zw; // 2 mul + 2 add + 2 mul
+    float3 color = tex2D(s_image, uv).rgb;
+
+    // --- Квантование цвета до 0..255 ---
+    float3 c = floor(color * 255.0 + 0.5);             // 3 mul + 3 add + 3 floor
+
+    // --- Дизеринг 4x4 без mod ---
+    float2 dblock = floor(px * inv_dither_scale.x);    // 2 mul + 2 floor
+    float dx = dblock.x - floor(dblock.x / 4.0) * 4.0; // x % 4
+    float dy = dblock.y - floor(dblock.y / 4.0) * 4.0; // y % 4
+    float idx = dy * 4.0 + dx;                         // индекс в массиве
+    float d = dither_pattern[int(idx)] * dithering.x;  // 1 mul
+    c += d;                                            // 3 add
+
+    // --- Квантование и нормализация ---
+    c = floor(c * inv_shift.x) * inv_max.x;           // 3 mul + 3 floor + 3 mul
+
+    return float4(c, 1.0);
+}
+

@@ -1722,9 +1722,28 @@ end
 function init_game_time_base()
 	local t = amk.str_explode(":", system_ini():r_string("alife", "start_time"), true)
 	local d = amk.str_explode(".", system_ini():r_string("alife", "start_date"), true)
+	
+	--log1("=== INIT GAME TIME BASE ===")
+	--log1("Config start_time: " .. system_ini():r_string("alife", "start_time"))
+	--log1("Config start_date: " .. system_ini():r_string("alife", "start_date"))
+	--log1("Parsed time parts: t[1]="..t[1]..", t[2]="..t[2]..", t[3]="..t[3])
+	--log1("Parsed date parts: d[1]="..d[1]..", d[2]="..d[2]..", d[3]="..d[3])
+	
 	db.game_start_time = game.CTime()
-	--/ формат установки времени = (Y,M,D, h,m,s,ms)
-	db.game_start_time:set(tonumber(d[3]),tonumber(d[2]),tonumber(d[1]), tonumber(t[3]),tonumber(t[2]),tonumber(t[1]),0)	
+	-- ѕравильный пор€док: year, month, day, hour, min, sec, ms
+	db.game_start_time:set(
+		tonumber(d[3]),	 -- year
+		tonumber(d[2]),	 -- month
+		tonumber(d[1]),	 -- day
+		tonumber(t[1]),	 -- hour
+		tonumber(t[2]),	 -- min
+		tonumber(t[3]),	 -- sec
+		0				 -- ms
+	)
+	
+	--local y,m,d_,h,min,s,ms = db.game_start_time:get()
+	--log1(string.format("db.game_start_time set to: %04d-%02d-%02d %02d:%02d:%02d.%03d", y, m, d_, h, min, s, ms))
+	--log1("============================")
 end
 
 -- ѕолучение текущего игрового времени в минутах

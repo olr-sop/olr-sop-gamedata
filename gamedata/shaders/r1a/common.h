@@ -55,6 +55,10 @@ float3	r1a_apply_fog(float3 color, float fog_distance, float fog_y)
 {
 	return lerp(color, fog_color.rgb, r1a_fog_factor(fog_distance, fog_y));
 }
+float	r1a_fog_visibility(float fog_distance, float fog_y)
+{
+	return 1.0f - r1a_fog_factor(fog_distance, fog_y);
+}
 float2 	calc_detail 	(float3 w_pos)	{ 
 	float  	dtl	= distance(w_pos,eye_position)*dt_params.w;
 		dtl	= min(dtl*dtl, 1);
@@ -72,7 +76,8 @@ float4	calc_spot 	(out float4 tc_lmap, out float2 tc_att, float4 w_pos, float3 w
 	tc_att 		= s_pos.z;			// z=distance * (1/range)
 	float3 	L_dir_n = normalize	(w_pos - L_dynamic_pos.xyz);
 	float 	L_scale	= dot(w_norm,-L_dir_n);
-	return 	L_dynamic_color*L_scale*saturate(calc_fogging(w_pos));
+	float 	fog_vis = r1a_fog_visibility(distance(w_pos.xyz, eye_position), w_pos.y);
+	return 	L_dynamic_color*L_scale*fog_vis;
 }
 float4	calc_point 	(out float2 tc_att0, out float2 tc_att1, float4 w_pos, float3 w_norm)	{
 	float3 	L_dir_n = normalize	(w_pos - L_dynamic_pos.xyz);
@@ -80,7 +85,8 @@ float4	calc_point 	(out float2 tc_att0, out float2 tc_att1, float4 w_pos, float3
 	float3	L_tc 	= (w_pos - L_dynamic_pos.xyz) * L_dynamic_pos.w + .5f;	// tc coords
 	tc_att0		= L_tc.xz;
 	tc_att1		= L_tc.xy;
-	return 	L_dynamic_color*L_scale*saturate(calc_fogging(w_pos));
+	float 	fog_vis = r1a_fog_visibility(distance(w_pos.xyz, eye_position), w_pos.y);
+	return 	L_dynamic_color*L_scale*fog_vis;
 }
 float3	calc_sun		(float3 norm_w)	{ return L_sun_color*max(dot((norm_w),-L_sun_dir_w),0); 		}
 float3 	calc_model_hemi 	(float3 norm_w)	{ return (norm_w.y*0.5+0.5)*L_dynamic_props.w*L_hemi_color; 		}

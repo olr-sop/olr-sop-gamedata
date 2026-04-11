@@ -2,9 +2,10 @@
 
 struct 	v2p
 {
- 	float2 	tc0	: 	TEXCOORD0;	// base
+  	float2 	tc0	: 	TEXCOORD0;	// base
 	float4	c	:	COLOR0;		// diffuse
 	float	fog	:	FOG;
+	float3 fog_pos : TEXCOORD6;
 	float	fog_y	:	TEXCOORD7;
 };
 
@@ -14,7 +15,7 @@ struct 	v2p
 float4 	main	( v2p I )	: COLOR
 {
 	float result = I.c.a * tex2D(s_base,I.tc0).a;
-	float fog = 1.0f - r1a_fog_factor(I.fog, I.fog_y);
+	float fog = 1.0f - r1a_fog_factor(I.fog, I.fog_y, I.fog_pos);
 	fog *= fog;
 	return result * fog;
 }

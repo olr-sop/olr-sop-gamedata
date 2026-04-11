@@ -11,6 +11,7 @@ uniform float4		timers;
 uniform float4		fog_plane;
 uniform float4		fog_params;		// x=near*(1/(far-near)), ?,?, w = -1/(far-near)
 uniform float4		fog_color;
+uniform sampler2D	r1a_fog_sky_lut : register(s10);
 uniform float3		L_sun_color;
 uniform float3		L_sun_dir_w;
 uniform float3		L_sun_dir_e;

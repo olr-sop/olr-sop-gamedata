@@ -15,11 +15,7 @@ struct v2p {
 v2p main(v I) {
     v2p O;
     // Half-pixel offset делается здесь
-    O.HPos = float4(
-        (I.P.x + 0.5) * screen_res.z * 2 - 1,  // x
-        1 - (I.P.y + 0.5) * screen_res.w * 2,  // y (инверсия)
-        0, 1
-    );
+    O.HPos = float4((I.P.x + 0.5) * screen_res.z * 2 - 1, 1 - (I.P.y + 0.5) * screen_res.w * 2, 0, 1);
     O.tc0 = I.tc0;
     return O;
 }

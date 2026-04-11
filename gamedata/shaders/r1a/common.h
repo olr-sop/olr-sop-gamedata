@@ -10,54 +10,56 @@ uniform float4x4 	L_dynamic_xform;
 
 uniform float4x4	m_plmap_xform;
 uniform float4 		m_plmap_clamp	[2];	// 0.w = factor
-uniform float4		r1a_fog_params;	// x=mode(0..3), y=exp density, z=exp2 density, w=reserved
-uniform float4		r1a_fog_height;	// x=height level, y=height density, z,w reserved
+uniform float4		r1a_fog_params;	// w=height fog max density (x,y,z reserved)
+uniform float4		r1a_fog_height;	// x=height level, y=height density, z=tilt_x, w=tilt_z
+uniform float4		r1a_mipfog_params;	// x=enable, y=near_to_detail_start, z=directional_amount, w=reserved
+uniform float4		r1a_fog_volume_params;	// x=volume density scale
 
 float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
-float		r1a_fog_factor(float fog_distance, float fog_y)
+float		r1a_fog_factor(float fog_distance, float fog_y, float3 fog_pos)
 {
 	float linear_fog = saturate(fog_distance * fog_params.w + fog_params.x);
-	float result_fog = linear_fog;
+	return linear_fog;
+}
+
+float		r1a_height_fog_factor(float3 fog_pos, float fog_y)
+{
+	float plane_height = r1a_fog_height.x + fog_pos.x * r1a_fog_height.z + fog_pos.z * r1a_fog_height.w;
+	float height_fog = saturate((plane_height - fog_y) * r1a_fog_height.y);
+	return min(height_fog, saturate(r1a_fog_params.w));
+}
+
+float3	r1a_fog_color(float3 fog_pos, float fog_distance, float fog_y)
+{
+	float3 fog_target = fog_color.rgb;
 
 #ifdef R1A
-	float mode = r1a_fog_params.x;
-	float height_fog = saturate((r1a_fog_height.x - fog_y) * r1a_fog_height.y);
+	if (r1a_mipfog_params.x > 0.5f)
+	{
+		float4 clip = mul(m_VP, float4(fog_pos, 1.0f));
+		float inv_w = 1.0f / max(abs(clip.w), 1e-4f);
+		float2 ndc = clip.xy * inv_w;
+		float2 uv = float2(ndc.x * 0.5f + 0.5f, 0.5f - ndc.y * 0.5f);
+		uv = saturate(uv);
 
-	if (mode < 0.5f)
-	{
-		// 0: linear
-		result_fog = linear_fog;
-	}
-	else if (mode < 1.5f)
-	{
-		// 1: linear + height
-		result_fog = max(linear_fog, height_fog);
-	}
-	else if (mode < 2.5f)
-	{
-		// 2: exp2
-		float d = linear_fog * r1a_fog_params.z;
-		result_fog = saturate(1.0f - exp(-(d * d)));
-	}
-	else
-	{
-		// 3: exp2 + height
-		float d = linear_fog * r1a_fog_params.z;
-		float exp2_fog = saturate(1.0f - exp(-(d * d)));
-		result_fog = max(exp2_fog, height_fog);
+		float linear_fog = saturate(fog_distance * fog_params.w + fog_params.x);
+		float detail_t = saturate((linear_fog - r1a_mipfog_params.y) / max(1.0f - r1a_mipfog_params.y, 1e-3f));
+		float3 directional_fog = tex2D(r1a_fog_sky_lut, uv).rgb;
+		fog_target = lerp(fog_color.rgb, directional_fog, detail_t * r1a_mipfog_params.z);
 	}
 #endif
 
-	return result_fog;
+	return fog_target;
 }
 
-float3	r1a_apply_fog(float3 color, float fog_distance, float fog_y)
+float3	r1a_apply_fog(float3 color, float3 fog_pos, float fog_distance, float fog_y)
 {
-	return lerp(color, fog_color.rgb, r1a_fog_factor(fog_distance, fog_y));
+	float3 fog_target = r1a_fog_color(fog_pos, fog_distance, fog_y);
+	return lerp(color, fog_target, r1a_fog_factor(fog_distance, fog_y, fog_pos));
 }
-float	r1a_fog_visibility(float fog_distance, float fog_y)
+float	r1a_fog_visibility(float fog_distance, float fog_y, float3 fog_pos)
 {
-	return 1.0f - r1a_fog_factor(fog_distance, fog_y);
+	return 1.0f - r1a_fog_factor(fog_distance, fog_y, fog_pos);
 }
 float2 	calc_detail 	(float3 w_pos)	{ 
 	float  	dtl	= distance(w_pos,eye_position)*dt_params.w;
@@ -76,7 +78,7 @@ float4	calc_spot 	(out float4 tc_lmap, out float2 tc_att, float4 w_pos, float3 w
 	tc_att 		= s_pos.z;			// z=distance * (1/range)
 	float3 	L_dir_n = normalize	(w_pos - L_dynamic_pos.xyz);
 	float 	L_scale	= dot(w_norm,-L_dir_n);
-	float 	fog_vis = r1a_fog_visibility(distance(w_pos.xyz, eye_position), w_pos.y);
+	float 	fog_vis = r1a_fog_visibility(distance(w_pos.xyz, eye_position), w_pos.y, w_pos.xyz);
 	return 	L_dynamic_color*L_scale*fog_vis;
 }
 float4	calc_point 	(out float2 tc_att0, out float2 tc_att1, float4 w_pos, float3 w_norm)	{
@@ -85,7 +87,7 @@ float4	calc_point 	(out float2 tc_att0, out float2 tc_att1, float4 w_pos, float3
 	float3	L_tc 	= (w_pos - L_dynamic_pos.xyz) * L_dynamic_pos.w + .5f;	// tc coords
 	tc_att0		= L_tc.xz;
 	tc_att1		= L_tc.xy;
-	float 	fog_vis = r1a_fog_visibility(distance(w_pos.xyz, eye_position), w_pos.y);
+	float 	fog_vis = r1a_fog_visibility(distance(w_pos.xyz, eye_position), w_pos.y, w_pos.xyz);
 	return 	L_dynamic_color*L_scale*fog_vis;
 }
 float3	calc_sun		(float3 norm_w)	{ return L_sun_color*max(dot((norm_w),-L_sun_dir_w),0); 		}

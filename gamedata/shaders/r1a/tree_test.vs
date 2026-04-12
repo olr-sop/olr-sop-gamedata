@@ -13,8 +13,7 @@ struct vf
 	float3 COL0	: COLOR0;
 	float2 TEX0	: TEXCOORD0;
 	float  fog	: FOG;
-		float3 fog_pos : TEXCOORD6;
-	float  fog_y : TEXCOORD7;
+	float3 fog_pos : TEXCOORD6;
 };
 
 uniform float3x4	m_xform;
@@ -41,11 +40,6 @@ vf main (av v)
 	float2 	result	= calc_xz_wave	(wind.xz*inten, frac);
 	float4 	f_pos 	= float4(pos,1);
 
-	// Calc fog
-	o.fog_pos = (f_pos).xyz;
-	o.fog_y = (f_pos).y;
-	o.fog   = distance((f_pos).xyz, eye_position);
-
 	// Final xform
 #ifdef RETRO_MODE
 	o.HPOS = snap_to_position(mul(m_VP, f_pos));
@@ -65,6 +59,8 @@ vf main (av v)
 
 	// final xform, color, tc
 	o.TEX0.xy	= (v.misc * consts).xy;
+	o.fog		= calc_fogging	(f_pos);
+	o.fog_pos	= f_pos.xyz;
 
 	return o;
 }

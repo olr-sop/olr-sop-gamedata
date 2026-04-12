@@ -7,11 +7,10 @@ struct 	v2p
   	float3	c0:		COLOR0;		// sun
   	float4	c1:		COLOR1;		// lq-color + factor
 	float	fog:		FOG;
-		float3 fog_pos : TEXCOORD6;
-	float	fog_y:		TEXCOORD7;
-};
+ 		float3 fog_pos : TEXCOORD6;
+ };
 
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
 float4 	main ( v2p I )	: COLOR
 {
@@ -25,7 +24,7 @@ float4 	main ( v2p I )	: COLOR
 
 	// final-color
 	float3	final 	= light*t_base*2;
-	final			= r1a_apply_fog(final, I.fog_pos, distance(I.fog_pos, eye_position), I.fog_y);
+	final			= r1a_apply_fog(final, I.fog_pos);
 
 	// out
 	return  float4	(final.r,final.g,final.b,t_base.a);

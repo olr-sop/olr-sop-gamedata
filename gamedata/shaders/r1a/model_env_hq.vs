@@ -12,8 +12,7 @@ struct vf
 	float3 c0	: COLOR0;		// sun-color
 	float4 c1	: COLOR1;		// lq-color + factor
 	float  fog	: FOG;
-		float3 fog_pos : TEXCOORD6;
-	float  fog_y : TEXCOORD7;
+	float3 fog_pos : TEXCOORD6;
 };
 
 vf 	_main (v_model v)
@@ -36,9 +35,9 @@ vf 	_main (v_model v)
 	o.tc2		= calc_model_lmap	(pos_w);		// 
 	o.c0 		= calc_sun		(norm_w);  		// sun
 	o.c1 		= float4		(calc_model_lq_lighting(norm_w),m_plmap_clamp[0].w);
-	o.fog_pos = (pos_w4).xyz;
-	o.fog_y = (pos_w4).y;
-	o.fog   = distance((pos_w4).xyz, eye_position);		// fog, input in world coords
+	o.fog		= calc_fogging	(pos_w4);
+	o.fog_pos	= pos_w;
+
 #ifdef SKIN_COLOR
 	o.c1.rgb	*= v.rgb_tint;
 	o.c1.w		= 1;

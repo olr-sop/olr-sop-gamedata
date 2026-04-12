@@ -8,8 +8,7 @@ struct vf
 	float3 c0	: COLOR0;		// c0=hemi, 			c0.a = dt*
 	float3 c1	: COLOR1;		// c1=sun,			c1.a = dt+
 	float  fog	: FOG;
-		float3 fog_pos : TEXCOORD6;
-	float  fog_y : TEXCOORD7;
+	float3 fog_pos : TEXCOORD6;
 };
 
 vf main (v_lmap v)
@@ -21,16 +20,15 @@ vf main (v_lmap v)
 #ifdef RETRO_MODE
 	o.hpos = snap_to_position(mul(m_VP, v.P));
 #else	
-	o.hpos = mul(m_VP, v.P); // xform, input in world coords
+	o.hpos = mul(m_VP, v.P);
 #endif
 	
-	o.tc0		= unpack_tc_base	(v.uv0,v.T.w,v.B.w);		// copy tc
-	o.tc1		= o.tc0;						// copy tc
-	o.c0		= v_hemi		(N);				// hemi
-	o.c1 		= v_sun			(N);  				// sun
-	o.fog_pos = (v.P).xyz;
-	o.fog_y = (v.P).y;
-	o.fog   = distance((v.P).xyz, eye_position);				// fog, input in world coords
+	o.tc0		= unpack_tc_base	(v.uv0,v.T.w,v.B.w);
+	o.tc1		= o.tc0;
+	o.c0		= v_hemi		(N);
+	o.c1 		= v_sun			(N);
+	o.fog		= calc_fogging	(v.P);
+	o.fog_pos	= v.P.xyz;
 
 	return o;
 }

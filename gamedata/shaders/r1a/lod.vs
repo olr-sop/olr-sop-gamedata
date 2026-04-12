@@ -15,8 +15,7 @@ struct vf
 	float2 tc0		: TEXCOORD0;		// base0
 	float4 c		: COLOR0;			// color.alpha
 	float  fog		: FOG;
-		float3 fog_pos : TEXCOORD6;
-	float  fog_y : TEXCOORD7;
+	float3 fog_pos	: TEXCOORD6;
 };
 
 #define L_SCALE		(1.55)
@@ -49,9 +48,8 @@ vf main (vv v)
 	float3 L_final = L_rgb + L_hemi + L_sun + L_ambient;
 
 	o.c = float4(L_final, v.sun_af.z);
-	o.fog_pos = (pos).xyz;
-	o.fog_y = (pos).y;
-	o.fog   = distance((pos).xyz, eye_position);
+	o.fog		= calc_fogging	(pos);
+	o.fog_pos	= pos.xyz;
 
 	return o;
 }

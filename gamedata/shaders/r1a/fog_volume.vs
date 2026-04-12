@@ -3,9 +3,9 @@
 struct vf
 {
 	float4 hpos	: POSITION;
+	float  fog	: FOG;
 	float3 fog_pos : TEXCOORD6;
 	float  fog_y   : TEXCOORD7;
-	float  fog	: FOG;
 };
 
 vf main(v_vert v)
@@ -18,9 +18,9 @@ vf main(v_vert v)
 	o.hpos = mul(m_WVP, v.P);
 #endif
 
+	o.fog = calc_fogging(v.P);
 	o.fog_pos = v.P.xyz;
 	o.fog_y = v.P.y;
-	o.fog = distance(v.P.xyz, eye_position);
 
 	return o;
 }

@@ -7,8 +7,7 @@ struct vf
 	float2 tc0	: TEXCOORD0;
 	float3 c0	: COLOR0;		// c0=all lighting
 	float  fog	: FOG;
-		float3 fog_pos : TEXCOORD6;
-	float  fog_y : TEXCOORD7;
+	float3 fog_pos : TEXCOORD6;
 };
 
 vf main (v_vert v)
@@ -17,6 +16,8 @@ vf main (v_vert v)
 
 	float3 	N 	= 	unpack_normal	(v.N);
 	float4 	P 	= 	wmark_shift		(v.P,N);
+	float4	P_w4	= mul			(m_W, P);
+	float3	pos_w	= P_w4.xyz;
 	
 #ifdef RETRO_MODE
 	o.hpos = snap_to_position(mul(m_VP, P));
@@ -32,9 +33,8 @@ vf main (v_vert v)
 	float3 		L_final	= L_rgb + L_hemi + L_sun + L_ambient;
 
 	o.c0		= 	L_final;
-	o.fog_pos = (P).xyz;
-	o.fog_y = (P).y;
-	o.fog   = distance((P).xyz, eye_position);				// fog, input in world coords
+	o.fog		= 	calc_fogging	(P_w4);
+	o.fog_pos	= 	pos_w;
 
 	return o;
 }

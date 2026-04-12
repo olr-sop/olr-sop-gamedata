@@ -13,7 +13,6 @@ struct vf
 	float4 c	: COLOR0;
 	float  fog	: FOG;
 	float3 fog_pos : TEXCOORD6;
-	float  fog_y : TEXCOORD7;
 };
 
 vf main (vv v)
@@ -28,9 +27,9 @@ vf main (vv v)
 	
 	o.tc		= v.tc;				// copy tc
 	o.c		= v.c;				// copy color
-	o.fog_pos = (v.P).xyz;
-	o.fog_y = (v.P).y;
-	o.fog   = distance((v.P).xyz, eye_position);		// fog, input in world coords
+	o.fog		= saturate(calc_fogging(float4(v.P.xyz, 1.0f)));
+	o.fog_pos	= v.P.xyz;
+	o.c.w		*= o.fog;
 
 	return o;
 }

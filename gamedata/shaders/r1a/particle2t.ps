@@ -5,9 +5,7 @@ struct   v2p
    float2   tc0  :   TEXCOORD0;  // base
    float2   tc1  :   TEXCOORD1;  // another
   float4  c  :  COLOR0;    // diffuse
-	float	fog	:	FOG;
-	float3 fog_pos : TEXCOORD6;
-	float	fog_y	:	TEXCOORD7;
+	float3	fog_pos	:	TEXCOORD6;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -19,10 +17,8 @@ float4   main  ( v2p I )  : COLOR
 	 float4 grad = tex2D(s_another,I.tc1);
 	 float3 mult = base*grad*2;
 	  float3 color = lerp(base,mult,grad.w);
-	  float fog = 1.0f - r1a_fog_factor(I.fog, I.fog_y, I.fog_pos);
-	  fog *= fog;
-	  color *= fog;
-	  return  float4(color, fog);
+	  color = r1a_apply_fog(color, I.fog_pos);
+	  return  float4(color, grad.w);
 }
 
 

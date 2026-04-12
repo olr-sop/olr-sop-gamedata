@@ -5,8 +5,6 @@ struct 	v2p
   	float2 	tc0	: 	TEXCOORD0;	// base
 	float4	c	:	COLOR0;		// diffuse
 	float	fog	:	FOG;
-	float3 fog_pos : TEXCOORD6;
-	float	fog_y	:	TEXCOORD7;
 };
 
 
@@ -16,10 +14,8 @@ uniform sampler s_distort;
 float4 	main	( v2p I )	: COLOR
 {
 	float4	distort	= tex2D		(s_distort,I.tc0);
-	float    factor	= distort.a * dot(I.c.rgb,0.33h);
-	float fog = 1.0f - r1a_fog_factor(I.fog, I.fog_y, I.fog_pos);
-	fog *= fog;
-	return	float4	(distort.rgb * fog, factor * fog);
+	float    factor	= distort.a * dot(I.c.rgb,0.33h) * I.fog;
+	return	float4	(distort.rgb, factor);
 }
 
 

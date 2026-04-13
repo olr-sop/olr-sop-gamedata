@@ -21,6 +21,9 @@ float4	main	( v2p I )	: COLOR
 	float3	s0	= texCUBE(s_sky0, reflected_tc0);
 	float3	s1	= texCUBE(s_sky1, reflected_tc1);
 	float3	sky	= I.factor * lerp(s0, s1, I.factor.w) * 2;
+	float immersion = r1a_hfog_immersion_eye();
+	float3 hfog_color = lerp(r1a_hfog_color.rgb, fog_color.rgb, r1a_hfog_color.w);
+	sky = lerp(sky, hfog_color, immersion);
 
 	return float4(sky, 1);
 }

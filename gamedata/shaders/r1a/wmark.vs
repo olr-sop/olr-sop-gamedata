@@ -16,8 +16,6 @@ vf main (v_vert v)
 
 	float3 	N 	= 	unpack_normal	(v.N);
 	float4 	P 	= 	wmark_shift		(v.P,N);
-	float4	P_w4	= mul			(m_W, P);
-	float3	pos_w	= P_w4.xyz;
 	
 #ifdef RETRO_MODE
 	o.hpos = snap_to_position(mul(m_VP, P));
@@ -33,8 +31,8 @@ vf main (v_vert v)
 	float3 		L_final	= L_rgb + L_hemi + L_sun + L_ambient;
 
 	o.c0		= 	L_final;
-	o.fog		= 	calc_fogging	(P_w4);
-	o.fog_pos	= 	pos_w;
+	o.fog		= 	calc_fogging	(P);
+	o.fog_pos	= 	v.P.xyz;
 
 	return o;
 }

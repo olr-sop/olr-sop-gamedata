@@ -15,8 +15,8 @@ uniform float4		r1a_fog_height;	// x=height level, y=height density, z,w reserve
 uniform float4		r1a_hfog_color;	// xyz=height fog color, w=blend to fog_color in distance
 uniform float4		r1a_hfog_dist;	// x=color dist start (in linear fog), y=1/range, z=emitter_mul
 uniform float4		r1a_hfog_emitter_bb;	// x=minX, y=minZ, z=maxX, w=maxZ
-uniform float4		r1a_hfog_emitter_params;	// x=enable, y=edge
-uniform float4		r1a_hfog_emitter_height;	// x=minY, y=rangeY, z=signed_distance_range
+uniform float4		r1a_hfog_emitter_params;	// x=enable, y=edge, z=texel_world, w=packed8_flag
+uniform float4		r1a_hfog_emitter_height;	// x=minY, y=rangeY, z=signed_distance_range, w=reserved
 uniform float4		r1a_mipfog_params;	// x=enable, y=near_to_detail_start, z=directional_amount, w=reserved
 
 float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
@@ -59,9 +59,16 @@ float3	r1a_apply_fog(float3 color, float3 fog_pos)
 		float2 span = float2(max(r1a_hfog_emitter_bb.z - r1a_hfog_emitter_bb.x, 0.01f), max(r1a_hfog_emitter_bb.w - r1a_hfog_emitter_bb.y, 0.01f));
 		float2 uv = float2((fog_pos.x - r1a_hfog_emitter_bb.x) / span.x, (fog_pos.z - r1a_hfog_emitter_bb.y) / span.y);
 		float4 m = tex2D(r1a_hfog_emitter_mask, uv);
+		if (r1a_hfog_emitter_params.w > 0.5f)
+		{
+			const float deband = 0.5f / 255.0f;
+			m.r = saturate(m.r + deband);
+			m.g = saturate(m.g + deband);
+		}
 		float signed_dist = (m.r * 2.0f - 1.0f) * max(r1a_hfog_emitter_height.z, 0.01f);
-		float edge = max(r1a_hfog_emitter_params.y, 0.05f);
-		emitter_mask = saturate((signed_dist + edge) / edge);
+		float edge = max(r1a_hfog_emitter_params.y, r1a_hfog_emitter_params.z * 1.5f);
+		edge = max(edge, 0.05f);
+		emitter_mask = smoothstep(-edge * 1.5f, edge * 0.5f, signed_dist);
 		height_level = r1a_hfog_emitter_height.x + m.g * r1a_hfog_emitter_height.y;
 	}
 

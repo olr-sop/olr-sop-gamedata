@@ -10,9 +10,13 @@ uniform float4x4 	L_dynamic_xform;
 
 uniform float4x4	m_plmap_xform;
 uniform float4 		m_plmap_clamp	[2];	// 0.w = factor
-uniform float4		r1a_fog_params;	// x=near start, y=1/(near_end-near_start), z=immersion, w=max density
+uniform float4		r1a_fog_params;	// x=near start, y=1/(near_end-near_start), z=near curve, w=max density
 uniform float4		r1a_fog_height;	// x=height level, y=height density, z,w reserved
 uniform float4		r1a_hfog_color;	// xyz=height fog color, w=blend to fog_color in distance
+uniform float4		r1a_hfog_dist;	// x=color dist start (in linear fog), y=1/range, z=emitter_mul
+uniform float4		r1a_hfog_emitter_bb;	// x=minX, y=minZ, z=maxX, w=maxZ
+uniform float4		r1a_hfog_emitter_params;	// x=enable, y=edge
+uniform float4		r1a_hfog_opts;	// x=sss combine, y=sss sun tint
 uniform float4		r1a_mipfog_params;	// x=enable, y=near_to_detail_start, z=directional_amount, w=reserved
 
 float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
@@ -20,13 +24,6 @@ float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
 float r1a_fog_factor(float3 fog_pos)
 {
 	return saturate(calc_fogging(float4(fog_pos, 1.0f)));
-}
-
-float r1a_hfog_immersion_eye()
-{
-	float immersion = saturate((r1a_fog_height.x - eye_position.y) * r1a_fog_height.y);
-	immersion = min(immersion, saturate(r1a_fog_params.w));
-	return immersion * saturate(r1a_fog_params.z);
 }
 
 float3	r1a_fog_color(float3 fog_pos)
@@ -54,18 +51,42 @@ float3	r1a_apply_fog(float3 color, float3 fog_pos)
 {
 	float fog_factor = r1a_fog_factor(fog_pos);
 	float linear_fog = 1.0f - fog_factor;
-	float height_fog = saturate((r1a_fog_height.x - fog_pos.y) * r1a_fog_height.y);
+
+	float emitter_mask = 0.0f;
+	if (r1a_hfog_emitter_params.x > 0.5f)
+	{
+		float dist_l = fog_pos.x - r1a_hfog_emitter_bb.x;
+		float dist_r = r1a_hfog_emitter_bb.z - fog_pos.x;
+		float dist_b = fog_pos.z - r1a_hfog_emitter_bb.y;
+		float dist_t = r1a_hfog_emitter_bb.w - fog_pos.z;
+		float dist_edge = min(min(dist_l, dist_r), min(dist_b, dist_t));
+		float edge = max(r1a_hfog_emitter_params.y, 0.01f);
+		emitter_mask = smoothstep(-edge, edge, dist_edge);
+	}
+
+	float density = r1a_fog_height.y * saturate(emitter_mask * r1a_hfog_dist.z);
+	float height_fog = 0.0f;
+	height_fog = saturate((r1a_fog_height.x - fog_pos.y) * density);
+	height_fog = 1.0f - exp2(-height_fog * 2.0f);
+	height_fog = smoothstep(0.0f, 1.0f, height_fog);
 	height_fog = min(height_fog, saturate(r1a_fog_params.w));
 
 	float near_fade = saturate((distance(fog_pos, eye_position) - r1a_fog_params.x) * r1a_fog_params.y);
+	near_fade = pow(near_fade, max(r1a_fog_params.z, 0.2f));
 	height_fog *= near_fade;
 
-	float immersion = r1a_hfog_immersion_eye();
-	height_fog = saturate(height_fog + immersion * (1.0f - height_fog));
-
 	float result_fog = max(linear_fog, height_fog);
+	if (r1a_hfog_opts.x > 0.5f)
+		result_fog = saturate(linear_fog + height_fog * (linear_fog));
 	float3 fog_target = r1a_fog_color(fog_pos);
-	float3 hfog_color = lerp(r1a_hfog_color.rgb, fog_color.rgb, saturate(linear_fog * r1a_hfog_color.w));
+	float color_dist = saturate((linear_fog - r1a_hfog_dist.x) * r1a_hfog_dist.y);
+	float3 hfog_color = lerp(r1a_hfog_color.rgb, fog_color.rgb, saturate(color_dist * r1a_hfog_color.w));
+	if (r1a_hfog_opts.y > 0.5f)
+	{
+		float3 to_sun = normalize(-L_sun_dir_w);
+		float sun_t = saturate(dot(normalize(fog_pos - eye_position), to_sun));
+		hfog_color = lerp(hfog_color, L_sun_color, sun_t * 0.35f);
+	}
 	fog_target = lerp(fog_target, hfog_color, height_fog);
 
 	return lerp(fog_target, color, 1.0f - result_fog);

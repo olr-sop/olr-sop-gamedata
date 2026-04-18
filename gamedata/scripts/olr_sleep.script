@@ -7,12 +7,145 @@
  Last edit    : 21.02.2026
 --]]-----------------------------------------------------------------------------------------------
 
--- Вызывается из разных мест, считается что это сон в точно безопасной и комфортной зоне, 
--- поэтому тут всегда полное восстановление сонливости
--- тока часы (пока что)
-function sleep_main(scale)
-	bind_stalker.actor_sleep_full = true
-	db.actor:actor_sleep(scale, 0)
+-- Вызывается из разных мест
+-- TODO: Доделать принудительный сон при макс сонливости
+
+-- костыль для передачи времени
+local hours_to_sleep = 0
+local minutes_to_sleep = 0
+
+-- сон из инвентаря или из безопасной точки
+local sleep_in_safety_place = false
+
+-- передадим в актор апдейт, там будем контролить голодуху и желание наебнуть воды
+local actor_sleep = false
+
+-- константа скорости уменьшения сна за 1 игровую секунду
+local SLEEP_DECREASE_PER_SEC = 0.00000771605   -- sleep_v
+
+function sleep_main(hours, minutes, safety_place) -- Основная функция
+	
+    if hours == nil then hours = 0 end
+    if minutes == nil then minutes = 0 end
+
+    -- Если время не указано (0 часов и 0 минут) – рассчитываем до полного восстановления
+    if hours == 0 and minutes == 0 then
+        local current_sleep = db.actor.sleep or 1.0
+        local k = safety_place and 2.25 or 1.0
+        local needed_seconds = (1.0 - current_sleep) / (SLEEP_DECREASE_PER_SEC * k)
+        hours = math.floor(needed_seconds / 3600)
+        minutes = math.floor((needed_seconds % 3600) / 60)
+    end	
+	
+	if not safety_place then
+		if sleep_check_not_safety() then
+			start_sleep(hours, minutes, false)
+		else
+			log1("Пока шо ваще жопа, страшна спать")
+		end
+	else
+		start_sleep(hours, minutes, true)
+	end
+end
+
+function start_sleep(hours, minutes, safety_place) -- вызывается из основной функции sleep_main
+	log1("* [INFO] Call start_sleep, times set to ["..tostring(hours)..":"..tostring(minutes).."]")
+	log1("* [INFO] Actor start sleep")
+	xr_effects.disable_ui(db.actor, nil) -- Отключаем интерфейс
+	olr.switch_torch(false) -- Отключаем фонарик
+	hours_to_sleep = hours -- записываем скока спим часы
+	minutes_to_sleep = minutes -- записываем скока спим минуты
+	sleep_in_safety_place = safety_place -- заносим значение безопасного места для сна
+	actor_sleep = true -- говорим что мы спим
+	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback") -- старт анимки, запуск скрипта в конце
+	level.add_pp_effector("sleep_fade.ppe", 11, false) -- запуск затемненеия
+end
+
+function dream_callback() -- вызывается из start_sleep
+	log1("* [INFO] Actor dream_callback")
+	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback2") -- старт анимки, запуск скрипта в конце
+	level.change_game_time(0,hours_to_sleep,minutes_to_sleep) -- перемотка
+	db.actor.power = 1 -- восстанавливаем повар
+	
+    local total_seconds = hours_to_sleep * 3600 + minutes_to_sleep * 60
+    local k = sleep_in_safety_place and 2.25 or 1.0
+    local current_sleep = db.actor.sleep or 1.0
+    local increase = total_seconds * SLEEP_DECREASE_PER_SEC * k
+    local new_sleep = math.min(1.0, current_sleep + increase)
+    db.actor.sleep = new_sleep
+    log1(string.format("* [INFO] Sleep restored: %.2f -> %.2f (slept %02d:%02d, k=%.1f)", current_sleep, new_sleep, hours_to_sleep, minutes_to_sleep, k))
+	
+	-- Не совсем понятно когда будет вызов, поэтому пока тут, надо будет отладить
+	if not sleep_in_safety_place then
+		olr_sleep.spawen_izlom_rand() -- Спавн излома (а то и двух) возле Мессера если тот спал на улице
+		olr_sleep_robers.sleep_rob() -- Ограбление Мессера во сне
+	end
+	
+	blow_sleep_timer_low(hours_to_sleep * 1325) -- Задаём время по scale до выброса
+	
+	nick.clear_drinked_vodka() -- Обнуляет кол-во выпитых бутылок водки
+	unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
+	yan_dead_call() -- Странные сообщения на янтаре
+	set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
+	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
+	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
+	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне	
+	
+end
+
+function dream_callback2() -- вызывается из dream_callback
+	log1("* [INFO] Actor dream_callback2")
+	xr_effects.enable_ui(db.actor, nil)
+	hours_to_sleep = 0 -- обнуляем
+	minutes_to_sleep = 0 -- обнуляем
+	sleep_in_safety_place = false -- обнуляем
+	actor_sleep = false -- обнуляем
+end
+
+function sleep_check_not_safety() -- проврека на выброс (добавить остальные проверки)
+	-- проверка на выброс
+	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+		news_manager.send_tip(db.actor, game.translate_string("st_sleep_blowout"), nil, "info")
+		return false
+	end
+	
+	-- фром кок, проверки на ранение и радиацию
+	local bleeding = db.actor.bleeding > 0
+	local radiation = db.actor.radiation > 0
+
+	if (bleeding or radiation) then
+		if (bleeding and radiation) then
+			news_manager.send_tip(db.actor, game.translate_string("st_sleep_bleeding_radiation"), nil, "info")
+		elseif (bleeding) then
+			news_manager.send_tip(db.actor, game.translate_string("st_sleep_bleeding"), nil, "info")
+		elseif (radiation) then
+			news_manager.send_tip(db.actor, game.translate_string("st_sleep_radiation"), nil, "info")
+		end
+		return false
+	end	
+	
+	-- фром нлс, проверка на врагов вокруг
+	local enemy_around = false
+	for k, v in pairs(db.storage) do
+		local objg = level.object_by_id(k)
+		if objg then
+			if (objg and ((IsStalker(objg) and objg:relation(db.actor) == game_object.enemy and objg:alive()) or IsMonster(objg) and not string.find(objg:name(), "^rat_")) and objg:position():distance_to(db.actor:position()) < 30 and objg:alive()) then
+				enemy_around = true
+				break
+			end
+		end
+	end
+	
+	if enemy_around then
+		news_manager.send_tip(db.actor, game.translate_string("st_sleep_enemy_around"), nil, "info")
+		return false
+	end
+
+	return true
+end
+
+function check_actor_sleep()
+	return actor_sleep
 end
 
 ------------------------------------------------------------------------------------------------------------------------ 

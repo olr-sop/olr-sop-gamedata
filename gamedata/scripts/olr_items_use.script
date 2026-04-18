@@ -206,22 +206,6 @@ function use(obj)
 			xvars.foods[obj:name()] = nil
 			--log1("del food variable")
 		end
-	end	
-
-	if section == "mutant_zombie_hand" or section == "mutant_boar_leg" or section == "mutant_flesh_eye" then
-		if section == "mutant_zombie_hand" then
-			for k,v in pairs(db.storage) do
-				local stalker = level.object_by_id(k)
-				if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() then
-					if stalker:position():distance_to(db.actor:position()) < 20 and stalker:see(db.actor) and not olr_protected.is_no_offline_alife_obj(stalker:name()) then
-						local seer_name = news_main.get_npc_name(stalker)
-						news_manager.send_tip(db.actor, ""..seer_name..game.translate_string("st_olr_items_efs_saw_disgusting_meat"), 15, "unknown", 39000)
-						db.actor:change_character_reputation(-60)
-						break
-					end
-				end
-			end
-		end
 	end
 
 	if section == "snotvornoe" then
@@ -265,6 +249,30 @@ function on_use_sigaret(itm, eater) -- eater всегда актор(entity alive), у други
 	smoke_particle:set_direction(eater:direction())
 	smoke_particle:play_at_pos(vector():set(head_pos.x, head_pos.y, head_pos.z))
 	-- можно повесить на таймеры, чтобы дым отыгрывался после звука(сейчас одновременно), также вызывать постпроцесс
+	return true
+end
+
+function on_use_raw_meat(itm, eater)
+	local section = itm:section()
+	--if section == "mutant_zombie_hand" or section == "mutant_boar_leg" or section == "mutant_flesh_eye"
+	--   or section == "mutant_burer_hand"
+	--   or section == "mutant_krovosos_jaw"
+	--   or section == "mutant_dog_tail"
+	--   or section == "mutant_psevdodog_tail" then
+		--if section == "mutant_zombie_hand" then
+			for k,v in pairs(db.storage) do
+				local stalker = level.object_by_id(k)
+				if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() then
+					if stalker:position():distance_to(db.actor:position()) < 20 and stalker:see(db.actor) and not olr_protected.is_no_offline_alife_obj(stalker:name()) then
+						local seer_name = news_main.get_npc_name(stalker)
+						news_manager.send_tip(db.actor, game.translate_string("st_olr_items_efs_saw_disgusting_meat"), 15, "unknown", 39000, nil, nil, true, seer_name)
+						db.actor:change_character_reputation(-10)
+						break
+					end
+				end
+			end
+		--end
+	--end
 	return true
 end
 

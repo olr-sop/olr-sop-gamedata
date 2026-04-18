@@ -6,7 +6,7 @@ function use(obj)
 
 	local section = obj:section()
 	
-	--log1("olr_items_use - section = "..section.."")
+	log1("olr_items_use - section = "..section.."")
 
 	-- Мед инжектор и всё с ним связанное
 	if section == "med_injector" then
@@ -19,7 +19,9 @@ function use(obj)
 			return
 		end
 		olr.del(db.actor:object("med_injector_empty"))
+		olr.del(obj)
 		sim:create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		return
 	end
 	if section == "med_injector_empty" then
 		if db.actor:object("med_injector_capsule") == nil then
@@ -27,7 +29,9 @@ function use(obj)
 			return
 		end
 		olr.del(db.actor:object("med_injector_capsule"))
+		olr.del(obj)
 		sim:create("med_injector", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+		return
 	end	
 	
 	-- Батарейки
@@ -48,6 +52,7 @@ function use(obj)
 				news_manager.send_tip(db.actor, message, nil, "info", 3000)
 			end
 		end
+		return
 	end
 	
 	if section == "battery_change" then
@@ -62,12 +67,14 @@ function use(obj)
 			nick.enable_senf()
 			olr.show_minimap(true)
 		end
+		return
 	end	
 
 	-- Рюкзак тайник
 	if section == "custom_treasure_rukzak" then
 		local obj = sim:create("box_rukzak_treasure", db.actor:position():add(db.actor:direction():mul(0.2)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 		clear_useful_for_ai(obj)
+		return
 	end
 
 	-- Бутыль для воды с агропрома
@@ -79,6 +86,7 @@ function use(obj)
 		end
 		olr.give_item("arg_jaba_voda_boloto")
 		news_manager.send_tip(db.actor, game.translate_string("use_4"))
+		return
 	end
 
 	-- Бутыль для холодца
@@ -102,6 +110,7 @@ function use(obj)
 				sim:create("empty_butilka", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 			end
 		end
+		return
 	end
 	
 	-- theysani

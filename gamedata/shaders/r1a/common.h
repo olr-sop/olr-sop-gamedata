@@ -17,7 +17,7 @@ uniform float4		r1a_hfog_emitter_bb;	// x=minX, y=minZ, z=maxX, w=maxZ
 uniform float4		r1a_hfog_emitter_params;	// x=enable, y=edge, z=texel_world, w=reserved
 uniform float4		r1a_hfog_emitter_height;	// x=minY, y=rangeY, z=signed_distance_range, w=reserved
 uniform float4		r1a_hfog_tune;	// x=reserved, y=noise_amp, z=noise_scale, w=noise_speed
-uniform float4		r1a_mipfog_params;	// x=enable, y=near_to_detail_start, z=directional_amount, w=reserved
+uniform float4		r1a_mipfog_params;	// x=enable, y=near_to_detail_start, z=directional_amount, w=weather_blend_amount
 
 float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
 
@@ -61,6 +61,7 @@ float3	r1a_fog_color(float3 fog_pos)
 		float detail_t = saturate((linear_fog - r1a_mipfog_params.y) / max(1.0f - r1a_mipfog_params.y, 1e-3f));
 		float3 directional_fog = tex2D(r1a_fog_sky_lut, uv).rgb;
 		fog_target = lerp(directional_fog, fog_color.rgb, detail_t * r1a_mipfog_params.z);
+		fog_target = lerp(fog_color.rgb, fog_target, saturate(r1a_mipfog_params.w));
 	}
 
 	return fog_target;

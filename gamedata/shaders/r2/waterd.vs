@@ -1,4 +1,3 @@
-//uniform float4x4 	m_texgen;
 #include "common.h"
 #include "shared\waterconfig.h"
 #include "shared\watermove.h"
@@ -32,8 +31,6 @@ vf main (v_vert v)
 	o.tdist0	= watermove_tc 		(o.tbase*W_DISTORT_BASE_TILE_0, P.xz, W_DISTORT_AMP_0);
 	o.tdist1	= watermove_tc 		(o.tbase*W_DISTORT_BASE_TILE_1, P.xz, W_DISTORT_AMP_1);
 	o.hpos 		= mul			(m_VP, P);			// xform, input in world coords
-
-//	Igor: for additional depth dest
 
 	return o;
 }

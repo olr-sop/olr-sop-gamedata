@@ -163,27 +163,7 @@ half 	shadowtest_sun 	(float4 tc, float4 tcJ)			// jittered sampling
 uniform float3x4	m_sunmask	;				// ortho-projection
 half 	sunmask		(float4 P)	{				// 
 	float2 		tc	= mul	(m_sunmask, P);		//
-
-
-
-//похоже сила фильтрации санмаска, не затрагивая небо и r2a
-
-//только для r2 - умножаем или делим (s_lmap,tc).w на какое-нибудь число
-	return 		tex2D 		(s_lmap,tc).w/1.1;		// A8 
-
-//  /1 -слишком ярко
-// /1.5 - темновато
-//  /2 - темновато
-//  /3 - темновато
-//  /4 - слишком темно
-
-
-
-
-// по умолчанию
-// return 		tex2D 		(s_lmap,tc).w;		// A8
-
-
+	return 		tex2D 		(s_lmap,tc).w;		// A8 
 	
 }
 #else

@@ -23,14 +23,7 @@ p_bumped 	main 	(v_tree I)
 #endif
 	float4 	w_pos 	= float4(pos.x+result.x, pos.y, pos.z+result.y, 1);
 	float2 	tc 		= (I.tc * consts).xy;
-
-
-
-	//float 	hemi 	= I.Nh.w * c_scale.w;//слишком темные деревья
-	//float 	hemi 	= I.Nh.w * c_scale.w + c_bias.w;
-    float 	hemi 	= I.Nh.w*c_scale.w + (c_bias.w/2); //средний вариант
-
-
+	float 	hemi 	= I.Nh.w * c_scale.w + c_bias.w;
 
 	// Eye-space pos/normal
 	p_bumped 		O;

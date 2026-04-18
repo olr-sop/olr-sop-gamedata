@@ -19,10 +19,6 @@ p_flat 	_main	( v_model I )
 	O.tcdh.w	= L_material.y;							// (,,,dir-occlusion)
 #endif
 
-#ifdef USE_GRASS_WAVE
-	O.tcdh.z = 1.f;
-#endif
-
 #ifdef USE_TDETAIL
 	O.tcdbump	= O.tcdh*dt_params;					// dt tc
 #endif
@@ -45,6 +41,14 @@ p_flat	main(v_model_skinned_1 v) 	{ return _main(skinning_1(v)); }
 
 #ifdef	SKIN_2
 p_flat	main(v_model_skinned_2 v) 	{ return _main(skinning_2(v)); }
+#endif
+
+#ifdef	SKIN_3
+p_flat	main(v_model_skinned_3 v) 	{ return _main(skinning_3(v)); }
+#endif
+
+#ifdef	SKIN_4
+p_flat	main(v_model_skinned_4 v) 	{ return _main(skinning_4(v)); }
 #endif
 
 FXVS;

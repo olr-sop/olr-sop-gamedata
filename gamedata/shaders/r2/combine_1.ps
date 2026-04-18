@@ -1,4 +1,3 @@
-//#include "SSAO_options.cfg"
 #include "common.h"
 #include "lmodel.h"
 #include "hmodel.h"
@@ -43,31 +42,11 @@ _out         main                ( _input I )
 
         // static sun
 	half mtl 		= P.w;
-
-
-
-
-
-
-
-
-#ifdef USE_R2_STATIC_SUN
-	
-half sun_occ = P.w*2	;
-
-//mtl = xmaterial;  //стандарт, блеска металла нет
-mtl = 0.1;          //слабый
-//mtl = 0.7;        //много
-
-L +=  Ldynamic_color * sun_occ * plight_infinity(mtl, P.xyz, N.xyz, Ldynamic_dir);
-
+#ifdef        USE_R2_STATIC_SUN
+	half	sun_occ        	=       P.w*2	;
+			mtl 			= 		xmaterial;
+            L              +=       Ldynamic_color * sun_occ * plight_infinity	(mtl, P.xyz, N.xyz, Ldynamic_dir);
 #endif
-
-
-
-
-
-//#include "SSAO_combine_1.h"
 
         // hemisphere
         half3       hdiffuse,hspecular;
@@ -82,8 +61,6 @@ L +=  Ldynamic_color * sun_occ * plight_infinity(mtl, P.xyz, N.xyz, Ldynamic_dir
                       spec      = (C.rgb*.5h + .5h)*C.w + hspecular        ;
 #endif
 		half3       color     = C.rgb + spec     ;
-
-		//color = pow(color, 0.5);
 
         //. color + hemi + sun + lighting + specular
 		//			color 	= 	hdiffuse+hspecular+L.rgb+spec+C.rgb;

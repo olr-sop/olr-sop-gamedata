@@ -2,18 +2,16 @@
 #define        COMMON_H
 
 // #define USE_SUPER_SPECULAR
-#define SW_USE_FOAM	
+
 #include "shared\common.h"
 //////////////////////////////////////////////////////////////////////////////////////////
 // *** options
 
-#define USE_R2_STATIC_SUN
-
-//#define USE_GAMMA_22
+// #define USE_GAMMA_22
 // #define USE_SJITTER
 // #define USE_SUNFILTER
-
-#define USE_MBLUR                	//- HW-options defined //Врубаем блёр :)
+//
+// #define USE_MBLUR                	//- HW-options defined
 // #define USE_HWSMAP                	//- HW-options defined
 
 // #define USE_HWSMAP_PCF				//- nVidia GF3+, R600+
@@ -27,29 +25,13 @@
 // #define USE_TDETAIL                	//- shader defined
 // #define USE_LM_HEMI                	//- shader defined
 // #define USE_DISTORT                	//- shader defined
- #define USE_SUNMASK                		//- shader defined
+#define USE_SUNMASK                		//- shader defined
 //#define DBG_TMAPPING
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Волны по траве
-#define USE_GRASS_WAVE								// включить "волны" от ветра по траве
-#define GRASS_WAVE_FREQ 	float(0.7)				// частота появления волн
-#define GRASS_WAVE_POWER 	float(2.0)				// "яркость", заметность волн
-//////////////////////////////////////////////////////////////////////////////////////////
-
-
 //////////////////////////////////////////////////////////////////////////////////////////
 #ifndef SMAP_size
-#define SMAP_size        4096  //2048 4096
+#define SMAP_size        2048
 #endif
-
-
-#ifdef        USE_OLDBLOOM
-#define PARALLAX_H 0.02         // Defines HI_FLYER//
-#else
-#define PARALLAX_H 0.04 //0.02  // Defines macron//
-#endif
-
+#define PARALLAX_H 0.02
 #define parallax float2(PARALLAX_H, -PARALLAX_H/2)
 
 #ifdef        USE_R2_STATIC_SUN
@@ -74,7 +56,6 @@ half2         calc_detail                (half3 w_pos)      {
         half                  dt_add     = .5 * dtl;        // dt+  [0 .. 0.5]
         return                half2      (dt_mul,dt_add);
 }
-
 float3         calc_reflection     (float3 pos_w, float3 norm_w)
 {
     return reflect(normalize(pos_w-eye_position), norm_w);
@@ -83,15 +64,6 @@ float3         calc_reflection     (float3 pos_w, float3 norm_w)
 float3        calc_sun_r1                (float3 norm_w)    { return L_sun_color*saturate(dot((norm_w),-L_sun_dir_w));                 }
 float3        calc_model_hemi_r1         (float3 norm_w)    { return max(0,norm_w.y)*L_hemi_color;                                         }
 float3        calc_model_lq_lighting     (float3 norm_w)    { return L_material.x*calc_model_hemi_r1(norm_w) + L_ambient + L_material.y*calc_sun_r1(norm_w);         }
-
-float4	calc_spot 	(out float4 tc_lmap, out float2 tc_att, float4 w_pos, float3 w_norm)	{
-	float4 	s_pos	= mul	(L_dynamic_xform, w_pos);
-	tc_lmap		= s_pos.xyww;			// projected in ps/ttf
-	tc_att 		= s_pos.z;			// z=distance * (1/range)
-	float3 	L_dir_n = normalize	(w_pos - L_dynamic_pos.xyz);
-	float 	L_scale	= dot(w_norm,-L_dir_n);
-	return 	L_dynamic_color*L_scale*saturate(calc_fogging(w_pos));
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 struct         v_static                {
@@ -186,11 +158,10 @@ struct         p_bumped        {
   #endif
 #endif
 };
-
 //////////////////////////////////////////////////////////////////////////////////////////
 struct         p_flat                  {
         float4                 hpos        : POSITION;
-#if ((defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)) || defined(USE_GRASS_WAVE))
+#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
     float4                    tcdh        : TEXCOORD0;        // Texture coordinates,         w=sun_occlusion
 #else
     float2                    tcdh        : TEXCOORD0;        // Texture coordinates
@@ -258,51 +229,16 @@ uniform sampler2D       s_bloom;                //
 uniform sampler         s_image;                // used in various post-processing
 uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw + eps)
 //////////////////////////////////////////////////////////////////////////////////////////
-
-
-// Defines HI_FLYER//
-#ifdef        USE_OLDBLOOM
-
-#define def_gloss       half(2.f /255.f)	//(2.f /255.f) 
-#define def_aref        half(200.f/255.f)
-#define def_dbumph      half(0.333f)
-#define def_virtualh    half(.05f)              // 5cm
-#define def_distort     half(0.05f)             // we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
-#define def_lum_hrange	half(0.20h) //(0.15h) //(0.55h)
-#define def_hdr         half(6.h) //half(128.h)
-#define def_hdr_clip	half(1.75h)
-
-//////////////////////////////////////////////////////////////////////////////////////////
-#define	LUMINANCE_VECTOR                 half3(0.3f, 0.48f, 0.22f)
-void        tonemap              (out half4 low, out half4 high, half3 rgb, half scale)
-{
-        rgb     =      	rgb*scale       ;
-#ifdef	USE_BRANCHING		// ps_3_0
-	low	= 	half4(sqrt(rgb.xyz),	0);
-
-#else
-        low		=       half4           (rgb,           0 )	;
-#endif
-	low 	= 	half4(rgb,	  	0);
-
-#include "r2_2003.h" //силу свечения выводим в отдельный конфиг
-
-}
-
-#else
-
-
-// Defines MACRON//
+// Defines                                		//
 #define def_gloss       half(2.f /255.f)
 #define def_aref        half(200.f/255.f)
 #define def_dbumph      half(0.333f)
 #define def_virtualh    half(.05f)              // 5cm
 #define def_distort     half(0.05f)             // we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
-#define def_lum_hrange	half(0.15h) //(0.55h)
 #define def_hdr         half(8.h)         		// hight luminance range half(3.h)
 #define def_hdr_clip	half(0.75h)        		//
 
-/////
+//////////////////////////////////////////////////////////////////////////////////////////
 #define	LUMINANCE_VECTOR                 half3(0.3f, 0.48f, 0.22f)
 void        tonemap              (out half4 low, out half4 high, half3 rgb, half scale)
 {
@@ -315,29 +251,13 @@ void        tonemap              (out half4 low, out half4 high, half3 rgb, half
         high	=       half4       	(rgb/def_hdr,   0 )	;		// 8x dynamic range
 #endif
 
+//		low		= 	half4	(rgb, 0);
+//		rgb		/=	def_hdr	;
+//		high	= 	half4	(rgb, dot(rgb,0.333f)-def_hdr_clip)		;
 }
-
-#endif
-
-
-/////////////////////////////////////////////////////////////////////////////
-
-#ifdef        USE_OLDBLOOM   // Bloom by HI_FLYER//
-
-half4 	combine_bloom	(half3	low, half3 high) {
-	return	half4(low+high,1.h);
+half4		combine_bloom        (half3  low, half4 high)	{
+        return        half4(low + high*high.a, 1.h);
 }
-
-#else   // Bloom by macron//
-
-half4	combine_bloom        (half3  low, half4 high)	{
-        return  half4(low + high*high.a, 1.h);
-}
-
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-
 
 float3	v_hemi        	(float3 n)                        	{        return L_hemi_color*(.5f + .5f*n.y);                   }
 float3	v_hemi_wrap     (float3 n, float w)                	{        return L_hemi_color*(w + (1-w)*n.y);                   }
@@ -347,7 +267,6 @@ half3   p_hemi          (float2 tc)                         {
         half3        	t_lmh         = tex2D             	(s_hemi, tc);
         return  dot     (t_lmh,1.h/3.h);
 }
-
 
 #define FXPS technique _render{pass _code{PixelShader=compile ps_3_0 main();}}
 #define FXVS technique _render{pass _code{VertexShader=compile vs_3_0 main();}}

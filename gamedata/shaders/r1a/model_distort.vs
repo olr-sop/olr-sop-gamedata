@@ -25,6 +25,7 @@ vf   _main (v_model v)
   float3   norm_v   = normalize     (mul(m_WV,v.norm));
   float   fade   = 1-abs      (dot(dir_v,norm_v));
   o.c0    = fade;
+	o.c0.w *= saturate(calc_fogging(float4(v.pos.xyz, 1.0f)));
 
   return o;
 }

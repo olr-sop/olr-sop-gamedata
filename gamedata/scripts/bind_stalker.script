@@ -26,11 +26,6 @@ local loked_obj_name = ""
 
 local dbg_time = false -- выводит время на худ используя статик debug_time
 
--- Переменные для сна
-actor_sleep_full = false -- для восстановление сонливости на фулл
-local sleep_start_time = 0 -- время в начале сна
-local sleep_duration_sec = 0 -- время в конце сна, получаем через диффсек
-
 ----------------------------------------------------------------------------------------------------------------------
 class "actor_binder" (object_binder)
 ----------------------------------------------------------------------------------------------------------------------
@@ -132,8 +127,6 @@ function actor_binder:net_destroy()
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, nil)
-	self.object:set_callback(callback.actor_sleep, nil)
-	self.object:set_callback(callback.actor_wake_up, nil)
 	self.object:set_callback(callback.on_obj_look, nil)
 	self.object:set_callback(callback.on_obj_not_look, nil)
 	
@@ -191,8 +184,6 @@ function actor_binder:reinit()
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, self.on_drop_item_on_item, self)
-	self.object:set_callback(callback.actor_sleep, self.actor_start_sleep, self)
-	self.object:set_callback(callback.actor_wake_up, self.actor_end_sleep, self)
 	self.object:set_callback(callback.on_obj_look, self.on_look, self) 
 	self.object:set_callback(callback.on_obj_not_look, self.on_not_look, self)
 	
@@ -286,49 +277,6 @@ function actor_binder:on_drop_item_on_item(item1, item2)
         -- Если один из предметов - устройство, а второй не батарейка - игнорируем
         return
     end
-end
-
-function actor_binder:actor_start_sleep()
-	log1("### [INFO] Actor start sleep")
-	olr.switch_torch(false) -- Отключаем фонарик
-	sleep_start_time = game.get_game_time() -- Запоминаем время начала сна
-end
-
-function actor_binder:actor_end_sleep()
-	log1("### [INFO] Actor end sleep")
-	
-    -- Измеряем продолжительность сна
-    local sleep_end_time = game.get_game_time()
-    if sleep_start_time then
-        sleep_duration_sec = sleep_end_time:diffSec(sleep_start_time)
-		log1("sleep_duration_sec - "..tostring(sleep_duration_sec).."")
-        sleep_start_time = nil
-    else
-        log1("### [WARN] actor_end_sleep - проебали sleep_start_time")
-    end
-	
-	if actor_sleep_full then
-		db.actor.sleep = 1 -- это короче считается точно подходящим местом для сна и гарантировано высыпаемся
-	end
-
-	olr_sleep.blow_sleep_timer_low((sleep_duration_sec / 3600) * 1325) -- Задаём время по scale до выброса (sleep_duration_sec в секундах поэтому и делим на 3600)
-	
-	if not actor_sleep_full then
-		olr_sleep.spawen_izlom_rand() -- Спавн излома (а то и двух) возле Мессера если тот спал на улице
-		olr_sleep_robers.sleep_rob() -- Ограбление Мессера во сне
-	end
-	
-	nick.clear_drinked_vodka() -- Обнуляет кол-во выпитых бутылок водки
-	olr_sleep.unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
-	olr_sleep.yan_dead_call() -- Странные сообщения на янтаре
-	olr_sleep.set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
-	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
-	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
-	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне
-	
-	actor_sleep_full = false -- сбрасываем actor_sleep_full
-	sleep_start_time = 0
-	sleep_duration_sec = 0
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -667,12 +615,14 @@ function actor_binder:update(delta)
 	
 	game_stats.update (delta, self.object)
 	
-	if db.actor:is_actor_sleeping() then
-		if db.actor.satiety < 0.1 then
-			db.actor.satiety = 0.1
+	-- пораньше запустим проверки на сон
+	-- ставить тут проверки на 0.01 не стоит, так как это значение является критическим после которого хп начнёт убывать!
+	if olr_sleep.check_actor_sleep() then
+		if db.actor.satiety < 0.025 then
+			db.actor.satiety = 0.025
 		end
-		if db.actor.thirst < 0.1 then
-			db.actor.thirst = 0.1
+		if db.actor.thirst < 0.025 then
+			db.actor.thirst = 0.025
 		end
 	end
 	

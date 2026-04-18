@@ -20,9 +20,22 @@ local sleep_in_safety_place = false
 -- передадим в актор апдейт, там будем контролить голодуху и желание наебнуть воды
 local actor_sleep = false
 
+-- константа скорости уменьшения сна за 1 игровую секунду
+local SLEEP_DECREASE_PER_SEC = 0.00000771605   -- sleep_v
+
 function sleep_main(hours, minutes, safety_place) -- Основная функция
-	if hours == nil then log1("~ [WARN] hours is nil") hours = 0 end
-	if minutes == nil then log1("~ [WARN] minutes is nil") minutes = 0 end
+	
+    if hours == nil then hours = 0 end
+    if minutes == nil then minutes = 0 end
+
+    -- Если время не указано (0 часов и 0 минут) – рассчитываем до полного восстановления
+    if hours == 0 and minutes == 0 then
+        local current_sleep = db.actor.sleep or 1.0
+        local k = safety_place and 2.25 or 1.0
+        local needed_seconds = (1.0 - current_sleep) / (SLEEP_DECREASE_PER_SEC * k)
+        hours = math.floor(needed_seconds / 3600)
+        minutes = math.floor((needed_seconds % 3600) / 60)
+    end	
 	
 	if not safety_place then
 		if sleep_check_not_safety() then
@@ -41,7 +54,7 @@ function start_sleep(hours, minutes, safety_place) -- вызывается из основной фун
 	xr_effects.disable_ui(db.actor, nil) -- Отключаем интерфейс
 	olr.switch_torch(false) -- Отключаем фонарик
 	hours_to_sleep = hours -- записываем скока спим часы
-	minutes_to_sleep = minutes	or 0 -- записываем скока спим минуты
+	minutes_to_sleep = minutes -- записываем скока спим минуты
 	sleep_in_safety_place = safety_place -- заносим значение безопасного места для сна
 	actor_sleep = true -- говорим что мы спим
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback") -- старт анимки, запуск скрипта в конце
@@ -53,7 +66,14 @@ function dream_callback() -- вызывается из start_sleep
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback2") -- старт анимки, запуск скрипта в конце
 	level.change_game_time(0,hours_to_sleep,minutes_to_sleep) -- перемотка
 	db.actor.power = 1 -- восстанавливаем повар
-	db.actor.sleep = 1 -- восстанавливаем сонливость, пока на фулл, позже надо подумать как написать формулу
+	
+    local total_seconds = hours_to_sleep * 3600 + minutes_to_sleep * 60
+    local k = sleep_in_safety_place and 2.25 or 1.0
+    local current_sleep = db.actor.sleep or 1.0
+    local increase = total_seconds * SLEEP_DECREASE_PER_SEC * k
+    local new_sleep = math.min(1.0, current_sleep + increase)
+    db.actor.sleep = new_sleep
+    log1(string.format("* [INFO] Sleep restored: %.2f -> %.2f (slept %02d:%02d, k=%.1f)", current_sleep, new_sleep, hours_to_sleep, minutes_to_sleep, k))
 	
 	-- Не совсем понятно когда будет вызов, поэтому пока тут, надо будет отладить
 	if not sleep_in_safety_place then

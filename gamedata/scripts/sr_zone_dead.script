@@ -1,154 +1,131 @@
 --[[-----------------------------------------------------------------------------------------------
- File		  : sr_zone_dead.script
- Description  : Модуль "аномалии" мёртвая зона
- Copyright	  : Oblivion Lost Remake 3.0
- Author		  : hi_flyer, theysani
- Date		  : 15.11.15
- Last Edit	  : 18.12.25
+ File          : sr_zone_dead.script
+ Description   : Модуль "аномалии" мёртвая зона
+ Copyright     : Oblivion Lost Remake 3.0
+ Author        : hi_flyer, theysani
+ Date          : 15.11.15
+ Last Edit     : 18.12.25
 --]]----------------------------------------------------------------------------------------------- 
 
-local state_nowhere = 0 -- схема только что включилась
-local state_inside = 1 -- актер внутри
-local state_outside = 2 -- актер снаружи
+local state_nowhere = 0
+local state_inside = 1
+local state_outside = 2
 
--- таблица где харним всё нужное для разрядки
-local items_with_batteries = {}
-local time_update = 0
-local actor_inside_zone = false
-
-local actor = db.actor
-
--- таблица секций и того наскока надо разрядить раз в секунду
 local discharge_rates = {
-	["device_pda"] = 0.0055,
-	["device_torch"] = 0.0055,
-	["detector_simple"] = 0.0055,
-	["detector_advances"] = 0.0055,
-	["detector_elite"] = 0.0055,
-	["psy_blocerator"] = 0.0055
+    ["device_pda"] = 0.0055,
+    ["device_torch"] = 0.0055,
+    ["detector_simple"] = 0.0055,
+    ["detector_advances"] = 0.0055,
+    ["detector_elite"] = 0.0055,
+    ["psy_blocerator"] = 0.0055
 }
 
 class "action_zonedead"
 
-function action_zonedead:__init( obj, storage )
-	self.object = obj
-	self.st = storage
-	self.pp_effector_active = false
+function action_zonedead:__init(obj, storage)
+    self.object = obj
+    self.st = storage
+    self.pp_effector_active = false
+    -- Переменные теперь свои у каждой зоны
+    self.items_with_batteries = {}
+    self.time_update = 0
+    self.actor_inside_zone = false
 end
 
 function action_zonedead:reset_scheme()
-	self.state = state_nowhere -- еще неясно, в зоне он, или нет
-	self:switch_state(actor)
+    self.state = state_nowhere
+    self:switch_state(db.actor)
 end
 
-function action_zonedead:update( delta )
+function action_zonedead:update(delta)
+    local actor = db.actor
+    if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
+        return
+    end
 
-	if xr_logic.try_switch_to_another_section( self.object, self.st, actor ) then
-		return
-	end		  
-	
-	self:switch_state( actor )
-	
-	if self.state == state_inside then
-		if time_global() > time_update then
-			time_update = time_global() + 1000 -- раз в секунду
-			
-			local outfit = actor:get_current_outfit()
-			if outfit and outfit:is_exo_outfit() then
-				local exo_charge = outfit:get_exo_charge()
-				if exo_charge then
-					outfit:set_exo_charge(exo_charge - 0.0005)
-				end
-			end
-			
-			for i = 1, #items_with_batteries do
-				local item_data = items_with_batteries[i]
-				local obj = level.object_by_id(item_data.id)
-				
-				if obj then
-					local current_condition = obj:condition()
-					local new_condition = current_condition - item_data.discharge_rate
+    self:switch_state(actor)
 
-					if new_condition < 0 then
-						new_condition = 0
-					end
-					
-					obj:set_condition(new_condition)
+    if self.state == state_inside then
+        if time_global() > self.time_update then
+            self.time_update = time_global() + 1000
 
-					if new_condition <= 0 then
-						table.remove(items_with_batteries, i)
-						i = i - 1
-					end
-				else
-					table.remove(items_with_batteries, i)
-					i = i - 1
-				end
-			end
-		end
-	end
+            local outfit = actor:get_current_outfit()
+            if outfit and outfit:is_exo_outfit() then
+                local exo_charge = outfit:get_exo_charge()
+                if exo_charge then
+                    outfit:set_exo_charge(exo_charge - 0.0005)
+                end
+            end
+
+            for i = 1, #self.items_with_batteries do
+                local item_data = self.items_with_batteries[i]
+                if item_data then  -- дополнительная страховка
+                    local obj = level.object_by_id(item_data.id)
+                    if obj then
+                        local current_condition = obj:condition()
+                        local new_condition = current_condition - item_data.discharge_rate
+                        if new_condition < 0 then new_condition = 0 end
+                        obj:set_condition(new_condition)
+                        if new_condition <= 0 then
+                            table.remove(self.items_with_batteries, i)
+                            i = i - 1
+                        end
+                    else
+                        table.remove(self.items_with_batteries, i)
+                        i = i - 1
+                    end
+                end
+            end
+        end
+    end
 end
 
-function action_zonedead:switch_state( actor )
-	local state = self.state
-	
-	if state == state_outside or state == state_nowhere then
-		if self.object:inside( actor:center() ) then
-			self:zone_enter()
-			return
-		end
-	end
-	
-	if state == state_inside or state == state_nowhere then
-		if not self.object:inside( actor:center() ) then
-			self:zone_leave()
-			return
-		end
-	end
+function action_zonedead:switch_state(actor)
+    local state = self.state
+    if state == state_outside or state == state_nowhere then
+        if self.object:inside(actor:center()) then
+            self:zone_enter()
+            return
+        end
+    end
+    if state == state_inside or state == state_nowhere then
+        if not self.object:inside(actor:center()) then
+            self:zone_leave()
+            return
+        end
+    end
 end
 
 function action_zonedead:zone_enter()
-	self.state = state_inside
-	
-	--log1("~~~ sr_zone_dead : actor inside zone")
-	
-	items_with_batteries = {}
-	
-	-- Действия при входе в зону
-	olr.show_minimap(false)
-	actor:set_pda_disabled(true)
-	actor_inside_zone = true
+    self.state = state_inside
+    olr.show_minimap(false)
+    db.actor:set_pda_disabled(true)
+    self.actor_inside_zone = true
 
-	-- Заполняем таблицу предметами из инвентаря
-	actor:iterate_inventory(
-		function(_, obj)
-			if obj then
-				local section = obj:section()
-				local discharge_rate = discharge_rates[section]
-				
-				if discharge_rate then
-					table.insert(items_with_batteries, {
-						id = obj:id(),
-						section = section,
-						discharge_rate = discharge_rate
-					})
-				end
-			end
-		end
-	)
+    self.items_with_batteries = {}
+    db.actor:iterate_inventory(
+        function(_, obj)
+            if obj then
+                local section = obj:section()
+                local discharge_rate = discharge_rates[section]
+                if discharge_rate then
+                    table.insert(self.items_with_batteries, {
+                        id = obj:id(),
+                        section = section,
+                        discharge_rate = discharge_rate
+                    })
+                end
+            end
+        end
+    )
 end
 
 function action_zonedead:zone_leave()
-	self.state = state_outside
-	
-	--log1("~~~ sr_zone_dead : actor outside zone")
-	
-	-- Действия при выходе из зоны
-	olr.show_minimap(true)
-	actor:set_pda_disabled(false)
-	actor_inside_zone = false
-	
-	-- Очищаем таблицу при выходе из зоны
-	items_with_batteries = {}
+    self.state = state_outside
+    olr.show_minimap(true)
+    db.actor:set_pda_disabled(false)
+    self.actor_inside_zone = false
+    self.items_with_batteries = {}
 end
 
 function get_actor_state()

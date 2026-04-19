@@ -36,6 +36,33 @@ function action_walker_activity:activate_scheme(loading, npc)
 end
 
 function action_walker_activity:reset_scheme(loading, npc)
+	local npc_name = if_then_else(npc, npc:name(), "<nil>")
+	local npc_id = if_then_else(npc, tostring(npc:id()), "<nil>")
+	local npc_storage = npc and db.storage[npc:id()] or nil
+	local diag = string.format("npc='%s' id=%s section='%s' active='%s' gulag='%s' path_walk='%s' path_look='%s'",
+		npc_name,
+		npc_id,
+		utils.to_str(self.st.section),
+		utils.to_str(npc_storage and npc_storage.active_section),
+		utils.to_str(npc_storage and npc_storage.gulag_name),
+		utils.to_str(self.st.path_walk),
+		utils.to_str(self.st.path_look))
+
+	if not self.st.path_walk or self.st.path_walk == "" then
+		log1(string.format("xr_walker error: %s", diag))
+		abort("xr_walker: %s: path_walk is nil or empty", diag)
+	end
+
+	if not level.patrol_path_exists(self.st.path_walk) then
+		log1(string.format("xr_walker error: %s", diag))
+		abort("xr_walker: %s: path_walk '%s' does not exist", diag, self.st.path_walk)
+	end
+
+	if self.st.path_look and self.st.path_look ~= "" and not level.patrol_path_exists(self.st.path_look) then
+		log1(string.format("xr_walker error: %s", diag))
+		abort("xr_walker: %s: path_look '%s' does not exist", diag, self.st.path_look)
+	end
+
 	if self.st.path_walk_info == nil then			
 		self.st.path_walk_info = utils.path_parse_waypoints(self.st.path_walk)
 	end

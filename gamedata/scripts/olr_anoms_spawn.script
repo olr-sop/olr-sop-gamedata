@@ -375,14 +375,13 @@ function spawn_anom(anom_name, plosh, position, level_vertex_id, game_vertex_id,
     
     local restrikror_type = pac:r_u8()
     local powers = pac:r_float()
-    local owner_id = pac:r_s32()
+    local owner_id = pac:r_u32()
     local on_off_mode_enabled_time = pac:r_u32()
     local on_off_mode_disabled_time = pac:r_u32()
     local on_off_mode_shift_time = pac:r_u32()
     local offline_interactive_radius = pac:r_float()
     local artefact_spawn_places_count = pac:r_u16()
     local artefact_position_offset = pac:r_s32()
-    local last_spawn_time_present = pac:r_u8()
     
     -- Запись измененных данных
     pac:w_begin(game_vertex_id)
@@ -420,7 +419,6 @@ function spawn_anom(anom_name, plosh, position, level_vertex_id, game_vertex_id,
     pac:w_float(offline_interactive_radius)
     pac:w_u16(artefact_spawn_places_count)
     pac:w_u32(artefact_position_offset)
-    pac:w_u8(last_spawn_time_present)
     
     pac:r_seek(0)
     obj:STATE_Read(pac, pac:w_tell())

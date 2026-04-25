@@ -7311,50 +7311,6 @@ function radbun_restore_stuffmosk()
 	olr.del_by_name("lvl12_radar_bunker_space_restrictor_0015")
 end
 
-function setvisradbun()
-	-- Таблица NPC и их визуалов
-	local npc_list = {
-		"lvl12_radar_bunker_staler_undead_olr_0002",
-		"lvl12_radar_bunker_staler_undead_olr_0003",
-		"lvl12_radar_bunker_staler_undead_olr_0004",
-		"lvl12_radar_bunker_staler_undead_olr_0005",
-		"lvl12_radar_bunker_staler_undead_olr_0006",
-		"lvl12_radar_bunker_staler_undead_olr_0007",
-		"lvl12_radar_bunker_staler_undead_olr_0008",
-		"lvl12_radar_bunker_staler_undead_olr_0009",
-		"lvl12_radar_bunker_staler_undead_olr_0010",
-		"lvl12_radar_bunker_staler_undead_olr_0011",
-		"lvl12_radar_bunker_staler_undead_olr_0012",
-		"lvl12_radar_bunker_stalker_0004",
-		"lvl12_radar_bunker_stalker_0000",
-		"lvl12_radar_bunker_staler_undead_olr_0013"
-	}
-
-	local visuals = {
-		[[actors\scientist\scientist_group_01]],
-		[[actors\scientist\scientist_group_02]],
-		[[actors\scientist\scientist_group_03]],
-		[[actors\scientist\scientist_group_04]]
-	}
-
-	for _, npc_name in ipairs(npc_list) do
-		local npc = alife():object(npc_name)
-		if npc and IsStalker(npc) then
-			local gvid = npc.m_game_vertex_id
-			if game_graph():valid_vertex_id(gvid) and 
-			   alife():level_name(game_graph():vertex(gvid):level_id()) == "lvl12_radar_bunker" then
-				local pk = get_netpk(npc, 1)
-				if pk:isOk() then
-					local data = pk:get()
-					data.visual_name = visuals[math.random(#visuals)]
-					data.character_name = ""
-					pk:set(data)
-				end
-			end
-		end
-	end
-end
-
 --------------------------------------------------------------------------------------------------------------
 
 function bolezn_beshenstvo_timer()
@@ -8706,7 +8662,7 @@ end
 function del_monolit_hlam()
 	olr.del_by_name("lights_gi_r2_0001")
 	olr.del_by_name("lights_gi_r2_0000")
-	delete_netspawn_objects({ "lvl15_sarcofag_space_restrictor_0005", "lvl15_sarcofag_space_restrictor_0000", "sar_monolith_spot", "lvl_sar_lights_hanging_lamp_0000", "lvl_sar_lights_hanging_lamp", "sar_monolith", "lvl15_sarcofag_physic_object_0011", "lvl15_sarcofag_physic_object_0015", "lvl15_sarcofag_physic_object_0013", "lvl15_sarcofag_physic_object_0014", "lvl15_sarcofag_space_restrictor_0002", "lvl15_sarcofag_physic_object_0010", "lvl15_sarcofag_physic_object_0012", "lights_hanging_lamp0007" })
+	delete_netspawn_objects({ "lvl15_sarcofag_space_restrictor_0005", "lvl15_sarcofag_space_restrictor_0000", "lvl_sar_lights_hanging_lamp_0000", "lvl_sar_lights_hanging_lamp", "sar_monolith", "lvl15_sarcofag_physic_object_0011", "lvl15_sarcofag_physic_object_0015", "lvl15_sarcofag_physic_object_0013", "lvl15_sarcofag_physic_object_0014", "lvl15_sarcofag_space_restrictor_0002", "lvl15_sarcofag_physic_object_0010", "lvl15_sarcofag_physic_object_0012", "lights_hanging_lamp0007" })
 end
 
 function now_iremember_delhlam()
@@ -9613,21 +9569,11 @@ function rad_bun_tv_casuality_room()
 	)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\siren_gen]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	local te = texture_find("videos\\intro\\intro_gsc")
-	if te then
-		te:set_name("fx\\bloody_eye")
-		te:reload()
-	end
 end
 
 function rad_bun_tv_casuality_roomoff()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\siren_gen]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	local te = texture_find("videos\\intro\\intro_gsc")
-	if te then
-		te:set_name("videos\\intro\\intro_gsc")
-		te:reload()
-	end
 end
 
 function bun_swatoy_rush_bun_swatoy_rush_del()
@@ -12641,21 +12587,6 @@ end
 -- удаляем командора
 function delete_escape_wolf()
 	delete_netspawn_objects("lvl1_escape_stalker_0002")
-end
-
--- удаляем уч варлаб 1 
-function delete_uch_war_1()
-	delete_netspawn_objects("lvl17_warlab_stalker_0000")
-end
-
--- удаляем уч варлаб 2 
-function delete_uch_war_2()
-	delete_netspawn_objects("lvl17_warlab_stalker_0002")
-end
-
--- удаляем уч варлаб 3 
-function delete_uch_war_3()
-	delete_netspawn_objects("lvl17_warlab_stalker_0001")
 end
 
 -- зону слизней

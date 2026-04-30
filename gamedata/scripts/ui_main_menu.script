@@ -8,6 +8,7 @@
 
 _G.xvars = get_stored_vars()
 local menu_type = "" -- сюда записываем тип меню
+local g_main_menu_instance = nil
 
 class "main_menu" (CUIScriptWnd)
 
@@ -16,6 +17,7 @@ function main_menu:__init() super()
 	self:InitControls()
 	self:InitCallBacks()
 	self:InitMusic()
+	g_main_menu_instance = self
 end
 
 function main_menu:__finalize()
@@ -114,7 +116,6 @@ function main_menu:InitControls()
 	self:Register					(self.message_box, "msg_box")
 	
 	local _ver = xml:InitStatic		("static_version",self)
-	local mm						= _G.main_menu.get_main_menu()
 	
 	_ver:SetText					(olr.modver)
 	self:NeedCenterCursor			(true)
@@ -122,8 +123,7 @@ function main_menu:InitControls()
 end
 
 function main_menu:InitMusic()
-    local mm = _G.main_menu.get_main_menu()
-    
+	local mm = _G.main_menu.get_main_menu()
     xvars.pull = xvars.pull or 0
     xvars.pull_check = xvars.pull_check or false
     
@@ -149,6 +149,12 @@ function main_menu:GetMusicByMenuType()
         return xvars.current_music_theme
     end
     return [[music\menu_01]]
+end
+
+function Proxy_InitMusic()
+    if g_main_menu_instance then
+        g_main_menu_instance:InitMusic()
+    end
 end
 
 function main_menu:Show(f)
@@ -358,6 +364,8 @@ function main_menu:OnButton_last_save()
 end
 
 function main_menu:OnButton_credits_clicked()
+	local mm = _G.main_menu.get_main_menu()
+	mm:StopMusic()
 	game.start_tutorial("credits_seq")
 end
 

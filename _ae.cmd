@@ -1,1 +1,1 @@
-start bin\Editors\ActorEditor.exe -editor -lfs_mode
+start bin\Editors\ActorEditor.exe -editor

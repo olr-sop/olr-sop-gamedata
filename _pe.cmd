@@ -1,1 +1,1 @@
-start bin\Editors\ParticleEditor.exe -editor -lfs_mode
+start bin\Editors\ParticleEditor.exe -editor

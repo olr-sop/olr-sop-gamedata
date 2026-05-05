@@ -1,1 +1,1 @@
-start bin\Editors\ShaderEditor.exe -editor -lfs_mode
+start bin\Editors\ShaderEditor.exe -editor

@@ -44,7 +44,7 @@ function get_radius_for_section(sect)
     if radius[sect] then
         return radius[sect]
     else
-        printf("[ANOM_HOLDER] WARNING: cannot find radius for " .. sect .. ", using default 4")
+        log1("[ANOM_HOLDER] WARNING: cannot find radius for " .. sect .. ", using default 4")
         return 4
     end
 end
@@ -87,9 +87,14 @@ function enumerate_anoms()
                    obj:clsid() == clsid.zone_galant_s or
                    obj:clsid() == clsid.zone_mbald_s or
                    obj:clsid() == clsid.zone_mincer_s then
-                    anom_list[id] = {object = obj, pos = obj:position(), clsid = obj:clsid()}
+                    local sect = nil
+                    if obj.section then
+                        sect = obj:section()
+                    end
+                    local radius_val = sect and get_radius_for_section(sect) or 4
+                    anom_list[id] = {object = obj, pos = obj:position(), clsid = obj:clsid(), radius = radius_val, section = sect}
                     local pos = anom_list[id].pos
-                    --log1(string.format("[ANOM_HOLDER] STEP6: found anomaly id=%d, clsid=%d at (%.2f,%.2f,%.2f)", id, obj:clsid(), pos.x, pos.y, pos.z))
+                    log1(string.format("[ANOM_HOLDER] STEP6: found anomaly id=%d, clsid=%d at (%.2f,%.2f,%.2f)", id, obj:clsid(), pos.x, pos.y, pos.z))
                     cnt = cnt + 1
                 end
             end

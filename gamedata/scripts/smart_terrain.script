@@ -158,8 +158,6 @@ function se_smart_terrain:STATE_Read( packet, size )
 
 --	printf( "before read_params" )
 --	self:print()
-	
-	self:read_params()
 
 	-- под LevelEditor не пытаться читать из пакета ничего
 	if editor() then
@@ -167,6 +165,7 @@ function se_smart_terrain:STATE_Read( packet, size )
 	end
 	
 	set_save_marker(packet, "load", false, "se_smart_terrain")	
+	self:read_params()
 
 --	printf( "name=%s, script_version=%d", self:name(), self.script_version )
 
@@ -205,7 +204,12 @@ function se_smart_terrain:STATE_Read( packet, size )
 --	printf( "after read [%s]", self:name())
 --	self:print()
 
-	set_save_marker(packet, "load", true, "se_smart_terrain")
+	--if packet:r_elapsed() >= 2 then
+		set_save_marker(packet, "load", true, "se_smart_terrain")
+	--else
+		--log1(string.format("[se_smart_terrain][STATE_Read][legacy-no-trailer] id=%s tell=%d elapsed=%d", tostring(self.id), packet:r_tell(), packet:r_elapsed()))
+	--	log1("Странная хуйня тут короче")
+	--end
 end
 
 -- инициализировать работу смарт террейна.

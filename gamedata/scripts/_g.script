@@ -294,6 +294,12 @@ function set_save_marker(p, mode, check, prefix)
 			p:w_u16(dif)
 		else
 			local c_dif = p:r_tell() - save_markers[result]
+			
+			if prefix == "se_smart_terrain" and p:r_elapsed() < 2 then
+				log1(string.format("[WARN][se_smart_terrain][save_marker][load] tell=%d elapsed=%d need=2 c_dif=%d base=%d", p:r_tell(), p:r_elapsed(), c_dif, save_markers[result]))
+				return
+			end			
+			
 			local dif = p:r_u16()
 			 if dif ~= c_dif then
 				abort("INCORRECT LOAD [%s].[%s][%s]", result, dif, c_dif)

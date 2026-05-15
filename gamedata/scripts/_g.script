@@ -1724,6 +1724,33 @@ function get_texture_info(id_name, id_default)
 	return task_info:get_file_name(), r
 end
 
+-- SRP функции времени
+local time_table =
+{
+	isdst = false,
+	year  = 0,
+	month = 0,
+	day   = 0,
+	hour  = 0,
+	min   = 0,
+	sec   = 0,
+}
+
+function get_game_seconds_srp()
+
+	local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
+	      Y, M, D, h, m, s, ms = game.get_game_time():get(Y, M, D, h, m, s, ms)
+
+	time_table.year  = Y
+	time_table.month = M
+	time_table.day   = D
+	time_table.hour  = h
+	time_table.min   = m
+	time_table.sec   = s
+
+	return os.time(time_table)
+end
+
 -- Инициализация базового игрового времени
 function init_game_time_base()
 	local t = amk.str_explode(":", system_ini():r_string("alife", "start_time"), true)

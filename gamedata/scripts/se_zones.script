@@ -39,7 +39,6 @@ end
 
 function se_zone_anom:on_unregister()
   cse_anomalous_zone.on_unregister(self)
-  anomaly_holder.remove_anomaly(self.id)
 --  printf("unreg " .. tostring(self.id))  
 end
 
@@ -73,98 +72,9 @@ function se_zone_anom:update()
   end 
 end
 
-class "my_net_packet" (net_packet)
-function my_net_packet:__init() super ()
-end
-function my_net_packet:w_chunk_open16(num)
-  net_packet.w_chunk_open16(self,num)
-  printf("w_chunk_open16 " .. num)
-end
-function my_net_packet:w_begin(num)
-  net_packet.w_begin(self,num)
-  printf("w_begin " .. num)
-end
-function my_net_packet:w_u32(num)
-  printf("w_u32 " .. num)
-end
-function my_net_packet:w_chunk_open8(num)
-  printf("w_chunk_open8 " .. num)
-end
-function my_net_packet:w_u8(number)
-  printf("w_u8 " .. num)
-end
-function my_net_packet:w_u24(number)
-  printf("w_u24 " .. num)
-end
-function my_net_packet:w_tell()
-  printf("w_tell ")
-end
-function my_net_packet:w_clientID(ClientID)
-  printf("w_cliendID " .. ClientID)
-end
-function my_net_packet:w_sdir(vec)
-  printf("w_sdir ")
-end
-function my_net_packet:w_u16(num)
-  printf("w_u16 " .. num)
-end
-function my_net_packet:w_s16(num)
-  printf("w_s16 " .. num)
-end
-function my_net_packet:w_matrix(matrix)
-  printf("w_matrix ")
-end
-function my_net_packet:w_s64(num)
-  printf("w_s64 " .. num)
-end
-function my_net_packet:w_bool(boo)
-  printf("w_bool " .. boo)
-end
-function my_net_packet:w_dir(vec)
-  printf("w_dir ")
-end
-function my_net_packet:w_s32(num)
-  printf("w_s32 " .. num)
-end
-function my_net_packet:w_stringZ(string)
-  printf("w_stringZ " .. string)
-end
-function my_net_packet:w_float_q16(num1, num2, num3)
-  printf("w_float_q16 " .. num1 .. " " .. num2 .. " " .. num3)
-end
-function my_net_packet:w_angle8(num)
-  printf("w_angle8 " .. num)
-end
-function my_net_packet:w_float(num)
-  printf("w_float " .. num)
-end
-function my_net_packet:w_angle16(num)
-  printf("w_angle16 " .. num)
-end
-function my_net_packet:w_float_q8(num1, num2, num3)
-  printf("w_float_q8 " .. num1 .. " " .. num2 .. " " .. num3)
-end
-function my_net_packet:w_chunk_close8(num)
-  printf("w_chunk_close8 " .. num)
-end
-function my_net_packet:w_vec3(vec)
-  printf("w_vec3 ")
-end
-function my_net_packet:w_chunk_close16(num)
-  printf("w_chuck_close16 " .. num)
-end
-function my_net_packet:w_u64(num)
-  printf("w_u64 " .. num)
-end
-
 function se_zone_anom:STATE_Write(packet)
---  local mypack=my_net_packet()
---  mypack:w_begin(76)
---  cse_anomalous_zone.STATE_Write(self, mypack)
   cse_anomalous_zone.STATE_Write(self, packet)
---  printf("write " .. tostring(self.id))
---  anomaly_holder.add_anomaly(self.id,nil)
-
+  
   if (is_single_player_game() == false) then
     return
   end
@@ -178,20 +88,8 @@ function se_zone_anom:STATE_Write(packet)
 end
 -- восстановление
 function se_zone_anom:STATE_Read( packet, size )
---  local p1,p2
-  p1=packet:r_tell()
   cse_anomalous_zone.STATE_Read( self, packet, size )
-  p2=packet:r_tell()
-  packet:r_seek(p1+41)
-  local rad=packet:r_float()
-  packet:r_seek(p2)
---  printf(p1 .. " " .. p2)
-  if self.id~=65535 then
-    anomaly_holder.add_anomaly(self.id,self:clsid(),self:section_name(),rad)
-  end
---  local pos=self.position
---  printf("read " .. tostring(self.id) .. " " .. pos.x .. ";" .. pos.y .. ";" .. pos.z)
-  
+
   if editor() then
     return
   end

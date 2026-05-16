@@ -10,12 +10,19 @@ function evaluator_anomaly:__init(storage, npc, name)
 	self.called = false
 end
 
--- Хранилище временных данных для каждого NPC
+-- Локальные таблицы состояния для каждого NPC
 local holdtime = {}
 local stucktime = {}
 local laststate = {}
 local rdelta = {}
-local next_check_time = {}	 -- время следующей проверки
+local next_check_time = {}	 -- Время следующей проверки аномалий
+
+local function get_anomaly_object(anom_id)
+	if db and db.anoms_online and db.anoms_online[anom_id] then
+		return db.anoms_online[anom_id]
+	end
+	return level.object_by_id(anom_id)
+end
 
 function vec2str(v)
 	if v.x and v.y and v.z then
@@ -25,63 +32,55 @@ function vec2str(v)
 	end
 end
 
--- Спокойное состояние: вероятности ошибки (для разных типов аномалий)
+-- Базовые вероятности ошибки (вне боя)
 local error_prob = {
-	novice = {
-		[clsid.zone_bfuzz_s] = 5,
-		[clsid.zone_galant_s] = 5,
-		[clsid.zone_mbald_s] = 1,
-		[clsid.zone_mincer_s] = 5
-	},
-	experienced = {
-		[clsid.zone_bfuzz_s] = 2,
-		[clsid.zone_galant_s] = 2,
-		[clsid.zone_mbald_s] = 1,
-		[clsid.zone_mincer_s] = 2
-	},
-	veteran = {
-		[clsid.zone_bfuzz_s] = 1,
-		[clsid.zone_galant_s] = 1,
-		[clsid.zone_mbald_s] = 1,
-		[clsid.zone_mincer_s] = 1
-	},
-	master = {
-		[clsid.zone_bfuzz_s] = 0,
-		[clsid.zone_galant_s] = 0,
-		[clsid.zone_mbald_s] = 0,
-		[clsid.zone_mincer_s] = 0
-	}
+	novice = {},
+	experienced = {},
+	veteran = {},
+	master = {}
 }
 
--- Бой: вероятности ошибки выше
+-- В бою: увеличенные вероятности ошибки
 local error_prob_fight = {
-	novice = {
-		[clsid.zone_bfuzz_s] = 20,
-		[clsid.zone_galant_s] = 20,
-		[clsid.zone_mbald_s] = 5,
-		[clsid.zone_mincer_s] = 20
-	},
-	experienced = {
-		[clsid.zone_bfuzz_s] = 8,
-		[clsid.zone_galant_s] = 8,
-		[clsid.zone_mbald_s] = 2,
-		[clsid.zone_mincer_s] = 8
-	},
-	veteran = {
-		[clsid.zone_bfuzz_s] = 4,
-		[clsid.zone_galant_s] = 4,
-		[clsid.zone_mbald_s] = 1,
-		[clsid.zone_mincer_s] = 4
-	},
-	master = {
-		[clsid.zone_bfuzz_s] = 1,
-		[clsid.zone_galant_s] = 1,
-		[clsid.zone_mbald_s] = 1,
-		[clsid.zone_mincer_s] = 1
-	}
+	novice = {},
+	experienced = {},
+	veteran = {},
+	master = {}
 }
 
--- Радиус уклонения в зависимости от ранга (метры)
+local function read_error_prob_section(cfg, section_name, dest)
+	if not cfg or not cfg:section_exist(section_name) then
+		return
+	end
+
+	local n = cfg:line_count(section_name)
+	local id, value = "", ""
+	for i = 0, n - 1 do
+		local result
+		result, id, value = cfg:r_line(section_name, i, "", "")
+		local num = tonumber(value)
+		if result and id ~= "" and num ~= nil then
+			dest[id] = num
+		end
+	end
+end
+
+local function init_error_prob_from_config()
+	local cfg = ini_file("olr_script_configs.ltx")
+	if not cfg then
+		return
+	end
+
+	local rank_names = {"novice", "experienced", "veteran", "master"}
+	for _, rank_name in pairs(rank_names) do
+		read_error_prob_section(cfg, "anomaly_evader_error_prob_" .. rank_name, error_prob[rank_name])
+		read_error_prob_section(cfg, "anomaly_evader_error_prob_fight_" .. rank_name, error_prob_fight[rank_name])
+	end
+end
+
+init_error_prob_from_config()
+
+-- Добавочный радиус обнаружения в зависимости от ранга (метры)
 local rank_radius = {
 	novice = 5,
 	experienced = 10,
@@ -89,11 +88,11 @@ local rank_radius = {
 	master = 20
 }
 
--- Настройки интервалов проверки аномалий (в миллисекундах)
-local ANOM_CHECK_INTERVAL_DANGER   = 500	-- если NPC в опасной зоне (dist < visradius)
-local ANOM_CHECK_INTERVAL_MEDIUM   = 1500	-- если NPC на среднем расстоянии (visradius <= dist < FAR_DISTANCE)
-local ANOM_CHECK_INTERVAL_FAR	   = 5000	-- если NPC далеко от аномалий (dist >= FAR_DISTANCE)
-local FAR_DISTANCE				   = 50	-- метров, после которого считается "далеко"
+-- Интервалы проверки аномалий (в миллисекундах)
+local ANOM_CHECK_INTERVAL_DANGER   = 500	-- Если NPC в зоне опасности (dist < visradius)
+local ANOM_CHECK_INTERVAL_MEDIUM   = 1500	-- Если NPC на средней дистанции
+local ANOM_CHECK_INTERVAL_FAR	   = 5000	-- Если NPC далеко от аномалии
+local FAR_DISTANCE			   = 50	-- Порог для далекой дистанции
 
 function evaluator_anomaly:evaluate()
 	local nid = self.npc:id()
@@ -135,13 +134,13 @@ function evaluator_anomaly:evaluate()
 	if next_check_time[nid] == nil or cur_time > next_check_time[nid] then
 		--log1("[ANOM_EVAL] STEP9: check interval passed, searching anomalies...")
 
-		local hasanom, anomid, pos, cls, dist, radius = anomaly_holder.get_nearest_anomaly(self.npc)
+		local hasanom, anomid, pos, cls, dist, radius, anom_section = anomaly_holder.get_nearest_anomaly(self.npc)
 		local dynamic_interval = ANOM_CHECK_INTERVAL_FAR
 		
 		if hasanom then
 
-			-- Проверяем, активна ли аномалия
-			local anom_obj = level.object_by_id(anomid)
+			-- Проверяем, включена ли аномалия
+			local anom_obj = get_anomaly_object(anomid)
 			if anom_obj and not anom_obj:is_anom_enabled() then
 				--log1("[ANOM_EVAL] STEP10a: anomaly id=" .. anomid .. " is disabled, ignoring")
 				hasanom = false
@@ -161,7 +160,7 @@ function evaluator_anomaly:evaluate()
 			end
 			--log1(string.format("[ANOM_EVAL] STEP12: visradius = %.2f", visradius))
 
-			-- Выбор интервала в зависимости от дистанции
+			-- Выбираем интервал проверки по дистанции
 			if dist < visradius then
 				dynamic_interval = ANOM_CHECK_INTERVAL_DANGER
 			elseif dist < FAR_DISTANCE then
@@ -180,7 +179,10 @@ function evaluator_anomaly:evaluate()
 
 					local errortbl = error_tbl[rank_name]
 					if errortbl then
-						local errorrate = errortbl[cls]
+						local errorrate = nil
+						if anom_section then
+							errorrate = errortbl[anom_section]
+						end
 						if errorrate and math.random(0,100) < errorrate then
 							--log1("[ANOM_EVAL] STEP16: NPC failed to avoid anomaly (errorrate=" .. errorrate .. "%)")
 							stucktime[nid][anomid] = time_global() - 1
@@ -272,7 +274,7 @@ function action_evade_anomaly:execute ()
 		
 		if flag then
 			-- Проверяем активность аномалии
-			local anom_obj = level.object_by_id(anomid)
+			local anom_obj = get_anomaly_object(anomid)
 			if anom_obj and not anom_obj:is_anom_enabled() then
 				--log1("[ANOM_ACT] STEP4a: anomaly id=" .. anomid .. " is disabled, ignoring")
 				flag = false

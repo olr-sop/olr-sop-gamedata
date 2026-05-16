@@ -19,6 +19,8 @@ uniform float4		r1a_hfog_emitter_height;	// x=minY, y=rangeY, z=signed_distance_
 uniform float4		r1a_hfog_tune;	// x=reserved, y=noise_amp, z=noise_scale, w=noise_speed
 uniform float4		r1a_mipfog_params;	// x=enable, y=near_to_detail_start, z=directional_amount, w=weather_blend_amount
 
+uniform float4		g_tint;
+
 float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
 
 float r1a_fog_factor(float3 fog_pos)

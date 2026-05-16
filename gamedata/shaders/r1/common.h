@@ -11,6 +11,8 @@ uniform float4x4 	L_dynamic_xform;
 uniform float4x4	m_plmap_xform;
 uniform float4 		m_plmap_clamp	[2];	// 0.w = factor
 
+uniform float4		g_tint;
+
 float  	calc_fogging 	(float4 w_pos)	{ return dot(w_pos,fog_plane); 	}
 float2 	calc_detail 	(float3 w_pos)	{ 
 	float  	dtl	= distance(w_pos,eye_position)*dt_params.w;

@@ -303,7 +303,7 @@ function options_dialog:Update()
 		end
 		self.message_box:SetText(string.format("%s %d %s", game.translate_string("ui_mm_confirm_changes"), 15-(tg-self.timer), game.translate_string("ui_st_secs")))
 		if(tg-self.timer>=15) then
-			self.owner:GetHolder():start_stop_menu	(self.message_box,true)
+			self.message_box:HideDialog()
 			self:OnDiscardChanges()
 		end
 	end
@@ -325,7 +325,7 @@ function options_dialog:OnApplyChanges()
 			if opt:NeedCleanSCache() then
 				self.message_box:SetText(game.translate_string("ui_mm_need_restart_clean_scache"))
 			end
-			self.owner:GetHolder():start_stop_menu(self.message_box,true)
+			self.message_box:ShowDialog(true)
 		end
 	end
 end
@@ -347,6 +347,6 @@ function options_dialog:OnMenuReloaded()
 	if(_G.b_discard_settings_shown) then
 		self.message_box:Init("message_box_accept_vid_restart")
 		self.message_box:SetText(string.format("%s %d% s", game.translate_string("ui_mm_confirm_changes"), 15, game.translate_string("ui_st_secs")))
-		self:GetHolder():start_stop_menu(self.message_box,true)
+		self.message_box:ShowDialog(true)
 	end
 end

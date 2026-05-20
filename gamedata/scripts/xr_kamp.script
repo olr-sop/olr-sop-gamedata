@@ -167,7 +167,7 @@ function action_go_position:execute()
 
         -- Если вершина всё ещё невалидна (0 или nil), используем центр лагеря
         if not self.a.pos_vertex or self.a.pos_vertex == 0 or self.a.pos_vertex == 4294967295 then
-            log(string.format("xr_camp : [%s] WARNING: dest_vertex invalid (%s), using center point", self.object:name(), tostring(self.a.pos_vertex)))
+            log1(string.format("xr_camp : [%s] WARNING: dest_vertex invalid (%s), using center point", self.object:name(), tostring(self.a.pos_vertex)))
             local center_point = patrol(self.a.center_point):point(0)
             self.a.pos_vertex = self.object:accessible_nearest(center_point, vector():set(0,0,0))
         end
@@ -223,7 +223,7 @@ function action_wait:execute()
 	local state, sound, substate = kamps[self.a.center_point]:updateNpc(self.object)
 	
 	-- повернуть его лицом к центру	
-	state_mgr.set_state(self.object, state, nil, nil, {look_position = level.vertex_position(self.a.pp)}, nil, nil, {subanim = substate})
+	state_mgr.set_state(self.object, state, nil, nil, {look_position = self.a.pp}, nil, nil, {subanim = substate})
 	xr_sound.set_sound(self.object, sound)
 end
 function action_wait:finalize()

@@ -10614,11 +10614,13 @@ function dead_spawen_dinamite()
 end
 
 function esc_spawen_blokpost_docks()
-	local level_name = level.name()
-	if level_name == "lvl1_escape" then
-		local bloodbridgew = vector():set( -138.51, -29.32, -354.90 )
-		local obj = alife():create("agro_case_01", bloodbridgew, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
-		ui_hud_toolskit.Add_MapSpot(obj.id, "treasure", "Ибанный ящик с кордона")
+	local sobj = sim:object("esc_agro_case_01")
+	if sobj then
+		local id = sobj.id
+		sim:set_switch_offline(id, false)
+		sim:set_switch_online(id, true)
+		sim:set_interactive(id, true)
+		ui_hud_toolskit.Add_MapSpot(sobj.id, "treasure", "Ибанный ящик с кордона")
 	end
 end
 

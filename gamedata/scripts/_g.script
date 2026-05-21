@@ -180,24 +180,122 @@ function debug_write(output, trace)
 end
 
 -- Крешнуть игру (после вывода сообщения об ошибке в лог)
-
 function abort(fmt, ...)
-	local console = get_console()
-	local reason = format_to_string(fmt,...) or "<nil>"
-	local msg_crit_error = "ВНИМАНИЕ! Игра принудительно прерывается! Строка ниже является информацией об ошибке!\n".."ОШИБКА: "..reason..""
-	log1(msg_crit_error)
-	if level.present() then if db and (db.actor ~= nil) then olr.hud_tip_fatal(msg_crit_error) end end
-	if not FATAL_ABORT then
-		log1("FATAL_ABORT отключён!")
-		local msg_saves_corrupted = "Продолженная игра может привести к проблемам в игре и <битым> сохранениям!"
-		log1(msg_saves_corrupted)
-		if level.present() then if db and (db.actor ~= nil) then olr.hud_tip_fatal(msg_saves_corrupted) end end
-		console:execute("flush")
-	else
-		log1("FATAL_ABORT включён!")
-		console:execute("flush")
-		assert(msg_crit_error)
-	end
+
+    -- Сообщение об ошибке
+    local reason = format_to_string(fmt, ...) or "<nil>"
+	
+	-- Выводим предупреждение о вылете
+    local console = get_console()
+    local msg_crit_error = "ВНИМАНИЕ! Игра принудительно прерывается! Отправьте лог разработчку!\n" .. "ОШИБКА: " .. reason
+    log1(msg_crit_error)
+    if level.present() then
+        if db and (db.actor ~= nil) then
+            if olr and olr.hud_tip_fatal then
+                olr.hud_tip_fatal(msg_crit_error)
+            end
+        end
+    end
+	
+	console:execute("flush")
+
+    -- ==================== ФУНКЦИЯ ДЛЯ СБОРА СТЕКА ====================
+    local function get_stacktrace(start_level)
+        local frames = {}
+        local level = start_level or 2  -- начиная с уровня, который вызвал abort
+        while true do
+            local info = debug.getinfo(level, "Sln")  -- получаем имя, строку, файл
+            if not info then break end
+            local name = info.name or "<anonymous>"
+            local src = info.short_src or "?"
+            local line = info.currentline or 0
+            table.insert(frames, string.format("  %s:%d: in function '%s'", src, line, name))
+            level = level + 1
+        end
+        if #frames == 0 then
+            return "Call stack is empty (no additional frames)"
+        end
+        return "stack traceback:\n" .. table.concat(frames, "\n")
+    end
+
+    -- Собираем стек начиная с уровня 2 (вызывающий abort)
+    local traceback_str = get_stacktrace(2)
+    
+    -- Информация о вызывающем коде (уровень 2)
+    local caller = debug.getinfo(2, "Sln")
+    local caller_info = ""
+    if caller then
+        caller_info = string.format("Call from: %s:%d (function '%s')",
+            caller.short_src or "?",
+            caller.currentline or 0,
+            caller.name or "<anonymous>")
+    else
+        caller_info = "Call from: <неизвестно>"
+    end
+    
+    -- Сообщение об ошибке
+    local reason = format_to_string(fmt, ...) or "<nil>"
+    
+    -- Состояние watchdog
+    local watchdog_value = "unavailable"
+    local watchdog_reason = "unavailable"
+    if amk then
+        watchdog_value = tostring(amk.oau_watchdog) or "nil"
+        watchdog_reason = tostring(amk.oau_reason) or "nil"
+    end
+    
+    -- Формируем диагностическое сообщение
+    local diagnostic_msg = string.format(
+        "==================== ABORT ====================\n" ..
+        "Error: %s\n" ..
+        "%s\n" ..
+		"Watchdog: value %s, reason '%s'\n" ..
+		"Call stack (full chain):\n%s\n"
+        "=====================================================================",
+        tostring(reason),
+        tostring(caller_info),
+        tostring(watchdog_value),
+        tostring(watchdog_reason),
+        tostring(traceback_str)
+    )
+    
+    -- Пишем в лог
+	console:execute("flush")
+    log1(diagnostic_msg)
+	console:execute("flush")
+    error(diagnostic_msg)
+	
+	--[[
+    local console = get_console()
+    local msg_crit_error = "ВНИМАНИЕ! Игра принудительно прерывается! Строка ниже является информацией об ошибке!\n" .. "ОШИБКА: " .. reason
+    log1(msg_crit_error)
+    error(msg_crit_error)
+    if level.present() then
+        if db and (db.actor ~= nil) then
+            if olr and olr.hud_tip_fatal then
+                olr.hud_tip_fatal(msg_crit_error)
+            end
+        end
+    end
+    
+    if not FATAL_ABORT then
+        log1("FATAL_ABORT отключён!")
+        local msg_saves_corrupted = "Продолженная игра может привести к проблемам в игре и <битым> сохранениям!"
+        log1(msg_saves_corrupted)
+        if level.present() then
+            if db and (db.actor ~= nil) then
+                if olr and olr.hud_tip_fatal then
+                    olr.hud_tip_fatal(msg_saves_corrupted)
+                end
+            end
+        end
+        console:execute("flush")
+    else
+        log1("FATAL_ABORT включён!")
+        console:execute("flush")
+        error(msg_crit_error)
+    end
+	--]]
 end
 
 function format_to_string(fmt, ...)

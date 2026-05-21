@@ -168,13 +168,16 @@ function execute_game_timer_action(idx, name, action)
 		log1("! Executing game timer ["..name.."], idx="..idx)
 	end
 	
+    -- Записываем информацию о предстоящем вызове для отлова ошибок
+    amk.oau_reason = "game_timer [" .. name .. "] action: " .. tostring(action)	
+	
 	-- Выполняем действие
 	if action and action ~= "" then
 		local func = loadstring(action)
 		if func then
 			local success, error_msg = pcall(func)
-			if not success and debug_msg then
-				log1("! Game Timer error: "..tostring(error_msg))
+			if not success then
+				log1("! [ERROR][olr_timers] Game Timer error: "..tostring(error_msg))
 			end
 		end
 	end
@@ -189,6 +192,9 @@ function execute_game_timer_action(idx, name, action)
 	if debug_msg then
 		log1("! Game Timer ["..name.."] executed, done: "..xvars.game_timers_done.."/"..xvars.game_timers_count)
 	end
+	
+    -- Сбрасываем причину после успешного выполнения
+    amk.oau_reason = ""	
 end
 
 -- Выполнение действия реального таймера
@@ -197,13 +203,16 @@ function execute_real_timer_action(idx, name, action)
 		log1("! Executing real timer ["..name.."], idx="..idx)
 	end
 	
+    -- Записываем информацию о предстоящем вызове для отлова ошибок
+    amk.oau_reason = "real_timer [" .. name .. "] action: " .. tostring(action)	
+	
 	-- Выполняем действие
 	if action and action ~= "" then
 		local func = loadstring(action)
 		if func then
 			local success, error_msg = pcall(func)
-			if not success and debug_msg then
-				log1("! Real Timer error: "..tostring(error_msg))
+			if not success then
+				log1("! [ERROR][olr_timers] Real Timer error: "..tostring(error_msg))
 			end
 		end
 	end
@@ -218,6 +227,9 @@ function execute_real_timer_action(idx, name, action)
 	if debug_msg then
 		log1("! Real Timer ["..name.."] executed, done: "..xvars.real_timers_done.."/"..xvars.real_timers_count)
 	end
+	
+    -- Сбрасываем причину после успешного выполнения
+    amk.oau_reason = ""	
 end
 
 -- Проверка существования игрового таймера

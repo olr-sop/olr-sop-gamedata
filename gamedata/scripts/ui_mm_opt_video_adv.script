@@ -6,20 +6,33 @@ end
 function opt_video_adv:__finalize()
 end
 
+-- r1 = 0
+-- r1a = 3
+-- r2a = 1
+-- r2 = 2
+
 function all_modes(render_id)
 	return true
 end
 
-function mode_1(render_id)
-	return render_id==0
+function mode_r1(render_id)
+	return render_id == 0
+end
+
+function mode_r1a(render_id)
+	return render_id == 3
+end
+
+function mode_r1_r1a(render_id)
+	return render_id == 0 or render_id == 3
 end
 
 function mode_ge_2a(render_id)
-	return render_id>=1
+	return render_id >= 1 and render_id ~= 3 -- костыль
 end
 
 function mode_ge_2(render_id)
-	return render_id>=2
+	return render_id >= 2 and render_id ~= 3 -- костыль
 end
 
 function opt_video_adv:InitControls(x, y, xml, handler)
@@ -62,7 +75,7 @@ function opt_video_adv:InitControls(x, y, xml, handler)
 	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
 	xml:InitStatic								("video_adv:cap_ssample",				_st)
 	xml:InitTrackBar						("video_adv:track_ssample",				_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	table.insert(handler.m_preconditions, {func=mode_r1_r1a, control=_st})
 
 	_st = xml:InitStatic						("video_adv:templ_item",					nil)
 	xml:InitStatic								("video_adv:cap_detailtex",					_st)
@@ -79,51 +92,50 @@ function opt_video_adv:InitControls(x, y, xml, handler)
 	ctl			= xml:InitCheck		("video_adv:check_r2_sun_details",		_st)
 	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 	
-	_st				= xml:InitStatic			("video_adv:templ_item", nil)
-	xml:InitStatic								("video_adv:cap_r2_tonemap",		_st)
-	xml:InitCheck	("video_adv:check_r2_tonemap",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item", nil)
+--	xml:InitStatic								("video_adv:cap_r2_tonemap",		_st)
+--	xml:InitCheck	("video_adv:check_r2_tonemap",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_tonemap_middlegray",		_st)
-	xml:InitTrackBar							("video_adv:track_r2_tonemap_middlegray",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r2_tonemap_middlegray",		_st)
+--	xml:InitTrackBar							("video_adv:track_r2_tonemap_middlegray",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_soft_water",			_st)
-	ctl				= xml:InitCheck				("video_adv:check_r2_soft_water",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r2_soft_water",			_st)
+--	ctl				= xml:InitCheck				("video_adv:check_r2_soft_water",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r2_old_bloom",			_st)
+--	ctl				= xml:InitCheck				("video_adv:check_r2_old_bloom",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_old_bloom",			_st)
-	ctl				= xml:InitCheck				("video_adv:check_r2_old_bloom",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r2_ls_bloom_blend",			_st)
+--	ctl				= xml:InitCheck				("video_adv:check_r2_ls_bloom_blend",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_ls_bloom_blend",			_st)
-	ctl				= xml:InitCheck				("video_adv:check_r2_ls_bloom_blend",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
-
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r_compress_lmap",			_st)
-	ctl				= xml:InitCheck				("video_adv:check_r_compress_lmap",		_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r_compress_lmap",			_st)
+--	ctl				= xml:InitCheck				("video_adv:check_r_compress_lmap",		_st)
+--	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
 
 --	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
 --	xml:InitStatic								("video_adv:cap_r2_mblur",		_st)
 --	xml:InitTrackBar							("video_adv:track_r2_mblur",		_st)
 --	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_sun_lumscale",		_st)
-	xml:InitTrackBar							("video_adv:track_r2_sun_lumscale",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r2_sun_lumscale",		_st)
+--	xml:InitTrackBar							("video_adv:track_r2_sun_lumscale",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_sun_lumscale_amb",		_st)
-	xml:InitTrackBar							("video_adv:track_r2_sun_lumscale_amb",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_r2_sun_lumscale_amb",		_st)
+--	xml:InitTrackBar							("video_adv:track_r2_sun_lumscale_amb",		_st)
+--	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
 
 	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
 	xml:InitStatic								("video_adv:cap_light_distance",		_st)
@@ -155,10 +167,10 @@ function opt_video_adv:InitControls(x, y, xml, handler)
 	xml:InitCheck								("video_adv:check_vsync",				_st)
 	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_60hz",					_st)
-	xml:InitCheck								("video_adv:check_60hz",				_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+--	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
+--	xml:InitStatic								("video_adv:cap_60hz",					_st)
+--	xml:InitCheck								("video_adv:check_60hz",				_st)
+--	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
 
 	btn		= xml:Init3tButton					("video_adv:btn_to_simply",	self)
 	handler:Register							(btn, "btn_simply_graphic")

@@ -152,6 +152,7 @@ function options_dialog:InitCallBacks()
 	self:AddCallback("check_retromode",		ui_events.BUTTON_CLICKED,	self.OnRetromodeChanged,	self)
 	self:AddCallback("btn_simply_graphic",	ui_events.BUTTON_CLICKED,	self.OnSimplyGraphic,		self)
 	self:AddCallback("btn_keyb_default",	ui_events.BUTTON_CLICKED,	self.OnBtnKeyDefault,		self)
+	self:AddCallback("check_crosshair",		ui_events.BUTTON_CLICKED,	self.OnCheckCrossChanged,	self)
 
 	self:AddCallback("btn_cancel_download",	ui_events.BUTTON_CLICKED,	self.OnBtn_CancelDownload,	self)
 
@@ -172,6 +173,12 @@ function options_dialog:OnPresetChanged()
 	local opt					= COptionsManager()
 	opt:SetCurrentValues		("mm_opt_video")
 	opt:SetCurrentValues		("mm_opt_video_adv")
+end
+
+function options_dialog:OnCheckCrossChanged()
+	self.check_crosshair_cross:Enable(self.check_crosshair:GetCheck())
+	self.check_dyn_crosshair:Enable(self.check_crosshair:GetCheck())
+	self.check_hud_info:Enable(self.check_crosshair:GetCheck())
 end
 
 
@@ -250,6 +257,9 @@ function options_dialog:OnTabChange()
 		self.dlg_sound:Show(true)
 	elseif ids == "gameplay" then
 		self.dlg_gameplay:Show(true)
+		self.check_crosshair_cross:Enable(self.check_crosshair:GetCheck())
+		self.check_dyn_crosshair:Enable(self.check_crosshair:GetCheck())
+		self.check_hud_info:Enable(self.check_crosshair:GetCheck())
 	elseif ids == "controls" then
 		self.dlg_controls:Show(true)
 	end

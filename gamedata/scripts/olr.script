@@ -736,7 +736,7 @@ function check_memory()
     local MEMORY_CRITICAL_KB = 60000 -- 60 MB (но в KB)
     
     local memuse_kb = collectgarbage("count")
-    printf("##LUA MEMORY USAGE: [%d KB] (%.2f MB)", memuse_kb, memuse_kb / 1024)
+    --log1(string.format("~ [WARN] LUA MEMORY USAGE: [%d KB] (%.2f MB)", memuse_kb, memuse_kb / 1024))
     
     if memuse_kb > MEMORY_WARNING_KB then
         -- Выполняем полный цикл сборки мусора
@@ -745,8 +745,8 @@ function check_memory()
         
         if memuse_kb > MEMORY_CRITICAL_KB then
             local memuse_mb = memuse_kb / 1024
-            printf("!![%s] POSSIBLE MEMORY LEAK! MEMORY USAGE: [%.2f MB]", script_name():upper(), memuse_mb)
-            news_manager.send_tip(db.actor, "AHTUNG MEMORY LEAK!!! "..string.format("%.2f", memuse_mb).." MB", nil, "sos", 10000)
+            log1(string.format("~ [WARN] POSSIBLE MEMORY LEAK! MEMORY USAGE: [%.2f MB]", memuse_mb))
+            --news_manager.send_tip(db.actor, "AHTUNG MEMORY LEAK!!! "..string.format("%.2f", memuse_mb).." MB", nil, "sos", 10000)
         end
     end
 end
@@ -1001,7 +1001,7 @@ end
 -- удалить объект
 function del(obj)
 	if obj then
-		local sobj = alife():object(obj:id())
+		local sobj = alife():object(obj)
 		if sobj then
 			--if olr.olrdbg == true then
 			--	log1(" ! olr del object - ["..obj:name().."]")
@@ -1322,7 +1322,7 @@ function spawn_crows(num,dist)
 		num = 10
 	end
 	if dist == nil then
-		num = 40
+		dist = 40
 	end
  	for i = 1, num do
   		alife():create("m_crow", db.actor:position():add(db.actor:direction():mul(dist)), db.actor:level_vertex_id(), db.actor:game_vertex_id())

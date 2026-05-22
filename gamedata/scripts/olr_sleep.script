@@ -57,6 +57,7 @@ function start_sleep(hours, minutes, safety_place) -- вызывается из основной фун
 	minutes_to_sleep = minutes -- записываем скока спим минуты
 	sleep_in_safety_place = safety_place -- заносим значение безопасного места для сна
 	actor_sleep = true -- говорим что мы спим
+	blow_sleep_timer_low(hours_to_sleep) -- Задаём время до выброса (Думаю лучше тут перед сном сдвинуть время до выброса)
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback") -- старт анимки, запуск скрипта в конце
 	level.add_pp_effector("sleep_fade.ppe", 11, false) -- запуск затемненеия
 end
@@ -80,8 +81,6 @@ function dream_callback() -- вызывается из start_sleep
 		olr_sleep.spawen_izlom_rand() -- Спавн излома (а то и двух) возле Мессера если тот спал на улице
 		olr_sleep_robers.sleep_rob() -- Ограбление Мессера во сне
 	end
-	
-	blow_sleep_timer_low(hours_to_sleep * 1325) -- Задаём время по scale до выброса
 	
 	nick.clear_drinked_vodka() -- Обнуляет кол-во выпитых бутылок водки
 	unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"

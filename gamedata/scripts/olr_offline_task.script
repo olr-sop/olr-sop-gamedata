@@ -81,10 +81,11 @@ local function process_human_migration(community, smart_terrains_table)
                     smart_terrain.unregister_npc(npc)
                     npc:brain():can_choose_alife_tasks(true)
                     
-                    run_safely(
-                        function() npc:brain():update() end,
-                        "! olr_offline_task Error in brain update"
-                    )
+					if npc and npc:brain() then
+						npc:brain():update()
+					else
+						log1("~ [WARN] npc brain is nil, skipping update")
+					end
                     
                     olr.clear_restrictors(npc)
                     

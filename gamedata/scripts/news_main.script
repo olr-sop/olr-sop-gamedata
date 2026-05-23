@@ -1547,7 +1547,6 @@ end
 
 function check_news()
 	-- выдать те новости, что успели собраться и сгрупироватся.
-	amk.oau_reason="cn table_spawned"
 	if table_spawned then
 		for k, v in pairs(table_spawned) do	
 			on_spawn_group(v.community, v.level, v.position, v.count, v.o_type)
@@ -1555,7 +1554,6 @@ function check_news()
 		_g.clear_table(table_spawned)
 	end
 
-	amk.oau_reason="cn killed_by_actor"
 	if table_killed_by_actor then
 		for k, v in pairs(table_killed_by_actor) do	
 			this.on_hero_seen(v.community, v.level, v.position, v.count, v.o_type)
@@ -1565,12 +1563,11 @@ function check_news()
 
 	if (timer_last_showed + timer_show_freq < get_game_minutes()) then
 		-- Пора показывать, если есть что.
-		amk.oau_reason="cn on_news"
 		news_main.on_news()
 	end
 
 	spammers = {}
-	amk.oau_reason="cn start_timer"
+
 	if olr_timers.has_game_timer("news_check") then
 		--log1("~~~ Remove news_check timer")
 		olr_timers.del_game_timer("news_check")
@@ -1875,110 +1872,92 @@ end
 
 
 function on_news()
-	local avail = {}
-	if news_stack then 
-		amk.oau_reason="cn on_news first pass"
-		for k,v in pairs(news_stack) do
-			if v.activated == nil then
-				if (v.lifetime > get_game_minutes()) then
-					if (v.timeout < get_game_minutes()) then -- Новость актуальна.
-						--table.insert(avail, k)
-					else
-						--log1("Not ready yet - ".. v.from) -- Еще не время.
-					end
-				else -- Новость устарела.
-					--log1("Too old - "..v.from..": "..v.text)
-					table.remove(news_stack, k)
-				end
-			else -- Новость уже была.
-				table.remove(news_stack, k)
-			end
-		end
-		amk.oau_reason="cn on_news sort"
-		-- Отсортируем.
-		table.sort(news_stack, news_sort)
-		--amk.dump_table(news_stack)
-		amk.oau_reason="cn on_news second pass"
-		for k,v in pairs(news_stack) do
-			if v.activated == nil then
-				if (v.lifetime > get_game_minutes()) then
-					if (v.timeout < get_game_minutes()) then -- Новость актуальна.
-						table.insert(avail, k)
-					else
-							--log1("Not ready yet - ".. v.from..": "..v.text) -- Еще не время.
-					end
-				else 	-- Новость устарела.
-					--log1("Too old - "..v.from..": "..v.text)
-					table.remove(news_stack, k)
-				end
-			else -- Новость уже была.
-				table.remove(news_stack, k)
-			end
-		end
-	end
+    local avail = {}
+    if news_stack then
+        for k, v in pairs(news_stack) do
+            if v.activated == nil then
+                if (v.lifetime > get_game_minutes()) then
+                    if (v.timeout < get_game_minutes()) then -- Новость актуальна.
+                        --table.insert(avail, k)
+                    else
+                        --log1("Not ready yet - ".. v.from) -- Еще не время.
+                    end
+                else -- Новость устарела.
+                    --log1("Too old - "..v.from..": "..v.text)
+                    table.remove(news_stack, k)
+                end
+            else -- Новость уже была.
+                table.remove(news_stack, k)
+            end
+        end
+        -- Отсортируем.
+        table.sort(news_stack, news_sort)
+        for k, v in pairs(news_stack) do
+            if v.activated == nil then
+                if (v.lifetime > get_game_minutes()) then
+                    if (v.timeout < get_game_minutes()) then -- Новость актуальна.
+                        table.insert(avail, k)
+                    else
+                        --log1("Not ready yet - ".. v.from..": "..v.text) -- Еще не время.
+                    end
+                else -- Новость устарела.
+                    --log1("Too old - "..v.from..": "..v.text)
+                    table.remove(news_stack, k)
+                end
+            else -- Новость уже была.
+                table.remove(news_stack, k)
+            end
+        end
+    end
 
-	if avail and table.getn(avail) > 0 then
-		amk.oau_reason="cn on_news get available"
-		--local t = avail[math.random(table.getn(avail))]
-		local t = avail[1]
-		local z = news_stack[t]
-		if (z) then
-			local bAlive = false
-			local m_author_id = tonumber(z.author_id)
-			if (m_author_id ~= nil) then
-				amk.oau_reason="cn on_news check author"
-				bAlive = false
-				local obj = alife():object(m_author_id)
-				amk.oau_reason="cn on_news check author obj"
-				if (obj) then
-					amk.oau_reason="cn on_news author obj exists"
-					if (IsStalker(obj)) then
-						amk.oau_reason="cn on_news author obj is NPC"
-						if IsNpcStalker(obj) then
-							amk.oau_reason="cn on_news check author alive"
-					if (obj.alive and obj:alive()==true and obj.health and obj:health() > 0) then
-						if (_debug == true) then amk.add_spot_on_map(obj.id, "red_location", z.from..": "..z.text) end
-								amk.oau_reason="cn on_news author is alive"
-						bAlive = true
-					end
-				end
-					end
-				end
-			else
-				bAlive = true
-			end
-			if (bAlive == true) then
-				amk.oau_reason="cn on_news show_news"
-				--show_news(z.from, z.text, z.timeout, z.showtime, z.section)
-				show_news(z.text, z.from, 0, z.showtime, z.section)
-				amk.oau_reason="cn on_news set activated"
-				z.activated = get_game_minutes()
-			else
-				amk.oau_reason="cn on_news show_news alive is false"
-			end
-		end
-	else
-		--log1("on_news [5] - no news ")
-	end
+    if avail and table.getn(avail) > 0 then
+        --local t = avail[math.random(table.getn(avail))]
+        local t = avail[1]
+        local z = news_stack[t]
+        if (z) then
+            local bAlive = false
+            local m_author_id = tonumber(z.author_id)
+            if (m_author_id ~= nil) then
+                bAlive = false
+                local obj = alife():object(m_author_id)
+                if (obj) then
+                    if (IsStalker(obj)) then
+                        if IsNpcStalker(obj) then
+                            if (obj.alive and obj:alive() == true and obj.health and obj:health() > 0) then
+                                if (_debug == true) then
+                                    amk.add_spot_on_map(obj.id, "red_location", z.from .. ": " .. z.text)
+                                end
+                                bAlive = true
+                            end
+                        end
+                    end
+                end
+            else
+                bAlive = true
+            end
+            if (bAlive == true) then
+                --show_news(z.from, z.text, z.timeout, z.showtime, z.section)
+                show_news(z.text, z.from, 0, z.showtime, z.section)
+                z.activated = get_game_minutes()
+            end
+        end
+    else
+        --log1("on_news [5] - no news ")
+    end
 
-	amk.oau_reason="cn on_news continue"
+    local gtime = get_game_minutes()
 
-	local gtime = get_game_minutes()
+    if (gtime - timer_alife_showed > timer_alife_freq) then
+        amk_offline_alife.offline_alife()
+        timer_alife_showed = get_game_minutes()
+    end
 
-	if (gtime - timer_alife_showed > timer_alife_freq) then
-		amk.oau_reason="cn on_news offline_alife start"
-		amk_offline_alife.offline_alife()
-		amk.oau_reason="cn on_news offline_alife exit"
-		timer_alife_showed = get_game_minutes()
-	end
+    --log1(" on_news 4")
 
-	--log1(" on_news 4")
-	
-	if (gtime - timer_daytime_showed > timer_daytime_freq) then
-		on_daytime()
-	end
-	--log1(" on_news 5")
-
+    if (gtime - timer_daytime_showed > timer_daytime_freq) then
+        on_daytime()
+    end
+    --log1(" on_news 5")
 end
 
 function on_offline_item_found(who, object)
@@ -2282,7 +2261,7 @@ function on_document_find(npc, item)
 			-- тут запомнить айди непися для диалогов итд
 			xvars.doc_message_text_m_str = m_str
 			xvars.doc_message_text_m_from = m_from
-			olr_timers.st_timer("on_document_find_timer", math.random(140,180), "news_main.do_document_timer()")
+			olr_timers.st_timer_game("on_document_find_timer", math.random(300,1800), "news_main.do_document_timer()") -- теперь таймер на игровом времени, от 5 до 30 минут
 		end
 	end
 end
@@ -2302,31 +2281,22 @@ end
 
 function on_find_weapon(npc, item)
 	if (npc and item) then
-		amk.oau_reason="cn on_find_weapon 1 - item - "..item:name().." level - "..item.level_name.." "
-		amk.oau_reason="cn on_find_weapon 2 - item - "..item:name().." level - "..item.level_name.."  - npc - "..npc:name().." "
 		--log1(""чувак  "..npc:name().." нашёл оружие "..item:name().."") 
 		local m_from = get_npc_name(npc)
 		local m_str = game.translate_string(news_data.weapons_templates[math.random(table.getn(news_data.weapons_templates))])
 		local m_level = get_point_description(get_object_levelname(npc), get_object_position(npc))
-		amk.oau_reason="cn on_find_weapon 3"
-		if (m_level == "") then return end
-		amk.oau_reason="cn on_find_weapon 4"		
+		if (m_level == "") then return end	
 		local m_title = get_object_name(item)
 		local t = {["level"] = m_level, ["item"] = m_title}
-		amk.oau_reason="cn on_find_weapon 5"
 		for key0, value in pairs(t) do
 			m_str = string.gsub(m_str, "%$"..key0, value)
 		end
-		amk.oau_reason="cn on_find_weapon 6"
 		if (m_str ~= "") then
 			--log1("Offline: on_find_weapon "..m_from.." "..m_str)
-			amk.oau_reason="cn on_find_weapon 7" 
 			--show_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
 			do_news(m_str, m_from, math.random(timer_general, timer_general * 10), 15, "news", npc.id, 1)
-			amk.oau_reason="cn on_find_weapon 8"
 			if (_debug == true) then amk.add_spot_on_map(npc.id,"red_location", m_str) end
 		end
-		amk.oau_reason="cn on_find_weapon 9"
 	end
 end
 

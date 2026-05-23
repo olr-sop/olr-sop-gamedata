@@ -236,26 +236,15 @@ function abort(fmt, ...)
     -- Сообщение об ошибке
     local reason = format_to_string(fmt, ...) or "<nil>"
     
-    -- Состояние watchdog
-    local watchdog_value = "unavailable"
-    local watchdog_reason = "unavailable"
-    if amk then
-        watchdog_value = tostring(amk.oau_watchdog) or "nil"
-        watchdog_reason = tostring(amk.oau_reason) or "nil"
-    end
-    
     -- Формируем диагностическое сообщение
     local diagnostic_msg = string.format(
         "==================== ABORT ====================\n" ..
         "Error: %s\n" ..
         "%s\n" ..
-		"Watchdog: value %s, reason '%s'\n" ..
 		"Call stack (full chain):\n%s\n" ..
         "=====================================================================",
         tostring(reason),
         tostring(caller_info),
-        tostring(watchdog_value),
-        tostring(watchdog_reason),
         tostring(traceback_str)
     )
     

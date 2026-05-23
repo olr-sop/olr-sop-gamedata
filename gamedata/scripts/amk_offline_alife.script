@@ -475,7 +475,6 @@ function offline_alife(lvl)
 	--log1("Offline_alife lname - "..lname)
 
 	local st = 0
-	amk.oau_reason = "cn offline_alife chp1"
 	if off_npcs[lname] then
 		st = table.getn(off_npcs[lname].stalkers)
 	end
@@ -484,7 +483,6 @@ function offline_alife(lvl)
 	--log1(" CRASH offline_alife 3")
 
 	if st > 0 then
-		amk.oau_reason = "cn offline_alife chp2"
 		--log1(" CRASH offline_alife 4")
 
 		--local cnt_npcs = olr_offline_walk.ofl_walkers_cnt or search_intensivity
@@ -492,15 +490,12 @@ function offline_alife(lvl)
 
 		if db.actor then
 			--log1(" CRASH fr offline_alife 1")
-			amk.oau_reason = "cn offline_alife chp3"
 
 			local rnd = math.random(st)
-			amk.oau_reason = "cn offline_alife chp4"
 
 			for npcl = 1, table.getn(off_npcs[lname].stalkers) do
 				--if off_npcs[lname].stalkers[rnd] then
 
-				amk.oau_reason = "cn offline_alife chp5"
 				--log1(" CRASH fr offline_alife 2")
 
 				--if nid ~= nil then
@@ -513,47 +508,39 @@ function offline_alife(lvl)
 
 				local victim = alife():object(off_npcs[lname].stalkers[npcl].id)
 
-				amk.oau_reason = "cn offline_alife chp6"
 
 				if victim and not victim.online and victim.health and victim.can_switch_online and victim:health() > 0 and victim:can_switch_online() and victim:name() == off_npcs[lname].stalkers[npcl].name then
 					--log1("ofl alife victim upd - "..victim:name().." -- "..lname.."")
-					amk.oau_reason = "cn offline_alife chp7 " .. tostr(victim and victim:name())
 
 					--log1(" CRASH fr offline_alife 3")
 
 					local vdata = collect_info(victim, lname)
-					amk.oau_reason = "cn offline_alife chp8 " .. tostr(victim and victim:name())
 
 					if table.getn(vdata.weapons.seen) > 0 then
 						--log1(" CRASH fr offline_alife 4")
 						--log1("есть бесхозное оружие")
-						amk.oau_reason = "cn offline_alife chp13 " .. tostr(victim and victim:name())
 						this.on_weapons_found(victim, vdata)
 						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.documents) > 0 then
 						--log1(" CRASH fr offline_alife 5")
 						log1("есть доки")
-						amk.oau_reason = "cn offline_alife find docs chp15 " .. tostr(victim and victim:name())
 						this.on_document_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!≈—“№ ƒќ »!!!!! "..victim:name().." сейчас.", nil, "default", 9000)
 						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.inv_boxes) > 0 then
 						--log1(" CRASH fr offline_alife 6")
 						--log1("есть контейнеры. Ќадо обыскать")
-						amk.oau_reason = "cn offline_alife chp18 " .. tostr(victim and victim:name())
 						this.on_inv_boxes_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть контейнеры. Ќадо обыскать.!!!!! "..victim:name().."  сейчас.", nil, "default", 9000)
 						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.monsters) > 0 then
 						--log1(" CRASH fr offline_alife 8")
 						--log1("есть монстр€тина - видели, слышали, убили, сдохли...")
-						amk.oau_reason = "cn offline_alife chp10 " .. tostr(victim and victim:name())
 						this.on_monsters_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть монстр€тина - видели, слышали, убили, сдохли...!!!!! "..victim:name().."	 сейчас.", nil, "default", 9000)
 						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.artefacts) > 0 then
 						--log1("есть арты")
-						amk.oau_reason = "cn offline_alife chp14 " .. tostr(victim and victim:name())
 						this.on_artifacts_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть арты!!!!! "..victim:name().."	  сейчас.", nil, "default", 9000)
 						--log1(" CRASH fr offline_alife 9")
@@ -561,36 +548,30 @@ function offline_alife(lvl)
 					elseif table.getn(vdata.anoms) > 0 then
 						--log1(" CRASH fr offline_alife 7")
 						--log1("есть аномалии!")
-						amk.oau_reason = "cn offline_alife chp11 " .. tostr(victim and victim:name())
 						this.on_anoms_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!сть аномалии!!!!! "..victim:name().."	сейчас.", nil, "default", 9000)
 						break --прерываем цикл - событие отработано						
 					elseif table.getn(vdata.enemies) > 0 then
 						--log1("есть вражина воюем нах!")
-						amk.oau_reason = "cn offline_alife chp9 " .. tostr(victim and victim:name())
 						this.on_enemies_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть вражина!!!!! "..victim:name().."	 сейчас.", nil, "default", 9000)
 						--log1(" CRASH fr offline_alife 10")
 						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.corpses.stalkers) > 0 then
 						--log1("есть труп сталкера")
-						amk.oau_reason = "cn offline_alife chp11 " .. tostr(victim and victim:name())
 						this.on_npc_corpses_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть труп сталкера!!!!! "..victim:name().."   сейчас.", nil, "default", 9000)
 						--log1(" CRASH fr offline_alife 11")
 						break --прерываем цикл - событие отработано
 					elseif table.getn(vdata.corpses.monsters) > 0 then
 						--log1("есть труп монстра")
-						amk.oau_reason = "cn offline_alife chp12 " .. tostr(victim and victim:name())
 						this.on_monster_corpses_found(victim, vdata)
 						--news_manager.send_tip(db.actor, "!!!!!!есть труп монстра!!!!! "..victim:name().."	  сейчас.", nil, "default", 9000)
 						--log1(" CRASH fr offline_alife 12")
 						break --прерываем цикл - событие отработано
 					elseif items[victim.id] and table.getn(items[victim.id]) > 0 then
 						--попробуем продать вс€кого
-						amk.oau_reason = "cn offline_alife chp15 " .. tostr(victim and victim:name())
 						--log1("Offline: lets trade")
-						amk.oau_reason = "cn offline_alife chp17 " .. tostr(victim and victim:name())
 						this.process_trade(victim)
 						--log1("Offline: trade done")
 						--log1(" CRASH fr offline_alife 13")
@@ -603,7 +584,6 @@ function offline_alife(lvl)
 			end
 		end
 	end
-	amk.oau_reason = "cn offline_alife end"
 	--log1(" CRASH offline_alife 5")
 end
 
@@ -1274,7 +1254,6 @@ function on_monsters_found(victim, vdata)
 	local mfloor = math.floor
 	local mrandom = math.random
 	local tremove = table.remove
-	amk.oau_reason = "on_monsters_found begin"
 	if (victim == nil or vdata == nil) then
 		return
 	end
@@ -1317,7 +1296,6 @@ function on_monsters_found(victim, vdata)
 		flags = get_flags(victim.id)
 	}
 	table.insert(team_A, player)
-	amk.oau_reason = "on_monsters_found chp1"
 	if (vdata.friends and table.getn(vdata.friends) > 0) then
 		for i = 1, table.getn(vdata.friends) do
 			v_obj = vdata.friends[i]
@@ -1339,25 +1317,16 @@ function on_monsters_found(victim, vdata)
 			end
 		end
 	end
-	amk.oau_reason = "on_monsters_found chp2"
 	local params
 	for i = 1, table.getn(vdata.monsters) do
-		amk.oau_reason = "on_monsters_found chp2.1"
 		v_obj = vdata.monsters[i]
 		obj = alife():object(v_obj.id)
-		amk.oau_reason = "on_monsters_found chp2.2"
 		if (obj and obj:name() == v_obj.name) then
-			amk.oau_reason = "on_monsters_found chp2.3"
 			params = get_monster_params(obj)
-			amk.oau_reason = "on_monsters_found chp2.4"
 			if (params) then
-				amk.oau_reason = "on_monsters_found chp2.5"
 				rank = obj:rank()
-				amk.oau_reason = "on_monsters_found chp2.6"
 				health = obj:health()
-				amk.oau_reason = "on_monsters_found chp2.7"
 				firepower = params.attack * base_fp
-				amk.oau_reason = "on_monsters_found chp2.8"
 				player = {
 					player = obj,
 					speed = params.speed,
@@ -1368,17 +1337,12 @@ function on_monsters_found(victim, vdata)
 					firepower = firepower,
 					flags = get_flags(obj.id)
 				}
-				amk.oau_reason = "on_monsters_found chp2.9"
 				table.insert(team_B, player)
-				amk.oau_reason = "on_monsters_found chp2.10"
 			else
-				amk.oau_reason = "on_monsters_found chp2.11"
 				--log1("get_monster_params returns nil for "..obj:name())
-				amk.oau_reason = "on_monsters_found chp2.12"
 			end
 		end
 	end
-	amk.oau_reason = "on_monsters_found chp3"
 	local distances = {}
 	for a = 1, table.getn(team_A) do
 		local from = team_A[a].player
@@ -1396,7 +1360,6 @@ function on_monsters_found(victim, vdata)
 			end
 		end
 	end
-	amk.oau_reason = "on_monsters_found chp4"
 	-- Ѕерем тех, у кого самый высокий rank и мин. distance
 	table.sort(team_A,
 		function(a, b)
@@ -1413,7 +1376,6 @@ function on_monsters_found(victim, vdata)
 	local size_B = table.getn(team_B)
 	local died_A = 0
 	local died_B = 0
-	amk.oau_reason = "on_monsters_found chp5"
 	for i = 1, max_rounds do
 		if (table.getn(team_A) > 0 and table.getn(team_B) > 0) then
 			local index = table.getn(team_A)
@@ -1590,7 +1552,6 @@ function on_monsters_found(victim, vdata)
 			end
 		end
 	end
-	amk.oau_reason = "on_monsters_found end"
 	--log1("Ѕой с монстрами закончен.  оманда ј - было "..size_A.." осталось "..size_A-died_A..".  оманда Ѕ - было "..size_B.." осталось "..size_B-died_B..".")
 end
 
@@ -1746,41 +1707,29 @@ function on_weapons_found(victim, vdata)
 	if (victim == nil or vdata == nil) then
 		return
 	end
-	amk.oau_reason = "cn on_weapons_found chp1"
 	if (amk.is_debug == true) then
 		local lname = news_main.get_object_levelname(victim)
 		local s = "found weapons (" .. table.getn(vdata.weapons.seen) .. ") for " .. victim.id .. " on map " .. lname
 		--log1(s)
 	end
-	amk.oau_reason = "cn on_weapons_found chp2"
 	local obj, v_obj
 	local object
 	local v_id = victim.id
-	amk.oau_reason = "cn on_weapons_found chp3"
 	for i = 1, table.getn(vdata.weapons.seen) do
-		amk.oau_reason = "cn on_weapons_found chp4"
 		v_obj = vdata.weapons.seen[i]
 		if (v_obj) then
-			amk.oau_reason = "cn on_weapons_found chp5"
 			local object = alife():object(v_obj.id)
 			if (object and object:name() == v_obj.name) then
-				amk.oau_reason = "cn on_weapons_found chp6"
 				local rndrankitem = math.random(10, 30)
-				amk.oau_reason = "cn on_weapons_found chp6-1"
 				victim:set_rank(victim:rank() + rndrankitem)
-				amk.oau_reason = "cn on_weapons_found chp6-2"
 				news_main.on_find_weapon(victim, object)
-				amk.oau_reason = "cn on_weapons_found chp6-3"
 				local obj = this.pick_item(victim, object)
-				amk.oau_reason = "cn on_weapons_found chp7"
 				--log1("cталкер "..victim:name().." нашЄл пушку "..obj:name().." - его ранк теперь "..victim:rank().."")
 			end
 		end
 	end
-	amk.oau_reason = "cn on_weapons_found chp8"
 	this.process_trade(victim)
 	this.set_nickname(victim)
-	amk.oau_reason = "cn on_weapons_found chp9"
 end
 
 -- ћо€ прелесссть
@@ -2701,52 +2650,32 @@ end
 -- ѕоучаем immunities_sect
 -- ¬ immunities_sect читаем fire_wound_immunity. ¬се повреждени€ множим на него.
 function get_monster_params(obj)
-	amk.oau_reason = "get_monster_params chp1"
 	if (obj and IsMonster(obj)) or (obj and obj.community and obj:community() == "zombied") then
-		amk.oau_reason = "get_monster_params chp2"
 		if (monster_params and monster_params[obj:section_name()]) then
-			amk.oau_reason = "get_monster_params chp3"
 			return monster_params[obj:section_name()]
 		else
-			amk.oau_reason = "get_monster_params chp4"
 			local speed = utils.cfg_get_number(ini_sys, obj:section_name(), "MaxSpeed", obj, false, 5)
-			amk.oau_reason = "get_monster_params chp5"
 			local dist = utils.cfg_get_number(ini_sys, obj:section_name(), "MaxAttackDist", obj, false, 3)
-			amk.oau_reason = "get_monster_params chp6"
 			local imm_sect =
 				utils.cfg_get_string(ini_sys, obj:section_name(), "immunities_sect", obj, false, "", "")
-			amk.oau_reason = "get_monster_params chp7"
 			local immunity = utils.cfg_get_number(ini_sys, imm_sect, "fire_wound_immunity", obj, false, 1)
-			amk.oau_reason = "get_monster_params chp8"
 			local att_sect = utils.cfg_get_string(ini_sys, obj:section_name(), "attack_params", obj, false, "", "")
-			amk.oau_reason = "get_monster_params chp9"
 			local attack = 0.10
-			amk.oau_reason = "get_monster_params chp10 " .. tostring(att_sect)
 			if (att_sect ~= "" and ini_sys:section_exist(att_sect)) then
-				amk.oau_reason = "get_monster_params chp11"
 				local result, id, value = nil, nil, nil
 				local max_attack = 0
-				amk.oau_reason = "get_monster_params chp12"
 				for a = 0, ini_sys:line_count(att_sect) - 1 do
-					amk.oau_reason = "get_monster_params chp13"
 					result, id, value = ini_sys:r_line(att_sect, a, "", "")
-					amk.oau_reason = "get_monster_params chp14"
 					if id ~= nil and trim(id) ~= "" and trim(id) ~= nil and value ~= nil then
-						amk.oau_reason = "get_monster_params chp15"
 						local m_value = amk.str_explode(",", amk.trim(value), true)
-						amk.oau_reason = "get_monster_params chp16"
 						if (m_value and #m_value > 2) then
-							amk.oau_reason = "get_monster_params chp17"
 							local v = tonumber(m_value[2])
-							amk.oau_reason = "get_monster_params chp18"
 							if (v and v > max_attack) then
-								amk.oau_reason = "get_monster_params chp19"
 								max_attack = v
 							end
 						end
 					end
 				end
-				amk.oau_reason = "get_monster_params chp20"
 				attack = max_attack
 			end
 			--log1("speed for "..obj:section_name().." is "..tostring(speed))

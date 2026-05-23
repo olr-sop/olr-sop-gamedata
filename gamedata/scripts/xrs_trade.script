@@ -41,8 +41,6 @@ local no_levels = {
 local places = {}
 function on_item_drop() -- торговля меж сталкеров
 
-	amk.oau_reason="cn xrs_trade st1 st"
-
 	if not has_alife_info("esc_kill_gunslinger") then
 		return
 	end
@@ -50,9 +48,6 @@ function on_item_drop() -- торговля меж сталкеров
         if no_levels[level.name()] then
 		return
 	end
-	
-
-	amk.oau_reason="cn xrs_trade st2 st"
 
 	places = {}
 	for a=1,65534 do
@@ -73,41 +68,24 @@ function on_item_drop() -- торговля меж сталкеров
 		end
 	end
 
-	amk.oau_reason="cn xrs_trade st3 st"
-
 	if #places < 4 then
 		return
 	end
 
 	--log1(" places - "..#places.." ")
 
-	amk.oau_reason="cn xrs_trade st4 st"
-
 	local rand_obj1 = places[math.random(#places)]
 	local rand_obj2 = places[math.random(#places)]
-
-	amk.oau_reason="cn xrs_trade st4.1 st"
-	--log1("places id1 - "..rand_obj1:id().." ---  id2 - "..rand_obj2:id().." ---     ")
-	amk.oau_reason="cn xrs_trade st4.2 st"
 
 	local stobj1 = level.object_by_id(rand_obj1:id())
 	local stobj2 = level.object_by_id(rand_obj2:id())
 
 	if stobj1:id() == stobj2:id() then return end
-
-	amk.oau_reason="cn xrs_trade st5 st"
-
 	if stobj1 == nil then return end
 	if stobj2 == nil then return end
-
 	if stobj1:id() == nil then return end
 	if stobj2:id() == nil then return end
-
-	amk.oau_reason="cn xrs_trade st6 st"
 	table.insert( traders, { base = stobj1:id(), client = stobj2:id(), data = { stage = 0 } } )
-
-	amk.oau_reason="cn xrs_trade st7 st"
-
 end
 
 

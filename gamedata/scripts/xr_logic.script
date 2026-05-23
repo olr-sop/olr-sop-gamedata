@@ -1451,6 +1451,15 @@ function initialize_obj(obj, st, loaded, actor, stype)
 			ini = xr_logic.configure_schemes(obj, ini, ini_filename, stype, st.loaded_section_logic, st.loaded_gulag_name)
 			printf( "initialize_obj: loaded" )
 			xr_logic.activate_by_section(obj, ini, st.loaded_active_section, true)
+		else
+			local spawn_ini = obj:spawn_ini()
+			if spawn_ini and spawn_ini:section_exist("logic") then
+				ini_filename = "<customdata>"
+				local ini = get_customdata_or_ini_file(obj, ini_filename)
+				ini = xr_logic.configure_schemes(obj, ini, ini_filename, stype, "logic", nil)
+				local sect = xr_logic.determine_section_to_activate(obj, ini, "logic", actor)
+				xr_logic.activate_by_section(obj, ini, sect, false)
+			end
 		end
 
 --		if st.active_scheme then

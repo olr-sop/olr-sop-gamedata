@@ -88,7 +88,13 @@ function on_key_press(dik)
 	local bind = dik_to_bind(dik)
 	local inv_window = level.main_input_receiver()
 	
-	if bind == key_bindings.kUSE and db.actor:has_info("cooking_wnd") then
+	if bind == key_bindings.kUSE and db.actor:has_info("cooking_wnd") and kamp_current_id == 0 then
+		--log1("~ [WARN] Actor has cooking_wnd info away from the kampfire")
+		db.actor:disable_info_portion("cooking_wnd")
+		hud:RemoveCustomStatic("cooking_static")
+	end
+	
+	if bind == key_bindings.kUSE and db.actor:has_info("cooking_wnd") and kamp_current_id ~= 0 then
 		if not (inv_window and inv_window:IsShown()) then					-- ѕростенька€ проверка что если у нас уже открыто какое то окно (наше гуи, там или чЄт иное), то не пытатьс€ открывать окно готовки
 			level.start_stop_menu(bind_kampfire.ui_cooking_wnd(), true)
 		end

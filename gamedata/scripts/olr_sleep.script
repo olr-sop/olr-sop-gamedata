@@ -23,6 +23,9 @@ local actor_sleep = false
 -- константа скорости уменьшения сна за 1 игровую секунду
 local SLEEP_DECREASE_PER_SEC = 0.00000771605   -- sleep_v
 
+-- коэфицент для сна в небезопасных местах (через инвентарь)
+local coeff_sleep_not_safety = 1.66
+
 function sleep_main(hours, minutes, safety_place) -- Основная функция
 	
     if hours == nil then hours = 0 end
@@ -30,8 +33,8 @@ function sleep_main(hours, minutes, safety_place) -- Основная функция
 
     -- Если время не указано (0 часов и 0 минут) – рассчитываем до полного восстановления
     if hours == 0 and minutes == 0 then
-        local current_sleep = db.actor.sleep or 1.0
-        local k = safety_place and 2.25 or 1.0
+        local current_sleep = db.actor.sleep
+        local k = safety_place and 2.25 or coeff_sleep_not_safety
         local needed_seconds = (1.0 - current_sleep) / (SLEEP_DECREASE_PER_SEC * k)
         hours = math.floor(needed_seconds / 3600)
         minutes = math.floor((needed_seconds % 3600) / 60)
@@ -69,8 +72,8 @@ function dream_callback() -- вызывается из start_sleep
 	db.actor.power = 1 -- восстанавливаем повар
 	
     local total_seconds = hours_to_sleep * 3600 + minutes_to_sleep * 60
-    local k = sleep_in_safety_place and 2.25 or 1.0
-    local current_sleep = db.actor.sleep or 1.0
+    local k = sleep_in_safety_place and 2.25 or coeff_sleep_not_safety
+    local current_sleep = db.actor.sleep
     local increase = total_seconds * SLEEP_DECREASE_PER_SEC * k
     local new_sleep = math.min(1.0, current_sleep + increase)
     db.actor.sleep = new_sleep

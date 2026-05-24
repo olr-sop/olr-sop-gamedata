@@ -70,8 +70,6 @@ surface_bumped                sload_i         ( p_bumped I)
 surface_bumped              sload                 ( p_bumped I)
 {
         surface_bumped      S   = sload_i	(I);
-		S.normal.z			*=	0.5;		//. make bump twice as contrast (fake, remove me if possible)
-
         return              S;
 }
 

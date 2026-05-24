@@ -240,21 +240,24 @@ uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw +
 
 //////////////////////////////////////////////////////////////////////////////////////////
 #define	LUMINANCE_VECTOR                 half3(0.3f, 0.48f, 0.22f)
-void        tonemap              (out half4 low, out half4 high, half3 rgb, half scale)
-{
-        rgb     =      	rgb*scale       ;
-#ifdef	USE_BRANCHING		// ps_3_0
-        low		=       rgb.xyzz		;
-        high	=		low/def_hdr		;        // 8x dynamic range
-#else
-        low		=       half4           (rgb,           0 )	;
-        high	=       half4       	(rgb/def_hdr,   0 )	;		// 8x dynamic range
-#endif
 
-//		low		= 	half4	(rgb, 0);
-//		rgb		/=	def_hdr	;
-//		high	= 	half4	(rgb, dot(rgb,0.333f)-def_hdr_clip)		;
+/*	tonmapper
+	Created: 10/12/19	(Vector)
+	Last Edit: 05/06/20	(Vector)
+*/
+void tonemap(out half4 low, out half4 high, half3 rgb, half scale) {
+	const float	A = 0.22, B = 0.3, C = .1, D = 0.2, E = .01, F = 0.4, X = 1.25;
+	const float WhSQR = 2.89f;
+	float3 h 	= 	max(float3(0.0,0.0,0.0),scale-float3(.004,.004,.004));
+	float tone 	= 	(h*((X*A)*h+X*float3(C*B,C*B,C*B))+X*float3(D*E,D*E,D*E)) / 
+					(h*(A*h+float3(B,B,B))+float3(D*F,D*F,D*F)) - X*float3(E/F,E/F,E/F);
+	float sat	= 	(scale-tone); // (tone*scale); 
+	rgb		=	((rgb*(sat/2))*(scale+tone))/*+rgb/2*/;
+
+	low		=	((rgb*(1+rgb/WhSQR))).xyzz;
+	high	= rgb.xyzz/def_hdr; // 8x dynamic range
 }
+
 half4		combine_bloom        (half3  low, half4 high)	{
         return        half4(low + high*high.a, 1.h);
 }

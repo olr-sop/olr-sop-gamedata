@@ -34,11 +34,6 @@ function actor_binder:__init (obj) super(obj)
 	self.weather_manager = level_weathers.WeatherManager()
 	self.actor_detector = xr_detector.actor_detector()
 	_G.xvars = get_stored_vars()
-	max_item_amount = ini_sys:r_float("actor", "item_amount_base")
-end
-
-function GetBaseWeight()
-	return max_item_amount
 end
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:net_spawn(data)		
@@ -87,8 +82,6 @@ function actor_binder:net_spawn(data)
 		xvars.chang_lev = level.name()
 		olr.change_level()
 	end
-		
-	olr_ruck_limit.on_netspawn()
 	
 	xvars.cur_fov = device():get_fov() -- заполняем cur_fov на момент нет-спавна актора, если вдруг дадим менять его то надо будет что-то еще придумывать
 
@@ -123,7 +116,10 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.on_actor_landed, nil)
     self.object:set_callback(callback.on_key_press, nil)
     self.object:set_callback(callback.on_mouse_press, nil)
-    self.object:set_callback(callback.on_level_map_click, nil)
+	self.object:set_callback(callback.on_level_map_click, nil)
+
+	self.object:set_callback(callback.on_item_volume_exceeded, nil)
+	self.object:set_callback_bool(callback.on_item_can_take, nil)
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, nil)
@@ -181,6 +177,9 @@ function actor_binder:reinit()
     self.object:set_callback(callback.on_key_press, self.OnKey, self)
     self.object:set_callback(callback.on_mouse_press, self.mouse_press, self)
 	self.object:set_callback(callback.on_level_map_click, self.on_map_click, self)
+
+	self.object:set_callback(callback.on_item_volume_exceeded, self.on_item_volume_exceeded, self)
+	self.object:set_callback_bool(callback.on_item_can_take, self.on_item_can_take, self)
 	
 	--theysani added
 	self.object:set_callback(callback.on_drop_item_on_item, self.on_drop_item_on_item, self)
@@ -389,17 +388,14 @@ function actor_binder:obj_to_belt(obj)
 			db.actor:give_info_portion("tutor_detector_charge")
 		end
 	end
-	olr_ruck_limit.take_item_on_belt(obj)
 end
 
 function actor_binder:obj_to_ruck(obj)
-	olr_ruck_limit.obj_to_ruck(obj)
 end
 
 function actor_binder:obj_to_slot(obj)
 	core.tc("on_item_slot", obj)
 	olr.to_slot(obj)
-	olr_ruck_limit.take_item_on_slot(obj)
 end
 
 
@@ -468,11 +464,9 @@ end
 function actor_binder:on_trade(item, sell_bye, money)
 	--log1(" trade startt")
 	if sell_bye == true then
-		--log1(" продаём  true")
-		olr_ruck_limit.on_to_box(item)
 		game_stats.money_trade_update(money)
 	else
-		--log1(" покупаем")
+		--log1(" пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")
 		game_stats.money_trade_update(-money)
 	end
 	if item:is_weapon_magazined() then
@@ -520,8 +514,6 @@ function actor_binder:on_item_take (obj)
 
     level_tasks.proceed(self.object)
 
-	olr_ruck_limit.take_item(obj)
-
 	core.tc("on_item_take", obj)
 
 	olr_wep_sound.on_take(obj)
@@ -559,8 +551,6 @@ function actor_binder:on_item_drop (obj)
     level_tasks.proceed(self.object)
 
 	olr_items_drop.drop_item(obj)
-
-	olr_ruck_limit.drop_item_on_inv(obj)
 
 	core.tc("on_item_drop", obj)
 
@@ -604,6 +594,22 @@ function actor_binder:map_location_added_callback(spot_type_str, object_id)
 	--news_manager.send_task(db.actor, "new")
 end
 ----------------------------------------------------------------------------------------------------------------------
+function actor_binder:on_item_can_take(obj)
+	if level.get_game_difficulty() < 2 then
+		return true
+	end
+	-- Volume enforcement is done in C++ CanPickupByVolume 
+	-- which correctly skips slot/belt items. Script callback
+	-- can still reject for custom reasons (e.g., quest blocking).
+	return true
+end
+
+function actor_binder:on_item_volume_exceeded(item, cur_volume, max_volume)
+	if olr_ruck_limit and olr_ruck_limit.volume_over_message then
+		olr_ruck_limit.volume_over_message(item, cur_volume, max_volume)
+	end
+end
+
 function actor_binder:update(delta)
 	local tostr = tostring
 	if db.actor == nil then

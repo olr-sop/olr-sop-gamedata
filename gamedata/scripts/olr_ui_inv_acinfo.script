@@ -43,24 +43,26 @@ function repaint()
   	)
 end
 
--- db.actor:has_info("ui_inventory")
 function update(delta)
-		if ui.get_inventory_wnd():IsShown() and repaintnow == false then
-			if ui.get_inventory_wnd() and not att then
-				ptatt = ui.get_inventory_wnd()
-				att = olr_ui_inv_acinfo.ui_trade()
-				ptatt:AttachChild(att)
-				att:SetAutoDelete(true)
-				att:Show(true)
-			end	
-		else
-			if att and ptatt then
-				att:Show(false)
-				ptatt:DetachChild(att)
-				att = nil
-				ptatt = nil
-			end
+	if ui.get_inventory_wnd():IsShown() and repaintnow == false then
+		if ui.get_inventory_wnd() and not att then
+			ptatt = ui.get_inventory_wnd()
+			att = olr_ui_inv_acinfo.ui_trade()
+			ptatt:AttachChild(att)
+			att:SetAutoDelete(true)
+			att:Show(true)
 		end
+		if att then
+			att:UpdateVolume()
+		end
+	else
+		if att and ptatt then
+			att:Show(false)
+			ptatt:DetachChild(att)
+			att = nil
+			ptatt = nil
+		end
+	end
 end
 
 class "ui_trade" (CUIScriptWnd)
@@ -105,13 +107,9 @@ function ui_trade:InitControls()
 
 	self.vo = xml:InitStatic("volume_wnd", self.main)
 
-	--self.vt = xml:InitStatic("water_wnd", self.main)
-	--self.vt:SetTextST(string.format("%s: %s", game.translate_string("ui_inv_water_script"), self.vater))
-
 	self.so = xml:InitStatic("sleep_wnd", self.main)
 	self.so:SetTextST(sformat("%s: %s", game.translate_string("ui_inv_sleeping"),  self.sleep))
 
-	-- 
 	self.bw = xml:InitStatic("blowouts_wnd", self.main)
 	self.bw:SetTextST(sformat("%s: %s", game.translate_string("ui_inv_survived_blowouts"),  self.blows))
 
@@ -133,6 +131,18 @@ function ui_trade:InitControls()
 	self.vo:SetTextST(sformat("%s: %s / "..vol_cur_max.."", game.translate_string("ui_inv_volume_script"),  vol_cur))
 end
 
+function ui_trade:UpdateVolume()
+
+	if level.get_game_difficulty() < 2 then return end
+
+	local sformat = string.format
+	local cur_vol = db.actor:get_used_volume()
+	if cur_vol < 0 then cur_vol = 0 end
+	local max_vol = db.actor:get_max_volume()
+	
+	self.vo:SetTextST(sformat("%s: %1.1f / %1.0f", game.translate_string("ui_inv_volume_script"), cur_vol, max_vol))
+
+end
 
 function ui_trade:ActorInformation()
 end

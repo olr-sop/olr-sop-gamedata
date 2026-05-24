@@ -610,6 +610,20 @@ function actor_binder:on_item_volume_exceeded(item, cur_volume, max_volume)
 	end
 end
 
+-- Проверка по объёму выполняется в движке, если true то можно поднять, если false то подъема не будет
+-- Если установили false нужно будет тут же сделать вывод почему, так как превышение объема считается далее и до него не дойдёт вообще
+function actor_binder:on_item_can_take(obj)
+	return true
+end
+
+-- Коллбэк вызывается только когда у нас превышение объема и нужно что-то сделать. Пока что будет только вывод сообщения о том что нет места в рюкзаке
+function actor_binder:on_item_volume_exceeded(item, cur_volume, max_volume)
+	log1("Пытаемся поднять предмет - ["..tostring(item:section()).."] нынешний объем cur_volume - ["..tostring(cur_volume).."] нынешний макс объем max_volume - ["..tostring(max_volume).."]")
+	local item_name = item:get_name()
+	local string_formatted = game.translate_string("st_olr_ruck_limit_not_enough_space").." "..item_name..game.translate_string("st_olr_ruck_limit_not_enough_space_2").." "..tostring(cur_volume).." / "..tostring(max_volume)..""
+	olr.hud_tip("", string_formatted, 3, true)
+end
+
 function actor_binder:update(delta)
 	local tostr = tostring
 	if db.actor == nil then

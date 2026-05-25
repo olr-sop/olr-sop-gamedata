@@ -6831,7 +6831,7 @@ function yan_killmonster_go()
 end
 
 function yan_killmonster_timer()
-	olr_timers.st_timer("yan_killmonster_go", 1135, "nick.yan_killmonster_go()")
+	olr_timers.st_timer_game("yan_killmonster_go", math.random(12600,16380), "nick.yan_killmonster_go()") -- В сообщении пишется что примерно через 4 часа она прибудет (от 3.5 до 4.55 часов) (таймер на игровом времени)
 	news_manager.send_tip(db.actor, game.translate_string("yan_killmonster_timer_0"), nil, "professor", 10000, nil, nil, true, "st_yan_general_ecolog_name")
 end
 
@@ -8775,7 +8775,7 @@ function give_treasure_brain_docs()
 		olr.add_spot_on_map(metka.id, "crlc_big", game.translate_string("give_treasure_brain_docs_0"))
 		alife():create("documentacia_zombibrain_doki", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id, rand_obj.id) -- серверный
 		local pos = news_main.get_point_description( alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x, rand_obj.position.y, rand_obj.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("give_treasure_brain_docs_1") .. pos .. ".", nil, "artifact", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("give_treasure_brain_docs_1").." "..pos ..".", nil, "artifact", 19000)
 	end
 	for id = 1, 65534 do
 		local npc = level.object_by_id(id)
@@ -8831,7 +8831,7 @@ function osved_about_docstalker()
 		local name = news_main.get_npc_name(rand_obj)
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x, rand_obj.position.y, rand_obj.position.z))
 		olr.beep()
-		news_manager.send_tip(db.actor, game.translate_string("osved_about_docstalker_0")..name ..". "..pos..game.translate_string("osved_about_docstalker_1"), nil, "flash", 95000, nil, "pda_news", true)
+		news_manager.send_tip(db.actor, game.translate_string("osved_about_docstalker_0").." "..name ..". "..pos.." "..game.translate_string("osved_about_docstalker_1"), nil, "flash", 95000, nil, "pda_news", true)
 	else
 		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("osved_about_docstalker_2"), nil, "unknown", 95000, nil, "pda_news", true)

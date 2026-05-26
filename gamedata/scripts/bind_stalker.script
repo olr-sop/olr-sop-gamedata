@@ -594,21 +594,6 @@ function actor_binder:map_location_added_callback(spot_type_str, object_id)
 	--news_manager.send_task(db.actor, "new")
 end
 ----------------------------------------------------------------------------------------------------------------------
-function actor_binder:on_item_can_take(obj)
-	if level.get_game_difficulty() < 2 then
-		return true
-	end
-	-- Volume enforcement is done in C++ CanPickupByVolume 
-	-- which correctly skips slot/belt items. Script callback
-	-- can still reject for custom reasons (e.g., quest blocking).
-	return true
-end
-
-function actor_binder:on_item_volume_exceeded(item, cur_volume, max_volume)
-	if olr_ruck_limit and olr_ruck_limit.volume_over_message then
-		olr_ruck_limit.volume_over_message(item, cur_volume, max_volume)
-	end
-end
 
 -- Проверка по объёму выполняется в движке, если true то можно поднять, если false то подъема не будет
 -- Если установили false нужно будет тут же сделать вывод почему, так как превышение объема считается далее и до него не дойдёт вообще

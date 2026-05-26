@@ -54,9 +54,11 @@ end
 
 function generic_physics_binder:reinit()
 	object_binder.reinit(self)
-
+	local old_st = db.storage[self.object:id()]
+	if old_st and old_st.active_scheme then
+		log1(string.format("!!! bind_physic: reinit [%s] wiped storage (had scheme '%s')", self.object:name(), old_st.active_scheme))
+	end
 	db.storage[self.object:id()] = { }
-
 	self.st = db.storage[self.object:id()]
 end
 

@@ -1453,12 +1453,15 @@ function initialize_obj(obj, st, loaded, actor, stype)
 			xr_logic.activate_by_section(obj, ini, st.loaded_active_section, true)
 		else
 			local spawn_ini = obj:spawn_ini()
-			if spawn_ini and spawn_ini:section_exist("logic") then
+			if obj:clsid() == 86 and spawn_ini and spawn_ini:section_exist("logic") then
+				--log1(string.format("xr_logic: [%s] loaded_ini_filename is NIL, but [logic] found in custom_data, recovering", obj:name()))
 				ini_filename = "<customdata>"
 				local ini = get_customdata_or_ini_file(obj, ini_filename)
 				ini = xr_logic.configure_schemes(obj, ini, ini_filename, stype, "logic", nil)
 				local sect = xr_logic.determine_section_to_activate(obj, ini, "logic", actor)
 				xr_logic.activate_by_section(obj, ini, sect, false)
+			--else
+				--log1(string.format("xr_logic: [%s] loaded_ini_filename is NIL, no [logic] in custom_data, skipping",obj:name()))
 			end
 		end
 

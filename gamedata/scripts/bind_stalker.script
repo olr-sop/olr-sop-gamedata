@@ -603,10 +603,14 @@ end
 
 -- Коллбэк вызывается только когда у нас превышение объема и нужно что-то сделать. Пока что будет только вывод сообщения о том что нет места в рюкзаке
 function actor_binder:on_item_volume_exceeded(item, cur_volume, max_volume)
-	log1("Пытаемся поднять предмет - ["..tostring(item:section()).."] нынешний объем cur_volume - ["..tostring(cur_volume).."] нынешний макс объем max_volume - ["..tostring(max_volume).."]")
+	--log1("Пытаемся поднять предмет - ["..tostring(item:section()).."] скока будет с предметом cur_volume - ["..tostring(cur_volume).."] нынешний макс объем max_volume - ["..tostring(max_volume).."]")
 	local item_name = item:get_name()
-	local string_formatted = game.translate_string("st_olr_ruck_limit_not_enough_space").." "..item_name..game.translate_string("st_olr_ruck_limit_not_enough_space_2").." "..tostring(cur_volume).." / "..tostring(max_volume)..""
-	olr.hud_tip("", string_formatted, 3, true)
+	local text_all = game.translate_string("st_on_item_volume_exceeded").." "..item_name
+	local hud = get_hud()
+	local custom_static = hud:GetCustomStatic("custom_sms_text_actor")
+	hud:AddCustomStatic("custom_sms_text_actor", true)
+	hud:GetCustomStatic("custom_sms_text_actor"):wnd():SetTextST(tostring(text_all))
+	hud:GetCustomStatic("custom_sms_text_actor").m_endTime = time_global()/1000 + 5	
 end
 
 function actor_binder:update(delta)

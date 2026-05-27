@@ -1,5 +1,9 @@
 -- hi_flyer 25.03.16
 
+local geiger_simple_snd = xr_sound.get_safe_sound_object([[device\detectors\da-2_noise1_loop]])
+local geiger_advances_snd = xr_sound.get_safe_sound_object([[device\detectors\uda-14a_noise_loop]])
+local geiger_elite_snd = xr_sound.get_safe_sound_object([[device\detectors\geiger_noise_loop]])
+
 function klick_item_inv(obj)
 
     if not obj then
@@ -7,26 +11,17 @@ function klick_item_inv(obj)
     end
 
 
-    local has_geiger = db.actor:object("detector_simple")
+    local has_geiger = db.actor:object("detector_simple") or db.actor:object("detector_advances") or db.actor:object("detector_elite")
     if has_geiger then
         local cnd = has_geiger:condition()
         if cnd > 0.01 then
-            if xvars.foods[obj:name()] == true or xvars.weapons[obj:name()] == true then
-                --log1("has rad obj")
-                local snd_obj = xr_sound.get_safe_sound_object([[device\detectors\geiger_noise_loop]])
-                if not snd_obj:playing() then
-                    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+            if xvars.foods[obj:name()] == true or xvars.weapons[obj:name()] == true or (ini_sys:line_exist(obj:section(), "radiation_restore_speed") and ini_sys:r_float(obj:section(), "radiation_restore_speed") > 0) then
+                if not geiger_elite_snd:playing() then
+                    geiger_elite_snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
                 end
                 if not has_alife_info("radiation_inv_act_cliked") then
                     olr.info("radiation_inv_act_cliked")
                     news_manager.send_tip(db.actor, game.translate_string("st_olr_items_inv_click_radioactive_thing_1").." "..obj:get_name().." "..game.translate_string("st_olr_items_inv_click_radioactive_thing_2"), nil, "hero", 59000)
-                end
-            end
-            if ini_sys:line_exist(obj:section(), "inventory_radiation") or ini_sys:line_exist(obj:section(), "radiation_restore_speed") and ini_sys:r_float(obj:section(), "radiation_restore_speed") > 0 then
-                local snd_obj = xr_sound.get_safe_sound_object([[device\detectors\geiger_noise_loop]])
-                if not snd_obj:playing() then
-                    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-                    --log1(" snd has inventory_radiation ")
                 end
             end
         end

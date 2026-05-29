@@ -943,13 +943,16 @@ local function select_weapon(weapons)
 	if not weapons or #weapons == 0 then return nil end
 	if #weapons == 1 then return weapons[1].section end
 	
-	local rand = math.random()
+    local total = 0
+    for i = 1, #weapons do total = total + weapons[i].prob end
+    if total <= 0 then return weapons[1].section end	
+	
+	local rand = math.random() * total
 	for i = 1, #weapons do
-		if rand < weapons[i].prob then
-			return weapons[i].section
-		end
 		rand = rand - weapons[i].prob
+		if rand < 0 then return weapons[i].section end
 	end
+	
 	return weapons[1].section
 end
 

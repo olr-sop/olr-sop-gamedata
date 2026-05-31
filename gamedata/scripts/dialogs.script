@@ -175,9 +175,10 @@ function relocate_item_section(victim, section, type)
 					level.client_spawn_manager():add(item.id, 0,
 						function(id, obj)
 							if obj and g_food_table[obj:section()] then
-								xvars.foods[obj:name()] = false
+								obj:set_condition(0.99) -- Для еды что бы была в идеале сразу
+								xvars.foods[tostring(obj:id())] = {sec = obj:section(), rad = false}
 							elseif obj and g_weapon_table[obj:section()] then
-								xvars.weapons[obj:name()] = false
+								xvars.weapons[tostring(obj:id())] = {sec = obj:section(), rad = false}
 							end
 						end
 					)

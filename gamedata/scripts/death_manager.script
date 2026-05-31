@@ -552,11 +552,13 @@ function check_item_dependence(npc, section)
 end
 
 function set_rad_flag(obj)
-	if xvars and xvars.weapons and obj and obj:name() then
-		if xvars.weapons[obj:name()] ~= nil then
+	if xvars and xvars.weapons and obj then
+		local id_str = tostring(obj:id())
+		local entry = xvars.weapons[id_str]
+		if entry and entry.sec == obj:section() then
 			return
 		end
-		xvars.weapons[obj:name()] = math.random(1, 2) == 1
+		xvars.weapons[id_str] = {sec = obj:section(), rad = math.random(1, 2) == 1}
 	end
 end
 

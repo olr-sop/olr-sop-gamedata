@@ -185,11 +185,6 @@ function use(obj)
 			sim:create("energy_drink", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 		end
 	end
-
-	if section == "crow_food" then
-		--log1("eat crow_food")
-		db.actor.radiation = 0.02315
-	end
 	
 	if section == "conserva" then
 		local bobj2 = sim:create("ph_food_conserv1_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -211,7 +206,10 @@ function use(obj)
 	local cond = obj:condition()
 	
 	if g_food_table[section] then
-		xvars.foods[obj:name()] = nil
+		if xvars.foods[tostring(obj:id())] ~= nil then
+			db.actor.radiation = 0.0525 -- Поедание заражённой радиацией еды черевато
+		end
+		xvars.foods[tostring(obj:id())] = nil -- Очищаем вообще в любом случае
 	end
 
 	if section == "snotvornoe" then

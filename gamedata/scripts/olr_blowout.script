@@ -420,38 +420,54 @@ end
 -------------------------------------------------
 
 function clear_trash_wars()
-	-- TODO ещё раз проверить имена объектов как они записаны в xvars
-	for key, value in pairs(xvars.foods()) do
-		local food_object = alife():object(key)
-		if not food_object then
-			log1(" DELDETED food " .. key .. " = " .. tostring(value) .. "")
+
+	for key, value in pairs(xvars.foods(true)) do
+		if type(value) ~= "table" then
+			--log1(" Invalid food entry for id " .. key .. ", type " .. type(value) .. ", removing")
 			xvars.foods[key] = nil
-			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "Место где проводили замеры учёные." )
+		else
+			--log1(" Key from tbl - "..tostring(key).."")
+			local food_object = alife():object(tonumber(key))
+			if not food_object then
+				--log1(" DELETED food " .. key .. " id")
+				xvars.foods[key] = nil
+			else
+				if value.sec and value.sec ~= food_object:section_name() then
+					xvars.foods[key] = nil
+				end
+			end
 		end
 	end
-	for key, value in pairs(xvars.weapons()) do
-		local wpn_object = alife():object(key)
-		if not wpn_object then
-			log1(" DELDETED WPN " .. key .. " = " .. tostring(value) .. "")
+
+	for key, value in pairs(xvars.weapons(true)) do
+		if type(value) ~= "table" then
+			--log1(" Invalid weapon entry for id " .. key .. ", type " .. type(value) .. ", removing")
 			xvars.weapons[key] = nil
-			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "Место где проводили замеры учёные." )
+		else
+			local wpn_object = alife():object(tonumber(key))
+			if not wpn_object then
+				--log1(" DELETED WPN " .. key .. " id")
+				xvars.weapons[key] = nil
+			else
+				if value.sec and value.sec ~= wpn_object:section_name() then
+					xvars.weapons[key] = nil
+				end
+			end
 		end
 	end
+
+	-- Артефакты без изменений
 	for key, value in pairs(xvars.arts()) do
 		local art_object = alife():object(key)
-		if not art_object then -- если нет арта
-			--if xvars.arts[key]~=nil then	-- но есть его запись  weight cost
-			--	xvars.arts[key]=nil
-			--end
-			if xvars.arts[key .. game.translate_string("weight")] ~= nil then -- но есть его запись weight
+		if not art_object then
+			if xvars.arts[key .. game.translate_string("weight")] ~= nil then
 				xvars.arts[key .. game.translate_string("weight")] = nil
 			end
-			if xvars.arts[key .. game.translate_string("cost")] ~= nil then -- но есть его запись cost
+			if xvars.arts[key .. game.translate_string("cost")] ~= nil then
 				xvars.arts[key .. game.translate_string("cost")] = nil
 			end
 		end
 	end
-	--log1("--clear wars end--")
 end
 
 function clear_bolts()

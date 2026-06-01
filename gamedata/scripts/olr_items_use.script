@@ -206,9 +206,10 @@ function use(obj)
 	local cond = obj:condition()
 	
 	if g_food_table[section] then
-		if xvars.foods[tostring(obj:id())] ~= nil then
-			db.actor.radiation = 0.0525 -- Поедание заражённой радиацией еды черевато
-		end
+		local e_food = xvars.foods[tostring(obj:id())]
+		if e_food and e_food.sec == section and e_food.rad then
+			db.actor.radiation = 0.1525 -- Поедание заражённой радиацией еды черевато
+		end		
 		xvars.foods[tostring(obj:id())] = nil -- Очищаем вообще в любом случае
 	end
 

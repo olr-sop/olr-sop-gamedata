@@ -504,6 +504,16 @@ function keep_item(npc, item)
 	return false
 end
 
+function getAfParams(section)
+	local mrandom = math.random
+	local val_weight = ini_sys:r_float(section, "inv_weight")
+	local val_weight_fin = val_weight + ((val_weight / 100) * mrandom(-10, 10))
+	local val_cost = ini_sys:r_float(section, "cost")
+	local val_cost_fin = val_cost + ((val_cost / 100) * mrandom(-10, 10))
+	local val_cond = mrandom(0.1, 0.8)
+	return val_cond, val_cost_fin, val_weight_fin
+end
+
 -- Функция спавнит необходимое число предметов
 function create_items(npc, section, number, rnd)
 	if ammo_sections[section] == true then
@@ -520,7 +530,15 @@ function create_items(npc, section, number, rnd)
 	else
 		for i = 1, number do
 			if math.random(1000) <= rnd then
-				alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+				local itm_obj = alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+				--local se_item = alife():object(itm_obj.id)
+				--local se_cont_item = alife():cast_to_cont(se_item)
+				--if se_cont_item --and math.random(0, 3) == 2 
+				--then
+				--	--suitable_arts = af_galantine, af_mercury_ball, af_junk_bolt, af_junk_debris, af_knot, af_cotton
+				--	local val_cond, val_cost, val_weight = getAfParams("af_mercury_ball")
+				--	se_cont_item:add_artefact("af_mercury_ball", math.random(0.1, 0.95), val_cost, val_weight, true)
+				--end
 			end
 		end
 	end

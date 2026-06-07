@@ -1,307 +1,40 @@
 --[[
 	-- Script name: olr_newnpc_eqp.script
-	-- Description: Скрипт раздаёт оружие непесям (Только для респавновых, не для тех кто заранее заспавнен)
+	-- Description: Скрипт раздаёт оружие непесям
 	-- Author: theysani
-	-- Last edit: 12.02.26
+	-- Last edit: 07.06.26
 --]]
 
 --[[
+    Как вычисляется шанс выпадения оружия:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ранги по числам:
-Новичок - от 0 до 300
-Опытный - от 300 до 600
-Ветеран - от 600 до 900
-Мастер	- от 900
+    Для каждого списка (first, second, knife) суммируются значения prob.
+    Шанс конкретного оружия = (prob этого оружия) / (сумма всех prob в списке) * 100%
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-В first не может быть любой секции кроме этих
-wpn_usp - wpn_usp
-wpn_sig220 - wpn_sig220
-wpn_colt1911 - wpn_colt1911
-wpn_walther - wpn_walther
-wpn_hpsa - wpn_hpsa
-wpn_aps - wpn_aps
-wpn_fort - wpn_fort
-wpn_pb - wpn_pb
-wpn_pm - wpn_pm
-wpn_beretta - wpn_beretta
-wpn_desert_eagle - wpn_desert_eagle
+    Пример:
+		first = {
+			{section = "wpn_pm", prob = 0.6},
+			{section = "wpn_pb", prob = 0.2},
+			{section = "wpn_fort", prob = 0.4}
+		},
+       Сумма = 1.2
+       wpn_pm: 0.6 / 1.2 * 100% = 50%
+       wpn_pb: 0.2 / 1.2 * 100% = 16.67%
+       wpn_fort: 0.4 / 1.2 * 100% = 33.33%
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-В second могут быть все остальные секции кроме тех что есть в first
-wpn_mp5 - wpn_mp5
-wpn_wincheaster1300 - wpn_wincheaster1300
-wpn_toz34 - wpn_toz34
-wpn_bm16 - wpn_bm16
-wpn_fn2000 - wpn_fn2000
-wpn_groza - wpn_groza
-wpn_g36 - wpn_g36
-wpn_val - wpn_val
-wpn_lr300 - wpn_lr300
-wpn_ak74 - wpn_ak74
-wpn_akms - wpn_akms
-wpn_svu - wpn_svu
-wpn_vintorez - wpn_vintorez
-wpn_svd - wpn_svd
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    Если сумма = 0, берётся первое оружие (шанс 100%).
+	
+	second_chance -- задаёт шанс выпадения "основого" оружия, прописывается в каждом ранге конкретной группировки, не является обязательным
+	Задаётся second_chance в пределах от 0 до 1 (от 0% до 100%), если не прописан то всегда 100%
+	
+	В целом жёстких требований что бы тока пистолеты были в first а вторичка в second нет, можно как угодно в каком угодно порядке прописывать это больше чисто для удобства
 --]]
 
-local weapon_tables_blank = {
-	bandit = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	sliznyaki = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	stalker = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	dolg = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	freedom = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	killer = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	monolith = {
-		novice = {
-			first = {
-			},
-			second = {
-			}
-		},
-		experienced = {
-			first = {
-			},
-			second = {
-			}
-		},
-		veteran = {
-			first = {
-			},
-			second = {
-			}
-		},
-		master = {
-			first = {
-			},
-			second = {
-			}
-		}
-	},
-	ecologs = {
-		novice = {
-			first = {
-			},
-			second = {}
-		},
-		experienced = {
-			first = {
-			},
-			second = {}
-		},
-		veteran = {
-			first = {
-			},
-			second = {}
-		},
-		master = {
-			first = {
-			},
-			second = {}
-		}
-	},
-	sky = {
-		novice = {
-			first = {
-			},
-			second = {}
-		},
-		experienced = {
-			first = {
-			},
-			second = {}
-		},
-		veteran = {
-			first = {
-			},
-			second = {}
-		},
-		master = {
-			first = {
-			},
-			second = {}
-		}
-	},
-	military = {
-		novice = {
-			first = {
-			},
-			second = {}
-		},
-		experienced = {
-			first = {
-			},
-			second = {}
-		},
-		veteran = {
-			first = {
-			},
-			second = {}
-		},
-		master = {
-			first = {
-			},
-			second = {}
-		}
-	}
-}
-
 local weapon_tables = {
+	-- Бандиты
 	bandit = {
 		novice = {
+			second_chance = 0.33,   -- 33% шанс получить основное оружие (если этот рандом сыграл то далее уже будет раздача как обычно, из комментария выше но для second таблицы с оружием)
 			first = {
 				{section = "wpn_pm", prob = 0.6},
 				{section = "wpn_pb", prob = 0.2},
@@ -318,6 +51,7 @@ local weapon_tables = {
 			}
 		},
 		experienced = {
+			second_chance = 0.66, -- 66% шанс получить основное оружие
 			first = {
 				{section = "wpn_pm", prob = 0.6},
 				{section = "wpn_pb", prob = 0.2},
@@ -340,6 +74,7 @@ local weapon_tables = {
 			}			
 		},
 		veteran = {
+			second_chance = 0.9, -- 90% шанс получить основное оружие
 			first = {
 				{section = "wpn_fort", prob = 0.3},
 				{section = "wpn_aps", prob = 0.4},
@@ -363,6 +98,7 @@ local weapon_tables = {
 			}			
 		},
 		master = {
+			second_chance = 1.0, -- 100% шанс получить основное оружие, но тут можно было не указывать вовсе, это равнозначно отсуствию этого значения в таблице
 			first = {
 				{section = "wpn_aps", prob = 0.4},
 				{section = "wpn_walther", prob = 0.6},
@@ -386,6 +122,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Сталкеры
 	stalker = {
 		novice = {
 			first = {
@@ -488,6 +225,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Зомбированные
 	stalker_zombied = {
 		novice = {
 			first = {
@@ -582,7 +320,8 @@ local weapon_tables = {
 				{section = "wpn_knife_bayonet_rusty", prob = 0.5},
 			}			
 		}
-	},	
+	},
+	-- Долг
 	dolg = {
 		novice = {
 			first = {
@@ -656,6 +395,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Свобода
 	freedom = {
 		novice = {
 			first = {
@@ -762,6 +502,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Наёмники
 	killer = {
 		novice = {
 			first = {
@@ -833,6 +574,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Монолит
 	monolith = {
 		novice = {
 			first = {
@@ -900,6 +642,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Экологи
 	ecologs = {
 		novice = {
 			first = {
@@ -942,6 +685,7 @@ local weapon_tables = {
 			}			
 		}
 	},
+	-- Военные
 	military = {
 		novice = {
 			first = {
@@ -1232,7 +976,16 @@ function on_spawn(obj)
 		end
 	end
 	
+	-- Первичка, они же пистолеты-ПП
 	give_weapon(weapons.first, true)
-	give_weapon(weapons.second, true)
+	
+    -- Основное оружие – с вероятностью second_chance
+    local chance = weapons.second_chance
+    if chance == nil then chance = 1.0 end
+    if math.random() <= chance then
+        give_weapon(weapons.second, true)
+    end
+	
+	-- Ножи
 	give_weapon(weapons.knife, false)
 end

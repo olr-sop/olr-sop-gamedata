@@ -325,7 +325,6 @@ function all_blowend_funcs()
 	olr_timers.st_timer("spawen_rtut_shars_random", 18, "olr_blowout.spawen_rtut_shars_random()")
 	olr_timers.st_timer("spawen_rtut_shars", 20, "olr_blowout.spawen_rtut_shars()")
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
-	olr_timers.st_timer("mg_spawn_zombies", 36, "olr_blowout.mg_spawn_zombies()")
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
 	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- всех локацций
 	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()")
@@ -646,82 +645,6 @@ function del_rnd_anoms()
 			end
 		end
 	end
-end
-
----------------------------------------------
-
-function mg_spawn_zombies()
-	if has_alife_info("sokolov_kvest_dialog_done") then
-		local montabl = {
-			[clsid.respawn] = true
-		}
-
-		local sectionsa = {
-			"korpus_gas",
-			"fracture_strong",
-			"fracture_midle",
-			"pseudodog_weak",
-			"pseudodog_strong",
-			"pseudodog_normal",
-			"bloodsucker_strong"
-		}
-
-		local count = 0
-		local sim = alife()
-		for id = 1, 65534 do
-			local kill = sim:object(id)
-			if kill then
-				if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-					local section = sectionsa[math.random(table.getn(sectionsa))]
-					local rndz = math.random(1, 15)
-
-					if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndz == 1 then
-						local sobj = sim:create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-						amk.on_REspawn(sobj)
-						--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-						count = count + 1
-						--news_manager.send_tip(db.actor,"bloodsucker_strong and korpus_gas заспавнилось " .. count .. " нау ииии",nil,"freedom",9000)
-					end
-				end
-			end
-		end
-	end
-
-	if xvars.blow_count < 8 then
-		return
-	end
-
-	local montabl = {
-		[clsid.respawn] = true
-	}
-
-	local sectionsa = {
-		"dog_weak",
-		"dog_normal",
-		"pseudodog_weak",
-		"pseudodog_normal",
-		"zombie_plague",
-		"zombie_plague_strong"
-	}
-
-	local count = 0
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
-				local rndzz = math.random(1, 35)
-				if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndzz == 1 then
-					local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-					amk.on_REspawn(sobj)
-					--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-					count = count + 1
-				end
-			end
-		end
-	end
-	--news_manager.send_tip(db.actor, "всего новых сталкеров заспавнилось " .. count .. " нау ииии", nil, "freedom", 9000)
 end
 
 ---------------------------------------------

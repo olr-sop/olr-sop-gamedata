@@ -84,6 +84,8 @@ function actor_binder:net_spawn(data)
 	end
 	
 	xvars.cur_fov = device():get_fov() -- заполняем cur_fov на момент нет-спавна актора, если вдруг дадим менять его то надо будет что-то еще придумывать
+	
+	get_console():execute("ph_timefactor 1") -- на всякий случай если вдруг мы вылезем из схемы sr_water а таймфактор физики не сбросится на единицу. Репорты были по этой кривой схеме. Решение пока такое.
 
 	return true
 end
@@ -776,11 +778,15 @@ function actor_binder:update(delta)
 		-- Формирование текста для отображения
 		if StatCS ~= nil then
 			local display_text = 
-				"Реальное время: " .. tostr(formatted_time_real) .. "\\n" ..
-				"Расчетное время из game.time(): " .. tostr(formatted_game_time) .. "\\n" ..
-				"Игровое время (level): " .. tostr(formatted_level_time) .. "\\n" ..
-				"time_global(): " .. tostr(time_global()) .. "\\n" ..			
-				"game.time(): " .. tostr(current_time) .. "\\n"
+				--"Реальное время: " .. tostr(formatted_time_real) .. "\\n" ..
+				--"Расчетное время из game.time(): " .. tostr(formatted_game_time) .. "\\n" ..
+				--"Игровое время (level): " .. tostr(formatted_level_time) .. "\\n" ..
+				"time_global(): " .. tostr(time_global()) .. "\\n" ..
+				"game.time(): " .. tostr(game.time()) .. "\\n" ..
+				"game.time64(): " .. tostr(game.time64()) .. "\\n" ..
+				"get_game_seconds_srp(): " .. tostr(get_game_seconds_srp()) .. "\\n" ..
+				"get_game_seconds(): " .. tostr(get_game_seconds()) .. "\\n" ..
+				"get_game_minutes(): " .. tostr(get_game_minutes()) .. "\\n"
 			
 			StatCS:wnd():SetTextST(display_text)
 		end	

@@ -21,6 +21,11 @@ local difficulty_multipliers = {}
 -- Кэш для множителей рангов
 local rank_multipliers_cache = {}
 
+-- Кэш для артефактов в капсуле
+local capsule_suitable_arts = {}
+local capsule_spawn_by_rank = {}
+
+-- Путь до конфига
 local death_ini = ini_file("misc\\death_generic.ltx")
 
 -- Тут хранятся патроны которые надо удалить чуть чуть позже смерти непеся
@@ -63,6 +68,50 @@ function release_deferred_ammo()
 			-- если только геймобъект - он ещё не успел сдохнуть, сцуко, не трогаем его
 			--write_log("!!DEFFERED_DEBUG DEBUG_DELETING_ONLY_GAMEOBJ")
 		end		
+	end
+end
+
+-- Кэшируем все артефакты и прочее в таблицы для быстрого доступа к ним
+function load_capsule_settings()
+
+	if ini_sys and ini_sys:section_exist("capsule_rone") then
+		local suitable_arts = ini_sys:r_string("capsule_rone", "suitable_arts")
+		if suitable_arts and suitable_arts ~= "" then
+			local arts = parse_names(suitable_arts)
+			for _, art_section in pairs(arts) do
+				capsule_suitable_arts[#capsule_suitable_arts + 1] = art_section
+			end
+		end
+	end
+
+	local rank_categories = {"novice", "experienced", "veteran", "master"}
+	for _, rank_category in ipairs(rank_categories) do
+		local section_name = "capsule_" .. rank_category
+		local chance = 0
+		local max_artefacts = 0
+
+		if death_ini:section_exist(section_name) then
+			if death_ini:line_exist(section_name, "chance") then
+				chance = tonumber(death_ini:r_string(section_name, "chance")) or 0
+			end
+
+			if death_ini:line_exist(section_name, "max_artefacts") then
+				max_artefacts = tonumber(death_ini:r_string(section_name, "max_artefacts")) or 0
+			end
+		end
+
+		if chance < 0 then
+			chance = 0
+		elseif chance > 1 then
+			chance = 1
+		end
+
+		max_artefacts = math.max(0, math.floor(max_artefacts))
+
+		capsule_spawn_by_rank[rank_category] = {
+			chance = chance,
+			max_artefacts = max_artefacts
+		}
 	end
 end
 
@@ -212,6 +261,9 @@ function init_drop_settings()
 			end
 		end
 	end
+	
+	-- Вызываем заполение кэша для капсулы
+	load_capsule_settings()
 	
 	--dump_drop_tables() -- dump table for debugging
 end
@@ -504,14 +556,49 @@ function keep_item(npc, item)
 	return false
 end
 
-function getAfParams(section)
+-- Функция рандомит параметры артефактов находящихся внутри капсулы
+function artefact_rnd_params(section)
 	local mrandom = math.random
 	local val_weight = ini_sys:r_float(section, "inv_weight")
 	local val_weight_fin = val_weight + ((val_weight / 100) * mrandom(-10, 10))
 	local val_cost = ini_sys:r_float(section, "cost")
 	local val_cost_fin = val_cost + ((val_cost / 100) * mrandom(-10, 10))
-	local val_cond = mrandom(0.1, 0.8)
+	local val_cond = mrandom(10, 80) / 100
 	return val_cond, val_cost_fin, val_weight_fin
+end
+
+-- Функция заполнения капсулы артефактами
+function fill_capsule_with_artefacts(npc, se_cont_item)
+	if not se_cont_item then
+		return
+	end
+
+	if #capsule_suitable_arts == 0 then
+		return
+	end
+
+	local npc_rank = npc:rank() or 0
+	local rank_category = get_rank_category(npc_rank)
+	local capsule_settings = capsule_spawn_by_rank[rank_category]
+
+	if not capsule_settings then
+		return
+	end
+
+	local chance = capsule_settings.chance or 0
+	local max_artefacts = capsule_settings.max_artefacts or 0
+
+	if chance <= 0 or max_artefacts <= 0 then
+		return
+	end
+
+	for i = 1, max_artefacts do
+		if math.random() <= chance then
+			local art_section = capsule_suitable_arts[math.random(#capsule_suitable_arts)]
+			local val_cond, val_cost, val_weight = artefact_rnd_params(art_section)
+			se_cont_item:add_artefact(art_section, val_cond, val_cost, val_weight, true)
+		end
+	end
 end
 
 -- Функция спавнит необходимое число предметов
@@ -530,15 +617,14 @@ function create_items(npc, section, number, rnd)
 	else
 		for i = 1, number do
 			if math.random(1000) <= rnd then
-				local itm_obj = alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-				--local se_item = alife():object(itm_obj.id)
-				--local se_cont_item = alife():cast_to_cont(se_item)
-				--if se_cont_item --and math.random(0, 3) == 2 
-				--then
-				--	--suitable_arts = af_galantine, af_mercury_ball, af_junk_bolt, af_junk_debris, af_knot, af_cotton
-				--	local val_cond, val_cost, val_weight = getAfParams("af_mercury_ball")
-				--	se_cont_item:add_artefact("af_mercury_ball", math.random(0.1, 0.95), val_cost, val_weight, true)
-				--end
+				if section ~= "capsule_rone" then
+					alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())				
+				else
+					local itm_obj = alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+					local se_item = alife():object(itm_obj.id)
+					local se_cont_item = alife():cast_to_cont(se_item)
+					fill_capsule_with_artefacts(npc, se_cont_item)
+				end
 			end
 		end
 	end

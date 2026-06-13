@@ -7,16 +7,29 @@ local ptatt
 
 local repaintnow = false
 
-function get_vater(num)
-	if num >= 0 and num <= 0.1 then
-		return game.translate_string("st_very_strong")
-	elseif num > 0.1 and num <= 0.3 then
-		return game.translate_string("st_strong")
-	elseif num > 0.3 and num <= 0.4 then
-		return game.translate_string("st_middle")
-	elseif num > 0.4 then
-		return game.translate_string("st_none")
-	end
+function on_inventory_show()
+    if not att then
+        ptatt = ui.get_inventory_wnd()
+        att = olr_ui_inv_acinfo.ui_trade()
+        ptatt:AttachChild(att)
+        att:SetAutoDelete(true)
+        att:Show(true)
+    end
+end
+
+function on_inventory_hide()
+    if att and ptatt then
+        att:Show(false)
+        ptatt:DetachChild(att)
+        att = nil
+        ptatt = nil
+    end
+end
+
+function update(delta)
+    if att then
+        att:UpdateVolume()
+    end
 end
 
 function get_sleep(num)
@@ -30,38 +43,6 @@ function get_sleep(num)
 		return game.translate_string("st_ui_sleep_slight")
 	elseif num > 0.5 then
 		return game.translate_string("st_ui_sleep_none")
-	end
-end
-
-function repaint()
-	repaintnow = true
-	local wait_time = 0
-  	wait_time = time_global() + 5
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() repaintnow = false end
-  	)
-end
-
-function update(delta)
-	if ui.get_inventory_wnd():IsShown() and repaintnow == false then
-		if ui.get_inventory_wnd() and not att then
-			ptatt = ui.get_inventory_wnd()
-			att = olr_ui_inv_acinfo.ui_trade()
-			ptatt:AttachChild(att)
-			att:SetAutoDelete(true)
-			att:Show(true)
-		end
-		if att then
-			att:UpdateVolume()
-		end
-	else
-		if att and ptatt then
-			att:Show(false)
-			ptatt:DetachChild(att)
-			att = nil
-			ptatt = nil
-		end
 	end
 end
 

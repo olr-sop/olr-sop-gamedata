@@ -50,6 +50,13 @@ function evaluator_trading:evaluate()
 		end
 	end
 	
+	-- TODO Отключать еще при выбросе!!
+	
+	local spawn_ini = npc:spawn_ini()
+	if spawn_ini and spawn_ini:section_exist("logic") then
+		return false -- Сталкеры имеющие логику в кастом дате так-же игнорируются
+	end
+	
 	if olr_protected.is_no_offline_alife_obj(npc:name()) then 
 		return false -- Квестовые защищенные и прочие непеси из этого списка НЕ ДОЛЖНЫ БЛЯ БЕЖАТЬ ТОРГОВАТЬ
 	end

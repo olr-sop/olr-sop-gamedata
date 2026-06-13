@@ -49,6 +49,10 @@ function evaluator_trading:evaluate()
 			return false
 		end
 	end
+	
+	if olr_protected.is_no_offline_alife_obj(npc:name()) then 
+		return false --  вестовые защищенные и прочие непеси из этого списка Ќ≈ ƒќЋ∆Ќџ ЅЋя Ѕ≈∆ј“№ “ќ–√ќ¬ј“№
+	end
 
 	if has_alife_info("olr_traders_night") then
 		return false
@@ -98,7 +102,7 @@ function evaluator_trading:evaluate()
 		if has_alife_info("kvest_bar_2_dialog_start") then
 			return false -- ∆аба свалил на ’олмы
 		end
-		if npc:money() > 100 then
+		if npc:money() > 1000 then
 			return true
 		end
 		if npc:ruck_count() > 25 then
@@ -110,7 +114,7 @@ function evaluator_trading:evaluate()
 		if not has_alife_info("greh_leader_key_taken_docs_vetri") then
 			return false -- ∆аба свалил на ’олмы
 		end
-		if npc:money() > 300 then
+		if npc:money() > 3000 then
 			return true
 		end
 		if npc:ruck_count() > 25 then
@@ -129,7 +133,7 @@ function evaluator_trading:evaluate()
 		if has_alife_info("bun_antenna_off") then
 			return false -- бармен свалил
 		end
-		if npc:money() > 500 then
+		if npc:money() > 5000 then
 			return true
 		end
 		if npc:ruck_count() > 25 then
@@ -609,7 +613,10 @@ function add_to_binder(object, char_ini, scheme, section, st)
 	local new_action = action_go_trade(st)
 	new_action:add_precondition(world_property(property_wounded, false))
 	new_action:add_precondition(world_property(stalker_ids.property_alive, true))
-	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))
+	new_action:add_precondition(world_property(stalker_ids.property_danger,false)) -- Не было проверок на отсуствие апасности
+	new_action:add_precondition(world_property(stalker_ids.property_enemy, false)) -- и на отсуствие ворога
+	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))	
+	
 	xr_motivator.addCommonPrecondition(new_action)
 	new_action:add_effect(world_property(ev_trade_now, false))
 	planner:add_action(ac_trade, new_action)

@@ -557,9 +557,9 @@ function actor_binder:on_item_drop (obj)
 
 	--event("actor_item_drop"):trigger({obj = obj})
 	
-	if db.actor:has_info("ui_inventory") then
-		db.actor:invalidate_inventory()
-	end
+	--if db.actor:has_info("ui_inventory") then
+	--	db.actor:invalidate_inventory()	-- Странные костыли флаера
+	--end
 
 end
 ----------------------------------------------------------------------------------------------------------------------
@@ -794,93 +794,114 @@ function actor_binder:update(delta)
 	end
 end
 ------------------------------------------------------------------
-function actor_binder:save(packet)
+local ACTOR_BINDER_VERSION = 1
 
+function actor_binder:save(packet)
+	packet:w_u16(ACTOR_BINDER_VERSION)
+	set_save_marker(packet, "save", false, "actor_binder")
 	if packet:w_tell() == 0 then
 		news_manager.send_tip(db.actor, game.translate_string("actor_bindersave_0"), nil, "freedom", 9000)
 	end
 
-	--log1("!!Memory used by Lua before cleanup: "..collectgarbage("count"))
-	--collectgarbage("collect")
-	--log1("--Memory used by Lua after cleanup: "..collectgarbage("count"))
-
-	--log1("Actor packet: "..packet:w_tell().."")
 	xvars.saves_count = xvars.saves_count + 1
 
 	core.tc("actor_save",packet)
-	
-	local save_treasure_manager = true
-	
+
 	printf("actor_binder:save(): self.object:name()='%s'", self.object:name())
 	object_binder.save(self, packet)
 
-	-- Сохраняем уровень сложности
-	if save_treasure_manager == true then
-		packet:w_u8(level.get_game_difficulty() + 128)
-	else
-		packet:w_u8(level.get_game_difficulty())
-	end
+	local pos_before
 
-	-- Сохраняем данные об отключенном вводе
+	-- Game difficulty
+	pos_before = packet:w_tell()
+	packet:w_u8(level.get_game_difficulty())
+	log1(string.format("[SAVE actor_binder] game_difficulty: %d byte(s)", packet:w_tell() - pos_before))
+
+	-- disable_input_time
+	pos_before = packet:w_tell()
 	if self.st.disable_input_time == nil then
 		packet:w_bool(false)
 	else
 		packet:w_bool(true)
 		utils.w_CTime(packet, self.st.disable_input_time)
 	end
+	log1(string.format("[SAVE actor_binder] disable_input_time: %d byte(s)", packet:w_tell() - pos_before))
 
+	-- pstor
+	pos_before = packet:w_tell()
 	if alife() then
 		xr_logic.pstor_save_all(self.object, packet)
 	end
+	log1(string.format("[SAVE actor_binder] pstor: %d byte(s)", packet:w_tell() - pos_before))
+
+	-- weather
+	pos_before = packet:w_tell()
 	self.weather_manager:save(packet)
+	log1(string.format("[SAVE actor_binder] weather: %d byte(s)", packet:w_tell() - pos_before))
 
+	-- psy_antenna
+	pos_before = packet:w_tell()
 	sr_psy_antenna.save( packet )
-	                                 
-	self.actor_detector:save(packet)
-        --olr_blowout.on_game_save()		
+	log1(string.format("[SAVE actor_binder] psy_antenna: %d byte(s)", packet:w_tell() - pos_before))
 
-        --event("actor_save"):trigger({packet = packet})
+	-- actor_detector
+	pos_before = packet:w_tell()
+	self.actor_detector:save(packet)
+	log1(string.format("[SAVE actor_binder] detector: %d byte(s)", packet:w_tell() - pos_before))
+
+	set_save_marker(packet, "save", true, "actor_binder")
+
+	log1(string.format("[SAVE actor_binder] TOTAL: %d bytes", packet:w_tell()))
 end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:load(reader)
+	-- Version check
+	if reader:r_eof() then
+		abort("SAVE BROKEN [actor_binder]: reader empty at version check")
+	end
+	if reader:r_elapsed() < 2 then
+		abort("SAVE BROKEN [actor_binder]: not enough bytes for version tag (elapsed=%d)", reader:r_elapsed())
+	end
+	local ver = reader:r_u16()
+	if ver ~= ACTOR_BINDER_VERSION then
+		abort("SAVE VERSION MISMATCH [actor_binder]: expected=%d got=%d", ACTOR_BINDER_VERSION, ver)
+	end
+
+	set_save_marker(reader, "load", false, "actor_binder")
 	printf("actor_binder:load(): self.object:name()='%s'", self.object:name())
 	object_binder.load(self, reader)
 	printf("actor_binder:object_binder.load(): self.object:name()='%s'", self.object:name())
 
-	-- Загружаем уровень сложности
+	safe_r(reader, "r_u8", 1, "actor_binder.game_difficulty")
 	local game_difficulty = reader:r_u8()
-	
-	local load_treasure_manager = false      
-	if game_difficulty >= 128 then           
+	local load_treasure_manager = false
+	if game_difficulty >= 128 then
 		game_difficulty = game_difficulty - 128
-		load_treasure_manager = true           
-	end                                      
-
-	
+		load_treasure_manager = true
+	end
+	--log1(string.format("[LOAD actor_binder] game_difficulty=%s", tostring(game_difficulty)))
 	get_console():execute("g_game_difficulty "..game_difficulty_by_num[game_difficulty] or 0)
 
-	if reader:r_eof() then
-		abort("SAVE IS BROKEN actor binder")
-	end
-
+	safe_r(reader, "r_u8", 1, "actor_binder.disable_input_time_flag")
 	local stored_input_time = reader:r_u8()
 	if stored_input_time == true then
-		self.st.disable_input_time = utils.r_CTime(reader)
+		utils.r_CTime(reader)
 	end
 
-	if alife() then
-		xr_logic.pstor_load_all(self.object, reader)
-	end
+	safe_r(reader, "r_u32", 4, "actor_binder.pstor_count")
+	xr_logic.pstor_load_all(self.object, reader)
+
+	safe_r(reader, "r_stringZ", 1, "actor_binder.weather")
 	self.weather_manager:load(reader)
 
-	sr_psy_antenna.load(reader)                  
-	
-	self.actor_detector:load(reader)	
+	safe_r(reader, "r_bool", 1, "actor_binder.psy_antenna_flag")
+	sr_psy_antenna.load(reader)
 
-        --event("actor_load"):trigger({reader = reader})
+	safe_r(reader, "r_u8", 1, "actor_binder.detector")
+	self.actor_detector:load(reader)
 
-
+	set_save_marker(reader, "load", true, "actor_binder")
 end
 ----------------------------------------------------------------------------------------------------------------------
 

@@ -314,14 +314,14 @@ function spawn_genrozd()
 end
 
 function ac_hit_gen_durik()
-	log1("hhh")
+	--log1("hhh")
 	olr.info("oso_start_goavay_visel")
 	olr.del_by_name("lvl16_generators_space_restrictor_0056")
 	xr_effects.actor_usel_boss()
 end
 
 function suker_sarcofag_spwn()
-	log1("k s")
+	--log1("k s")
 	olr.spawn_on_obj("m_bloodsucker_e", "lvl15_sarcofag_space_restrictor_0014")
 	olr.del_by_name("lvl15_sarcofag_space_restrictor_0014")
 end
@@ -3387,22 +3387,24 @@ function en_gen_ui_deadboss()
 end
 
 function actor_usel_boss()
-	olr.horror_snd()
-	local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
-	local bosp = level.object_by_id(objp.id)
-	if bosp then
-		local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
-		if not boss_particle:playing() then
-			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y + 1.6, bosp:position().z))
+	if not has_alife_info("oso_start_goavay_visel") then
+		olr.info("oso_start_goavay_visel")
+		olr.horror_snd()
+		local objp = alife():object("lvl16_generators_staler_undead_olr_0003")
+		local bosp = level.object_by_id(objp.id)
+		if bosp then
+			local boss_particle = particles_object("ghoul\\fx-05-blue-glow_00")
+			if not boss_particle:playing() then
+				boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y + 1.6, bosp:position().z))
+			end
 		end
+		olr_blowout.blowout_additional_timer()
+		olr.hud_tip("", game.translate_string("actor_usel_boss_0"), 10, true)
+		olr.kill_by_name("lvl16_generators_staler_undead_olr_0003")
+		olr.del_by_name("lvl16_generators_space_restrictor_0070")
+		olr.del_by_name("lvl16_generators_space_restrictor_0057")
+		olr.del_by_name("lvl16_generators_space_restrictor_0056")
 	end
-	olr_blowout.blowout_additional_timer()
-	news_manager.send_tip(db.actor, game.translate_string("actor_usel_boss_0"), nil, "hero", 49000)
-	olr.info("oso_start_goavay_visel")
-	olr.kill_by_name("lvl16_generators_staler_undead_olr_0003")
-	olr.del_by_name("lvl16_generators_space_restrictor_0070")
-	olr.del_by_name("lvl16_generators_space_restrictor_0057")
-	olr.del_by_name("lvl16_generators_space_restrictor_0056")
 end
 
 function start_oso_killed_shahta()

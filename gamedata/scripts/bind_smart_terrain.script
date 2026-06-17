@@ -65,9 +65,12 @@ function smart_terrain_binder:update( delta )
 
 	self.se_smart_terrain:update()
 
-	if olr_blowout.state_blow == 3 then
-		olr_blowout.Kill_Monsters(self.se_smart_terrain.gulag)
-	end 
-
+	local m = surge_manager.get_surge_manager()
+	if (m.started) then
+		local diff_sec = math.ceil(game.get_game_time():diffSec(m.inited_time) / level.get_time_factor())
+		if diff_sec >= 185 then
+			olr_blowout.Kill_Monsters(self.se_smart_terrain.gulag)
+		end
+	end
 
 end

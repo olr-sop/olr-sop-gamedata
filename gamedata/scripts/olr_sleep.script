@@ -62,6 +62,7 @@ function start_sleep(hours, minutes, safety_place) -- вызывается из основной фун
 	blow_sleep_timer_low(hours_to_sleep) -- Задаём время до выброса (Думаю лучше тут перед сном сдвинуть время до выброса)
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback") -- старт анимки, запуск скрипта в конце
 	level.add_pp_effector("sleep_fade.ppe", 11, false) -- запуск затемненеия
+	surge_manager.resurrect_skip_message()
 end
 
 function dream_callback() -- вызывается из start_sleep
@@ -101,6 +102,10 @@ function dream_callback2() -- вызывается из dream_callback
 	minutes_to_sleep = 0 -- обнуляем
 	sleep_in_safety_place = false -- обнуляем
 	actor_sleep = false -- обнуляем
+	surge_manager.get_surge_manager().time_forwarded = true
+	if surge_manager.is_started() then
+		level.stop_weather_fx()
+	end
 end
 
 function sleep_check_not_safety() -- проврека на выброс (добавить остальные проверки)
@@ -203,6 +208,10 @@ function dream_callback2_special() -- вызывается из dream_callback
 	minutes_to_sleep = 0 -- обнуляем
 	sleep_in_safety_place = false -- обнуляем
 	actor_sleep = false -- обнуляем
+	surge_manager.get_surge_manager().time_forwarded = true
+	if surge_manager.is_started() then
+		level.stop_weather_fx()
+	end	
 end
 
 ------------------------------------------------------------------------------------------------------------------------ 

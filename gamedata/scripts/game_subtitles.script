@@ -1,76 +1,90 @@
+-- Глобальные переменные модуля субтитров
+local current_scene = nil
+local scene_start_time = 0
+local scene_phrases = {}	-- массив фраз текущей сцены
+local active_phrase_idx = -1
+local hud_static_name = "subtitles_scene_text"	-- один статик на всё
 
-function add_subtitle(text_all, timeout)
-	local hud = get_hud()
-	local custom_static = hud:GetCustomStatic("subtitles_scene_text")
-	hud:AddCustomStatic("subtitles_scene_text", true)
-	hud:GetCustomStatic("subtitles_scene_text"):wnd():SetTextST(tostring(text_all))
-	hud:GetCustomStatic("subtitles_scene_text").m_endTime = time_global()/1000 + timeout
-end
-
-function add_subtitle2(text_all, timeout)
-	local hud = get_hud()
-	local custom_static = hud:GetCustomStatic("subtitles_scene_text2") -- во избежание перезаписи текста(lanim может не включиться) чередуем
-	hud:AddCustomStatic("subtitles_scene_text2", true)
-	hud:GetCustomStatic("subtitles_scene_text2"):wnd():SetTextST(tostring(text_all))
-	hud:GetCustomStatic("subtitles_scene_text2").m_endTime = time_global()/1000 + timeout
-end
-
+-- Запуск сцены (замена вашей start_scene)
 function start_scene(scene_name)
 	if scene_name == "military_radio_peredacha" then
-		olr_timers.st_timer("military_radio_peredacha1", 13, "game_subtitles.military_radio_peredacha1()")
-		olr_timers.st_timer("military_radio_peredacha2", 20, "game_subtitles.military_radio_peredacha2()")
-		olr_timers.st_timer("military_radio_peredacha3", 32, "game_subtitles.military_radio_peredacha3()")
-		olr_timers.st_timer("military_radio_peredacha4", 44, "game_subtitles.military_radio_peredacha4()")
-		olr_timers.st_timer("military_radio_peredacha5", 55.5, "game_subtitles.military_radio_peredacha5()")
-		olr_timers.st_timer("military_radio_peredacha6", 75.5, "game_subtitles.military_radio_peredacha6()")
-		olr_timers.st_timer("military_radio_peredacha7", 89.4, "game_subtitles.military_radio_peredacha7()")
-		olr_timers.st_timer("military_radio_peredacha8", 108, "game_subtitles.military_radio_peredacha8()")
-		olr_timers.st_timer("military_radio_peredacha9", 126, "game_subtitles.military_radio_peredacha9()")
-		olr_timers.st_timer("military_radio_peredacha10", 142, "game_subtitles.military_radio_peredacha10()")
-		olr_timers.st_timer("military_radio_peredacha11", 154, "game_subtitles.military_radio_peredacha11()")
+		-- Определение фраз: {start_sec, duration_sec, text_string_id}
+		scene_phrases = {
+			{13,	7.1,  "st_military_radio_peredacha_phrase_01"},
+			{20,	11.8, "st_military_radio_peredacha_phrase_02"},
+			{32,	12,	  "st_military_radio_peredacha_phrase_03"},
+			{44,	11,	  "st_military_radio_peredacha_phrase_04"},
+			{55.5,	20,	  "st_military_radio_peredacha_phrase_05"},
+			{75.5,	14,	  "st_military_radio_peredacha_phrase_06"},
+			{89.4,	20.5, "st_military_radio_peredacha_phrase_07"},
+			{108,	20,	  "st_military_radio_peredacha_phrase_08"},
+			{123,	18,	  "st_military_radio_peredacha_phrase_09"},
+			{136,	12,	  "st_military_radio_peredacha_phrase_10"},
+			{154,	25,	  "st_military_radio_peredacha_phrase_11"}
+		}
+		current_scene = scene_name
+		scene_start_time = time_global() / 1000
+		active_phrase_idx = -1
 	end
+	
+	-- Создаём единый статик, если его ещё нет
+	local hud = get_hud()
+	if not hud:GetCustomStatic(hud_static_name) then
+		hud:AddCustomStatic(hud_static_name, true)
+	end
+	
 end
 
-function military_radio_peredacha1()
-	add_subtitle("st_military_radio_peredacha_phrase_01", 7.1)
-end
+-- Вызывать КАЖДЫЙ КАДР (можно в том же месте, где вызывается upd_timers)
+function update_subtitles()
+	if not current_scene then
+		return
+	end
 
-function military_radio_peredacha2()
-	add_subtitle2("st_military_radio_peredacha_phrase_02", 11.8)
-end
+	local elapsed = time_global() / 1000 - scene_start_time
+	local new_idx = -1
 
-function military_radio_peredacha3()
-	add_subtitle("st_military_radio_peredacha_phrase_03", 12)
-end
+	-- Ищем активную фразу
+	for i, phrase in ipairs(scene_phrases) do
+		if elapsed >= phrase[1] and elapsed < phrase[1] + phrase[2] then
+			new_idx = i
+			break
+		end
+	end
 
-function military_radio_peredacha4()
-	add_subtitle2("st_military_radio_peredacha_phrase_04", 11)
-end
+	-- Если активная фраза изменилась
+	if new_idx ~= active_phrase_idx then
+		local hud = get_hud()
+		local cs = hud:GetCustomStatic(hud_static_name)
 
-function military_radio_peredacha5()
-	add_subtitle("st_military_radio_peredacha_phrase_05", 20)
-end
+		if new_idx == -1 then
+			-- Скрываем статик (пауза между фразами или сцена кончилась)
+			if cs then
+				cs:wnd():Show(false)
+			end
+		else
+			-- Показываем и обновляем текст
+			if cs then
+				cs:wnd():SetTextST(tostring(scene_phrases[new_idx][3]))
+				cs:wnd():Show(true)
+			end
+		end
+		active_phrase_idx = new_idx
+	end
 
-function military_radio_peredacha6()
-	add_subtitle2("st_military_radio_peredacha_phrase_06", 14)
-end
-
-function military_radio_peredacha7()
-	add_subtitle("st_military_radio_peredacha_phrase_07", 20.5)
-end
-
-function military_radio_peredacha8()
-	add_subtitle2("st_military_radio_peredacha_phrase_08", 21)
-end
-
-function military_radio_peredacha9()
-	add_subtitle("st_military_radio_peredacha_phrase_09", 23)
-end
-
-function military_radio_peredacha10()
-	add_subtitle2("st_military_radio_peredacha_phrase_10", 12)
-end
-
-function military_radio_peredacha11()
-	add_subtitle("st_military_radio_peredacha_phrase_11", 25)
+	-- Проверка завершения сцены
+	if active_phrase_idx == -1 then
+		local last_phrase = scene_phrases[#scene_phrases]
+		if elapsed > last_phrase[1] + last_phrase[2] then
+			-- Сцена полностью завершена, подчищаем
+			current_scene = nil
+			scene_phrases = {}
+			local hud = get_hud()
+			local cs = hud:GetCustomStatic(hud_static_name)
+			if cs then
+				cs:wnd():Show(false)
+				hud:RemoveCustomStatic(hud_static_name)
+			end
+		end
+	end
 end

@@ -843,7 +843,6 @@ end
 local ACTOR_BINDER_VERSION = 1
 
 function actor_binder:save(packet)
-	packet:w_u16(ACTOR_BINDER_VERSION)
 	set_save_marker(packet, "save", false, "actor_binder")
 	if packet:w_tell() == 0 then
 		news_manager.send_tip(db.actor, game.translate_string("actor_bindersave_0"), nil, "freedom", 9000)
@@ -851,10 +850,10 @@ function actor_binder:save(packet)
 
 	xvars.saves_count = xvars.saves_count + 1
 
-	core.tc("actor_save",packet)
-
 	printf("actor_binder:save(): self.object:name()='%s'", self.object:name())
 	object_binder.save(self, packet)
+
+	core.tc("actor_save",packet)
 
 	local pos_before
 
@@ -875,9 +874,7 @@ function actor_binder:save(packet)
 
 	-- pstor
 	pos_before = packet:w_tell()
-	if alife() then
-		xr_logic.pstor_save_all(self.object, packet)
-	end
+	xr_logic.pstor_save_all(self.object, packet)
 	log1(string.format("[SAVE actor_binder] pstor: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- weather
@@ -888,7 +885,7 @@ function actor_binder:save(packet)
 	-- surge manager
 	pos_before = packet:w_tell()
 	self.surge_manager:save(packet)
-	log1(string.format("[SAVE actor_binder] weather: %d byte(s)", packet:w_tell() - pos_before))
+	log1(string.format("[SAVE actor_binder] surge manager: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- psy_antenna
 	pos_before = packet:w_tell()
@@ -907,18 +904,6 @@ end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:load(reader)
-	-- Version check
-	if reader:r_eof() then
-		abort("SAVE BROKEN [actor_binder]: reader empty at version check")
-	end
-	if reader:r_elapsed() < 2 then
-		abort("SAVE BROKEN [actor_binder]: not enough bytes for version tag (elapsed=%d)", reader:r_elapsed())
-	end
-	local ver = reader:r_u16()
-	if ver ~= ACTOR_BINDER_VERSION then
-		abort("SAVE VERSION MISMATCH [actor_binder]: expected=%d got=%d", ACTOR_BINDER_VERSION, ver)
-	end
-
 	set_save_marker(reader, "load", false, "actor_binder")
 	printf("actor_binder:load(): self.object:name()='%s'", self.object:name())
 	object_binder.load(self, reader)

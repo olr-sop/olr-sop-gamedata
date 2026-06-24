@@ -15,6 +15,14 @@ local surge_earthquake_sound = xr_sound.get_safe_sound_object([[ambient\weather\
 local blowout_begin = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
 local blowout_rumble = xr_sound.get_safe_sound_object([[ambient\weather\blowout_rumble]])
 
+no_blow_levels = {
+	["lvl_level12"] = true,
+	["lvl12_radar_bunker"] = true,
+	["lvl14_stancia"] = true,
+	["lvl15_sarcofag"] = true,
+	["lvl16_generators"] = true
+}
+
 class "CSurgeManager"
 function CSurgeManager:__init()
 end
@@ -120,6 +128,11 @@ function CSurgeManager:actor_cover()
 			end
 		end
 	end
+	
+	if not actor:is_actor_outdoors() then
+		log1("---> surge: actor in cover!")
+		return true
+	end	
 
 	log1("---> surge: actor is out of cover!")
 	return false
@@ -265,7 +278,7 @@ function CSurgeManager:update()
 		end
 
 		local level_name = level.name()
-		if (level_name == "llvl4u_darklab" or level_name == "lvl12_radar_bunker" or level_name == "lvl15_sarcofag") then
+		if no_blow_levels[level_name] then
 			log1("---> surge: stopped because of level!")
 			self:end_surge()
 			return
@@ -342,6 +355,10 @@ function CSurgeManager:update()
 					"st_olr_blowout_warning_4"
 				}
 				news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "info", 15000)
+				if not has_alife_info("olr_blowout_first_hideouts") then
+					db.actor:give_info_portion("olr_blowout_first_hideouts")
+					olr_timers.st_timer_game("olr_blowout_first_hideouts", 60, "nick.olr_blowout_first_hideouts()") -- Через игровую минуту Жаба напишет нам искать укрытие
+				end
 				level.set_weather_fx("surge")
 				-- Таски тоже отключаю для вас, нужны правки в движке на откат стадий тасков типа как в ЗП (стекольщик сказал нахуй надо, поэтому увы...)
 				-- xvars.quests_all_ids = xvars.quests_all_ids + 1
@@ -366,7 +383,7 @@ function CSurgeManager:start(manual)
 	log1("---> surge: start diff_sec = "..tostring(diff_sec))
 
 	local level_name = level.name()
-	if (level_name == "llvl4u_darklab" or level_name == "lvl12_radar_bunker" or level_name == "lvl15_sarcofag") then
+	if no_blow_levels[level_name] then
 		log1("---> surge: skipped because of level!")
 		self.skip_message = true
 		self:skip_surge()

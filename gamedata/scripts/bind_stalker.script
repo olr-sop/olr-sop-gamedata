@@ -884,6 +884,11 @@ function actor_binder:save(packet)
 	pos_before = packet:w_tell()
 	self.weather_manager:save(packet)
 	log1(string.format("[SAVE actor_binder] weather: %d byte(s)", packet:w_tell() - pos_before))
+	
+	-- surge manager
+	pos_before = packet:w_tell()
+	self.surge_manager:save(packet)
+	log1(string.format("[SAVE actor_binder] weather: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- psy_antenna
 	pos_before = packet:w_tell()
@@ -935,6 +940,10 @@ function actor_binder:load(reader)
 
 	safe_r(reader, "r_stringZ", 1, "actor_binder.weather")
 	self.weather_manager:load(reader)
+	
+	safe_r(reader, "r_stringZ", 1, "actor_binder.surge_manager")
+	self.surge_manager:load(reader)
+	self.f_surge_manager_loaded = true
 
 	safe_r(reader, "r_bool", 1, "actor_binder.psy_antenna_flag")
 	sr_psy_antenna.load(reader)

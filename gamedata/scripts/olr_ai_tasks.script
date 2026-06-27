@@ -187,7 +187,7 @@ local global_task_rnd_way = {
     [161] = {name = "cha_vorola"}
 }
 
--- регистрация основной миссии при появлении в зоне
+-- регистрация основной миссии при появлении в зоне (касается только тех сталкеров что спавнятся через респавн!)
 function on_spawn_npc(obj)
     if obj and IsStalker(obj) and xvars.npcs_tasks then
         if obj:community() == "monolith" or obj:community() == "military" or obj:community() == "zombied" then
@@ -212,6 +212,10 @@ end
 
 -------------smart_terrain-----
 function has_task(obj)
+
+	if not xvars or not xvars.npcs_tasks then return false end -- Так нужно так как se_stalker во время реги сталкера уже дёргаем ему первый апдейт который выбирает смарт куда тот пойдёт.
+															   -- и это может происходить пока у нас нет xvars или xvars.npcs_tasks, поэтому проверяем на наличие онных
+	
     if obj and IsStalker(obj) then
         --торговля бар
         if xvars.npc_ofl_trade[obj:name()] == true then

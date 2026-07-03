@@ -839,9 +839,8 @@ function actor_binder:update(delta)
 	
 	end
 end
-------------------------------------------------------------------
-local ACTOR_BINDER_VERSION = 1
 
+------------------------------------------------------------------
 function actor_binder:save(packet)
 	set_save_marker(packet, "save", false, "actor_binder")
 	if packet:w_tell() == 0 then
@@ -850,90 +849,92 @@ function actor_binder:save(packet)
 
 	xvars.saves_count = xvars.saves_count + 1
 
-	printf("actor_binder:save(): self.object:name()='%s'", self.object:name())
+	--printf("actor_binder:save(): self.object:name()='%s'", self.object:name())
 	object_binder.save(self, packet)
 
 	core.tc("actor_save",packet)
 
-	local pos_before
+	--local pos_before
 
 	-- Game difficulty
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	packet:w_u8(level.get_game_difficulty())
-	log1(string.format("[SAVE actor_binder] game_difficulty: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] game_difficulty: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- disable_input_time
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	if self.st.disable_input_time == nil then
 		packet:w_bool(false)
 	else
 		packet:w_bool(true)
 		utils.w_CTime(packet, self.st.disable_input_time)
 	end
-	log1(string.format("[SAVE actor_binder] disable_input_time: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] disable_input_time: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- pstor
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	xr_logic.pstor_save_all(self.object, packet)
-	log1(string.format("[SAVE actor_binder] pstor: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] pstor: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- weather
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	self.weather_manager:save(packet)
-	log1(string.format("[SAVE actor_binder] weather: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] weather: %d byte(s)", packet:w_tell() - pos_before))
 	
 	-- surge manager
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	self.surge_manager:save(packet)
-	log1(string.format("[SAVE actor_binder] surge manager: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] surge manager: %d byte(s)", packet:w_tell() - pos_before))
+	
 
 	-- psy_antenna
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	sr_psy_antenna.save( packet )
-	log1(string.format("[SAVE actor_binder] psy_antenna: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] psy_antenna: %d byte(s)", packet:w_tell() - pos_before))
 
 	-- actor_detector
-	pos_before = packet:w_tell()
+	--pos_before = packet:w_tell()
 	self.actor_detector:save(packet)
-	log1(string.format("[SAVE actor_binder] detector: %d byte(s)", packet:w_tell() - pos_before))
+	--log1(string.format("[SAVE actor_binder] detector: %d byte(s)", packet:w_tell() - pos_before))
 
 	set_save_marker(packet, "save", true, "actor_binder")
 
-	log1(string.format("[SAVE actor_binder] TOTAL: %d bytes", packet:w_tell()))
+	--log1(string.format("[SAVE actor_binder] TOTAL: %d bytes", packet:w_tell()))
 end
 
 ----------------------------------------------------------------------------------------------------------------------
 function actor_binder:load(reader)
 	set_save_marker(reader, "load", false, "actor_binder")
-	printf("actor_binder:load(): self.object:name()='%s'", self.object:name())
+	--printf("actor_binder:load(): self.object:name()='%s'", self.object:name())
 	object_binder.load(self, reader)
-	printf("actor_binder:object_binder.load(): self.object:name()='%s'", self.object:name())
+	--printf("actor_binder:object_binder.load(): self.object:name()='%s'", self.object:name())
 
-	safe_r(reader, "r_u8", 1, "actor_binder.game_difficulty")
+	--safe_r(reader, "r_u8", 1, "actor_binder.game_difficulty")
 	local game_difficulty = reader:r_u8()
 	--log1(string.format("[LOAD actor_binder] game_difficulty=%s", tostring(game_difficulty)))
 	get_console():execute("g_game_difficulty "..game_difficulty_by_num[game_difficulty] or 0)
 
-	safe_r(reader, "r_u8", 1, "actor_binder.disable_input_time_flag")
+	--safe_r(reader, "r_u8", 1, "actor_binder.disable_input_time_flag")
 	local stored_input_time = reader:r_u8()
 	if stored_input_time == true then
 		utils.r_CTime(reader)
 	end
 
-	safe_r(reader, "r_u32", 4, "actor_binder.pstor_count")
+	--safe_r(reader, "r_u32", 4, "actor_binder.pstor_count")
 	xr_logic.pstor_load_all(self.object, reader)
 
-	safe_r(reader, "r_stringZ", 1, "actor_binder.weather")
+	--safe_r(reader, "r_stringZ", 1, "actor_binder.weather")
 	self.weather_manager:load(reader)
 	
-	safe_r(reader, "r_stringZ", 1, "actor_binder.surge_manager")
+	--safe_r(reader, "r_stringZ", 1, "actor_binder.surge_manager")
 	self.surge_manager:load(reader)
 	self.f_surge_manager_loaded = true
 
-	safe_r(reader, "r_bool", 1, "actor_binder.psy_antenna_flag")
+	--safe_r(reader, "r_bool", 1, "actor_binder.psy_antenna_flag")
 	sr_psy_antenna.load(reader)
+	
 
-	safe_r(reader, "r_u8", 1, "actor_binder.detector")
+	--safe_r(reader, "r_u8", 1, "actor_binder.detector")
 	self.actor_detector:load(reader)
 
 	set_save_marker(reader, "load", true, "actor_binder")

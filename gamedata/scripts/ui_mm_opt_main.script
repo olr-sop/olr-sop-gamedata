@@ -238,11 +238,9 @@ function options_dialog:OnBtnAccept()
 		self:GetHolder():start_stop_menu(self.message_box,true)
 	else
 		self:OnApplyChanges()
+		opt:OptionsPostAccept()
+		console:execute("cfg_save")
 	end
-
-	opt:OptionsPostAccept()
-
-	console:execute("cfg_save")
 end
 
 function options_dialog:OnBtnCancel()
@@ -362,6 +360,10 @@ function options_dialog:OnApplyChanges()
 	self:GetHolder():start_stop_menu	(self.owner, true)
 	self:GetHolder():start_stop_menu	(self,true)
 	self.owner:Show(true)
+	
+	local opt = COptionsManager()
+	opt:OptionsPostAccept()
+	get_console():execute("cfg_save")
 
 	if false==self.b_restart_system_shown then
 		local opt = COptionsManager()

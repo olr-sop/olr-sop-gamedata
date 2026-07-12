@@ -548,15 +548,6 @@ function see_enemy(actor, npc)
     return false
 end
 
-
--- DELME: для тестов: {=test_condition_actor_near}
-function test_condition_actor_near(actor, npc)
-	if distance_between(actor, npc) <= 3 then
-		return true
-	end
-	return false
-end
-
 function talking(actor, npc)
 	return actor:is_talking()
 end
@@ -577,18 +568,6 @@ end
 function actor_enemy(actor, npc)
 	local t = db.storage[npc:id()].death
 	return npc:relation(actor) == game_object.enemy or (t ~= nil and t.killer == actor:id())
-end
-
-function gar_dm_nearest_bandit(actor, npc)
-	--printf("_bp: xr_conditions: nearest [%s]? %s", npc:name(),
-	--		if_then_else(xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 1), "true", "false"))
-	return xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 1)
-end
-
-function gar_dm_2nd_nearest_bandit(actor, npc)
-	--printf("_bp: xr_conditions: 2nd nearest [%s]? %s", npc:name(),
-	--		if_then_else(xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 2), "true", "false"))
-	return xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 2)
 end
 
 function trade_exchanged(actor, npc)
@@ -703,62 +682,6 @@ function dist_to_enemy_le(actor, npc, p)
 	return d and enemy and enemy:position():distance_to_sqr(npc:position()) <= d * d
 end
 
-
-------------------------------------------------------------------------------------
--- Special functions for Escape
-------------------------------------------------------------------------------------
-function esc_blokpost_night(actor,npc)
-	if xr_gulag.getGulagState("esc_blokpost") == 1 then
-		return true
-	end
-	return false
-end
-
-
-------------------------------------------------------------------------------------
--- Special functions for Bar
-------------------------------------------------------------------------------------
-function check_actor_in_kamaz(actor, npc)
-	return bind_car.act_in_car_now() and bind_car.actor_car_name("lvl5_bar_m_car_0004")
-end
-
-
-
--------------------------------------------------------------------------------------
--- Special for Trade
--------------------------------------------------------------------------------------
-local trade_by_level = {
-	l01_escape = "escape",
-	l02_garbage = "garbage",
-	l03_agroprom = "garbage",
-	l03u_agr_underground = "garbage",
-	l04_darkvalley = "garbage",
-	k01_darkscap = "garbage",
-	l04u_labx18 = "garbage",
-	l05_bar = "bar",
-	l06_Rostok = "bar",
-	l07_military = "bar",
-	l08_yantar = "yantar",
-	l08u_brainlab = "yantar",
-	l09_deadcity = "yantar",
-	l10_radar = "radar",
-	l10u_bunker = "radar",
-	l11_pripyat = "radar"
-	}
-function npc_trade_by_level(actor, npc, p)
-	local trade = trade_by_level[level.name()]	
-
-	if trade == nil then
-		return false
-	end
-
-	if trade == p[1] then
-		return true
-	else
-		return false
-	end
-end
-
 function actor_in_dolg(actor, npc)
 	if db.actor then
 		return db.actor:character_community() == "actor_dolg"
@@ -795,4 +718,21 @@ function can_send_tutorial(actor, npc, p)
 		return false
 	end
 	return true
+end
+
+------------------------------------------------------------------------------------
+-- Special functions for Escape
+------------------------------------------------------------------------------------
+function esc_blokpost_night(actor,npc)
+	if xr_gulag.getGulagState("esc_blokpost") == 1 then
+		return true
+	end
+	return false
+end
+
+------------------------------------------------------------------------------------
+-- Special functions for Bar
+------------------------------------------------------------------------------------
+function check_actor_in_kamaz(actor, npc)
+	return bind_car.act_in_car_now() and bind_car.actor_car_name("lvl5_bar_m_car_0004")
 end

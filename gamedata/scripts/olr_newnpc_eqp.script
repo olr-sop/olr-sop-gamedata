@@ -3,7 +3,9 @@
 	-- Description: Скрипт раздаёт оружие непесям
 	-- Author: theysani
 	-- Last edit: 07.06.26
---]] --[[
+--]]
+
+--[[
     Как вычисляется шанс выпадения оружия:
 
     Для каждого списка (first, second, knife) суммируются значения prob.
@@ -26,1703 +28,976 @@
 	Задаётся second_chance в пределах от 0 до 1 (от 0% до 100%), если не прописан то всегда 100%
 	
 	В целом жёстких требований что бы тока пистолеты были в first а вторичка в second нет, можно как угодно в каком угодно порядке прописывать это больше чисто для удобства
---]] local weapon_tables = {
-    -- Бандиты
-    bandit = {
-        novice = {
-            second_chance = 0.33, -- 33% шанс получить основное оружие (если этот рандом сыграл то далее уже будет раздача как обычно, из комментария выше но для second таблицы с оружием)
-            first = {{
-                section = "wpn_pm",
-                prob = 0.6
-            }, {
-                section = "wpn_pb",
-                prob = 0.2
-            }, {
-                section = "wpn_fort",
-                prob = 0.4
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.5
-            }, {
-                section = "wpn_toz34",
-                prob = 0.4
-            }, {
-                section = "wpn_aek",
-                prob = 0.1
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            second_chance = 0.66, -- 66% шанс получить основное оружие
-            first = {{
-                section = "wpn_pm",
-                prob = 0.6
-            }, {
-                section = "wpn_pb",
-                prob = 0.3
-            }, {
-                section = "wpn_fort",
-                prob = 0.3
-            }, {
-                section = "wpn_aps",
-                prob = 0.1
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.3
-            }, {
-                section = "wpn_toz34",
-                prob = 0.4
-            }, {
-                section = "wpn_mp5",
-                prob = 0.35
-            }, {
-                section = "wpn_aek",
-                prob = 0.45
-            }, {
-                section = "wpn_akms",
-                prob = 0.6
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.3
-            }, {
-                section = "wpn_rpk",
-                prob = 0.15
-            }, {
-                section = "wpn_tiss",
-                prob = 0.06
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            second_chance = 0.9, -- 90% шанс получить основное оружие
-            first = {{
-                section = "wpn_fort",
-                prob = 0.3
-            }, {
-                section = "wpn_aps",
-                prob = 0.4
-            }, {
-                section = "wpn_beretta",
-                prob = 0.2
-            }, {
-                section = "wpn_gsh",
-                prob = 0.2
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.4
-            }},
-            second = {{
-                section = "wpn_mp5",
-                prob = 0.4
-            }, {
-                section = "wpn_aek",
-                prob = 0.4
-            }, {
-                section = "wpn_akms",
-                prob = 0.3
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.3
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }, {
-                section = "wpn_l85",
-                prob = 0.5
-            }, {
-                section = "wpn_rpk",
-                prob = 0.4
-            }, {
-                section = "wpn_tiss",
-                prob = 0.15
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        master = {
-            second_chance = 1.0, -- 100% шанс получить основное оружие, но тут можно было не указывать вовсе, это равнозначно отсуствию этого значения в таблице
-            first = {{
-                section = "wpn_aps",
-                prob = 0.4
-            }, {
-                section = "wpn_walther",
-                prob = 0.6
-            }, {
-                section = "wpn_desert_eagle",
-                prob = 0.05
-            }, {
-                section = "wpn_gsh",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_ak74",
-                prob = 0.73
-            }, {
-                section = "wpn_l85",
-                prob = 0.59
-            }, {
-                section = "wpn_g36",
-                prob = 0.22
-            }, {
-                section = "wpn_spas12",
-                prob = 0.32
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.24
-            }, {
-                section = "wpn_rpk",
-                prob = 0.22
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.16
-            }, {
-                section = "wpn_tiss",
-                prob = 0.35
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        }
-    },
-    -- Сталкеры
-    stalker = {
-        novice = {
-            second_chance = 0.33,
-            first = {{
-                section = "wpn_pm",
-                prob = 0.8
-            }, {
-                section = "wpn_pb",
-                prob = 0.6
-            }, {
-                section = "wpn_fort",
-                prob = 0.4
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.5
-            }, {
-                section = "wpn_toz34",
-                prob = 0.4
-            }, {
-                section = "wpn_aek",
-                prob = 0.1
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_pm",
-                prob = 0.5
-            }, {
-                section = "wpn_pb",
-                prob = 0.5
-            }, {
-                section = "wpn_fort",
-                prob = 0.7
-            }, {
-                section = "wpn_aps",
-                prob = 0.3
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.3
-            }, {
-                section = "wpn_beretta",
-                prob = 0.1
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.2
-            }, {
-                section = "wpn_toz34",
-                prob = 0.2
-            }, {
-                section = "wpn_mp5",
-                prob = 0.24
-            }, {
-                section = "wpn_aek",
-                prob = 0.34
-            }, {
-                section = "wpn_akms",
-                prob = 0.68
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.64
-            }, {
-                section = "wpn_ak74",
-                prob = 0.56
-            }, {
-                section = "wpn_tiss",
-                prob = 0.15
-            }, {
-                section = "wpn_l85",
-                prob = 0.45
-            }, {
-                section = "wpn_rpk",
-                prob = 0.31
-            }, {
-                section = "wpn_g36",
-                prob = 0.16
-            }, {
-                section = "wpn_lr300",
-                prob = 0.2
-            }, {
-                section = "wpn_svd",
-                prob = 0.12
-            }, {
-                section = "wpn_svu",
-                prob = 0.06
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }, {
-                section = "wpn_gsh",
-                prob = 0.3
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.3
-            }, {
-                section = "wpn_walther",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_aks74u",
-                prob = 0.34
-            }, {
-                section = "wpn_ak74",
-                prob = 0.52
-            }, {
-                section = "wpn_lr300",
-                prob = 0.3
-            }, {
-                section = "wpn_sig550",
-                prob = 0.2
-            }, {
-                section = "wpn_g36",
-                prob = 0.15
-            }, {
-                section = "wpn_rpk",
-                prob = 0.4
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.4
-            }, {
-                section = "wpn_tiss",
-                prob = 0.45
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.26
-            }, {
-                section = "wpn_svd",
-                prob = 0.24
-            }, {
-                section = "wpn_svu",
-                prob = 0.2
-            }, {
-                section = "wpn_spas12",
-                prob = 0.1
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.25
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.25
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.31
-            }, {
-                section = "wpn_gsh",
-                prob = 0.36
-            }, {
-                section = "wpn_sig220",
-                prob = 0.21
-            }, {
-                section = "wpn_usp",
-                prob = 0.16
-            }},
-            second = {{
-                section = "wpn_ak74",
-                prob = 0.25
-            }, {
-                section = "wpn_lr300",
-                prob = 0.3
-            }, {
-                section = "wpn_fn2000",
-                prob = 0.15
-            }, {
-                section = "wpn_sig550",
-                prob = 0.25
-            }, {
-                section = "wpn_g36",
-                prob = 0.2
-            }, {
-                section = "wpn_val",
-                prob = 0.34
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.35
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.35
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.3
-            }, {
-                section = "wpn_spas12",
-                prob = 0.1
-            }, {
-                section = "wpn_svd",
-                prob = 0.24
-            }, {
-                section = "wpn_svu",
-                prob = 0.24
-            }, {
-                section = "wpn_rpg7",
-                prob = 0.2
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        }
-    },
-    -- Зомбированные
-    stalker_zombied = {
-        novice = {
-            second_chance = 0.20,
-            first = {{
-                section = "wpn_pm",
-                prob = 0.4
-            }, {
-                section = "wpn_pb",
-                prob = 0.15
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.15
-            }, {
-                section = "wpn_gsh",
-                prob = 0.2
-            }, {
-                section = "wpn_fort",
-                prob = 0.4
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.35
-            }, {
-                section = "wpn_toz34",
-                prob = 0.35
-            }, {
-                section = "wpn_akms",
-                prob = 0.25
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.25
-            }},
-            knife = {{
-                section = "wpn_knife_bayonet_rusty",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            second_chance = 0.75,
-            first = {{
-                section = "wpn_pm",
-                prob = 0.5
-            }, {
-                section = "wpn_pb",
-                prob = 0.5
-            }, {
-                section = "wpn_fort",
-                prob = 0.7
-            }, {
-                section = "wpn_aps",
-                prob = 0.4
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.4
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.34
-            }, {
-                section = "wpn_toz34",
-                prob = 0.31
-            }, {
-                section = "wpn_mp5",
-                prob = 0.24
-            }, {
-                section = "wpn_aek",
-                prob = 0.34
-            }, {
-                section = "wpn_akms",
-                prob = 0.68
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.64
-            }, {
-                section = "wpn_ak74",
-                prob = 0.56
-            }, {
-                section = "wpn_tiss",
-                prob = 0.2
-            }, {
-                section = "wpn_l85",
-                prob = 0.45
-            }, {
-                section = "wpn_rpk",
-                prob = 0.31
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.12
-            }},
-            knife = {{
-                section = "wpn_knife_bayonet_rusty",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }, {
-                section = "wpn_gsh",
-                prob = 0.3
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.3
-            }, {
-                section = "wpn_walther",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_aks74u",
-                prob = 0.34
-            }, {
-                section = "wpn_ak74",
-                prob = 0.52
-            }, {
-                section = "wpn_g36",
-                prob = 0.20
-            }, {
-                section = "wpn_l85",
-                prob = 0.4
-            }, {
-                section = "wpn_lr300",
-                prob = 0.3
-            }, {
-                section = "wpn_rpk",
-                prob = 0.4
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.4
-            }, {
-                section = "wpn_tiss",
-                prob = 0.45
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.26
-            }, {
-                section = "wpn_svd",
-                prob = 0.05
-            }, {
-                section = "wpn_svu",
-                prob = 0.05
-            }, {
-                section = "wpn_spas12",
-                prob = 0.15
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.25
-            }},
-            knife = {{
-                section = "wpn_knife_bayonet_rusty",
-                prob = 0.5
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.25
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.31
-            }, {
-                section = "wpn_gsh",
-                prob = 0.36
-            }, {
-                section = "wpn_sig220",
-                prob = 0.21
-            }, {
-                section = "wpn_usp",
-                prob = 0.16
-            }},
-            second = {{
-                section = "wpn_ak74",
-                prob = 0.3
-            }, {
-                section = "wpn_lr300",
-                prob = 0.4
-            }, {
-                section = "wpn_l85",
-                prob = 0.3
-            }, {
-                section = "wpn_sig550",
-                prob = 0.2
-            }, {
-                section = "wpn_lr300",
-                prob = 0.4
-            }, {
-                section = "wpn_val",
-                prob = 0.34
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.35
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.35
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.3
-            }, {
-                section = "wpn_spas12",
-                prob = 0.15
-            }, {
-                section = "wpn_svd",
-                prob = 0.24
-            }, {
-                section = "wpn_svu",
-                prob = 0.24
-            }, {
-                section = "wpn_rpg7",
-                prob = 0.2
-            }},
-            knife = {{
-                section = "wpn_knife_bayonet_rusty",
-                prob = 0.5
-            }}
-        }
-    },
-    -- Долг
-    dolg = {
-        novice = {
-            first = {{
-                section = "wpn_pb",
-                prob = 0.6
-            }, {
-                section = "wpn_fort",
-                prob = 0.6
-            }, {
-                section = "wpn_aps",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_aek",
-                prob = 0.6
-            }, {
-                section = "wpn_akms",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_ak74",
-                prob = 0.73
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.62
-            }, {
-                section = "wpn_l85",
-                prob = 0.55
-            }, {
-                section = "wpn_akms",
-                prob = 0.41
-            }, {
-                section = "wpn_rpk",
-                prob = 0.35
-            }, {
-                section = "wpn_tiss",
-                prob = 0.25
-            }, {
-                section = "wpn_lr300",
-                prob = 0.25
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.25
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_colt1911",
-                prob = 0.5
-            }, {
-                section = "wpn_walther",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_ak74",
-                prob = 0.53
-            }, {
-                section = "wpn_lr300",
-                prob = 0.4
-            }, {
-                section = "wpn_sig550",
-                prob = 0.3
-            }, {
-                section = "wpn_g36",
-                prob = 0.15
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.3
-            }, {
-                section = "wpn_val",
-                prob = 0.25
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.21
-            }, {
-                section = "wpn_svd",
-                prob = 0.32
-            }, {
-                section = "wpn_svu",
-                prob = 0.18
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_gsh",
-                prob = 0.5
-            }, {
-                section = "wpn_usp",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_fn2000",
-                prob = 0.6
-            }, {
-                section = "wpn_groza",
-                prob = 0.6
-            }, {
-                section = "wpn_spas12",
-                prob = 0.3
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.3
-            }, {
-                section = "wpn_spas12",
-                prob = 0.15
-            }, {
-                section = "wpn_svu",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        }
-    },
-    -- Свобода
-    freedom = {
-        novice = {
-            first = {{
-                section = "wpn_pb",
-                prob = 0.6
-            }, {
-                section = "wpn_fort",
-                prob = 0.6
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.3
-            }, {
-                section = "wpn_toz34",
-                prob = 0.32
-            }, {
-                section = "wpn_aek",
-                prob = 0.5
-            }, {
-                section = "wpn_mp5",
-                prob = 0.5
-            }, {
-                section = "wpn_akms",
-                prob = 0.74
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.52
-            }, {
-                section = "wpn_ak74",
-                prob = 0.46
-            }, {
-                section = "wpn_l85",
-                prob = 0.34
-            }, {
-                section = "wpn_tiss",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_pm",
-                prob = 0.43
-            }, {
-                section = "wpn_pb",
-                prob = 0.43
-            }, {
-                section = "wpn_fort",
-                prob = 0.45
-            }, {
-                section = "wpn_aps",
-                prob = 0.42
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.46
-            }},
-            second = {{
-                section = "wpn_bm16",
-                prob = 0.21
-            }, {
-                section = "wpn_toz34",
-                prob = 0.22
-            }, {
-                section = "wpn_aek",
-                prob = 0.30
-            }, {
-                section = "wpn_mp5",
-                prob = 0.30
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.31
-            }, {
-                section = "wpn_ak74",
-                prob = 0.32
-            }, {
-                section = "wpn_lr300",
-                prob = 0.34
-            }, {
-                section = "wpn_l85",
-                prob = 0.38
-            }, {
-                section = "wpn_akms",
-                prob = 0.37
-            }, {
-                section = "wpn_rpk",
-                prob = 0.32
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.31
-            }, {
-                section = "wpn_tiss",
-                prob = 0.35
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.32
-            }, {
-                section = "wpn_svd",
-                prob = 0.12
-            }, {
-                section = "wpn_svu",
-                prob = 0.11
-            }, {
-                section = "wpn_spas12",
-                prob = 0.14
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.12
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.31
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.2
-            }, {
-                section = "wpn_walther",
-                prob = 0.37
-            }, {
-                section = "wpn_gsh",
-                prob = 0.35
-            }, {
-                section = "wpn_sig220",
-                prob = 0.33
-            }},
-            second = {{
-                section = "wpn_aks74u",
-                prob = 0.31
-            }, {
-                section = "wpn_ak74",
-                prob = 0.32
-            }, {
-                section = "wpn_lr300",
-                prob = 0.25
-            }, {
-                section = "wpn_sig550",
-                prob = 0.15
-            }, {
-                section = "wpn_rpk",
-                prob = 0.24
-            }, {
-                section = "wpn_rpk74",
-                prob = 0.21
-            }, {
-                section = "wpn_val",
-                prob = 0.32
-            }, {
-                section = "wpn_groza",
-                prob = 0.3
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.34
-            }, {
-                section = "wpn_svd",
-                prob = 0.14
-            }, {
-                section = "wpn_svu",
-                prob = 0.12
-            }, {
-                section = "wpn_spas12",
-                prob = 0.16
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.14
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.3
-            }, {
-                section = "wpn_desert_eagle",
-                prob = 0.05
-            }, {
-                section = "wpn_sig220",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_g36",
-                prob = 0.25
-            }, {
-                section = "wpn_fn2000",
-                prob = 0.15
-            }, {
-                section = "wpn_groza",
-                prob = 0.1
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.1
-            }, {
-                section = "wpn_val",
-                prob = 0.1
-            }, {
-                section = "wpn_g36",
-                prob = 0.1
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.1
-            }, {
-                section = "wpn_spas12",
-                prob = 0.1
-            }, {
-                section = "wpn_svd",
-                prob = 0.5
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        }
-    },
-    -- Наёмники
-    killer = {
-        novice = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_beretta",
-                prob = 0.05
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_l85",
-                prob = 0.1
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_beretta",
-                prob = 0.5
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_aks74u",
-                prob = 0.5
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }, {
-                section = "wpn_l85",
-                prob = 0.5
-            }, {
-                section = "wpn_lr300",
-                prob = 0.5
-            }, {
-                section = "wpn_spas12",
-                prob = 0.2
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.2
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_walther",
-                prob = 0.3
-            }, {
-                section = "wpn_beretta",
-                prob = 0.25
-            }, {
-                section = "wpn_colt1911",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_rpk74",
-                prob = 0.35
-            }, {
-                section = "wpn_lr300",
-                prob = 0.2
-            }, {
-                section = "wpn_sig550",
-                prob = 0.15
-            }, {
-                section = "wpn_vintorez",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.2
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_colt1911",
-                prob = 0.2
-            }, {
-                section = "wpn_usp",
-                prob = 0.4
-            }, {
-                section = "wpn_desert_eagle",
-                prob = 0.08
-            }, {
-                section = "wpn_sig220",
-                prob = 0.4
-            }},
-            second = {{
-                section = "wpn_fn2000",
-                prob = 0.3
-            }, {
-                section = "wpn_g36",
-                prob = 0.3
-            }, {
-                section = "wpn_spas12",
-                prob = 0.25
-            }, {
-                section = "wpn_val",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.7
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        }
-    },
-    -- Монолит
-    monolith = {
-        novice = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_beretta",
-                prob = 0.2
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_akms",
-                prob = 0.8
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.5
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }, {
-                section = "wpn_l85",
-                prob = 0.5
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_beretta",
-                prob = 0.3
-            }, {
-                section = "wpn_walther",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_aks74u",
-                prob = 0.5
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }, {
-                section = "wpn_l85",
-                prob = 0.5
-            }, {
-                section = "wpn_lr300",
-                prob = 0.1
-            }, {
-                section = "wpn_spas12",
-                prob = 0.1
-            }, {
-                section = "wpn_wincheaster1300",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_colt1911",
-                prob = 0.3
-            }},
-            second = {{
-                section = "wpn_g36",
-                prob = 0.3
-            }, {
-                section = "wpn_val",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_usp",
-                prob = 0.5
-            }, {
-                section = "wpn_sig220",
-                prob = 0.5
-            }},
-            second = {{
-                section = "wpn_fn2000",
-                prob = 0.4
-            }, {
-                section = "wpn_lr300",
-                prob = 0.3
-            }, {
-                section = "wpn_groza",
-                prob = 0.5
-            }, {
-                section = "wpn_svu",
-                prob = 0.3
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        }
-    },
-    -- Экологи
-    ecologs = {
-        novice = {
-            first = {{
-                section = "wpn_pm",
-                prob = 0.8
-            }},
-            second = {},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_pm",
-                prob = 0.6
-            }},
-            second = {},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_fort",
-                prob = 0.5
-            }},
-            second = {},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }},
-            second = {},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.1
-            }}
-        }
-    },
-    -- Военные
-    military = {
-        novice = {
-            first = {{
-                section = "wpn_pm",
-                prob = 0.8
-            }},
-            second = {{
-                section = "wpn_akms",
-                prob = 0.8
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.01
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.95
-            }}
-        },
-        experienced = {
-            first = {{
-                section = "wpn_pm",
-                prob = 0.8
-            }, {
-                section = "wpn_fort",
-                prob = 0.6
-            }},
-            second = {{
-                section = "wpn_akms",
-                prob = 0.8
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.01
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.95
-            }}
-        },
-        veteran = {
-            first = {{
-                section = "wpn_hpsa",
-                prob = 0.2
-            }, {
-                section = "wpn_fort",
-                prob = 0.8
-            }},
-            second = {{
-                section = "wpn_akms",
-                prob = 0.8
-            }, {
-                section = "wpn_aks74u",
-                prob = 0.5
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.05
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.85
-            }}
-        },
-        master = {
-            first = {{
-                section = "wpn_aps",
-                prob = 0.5
-            }, {
-                section = "wpn_hpsa",
-                prob = 0.5
-            }, {
-                section = "wpn_fort",
-                prob = 0.6
-            }},
-            second = {{
-                section = "wpn_aks74u",
-                prob = 0.5
-            }, {
-                section = "wpn_ak74",
-                prob = 0.5
-            }},
-            knife = {{
-                section = "wpn_knife",
-                prob = 0.5
-            }, {
-                section = "wpn_knife_bayonet",
-                prob = 0.5
-            }}
-        }
-    }
+--]]
+
+local weapon_tables = {
+	-- Бандиты
+	bandit = {
+		novice = {
+			second_chance = 0.33,   -- 33% шанс получить основное оружие (если этот рандом сыграл то далее уже будет раздача как обычно, из комментария выше но для second таблицы с оружием)
+			first = {
+				{section = "wpn_pm", prob = 0.6},
+				{section = "wpn_pb", prob = 0.2},
+				{section = "wpn_fort", prob = 0.4}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.5},
+				{section = "wpn_toz34", prob = 0.4},
+				{section = "wpn_aek", prob = 0.1}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}
+		},
+		experienced = {
+			second_chance = 0.66, -- 66% шанс получить основное оружие
+			first = {
+				{section = "wpn_pm", prob = 0.6},
+				{section = "wpn_pb", prob = 0.3},
+				{section = "wpn_fort", prob = 0.3},
+				{section = "wpn_aps", prob = 0.1}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.3},
+				{section = "wpn_toz34", prob = 0.4},
+				{section = "wpn_mp5", prob = 0.35},
+				{section = "wpn_aek", prob = 0.45},
+				{section = "wpn_akms", prob = 0.6},
+				{section = "wpn_aks74u", prob = 0.3},
+				{section = "wpn_rpk", prob = 0.15},
+				{section = "wpn_tiss", prob = 0.06}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			second_chance = 0.9, -- 90% шанс получить основное оружие
+			first = {
+				{section = "wpn_fort", prob = 0.3},
+				{section = "wpn_aps", prob = 0.4},
+				{section = "wpn_beretta", prob = 0.2},
+				{section = "wpn_gsh", prob = 0.2},
+				{section = "wpn_hpsa", prob = 0.4}
+			},
+			second = {
+				{section = "wpn_mp5", prob = 0.4},
+				{section = "wpn_aek", prob = 0.4},
+				{section = "wpn_akms", prob = 0.3},
+				{section = "wpn_aks74u", prob = 0.3},
+				{section = "wpn_ak74", prob = 0.5},
+				{section = "wpn_l85", prob = 0.5},
+				{section = "wpn_rpk", prob = 0.4},
+				{section = "wpn_tiss", prob = 0.15}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		master = {
+			second_chance = 1.0, -- 100% шанс получить основное оружие, но тут можно было не указывать вовсе, это равнозначно отсуствию этого значения в таблице
+			first = {
+				{section = "wpn_aps", prob = 0.4},
+				{section = "wpn_walther", prob = 0.6},
+				{section = "wpn_desert_eagle", prob = 0.05},
+				{section = "wpn_gsh", prob = 0.3}
+				
+			},
+			second = {
+				{section = "wpn_ak74", prob = 0.73},
+				{section = "wpn_l85", prob = 0.59},
+				{section = "wpn_g36", prob = 0.22},
+				{section = "wpn_spas12", prob = 0.32},
+				{section = "wpn_wincheaster1300", prob = 0.24},
+				{section = "wpn_rpk", prob = 0.22},
+				{section = "wpn_rpk74", prob = 0.16},
+				{section = "wpn_tiss", prob = 0.35}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		}
+	},
+	-- Сталкеры
+	stalker = {
+		novice = {
+			second_chance = 0.33,
+			first = {
+				{section = "wpn_pm", prob = 0.8},
+				{section = "wpn_pb", prob = 0.6},
+				{section = "wpn_fort", prob = 0.4}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.5},
+				{section = "wpn_toz34", prob = 0.4},
+				{section = "wpn_aek", prob = 0.1}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_pm", prob = 0.5},
+				{section = "wpn_pb", prob = 0.5},
+				{section = "wpn_fort", prob = 0.7},
+				{section = "wpn_aps", prob = 0.3},
+				{section = "wpn_hpsa", prob = 0.3},
+				{section = "wpn_beretta", prob = 0.1}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.2},
+				{section = "wpn_toz34", prob = 0.2},
+				{section = "wpn_mp5", prob = 0.24},
+				{section = "wpn_aek", prob = 0.34},
+				{section = "wpn_akms", prob = 0.68},
+				{section = "wpn_aks74u", prob = 0.64},
+				{section = "wpn_ak74", prob = 0.56},
+				{section = "wpn_tiss", prob = 0.15},
+				{section = "wpn_l85", prob = 0.45},
+				{section = "wpn_rpk", prob = 0.31},
+				{section = "wpn_g36", prob = 0.16},
+				{section = "wpn_lr300", prob = 0.2},
+				{section = "wpn_svd", prob = 0.12},
+				{section = "wpn_svu", prob = 0.06}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_hpsa", prob = 0.5},
+				{section = "wpn_gsh", prob = 0.3},
+				{section = "wpn_colt1911", prob = 0.3},
+				{section = "wpn_walther", prob = 0.3}
+			},
+			second = {
+				{section = "wpn_aks74u", prob = 0.34},
+				{section = "wpn_ak74", prob = 0.52},
+				{section = "wpn_lr300", prob = 0.3},
+				{section = "wpn_sig550", prob = 0.2},
+				{section = "wpn_g36", prob = 0.15},
+				{section = "wpn_rpk", prob = 0.4},
+				{section = "wpn_rpk74", prob = 0.4},
+				{section = "wpn_tiss", prob = 0.45},
+				{section = "wpn_vintorez", prob = 0.26},
+				{section = "wpn_svd", prob = 0.24},
+				{section = "wpn_svu", prob = 0.2},
+				{section = "wpn_spas12", prob = 0.1},
+				{section = "wpn_wincheaster1300", prob = 0.25}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_aps", prob = 0.25},
+				{section = "wpn_colt1911", prob = 0.31},
+				{section = "wpn_gsh", prob = 0.36},
+				{section = "wpn_sig220", prob = 0.21},
+				{section = "wpn_usp", prob = 0.16}
+			},
+			second = {
+				{section = "wpn_ak74", prob = 0.25},
+				{section = "wpn_lr300", prob = 0.3},
+				{section = "wpn_fn2000", prob = 0.15},
+				{section = "wpn_sig550", prob = 0.25},
+				{section = "wpn_g36", prob = 0.2},
+				{section = "wpn_val", prob = 0.34},
+				{section = "wpn_vintorez", prob = 0.35},
+				{section = "wpn_rpk74", prob = 0.35},
+				{section = "wpn_wincheaster1300", prob = 0.3},
+				{section = "wpn_spas12", prob = 0.1},
+				{section = "wpn_svd", prob = 0.24},
+				{section = "wpn_svu", prob = 0.24},
+				{section = "wpn_rpg7", prob = 0.2}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		}
+	},
+	-- Зомбированные
+	stalker_zombied = {
+		novice = {
+			second_chance = 0.20,
+			first = {
+				{section = "wpn_pm", prob = 0.4},
+				{section = "wpn_pb", prob = 0.15},
+				{section = "wpn_hpsa", prob = 0.15},
+				{section = "wpn_gsh", prob = 0.2},
+				{section = "wpn_fort", prob = 0.4}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.35},
+				{section = "wpn_toz34", prob = 0.35},
+				{section = "wpn_akms", prob = 0.25},
+				{section = "wpn_aks74u", prob = 0.25}
+			},
+			knife = {
+				{section = "wpn_knife_bayonet_rusty", prob = 0.5},
+			}			
+		},
+		experienced = {
+			second_chance = 0.75,
+			first = {
+				{section = "wpn_pm", prob = 0.5},
+				{section = "wpn_pb", prob = 0.5},
+				{section = "wpn_fort", prob = 0.7},
+				{section = "wpn_aps", prob = 0.4},
+				{section = "wpn_hpsa", prob = 0.4}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.34},
+				{section = "wpn_toz34", prob = 0.31},
+				{section = "wpn_mp5", prob = 0.24},
+				{section = "wpn_aek", prob = 0.34},
+				{section = "wpn_akms", prob = 0.68},
+				{section = "wpn_aks74u", prob = 0.64},
+				{section = "wpn_ak74", prob = 0.56},
+				{section = "wpn_tiss", prob = 0.2},
+				{section = "wpn_l85", prob = 0.45},
+				{section = "wpn_rpk", prob = 0.31},
+				{section = "wpn_rpk74", prob = 0.12}
+			},
+			knife = {
+				{section = "wpn_knife_bayonet_rusty", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_hpsa", prob = 0.5},
+				{section = "wpn_gsh", prob = 0.3},
+				{section = "wpn_colt1911", prob = 0.3},
+				{section = "wpn_walther", prob = 0.3}
+			},
+			second = {
+				{section = "wpn_aks74u", prob = 0.34},
+				{section = "wpn_ak74", prob = 0.52},
+				{section = "wpn_g36", prob = 0.20},
+				{section = "wpn_l85", prob = 0.4},
+				{section = "wpn_lr300", prob = 0.3},
+				{section = "wpn_rpk", prob = 0.4},
+				{section = "wpn_rpk74", prob = 0.4},
+				{section = "wpn_tiss", prob = 0.45},
+				{section = "wpn_vintorez", prob = 0.26},
+				{section = "wpn_svd", prob = 0.05},
+				{section = "wpn_svu", prob = 0.05},
+				{section = "wpn_spas12", prob = 0.15},
+				{section = "wpn_wincheaster1300", prob = 0.25}
+			},
+			knife = {
+				{section = "wpn_knife_bayonet_rusty", prob = 0.5},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_aps", prob = 0.25},
+				{section = "wpn_colt1911", prob = 0.31},
+				{section = "wpn_gsh", prob = 0.36},
+				{section = "wpn_sig220", prob = 0.21},
+				{section = "wpn_usp", prob = 0.16}
+			},
+			second = {
+				{section = "wpn_ak74", prob = 0.3},
+				{section = "wpn_lr300", prob = 0.4},
+				{section = "wpn_l85", prob = 0.3},
+				{section = "wpn_sig550", prob = 0.2},
+				{section = "wpn_lr300", prob = 0.4},
+				{section = "wpn_val", prob = 0.34},
+				{section = "wpn_vintorez", prob = 0.35},
+				{section = "wpn_rpk74", prob = 0.35},
+				{section = "wpn_wincheaster1300", prob = 0.3},
+				{section = "wpn_spas12", prob = 0.15},
+				{section = "wpn_svd", prob = 0.24},
+				{section = "wpn_svu", prob = 0.24},
+				{section = "wpn_rpg7", prob = 0.2}
+			},
+			knife = {
+				{section = "wpn_knife_bayonet_rusty", prob = 0.5},
+			}			
+		}
+	},
+	-- Долг
+	dolg = {
+		novice = {
+			first = {
+				{section = "wpn_pb", prob = 0.6},
+				{section = "wpn_fort", prob = 0.6},
+				{section = "wpn_aps", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_aek", prob = 0.6},
+				{section = "wpn_akms", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_hpsa", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_ak74", prob = 0.73},
+				{section = "wpn_aks74u", prob = 0.62},
+				{section = "wpn_l85", prob = 0.55},
+				{section = "wpn_akms", prob = 0.41},
+				{section = "wpn_rpk", prob = 0.35},
+				{section = "wpn_tiss", prob = 0.25},
+				{section = "wpn_lr300", prob = 0.25},
+				{section = "wpn_rpk74", prob = 0.25}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_colt1911", prob = 0.5},
+				{section = "wpn_walther", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_ak74", prob = 0.53},
+				{section = "wpn_lr300", prob = 0.4},
+				{section = "wpn_sig550", prob = 0.3},
+				{section = "wpn_g36", prob = 0.15},
+				{section = "wpn_vintorez", prob = 0.3},
+				{section = "wpn_val", prob = 0.25},
+				{section = "wpn_wincheaster1300", prob = 0.21},
+				{section = "wpn_svd", prob = 0.32},
+				{section = "wpn_svu", prob = 0.18}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_gsh", prob = 0.5},
+				{section = "wpn_usp", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_fn2000", prob = 0.6},
+				{section = "wpn_groza", prob = 0.6},
+				{section = "wpn_spas12", prob = 0.3},
+				{section = "wpn_wincheaster1300", prob = 0.3},
+				{section = "wpn_spas12", prob = 0.15},
+				{section = "wpn_svu", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		}
+	},
+	-- Свобода
+	freedom = {
+		novice = {
+			first = {
+				{section = "wpn_pb", prob = 0.6},
+				{section = "wpn_fort", prob = 0.6}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.3},
+				{section = "wpn_toz34", prob = 0.32},
+				{section = "wpn_aek", prob = 0.5},
+				{section = "wpn_mp5", prob = 0.5},
+				{section = "wpn_akms", prob = 0.74},
+				{section = "wpn_aks74u", prob = 0.52},
+				{section = "wpn_ak74", prob = 0.46},
+				{section = "wpn_l85", prob = 0.34},
+				{section = "wpn_tiss", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_pm", prob = 0.43},
+				{section = "wpn_pb", prob = 0.43},
+				{section = "wpn_fort", prob = 0.45},
+				{section = "wpn_aps", prob = 0.42},
+				{section = "wpn_hpsa", prob = 0.46}
+			},
+			second = {
+				{section = "wpn_bm16", prob = 0.21},
+				{section = "wpn_toz34", prob = 0.22},
+				{section = "wpn_aek", prob = 0.30},
+				{section = "wpn_mp5", prob = 0.30},
+				{section = "wpn_aks74u", prob = 0.31},
+				{section = "wpn_ak74", prob = 0.32},
+				{section = "wpn_lr300", prob = 0.34},
+				{section = "wpn_l85", prob = 0.38},
+				{section = "wpn_akms", prob = 0.37},
+				{section = "wpn_rpk", prob = 0.32},
+				{section = "wpn_rpk74", prob = 0.31},
+				{section = "wpn_tiss", prob = 0.35},
+				{section = "wpn_vintorez", prob = 0.32},
+				{section = "wpn_svd", prob = 0.12},
+				{section = "wpn_svu", prob = 0.11},
+				{section = "wpn_spas12", prob = 0.14},
+				{section = "wpn_wincheaster1300", prob = 0.12}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_aps", prob = 0.31},
+				{section = "wpn_colt1911", prob = 0.2},
+				{section = "wpn_walther", prob = 0.37},
+				{section = "wpn_gsh", prob = 0.35},
+				{section = "wpn_sig220", prob = 0.33}
+			},
+			second = {
+				{section = "wpn_aks74u", prob = 0.31},
+				{section = "wpn_ak74", prob = 0.32},
+				{section = "wpn_lr300", prob = 0.25},
+				{section = "wpn_sig550", prob = 0.15},
+				{section = "wpn_rpk", prob = 0.24},
+				{section = "wpn_rpk74", prob = 0.21},
+				{section = "wpn_val", prob = 0.32},
+				{section = "wpn_groza", prob = 0.3},
+				{section = "wpn_vintorez", prob = 0.34},
+				{section = "wpn_svd", prob = 0.14},
+				{section = "wpn_svu", prob = 0.12},
+				{section = "wpn_spas12", prob = 0.16},
+				{section = "wpn_wincheaster1300", prob = 0.14}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_colt1911", prob = 0.3},
+				{section = "wpn_desert_eagle", prob = 0.05},
+				{section = "wpn_sig220", prob = 0.3}
+			},
+			second = {
+				{section = "wpn_g36", prob = 0.25},
+				{section = "wpn_fn2000", prob = 0.15},
+				{section = "wpn_groza", prob = 0.1},
+				{section = "wpn_vintorez", prob = 0.1},
+				{section = "wpn_val", prob = 0.1},
+				{section = "wpn_g36", prob = 0.1},
+				{section = "wpn_wincheaster1300", prob = 0.1},
+				{section = "wpn_spas12", prob = 0.1},
+				{section = "wpn_svd", prob = 0.5}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		}
+	},
+	-- Наёмники
+	killer = {
+		novice = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_beretta", prob = 0.05},
+				{section = "wpn_hpsa", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_l85", prob = 0.1},
+				{section = "wpn_ak74", prob = 0.5}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_beretta", prob = 0.5},
+				{section = "wpn_hpsa", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_aks74u", prob = 0.5},
+				{section = "wpn_ak74", prob = 0.5},
+				{section = "wpn_l85", prob = 0.5},
+				{section = "wpn_lr300", prob = 0.5},
+				{section = "wpn_spas12", prob = 0.2},
+				{section = "wpn_wincheaster1300", prob = 0.2}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_walther", prob = 0.3},
+				{section = "wpn_beretta", prob = 0.25},
+				{section = "wpn_colt1911", prob = 0.3}
+			},
+			second = {
+				{section = "wpn_rpk74", prob = 0.35},
+				{section = "wpn_lr300", prob = 0.2},
+				{section = "wpn_sig550", prob = 0.15},
+				{section = "wpn_vintorez", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.2},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_colt1911", prob = 0.2},
+				{section = "wpn_usp", prob = 0.4},
+				{section = "wpn_desert_eagle", prob = 0.08},
+				{section = "wpn_sig220", prob = 0.4}
+			},
+			second = {
+				{section = "wpn_fn2000", prob = 0.3},
+				{section = "wpn_g36", prob = 0.3},
+				{section = "wpn_spas12", prob = 0.25},
+				{section = "wpn_val", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.7},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		}
+	},
+	-- Монолит
+	monolith = {
+		novice = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_beretta", prob = 0.2},
+				{section = "wpn_hpsa", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_akms", prob = 0.8},
+				{section = "wpn_aks74u", prob = 0.5},
+				{section = "wpn_ak74", prob = 0.5},
+				{section = "wpn_l85", prob = 0.5}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_beretta", prob = 0.3},
+				{section = "wpn_walther", prob = 0.3}
+			},
+			second = {
+				{section = "wpn_aks74u", prob = 0.5},
+				{section = "wpn_ak74", prob = 0.5},
+				{section = "wpn_l85", prob = 0.5},
+				{section = "wpn_lr300", prob = 0.1},
+				{section = "wpn_spas12", prob = 0.1},
+				{section = "wpn_wincheaster1300", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_colt1911", prob = 0.3}
+			},
+			second = {
+				{section = "wpn_g36", prob = 0.3},
+				{section = "wpn_val", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_usp", prob = 0.5},
+				{section = "wpn_sig220", prob = 0.5}
+			},
+			second = {
+				{section = "wpn_fn2000", prob = 0.4},
+				{section = "wpn_lr300", prob = 0.3},
+				{section = "wpn_groza", prob = 0.5},
+				{section = "wpn_svu", prob = 0.3}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		}
+	},
+	-- Экологи
+	ecologs = {
+		novice = {
+			first = {
+				{section = "wpn_pm", prob = 0.8}
+			},
+			second = {},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_pm", prob = 0.6}
+			},
+			second = {},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_fort", prob = 0.5}
+			},
+			second = {},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_aps", prob = 0.5}
+			},
+			second = {},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.1},
+			}			
+		}
+	},
+	-- Военные
+	military = {
+		novice = {
+			first = {
+				{section = "wpn_pm", prob = 0.8}
+			},
+			second = {
+				{section = "wpn_akms", prob = 0.8}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.01},
+				{section = "wpn_knife_bayonet", prob = 0.95},
+			}			
+		},
+		experienced = {
+			first = {
+				{section = "wpn_pm", prob = 0.8},
+				{section = "wpn_fort", prob = 0.6}
+			},
+			second = {
+				{section = "wpn_akms", prob = 0.8}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.01},
+				{section = "wpn_knife_bayonet", prob = 0.95},
+			}			
+		},
+		veteran = {
+			first = {
+				{section = "wpn_hpsa", prob = 0.2},
+				{section = "wpn_fort", prob = 0.8}
+			},
+			second = {
+				{section = "wpn_akms", prob = 0.8},
+				{section = "wpn_aks74u", prob = 0.5},
+				{section = "wpn_ak74", prob = 0.5}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.05},
+				{section = "wpn_knife_bayonet", prob = 0.85},
+			}			
+		},
+		master = {
+			first = {
+				{section = "wpn_aps", prob = 0.5},
+				{section = "wpn_hpsa", prob = 0.5},
+				{section = "wpn_fort", prob = 0.6}
+			},
+			second = {
+				{section = "wpn_aks74u", prob = 0.5},
+				{section = "wpn_ak74", prob = 0.5}
+			},
+			knife = {
+				{section = "wpn_knife", prob = 0.5},
+				{section = "wpn_knife_bayonet", prob = 0.5},
+			}			
+		}
+	}
 }
 
 local skip_npc_names = {
-    escape_trader_0000 = true,
-    lvl1_escape_staler_undead_olr = true,
-    lvl1_escape_staler_undead_olr_0000 = true,
-    lvl1_escape_stalker = true,
-    lvl1_escape_stalker_0001 = true,
-    lvl1_escape_stalker_0002 = true,
-    lvl1_escape_stalker_0004 = true,
-    lvl1_escape_stalker_0005 = true,
-    lvl1_escape_stalker_0008 = true,
-    lvl1_escape_stalker_000a = true,
-    lvl1_escape_stalker_0029 = true,
-    lvl1_escape_stalker_0030 = true,
-    lvl1_escape_stalker_0038_goplit = true,
-    lvl1_escape_stalker_0039 = true,
-    lvl1_escape_stalker_0042 = true,
-    lvl1_escape_stalker_0054 = true,
-    lvl1_escape_stalker_0055 = true,
-    lvl2_garbage_staler_undead_olr = true,
-    lvl2_garbage_staler_undead_olr_0000 = true,
-    lvl2_garbage_staler_undead_olr_0001 = true,
-    lvl2_garbage_staler_undead_olr_0002 = true,
-    lvl2_garbage_staler_undead_olr_0012 = true,
-    lvl2_garbage_stalker_0030 = true,
-    lvl2_garbage_stalker_0037lloh = true,
-    lvl2_garbage_stalker_0037lloh_0000 = true,
-    lvl2_garbage_stalker_0040 = true,
-    lvl2_garbage_stalker_0055 = true,
-    lvl3_agroprom_staler_undead_olr = true,
-    lvl3_agroprom_stalker_0004 = true,
-    lvl3_agroprom_stalker_0010 = true,
-    lvl3_agroprom_stalker_0029 = true,
-    lvl3_agroprom_stalker_0039 = true,
-    lvl3_agroprom_stalker_0043 = true,
-    lvl4u_darklab_stalker_0024 = true,
-    lvl4u_darklab_stalker_0025 = true,
-    lvl4_darkdolina_staler_undead_olr = true,
-    lvl4_darkdolina_staler_undead_olr_0001 = true,
-    lvl4_darkdolina_staler_undead_olr_0002 = true,
-    lvl4_darkdolina_staler_undead_olr_0003 = true,
-    lvl4_darkdolina_staler_undead_olr_0004 = true,
-    lvl4_darkdolina_staler_undead_olr_0005 = true,
-    lvl4_darkdolina_staler_undead_olr_0006 = true,
-    lvl4_darkdolina_staler_undead_olr_0007 = true,
-    lvl4_darkdolina_staler_undead_olr_0008 = true,
-    lvl4_darkdolina_staler_undead_olr_0009 = true,
-    lvl4_darkdolina_staler_undead_olr_0010 = true,
-    lvl4_darkdolina_staler_undead_olr_0011 = true,
-    lvl4_darkdolina_staler_undead_olr_0012 = true,
-    lvl4_darkdolina_staler_undead_olr_0013 = true,
-    lvl4_darkdolina_staler_undead_olr_0014 = true,
-    lvl4_darkdolina_staler_undead_olr_0015 = true,
-    lvl4_darkdolina_stalker_0004 = true,
-    lvl4_darkdolina_stalker_0021 = true,
-    lvl4_darkdolina_stalker_0036 = true,
-    lvl4_darkdolina_stalker_0071 = true,
-    bar_barman = true,
-    bar_bar_lisiy = true,
-    lvl5_bar_staler_undead_olr = true,
-    lvl5_bar_staler_undead_olr_0000 = true,
-    lvl5_bar_staler_undead_olr_0001 = true,
-    lvl5_bar_staler_undead_olr_0002 = true,
-    lvl5_bar_staler_undead_olr_0003 = true,
-    lvl5_bar_staler_undead_olr_0003_lonewolf = true,
-    lvl5_bar_staler_undead_olr_0004 = true,
-    lvl5_bar_staler_undead_olr_0006 = true,
-    lvl5_bar_staler_undead_olr_0007 = true,
-    lvl5_bar_staler_undead_olr_0008 = true,
-    lvl5_bar_staler_undead_olr_0009 = true,
-    lvl5_bar_staler_undead_olr_0010 = true,
-    lvl5_bar_staler_undead_olr_0012 = true,
-    lvl5_bar_stalker = true,
-    lvl5_bar_stalker_0002 = true,
-    lvl5_bar_stalker_0007 = true,
-    lvl5_bar_stalker_0031 = true,
-    lvl5_bar_stalker_0037 = true,
-    lvl5_bar_stalker_0038 = true,
-    lvl5_bar_stalker_0039 = true,
-    lvl5_bar_stalker_0050 = true,
-    lvl5_bar_stalker_0051 = true,
-    lvl5_bar_stalker_0053 = true,
-    lvl5_bar_stalker_0055 = true,
-    lvl6_rostok_staler_undead_olr = true,
-    lvl6_rostok_staler_undead_olr_0000 = true,
-    lvl6_rostok_stalker_0002 = true,
-    lvl7_yantar_staler_undead_olr = true,
-    lvl7_yantar_staler_undead_olr_0000 = true,
-    lvl7_yantar_staler_undead_olr_0001 = true,
-    lvl7_yantar_staler_undead_olr_0002 = true,
-    lvl7_yantar_stalker_0003 = true,
-    lvl7_yantar_stalker_0013 = true,
-    lvl7_yantar_stalker_0058 = true,
-    lvl7_yantar_stalker_sakharov = true,
-    lvl8_swamp_staler_undead_olr = true,
-    lvl8_swamp_stalker_0000 = true,
-    lvl8_swamp_stalker_0006 = true,
-    lvl8_swamp_stalker_0010 = true,
-    lvl8_swamp_stalker_0011 = true,
-    lvl8_swamp_stalker_0012 = true,
-    lvl8_swamp_stalker_0014 = true,
-    lvl8_swamp_stalker_0020 = true,
-    lvl8_swamp_stalker_0022 = true,
-    lvl9_military_staler_undead_olr = true,
-    lvl9_military_stalker_0007 = true,
-    lvl9_military_stalker_0027 = true,
-    lvl9_military_stalker_0031 = true,
-    lvl9_military_stalker_0046 = true,
-    lvl10_radar_stalker_0031 = true,
-    lvl10_radar_stalker_0035 = true,
-    lvl10_radar_stalker_0040 = true,
-    lvl10_radar_stalker_0041 = true,
-    lvl12_radar_bunker_staler_undead_olr = true,
-    lvl12_radar_bunker_staler_undead_olr_0000 = true,
-    lvl12_radar_bunker_staler_undead_olr_0001 = true,
-    lvl11_deadcity_staler_undead_olr_0000 = true,
-    lvl11_deadcity_staler_undead_olr_0001 = true,
-    lvl11_deadcity_staler_undead_olr_0002 = true,
-    lvl11_deadcity_staler_undead_olr_0003 = true,
-    lvl11_deadcity_staler_undead_olr_0004 = true,
-    lvl11_deadcity_stalker_0000 = true,
-    lvl11_deadcity_stalker_0001 = true,
-    lvl11_deadcity_stalker_0004 = true,
-    lvl11_deadcity_stalker_0005 = true,
-    lvl11_deadcity_stalker_0012 = true,
-    lvl11_deadcity_stalker_0013 = true,
-    lvl11_deadcity_stalker_0032 = true,
-    lvl11_deadcity_stalker_0048 = true,
-    lvl13_prip_stalker_0089 = true,
-    lvl16_generators_staler_undead_olr = true,
-    lvl16_generators_staler_undead_olr_0000 = true,
-    lvl16_generators_staler_undead_olr_0001 = true,
-    lvl16_generators_staler_undead_olr_0002 = true,
-    lvl16_generators_staler_undead_olr_0003 = true,
-    lvl16_generators_staler_undead_olr_0007 = true,
-    lvl16_generators_stalker_0032 = true,
-    lvl16_generators_stalker_0035 = true
+	escape_trader_0000 = true,
+	lvl1_escape_staler_undead_olr = true,
+	lvl1_escape_staler_undead_olr_0000 = true,
+	lvl1_escape_stalker = true,
+	lvl1_escape_stalker_0001 = true,
+	lvl1_escape_stalker_0002 = true,
+	lvl1_escape_stalker_0004 = true,
+	lvl1_escape_stalker_0005 = true,
+	lvl1_escape_stalker_0008 = true,
+	lvl1_escape_stalker_000a = true,
+	lvl1_escape_stalker_0029 = true,
+	lvl1_escape_stalker_0030 = true,
+	lvl1_escape_stalker_0038_goplit = true,
+	lvl1_escape_stalker_0039 = true,
+	lvl1_escape_stalker_0042 = true,
+	lvl1_escape_stalker_0054 = true,
+	lvl1_escape_stalker_0055 = true,
+	lvl2_garbage_staler_undead_olr = true,
+	lvl2_garbage_staler_undead_olr_0000 = true,
+	lvl2_garbage_staler_undead_olr_0001 = true,
+	lvl2_garbage_staler_undead_olr_0002 = true,
+	lvl2_garbage_staler_undead_olr_0012 = true,
+	lvl2_garbage_stalker_0030 = true,
+	lvl2_garbage_stalker_0037lloh = true,
+	lvl2_garbage_stalker_0037lloh_0000 = true,
+	lvl2_garbage_stalker_0040 = true,
+	lvl2_garbage_stalker_0055 = true,
+	lvl3_agroprom_staler_undead_olr = true,
+	lvl3_agroprom_stalker_0004 = true,
+	lvl3_agroprom_stalker_0010 = true,
+	lvl3_agroprom_stalker_0029 = true,
+	lvl3_agroprom_stalker_0039 = true,
+	lvl3_agroprom_stalker_0043 = true,
+	lvl4u_darklab_stalker_0024 = true,
+	lvl4u_darklab_stalker_0025 = true,
+	lvl4_darkdolina_staler_undead_olr = true,
+	lvl4_darkdolina_staler_undead_olr_0001 = true,
+	lvl4_darkdolina_staler_undead_olr_0002 = true,
+	lvl4_darkdolina_staler_undead_olr_0003 = true,
+	lvl4_darkdolina_staler_undead_olr_0004 = true,
+	lvl4_darkdolina_staler_undead_olr_0005 = true,
+	lvl4_darkdolina_staler_undead_olr_0006 = true,
+	lvl4_darkdolina_staler_undead_olr_0007 = true,
+	lvl4_darkdolina_staler_undead_olr_0008 = true,
+	lvl4_darkdolina_staler_undead_olr_0009 = true,
+	lvl4_darkdolina_staler_undead_olr_0010 = true,
+	lvl4_darkdolina_staler_undead_olr_0011 = true,
+	lvl4_darkdolina_staler_undead_olr_0012 = true,
+	lvl4_darkdolina_staler_undead_olr_0013 = true,
+	lvl4_darkdolina_staler_undead_olr_0014 = true,
+	lvl4_darkdolina_staler_undead_olr_0015 = true,
+	lvl4_darkdolina_stalker_0004 = true,
+	lvl4_darkdolina_stalker_0021 = true,
+	lvl4_darkdolina_stalker_0036 = true,
+	lvl4_darkdolina_stalker_0071 = true,
+	lvl4_darkdolina_stalker_0071 = true,
+	bar_barman = true,
+	bar_bar_lisiy = true,
+	lvl5_bar_staler_undead_olr = true,
+	lvl5_bar_staler_undead_olr_0000 = true,
+	lvl5_bar_staler_undead_olr_0001 = true,
+	lvl5_bar_staler_undead_olr_0002 = true,
+	lvl5_bar_staler_undead_olr_0003 = true,
+	lvl5_bar_staler_undead_olr_0003_lonewolf = true,
+	lvl5_bar_staler_undead_olr_0004 = true,
+	lvl5_bar_staler_undead_olr_0006 = true,
+	lvl5_bar_staler_undead_olr_0007 = true,
+	lvl5_bar_staler_undead_olr_0008 = true,
+	lvl5_bar_staler_undead_olr_0009 = true,
+	lvl5_bar_staler_undead_olr_0010 = true,
+	lvl5_bar_staler_undead_olr_0012 = true,
+	lvl5_bar_stalker = true,
+	lvl5_bar_stalker_0002 = true,
+	lvl5_bar_stalker_0007 = true,
+	lvl5_bar_stalker_0031 = true,
+	lvl5_bar_stalker_0037 = true,
+	lvl5_bar_stalker_0038 = true,
+	lvl5_bar_stalker_0039 = true,
+	lvl5_bar_stalker_0050 = true,
+	lvl5_bar_stalker_0051 = true,
+	lvl5_bar_stalker_0053 = true,
+	lvl5_bar_stalker_0055 = true,
+	lvl6_rostok_staler_undead_olr = true,
+	lvl6_rostok_staler_undead_olr_0000 = true,
+	lvl6_rostok_stalker_0002 = true,
+	lvl7_yantar_staler_undead_olr = true,
+	lvl7_yantar_staler_undead_olr_0000 = true,
+	lvl7_yantar_staler_undead_olr_0001 = true,
+	lvl7_yantar_staler_undead_olr_0002 = true,
+	lvl7_yantar_stalker_0003 = true,
+	lvl7_yantar_stalker_0013 = true,
+	lvl7_yantar_stalker_0058 = true,
+	lvl7_yantar_stalker_sakharov = true,
+	lvl8_swamp_staler_undead_olr = true,
+	lvl8_swamp_stalker_0000 = true,
+	lvl8_swamp_stalker_0006 = true,
+	lvl8_swamp_stalker_0010 = true,
+	lvl8_swamp_stalker_0011 = true,
+	lvl8_swamp_stalker_0012 = true,
+	lvl8_swamp_stalker_0014 = true,
+	lvl8_swamp_stalker_0020 = true,
+	lvl8_swamp_stalker_0022 = true,
+	lvl9_military_staler_undead_olr = true,
+	lvl9_military_stalker_0007 = true,
+	lvl9_military_stalker_0027 = true,
+	lvl9_military_stalker_0031 = true,
+	lvl9_military_stalker_0046 = true,
+	lvl10_radar_stalker_0031 = true,
+	lvl10_radar_stalker_0035 = true,
+	lvl10_radar_stalker_0040 = true,
+	lvl10_radar_stalker_0041 = true,
+	lvl10_radar_stalker_0041 = true,
+	lvl12_radar_bunker_staler_undead_olr = true,
+	lvl12_radar_bunker_staler_undead_olr_0000 = true,
+	lvl12_radar_bunker_staler_undead_olr_0001 = true,
+	lvl11_deadcity_staler_undead_olr_0000 = true,
+	lvl11_deadcity_staler_undead_olr_0001 = true,
+	lvl11_deadcity_staler_undead_olr_0002 = true,
+	lvl11_deadcity_staler_undead_olr_0003 = true,
+	lvl11_deadcity_staler_undead_olr_0004 = true,
+	lvl11_deadcity_stalker_0000 = true,
+	lvl11_deadcity_stalker_0001 = true,
+	lvl11_deadcity_stalker_0004 = true,
+	lvl11_deadcity_stalker_0005 = true,
+	lvl11_deadcity_stalker_0012 = true,
+	lvl11_deadcity_stalker_0013 = true,
+	lvl11_deadcity_stalker_0032 = true,
+	lvl11_deadcity_stalker_0048 = true,
+	lvl13_prip_stalker_0089 = true,
+	lvl16_generators_staler_undead_olr = true,
+	lvl16_generators_staler_undead_olr_0000 = true,
+	lvl16_generators_staler_undead_olr_0001 = true,
+	lvl16_generators_staler_undead_olr_0002 = true,
+	lvl16_generators_staler_undead_olr_0003 = true,
+	lvl16_generators_staler_undead_olr_0007 = true,
+	lvl16_generators_stalker_0032 = true,
+	lvl16_generators_stalker_0035 = true,
+	lvl16_generators_stalker_0035 = true,
 }
 
 -- функция для получения первого класса патронов
 local function get_ammo_class(weapon_section)
-    local weapon_ammo_class = utils.cfg_get_string(ini_sys, weapon_section, "ammo_class", weapon_section, false, "", "")
-    if not weapon_ammo_class or weapon_ammo_class == "" then
-        return nil
-    end
-    local ammo_section = amk.str_explode(",", weapon_ammo_class)
-    return ammo_section[1]
+	local weapon_ammo_class = utils.cfg_get_string(ini_sys, weapon_section, "ammo_class", weapon_section, false, "", "")
+	if not weapon_ammo_class or weapon_ammo_class == "" then return nil end
+	local ammo_section = amk.str_explode(",", weapon_ammo_class)
+	return ammo_section[1]	
 end
 
 -- таблица соответствия группировок
 local faction_groups = {
-    deads = "bandit",
-    sin = "bandit",
-    lastday = "bandit",
-    stranger = "stalker",
-    neutral = "stalker",
-    zombied = "stalker_zombied",
-    sky = "ecologs",
-    iskateli = "stalker",
-    voenstals = "dolg",
-    bandit = "bandit",
-    stalker = "stalker",
-    ecolog = "ecologs",
-    military = "military",
-    sliznyaki = "bandit",
-    dolg = "dolg",
-    freedom = "freedom",
-    killer = "killer",
-    monolith = "monolith"
+	deads = "bandit", 
+	sin = "bandit", 
+	lastday = "bandit",
+	stranger = "stalker", 
+	neutral = "stalker", 
+	zombied = "stalker_zombied",
+	sky = "ecologs", 
+	iskateli = "stalker", 
+	voenstals = "dolg",
+	bandit = "bandit", 
+	stalker = "stalker", 
+	ecolog = "ecologs", 
+	military = "military", 
+	sliznyaki = "bandit", 
+	dolg = "dolg",
+	freedom = "freedom", 
+	killer = "killer", 
+	monolith = "monolith"
 }
 
 local function get_main_faction(community)
-    return faction_groups[community] or "stalker"
+	return faction_groups[community] or "stalker"
 end
 
 local function get_rank_key(rank)
-    if rank <= 300 then
-        return "novice"
-    elseif rank <= 600 then
-        return "experienced"
-    elseif rank <= 900 then
-        return "veteran"
-    else
-        return "master"
-    end
+	if rank <= 300 then return "novice"
+	elseif rank <= 600 then return "experienced"
+	elseif rank <= 900 then return "veteran"
+	else return "master" end
 end
 
 local function select_weapon(weapons)
-    if not weapons or #weapons == 0 then
-        return nil
-    end
-    if #weapons == 1 then
-        return weapons[1].section
-    end
-
+	if not weapons or #weapons == 0 then return nil end
+	if #weapons == 1 then return weapons[1].section end
+	
     local total = 0
-    for i = 1, #weapons do
-        total = total + weapons[i].prob
-    end
-    if total <= 0 then
-        return weapons[1].section
-    end
-
-    local rand = math.random() * total
-    for i = 1, #weapons do
-        rand = rand - weapons[i].prob
-        if rand < 0 then
-            return weapons[i].section
-        end
-    end
-
-    return weapons[1].section
+    for i = 1, #weapons do total = total + weapons[i].prob end
+    if total <= 0 then return weapons[1].section end	
+	
+	local rand = math.random() * total
+	for i = 1, #weapons do
+		rand = rand - weapons[i].prob
+		if rand < 0 then return weapons[i].section end
+	end
+	
+	return weapons[1].section
 end
 
 -- Основная функция
 function on_spawn(obj)
-    if not obj then
-        return
-    end
-
-    if skip_npc_names[obj:name()] then
-        -- log1("### [INFO] olr_newnpc_eqp: skip npc - "..tostring(obj:name()).."")
-        return
-    end
-
-    -- log1("### [INFO] olr_newnpc_eqp: Called euqip: name - "..tostring(obj:name())..", faction - "..tostring(obj:community())..", rank - "..tostring(get_rank_key(obj:rank())).."")
-
-    local main_faction = get_main_faction(obj:community())
-    local weapons = weapon_tables[main_faction] or weapon_tables.stalker
-    weapons = weapons[get_rank_key(obj:rank())]
-    if not weapons then
-        return
-    end
-
-    -- Выдача оружия
-    local function give_weapon(weapon_list, spawn_ammo)
-        if not weapon_list or #weapon_list == 0 then
-            return
-        end
-        local weapon_section = select_weapon(weapon_list)
-        if not weapon_section then
-            return
-        end
-        -- log1("### [INFO] olr_newnpc_eqp: Create weapon - "..tostring(weapon_section).."")
-        alife():create(weapon_section, obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-        local ammo_class = get_ammo_class(weapon_section)
-        if spawn_ammo and ammo_class then
-            -- log1("### [INFO] olr_newnpc_eqp: Create ammo "..tostring(ammo_class).." for "..tostring(weapon_section).."")
-            for i = 1, math.random(3, 6) do
-                alife():create(ammo_class, obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-            end
-        end
-    end
-
-    -- Первичка, они же пистолеты-ПП
-    give_weapon(weapons.first, true)
-
+	if not obj then return end
+	
+	if skip_npc_names[obj:name()] then
+		--log1("### [INFO] olr_newnpc_eqp: skip npc - "..tostring(obj:name()).."")
+		return
+	end
+	
+	--log1("### [INFO] olr_newnpc_eqp: Called euqip: name - "..tostring(obj:name())..", faction - "..tostring(obj:community())..", rank - "..tostring(get_rank_key(obj:rank())).."")
+	
+	local main_faction = get_main_faction(obj:community())
+	local weapons = weapon_tables[main_faction] or weapon_tables.stalker
+	weapons = weapons[get_rank_key(obj:rank())]
+	if not weapons then return end
+	
+	-- Выдача оружия
+	local function give_weapon(weapon_list, spawn_ammo)
+		if not weapon_list or #weapon_list == 0 then return end
+		local weapon_section = select_weapon(weapon_list)
+		if not weapon_section then return end
+		--log1("### [INFO] olr_newnpc_eqp: Create weapon - "..tostring(weapon_section).."")
+		alife():create(weapon_section, obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+		local ammo_class = get_ammo_class(weapon_section)
+		if spawn_ammo and ammo_class then
+			--log1("### [INFO] olr_newnpc_eqp: Create ammo "..tostring(ammo_class).." for "..tostring(weapon_section).."")
+			for i = 1, math.random(3,6) do
+				alife():create(ammo_class, obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+			end
+		end
+	end
+	
+	-- Первичка, они же пистолеты-ПП
+	give_weapon(weapons.first, true)
+	
     -- Основное оружие – с вероятностью second_chance
     local chance = weapons.second_chance
-    if chance == nil then
-        chance = 1.0
-    end
+    if chance == nil then chance = 1.0 end
     if math.random() <= chance then
         give_weapon(weapons.second, true)
     end
-
-    -- Ножи
-    give_weapon(weapons.knife, false)
+	
+	-- Ножи
+	give_weapon(weapons.knife, false)
 end

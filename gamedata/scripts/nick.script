@@ -10320,15 +10320,15 @@ function esc_spawen_blokpost_docks()
 end
 
 function esc_kill_gulag_military()
-	local gulag = xr_gulag.get_gulag_by_sid(093)
-	if gulag then
-		for k,v in pairs(gulag.Object) do
-			if type(v)=="userdata" then
-				local o = level.object_by_id(k) 
-				if o then o:kill(o) end
-			end
-		end
-	end
+    local gulag = xr_gulag.get_gulag_by_sid(093)
+    if gulag then
+        for id,val in pairs(gulag.Object) do
+            local se_obj = alife():object(id)
+            if se_obj and (IsStalker(se_obj) or IsMonster(se_obj)) then
+                olr.kill_by_name(se_obj:name())
+            end
+        end
+    end
 end
 
 function agr_spawen_nauchinkia()

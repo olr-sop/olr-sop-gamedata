@@ -55,15 +55,26 @@ function se_stalker:get_job_online()
 	end
 end
 --------------------
-function se_stalker:can_switch_offline ()
-	if self:get_job_online() ~= nil then
-		return not self:get_job_online()
-	else
-		return cse_alife_human_stalker.can_switch_offline (self)
+function se_stalker:can_switch_offline()
+	local can_be_offline = false
+	if self.force_offline then
+		can_be_offline = true
+	else	
+		if self:get_job_online() ~= nil then
+			can_be_offline = not self:get_job_online()
+		else
+			can_be_offline = cse_alife_human_stalker.can_switch_offline(self)
+		end
 	end
+	return can_be_offline
 end
+
 --------------------
-function se_stalker:can_switch_online ()
+function se_stalker:can_switch_online()
+	if self.force_offline then
+		return false
+	end
+	
 	if self.dont_spawn_online == true then
 		return false
 	end

@@ -75,14 +75,24 @@ function se_monster:get_job_online()
 end
 --------------------
 function se_monster:can_switch_offline ()
-	if self:get_job_online() ~= nil then
-		return not self:get_job_online()
-	else
-		return cse_alife_monster_base.can_switch_offline (self)
+	local can_be_offline = false
+	if self.force_offline then
+		can_be_offline = true
+	else	
+		if self:get_job_online() ~= nil then
+			can_be_offline = not self:get_job_online()
+		else
+			can_be_offline = cse_alife_monster_base.can_switch_offline(self)
+		end
 	end
+	return can_be_offline	
 end
 --------------------
 function se_monster:can_switch_online ()
+	if self.force_offline then
+		return false
+	end
+	
 	if self:get_job_online() ~= nil then
 		return self:get_job_online()
 	end

@@ -335,6 +335,18 @@ end
 
 end
 
+function binder_error_msg()
+	get_console():execute("flush")
+    local msg_crit_error = "Произошёл `отвал` биндера, сохранитесь, закройте игру и отправьте лог разработчику"
+    if level.present() then
+        if db and (db.actor ~= nil) then
+            if olr and olr.hud_tip_fatal then
+                olr.hud_tip_fatal(msg_crit_error)
+            end
+        end
+    end	
+end
+
 -- Глобальная функция для безопасного выполнения
 function run_safely(func, error_message)
     local success, error_msg = pcall(func)

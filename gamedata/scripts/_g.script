@@ -1696,6 +1696,21 @@ function switch_offline (npc)
        sim:set_switch_offline (npc:id (), true)
     end
 end
+
+-- Поддержка spawner cond в итемах наследующих CSE_ALifeItem (почти всё в игре кроме живых существ (нпс и мутанты))
+function check_item_spawner_cond(id)
+    local sim = alife()
+    if not sim then return true end
+    local obj = sim:object(id)
+    if not obj then return true end
+    local ini = obj:spawn_ini()
+    if ini and ini:section_exist("spawner") then
+        local cond = xr_logic.parse_condlist(obj, "spawner", "cond", ini:r_string("spawner", "cond"))
+        local r = xr_logic.pick_section_from_condlist(db.actor, obj, cond)
+        return r ~= nil
+    end
+    return true
+end
 -------------------------------------------------------------------------------------------
 function get_actor_id()
 	if(level.actor() == nil) then return -1 end

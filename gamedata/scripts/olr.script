@@ -982,10 +982,12 @@ function delete_object(obj)
         elseif type(obj.id) == "function" then
             se_obj = alife():object(obj:id())
         end
+    elseif type(obj) == "userdata" then
+        se_obj = alife():object(obj:id())
     end
 
     if not se_obj then
-        log1("! delete_object - " .. tostring(obj) .. " return nil")
+        log1("! delete_object - " .. ((pcall(tostring, obj) and tostring(obj)) or type(obj)) .. " return nil")
         return
     end
 	

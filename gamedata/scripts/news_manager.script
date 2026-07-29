@@ -518,35 +518,51 @@ function get_inv_name(section)
 	return ini_sys:r_string(section,"inv_name")
 end
 
-function relocate_item(actor, type, item)
+function relocate_item(actor, type, item, amount)
 	if db.actor == nil then return false end
+	
+	local news_text = ""
+	local news_text_wo_header = ""	
+	
 	-- Играем дефолтный звук
 	if type == "in" then
+	
 		local task_texture, task_rect = get_texture_info("ui_notification_found_item")
-		local news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))
-		
-		local news_text_wo_header = game.translate_string(get_inv_name(item))
 		local news_header = "%c[255,160,181,169]"..game.translate_string("general_in_item")
+		
+		if amount == 1 then
+			news_text_wo_header = game.translate_string(get_inv_name(item))
+			news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))
+		else
+			news_text_wo_header = game.translate_string(get_inv_name(item)).." x"..amount
+			news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item)).." x"..amount
+		end
 		
 		if db.actor:is_talking() then
 			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
 		else
 			db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
-		end		
+		end
+		
 	elseif type == "out" then
+	
 		local task_texture, task_rect = get_texture_info("ui_notification_lost_item")
-		local news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))
+		local news_header = "%c[255,160,181,169]"..game.translate_string("general_out_item")
 
-		local news_text_wo_header = game.translate_string(get_inv_name(item))
-		local news_header = "%c[255,160,181,169]"..game.translate_string("general_out_item")		
-
+		if amount == 1 then
+			news_text_wo_header = game.translate_string(get_inv_name(item))
+			news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))
+		else
+			news_text_wo_header = game.translate_string(get_inv_name(item)).." x"..amount
+			news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item)).." x"..amount
+		end
+		
 		if db.actor:is_talking() then
 			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
 		else
 			db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
 		end		
 	end
-	
 end
 
 function relocate_money(actor, type, amount)

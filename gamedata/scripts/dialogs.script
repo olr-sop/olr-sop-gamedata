@@ -163,13 +163,13 @@ end
 
 -- Use this function instead.
 -- При передаче предмета игроку нужно для еды и оружия выставлять флаги что они не заражены
-function relocate_item_section(victim, section, type)
-	if db.actor and victim then
-		if type == "in" then
-			-- Трансферить нужно только квестовые предметы.
-			if quest_section[section] == true and victim:object(section) ~= nil then
-				victim:transfer_item(victim:object(section), db.actor)
-			else
+function relocate_item_section(victim, section, type, amount)
+	if db.actor then
+		if not amount then
+			amount = 1
+		end
+		for i = 1, amount do
+			if type == "in" then
 				local item = alife():create(section, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 				if item then
 					level.client_spawn_manager():add(item.id, 0,
@@ -183,11 +183,14 @@ function relocate_item_section(victim, section, type)
 						end
 					)
 				end
+			elseif type == "out" then
+				if victim == nil then
+					log1("#WARN: [dialogs.relocate_item_section] Couldn't relocate item to NULL")
+				end
+				db.actor:transfer_item(db.actor:object(section), victim)
 			end
-		elseif type == "out" then
-			db.actor:transfer_item(db.actor:object(section), victim)
 		end
-		news_manager.relocate_item(db.actor, type, section)
+		news_manager.relocate_item(db.actor, type, section, amount)
 	end
 end
 

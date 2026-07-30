@@ -5,11 +5,19 @@ local mozg_particle = particles_object("monsters\\pseudo_phantom_death_00")
 local mozg_light = alife():object("mozg_for_light_object")
 local mozg_light_flag = false
 local actor_close_mozg = false
-local take_flag = 0
 
 local parasits = {
 	["zombie_plague"] = true,
 	["zombie_plague_strong"] = true
+}
+
+-- Таблицу с крысами будем держать тут, нех её инитить постоянно
+local is_rat_variant = {
+	["m_rat_e"] = true,
+	["m_rat_e2"] = true,
+	["m_rat_e3"] = true,
+	["m_rat_e4"] = true,
+	["m_rat_new"] = true
 }
 
 function bind(obj)
@@ -42,11 +50,13 @@ function generic_object_binder:reinit()
 	db.storage[self.object:id()] = { }
 
 	self.st = db.storage[self.object:id()]
-
-	self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
-	self.object:set_callback(callback.hit,					self.hit_callback,		self)
-	self.object:set_callback(callback.death,				self.death_callback,	self)
-	self.object:set_callback( callback.use_object, self.use_callback, self )
+	if (self.object:alive()) then
+		self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
+		self.object:set_callback(callback.hit,					self.hit_callback,		self)
+		self.object:set_callback(callback.death,				self.death_callback,	self)
+	end
+	
+	--self.object:set_callback( callback.use_object, self.use_callback, self )
 end
 
 
@@ -65,96 +75,6 @@ function generic_object_binder:net_destroy()
 	db.storage[self.object:id()] = nil
 
 	object_binder.net_destroy(self)
-end 
-
-
-function generic_object_binder:use_callback(obj, who)
-
-	local is_rat_variant = {
-		["m_rat_e"] = true,
-		["m_rat_e2"] = true,
-		["m_rat_e3"] = true,
-		["m_rat_e4"] = true,
-		["m_rat_new"] = true
-	}
-	
-	local self_object_sec = self.object:section()
-
-	if not self.object:alive() then
-		if not is_rat_variant[self_object_sec] then
-            if ini_sys:line_exist(self_object_sec, "known_info") then
-                local known_inf = ini_sys:r_string(self_object_sec, "known_info") or ""
-                if not has_alife_info(known_inf) then
-                    --olr.hud_tip("", "У меня нет информации о этом мутанте...", 2)
-                    --return
-                else
-                    --log1("HAS konwn ifo - "..known_inf.." ")
-                end
-                self.object:iterate_inventory(
-                    function(_, item)
-                        if item then
-                            local sec_item = tostring(item:section())
-                            alife():create(sec_item, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-                            olr.del(item)
-                            olr.hud_tip("", game.translate_string("st_bind_monster_received_items").." "..item:get_name(), 2)
-                            take_flag = 1
-                            local wait_time = 0
-                            wait_time = time_global() + 1000
-                            level.add_call(
-                                function()
-                                    return time_global() > wait_time
-                                end,
-                                function()
-                                    self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts"))
-                                end
-                            )
-                        else
-                            local wait_time = 0
-                            wait_time = time_global() + 1000
-                            level.add_call(
-                                function()
-                                    return time_global() > wait_time
-                                end,
-                                function()
-                                    self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts"))
-                                end
-                            )
-                        end
-                    end
-                )
-                if take_flag == 0 and has_alife_info(known_inf) then
-                    local wait_time = 0
-                    wait_time = time_global() + 3000
-                    level.add_call(
-                        function()
-                            return time_global() > wait_time
-                        end,
-                        function()
-                            self.object:set_tip_text(game.translate_string("st_bind_monster_no_needed_parts"))
-                        end
-                    )
-                    olr.hud_tip("", game.translate_string("st_bind_monster_no_proper_samples"), 2)
-                    return
-                end
-            end
-        end
-    end
-
-    if not self.object:alive() then
-        if is_rat_variant[self_object_sec] then
-            local bol_var = math.random(1, 2)
-            if bol_var == 1 then
-                local objj = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-                level.client_spawn_manager():add(objj.id, 0, function(id, obj) obj:set_condition((math.random(30, 55) / 100)) end)
-                olr.hud_tip("", game.translate_string("st_bind_monster_itlldo"), 2, true) -- тоже самое что и в bind_crow
-                olr.del(self.object)
-            else
-                olr.hud_tip("", game.translate_string("st_bind_monster_too_damaged"), 2, true)
-                olr.del(self.object)
-            end
-        end
-    end
-	
 end
 
 
@@ -170,9 +90,9 @@ function generic_object_binder:update(delta)
 	local act = db.actor
 	local dist_to_actor = act:position():distance_to(spos)
 
-	local npc_test_name = self.object:name()
-	local npc_test_section = self.object:section()
-	local npc_test_id = self.object:id()
+--	local npc_test_name = self.object:name()
+--	local npc_test_section = self.object:section()
+--	local npc_test_id = self.object:id()
 
 	--log1("check bind_monster: clsid = "..tostring(cls)..", npc name = "..tostring(npc_test_name)..", section = "..tostring(npc_test_section)..", id = "..tostring(npc_test_id).."") -- для теста
 
@@ -189,7 +109,52 @@ function generic_object_binder:update(delta)
 			end
 		end
 	end
-
+	
+	-- Обработка трупа для срезки частей
+	-- Если труп то дальнейший апдейт гасим, ибо смысла нет (возможно только паразиты, но это формально еще "живой" зомбу делает а не мёртвый
+	-- Если что это можно будет и овердрайвить потом
+	if not self.object:alive() then
+		local looted = xr_logic.pstor_retrieve(self.object, "looted", nil)
+		if not looted then
+			self.object:set_callback(callback.use_object, self.use_callback, self)
+			self.object:set_tip_text("st_butcher_field_dress")
+		else
+			self.object:set_callback(callback.use_object, nil)
+			self.object:set_tip_text("")
+		end
+		return
+	end
+	
+	-- Заготовка на потом
+	--[[
+	if not (self.object:alive()) then
+		local looted = utils.se_obj_load_var(self.object:id(),self.object:name(),"looted") == "true"
+		if (not looted) and (knife_manager.is_equipped()) then
+			if (knife_manager.get_condition() < 0.15) then
+				self.object:set_callback(callback.use_object, nil)
+				self.object:set_tip_text(game.translate_string("st_body_knife_bad"))
+			elseif (not knife_manager.can_loot(self.object:section())) then
+				self.object:set_callback(callback.use_object, nil)
+				self.object:set_tip_text(game.translate_string("st_body_knife_weak"))
+			else
+				self.object:set_callback(callback.use_object, self.use_callback, self)
+				self.object:set_tip_text(game.translate_string("st_body_loot"))
+			end
+		else
+			self.object:set_callback(callback.use_object, nil)
+			
+			if (not looted) and (not (knife_manager.is_equipped())) then
+				self.object:set_callback(callback.use_object, nil)
+				self.object:set_tip_text(game.translate_string("st_body_knife_needed"))
+			else
+				self.object:set_callback(callback.use_object, nil)
+				self.object:set_tip_text("")
+			end
+		end
+		return
+	end	
+	--]]
+	
 	if self.object:alive() then
 
 		core.tc("monster_update", self, delta)
@@ -489,17 +454,147 @@ function generic_object_binder:update(delta)
 			--self.object:add_animation("stand_walk_fwd_"..i, true)
 		--end
 		end
-	else
-		if not self.dead then
-			self.object:set_tip_text("")
-			self.object:set_nonscript_usable(false)
-			self.dead = true
-		end
 	end
 
 	if self.st.active_section ~= nil then
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
 	end
+end
+
+--[[
+
+st_butcher_badluck_1
+st_butcher_badluck_2
+st_butcher_badluck_3
+st_butcher_badluck_4
+
+game.translate_string("st_butcher_badluck_"..tostring(math.random(1,4)))
+
+st_butcher_success_1
+st_butcher_success_2
+st_butcher_success_3
+st_butcher_success_4
+
+game.translate_string("st_butcher_success_"..tostring(math.random(1,4)))
+
+st_butcher_damaged_1
+st_butcher_damaged_2
+st_butcher_damaged_3
+st_butcher_damaged_4
+
+game.translate_string("st_butcher_damaged_"..tostring(math.random(1,4)))
+
+st_butcher_unknown_1
+st_butcher_unknown_2
+st_butcher_unknown_3
+st_butcher_unknown_4
+
+game.translate_string("st_butcher_unknown_"..tostring(math.random(1,4)))
+
+--]]
+
+function generic_object_binder:use_callback(obj, who)
+
+	if not (self.object) then
+		return
+	end
+	
+	-- проверяем в псторе тушки наличие looted, если вернёт тру то значит она обыскана, можно уходить
+	local looted = xr_logic.pstor_retrieve(obj, "looted", nil)
+	if looted then return end
+
+	xr_logic.pstor_store(obj, "looted", true) -- пишем в пстор тушки что её облутали
+	
+	local self_object_sec = obj:section()
+	
+	self.sound_knife = sound_object("material\\collide\\knife\\knife_0"..tostring(math.random(1, 2)))
+	
+	if is_rat_variant[self_object_sec] then
+		if math.random(1, 3) == 1 then
+			olr.hud_tip("", game.translate_string("st_butcher_badluck_"..tostring(math.random(1,4))), 2, true) -- мессага
+			self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)
+			olr.delete_object(obj) -- Удаляем тушку крысы
+		else
+			olr.hud_tip("", game.translate_string("st_butcher_success_"..tostring(math.random(1,4))), 2, true) -- мессага
+			local item = alife():create("rat_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			if item then
+				level.client_spawn_manager():add(item.id, 0,
+					function(id, obj)
+						if obj and g_food_table[obj:section()] then
+							obj:set_condition(math.random(35, 98) / 100) -- Состояние от 35 до 98%
+							xvars.foods[tostring(obj:id())] = {sec = obj:section(), rad = math.random() < 0.5} -- заносим в таблицу xvars.foods, шансы пока 50 на 50 как и везде
+						end
+					end
+				)
+			end
+			self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)		
+			news_manager.relocate_item(db.actor, "in", "rat_food") -- мессага
+			olr.delete_object(self.object) -- Удаляем тушку крысы
+		end
+		return -- можно уходить, по крысе отработали
+	end
+	
+	if ini_sys:line_exist(self_object_sec, "mutant_parts_section") then
+		if ini_sys:line_exist(self_object_sec, "known_info") then
+			local known_inf = ini_sys:r_string(self_object_sec, "known_info") or ""
+			local meat_sectiion = ini_sys:r_string(self_object_sec, "mutant_parts_section") or ""
+			if has_alife_info(known_inf) then
+				-- Можем попытаться отрезать
+				-- Биномиальное распределение
+				local count = 0
+				local max_count = ini_sys:r_u32(self_object_sec, "mutant_parts_max") or 1
+				local p = ini_sys:r_float(self_object_sec, "mutant_parts_prob") or 0.6 -- пик будет 2-3 при макс 4 при p = 0.6
+				for i = 1, max_count do
+					if math.random() < p then
+						count = count + 1
+					end
+				end
+				if count ~= 0 then
+					if math.random(1, 25) == 1 then
+						self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)		
+						olr.hud_tip("", game.translate_string("st_butcher_badluck_"..tostring(math.random(1,4))), 2, true) -- подлянка
+					else
+						for i = 1, count do
+							local item = alife():create(meat_sectiion, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+							if item then
+								level.client_spawn_manager():add(item.id, 0,
+									function(id, obj)
+										if obj and g_food_table[obj:section()] then
+											obj:set_condition(math.random(35, 98) / 100) -- Состояние от 35 до 98%
+											xvars.foods[tostring(obj:id())] = {sec = obj:section(), rad = math.random() < 0.5} -- заносим в таблицу xvars, шансы пока 50 на 50 как и везде
+										end
+									end
+								)
+							end
+						end
+						self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)						
+						news_manager.relocate_item(db.actor, "in", meat_sectiion, count) -- скока получили
+						olr.hud_tip("", game.translate_string("st_butcher_success_"..tostring(math.random(1,4))), 2, true) -- мессага
+					end
+				else
+					self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)
+					olr.hud_tip("", game.translate_string("st_butcher_damaged_"..tostring(math.random(1,4))), 2, true) -- не повезло
+				end
+				
+				local h = hit()
+				h.power = 0
+				h.direction = db.actor:position():sub(obj:position())
+				h.direction:normalize()
+				h.direction.y = h.direction.y + 0.3 + math.random() * 0.2  -- 0.3-0.5 вверх
+				h.direction:normalize()
+				h.draftsman = db.actor
+				h.impulse = 400 + math.random(0, 200)
+				h.type = hit.wound
+				obj:hit(h)
+				
+			else
+				-- Мы не знаем что отрезать
+				olr.hud_tip("", game.translate_string("st_butcher_unknown_"..tostring(math.random(1,4))), 2, true) -- нет инфы
+			end
+		end
+	end
+	
+	return
 end
 
 function generic_object_binder:extrapolate_callback()
@@ -536,21 +631,26 @@ end
 
 function generic_object_binder:death_callback(victim, who)
 
-	if who:id() == db.actor:id() then
-		if victim:clsid() == clsid.zombie or victim:clsid() == clsid.zombie_s then
-			bb_mod.npcondeath(victim, who)
+	if (who) then
+		if (who:id() == db.actor:id()) then
+			xr_statistic.addKillCount(who, self.object)
+			if victim:clsid() == clsid.zombie or victim:clsid() == clsid.zombie_s then
+				bb_mod.npcondeath(victim, who)
+			end
+			local sobj = game.translate_string(xvars.quest_two_target_yan)
+			if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken_yan") then
+				news_manager.send_tip(db.actor, game.translate_string("generic_object_binderdeath_callback_0"), 1, "mutants", 9000)
+				level.map_remove_object_spot(self.object:id(), "monster_part_location")
+				db.actor:change_character_reputation(15)
+			end
+		elseif (IsStalker(who) and who:alive()) then
+			local se_who = alife_object(who:id())
+			-- Дадим немного очков ранга за убийство мутанта
+			if (se_who) then
+				who:set_character_rank(who:character_rank()+math.random(5,15))
+			end
 		end
-		local sobj = game.translate_string(xvars.quest_two_target_yan)
-		if sobj and sobj == game.translate_string(self.object:name()) and has_alife_info("doska_two_taken_yan") then
-			news_manager.send_tip(db.actor, game.translate_string("generic_object_binderdeath_callback_0"), 1, "mutants", 9000)
-			level.map_remove_object_spot(self.object:id(), "monster_part_location")
-			db.actor:change_character_reputation(15)
-		end
-	end
-
-	if db.actor then	
-		xr_statistic.addKillCount(who, self.object)
-	end
+	end	
 
 	if self.st.mob_death then
 		xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", victim, who)
@@ -559,6 +659,11 @@ function generic_object_binder:death_callback(victim, who)
 	if self.st.active_section then
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", victim, who)
 	end
+	
+	-- Отрубаем коллбэки
+	victim:set_callback(callback.death,nil)
+	victim:set_callback(callback.patrol_path_in_point,nil)
+	victim:set_callback(callback.hit,nil)
 
 	smart_terrain.on_death( self.object:id() )
 

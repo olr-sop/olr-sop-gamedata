@@ -30,15 +30,27 @@ end
 
 -- evaluator
 function evaluator_trading:evaluate()
+	-- ПЕРФ: решение «торговать/нет» меняется медленно — кэшируем результат на 500 мс.
+	local now = time_global()
+	if self._ev_tm and now < self._ev_tm then
+		return self._ev_res
+	end
+	self._ev_tm = now + 500
 
 	local npc = self.object
-	local best_enemy = self.object:best_enemy()
 
-	if best_enemy then
+	-- ПЕРФ: дешёвые early-out'ы первыми; дорогие has_alife_info / money / ruck_count — после.
+	local lvl = level.name()
+	local name = npc:name()
+	local comm = npc:character_community()
+
+	if npc:best_enemy() then
+		self._ev_res = false
 		return false
 	end
 
 	if npc:is_talking() then
+		self._ev_res = false
 		return false
 	end
 
@@ -46,6 +58,7 @@ function evaluator_trading:evaluate()
 		local npctalk = level:get_second_talker()
 		if npctalk:name() == "bar_barman" or npctalk:name() == "lvl9_military_m_trader" or npctalk:name() == "escape_trader_0000" then
 			--log1("nope")
+			self._ev_res = false
 			return false
 		end
 	end
@@ -54,49 +67,43 @@ function evaluator_trading:evaluate()
 	
 	local spawn_ini = npc:spawn_ini()
 	if spawn_ini and spawn_ini:section_exist("logic") then
+		self._ev_res = false
 		return false -- Сталкеры имеющие логику в кастом дате так-же игнорируются
 	end
 	
-	if olr_protected.is_no_offline_alife_obj(npc:name()) then 
+	if olr_protected.is_no_offline_alife_obj(name) then 
+		self._ev_res = false
 		return false -- Квестовые защищенные и прочие непеси из этого списка НЕ ДОЛЖНЫ БЛЯ БЕЖАТЬ ТОРГОВАТЬ
 	end
 
 	if has_alife_info("olr_traders_night") then
+		self._ev_res = false
 		return false
 	end
-	if npc:name() == "lvl5_bar_staler_undead_olr_0003_lonewolf" then
+
+	-- Чёрные списки имён и фракций
+	if name == "lvl5_bar_staler_undead_olr_0003_lonewolf"
+		or name == "lvl9_military_stalker_0033"
+		or name == "lvl5_bar_stalker_0052"
+		or name == "esc_raid_scientist"
+		or name == "esc_raid_scientist_0000"
+		or name == "esc_raid_scientist_0001"
+		or name == "lvl1_escape_stalker_0054" -- Сивый
+		or name == "lvl1_escape_stalker_0055" -- Чёрт
+	then
+		self._ev_res = false
 		return false
 	end
-	if npc:name() == "lvl9_military_stalker_0033" then
-		return false
-	end
-	if npc:name() == "lvl5_bar_stalker_0052" then
-		return false
-	end
-	if npc:name() == "esc_raid_scientist" then
-		return false
-	end
-	if npc:name() == "esc_raid_scientist_0000" then
-		return false
-	end
-	if npc:name() == "esc_raid_scientist_0001" then
-		return false
-	end
-	if npc:name() == "lvl1_escape_stalker_0054" then -- Сивый
-		return false
-	end
-	if npc:name() == "lvl1_escape_stalker_0055" then -- Чёрт
-		return false
-	end
-	
-	if npc:character_community() == "military" 
-		or npc:character_community() == "zombied"
-		or npc:character_community() == "trader"
-		or npc:character_community() == "monolith"
-		or npc:character_community() == "neutral"
-		or npc:character_community() == "bandit"
-		or npc:character_community() == "voenstals"
-		or npc:character_community() == "sin"  then
+
+	if comm == "military" 
+		or comm == "zombied"
+		or comm == "trader"
+		or comm == "monolith"
+		or comm == "neutral"
+		or comm == "bandit"
+		or comm == "voenstals"
+		or comm == "sin"  then
+		self._ev_res = false
 		return false
 	end
 	-- копим бабло для основной цели
@@ -104,51 +111,69 @@ function evaluator_trading:evaluate()
 	--	return false
 	--end
 
+	-- ПЕРФ: торгуют только на трёх уровнях — раньше этот случай доходил до money/has_alife_info.
+	if lvl ~= "lvl1_escape" and lvl ~= "lvl9_military" and lvl ~= "lvl5_bar" then
+		self._ev_res = false
+		return false
+	end
+
 	-- Жаба
-	if level.name()== "lvl1_escape" then
+	if lvl == "lvl1_escape" then
 		if has_alife_info("kvest_bar_2_dialog_start") then
+			self._ev_res = false
 			return false -- Жаба свалил на Холмы
 		end
 		if npc:money() > 1000 then
+			self._ev_res = true
 			return true
 		end
 		if npc:ruck_count() > 25 then
+			self._ev_res = true
 			return true
 		end
 	end
 	-- Жаба мил
-	if level.name()== "lvl9_military" then
+	if lvl == "lvl9_military" then
 		if not has_alife_info("greh_leader_key_taken_docs_vetri") then
+			self._ev_res = false
 			return false -- Жаба свалил на Холмы
 		end
 		if npc:money() > 3000 then
+			self._ev_res = true
 			return true
 		end
 		if npc:ruck_count() > 25 then
+			self._ev_res = true
 			return true
 		end
 	end
 
 	-- Бармен
-	if level.name()== "lvl5_bar" then
+	if lvl == "lvl5_bar" then
 		if not has_alife_info("open_bar_door_start_krisa") then
+			self._ev_res = false
 			return false -- бармен ещё не появился с начала
 		end
 		if has_alife_info("greh_leader_key_taken_docs_vetri") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
+			self._ev_res = false
 			return false -- бармен свалил и ещё не вернулся
 		end
 		if has_alife_info("bun_antenna_off") then
+			self._ev_res = false
 			return false -- бармен свалил
 		end
 		if npc:money() > 5000 then
+			self._ev_res = true
 			return true
 		end
 		if npc:ruck_count() > 25 then
 			--log1("has to trade - "..npc:ruck_count().." ")
+			self._ev_res = true
 			return true
 		end
 	end
 
+	self._ev_res = false
 	return false
 end
 

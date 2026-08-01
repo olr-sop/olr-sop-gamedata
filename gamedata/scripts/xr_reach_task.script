@@ -14,14 +14,24 @@ end
 
 -- TODO а если точка внутри рестриктора? например kamp
 function evaluator_reached_strn_job_location:evaluate()
+	-- ѕ≈–‘: результат мен€етс€ только при достижении точки Ч кэшируем на 150 мс.
+	local now = time_global()
+	if self._ev_tm and now < self._ev_tm then
+		return self._ev_res
+	end
+	self._ev_tm = now + 150
+
 	if self.gst.gulag and not self.gst.gulag:has_obj_reached_job_location( self.object:id() ) then
 		if self.object:level_vertex_id() == self.gst.gulag:obj_job_location( self.object:id() ) then
 			self.gst.gulag:beginJob( self.object:id() )
+			self._ev_res = true
 			return true
 		else
+			self._ev_res = false
 			return false
 		end
 	else
+		self._ev_res = true
 		return true
 	end
 end

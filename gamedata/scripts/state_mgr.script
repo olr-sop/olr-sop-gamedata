@@ -16,6 +16,13 @@ function evaluator_state_mgr_idle:__init(name, state_manager) super (nil, name)
 	self.mgr = nil
 end
 function evaluator_state_mgr_idle:evaluate()
+	-- ПЕРФ: каскад вложенных evaluator'ов кэшируем на 150 мс.
+	local now = time_global()
+	if self._ev_tm and now < self._ev_tm then
+		return self._ev_res
+	end
+	self._ev_tm = now + 150
+
 	local t = self.st.target_state == "idle" and 
 		   --not self.st.planner:evaluator(self.st.properties["locked"]):evaluate() and
 		   self.st.planner:evaluator(self.st.properties["movement"]):evaluate()	and
@@ -32,8 +39,12 @@ function evaluator_state_mgr_idle:evaluate()
 		end
 	end
 	
-	if self.st.combat == true then return true end
+	if self.st.combat == true then 
+		self._ev_res = true
+		return true 
+	end
 
+	self._ev_res = false
 	return false
 
 end
@@ -45,6 +56,13 @@ function evaluator_state_mgr_idle_off:__init(name, state_manager) super (nil, na
 	self.mgr = nil
 end
 function evaluator_state_mgr_idle_off:evaluate()
+	-- ПЕРФ: каскад вложенных evaluator'ов кэшируем на 150 мс.
+	local now = time_global()
+	if self._ev_tm and now < self._ev_tm then
+		return self._ev_res
+	end
+	self._ev_tm = now + 150
+
 	local t = self.st.target_state == "idle" and 
 		   self.st.planner:evaluator(self.st.properties["movement"]):evaluate()	and
 		   self.st.planner:evaluator(self.st.properties["animstate"]):evaluate() and
@@ -54,6 +72,7 @@ function evaluator_state_mgr_idle_off:evaluate()
 			 self.st.planner:evaluator(self.st.properties["mental"]):evaluate() -- and
 --			 self.st.planner:evaluator(self.st.properties["direction"]):evaluate()
 --	log1("Checking idleoff for "..self.object:name().." = "..tostring(t))
+	self._ev_res = t
 	return t
 end
 
@@ -66,7 +85,15 @@ function evaluator_state_mgr_idle_alife:__init(name, state_manager) super (nil, 
 	self.t = nil
 end
 function evaluator_state_mgr_idle_alife:evaluate()
+	-- ПЕРФ: каскад вложенных evaluator'ов кэшируем на 150 мс.
+	local now = time_global()
+	if self._ev_tm and now < self._ev_tm then
+		return self._ev_res
+	end
+	self._ev_tm = now + 150
+
 	if not self.object:alive() then
+		self._ev_res = true
 		return true
 	end
 	-- апдейт менеджера анимаций
@@ -99,13 +126,17 @@ function evaluator_state_mgr_idle_alife:evaluate()
 			
 			if t == true then self.st.alife = true end
 			if self.st.alife == true then 
+				self._ev_res = true
 				return true 
 			end		
+			self._ev_res = t
 			return t
 		else
+			self._ev_res = false
 			return false
 		end
 	end
+	self._ev_res = true
 	return true
 end
 

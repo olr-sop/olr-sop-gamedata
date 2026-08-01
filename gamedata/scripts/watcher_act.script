@@ -41,15 +41,24 @@ function cannot_take_that(npc)
 	return false
 end
 
+-- кэш веса предмета по секции (ini_sys:r_float один раз на секцию, а не на каждый предмет)
+local item_weight_cache = {}
+local function item_weight(section)
+	local w = item_weight_cache[section]
+	if w == nil then
+		w = ini_sys:r_float(section, "inv_weight")
+		item_weight_cache[section] = w
+	end
+	return w
+end
+
 function max_weight(npc)
 	local total_weight = 0.0
 	if npc then
 		npc:iterate_inventory(
 		function(dummy, item)
 			if item then
-				local section = item:section()
-				local item_wt = ini_sys:r_float(section, "inv_weight")
-				total_weight = total_weight + item_wt
+				total_weight = total_weight + item_weight(item:section())
 			end
 		end, nil
 		)
@@ -191,12 +200,21 @@ function bgwith(str, ptr)
 	return ps ~= nil and ps == 1
 end
 
+-- ПЕРФ: кэш вердикта «секция ценная» (clsid/префикс). Одна секция -> один вердикт,
+-- экономит 4 string.find + obj:clsid() на каждый объект скана. Трупы по-прежнему решает checkCorpse.
+local valuable_sec_cache = {}
+
 function isValuable(obj)
     local sec = obj:section()
-    if valuable_clsid[obj:clsid()] then
+    local v = valuable_sec_cache[sec]
+    if v == nil then
+        v = valuable_clsid[obj:clsid()] or bgwith(sec, "af_") or bgwith(sec, "ammo_") or bgwith(sec, "wpn_") or bgwith(sec, "energy_")
+        valuable_sec_cache[sec] = v
+    end
+    if v then
         return true, false
     end
-    return bgwith(sec, "af_") or bgwith(sec, "ammo_") or bgwith(sec, "wpn_") or bgwith(sec, "energy_") or checkCorpse(obj), IsStalker(obj) or IsMonster(obj)
+    return checkCorpse(obj), IsStalker(obj) or IsMonster(obj)
 end
 
 function objValue(obj)
@@ -275,17 +293,77 @@ function bad_danger(npc)
 	return false
 end
 
+-- Поиск целей по таймеру. Вынесен из ev_see_stuff:evaluate, чтобы не аллоцировать closure на каждый вызов.
+-- Возвращает true, если подходящая цель найдена и заклеймлена.
+local function scan_stuff(npc, st, busy, dist_limit)
+	local res = false
+	local min_dist = 100000
+	local function check_item(o)
+		local obj = o:object()
+		if obj_owner[obj:id()] and (level.object_by_id(obj_owner[obj:id()]) == nil or level.object_by_id(obj_owner[obj:id()]):alive() == false) then
+			obj_owner[obj:id()] = nil
+		end
+			if (not st.disabled_objects[obj:id()]) and (obj:parent() == nil or not IsStalker(obj:parent())) and
+					(obj_owner[obj:id()] == nil or obj_owner[obj:id()] == npc:id()) then
+				-- ПЕРФ: isValuable теперь дешёвая (кэш по секции) и стоит ПЕРЕД дорогим npc:accessible.
+				-- Большинство видимых объектов (живые сталкеры, мусор) отсекаются без запроса графа путей.
+				local valuable, corpse = isValuable(obj)
+				if valuable and npc:accessible(obj:level_vertex_id()) and
+						(db.actor == nil or db.actor:alive() == false or db.actor:position():distance_to_sqr(obj:position()) > 6) then
+					local value = 3000
+					if not corpse then
+						value = objValue(obj)
+					end
+					if value <= 0 then
+						value = 0
+					end
+					local max_dist = 5 + math.sqrt(value)
+					if busy then
+						max_dist = max_dist / 5
+					end
+					local dist = level.vertex_position(obj:level_vertex_id()):distance_to(npc:position())
+					local corrected_dist = dist
+					if dist > 5 then
+						corrected_dist = 5 + (dist - 5) / math.sqrt(value)
+					end
+					if dist < max_dist and corrected_dist < min_dist and dist < dist_limit then
+						min_dist = corrected_dist
+						claimGObject(npc, st, obj)
+						res = true
+					end
+				end
+			end
+	end -- function check_item
+	for o in npc:memory_visible_objects() do
+		check_item(o)
+	end
+	for o in npc:memory_sound_objects() do
+		check_item(o)
+	end
+	--			for o in npc:not_yet_visible_objects() do
+	--				check_item(o)
+	--			end
+	return res
+end
+
 function ev_see_stuff:evaluate()
+	-- ПЕРФ: результат кэшируем на 250 мс, чтобы не гонять дорогие проверки на каждый brain-update.
+	local now = time_global()
+	if self._ev_tm and now < self._ev_tm then
+		return self._ev_res
+	end
+	self._ev_tm = now + 250
+
 	if self.object:best_enemy() then
+		self._ev_res = false
 		return false
 	end
 	local res = getGObject(self.st) ~= nil
 	local npc = self.object
 	-- ПЕРФ: try_switch_to_another_section дорогая (парсинг condlist + see_actor), bad_situation (get_nearest_anomaly + iterate_inventory).
-	-- Кэшируем результат: тяжёлые проверки раз в WATCHER_CHECK_PERIOD мс, вместо каждого кадра.
-	local now = time_global()
+	-- Кэшируем результат: тяжёлые проверки раз в 2000 мс, вместо каждого кадра.
 	if self.st._chk_time == nil or now >= self.st._chk_time then
-		self.st._chk_time = now + 1000
+		self.st._chk_time = now + 2000
 		local actsch = db.storage[npc:id()].active_scheme
 		if actsch and db.actor then
 			xr_logic.try_switch_to_another_section(npc, db.storage[npc:id()][actsch], db.actor)
@@ -298,6 +376,7 @@ function ev_see_stuff:evaluate()
 			freeGObject(self.st)
 			--log1(npc:name().." distracted. sect "..act_sec,"grb")
 		end
+		self._ev_res = false
 		return false
 	end
 	local dist_limit = 1000
@@ -307,56 +386,17 @@ function ev_see_stuff:evaluate()
 	local busy = bgwith(act_sec, "walker") or bgwith(act_sec, "combat") or bgwith(act_sec, "danger") -- or npc:best_danger()
 	if res and self.st.block_search then
 		-- NPC собрался взять вещь. Временно прекратим поиск.
+		self._ev_res = true
 		return true
 	end
-	timed(self.st, "tm1", 5000 + math.random() * 10000,
-		function()
-			local min_dist = 100000
-			local function check_item(o)
-				local obj = o:object()
-				if obj_owner[obj:id()] and (level.object_by_id(obj_owner[obj:id()]) == nil or level.object_by_id(obj_owner[obj:id()]):alive() == false) then
-					obj_owner[obj:id()] = nil
-				end
-					if (not self.st.disabled_objects[obj:id()]) and (obj:parent() == nil or not IsStalker(obj:parent())) and
-							(obj_owner[obj:id()] == nil or obj_owner[obj:id()] == npc:id()) and npc:accessible(obj:level_vertex_id()) and
-							(db.actor == nil or db.actor:alive() == false or db.actor:position():distance_to_sqr(obj:position()) > 6) then
-					local valuable, corpse = isValuable(obj)
-					if valuable then
-						local value = 3000
-						if not corpse then
-							value = objValue(obj)
-						end
-						if value <= 0 then
-							value = 0
-						end
-						local max_dist = 5 + math.sqrt(value)
-						if busy then
-							max_dist = max_dist / 5
-						end
-						local dist = level.vertex_position(obj:level_vertex_id()):distance_to(npc:position())
-						local corrected_dist = dist
-						if dist > 5 then
-							corrected_dist = 5 + (dist - 5) / math.sqrt(value)
-						end
-						if dist < max_dist and corrected_dist < min_dist and dist < dist_limit then
-							min_dist = corrected_dist
-							claimGObject(npc, self.st, obj)
-							res = true
-						end
-					end
-				end
-			end -- function check_item
-			for o in npc:memory_visible_objects() do
-				check_item(o)
-			end
-			for o in npc:memory_sound_objects() do
-				check_item(o)
-			end
-			--			for o in npc:not_yet_visible_objects() do
-			--				check_item(o)
-			--			end
-		end
-	)
+	-- Первый вызов только ставит таймер, далее скан каждые 8-20 сек (ПЕРФ: реже, чем 5-15 сек).
+	if not self.st.tm1 then
+		self.st.tm1 = now + 8000 + math.random() * 12000
+	elseif now >= self.st.tm1 then
+		self.st.tm1 = now + 8000 + math.random() * 12000
+		res = scan_stuff(npc, self.st, busy, dist_limit)
+	end
+	self._ev_res = res
 	return res
 end
 

@@ -49,6 +49,17 @@ function evaluator_trading:evaluate()
 			return false
 		end
 	end
+	
+	-- TODO Отключать еще при выбросе!!
+	
+	local spawn_ini = npc:spawn_ini()
+	if spawn_ini and spawn_ini:section_exist("logic") then
+		return false -- Сталкеры имеющие логику в кастом дате так-же игнорируются
+	end
+	
+	if olr_protected.is_no_offline_alife_obj(npc:name()) then 
+		return false -- Квестовые защищенные и прочие непеси из этого списка НЕ ДОЛЖНЫ БЛЯ БЕЖАТЬ ТОРГОВАТЬ
+	end
 
 	if has_alife_info("olr_traders_night") then
 		return false
@@ -71,10 +82,18 @@ function evaluator_trading:evaluate()
 	if npc:name() == "esc_raid_scientist_0001" then
 		return false
 	end
+	if npc:name() == "lvl1_escape_stalker_0054" then -- Сивый
+		return false
+	end
+	if npc:name() == "lvl1_escape_stalker_0055" then -- Чёрт
+		return false
+	end
+	
 	if npc:character_community() == "military" 
-		or npc:character_community() == "trader" 
-		or npc:character_community() == "monolith" 
-		or npc:character_community() == "neutral" 
+		or npc:character_community() == "zombied"
+		or npc:character_community() == "trader"
+		or npc:character_community() == "monolith"
+		or npc:character_community() == "neutral"
 		or npc:character_community() == "bandit"
 		or npc:character_community() == "voenstals"
 		or npc:character_community() == "sin"  then
@@ -90,7 +109,7 @@ function evaluator_trading:evaluate()
 		if has_alife_info("kvest_bar_2_dialog_start") then
 			return false -- Жаба свалил на Холмы
 		end
-		if npc:money() > 100 then
+		if npc:money() > 1000 then
 			return true
 		end
 		if npc:ruck_count() > 25 then
@@ -102,7 +121,7 @@ function evaluator_trading:evaluate()
 		if not has_alife_info("greh_leader_key_taken_docs_vetri") then
 			return false -- Жаба свалил на Холмы
 		end
-		if npc:money() > 300 then
+		if npc:money() > 3000 then
 			return true
 		end
 		if npc:ruck_count() > 25 then
@@ -121,7 +140,7 @@ function evaluator_trading:evaluate()
 		if has_alife_info("bun_antenna_off") then
 			return false -- бармен свалил
 		end
-		if npc:money() > 500 then
+		if npc:money() > 5000 then
 			return true
 		end
 		if npc:ruck_count() > 25 then
@@ -601,7 +620,10 @@ function add_to_binder(object, char_ini, scheme, section, st)
 	local new_action = action_go_trade(st)
 	new_action:add_precondition(world_property(property_wounded, false))
 	new_action:add_precondition(world_property(stalker_ids.property_alive, true))
-	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))
+	new_action:add_precondition(world_property(stalker_ids.property_danger,false)) -- Не было проверок на отсуствие апасности
+	new_action:add_precondition(world_property(stalker_ids.property_enemy, false)) -- и на отсуствие ворога
+	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))	
+	
 	xr_motivator.addCommonPrecondition(new_action)
 	new_action:add_effect(world_property(ev_trade_now, false))
 	planner:add_action(ac_trade, new_action)

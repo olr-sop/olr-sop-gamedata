@@ -1,28 +1,25 @@
-
 [zone_rusty_hair]
 GroupControlSection		= spawn_group_zone
 $spawn 					= "zones\rusty hair"
 ;$prefetch 				= 16
-class					= Z_RUSTYH
-script_binding				= bind_anomaly.Init
+class					= ZS_BFUZZ
 visual					= physics\anomaly\liana_01
-min_speed_to_react		= 2.0
 ef_anomaly_type			= 7
 ef_weapon_type			= 19
+script_binding			= bind_anomaly.Init
+min_speed_to_react		= 1.5
 
 throw_impulse			= 0.1
 hit_impulse_scale		= 0.05 ;0.5
-effective_radius		= 0.75 ;размер радиуса в процентах от оригинального, где действует зона
+effective_radius		= 1 ;размер радиуса в процентах от оригинального, где действует зона
 postprocess				= anomaly_rustyhair
-
-artefacts			= af_thorn,0.7,af_thorn_black,0.25,af_needle,0.05
 
 shape_transp_color		= 255, 0, 0, 60
 shape_edge_color		= 32, 32, 32, 255
 
 ;----------- Anomaly settings -----------------------
-min_start_power		= 0.039 ;0.019
-max_start_power		= 0.040 ;0.020
+min_start_power		= 0.9
+max_start_power		= 1.0
 attenuation			= 1
 period				= 1
 min_artefact_count	= 1
@@ -30,44 +27,37 @@ max_artefact_count	= 2
 
 hit_big_particles			= anomaly2\gravity_damage_02_blood3
 
-;blowout_sound		= anomaly\burning_fuzz_blowout
-hit_sound			= anomaly\burning_fuzz_hit
+blowout_sound			= anomaly\burning_fuzz_blowout
+hit_sound				= anomaly\burning_fuzz_hit
 
-hit_type		= shock
+hit_type		    = burn
 
 disable_time		= -1	;время игнорирования неживого объекта в зоне (-1 если не нужно)
 disable_time_small	= 500		;время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
 disable_idle_time	= -1	;время отключения idle партиклов
 
-ignore_nonalive		= true ;false;
-ignore_small		= false;
-ignore_artefacts	= true
+awaking_time			= 50
+blowout_time			= 1000	
+accamulate_time			= 5000
 
-awaking_time				= 500
-blowout_time				= 8000 ;1000	
-accamulate_time				= 1000 ;5000
+attack_animation_start	= 10
+attack_animation_end	= 1000
 
-attack_animation_start		= 0
-attack_animation_end		= 8000 ;1000
+ignore_nonalive			= true;
+ignore_small			= false;
+ignore_artefacts		= true
 
-blowout_light		= off
-idle_light			= off
+blowout_light			= off
+idle_light				= off
+blowout_wind			= off
+visible_by_detector		= on
 
-visible_by_detector = on
-
-blowout_wind		= off
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;рождение артефактов 
 artefacts						= af_rusty_hair, 1.0
-
-;во время срабатывания в online
-spawn_blowout_artefacts			= on					; рождение артефактов во время срабатывания, для true принимаются on/yes/true/1, иначе значение будет false
-
-artefact_spawn_probability		= 0.6					;вероятность, что во время срабатывания аномалии будет рожден артефакт
-artefact_spawn_cycles			= 1						; кол-во проходов при смерти сущности в аномалии, 2 по умолчанию
+spawn_blowout_artefacts			= on
+artefact_spawn_probability		= 0.7					;вероятность, что во время срабатывания аномалии будет рожден артефакт
+artefact_spawn_cycles			= 2						; кол-во проходов при смерти сущности в аномалии, 2 по умолчанию
 artefact_spawn_particles		= anomaly2\pux_blast	;партиклы, которые отыграются на месте рождения артефакта (опционально)
 artefact_born_sound				= anomaly\pux_blast		;звук, который отыграются на месте рождения артефакта (опционально)
 
-throw_out_power					= 3					;импульс с которым артефакт будет выброшен из зоны в произвольном направлении
+throw_out_power					= 3						;импульс с которым артефакт будет выброшен из зоны в произвольном направлении
 artefact_spawn_height			= 5						;(м) высота на центром зоны где будет рожден артефакт

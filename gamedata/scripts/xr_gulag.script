@@ -7,17 +7,8 @@ level_gulags = {
 gulag_general,
 gulag_escape,
 gulag_garbage,
-gulag_agroprom,
-gulag_agroprom_underground,
-gulag_dark_valley,
-gulag_labx18, 
 gulag_bar,
-gulag_military,
-gulag_radar,
-gulag_radar_u,
-gulag_yantar,
-gulag_pripyat,
-gulag_deadcity
+gulag_yantar
 
 }
 
@@ -140,7 +131,7 @@ function gulag:validate_jobs()
 
 	for i, v in ipairs( jobs_avail_in_states ) do
 		if v < self.capacity then
-			print_table( self.Job )
+--			print_table( self.Job )
 			abort( "[smart_terrain %s] type=%s state=%d capacity=%d: too few absolutely available jobs", self.name, self.type, i, self.capacity )
 		end
 	end
@@ -197,8 +188,10 @@ function gulag:prepare_jobs()
 
 	for obj_id, jobN in pairs( self.ObjectJob ) do
 		job        = self.Job[jobN]
-		job.object = obj_id
-		self.ObjectJobPathName[obj_id] = job.path_name
+		if job ~= nil then
+			job.object = obj_id
+			self.ObjectJobPathName[obj_id] = job.path_name
+		end
 	end
 end
 
@@ -502,17 +495,19 @@ function gulag:can_obj_begin_job( obj_id, obj )
 
 	if jobN and not self.Object_begin_job[obj_id] then
 		local job = self.Job[jobN]
-		
-		-- Спешл кейс, проверка только по вертексам графа
-		if job.position_threshold == "graph" then
-			local obj_gv, obj_pos = self:get_obj_game_vertex_and_position( obj_id )
-			local job_gv          = game_graph():vertex( job.game_vertex_id )
-			if obj_gv:level_vertex_id() == job_gv:level_vertex_id() then
-				return true
+		if job ~= nil then
+			--' Спешл кейс, проверка только по вертексам графа
+			if job.position_threshold == "graph" then
+				local obj_gv, obj_pos = self:get_obj_game_vertex_and_position( obj_id )
+				local job_gv          = game_graph():vertex( job.game_vertex_id )
+				if obj_gv:level_vertex_id() == job_gv:level_vertex_id() then
+					return true
+				end
+				return false
 			end
+		else
 			return false
 		end
-	
 		return self:distance_to_job_location(obj_id, job) < (job.position_threshold or job_position_threshold)
 	else
 		return false
@@ -559,8 +554,9 @@ function gulag:obj1_job_suits_obj2( obj_id, npc_info )
 		printf( "job=nil! obj=%s obj_id=%d", self.npc_info[obj_id].name, obj_id )
 		self:print()
 	end
-
-	return not job.predicate or job.predicate( npc_info, self )
+  	if job ~= nil then
+  		return not job.predicate or job.predicate( npc_info, self )
+  	end
 end
 
 -- существует ли указанное состояние в табличке?
@@ -1216,7 +1212,7 @@ function setup_gulag_and_logic_on_spawn( obj, st, sobject, stype, loaded )
 			strn_id = 65535
 		end
 		
-		if strn_id == 0 then strn_id = 65535 end
+		--if strn_id == 0 then strn_id = 65535 end
 		
 		local strn                   = sim:object( strn_id )
 		

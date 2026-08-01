@@ -50,10 +50,9 @@ function sleep_main(hours, minutes, safety_place) -- Основная функция
 		start_sleep(hours, minutes, true)
 	end
 end
-
 function start_sleep(hours, minutes, safety_place) -- вызывается из основной функции sleep_main
-	log1("* [INFO] Call start_sleep, times set to ["..tostring(hours)..":"..tostring(minutes).."]")
-	log1("* [INFO] Actor start sleep")
+	--log1("* [INFO] Call start_sleep, times set to ["..tostring(hours)..":"..tostring(minutes).."]")
+	--log1("* [INFO] Actor start_sleep")
 	xr_effects.disable_ui(db.actor, nil) -- Отключаем интерфейс
 	olr.switch_torch(false) -- Отключаем фонарик
 	hours_to_sleep = hours -- записываем скока спим часы
@@ -63,10 +62,11 @@ function start_sleep(hours, minutes, safety_place) -- вызывается из основной фун
 	blow_sleep_timer_low(hours_to_sleep) -- Задаём время до выброса (Думаю лучше тут перед сном сдвинуть время до выброса)
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback") -- старт анимки, запуск скрипта в конце
 	level.add_pp_effector("sleep_fade.ppe", 11, false) -- запуск затемненеия
+	surge_manager.resurrect_skip_message()
 end
 
 function dream_callback() -- вызывается из start_sleep
-	log1("* [INFO] Actor dream_callback")
+	--log1("* [INFO] Actor dream_callback")
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback2") -- старт анимки, запуск скрипта в конце
 	level.change_game_time(0,hours_to_sleep,minutes_to_sleep) -- перемотка
 	db.actor.power = 1 -- восстанавливаем повар
@@ -96,12 +96,16 @@ function dream_callback() -- вызывается из start_sleep
 end
 
 function dream_callback2() -- вызывается из dream_callback
-	log1("* [INFO] Actor dream_callback2")
+	--log1("* [INFO] Actor dream_callback2")
 	xr_effects.enable_ui(db.actor, nil)
 	hours_to_sleep = 0 -- обнуляем
 	minutes_to_sleep = 0 -- обнуляем
 	sleep_in_safety_place = false -- обнуляем
 	actor_sleep = false -- обнуляем
+	surge_manager.get_surge_manager().time_forwarded = true
+	if surge_manager.is_started() then
+		level.stop_weather_fx()
+	end
 end
 
 function sleep_check_not_safety() -- проврека на выброс (добавить остальные проверки)
@@ -148,6 +152,66 @@ end
 
 function check_actor_sleep()
 	return actor_sleep
+end
+
+-- Специальная версия для квеста на милитари
+
+function sleep_main_special(hours, minutes) -- Специальная функция, отключены все проверки.
+	
+    if hours == nil then hours = 0 end
+    if minutes == nil then minutes = 0 end
+
+	start_sleep_special(hours, minutes, true)
+end
+
+
+function start_sleep_special(hours, minutes, safety_place) -- вызывается из основной функции sleep_main
+	--log1("* [INFO] Call start_sleep, times set to ["..tostring(hours)..":"..tostring(minutes).."]")
+	--log1("* [INFO] Actor start_sleep_special")
+	xr_effects.disable_ui(db.actor, nil) -- Отключаем интерфейс
+	olr.switch_torch(false) -- Отключаем фонарик
+	hours_to_sleep = hours -- записываем скока спим часы
+	minutes_to_sleep = minutes -- записываем скока спим минуты
+	sleep_in_safety_place = safety_place -- заносим значение безопасного места для сна
+	actor_sleep = true -- говорим что мы спим
+	blow_sleep_timer_low(hours_to_sleep) -- Задаём время до выброса (Думаю лучше тут перед сном сдвинуть время до выброса)
+	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback_special") -- старт анимки, запуск скрипта в конце
+	level.add_pp_effector("sleep_fade.ppe", 11, false) -- запуск затемненеия
+end
+
+function dream_callback_special() -- вызывается из start_sleep
+	--log1("* [INFO] Actor dream_callback_special")
+	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback2_special") -- старт анимки, запуск скрипта в конце
+	level.change_game_time(0,hours_to_sleep,minutes_to_sleep) -- перемотка
+	
+	-- Полный рестор
+	db.actor.health = 1
+	db.actor.satiety = 1
+	db.actor.thirst = 1
+	db.actor.sleep = 1
+	db.actor.radiation = -1	
+	
+	nick.clear_drinked_vodka() -- Обнуляет кол-во выпитых бутылок водки
+	unic_arts() -- Лечит болезни после сна при наличии арта "Невидимый куб"
+	yan_dead_call() -- Странные сообщения на янтаре
+	set_food_art_sleep() -- Задаёт состояние еды и детекторов если те на поясе после сна
+	db.actor:disable_info_portion("actor_has_prostuda") -- Лечим простуду
+	olr.check_time() -- Выдаёт поршни дня или ночи торгашей
+	olr_blowout.clear_dead_monsters() -- Чистим локации от мёртвых мутантов в оффлайне	
+	
+end
+
+function dream_callback2_special() -- вызывается из dream_callback
+	--log1("* [INFO] Actor dream_callback2")
+	xr_effects.enable_ui(db.actor, nil)
+	hours_to_sleep = 0 -- обнуляем
+	minutes_to_sleep = 0 -- обнуляем
+	sleep_in_safety_place = false -- обнуляем
+	actor_sleep = false -- обнуляем
+	surge_manager.get_surge_manager().time_forwarded = true
+	if surge_manager.is_started() then
+		level.stop_weather_fx()
+	end	
 end
 
 ------------------------------------------------------------------------------------------------------------------------ 

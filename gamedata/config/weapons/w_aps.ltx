@@ -24,7 +24,7 @@ item_amount = 3
 
 3d_static_scale = 1.1
 
-cost				= 240				; the price of the item
+cost				= 150				; the price of the item
 weapon_class			= assault_rifle		; the type of the box that will be used in buy-menu in multiplayer mode	
 	
 ammo_limit			= 210				; obsolete
@@ -62,23 +62,27 @@ kill_msg_height		= 24
 
 ;-----------------------------------------------------------------------------------
 ;базовая дисперсия
-control_inertion_factor		= 1.4
-fire_dispersion_base		= 0.24	;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_base			= 0.2		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_condition_factor= 6			;увеличение дисперсии в процентах при максимальном износе 
+condition_shot_dec				= 0.00015	;увеличение износа при каждом выстреле
 
 ;отдача
-cam_relax_speed         	= 8	;скорость возврата в исходное положение
-cam_relax_speed_ai         	= 6
-cam_dispersion          	= 1.4	;увеличения угла (в градусах) с каждым выстрелом
-cam_dispersion_inc		= 0.0	;увеличениe cam_dispersion с каждым выстрелом
-cam_dispersion_frac		= 1.0	;ствол будет подыматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
-cam_max_angle			= 60.0	;максимальный угол отдачи
-cam_max_angle_horz		= 16.0	;(degree) maximum shot horizontal degree 
-cam_step_angle_horz		= 0.6	;(degree) size of step camera moved in horizontal position while shooting
+cam_dispersion					= 0.35		;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc				= 0.45		;увеличениe cam_dispersion с каждым выстрелом
+cam_dispersion_frac				= 0.85		;ствол будет подниматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
+cam_max_angle					= 31.0		;максимальный угол отдачи
+cam_max_angle_horz				= 16.0		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz				= 0.75		;(degree) size of step camera moved in horizontal position while shooting
+cam_relax_speed					= 8			;скорость возврата в исходное положение
 
-fire_dispersion_condition_factor 	= 5	;увеличение дисперсии в процентах при максимальном износе 
-misfire_probability 			= 0.0015	;вероятность осечки при максимальном износе 
-misfire_condition_k			= 0.015
-condition_shot_dec			= 0.00024 ;увеличение износа при каждом выстреле
+control_inertion_factor			= 1
+misfire_probability				= 0.0015	;вероятность осечки при максимальном износе 
+
+PDM_disp_crouch					= 1
+PDM_disp_crouch_no_acc			= 0.95
+PDM_disp_accel_factor			= 1.3
+PDM_disp_base					= 1
+PDM_disp_vel_factor				= 1.3
 ;--------------------------------------------------------------------------------
 
 flame_particles			= weapons\generic_weapon03
@@ -87,26 +91,20 @@ smoke_particles			= weapons\generic_shoot_00
 shell_point		 	= 0,0.234,0.026				; position (3rd person view) for shell to throw out
 shell_particles	 		= weapons\generic_shells	; name of the particles for shells
 
-PDM_disp_base 				= 0.5
-PDM_disp_vel_factor 		= 1.1
-PDM_disp_accel_factor 		= 1.1
-PDM_disp_crouch	 			= 1
-PDM_disp_crouch_no_acc 		= 1
-
 ; ttc
-hit_power        	= 0.42
-hit_impulse		 	= 24
+hit_power			= 0.364
+hit_impulse			= 28.5
 hit_type 			= fire_wound
 
-fire_distance            	= 100		; maximum fire distance that bullet can fly
-bullet_speed			= 340		; starting bullet speed
-rpm                      	= 600		; max round per minute
+fire_distance		= 200		; maximum fire distance that bullet can fly
+bullet_speed		= 340		; starting bullet speed
+rpm					= 700		; max round per minute
 
-use_aim_bullet			= true		;Поддерживается ли первая суппер пуля
+use_aim_bullet		= true		;Поддерживается ли первая суппер пуля
 time_to_aim			= 1.0	
 
-silencer_hit_power       	= 0.38
-silencer_hit_impulse	 	= 10
+silencer_hit_power       	= 0.32
+silencer_hit_impulse	 	= 24.5
 silencer_fire_distance   	= 50
 silencer_bullet_speed	 	= 220
 
@@ -115,7 +113,7 @@ normal                   	= 0, 1, 0
 position         	        = -0.026000,-0.192000,0.003000			; position (offset) and orientation of the weapon in the hands of character
 orientation      	        = -0.026000,-0.174000,0.002000						; (3rd person view)
 
-fire_point             		=  0,0.226,0.162			; position (3rd person view) for particles of fire 
+fire_point             		= 0.000000,0.241000,0.202000			; position (3rd person view) for particles of fire 
 
 ;--STRAP PARAMETERS-----------------------------------------------------------------
 strap_position         		= -0.16,-0.40,0.15			; position (offset) and orientation of the weapon when it is strapped
@@ -146,9 +144,8 @@ silencer_y 			= -16
 ;------------------------------ S.T.A.L.K.E.R`s sound remake ------------------------------
 snd_draw					= weapons\pm\draw
 snd_holster					= weapons\general\holster
-snd_shoot					= weapons\pm\shoot   
+snd_shoot					= weapons\aps\shoot
 snd_empty					= weapons\general\pistol_empty
-; snd_reload					= weapons\aps\p_reload2, 0.8
 snd_reload					= weapons\pm\reload, 0.8
 snd_close					= weapons\general\holster
 snd_silncer_shot			= weapons\pb\shoot, 0.4
@@ -175,15 +172,23 @@ silencer_light_time 		= 0.2
 
 allow_inertion = true
 
-shell_point			= -0.14,0.05,0.09
-fire_point			= -0.082,0.016,0.019
-fire_bone                	= wpn_body
+shell_point		         = -0.0, -0.0, 0.0
+fire_point               = -0.050000,0.000000,0.090000
+fire_bone                = wpn_body
 
-position			= 0.112000,-0.038000,-0.110000
-orientation			= 8.677805,3.990414,0.000000
+;позиция и направление оружия с руками
+orientation              = 0,0,0
+position                 = 0.000000,-0.010000,-0.030000
 
-visual                  	= weapons\aps\aps_hud.ogf
+;смещения HUD для режима приближения
+zoom_offset			= -0.374400,0.119700,0.000000
+zoom_rotate_x		= 0.109700
+zoom_rotate_y		= 0.281600
 
+;модель оружия с руками
+visual                   	= weapons\aps\aps_hud.ogf
+
+;анимации оружия
 anim_holster				= holster
 anim_idle					= idle
 anim_empty					= empty
@@ -191,23 +196,9 @@ anim_reload					= reload_full
 anim_reload_empty			= reload
 anim_draw					= draw
 anim_draw_empty				= draw_empty
-anim_shoot					= shoot
+anim_shoot					= shoot1
 anim_shot_last				= shoot_last
-anim_close					= holster ;idle
+anim_close					= close
 anim_idle_aim				= idle_aim
 anim_idle_sprint			= idle_sprint
-anim_reload_jammed          = misfire
-
-;-----------------------OLR 3--------------------------
-
-anim_idle_walk = idle
-anim_idle_walk_slow = idle
-
-anim_idle_walk_empty = idle
-anim_idle_walk_slow_empty = idle
-
-;смещения HUD для режима приближения
-zoom_offset			= -0.24,0.092,-0.0685
-zoom_rotate_x		= 0.063000
-zoom_rotate_y		= 0.152500
 

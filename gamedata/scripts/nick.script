@@ -1,6 +1,5 @@
 -- Различные сюжетные функции
 -- hi_flyer, OLR mod 2012-2024
--- olr.beep()
 
 function delete_netspawn_objects(obj_ids)
     local sim = alife()
@@ -51,7 +50,6 @@ function has_radweaknow()
 end
 
 function esc_polter_dead_st()
-	olr.beep()
 	db.actor:change_character_reputation(15)
 	news_manager.send_tip(db.actor, game.translate_string("esc_polter_dead_st_0"), 5, "trader", 25000, nil, nil, true, "escape_trader_name")
 end
@@ -79,15 +77,15 @@ end
 
 function give_battery_charge()
 	olr.give_item("battery_change")
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("give_battery_charge_0"), 3, "neutral", 20000)
 end
 
 function prof_sos_talk_saved_priz()
 	olr.give_item("battery_change")
-	news_manager.send_tip(db.actor, game.translate_string("prof_sos_talk_saved_priz_0"), nil, "money_found", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("prof_sos_talk_saved_priz_0"), nil, "money_found", 39000)
 	db.actor:give_money(800)
 	game_stats.money_quest_update(800)
+	news_manager.relocate_money(db.actor, "in", 800)
 end
 
 function mil_nap_on_base_blow_st()
@@ -116,9 +114,10 @@ function prec_art_mil_jaba()
 end
 
 function pes_art_otdaem()
-	news_manager.send_tip(db.actor, game.translate_string("pes_art_otdaem_0"), nil, "money_found", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("pes_art_otdaem_0"), nil, "money_found", 39000)
 	db.actor:give_money(3000)
 	game_stats.money_quest_update(3000)
+	news_manager.relocate_money(db.actor, "in", 3000)
 	nik_dialog.out_item_much("art_mil_jaba",1)
 	olr.del_by_name("mil_naparnik_niva_ph")
 end
@@ -327,7 +326,6 @@ function dopseif_bar_start()
 end
 
 function dopseif_bar_done()
-	--olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("dopseif_bar_done_0"), nil, "artifact_merger", 10000)
 	olr.del_by_name("lvl5_bar_physic_object_0028")
 	olr.to_online("lvl5_bar_inventory_box_dopseif")
@@ -405,27 +403,22 @@ function daem_snotvornoe_bar()
 end
 
 function osved_turisty_band_kill()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("osved_turisty_band_kill_0"), nil, "flash", 30000)
 	olr.info("kill_band_turisty")
 end
 
 function kill_dolina_malboro_dead_all_spaw_now()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("kill_dolina_malboro_dead_all_spaw_now_0"), nil, "hero", 30000)
 	news_manager.send_tip(db.actor, game.translate_string("kill_dolina_malboro_dead_all_spaw_now_1"), 4, "flash", 30000)
 	olr_timers.st_timer("osved_turisty_band_kill", 414, "nick.osved_turisty_band_kill()")
 end
 
 function osved_dolina_band_kill()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("osved_dolina_band_kill_0"), nil, "flash", 30000)
 	olr.info("kill_dolina_malboro")
-	olr.info("kill_dolina_malboro_dead_all")
 end
 
 function osved_bar_band_kill()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("osved_bar_band_kill_0"), nil, "flash", 30000)
 	olr.info("kill_bar_portoshitely")
 end
@@ -434,22 +427,6 @@ function garage_fedka_bandosi()
 	olr.spawn_on_obj("sim_respawn_bandit_novice", "lvl2_garbage_stalker_0063")
 	olr.spawn_on_obj("sim_respawn_bandit_general", "lvl2_garbage_stalker_0063")
 	olr.spawn_on_obj("sim_respawn_bandit_novice", "lvl2_garbage_stalker_0063")	
-end
-
-function garage_zombi_from_doliana()
-	olr.spawn_on_obj("m_zombie_e", "gar_smart_bandit_2")
-	olr.spawn_on_obj("m_zombie_e", "gar_smart_bandit_2")
-	olr.spawn_on_obj("m_zombie_e", "gar_smart_bandit_2")
-
-	olr.spawn_on_obj("m_zombie_e", "gar_smart_bandit_2")
-	olr.spawn_on_obj("m_zombie_e", "gar_smart_bandit_2")
-
-	olr.spawn_on_obj("m_zombie_e", "lvl2_garbage_zone_radioactive_weak_0117")
-	olr.spawn_on_obj("m_zombie_e", "lvl2_garbage_zone_radioactive_weak_0117")
-	olr.spawn_on_obj("m_zombie_e", "lvl2_garbage_zone_radioactive_weak_0117")
-	olr.spawn_on_obj("m_zombie_e", "lvl2_garbage_zone_radioactive_weak_0117")
-	olr.spawn_on_obj("m_zombie_e", "lvl2_garbage_zone_radioactive_weak_0117")
-
 end
 
 function garage_dolg_from_doliana()
@@ -467,7 +444,6 @@ function biolab_kamaz_fail()
 end
 
 function sos_yan_dead_sms()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("sos_yan_dead_sms_0"), 1, "professor", 39000, nil, nil, true, "st_yan_general_ecolog_name")
 	olr_timers.st_timer("set_ac_gen_enem", 4, "nick.sos_yan_dead_sms2()")
 end
@@ -682,37 +658,37 @@ function look_yantar(obj)
 end
 
 function chaes_anoms_dell_jurn()
-	news_manager.send_tip(db.actor, game.translate_string("chaes_anoms_dell_jurn_0"), 28, "freedom", 19000)
-	olr.kill_mon_in_radius(db.actor:position(), 50)
+--	news_manager.send_tip(db.actor, game.translate_string("chaes_anoms_dell_jurn_0"), 28, "freedom", 19000)
+--	olr.kill_mon_in_radius(db.actor:position(), 50)
 	
-	olr.del_by_name("zone_mosquito_bald0030_stan")
-	olr.del_by_name("lvl11_deadcity_staler_undead_olr")
-	olr.del_by_name("lvl13_prip_space_restrictor_0016")
-	olr.del_by_name("lvl13_prip_space_restrictor_0015")
-	olr.del_by_name("lvl13_prip_space_restrictor_0014")
-	olr.del_by_name("lvl13_prip_space_restrictor_0013")
-	olr.del_by_name("lvl13_prip_m_car")
+--	olr.del_by_name("zone_mosquito_bald0030_stan")
+--	olr.del_by_name("lvl11_deadcity_staler_undead_olr")
+--	olr.del_by_name("lvl13_prip_space_restrictor_0016")
+--	olr.del_by_name("lvl13_prip_space_restrictor_0015")
+--	olr.del_by_name("lvl13_prip_space_restrictor_0014")
+--	olr.del_by_name("lvl13_prip_space_restrictor_0013")
+--	olr.del_by_name("lvl13_prip_m_car")
 	
-	olr.spawn_on_obj("m_gigant_e", "rad_zone_radioactive_0038")
-	olr.spawn_on_obj("gigant_strong", "rad_zone_radioactive_0038")
-	olr.spawn_on_obj("sim_respawn_soldier_milstalker", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_soldier_milstalker", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_soldier_milstalker", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
-	olr.spawn_on_obj("sim_respawn_stalker_general", "matress_prip_krovo")
-	olr.spawn_on_obj("sim_respawn_stalker_veteran", "matress_prip_krovo")
-	olr.spawn_on_obj("sim_respawn_stalker_master", "matress_prip_krovo")
-	olr.spawn_on_obj("sim_respawn_monolith_regular", "lvl56545_bar_space_restrictor_0013")
-	olr.spawn_on_obj("sim_respawn_monolith_specnaz", "lvl56545_bar_space_restrictor_0013")
-	olr.spawn_on_obj("sim_respawn_monolith_master", "lvl56545_bar_space_restrictor_0013")
-	olr.spawn_on_obj("sim_respawn_monolith_regular", "lvl56545_bar_space_restrictor_0013")
-	olr.spawn_on_obj("sim_respawn_monolith_specnaz", "lvl56545_bar_space_restrictor_0013")
-	olr.spawn_on_obj("sim_respawn_monolith_master", "lvl56545_bar_space_restrictor_0013")
+--	olr.spawn_on_obj("m_gigant_e", "rad_zone_radioactive_0038")
+--	olr.spawn_on_obj("gigant_strong", "rad_zone_radioactive_0038")
+--	olr.spawn_on_obj("sim_respawn_soldier_milstalker", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_soldier_milstalker", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_soldier_milstalker", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_soldier_specnaz", "rad_zone_radioactive_0072")
+--	olr.spawn_on_obj("sim_respawn_stalker_general", "matress_prip_krovo")
+--	olr.spawn_on_obj("sim_respawn_stalker_veteran", "matress_prip_krovo")
+--	olr.spawn_on_obj("sim_respawn_stalker_master", "matress_prip_krovo")
+--	olr.spawn_on_obj("sim_respawn_monolith_regular", "lvl56545_bar_space_restrictor_0013")
+--	olr.spawn_on_obj("sim_respawn_monolith_specnaz", "lvl56545_bar_space_restrictor_0013")
+---	olr.spawn_on_obj("sim_respawn_monolith_master", "lvl56545_bar_space_restrictor_0013")
+--	olr.spawn_on_obj("sim_respawn_monolith_regular", "lvl56545_bar_space_restrictor_0013")
+--	olr.spawn_on_obj("sim_respawn_monolith_specnaz", "lvl56545_bar_space_restrictor_0013")
+--	olr.spawn_on_obj("sim_respawn_monolith_master", "lvl56545_bar_space_restrictor_0013")
 
-	olr.to_online("lvl10_radar_physic_object_0206")
+--	olr.to_online("lvl10_radar_physic_object_0206")
 end
 
 function jaba_kill_greh_kk_tip()
@@ -757,34 +733,6 @@ function engame_fun_monolitc()
 
 	local rnd = mrandom(90, 157)
 	olr_timers.st_timer("engame_fun_monolitc", rnd, "nick.engame_fun_monolitc()")
-end
-
-function spawn_jourlalist_monstrs_spawn_online()
-	olr.snd([[ambient\special\pripyat_monsters_spawn]])
-	olr.horror_snd()
-	local wait_time = 0
-	wait_time = time_global() + 11200
-	level.add_call(
-		function()
-			return time_global() > wait_time
-		end,
-		function()
-			olr.snd([[ambient\special\pripyat_monsters_shootout]])
-		end
-	)
-	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_monstrs_spawn_online_0"), 8, "freedom", 19000)
-	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_monstrs_spawn_online_1"), 17, "dolg", 19000)
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill and IsStalker(kill) or IsMonster(kill) then
-			if not kill:alive() then
-				if kill.level_name == "lvl10_radar" or kill.level_name == "lvl9_military" or kill.level_name == "lvl13_prip" or kill.level_name == "lvl3_agroprom" or kill.level_name == "lvl4_darkdolina" or kill.level_name == "lvl11_deadcity" then
-					alife():release(kill, true)
-				end
-			end
-		end
-	end
 end
 
 function fantasm_den_man_start_fun()
@@ -1232,7 +1180,6 @@ function barman_span_barwolf()
 end
 
 function oso_no()
-	olr.snd([[ambient\special\pripyat_monsters_spawn]])
 	level.add_pp_effector("black.ppe", 20131, false)
 	db.actor:set_actor_position(vector():set(171,16,-485))
 	local wait_time = 0
@@ -1370,7 +1317,7 @@ function navodka_jurnal_1_high()
 end
 
 function navodka_jurnal_finded_high_1()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_1_0"), nil, "flash", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_1_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 	olr.info("navodka_jurnal_finded_high_1")
 end
 
@@ -1393,12 +1340,12 @@ function navodka_jurnal_finded_1()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_0"), nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_1").." "..pos, nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_1_1").." "..pos, nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 end
@@ -1409,7 +1356,7 @@ function navodka_jurnal_2_high()
 end
 
 function navodka_jurnal_finded_high_2()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_2_0"), nil, "flash", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_2_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 	olr.info("navodka_jurnal_finded_high_2")
 end
 
@@ -1432,12 +1379,12 @@ function navodka_jurnal_finded_2()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_0"), nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_1").." "..pos, nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_2_1").." "..pos, nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 end
@@ -1448,7 +1395,7 @@ function navodka_jurnal_3_high()
 end
 
 function navodka_jurnal_finded_high_3()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_3_0"), nil, "flash", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_3_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 	olr.info("navodka_jurnal_finded_high_3")
 end
 
@@ -1471,12 +1418,12 @@ function navodka_jurnal_finded_3()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_0"), nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_1").." "..pos, nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_3_1").." "..pos, nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 end
@@ -1487,7 +1434,7 @@ function navodka_jurnal_4_high()
 end
 
 function navodka_jurnal_finded_high_4()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_4_0"), nil, "flash", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_4_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 	olr.info("navodka_jurnal_finded_high_4")
 end
 
@@ -1510,12 +1457,12 @@ function navodka_jurnal_finded_4()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_0"), nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_1").." "..pos, nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_4_1").." "..pos, nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 end
@@ -1526,7 +1473,7 @@ function navodka_jurnal_5_high()
 end
 
 function navodka_jurnal_finded_high_5()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_5_0"), nil, "flash", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_5_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 	olr.info("navodka_jurnal_finded_high_5")
 end
 
@@ -1550,13 +1497,13 @@ function navodka_jurnal_finded_5()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_0"), nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 	if cnt > 0 then
 		local pos =
 			news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_1").." "..pos, nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_5_1").." "..pos, nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 end
@@ -1567,7 +1514,7 @@ function navodka_jurnal_6_high()
 end
 
 function navodka_jurnal_finded_high_6()
-	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_6_0"), nil, "flash", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_high_6_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 	olr.info("navodka_jurnal_finded_high_6")
 end
 
@@ -1591,12 +1538,12 @@ function navodka_jurnal_finded_6()
 		end
 	end
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_0"), nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_0"), nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 	if cnt > 0 then
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(dok.m_game_vertex_id):level_id()), vector():set(dok.position.x, dok.position.y, dok.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_1").." "..pos, nil, "flash", 10000, nil, nil, false)
+		news_manager.send_tip(db.actor, game.translate_string("navodka_jurnal_finded_6_1").." "..pos, nil, "flash", 10000, nil, nil, true, "bar_informer_name")
 		return
 	end
 end
@@ -1610,7 +1557,7 @@ function ded_pomeraet_yan()
 	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
-	delete_netspawn_objects({"lvl7_yantar_stalker_sakharov", "lvl7_yantar_physic_object_0673"})
+	delete_netspawn_objects({"yan_scientist_gorbovsky", "lvl7_yantar_physic_object_0673"})
 end
 
 function add_vibr_tmer_yanzam()
@@ -1635,7 +1582,6 @@ function clead_dead_sin()
 			end
 		end
 	end
-	olr.del_by_name("lvl9_military_physic_object_0406")
 	olr.del_by_name("lvl9_military_big_safe_box")
 	olr.del_by_name("lvl9_military_physic_object_0341")
 	olr.del_by_name("lvl9_military_physic_object_0217")
@@ -1685,14 +1631,13 @@ function chekart_belt()
 	end
 	if artcnt == 1 then
 		local known_inf = ini_sys:r_string(art:section(), "known_info")
-		local known_inf_desc = game.translate_string(known_inf)
-		if has_alife_info(known_inf_desc) then
+		if has_alife_info(known_inf) then
 			local m_where = game.translate_string("chekart_belt_2")
 			db.actor:give_talk_message(""..m_where.."", "ui\\ui_iconsTotal", Frect():set(0,0,10,10), "simple_answer_item")
 			return
 		end
 		local m_where = game.translate_string("chekart_belt_3")
-		olr.info(known_inf_desc)
+		olr.info(known_inf)
 		db.actor:give_money(-250)
 		game_stats.money_quest_update(-250)
 		news_manager.relocate_money(db.actor, "out", 250)
@@ -1757,7 +1702,7 @@ function zaradka_battery_exo()
 end
 
 function conserva_sciet_food_hmm()
-	news_manager.send_tip(db.actor, game.translate_string("conserva_sciet_food_hmm_0"), 8, "hero", 29000)	
+	olr.hud_tip("", game.translate_string("conserva_sciet_food_hmm_0"), 8, true)
 end
 
 function has_psy_shapka_proto_rostok()
@@ -2058,7 +2003,7 @@ function money_obrazcy_give(obj,act)
 end
 
 function kamaz_priehal_savk()
-	if olr.obj_in_zone("lvl9_militar_kam_quest_kordon","lvl1_escape_blow_hide_restr_0006") then
+	if olr.obj_in_zone("lvl9_militar_kam_quest_kordon","esc_space_restrictor_kamaz_quest") then
 		return true
 	else
 		return false
@@ -2146,9 +2091,9 @@ function set_level_choosen_zombied(level)
                         olr.kill_offline_stalker(kill)
                         local rnd = math.random(1, 5)
                         if rnd == 1 then
-                            sim:create("m_zombie_e", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-                        elseif rnd == 2 then
                             sim:create("zombie_weak", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
+                        elseif rnd == 2 then
+                            sim:create("zombie_normal", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
                         elseif rnd == 3 then
                             sim:create("zombie_strong", kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
                         end
@@ -2160,7 +2105,6 @@ function set_level_choosen_zombied(level)
 end
 
 function pre_aes_antenna_upravlenie()
-	olr.beep()
 	olr.snd([[ambient\special\radar_bunker_destroying_generator]])
 	news_manager.send_tip(db.actor, game.translate_string("pre_aes_antenna_upravlenie_0"), nil, "unknown", 39000, nil, nil, true, "st_sec_system_name")
 	news_manager.send_tip(db.actor, game.translate_string("pre_aes_antenna_upravlenie_1"), 5, "unknown", 39000, nil, nil, true, "st_sec_system_name")
@@ -2798,7 +2742,7 @@ function scary_greh_finded_now()
 end
 
 function onlineered_docs_rostok()
-	olr.to_online("lvl6_rostok_bar_golg_docs")
+	olr.to_online("ros_box_rukzak")
 	news_manager.send_tip(db.actor, game.translate_string("onlineered_docs_rostok_0"), 12, "dolg_leader", 9000)
 end
 
@@ -2976,12 +2920,12 @@ function out_barunder_docks()
 	game_stats.money_quest_update(500)
 end
 
-function nick.first_under_bar()
+function first_under_bar()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\bar_zombie_spawn_1]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local bloodbridge = vector():set( 147.55, -99.69, 432.61 )
 	local sim = alife()
-	sim:create("m_zombie_e", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+	sim:create("zombie_weak", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 	local bloodbridge = vector():set( 163.55, -99.69, 432.61 )
 	sim:create("zombie_normal", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 	local bloodbridge = vector():set( 155.55, -99.69, 438.61 )
@@ -2996,7 +2940,7 @@ function undezdva()
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local bloodbridge = vector():set( 147.55, -99.69, 432.61 )
 	local sim = alife()
-	sim:create("m_zombie_e", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
+	sim:create("zombie_weak", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 	local bloodbridge = vector():set( 163.55, -99.69, 432.61 )
 	sim:create("zombie_strong", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 	local bloodbridge = vector():set( 155.55, -99.69, 438.61 )
@@ -3049,12 +2993,16 @@ function vorglaz_way_dolgbazaa_zombigo()
 	olr.kill_mon_in_radius(db.actor:position(), 140)
 	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_0"), nil, "dolg", 9000, nil, nil, true, "st_nick_character_name_croweye")
 	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_1"), 8, "hero", 9000, nil, nil, false)
-	news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_2"), 16, "hero", 9000, nil, nil, false)
+	--news_manager.send_tip(db.actor, game.translate_string("vorglaz_way_dolgbazaa_zombigo_2"), 16, "hero", 9000, nil, nil, false)
+	olr_timers.st_timer("vorglaz_way_dolgbazaa_zombigo_tip", 16, "nick.vorglaz_way_dolgbazaa_zombigo_tip()")
 
 	olr.del_by_name("lvl5_bar_physic_object_0103")
 	
 end
 
+function vorglaz_way_dolgbazaa_zombigo_tip()
+	olr.hud_tip("",game.translate_string("vorglaz_way_dolgbazaa_zombigo_2"), 5, true)
+end
 function give_docks_vorglaz()
 	olr.blow_add(200)
 	olr.kill_mon_in_radius(db.actor:position(), 140)
@@ -3082,17 +3030,6 @@ function vorglaz_away_from_garbage()
 	level.add_pp_effector("black.ppe", 20131, false)
 	news_manager.send_tip(db.actor, game.translate_string("vorglaz_away_from_garbage_0"), nil, "dolg", 9000, nil, nil, true, "st_nick_character_name_croweye")
 	olr.del_by_name("lvl4_darkdolina_stalker_0036")
-	local sobj = alife():object("lvl2_garbage_stalker_0055")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			local vis = [[actors\zombied\zombied_duty_01]]
-			data.visual_name = vis
-			data.character_name = game.translate_string("st_nick_character_name_croweye")
-			pk:set(data)
-		end
-	end
 end
 
 function kill_all_dolgs_garbage()
@@ -3102,7 +3039,7 @@ function kill_all_dolgs_garbage()
 		if kill then
 			if IsStalker(kill) then
 				if kill:alive() and kill.level_name == "lvl2_garbage" then
-					if kill:community() == "dolg" then
+					if kill:community() == "dolg" and kill:name() ~= "lvl2_garbage_staler_undead_olr_0012" then
 						xvars.dead_in_offline[kill:name()] = true
 						olr.kill_offline_stalker(kill)
 					end
@@ -3113,7 +3050,6 @@ function kill_all_dolgs_garbage()
 end
 
 function vorglaz_killers_spawn()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("vorglaz_killers_spawn_0"), nil, "dolg", 9000)
 	olr_timers.st_timer("vorglaz_killers_spawn_musli", 15, "nick.vorglaz_killers_spawn_musli()")
 	olr.info("cutcsene_dolg_killers_vorglaz")
@@ -3251,53 +3187,18 @@ function dolcuttchse()
 	olr.del_by_name("lvl4_darkdolina_physic_object_0364")
 
 	olr.del_by_name("lvl2_garbage_stalker_0042")
-
-	local sobj = sim:object("gar_bandit_stroyka1") 
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	
-	local sobj = sim:object("gar_bandit_stroyka2") 
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	
-	local sobj = sim:object("gar_bandit_stroyka3") 
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	
-	local sobj = sim:object("gar_bandit_stroyka4") 
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	
-	local sobj = sim:object("gar_bandit_stroyka5") 
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-
 end
 
 function nagrada_escape_dolg()
 	olr.give_item("wpn_aps")
 	olr.give_item("wpn_akms")
 	olr_timers.st_timer("barmmntchse", 8, "nick.barman_gotodolkick()")
-	if not has_alife_info("dolina_killer_dolg_escape_done_krav_have") then
-		news_manager.send_tip(db.actor,	game.translate_string("nagrada_escape_dolg_0"), nil, "dolg_mask", 25000, nil, nil, true, "bar_major_kravcov_name")
-	end
 end
 
 function barman_gotodolkick()
-	olr.beep()
-	olr.to_offline("gar_bandit_stroyka1")
-	olr.to_offline("gar_bandit_stroyka2")
-	olr.to_offline("gar_bandit_stroyka3")
-	olr.to_offline("gar_bandit_stroyka4")
-	olr.to_offline("gar_bandit_stroyka5")
 	news_manager.send_tip(db.actor, game.translate_string("barman_gotodolkick_0"), nil, "barman", 79000, nil, nil, true, "st_barkeep_short")
 	if not has_alife_info("dolina_killer_dolg_escape_done_krav_have") then
-		news_manager.send_tip(db.actor, game.translate_string("st_nick_major_kravtsov_invitation"), nil, "dolg_mask", 25000, nil, nil, true, "bar_major_kravcov_name")
+		news_manager.send_tip(db.actor, game.translate_string("st_nick_major_kravtsov_invitation"), 5, "dolg_mask", 25000, nil, nil, true, "bar_major_kravcov_name")
 	end
 end
 
@@ -3313,15 +3214,12 @@ function kravcov_brother_spawn_bar()
 end
 
 function kravcov_brother_killer_start()
-	olr.beep()
 	news_manager.send_tip(db.actor, "kravcov_brother_killer_start_0", 10, "dolg_mask", 15000, nil, nil, true, "bar_major_kravcov_name")
 	olr_timers.st_timer("kravcov_brother_killer_start_two", 12, "nick.kravcov_brother_killer_start_two()")
-	olr.del_by_name("lvl5_bar_physic_object_0787")
 	olr.del_by_name("lvl5_bar_explosive_fuelcan")
 end
 
 function kravcov_brother_killer_start_two()
-	olr.beep()
 	olr.info("killers_escape_brotha_start")
 	news_manager.send_tip(db.actor, "kravcov_brother_killer_start_two_0", nil, "dolg_mask", 15000, nil, nil, true, "bar_major_kravcov_name")
 end
@@ -3414,7 +3312,6 @@ function rnd_vis_killers()
 end
 
 function dolina_killers_acessss()
-	olr.beep()
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\darkvalley\killers\radio_speech]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	news_manager.send_tip(db.actor, game.translate_string("dolina_killers_acessss_0"), nil, "killer", 39000)
@@ -3490,7 +3387,6 @@ function clear_chaes_zom()
 end
 
 function yan_biogroup_online()
-	olr.beep()
 	olr.to_online("lvl7_yantar_physic_object_0640")
 	olr.to_online("lvl7_yantar_physic_object_0641")
 	olr.to_online("lvl7_yantar_physic_object_0684")
@@ -3575,7 +3471,6 @@ end
 function jaba_about_esc_sleep()
 	if has_alife_info("kvest_esc_1_dialog_start") and not has_alife_info("jaba_about_esc_sleep_done") then
 		olr.info("jaba_about_esc_sleep_done")
-		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("jaba_about_esc_sleep_0"), nil, "trader", 35000, nil, nil, true, "escape_trader_name")
 	end
 end
@@ -3746,18 +3641,6 @@ function is_garbage_level()
 	else
 		return false
 	end
-end
-
-function del_garbage_bandosy()
-	olr.del_by_name("lvl2_garbage_stalker_0044")
-	olr.del_by_name("lvl2_garbage_stalker_0048")
-	olr.del_by_name("lvl2_garbage_stalker_0049")
-	olr.del_by_name("pricep1_0000_garbageswe")
-end
-
-function chaes_perehod_spot()
-	local sp1_place = alife():object("lvl14_stancia_level_changer_0002")
-	olr.add_spot_on_map( sp1_place.id,"level_changer", game.translate_string("st_nick_level_marker_forgotten_road") )
 end
 
 function daem_fantasm_metka()
@@ -3955,7 +3838,6 @@ function kil_in_dcp()
 end
 
 function olr_blowout_first_hideouts()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("olr_blowout_first_hideouts_0"), nil, "trader", 25000, nil, nil, true, "escape_trader_name")
 end
 
@@ -3990,7 +3872,7 @@ function enemys_sms_pda_escape_mon()
 		end
 	end
 	
-	news_manager.send_tip(db.actor, game.translate_string("enemys_sms_pda_escape_mon_0"), nil, "kill_messer", 25000)
+	news_manager.send_tip(db.actor, game.translate_string("enemys_sms_pda_escape_mon_0"), nil, "signal_lost", 25000)
 
 	local sobj = alife():object("l10u_radar_bunker_physic_object_0075")
 	if sobj then
@@ -4000,17 +3882,6 @@ function enemys_sms_pda_escape_mon()
 	if sobj then
 		alife():release(sobj, true)
 	end
-
-	local wait_time = 0
-	wait_time = time_global() + 12200
-	level.add_call(
-		function()
-			return time_global() > wait_time
-		end,
-		function()
-			olr.snd([[ambient\special\escape_fighter]])
-		end
-	)
 end
 
 function bigrat_garbage_died()
@@ -4023,11 +3894,6 @@ function garbage_timer_bigrat_done()
 	olr.del_by_name("lvl1_escape_stalker_0011") 
 	olr.del_by_name("lvl1_escape_stalker_0013") 
 	olr.del_by_name("lvl1_escape_stalker_0012") 
-end
-
-function give_kill_rats_garbage_start()
-	local sp1_place = alife():object("krusinye_podzemelya")
-	olr.add_spot_on_map( sp1_place.id,"crlc_mdl", game.translate_string("st_nick_rat_pack_mark") )
 end
 
 function bar_first_ivancov()
@@ -4315,6 +4181,7 @@ end
 function give_onekamon()
 	db.actor:give_money(-1000)
 	game_stats.money_quest_update(-1000)
+	news_manager.relocate_money(db.actor, "out", 1000)
 	olr.to_online("lvl6_rostok_physic_object_0286")
 end
 
@@ -4357,15 +4224,6 @@ function set_sanya_borov()
 		end
 	end
 
-	local sobj = sim:object("lvl5_bar_stalker_0063")
-	if sobj then
-		local pk = get_netpk(sobj, 1)
-		if pk:isOk() then
-			local data = pk:get()
-			data.character_name = game.translate_string("st_nick_character_name_middleman")
-			pk:set(data)
-		end
-	end
 	local sobj = sim:object("bar_bar_visitors_1_2")
 	if sobj then
 		local pk = get_netpk(sobj, 1)
@@ -4448,12 +4306,7 @@ function bar_killer_strts()
 	end
 end
 
-function kill_ec_dolin_sms()
-	news_manager.send_tip(db.actor, game.translate_string("kill_ec_dolin_sms_0"), nil, "professor", 39000, nil, nil, true, "st_yan_general_ecolog_name")
-end
-
 function kill_ec_dolin()
-	olr_timers.st_timer("kill_ec_dolin_sms", 30, "nick.kill_ec_dolin_sms()")
 	olr.spawn_on_obj("bloodsucker_strong", "lvl4_darkdolina_stalker_0021")
 	olr.kill_by_name("lvl4_darkdolina_stalker_0021")
 end
@@ -4461,7 +4314,7 @@ end
 function scient_strt()
 	local pos = vector():set(200,2,200)
 	olr.kill_mon_in_radius(pos, 110)
-	news_manager.send_tip(db.actor, game.translate_string("scient_strt_0"), nil, "ecolog_red", 39000)
+	news_manager.send_tip(db.actor, game.translate_string("scient_strt_0"), nil, "ecolog", 39000, nil, nil, true, "st_iskatels_name")
 	local gar = alife():object("lvl4_darkdolina_physic_object_0362")
 	if gar then
 		olr.add_spot_on_map( gar.id,"crlc_mdl", game.translate_string("st_nick_scientist_location") )
@@ -4509,11 +4362,17 @@ end
 
 function daem_zombu_art()
 	olr.blow_add(220)
-	alife():create("af_gravi_med", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	news_manager.send_tip(db.actor, game.translate_string("daem_zombu_art_0"), nil, "item", 5000)
+	--alife():create("af_gravi_med", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+	--news_manager.send_tip(db.actor, game.translate_string("daem_zombu_art_0"), nil, "item", 5000)
 	olr.give_item("af_gravi_med")
+	olr.give_item("af_gravi_med")-- в 3.0 выдавался один af_art_3_step_anom_svetim, сейчас вместо него два средних гравиарта
 	olr.del_by_name("lvl5_bar_physic_object_0954")
 	olr_timers.st_timer("szobmu_house", 12, "nick.zobmu_barman_gde()")
+	olr_timers.st_timer("daem_zombu_art1", 2, "nick.daem_zombu_art1()")
+end
+
+function daem_zombu_art1()
+	db.actor:give_info_portion("bar_zombu_waled_talked")
 end
 
 function zobmu_barman_gde()
@@ -4722,14 +4581,19 @@ function try_reload_pda()
 end
 
 function try_reload_pda2()
-	news_manager.send_tip(db.actor, game.translate_string("try_reload_pda2_0"))
+	news_manager.send_tip(db.actor, game.translate_string("try_reload_pda2_0"), nil, "info", nil, nil, nil, true, "st_pda")
 	olr_timers.st_timer("try_reload_pda", 16, "nick.try_reload_pda3()")
 end
 
 function try_reload_pda3()
-	news_manager.send_tip(db.actor, game.translate_string("try_reload_pda3_0"))
+	news_manager.send_tip(db.actor, game.translate_string("try_reload_pda3_0"), nil, "info", nil, nil, nil, true, "st_pda")
 	db.actor:give_info_portion("try_reload_pda_done")
-	news_manager.send_tip(db.actor, game.translate_string("try_reload_pda3_1"), 5, "hero", 29000)
+	--news_manager.send_tip(db.actor, game.translate_string("try_reload_pda3_1"), 5, "hero", 29000)
+	olr_timers.st_timer("try_reload_pda", 5, "nick.try_reload_pda4()")
+end
+
+function try_reload_pda4()
+	olr.hud_tip("", game.translate_string("try_reload_pda3_1"), 8, true)
 end
 
 function clear_all_bolezns()
@@ -4780,6 +4644,7 @@ end
 function dolgmed_about_radwealech_otdaem()
 	db.actor:give_money(-500)
 	game_stats.money_quest_update(-500)
+	news_manager.relocate_money(db.actor, "out", 500)
 	level.add_pp_effector("black.ppe", 20131, false)
 	level.add_pp_effector("snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
@@ -4897,6 +4762,7 @@ end
 function mani_min_pisot()
 	db.actor:give_money(-500)
 	game_stats.money_quest_update(-500)
+	news_manager.relocate_money(db.actor, "out", 500)
 end
 
 function clear_ratcrazy_bolezn()
@@ -4942,7 +4808,6 @@ function nii_cheking_studen_tmr()
 end
 
 function agr_cheking_studen()
-	olr.beep()
 	local cnt = 0
 	local sim = alife()
 	for id=1, 65534 do
@@ -4953,18 +4818,18 @@ function agr_cheking_studen()
 				cnt = cnt + 1 
 				if obj.level_name == "lvl1_escape" or obj.level_name == "lvl2_garbage" or obj.level_name == "lvl3_agroprom" or obj.level_name == "lvl4_darkdolina" or obj.level_name == "lvl6_rostok" or obj.level_name == "lvl7_yantar" then
 					local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(obj.m_game_vertex_id):level_id()), vector():set(obj.position.x,obj.position.y,obj.position.z))
-					news_manager.send_tip(db.actor, game.translate_string("agr_cheking_studen_0") ..pos.. game.translate_string("agr_cheking_studen_1"), nil, "artifact", 19000)
+					news_manager.send_tip(db.actor, game.translate_string("agr_cheking_studen_0").." " ..pos..". ".. game.translate_string("agr_cheking_studen_1"), nil, "artifact", 19000)
 					break
 				else
-					news_manager.send_tip(db.actor, game.translate_string("agr_cheking_studen_1"), nil, "artifact", 19000)
+					news_manager.send_tip(db.actor, game.translate_string("agr_cheking_studen_2"), nil, "artifact", 19000)
 					break
-				end				
+				end
 			end
 		end
 	end
 
 	if cnt == 0 then
-		news_manager.send_tip(db.actor, game.translate_string("agr_cheking_studen_2"), nil, "artifact", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("agr_cheking_studen_3"), nil, "artifact", 19000)
 	end
 end
 
@@ -4981,16 +4846,18 @@ function precond_studenone()
 end
 
 function otdaem_jguchipuh()
-	news_manager.send_tip(db.actor, game.translate_string("otdaem_jguchipuh_0"), nil, "money_found", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("otdaem_jguchipuh_0"), nil, "money_found", 39000)
 	db.actor:give_money(600)
 	game_stats.money_quest_update(600)
+	news_manager.relocate_money(db.actor, "in", 600)
 	nik_dialog.out_item_much("af_cotton",1)
 end
 
 function otdaem_studenone()
-	news_manager.send_tip(db.actor, game.translate_string("otdaem_studenone_0"), nil, "money_found", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("otdaem_studenone_0"), nil, "money_found", 39000)
 	db.actor:give_money(500)
 	game_stats.money_quest_update(500)
+	news_manager.relocate_money(db.actor, "in", 500)
 	nik_dialog.out_item_much("af_galantine",1)
 end
 
@@ -5003,16 +4870,18 @@ function precond_radoblomok()
 end
 
 function otdaem_radbolt()
-	news_manager.send_tip(db.actor, game.translate_string("otdaem_radbolt_0"), nil, "money_found", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("otdaem_radbolt_0"), nil, "money_found", 39000)
 	db.actor:give_money(300)
 	game_stats.money_quest_update(300)
+	news_manager.relocate_money(db.actor, "in", 300)
 	nik_dialog.out_item_much("af_junk_bolt",1)
 end
 
 function otdaem_radoblomok()
-	news_manager.send_tip(db.actor, game.translate_string("otdaem_radoblomok_0"), nil, "money_found", 39000)
+	--news_manager.send_tip(db.actor, game.translate_string("otdaem_radoblomok_0"), nil, "money_found", 39000)
 	db.actor:give_money(250)
 	game_stats.money_quest_update(250)
+	news_manager.relocate_money(db.actor, "in", 250)
 	nik_dialog.out_item_much("af_junk_debris",1)
 end
 
@@ -5119,27 +4988,6 @@ function agro_ecologs_clear_hlam()
 	olr.del_by_name("agropromyable_object_0003")
 	olr.del_by_name("lvl3_agroprom_physic_object_0158")
 	olr.del_by_name("lvl3_agroprom_physic_object_0324")
-
-	local sobj = sim:object("gar_bandit_stroyka1")
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	local sobj = sim:object("gar_bandit_stroyka2")
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	local sobj = sim:object("gar_bandit_stroyka3")
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	local sobj = sim:object("gar_bandit_stroyka4")
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
-	local sobj = sim:object("gar_bandit_stroyka5")
-	if sobj and not sobj:alive() then
-		olr.del(sobj)
-	end
 end
 
 function yan_zaval_ofl()
@@ -5375,7 +5223,7 @@ function set_boss_enemye()
 end
 
 function teleport_boss_fight()
-	olr_timers.st_timer("bosstelep_timer", math.random(20, 37), "nick.teleport_boss_fight()")
+	olr_timers.st_timer_game("bosstelep_timer", math.random(20, 37), "nick.teleport_boss_fight()")
 	olr.spawen_phantoms()
 	local car = alife():object("lvl16_generators_staler_undead_olr_0002")
 	if car and car:alive() then
@@ -5960,28 +5808,6 @@ function set_rand_grehs()
 	end
 end
 
-function chaes_contrs_spawn()
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0234")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0225")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0204")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0222")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_strong_0051")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0082")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0061")
-    olr.spawn_on_obj("controller_normal", "zone_radioactive0031sss")
-    olr.spawn_on_obj("controller_normal", "lvl14_stancia_zone_radioactive_weak_0045")
-
-    olr.spawn_on_obj("sim_respawn_killer_veteran", "rad_zone_radioactive_0046")
-    olr.spawn_on_obj("sim_respawn_killer_sniper", "rad_zone_radioactive_0046")
-    olr.spawn_on_obj("sim_respawn_killer_general", "rad_zone_radioactive_0046")
-    olr.spawn_on_obj("sim_respawn_killer_master", "rad_zone_radioactive_0046")
-
-    olr.spawn_on_obj("sim_respawn_killer_veteran", "rad_zone_radioactive_0094")
-    olr.spawn_on_obj("sim_respawn_killer_sniper", "rad_zone_radioactive_0094")
-    olr.spawn_on_obj("sim_respawn_killer_general", "rad_zone_radioactive_0094")
-    olr.spawn_on_obj("sim_respawn_killer_master", "rad_zone_radioactive_0094")
-end
-
 function sarcosms()
 	olr.kill_mon_in_radius(db.actor:position(), 250)
 	news_manager.send_tip(db.actor, game.translate_string("sarcosms_0"), nil, "unknown", 10000)
@@ -6098,64 +5924,7 @@ function pr_bar_angr1()
 	level.disable_input() -- при виде крысы ХАК
 	olr_timers.st_timer("attak1", 14, "nick.pr_bar_angr2()")
 	news_manager.send_tip(db.actor, game.translate_string("pr_bar_angr1_0"), nil, "barman", 9000, nil, nil, true, "st_barkeep_short")
-	local act = db.actor
-	act:iterate_inventory(
-		function(act, obj)
-			if obj and obj:is_weapon_magazined() then
-				act:drop_item(obj)
-			end
-			--local wpn = bos:best_weapon()
-			--if wpn then
-			--	wpn:set_ammo_elapsed(5)
-			--end
-		end,
-		act
-	)
-end
 
-function pr_bar_angr2()
-	olr_timers.st_timer("attak21", 16, "nick.pr_bar_angr3()")
-	news_manager.send_tip(db.actor, game.translate_string("pr_bar_angr2_0"), nil, "barman", 9000, nil, nil, true, "st_barkeep_short")
-end
-
-function pr_bar_angr3()
-	level.disable_input()	-- при виде крысы
-	level.disable_input()	-- при виде крысы ХАК
-	olr_timers.st_timer("attak231", 17, "nick.kill_krisa_deagle()")
-	olr_timers.st_timer("attak31", 18, "nick.kill_krisa_pri()")
-	news_manager.send_tip(db.actor, game.translate_string("pr_bar_angr3_0"), nil, "barman", 16000, nil, nil, true, "st_barkeep_short")
-end
-
-function kill_krisa_deagle()
-	local sobj = alife():object("lvl13_prip_stalker_0089") 
-	if sobj then 
-		alife():create("wpn_fort", sobj.position, sobj.m_level_vertex_id, sobj.m_game_vertex_id, sobj.id)
-	end
-	olr_timers.st_timer("kill_krisa_scr_prp", 1, "nick.kill_krisa_scr_prp()")	
-end
-
-function kill_krisa_scr_prp()
-    local obj = alife():object("lvl13_prip_stalker_0089")
-    if obj then
-        local h = hit()
-        h.power = 0.1
-        h.direction = vector():set(0, -1, 0)
-        h.impulse = 0
-        h.draftsman = db.actor
-        h.type = hit.strike
-        obj:hit(h)
-    end
-end
-
-function kill_krisa_pri()
-	level.disable_input()	-- при виде крысы
-	level.disable_input()	-- при виде крысы ХАК
-	olr_timers.st_timer("attak5", 3, "nick.kill_barman_pr()")
-	local point = patrol("krisa_prip_walk")
-	local look = patrol("krisa_prip_look")
-	local dir = look:point(0):sub(point:point(0))
-	db.actor:set_actor_direction(-dir:getH())
-	
 	local active_item = db.actor:active_item()	-- нож
 	if active_item and db.actor:active_slot()==0 then
 		db.actor:move_to_ruck(active_item)
@@ -6185,7 +5954,51 @@ function kill_krisa_pri()
 	local active_item = db.actor:active_item()	-- гранаты
 	if active_item and db.actor:active_slot()==11 then
 		db.actor:move_to_ruck(active_item)
-	end	
+	end
+end
+
+function pr_bar_angr2()
+	olr_timers.st_timer("attak21", 16, "nick.pr_bar_angr3()")
+	news_manager.send_tip(db.actor, game.translate_string("pr_bar_angr2_0"), nil, "barman", 9000, nil, nil, true, "st_barkeep_short")
+end
+
+function pr_bar_angr3()
+	level.disable_input()	-- при виде крысы
+	level.disable_input()	-- при виде крысы ХАК
+	olr_timers.st_timer_game("attak231", 17, "nick.kill_krisa_deagle()")
+	olr_timers.st_timer_game("attak31", 18, "nick.kill_krisa_pri()")
+	news_manager.send_tip(db.actor, game.translate_string("pr_bar_angr3_0"), nil, "barman", 16000, nil, nil, true, "st_barkeep_short")
+end
+
+function kill_krisa_deagle()
+	local sobj = alife():object("lvl13_prip_stalker_0089") 
+	if sobj then 
+		alife():create("wpn_fort", sobj.position, sobj.m_level_vertex_id, sobj.m_game_vertex_id, sobj.id)
+	end
+	olr_timers.st_timer_game("kill_krisa_scr_prp", 1, "nick.kill_krisa_scr_prp()")	
+end
+
+function kill_krisa_scr_prp()
+    local obj = alife():object("lvl13_prip_stalker_0089")
+    if obj then
+        local h = hit()
+        h.power = 0.1
+        h.direction = vector():set(0, -1, 0)
+        h.impulse = 0
+        h.draftsman = db.actor
+        h.type = hit.strike
+        obj:hit(h)
+    end
+end
+
+function kill_krisa_pri()
+	level.disable_input()	-- при виде крысы
+	level.disable_input()	-- при виде крысы ХАК
+	olr_timers.st_timer("attak5", 5, "nick.kill_barman_pr()")
+	local point = patrol("krisa_prip_walk")
+	local look = patrol("krisa_prip_look")
+	local dir = look:point(0):sub(point:point(0))
+	db.actor:set_actor_direction(-dir:getH())
 
 	local gaus = alife():create("wpn_gauss_m1", db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
 	if gaus then		
@@ -6222,7 +6035,7 @@ function trygauss_kill_barmn()
 				db.actor:move_to_slot(wpng)
 			end
 		)
-
+		
 		local wait_time = 0
 		wait_time = time_global() + 200
 		level.add_call(
@@ -6234,35 +6047,16 @@ function trygauss_kill_barmn()
 			end
 		)
 
-		local wait_time = 0
-		wait_time = time_global() + 600
-		level.add_call(
-			function()
-				return time_global() > wait_time
-			end,
-			function()
-				olr.emu_shoot()
-			end
-		)
-
-		olr_timers.st_timer("attak", 1, "olr.emu_shoot()")
+		olr_timers.st_timer("attak", 3, "olr.emu_shoot()")
 	end
 end
 
 function kill_barman_pr()
-	local sobj = alife():object("lvl13_prip_stalker_0089")
-	if sobj then
-		alife():create("wpn_fort", sobj.position, sobj.m_level_vertex_id, sobj.m_game_vertex_id, sobj.id)
-	end
 	db.actor:give_info_portion("prip_monols_spawn")
 	olr_timers.st_timer("mattak", 12, "nick.pr_molols_1()")
 	level.enable_input() -- как завалим
 	olr.enable_walk()
 	olr.del_by_name("lvl13_prip_space_restrictor_0018")
-    local npc = alife():object("lvl13_prip_stalker_0089")
-    if npc then
-        npc:kill(npc)  -- зачем делать хит, тупо килл и всё
-    end
 end
 
 function pr_molols_1()
@@ -6411,11 +6205,10 @@ end
 function away_zaval_and_del()
 	olr.del_by_name("lvl1_escape_space_restrictor_0107")
 	olr.del_by_name("lvl1_escape_stalker_0056")
-	olr_timers.st_timer("delete_zaval_nii", 3223, "nick.agr_del_zaval()")
+	olr_timers.st_timer_game("delete_zaval_nii", math.random(72000, 90000), "nick.agr_del_zaval()") -- Рандом от 20 до 25 игровых часов
 end
 
 function agr_del_zaval()
-	olr.beep()
 	olr.del_by_name("lvl3_agroprom_physic_object_0421")
 	olr.del_by_name("lvl3_agroprom_physic_object_0365")
 	news_manager.send_tip(db.actor, game.translate_string("agr_del_zaval_0"), nil, "trader", 49000, nil, nil, true, "escape_trader_name")
@@ -6811,13 +6604,7 @@ end
 function daem_paras_pribor()
 	olr.give_item("pribor_paras_spory")
 	olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0031")
-	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0031")
-	olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0031")
-	olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0031")
 	olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0034")
-	olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0034")
-	olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0034")
-	olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0034")
 	olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
 	olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
 	olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
@@ -6831,7 +6618,7 @@ function yan_killmonster_go()
 end
 
 function yan_killmonster_timer()
-	olr_timers.st_timer("yan_killmonster_go", 1135, "nick.yan_killmonster_go()")
+	olr_timers.st_timer_game("yan_killmonster_go", math.random(12600,16380), "nick.yan_killmonster_go()") -- В сообщении пишется что примерно через 4 часа она прибудет (от 3.5 до 4.55 часов) (таймер на игровом времени)
 	news_manager.send_tip(db.actor, game.translate_string("yan_killmonster_timer_0"), nil, "professor", 10000, nil, nil, true, "st_yan_general_ecolog_name")
 end
 
@@ -7540,7 +7327,6 @@ function viska_yas_jaba2()
 end
 
 function daem_za_esc_fantoma_sms_barmen()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("daem_za_esc_fantoma_sms_barmen_0"), nil, "barman", 5000, nil, nil, true, "st_barkeep_short")
 	db.actor:give_info_portion("esc_fantoma_sms_barmen_done")
 	local sobj = alife():object("lvl1_escape_space_restrictor_0102") 
@@ -7730,7 +7516,7 @@ function create_hand_medkit_actor()
 end
 
 function del_ohranik_yan_del()
-	olr.del_by_name("lvl7_uch_stalker_0006")
+	olr.del_by_name("yan_stalker_guard_04")
 	olr.del_by_name("lvl7_yantar_physic_object_0683")
 	olr.del_by_name("lvl7_yantar_physic_object_0248")
 end
@@ -7814,14 +7600,8 @@ function prof_uletel_gde_laborant_talked_precond(actor,npc)
 	return has_alife_info("olr_traders_night") and has_alife_info("prof_uletel_gde_laborant_talked")
 end
 
-function del_agr_yan_arg_ployt()
-	olr.del_by_name("yan_equip_helicopter_0001")
-	olr.del_by_name("lvl7_yantar_physic_object_0668")
-	olr.del_by_name("lvl7_yantar_physic_object_0546")
-end
-
 function del_bomj_and_sosach_vedmak()
-	news_manager.send_tip(db.actor, game.translate_string("del_bomj_and_sosach_vedmak_0"), nil, "neutral", 10000, nil, nil, false)
+	news_manager.send_tip(db.actor, game.translate_string("del_bomj_and_sosach_vedmak_0"), nil, "neutral", 10000, nil, nil, true, "gar_seryi_name")
 	olr.info("zedmak_lampa_start")
 	olr.del_by_name("lvl5_bar_bloodsucker_weak")
 	--olr.del_by_name("lvl5_bar_stalker_0005")
@@ -7832,7 +7612,6 @@ end
 
 function bar_first_del_bar_alcoholics()
 	local sim = alife()
-	olr.del_by_name("lvl5_bar_physic_object_0234")
 	olr.del_by_name("lvl5_bar_stalker_0065")
 	olr.del_by_name("lvl5_bar_stalker_0066")
 	olr.del_by_name("lvl5_bar_stalker_0067")
@@ -8173,7 +7952,7 @@ function bun_swatoy_look_hey()
 	bind_stalker.hide_weapon()
 	olr.snd([[weapons\gauss\shoot]])
 	level.add_pp_effector("snd_shock.ppe", 2371, false)
-	olr.snd([[characters_voice\scenario\radar_bunker\saint\saint_appearing]])
+	olr.snd([[ambient\special\radar_bunker_saint_appearing]])
 end
 
 function remove_cam_inert_timer()
@@ -8323,18 +8102,11 @@ end
 
 function bar_space_group_quest_delete()
 	olr.del_by_name("lvl5_bar_physic_object_1297")
-	olr.del_by_name("lvl5_bar_physic_object_1300")
-	olr.del_by_name("lvl5_bar_physic_object_1304")
-	olr.del_by_name("lvl5_bar_physic_object_1308")
 	olr.del_by_name("lvl5_bar_physic_object_1315")
 	olr.del_by_name("lvl5_bar_staler_undead_olr_0004")
-	olr.del_by_name("lvl5_bar_physic_object_1311")
 	olr.del_by_name("lvl5_bar_physic_object_1314")
 	olr.del_by_name("lvl5_bar_physic_object_1313")
 	olr.del_by_name("lvl5_bar_space_restrictor_0123")
-	olr.del_by_name("lvl5_bar_physic_object_1301")
-	olr.del_by_name("lvl5_bar_physic_object_1309")
-	olr.del_by_name("lvl5_bar_physic_object_1305")
 	olr.del_by_name("lvl5_bar_physic_object_1342")
 	olr.del_by_name("lvl5_bar_physic_object_1185")
 	olr.del_by_name("lvl5_bar_physic_object_1341")
@@ -8480,6 +8252,7 @@ end
 function otdaem_dezintegrator_f()
 	db.actor:give_money(500)
 	game_stats.money_quest_update(500)
+	news_manager.relocate_money(db.actor, "in", 500)
 	nik_dialog.out_item_much("af_chipper",1)
 	olr_timers.st_timer("dezint_two_now", 6000, "nick.has_timer_spacesms()")
 end
@@ -8569,16 +8342,17 @@ end
 function antenna_off_jaba_sms()
 	news_manager.send_tip(db.actor, game.translate_string("antenna_off_jaba_sms_0"), nil, "trader", 10000, nil, nil, true, "escape_trader_name")
 	news_manager.send_tip(db.actor, game.translate_string("antenna_off_jaba_sms_1"), 11, "trader", 10000, nil, nil, true, "escape_trader_name")
-	local se_obj = alife():object("lvl10_radar_level_changer_0002")
-	if se_obj then
-		olr.add_spot_on_map(se_obj.id, "level_changer", game.translate_string("to_road"))
+	local sim = alife()
+	local obj = sim:story_object(18035)
+	if obj then
+		level_tasks.set_lchanger_mapspot(obj, "lvl10_radar_level_changer_0002", "_up")
 	end
 	if db.actor then
 		db.actor:set_character_community("actor", 0, 0)
 	end
-	local se_obj = alife():object("lvl13_prip_level_changer_0001")
-	if se_obj then
-		olr.add_spot_on_map(se_obj.id, "level_changer", game.translate_string("st_nick_level_marker_forgotten_road"))
+	local obj = alife():object("lvl13_prip_level_changer_0001")
+	if obj then
+		level_tasks.set_lchanger_mapspot(obj, "lvl13_prip_level_changer_0002", "_right")
 	end
 end
 
@@ -8591,7 +8365,7 @@ function explode_all_zarazas(actor,npc)
 end
 
 function deadcity_paras_talk_to_dleader_sms2()
-	news_manager.send_tip(db.actor, game.translate_string("st_deadcity_paras_talk_to_dleader_sms2"), math.random(1700, 3000), "dolg_leader", 10000, nil, "pda_objective", true, "bar_dolg_general_voronin")
+	olr.hud_tip("", game.translate_string("st_deadcity_paras_talk_to_dleader_sms2"), 10, true)
 end
 
 function deadcity_paras_talk_to_dleader_sms3()
@@ -8603,7 +8377,7 @@ function deadcity_paras_talk_to_dleader_sms()
 end
 
 function proffecor_group_quest_delete_del()
-	delete_netspawn_objects({ "lvl_test_lights_hanging_lamp", "lvl_test_lights_hanging_lamp_0000", "lvl7_uch_stalker_0004", "lvl7_yantar_space_restrictor_0011", "lvl7_yantar_stalker_0013", "lvl7_yantar_physic_object_0545", "lvl7_yantar_physic_object_0649", "lvl7_yantar_physic_object_0164", "lvl7_yantar_physic_object_0166", "lvl7_yantar_staler_undead_olr_0000", "lvl7_yantar_m_chimera_e_0003", "lvl7_yantar_staler_undead_olr_0001", "lvl7_yantar_space_restrictor_0022", "lvl7_yantar_space_restrictor_0052", "lvl7_yantar_physic_object_0627", "lvl7_yantar_physic_object_0280", "lvl7_yantar_physic_object_0279", "lvl7_yantar_stalker_0001", "lvl7_uch_stalker_0005", })
+	delete_netspawn_objects({ "lvl_test_lights_hanging_lamp", "lvl_test_lights_hanging_lamp_0000", "yan_stalker_guard_03", "lvl7_yantar_space_restrictor_0011", "lvl7_yantar_stalker_0013", "lvl7_yantar_physic_object_0545", "lvl7_yantar_physic_object_0649", "lvl7_yantar_physic_object_0164", "lvl7_yantar_physic_object_0166", "lvl7_yantar_staler_undead_olr_0000", "lvl7_yantar_m_chimera_e_0003", "lvl7_yantar_staler_undead_olr_0001", "lvl7_yantar_space_restrictor_0022", "lvl7_yantar_space_restrictor_0052", "lvl7_yantar_physic_object_0627", "lvl7_yantar_physic_object_0280", "lvl7_yantar_physic_object_0279", "yan_scientist_gorbovsky_dead", "yan_stalker_guard_commander", })
 	local se_obj = alife():object("lvl7_yantar_smart_terrain_0013")
 	local sobj = alife():object("lvl7_yantar_inventory_box")
 	if sobj then
@@ -8612,8 +8386,8 @@ function proffecor_group_quest_delete_del()
 
 	olr_timers.st_timer("delyan_additional", 11, "nick.delyan_additional()")
 
-	olr.del_by_name("lvl7_uch_stalker_0003")
-	olr.del_by_name("lvl7_uch_stalker_0002")
+	olr.del_by_name("yan_stalker_guard_01")
+	olr.del_by_name("yan_stalker_guard_02")
 end
 
 function delyan_additional()
@@ -8645,10 +8419,6 @@ function del_monolit_hlam()
 end
 
 function now_iremember_delhlam()
-	local item_in_slot = db.actor:item_in_slot(6)
-	if item_in_slot ~= nil then
-		olr_ruck_limit.on_to_box(item_in_slot)
-	end
 	local iskluch_items = {
 		["device_pda"] = true,
 		["bolt"] = true
@@ -8687,7 +8457,7 @@ function del_agro_musor_after_pohod()
 	"lvl3_agroprom_space_restrictor_0000", 
 	"lvl3_agroprom_space_restrictor_0002", 
 	"lvl3_agroprom_space_restrictor_0001",
-	"lvl3_agroprom_stalker_0043", 
+--	"lvl3_agroprom_stalker_0043", 
 	"zavod_terr_0000", 
 	"zavod_terr_0001", 
 	"lvl3_agroprom_space_restrictor_0012"
@@ -8779,7 +8549,7 @@ function give_treasure_brain_docs()
 		olr.add_spot_on_map(metka.id, "crlc_big", game.translate_string("give_treasure_brain_docs_0"))
 		alife():create("documentacia_zombibrain_doki", rand_obj.position, rand_obj.m_level_vertex_id, rand_obj.m_game_vertex_id, rand_obj.id) -- серверный
 		local pos = news_main.get_point_description( alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x, rand_obj.position.y, rand_obj.position.z))
-		news_manager.send_tip(db.actor, game.translate_string("give_treasure_brain_docs_1") .. pos .. ".", nil, "artifact", 19000)
+		news_manager.send_tip(db.actor, game.translate_string("give_treasure_brain_docs_1").." "..pos ..".", nil, "artifact", 19000)
 	end
 	for id = 1, 65534 do
 		local npc = level.object_by_id(id)
@@ -8834,10 +8604,8 @@ function osved_about_docstalker()
 
 		local name = news_main.get_npc_name(rand_obj)
 		local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(rand_obj.m_game_vertex_id):level_id()), vector():set(rand_obj.position.x, rand_obj.position.y, rand_obj.position.z))
-		olr.beep()
-		news_manager.send_tip(db.actor, game.translate_string("osved_about_docstalker_0")..name ..". "..pos..game.translate_string("osved_about_docstalker_1"), nil, "flash", 95000, nil, "pda_news", true)
+		news_manager.send_tip(db.actor, game.translate_string("osved_about_docstalker_0").." "..name ..". "..pos.." "..game.translate_string("osved_about_docstalker_1"), nil, "flash", 95000, nil, "pda_news", true)
 	else
-		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("osved_about_docstalker_2"), nil, "unknown", 95000, nil, "pda_news", true)
 	end
 end
@@ -9283,7 +9051,7 @@ end
 
 -- удляем отработанные рестрикторы с кордона после того как первый раз поговорили с барменом (квест на доки в первой лабе)
 function del_escape_trash_restrictors()
-	delete_netspawn_objects({ "lvl1_escape_space_restrictor_0009", "lvl1_escape_space_restrictor_0064", "lvl1_escape_space_restrictor_0058", "lvl1_escape_space_restrictor_0098", "lvl1_escape_space_restrictor_0097", "lvl1_escape_space_restrictor_0065", "lvl1_escape_space_restrictor_0089", "lvl1_escape_space_restrictor_0092", "lvl1_escape_space_restrictor_0095", "lvl1_escape_space_restrictor_0087", "lvl1_escape_space_restrictor_0062", "lvl1_escape_space_restrictor_0066", "lvl1_escape_space_restrictor_0083", "lvl1_escape_space_restrictor_0086", "goon", "lvl1_escape_space_restrictor_0074", "lvl1_escape_space_restrictor_0077", "lvl1_escape_blow_hide_restr_0011", "lvl1_escape_space_restrictor_0084", "lvl1_escape_space_restrictor_0085", "lvl1_escape_space_restrictor_0011", "zone_kvest_1" })
+	delete_netspawn_objects({ "lvl1_escape_space_restrictor_0009", "lvl1_escape_space_restrictor_0064", "lvl1_escape_space_restrictor_0058", "lvl1_escape_space_restrictor_0098", "lvl1_escape_space_restrictor_0097", "lvl1_escape_space_restrictor_0065", "lvl1_escape_space_restrictor_0089", "lvl1_escape_space_restrictor_0092", "lvl1_escape_space_restrictor_0095", "lvl1_escape_space_restrictor_0087", "lvl1_escape_space_restrictor_0062", "lvl1_escape_space_restrictor_0066", "goon", "lvl1_escape_space_restrictor_0074", "lvl1_escape_space_restrictor_0077", "esc_space_restrictor_hors_scene", "zone_kvest_1" })
 end
 
 function clear_drinked_vodka()
@@ -9412,80 +9180,6 @@ end
 
 function hmm_final_journal_where_start()
 	news_manager.send_tip(db.actor, game.translate_string("hmm_final_journal_where_start"), math.random(3000, 4000), "hero", 15000, nil, "pda_objective", false)
-end
-
-function clear_metki_tihonov()
-	local sim = alife()
-	for id=1, 65534 do
-		local kill = sim:object(id)
-		if kill then	
-			if kill.id == xvars.tihonov_zakazy_weapons_one_id or kill.id == xvars.tihonov_zakazy_weapons_two_id or kill.id == xvars.tihonov_zakazy_weapons_tri_id then			
-						--olr.del(kill)
-				alife():release(kill, true) 
-			end
-		end
-	end
-end
-
-function this_id_tih_tri(fs,ss)
-	if fs:id() == xvars.tihonov_zakazy_weapons_tri_id then
-		return true
-	end
-end
-
-function this_id_tih_not3(fs,ss)
-	if fs:id() ~= xvars.tihonov_zakazy_weapons_tri_id then
-		return true
-	end
-end
-
-function this_id_tih_two(fs,ss)
-	if fs:id() == xvars.tihonov_zakazy_weapons_two_id then
-		return true
-	end
-end
-
-function this_id_tih_not2(fs,ss)
-	if fs:id() ~= xvars.tihonov_zakazy_weapons_two_id then
-		return true
-	end
-end
-
-function this_id_tih_not(fs,ss)
-	if fs:id() ~= xvars.tihonov_zakazy_weapons_one_id then
-		return true
-	end
-end
-
-function this_id_tih_one(fs,ss)
-	if fs:id() == xvars.tihonov_zakazy_weapons_one_id then
-		return true
-	end
-end
-
-function create_tihonov_zakaz(target_name, map_string, xvar_id)
-	local target = alife():object(target_name)
-	if target then
-		local obj = alife():create("swamp_quest_scienific", target.position, target.m_level_vertex_id, target.m_game_vertex_id)
-		if obj then
-			olr.add_spot_on_map(obj.id, "green_location", game.translate_string(map_string))
-			xvars[xvar_id] = obj.id
-			table.insert(olr_offline_walk.tabst, obj)
-			xvars.npc_ofl_trade_yan[obj:name()] = true
-		end
-	end
-end
-
-function tihonov_zakazy_weapons_one()
-	create_tihonov_zakaz("lvl4_darkdolina_zone_radioactive_weak_0002", "tihonov_zakazy_weapons_one_map", "tihonov_zakazy_weapons_one_id")
-end
-
-function tihonov_zakazy_weapons_two()
-	create_tihonov_zakaz("rostok_physic_object_0136", "tihonov_zakazy_weapons_two_map", "tihonov_zakazy_weapons_two_id") -- временная затычка, будет находится в кинотеатре
-end
-
-function tihonov_zakazy_weapons_tri()
-	create_tihonov_zakaz("lvl7_yantar_physic_object_0092", "tihonov_zakazy_weapons_tri_map", "tihonov_zakazy_weapons_tri_id")
 end
 
 function esc_voyaka_monolith_del()
@@ -9866,7 +9560,6 @@ function karlik_kikandos_docs()
 end
 
 function kvest_esc_5_dialog_start_spaven_glazagar_kick()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("kvest_esc_5_dialog_start_spaven_glazagar_kick"), math.random(1000, 3000), "dolg", 15000, nil, "neutral", true, "st_nick_character_name_croweye")	
 end
 
@@ -9875,6 +9568,21 @@ function otdaem_gazeta_otrivok_1(first_speaker, second_speaker)
 	dialogs.relocate_money(first_speaker, 50, "in")
 end
 
+function precond_jaba_has_any_doc()
+	return precond_bar_barman_kamaz_doki() or precond_gazeta_otrivok_1()
+	 or precond_doki_agro_dyatel() or precond_gar_postroika_dnevnik()
+	 or precond_bar_journalist_dnevnik() or precond_zombied_pda_dezintegr()
+	 or precond_zap_killera_jurn_zap() or precond_ros_seif_zap_1()
+	 or precond_ros_seif_zap_2() or precond_ros_korpus_pass()
+	 or precond_city_fake_dnevnik() or precond_jurn_plen_mesage()
+	 or precond_device_pda_last_day() or precond_killers_deadscient_doc()
+	 or precond_mg_monolitovec_doki() or precond_mg_zombie_dnevnik_dead()
+	 or precond_yantar_mozg_doki() or precond_dolina_prelaba_doki()
+	 or precond_radar_kompleks_doki() or precond_esc_vishka_dnevnik()
+	 or precond_scintific_pda_military() or precond_pda_ecol_dolina()
+	 or precond_device_pda_jan_one() or precond_device_pda_jan_two()
+	 or precond_device_pda_jan_tri()
+end
 function precond_gazeta_otrivok_1()
 	return nik_dialog.item_much("gazeta_otrivok_1",1) ~= false 
 end
@@ -10612,15 +10320,15 @@ function esc_spawen_blokpost_docks()
 end
 
 function esc_kill_gulag_military()
-	local gulag = xr_gulag.get_gulag_by_sid(093)
-	if gulag then
-		for k,v in pairs(gulag.Object) do
-			if type(v)=="userdata" then
-				local o = level.object_by_id(k) 
-				if o then o:kill(o) end
-			end
-		end
-	end
+    local gulag = xr_gulag.get_gulag_by_sid(093)
+    if gulag then
+        for id,val in pairs(gulag.Object) do
+            local se_obj = alife():object(id)
+            if se_obj and (IsStalker(se_obj) or IsMonster(se_obj)) then
+                olr.kill_by_name(se_obj:name())
+            end
+        end
+    end
 end
 
 function agr_spawen_nauchinkia()
@@ -10676,11 +10384,6 @@ function proverka_digger_alive_gar()
 	end
 end
 
-function ros_kino_changed() 
-	db.actor:disable_info_portion("on_on_zzgh_theature")
-	db.actor:give_info_portion("theature_new_ros")
-end
-
 function hear_something_2_special() 
 	db.actor:give_info_portion("slizen1_prisli_hear_something_2_special")
 end
@@ -10691,10 +10394,6 @@ end
 
 function done_kill_gopllit()
 	delete_netspawn_objects("lvl3_agroprom_stalker_0004")
-end
-
-function killlll_max_ros()
-	olr.kill_by_name("lvl6_rostok_stalker_0021")
 end
 
 function goplit_have_check()
@@ -10964,7 +10663,9 @@ function daem_saf_papku(first_speaker, second_speaker)
 	dialogs.relocate_item_section(second_speaker, "fil_saf_papka","in")
 end
 
-function give_konservas(first_speaker, second_speaker)	
+function give_konservas(first_speaker, second_speaker)
+	olr.give_item("bread")
+	olr.give_item("conserva")
 	dialogs.relocate_item_section(second_speaker, "af_galantine_pot","in")
 	dialogs.relocate_item_section(second_speaker, "af_galantine_pot","in")
 	if not has_alife_info("komandir_zdoh_nahui") then
@@ -10982,18 +10683,27 @@ function daem_vodka_dvashtuki(first_speaker, second_speaker)
 	delete_netspawn_objects("lvl6_rostok_bloodsucker_strong_0011")
 end
 
-function arts_zakaz1_slab_daem_nag(first_speaker, second_speaker)	
-	dialogs.relocate_item_section(second_speaker, "vodka","in")
+function arts_zakaz1_slab_daem_nag(first_speaker, second_speaker)
+	news_manager.relocate_money(db.actor, "in", 25)
+		db.actor:give_money(25)
+		game_stats.money_quest_update(25)
+	dialogs.relocate_item_section(second_speaker, "antirad","in")
 end
 
-function arts_zakaz1_sred_daem_nag(first_speaker, second_speaker)	
-	dialogs.relocate_item_section(second_speaker, "vodka","in")
-	dialogs.relocate_item_section(second_speaker, "vodka","in")
+function arts_zakaz1_sred_daem_nag(first_speaker, second_speaker)
+	news_manager.relocate_money(db.actor, "in", 50)
+		db.actor:give_money(50)
+		game_stats.money_quest_update(50)
+	dialogs.relocate_item_section(second_speaker, "antirad","in")
 end
 
-function arts_zakaz1_vse_daem_nag(first_speaker, second_speaker)	
-	dialogs.relocate_item_section(second_speaker, "vodka","in")
-	dialogs.relocate_item_section(second_speaker, "vodka","in")
+function arts_zakaz1_vse_daem_nag(first_speaker, second_speaker)
+	news_manager.relocate_money(db.actor, "in", 100)
+		db.actor:give_money(100)
+		game_stats.money_quest_update(100)
+	dialogs.relocate_item_section(second_speaker, "antirad","in")
+	dialogs.relocate_item_section(second_speaker, "antirad","in")
+	dialogs.relocate_item_section(second_speaker, "medkit","in")
 end
 
 function mertv_prines()
@@ -11192,7 +10902,7 @@ end
 function jaba_horok_dead()
 	if not has_alife_info("olr_5_have") then
 		nick.horok_ne_have_go_nazad()
-		olr.del_by_name("lvl1_escape_blow_hide_restr_0011")
+		olr.del_by_name("esc_space_restrictor_hors_scene")
 		db.actor:give_info_portion("horok_dead_zafeilili")
 		db.actor:change_character_reputation(-30) 
 		olr_timers.st_timer("deldeadhorekfail", 915, "nick.deldeadhorekfail()")
@@ -11442,7 +11152,7 @@ function lil_money(first_speaker, second_speaker)
 end
 
 function fine_skafandr_have()
-	return nik_dialog.item_much("stalker_outfit",1, 0.35) ~= false 
+	return nik_dialog.item_much("stalker_outfit",0.95, 0.35) ~= false 
 end
 
 function spawen_krest_nap()
@@ -11796,13 +11506,6 @@ function give_pattys_bablo (first_speaker, second_speaker)
 	dialogs.relocate_money(first_speaker, 2500, "in") 
 end
 
-function cit_drop_actor_inventory(actor)
-	inv_box_2 = level_object_by_sid(18029)
-	out_object = actor
-	in_object = inv_box_2
-	actor:inventory_for_each(transfer_object_item) 
-end
-
 function cross_off_yan()
 	--olr_spawn_phantoms.genmyphatoms()
 	--log1("1")
@@ -11973,7 +11676,7 @@ end
 
 -- переводим в ОФФЛАЙН професора верт
 function del_proffesor_ver()
-	olr_timers.st_timer_game("del_proffesor_ver_online", 432000, "nick.del_proffesoronline_ver()")	-- Профессор улетает на пять дней
+	olr_timers.st_timer_game("del_proffesor_ver_online", 259200, "nick.del_proffesoronline_ver()")	-- Профессор улетает на пять дней
 	news_manager.send_tip(db.actor, game.translate_string("del_proffesor_ver_0"), 60, "freedom", 10000)
 	olr_timers.st_timer("omsoffeoffeff3", 25, "nick.del_agr_yan_arg_ployt()")
 	local sim = alife()
@@ -11983,6 +11686,13 @@ function del_proffesor_ver()
 		sim:set_switch_online (se_obj.id, false)
 		sim:set_interactive (se_obj.id, false)
 	end
+end
+
+function del_agr_yan_arg_ployt()
+	olr.del_by_name("yan_equip_helicopter_0001")
+	olr.del_by_name("lvl7_yantar_physic_object_0668")
+	olr.del_by_name("lvl7_yantar_physic_object_0546")
+	news_manager.send_tip(db.actor, game.translate_string("del_proffesor_ver_1"), 40, "professor", 10000, nil, nil, true, "st_yan_general_ecolog_name")
 end
 
 -- переводим в ОНЛАЙН професора верт
@@ -12175,7 +11885,6 @@ function del_zagrada_quest_one()
 	local se_obj = alife():object("lvl4u_darklab_physic_object_0503")
 	if se_obj then
 		alife():release(se_obj, true)
-		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("del_zagrada_quest_one_0"), nil, "unknown", 9000, nil, nil, true, "st_burer_elder_name")
 		news_manager.send_tip(db.actor, game.translate_string("del_zagrada_quest_one_1"), 10, "unknown", 9000, nil, nil, "st_burer_elder_name")
 	end
@@ -12190,6 +11899,7 @@ end
 function remove_wolfff()
 	delete_netspawn_objects("lvl1_escape_stalker_0002")
 	delete_netspawn_objects("lvl1_escape_stalker_0004")
+	delete_netspawn_objects("lvl1_escape_stalker_0005")
 end
 
 -- удаляем сосыча росток cut
@@ -12715,11 +12425,6 @@ function rush_rostok_tmer_mochii2()
 	news_manager.send_tip(db.actor, game.translate_string("st_rush_rostok_tmer_mochii2"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", true, "st_group_title")
 end
 
-function maxsms_cool4()
-	news_manager.send_tip(db.actor, game.translate_string("st_maxsms_cool4"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", true, "st_sim_test_046_name")
-	olr.spawn_on_obj("af_deadhead", "lvl6_rostok_stalker_0021")
-end
-
 function mg_sms_hey_punkass_hrom()
 	olr.kill_mon_in_radius(db.actor:position(), 60)
 	news_manager.send_tip(db.actor, game.translate_string("st_mg_sms_hey_punkass_hrom"), math.random(1000, 3000), "freedom", 15000, nil, "pda_objective", true, "st_svoboda_leader_name")
@@ -12730,21 +12435,21 @@ function mg_sms_hey_punkass_hrom2()
 end
 
 function sms_esc_doki_band()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("sms_esc_doki_band"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", false)
 end
 
-function maxsms_cool3()
-	news_manager.send_tip(db.actor, game.translate_string("st_maxsms_cool3"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", true, "st_sim_test_046_name")
+function esc_sos_newbie_info_spot()
+	local sim = alife()
+	local obj = sim:object("lvl1_escape_stalker_0008")
+	--local obj = sim:story_object(110)
+	level.map_add_object_spot_ser(obj.id, "map_sos", "st_xr_wounded_sos_signal")
 end
 
-function maxsms_cool2()
-	news_manager.send_tip(db.actor, game.translate_string("st_maxsms_cool2"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", true, "st_sim_test_046_name")
-end
-
-function maxsms_cool()
-	news_manager.send_tip(db.actor, game.translate_string("st_maxsms_cool1"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", true, "st_sim_test_046_name")
-	olr.kill_mon_in_radius(db.actor:position(), 45)
+function esc_sos_newbie_info_remove_spot()
+	local sim = alife()
+	local obj = sim:object("lvl1_escape_stalker_0008")
+	--local obj = sim:story_object(110)
+	level.map_remove_object_spot(obj.id, "map_sos")
 end
 
 function noobik_progulka_tri()
@@ -12780,13 +12485,11 @@ end
 
 function zagon_bandosa()
 	if not has_alife_info("start_zagon_bandosa_dead") then
-		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("st_zagon_bandosa"), math.random(1000, 3000), "neutral", 15000, nil, "pda_objective", true, "gar_hellcar_name")
 	end
 end
 
 function lonewolf_gar_smsm()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_lonewolf_gar_smsm"), math.random(1000, 3000), "lone_wolf", 45000, nil, "pda_objective", true, "st_sim_test_036_name")
 	olr_timers.st_timer("lonewolf_gar_smsm2", 15, "nick.lonewolf_gar_smsm2()")
 	olr_timers.st_timer("lonewolf_gar_smsm3", 35, "nick.lonewolf_gar_smsm3()")
@@ -12801,8 +12504,13 @@ function lonewolf_gar_smsm3()
 end
 
 function dolina_barman_house_doki_voroniy_glas_smsm()
-	olr.beep()
-	delete_netspawn_objects({ "lvl2_garbage_staler_undead_olr", "lvl2_garbage_staler_undead_olr_0002", "lvl2_garbage_staler_undead_olr_0001" })
+	-- Не удаляем кабана
+	delete_netspawn_objects({ "lvl2_garbage_staler_undead_olr",  "lvl2_garbage_staler_undead_olr_0001" })
+	-- Просто убиваем
+	olr.kill_by_name("lvl2_garbage_staler_undead_olr_0002")
+	-- Выдаём поршень на провал квеста с Кабаном
+	--db.actor:give_info_portion("kaban_spawn_first_talk_failed") 
+	-- Не надо выдавать поршень, так как на этот момент мы этот квест точно выполнили, иначе он проваливается еще у Жабы
 	news_manager.send_tip(db.actor, game.translate_string("dolina_barman_house_doki_voroniy_glas_smsm_0"), 2, "dolg", 19000, nil, "pda_objective", true, "st_nick_character_name_croweye")
 end
 
@@ -12814,7 +12522,6 @@ function change_measures_counter()
 end
 
 function volk_sasesc()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_volk_sasesc"), math.random(1000, 3000), "lone_wolf", 15000, nil, "pda_objective", true, "st_sim_test_036_name")
 	olr_timers.st_timer("yan_yhggan_vsidetector", 30, "nick.volk_sasesc_exec()")
 end
@@ -12825,10 +12532,8 @@ end
 
 function volk_sasesc_bar()
 	if bind_car.act_in_car_now() == true then
-		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("st_volk_sasesc_bar"), math.random(1000, 3000), "lone_wolf", 15000, nil, "pda_objective", true, "st_sim_test_036_name")
 	end
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_volk_sasesc_stop"), math.random(1000, 3000), "lone_wolf", 15000, nil, "pda_objective", true, "st_sim_test_036_name")
 	db.actor:change_actor_sleep(-0.5)
 	olr.del_by_name("lvl2_garbage_stalker_0055")
@@ -12851,19 +12556,16 @@ function volk_sasesc_bar3()
 end
 
 function bad_timer_del_novic_sms()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_bad_timer_del_novic_sms"), math.random(1000, 3000), "novice", 15000, nil, "pda_objective", true, "stalker_zob_name")
 	db.actor:change_character_reputation(-20)
 	nick.clear_otmetka_kalash()
 end
 
 function bar_dolg_lider_stuka()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_bar_dolg_lider_stuka"), math.random(1000, 15000), "dolg_leader", 15000, nil, "pda_objective", false)
 end
 
 function bar_dolg_fantasm_go_message()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("bar_dolg_fantasm_go_message_0"), nil, "dolg", 10000, nil, "pda_objective", true, "bar_dolg_general_voronin")
 end
 
@@ -12872,7 +12574,6 @@ function diggr_blokpost()
 end
 
 function dofhodi_kvestpat()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_dofhodi_kvestpat"), math.random(1000, 1500), "trader", 15000, nil, "pda_objective", true, "escape_trader_name")
 	local sim = alife()
 	local sobj = sim:object("lvl2_garbage_af_toadeye_garbage") 
@@ -12885,18 +12586,15 @@ function dofhodi_kvestpat()
 end
 
 function jaba_zavod_doki_escsa()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_jaba_zavod_doki_escsa"), math.random(1000, 3500), "trader", 15000, nil, "pda_objective", true, "escape_trader_name")
 	olr.del_by_name("lvl1_escape_physic_object_0570")
 end
 
 function horok_ne_have_go_nazad()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_horok_ne_have_go_nazad"), math.random(1000, 1500), "trader", 15000, nil, "pda_objective", true, "escape_trader_name")
 end
 
 function sms_esc_olr_kvest_3_zametki_bio()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_sms_esc_olr_kvest_3_zametki_bio"), nil, "trader", 15000, nil, "pda_objective", true, "escape_trader_name")
 	olr.del_by_name("lvl1_escape_physic_object_0341")
 	olr_timers.st_timer("pda_zarad_info_zaba", 15, "nick.pda_zarad_info_zaba()")
@@ -12915,7 +12613,6 @@ function olr_blowout_first_zaba()
 end
 
 function olr_blowout_first_zaba_blok()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_olr_blowout_first_zaba_blok"), math.random(1000, 1500), "trader", 10000, nil, "pda_objective", true, "escape_trader_name")
 end
 
@@ -12952,7 +12649,6 @@ function fraer_yeag_3()
 end
 
 function st_pes_go_talk1()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("st_pes_go_talk1"), math.random(1000, 15000), "dolg", 5000, nil, "pda_objective", true, "gar_duty_indian_boar")
 	olr_timers.st_timer("pes_propaganda", 123, "nick.pes_propaganda()")
 end
@@ -12985,22 +12681,18 @@ function monolit_pridi()
 end
 
 function jaba_ohrene()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("jaba_ohrene"), math.random(1000, 15000), "trader", 15000, nil, "pda_objective", true, "escape_trader_name")
 end
 
 function komandir_zdohnah()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("komandir_zdohnah"), math.random(500, 1000), "trader", 15000, nil, "pda_objective", true, "escape_trader_name")
 end
 
 function infor_glob_rad_palba()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("infor_glob_rad_palba"), math.random(1000, 3000), "info", 5000, nil, nil, true, "st_pda")
 end
 
 function kolodetz_task_jaba()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("kolodetz_task_jaba_0"), nil, "trader", 5000, nil, "pda_objective", true, "escape_trader_name")
 end
 
@@ -13038,7 +12730,6 @@ end
 
 function kostumu_pesda_agr2()
 	if has_alife_info("medpribor_kvest_start_find_friend") then
-		olr.beep()
 		news_manager.send_tip(db.actor, "kostumu_pesda_agr", math.random(1000, 3000), "hero", 15000, nil, "pda_objective", true, xr_effects.get_real_actor_name())
 	end
 end
@@ -13048,7 +12739,6 @@ function coolweather_nap3()
 end
 
 function now_final_swapm_naprav_talk_done_docsms()
-	olr.beep()
 	olr.del_by_name("lvl6_rostok_space_restrictor_0025")
 	olr.del_by_name("lvl6_rostok_physic_object_0203")
 	olr.del_by_name("lvl6_rostok_physic_object_0200")
@@ -13103,7 +12793,6 @@ function coolweather_napaaim()
 end
 
 function prof_boloto_spawn_bandosov_smss5()
-	olr.beep()
 	news_manager.send_tip(db.actor, "prof_boloto_spawn_bandosov_smss5", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_general_ecolog_name")
 end
 
@@ -13123,7 +12812,6 @@ function rnd_zombies_spawn()
 end
 
 function prof_boloto_spawn_bandosov_smss4()
-	olr.beep()
 	news_manager.send_tip(db.actor, "prof_boloto_spawn_bandosov_smss4", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_general_ecolog_name")
 	level.add_pp_effector("vibros_p.ppe", 231, false)
 	nick.rnd_zombies_spawn()
@@ -13156,25 +12844,21 @@ function rnd_ppe_eff()
 end
 
 function prof_heliequp_spawn_bandosov_smss()
-	olr.beep()
 	news_manager.send_tip(db.actor, "prof_boloto_spawn_bandosov_smss", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_general_ecolog_name")
 	olr.kill_mon_in_radius(db.actor:position(), 120)
 end
 
 function killlll_plot_mg_sms3()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms3"), math.random(5000, 7000), "ecolog", 15000, nil, "pda_objective", false)
 end
 
 function killlll_plot_mg_sms4()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("killlll_plot_mg_sms4"), math.random(5000, 7000), "ecolog", 15000, nil, "pda_objective", false)
 end
 
 function yan_zamery_ucheny_zdoh_proff()
 	if not has_alife_info("yan_talk_done_zamery") then
-		olr.beep()
-	news_manager.send_tip(db.actor, "yan_zamery_ucheny_zdoh_proff", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_general_ecolog_name")
+		news_manager.send_tip(db.actor, "yan_zamery_ucheny_zdoh_proff", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_general_ecolog_name")
 	end
 end
 
@@ -13214,7 +12898,6 @@ function zov_kontakta_pda()
 end
 
 function zov_osvedom_case_pda()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("zov_osvedom_case_pda"), math.random(1000, 3000), "unknown", 5000, nil, "pda_objective", false)
 end
 
@@ -13223,7 +12906,6 @@ function zov_dveri_pda()
 end
 
 function zaba_ab_note()
-	--olr.beep()
 	--olr_timers.st_timer("jaba_ab_radweak", 165, "nick.jaba_ab_radweak()")
 	--local sactor = alife():actor()
 	--local cactor = level.object_by_id(sactor.id)
@@ -13233,7 +12915,6 @@ function zaba_ab_note()
 end
 
 function jaba_ab_radweak()
-	olr.beep()
 	olr.info("tutor_radiat_jornl")
 	news_manager.send_tip(db.actor, game.translate_string("jaba_ab_radweak_0"), nil, "trader", 15000, nil, nil, true, "escape_trader_name")
 end
@@ -13247,7 +12928,6 @@ function barm_sms_prcpntr()
 end
 
 function njvis_oka_sch()
-	olr.beep()
 	local sobj = alife():object("lvl1_escape_physic_object_0193") 
 	if sobj then 
 		olr.add_spot_on_map(sobj.id,"crlc_big", game.translate_string("njvis_oka_sch_map")) 
@@ -13352,7 +13032,6 @@ function basement_seryy_dee_dee()
 end
 
 function basement_seryy_dee()
-	olr.beep()
 	news_manager.send_tip(db.actor, "basement_seryy_dee_0", nil, "hero", 15000, nil, "pda_objective", true, xr_effects.get_real_actor_name())
 	news_manager.send_tip(db.actor, "basement_seryy_dee_1", 8, "neutral", 10000, nil, nil, true, "gar_seryi_name")
 	olr_timers.st_timer("rost_alarm_korps", 22, "nick.rost_alarm_korps()")
@@ -13394,7 +13073,6 @@ function turn_arena_lamps_off_yan_tip()
 end
 
 function basement_seryy()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("basement_seryy"), nil, "neutral", 5000, nil, nil, false)
 end
 
@@ -13407,7 +13085,6 @@ function messer_fonar_sms2()
 end
 
 function barmen_abyantar_pre_blow_psy()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("barmen_abyantar_pre_blow_psy"), nil, "trader", 25000, nil, "pda_objective", true, "escape_trader_name")
 end
 
@@ -13431,20 +13108,17 @@ end
 
 function dolg_arrabar_territory_palba()
 	if xr_conditions.actor_in_zone(nil,nil,{"bar_bunker_online_restrictor"}) then
-		olr.beep()
 		news_manager.send_tip(db.actor, game.translate_string("dolg_arrabar_territory_palba"), nil, "dolg", 10000, nil, "pda_tip", true, "dolg")
 	end
 end
 
 function proffes_aftrbrain_sms()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("proffes_aftrbrain_sms"), nil, "professor", 10000, nil, "pda_objective", true, "yan_general_ecolog")
 end
 
 function spawn_jourlalist_note()
 	local pos = vector():set(-93,1,100)
 	olr.kill_mon_in_radius(pos, 80)
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("spawn_jourlalist_note"), nil, "unknown", 5000, nil, nil, true, "st_jurnalist_name")
 end
 
@@ -13474,7 +13148,6 @@ function radar_ant_off_sms()
 end
 
 function kol()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("kol_0"), nil, "clear_sky", 10000, nil, "pda_tip", true, "st_cit_killer_leader_name")
 	olr.del_by_name("lvl5_bar_stalker_0025")
 	if has_alife_info("olr_traders_night") then
@@ -13488,14 +13161,12 @@ function tele3()
 end
 
 function tele2()
-	olr.beep()
 	olr_timers.st_timer("dok_zaidi_jurn_propal", 35, "nick.dok_zaidi_jurn_propal()")
 	news_manager.send_tip(db.actor, game.translate_string("tele2"), math.random(1000, 3000), "ecolog", 5000, nil, "pda_objective", true, "st_sim_test_034_name")
 	olr.info("tihonov_zaidi_jurn_propal_st") 
 end
 
 function dok_zaidi_jurn_propal()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("dok_zaidi_jurn_propal_0"), nil, "doctor", 99000)
 	olr.info("dok_zaidi_jurn_propal_st") 
 end
@@ -13560,7 +13231,6 @@ function varlab_1()
 end
 
 function radar_door()
-	olr.beep()
 	olr.hud_tip("", game.translate_string("radar_door"), 5, true)
 	olr_timers.st_timer("spawen_phantoms", 15, "olr.spawen_phantoms()")
 	olr_timers.st_timer("spawen_phantoms", 35, "olr.spawen_phantoms()")
@@ -13574,42 +13244,11 @@ end
 
 function jurnl()
 	news_manager.send_tip(db.actor, game.translate_string("jurnl"), math.random(1000, 3000), "unknown", 15000, nil, true, "st_jurnalist_name")
-	olr_timers.st_timer("chaes_add_spawn_doki_seven", 5, "nick.chaes_add_spawn_doki_seven()")
-	olr_timers.st_timer("chaes_add_spawn_doki_seven", 25, "nick.chaes_add_spawn_doki_seven()")
-	olr_timers.st_timer("chaes_add_spawn_doki_seven", 35, "nick.chaes_add_spawn_doki_seven()")
-end
-
-function chaes_add_spawn_doki_seven()
-	local sectionsa = {
-		"m_bloodsucker_e",
-		"bloodsucker_strong",
-		"zombie_strong",
-		"m_gigant_e"
-	}
-
-	local count = 30
-	for ind = 1, count do
-		local lname = level.name()
-
-		local lvtab = GetLevelVertexes(lname)
-		local lvx = math.max(unpack(lvtab))
-		local lv = math.random(1, lvx)
-
-		local gvtab = GetGameVertexes(lname)
-		local gv_min = math.min(unpack(gvtab))
-		local gv_max = math.max(unpack(gvtab))
-
-		local section = sectionsa[math.random(table.getn(sectionsa))]
-		local obj = alife():create(section, level.vertex_position(lv), lv, gv_max)
-		if obj and obj.position:distance_to_xz(db.actor:position()) < 50 then --- ваяки
-			alife():release(obj, true)
-		end
-	end
 end
 
 function spasipo_freed()
 	delete_netspawn_objects("lvl11_deadcity_physic_object_0736")
-	news_manager.send_tip(db.actor, game.translate_string("spasipo_freed"), nil, "freedom", 10000, nil, nil, true, "st_sim_test_048_name")
+	news_manager.send_tip(db.actor, game.translate_string("spasipo_freed"), nil, "freedom", 10000, nil, nil, true, "st_patroul_name")
 end
 
 function slizen()
@@ -13635,12 +13274,10 @@ function zaba_zovet()
 end
 
 function zaba_sobaki_angar()
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string("zaba_sobaki_angar"), nil, "trader", 10000, nil, nil, true, "escape_trader_name")
 end
 
 function zaba_art_garb()
-	olr.beep()
 	olr_timers.st_timer("zaba_sobaki_angar", 15, "nick.zaba_sobaki_angar()")
 	olr_timers.st_timer("sms_about_angar_art", 2500, "nick.angar_art_jaba()")
 	local jaba_place = alife():object("lvl2_garbage_stalker_0012")

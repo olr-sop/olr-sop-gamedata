@@ -4,6 +4,18 @@
 local time_apdeyta = 0
 local timerup = 1000
 
+-- секции торговцев для исключения заражения, хорошего состояния и медленной порчи
+-- уточнить торгует ли учённый на болотах в бункере который сидит
+local trader_profile = {
+	escape_trader_0000 = true, -- Жаба на Кордоне
+	bar_barman = true, -- Крыса
+	yan_scientist_gorbovsky = true, -- Профессор на Янтаре
+	bar_dolg_petrenko = true, -- Торговец долга
+	lvl5_bar_stalker_0051 = true, -- Медик долга
+	lvl9_military_m_trader = true, -- Жаба на милитари
+	lvl11_deadcity_stalker_0001 = true, -- Торговец свободы
+}
+
 function Init(obj)
 	local oNewBinder = CItemBinder(obj)
 	obj:bind_object(oNewBinder)
@@ -40,18 +52,31 @@ function CItemBinder:net_spawn(data)
 	if not object_binder.net_spawn(self, data) then
 		return false
 	end
+	
+	local se_obj = alife():object(self.object:id()) -- Получим сначала серверный объект
+
+	if se_obj and xvars and xvars.foods and g_food_table[self.object:section()] then
+		local id_str = tostring(se_obj.id)
+		local entry = xvars.foods[id_str]
+		if not entry or entry.sec ~= self.object:section() then
+			local p_id = se_obj.parent_id
+			local p_obj = p_id and alife():object(p_id)
+			if p_obj and trader_profile[p_obj:name()] then
+				--log1("! Еда у торговца: name = "..self.object:name().." id = "..se_obj.id.."")
+				xvars.foods[id_str] = {sec = self.object:section(), rad = false}
+			else
+				--log1("! Еда не у торговца: name = "..self.object:name().." id = "..se_obj.id.."")
+				xvars.foods[id_str] = {sec = self.object:section(), rad = math.random(1, 2) == 1}
+			end
+		end
+	end	
+	
 	return true
 end
 
 function CItemBinder:net_destroy()
 	object_binder.net_destroy(self)
 end
-
-local trader_sections = { -- секции торговцев для исключения заражения, хорошего состояния и медленной порчи
-	m_trader = true,
-	m_barman = true,
-	stalker_sakharov = true
-}
 
 local food_sections_neportit = { -- еда которая не должна портится (по крайней мере очень быстро)
 								 -- не используется на данный момент
@@ -61,23 +86,10 @@ local food_sections_neportit = { -- еда которая не должна портится (по крайней м
 function CItemBinder:update(delta)
 	object_binder.update(self, delta)
 	
-	-- порядок заражения итемов радиацией
-	-- проверяем что xvars и xvars.foods есть и что имя айтема у нас пуст, т.е nil
-	-- проверяем какой класс родителя у нас, если не clsid.script_trader то заражаем, иначе ставим флаг не заражённого (т.е у торгоша будет не заражена еда)
-	if xvars and xvars.foods and xvars.foods[self.object:name()] == nil then -- проверяем xvars и то что айтема по id там нет, т.е nil
-		if self.object:parent() ~= nil and trader_sections[self.object:parent():section()] then
-			--log1("! Еда у торговца: name = "..self.object:name().." id = "..self.object:id().."")
-			xvars.foods[self.object:name()] = false -- прописываем еде торгоша что еда не заражена
-		else
-			--log1("! Еда не у торговца: name = "..self.object:name().." id = "..self.object:id().."")
-			set_radfood_flag(self.object) -- заражаем или нет
-		end
-	end
-	
 	-- состояние еды у торговцев будет всегда от 90 до 99%
 	local cond = self.object:condition()
 	if cond == 1 and g_food_table[self.object:section()] then
-		if self.object:parent() ~= nil and trader_sections[self.object:parent():section()] then
+		if self.object:parent() ~= nil and trader_profile[self.object:parent():name()] then
 			--log1("! Меняем состояние еды у торговца: name = "..self.object:name().." id = "..self.object:id().."")
 			self.object:set_condition((math.random(90, 99) / 100)) -- у торговцев еда всегда почти идеальна
 		else
@@ -90,7 +102,7 @@ function CItemBinder:update(delta)
 	if time_global() > time_apdeyta then
 		time_apdeyta = time_global() + timerup
 		if ini_sys:line_exist(self.object:section(), "cor_time") and cond > 0.01 then
-			if not (self.object:parent() ~= nil and trader_sections[self.object:parent():section()]) then
+			if self.object:parent() ~= nil and trader_profile[self.object:parent():name()] then
 				self.object:set_condition(cond - (self:TimeCondLost()*0.25)) -- у торговецв еда портится в 4 раза дольше
 				--log1("! Меняем состояние еды в апдейте у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
 			else
@@ -112,13 +124,4 @@ function CItemBinder:TimeCondLost()
 		return 0
 	end
 	return 100 / skis / 24 / 100 / 60 * 100
-end
-
-function set_radfood_flag(obj)
-	-- надо бы для таких штук ввести некие множители, а не 50 на 50
-	if math.random(1, 2) == 1 then
-		xvars.foods[obj:name()] = true
-	else
-		xvars.foods[obj:name()] = false
-	end
 end

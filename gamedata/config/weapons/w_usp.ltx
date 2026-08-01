@@ -54,22 +54,27 @@ kill_msg_height		= 23
 
 ;-----------------------------------------------------------------------------------
 ;базовая дисперсия
-control_inertion_factor		= 0.9
-fire_dispersion_base		= 0.155 	;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_base			= 0.155		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_condition_factor= 3			;увеличение дисперсии в процентах при максимальном износе 
+condition_shot_dec				= 0.00008	;увеличение износа при каждом выстреле
 
 ;отдача
-cam_relax_speed         	= 5	;скорость возврата в исходное положение
-cam_dispersion          	= 0.28	;увеличения угла (в градусах) с каждым выстрелом
-cam_dispersion_inc		= 0.2	;увеличениe cam_dispersion с каждым выстрелом
-cam_dispersion_frac		= 0.75	;ствол будет подыматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
-cam_max_angle			= 16.0	;максимальный угол отдачи
-cam_max_angle_horz		= 12.0	;(degree) maximum shot horizontal degree 
-cam_step_angle_horz		= 1.0	;(degree) size of step camera moved in horizontal position while shooting
+cam_dispersion					= 0.27		;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc				= 0.37		;увеличениe cam_dispersion с каждым выстрелом
+cam_dispersion_frac				= 0.85		;ствол будет подниматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
+cam_max_angle					= 48.0		;максимальный угол отдачи
+cam_max_angle_horz				= 6.0		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz				= 0.6		;(degree) size of step camera moved in horizontal position while shooting
+cam_relax_speed					= 7.5			;скорость возврата в исходное положение
 
-fire_dispersion_condition_factor= 3	;увеличение дисперсии в процентах при максимальном износе 
-misfire_probability 		= 0.003	;вероятность осечки при максимальном износе 
-misfire_condition_k			= 0.05
-condition_shot_dec 			= 0.0007 ;увеличение износа при каждом выстреле
+control_inertion_factor			= 1.05
+misfire_probability				= 0.003		;вероятность осечки при максимальном износе 
+
+PDM_disp_crouch					= 0.9
+PDM_disp_crouch_no_acc			= 0.85
+PDM_disp_accel_factor			= 1.2
+PDM_disp_base					= 0.9
+PDM_disp_vel_factor				= 1.2
 ;-----------------------------------------------------------------------------------
 
 direction                	= 0, 0, 1
@@ -84,20 +89,14 @@ shell_particles	 			= weapons\generic_shells
 
 rpm_empty_click 	 		= 200
 
-PDM_disp_base 			= 1.0
-PDM_disp_vel_factor 		= 0.7
-PDM_disp_accel_factor 		= 0.7
-PDM_crouch	 		= 1.0
-PDM_crouch_no_acc 		= 1.0
-
 ; ttc
-hit_power               = 0.55
-hit_impulse		 		= 24
-hit_type = fire_wound
+hit_power				= 0.47
+hit_impulse				= 57.3
+hit_type				= fire_wound
 
-fire_distance           = 60
-bullet_speed			= 285	;начальная скорость пули
-rpm                     = 400
+fire_distance			= 100
+bullet_speed			= 270	;начальная скорость пули
+rpm						= 400
 ; end ttc
 
 use_aim_bullet				= true		;Поддерживается ли первая суппер пуля
@@ -129,6 +128,7 @@ light_var_range		 		= 0.5
 light_time 		 			= 0.2
 
 ph_mass			 			= 1
+;cost			 			= 350
 
 ;addons
 scope_status				= 0
@@ -168,30 +168,38 @@ silencer_light_time 		= 0.2
  
 [wpn_usp_hud]
 allow_inertion = true
-shell_point		         = -0.0, -0.00, 0.00
-fire_point               = -0.030000,0.010000,0.090000
-fire_bone                = pistol
-orientation			= 7.687998,-2.764997,0.000000
-position			= 0.070000,-0.130000,0.150000
+
+shell_point		         = -0.0, -0.0, 0.0
+fire_point               = -0.100000,0.000000,0.060000
+fire_bone                = wpn_body
+
+;позиция и направление оружия с руками
+orientation              = 0,0,0
+position                 = 0.000000,-0.010000,-0.030000
+
+;смещения HUD для режима приближения
+zoom_offset			= -0.371200,0.116900,0.000000
+zoom_rotate_x		= 0.106700
+zoom_rotate_y		= 0.272400
+
+;модель оружия с руками
 visual                   = weapons\usp\usp_hud.ogf
 
+;анимации оружия
 anim_holster				= holster
 anim_idle					= idle
 anim_empty					= empty
-anim_reload					= reload
-anim_reload_empty			= reload_full
+anim_reload					= reload_full
+anim_reload_empty			= reload
 anim_draw					= draw
 anim_draw_empty				= draw_empty
-anim_shoot					= shoot0
+anim_shoot					= shoot1
 anim_shot_last				= shoot_last
-anim_close					= holster
+anim_close					= close
 anim_idle_aim				= idle_aim
 anim_idle_sprint			= idle_sprint
 
-;смещения HUD для режима приближения
-zoom_offset			= -0.154900,0.044400,0.000000
-zoom_rotate_x		= 0.040000
-zoom_rotate_y		= 0.128001
 
-zoom_hide_crosshair	= true					;to hide crosshair in zoom 
+
+
 

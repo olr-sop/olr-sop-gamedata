@@ -240,20 +240,7 @@ function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_i
 	--	who:disable_anomaly()
 	--end
 
-	-- те мутанты что хитают нас - умирают
-	if self.object:name() == "lab_burer_elder_1" or self.object:name() == "lab_burer_elder_2" then
-		if who:is_monster() then
-			local h = hit()
-			h.power = 11111
-			h.direction = vector():set (0, 1, 0)
-			h.impulse = 0.01
-			h.draftsman = obj
-			h.type = hit.strike
-			who:hit(h)
-		end
-	end
-
-	if who:section() == "zone_buzz_dezint" then
+	if who:section() == "zone_witches_galantine_dezint" then
 		local h = hit()
 		h.power = 0.001
 		h.direction = vector():set (0, 1, 0)
@@ -498,7 +485,7 @@ function motivator_binder:update(delta)
             local selfob = self.object
             selfob:iterate_inventory(
                 function(selfob, obj)
-                    if obj and obj:is_weapon() then
+                    if obj and obj:is_weapon() and not (obj:clsid() == clsid.wpn_knife or obj:clsid() == clsid.wpn_knife_s) then
                         if self.ammo_create == false then
                             local wname = utils.cfg_get_string(ini_sys, obj:section(), "ammo_class", obj, false, "", "")
                             local sectamm = amk.str_explode(",", wname)
@@ -960,10 +947,18 @@ function addCommonPrecondition(action)
 	action:add_precondition (world_property(xr_evaluators_id.sidor_wounded_base + 0,  false))
 	action:add_precondition (world_property(xr_evaluators_id.chugai_heli_hunter_base, false))
 	action:add_precondition (world_property(xr_evaluators_id.abuse_base, false))
+	
 	if anomaly_evader then
 		action:add_precondition (world_property(1099,false))
-	end	
+	end
+	
 	core.tc("motivator_addCommonPrecondition",action)
+	
+	if xrs_grenade then 
+		action:add_precondition (world_property(xrs_grenade.evid_crazy_grenadier, false))
+		action:add_precondition (world_property(xrs_grenade.evid_aaa_grenade, false))
+	end
+	
 	if watcher_act then
 		action:add_precondition(world_property(watcher_act.evid_see_stuff, false))
 	end

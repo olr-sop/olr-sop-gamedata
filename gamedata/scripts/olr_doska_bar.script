@@ -103,6 +103,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		olr.info("doska_one_working_bar")
 		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_find_item").." "..game.translate_string(xvars.quest_one_text_name_bar)..game.translate_string("st_olr_doska_bar_task_2"), 1, "item", 9000)
 		olr_timers.st_timer("doska_one_gen_timer_fail_bar", 7500, "olr_doska_bar.doska_one_gen_timer_fail_bar()")
+		db.actor:give_info_portion("bar_doska_quest_taken")
 	else
 		--log1("cannot take quest")
 	end
@@ -122,6 +123,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		local obj = alife():object(sobj)
 		olr.add_spot_on_map( obj.id,"kill_stalker_location", game.translate_string("st_olr_doska_bar_task_4")..nm)
 		olr_timers.st_timer("doska_two_gen_timer_fail_bar", 7500, "olr_doska_bar.doska_two_gen_timer_fail_bar()")
+		db.actor:give_info_portion("bar_doska_quest_taken")
 	else
 		--log1("cannot take quest")
 	end
@@ -132,7 +134,6 @@ function ui_quests_table:Hide()
 	bind_stalker.restore_weapon()
 	level.remove_cam_effector(30)
 end
-
 ----------------------------------------------------------------------------------------------------------------------------
 -- Поиск предметов
 
@@ -141,6 +142,7 @@ function doska_one_gen_timer_fail_bar()
 	olr_doska_bar.clear_find_item()
 	olr_timers.st_timer("doska_one_gen_bar", 33, "olr_doska_bar.gen_rnd_item_find()")
 	db.actor:disable_info_portion("doska_one_working_bar")
+	db.actor:disable_info_portion("bar_doska_quest_taken")
 	db.actor:change_character_reputation(-20)
 end 
 
@@ -154,7 +156,17 @@ function precond_user_task_doska_item()
 	if art and art:is_artefact() then
 		return false
 	end
-     return nik_dialog.item_much(obj_targ,1) ~= false 
+	return nik_dialog.item_much(obj_targ,1) ~= false 
+end
+
+function has_any_active_task_doska(first_speaker, second_speaker)
+	if xvars.quest_one_target_bar ~= "" then
+		return true
+	end
+	if xvars.quest_two_target_bar ~= "" then
+		return true
+	end
+	return false
 end
 
 function precond_user_task_doska_item_art()
@@ -168,8 +180,7 @@ function precond_user_task_doska_item_art()
 	end
 	if art and art:is_artefact() then
 		local known_inf = ini_sys:r_string(obj_targ, "known_info")
-		local known_inf_desc = game.translate_string(known_inf)
-     	return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf_desc)
+     	return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf)
 	end
 end
 
@@ -181,6 +192,7 @@ function one_complete_func_item()
 	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_bar.clear_find_item()
 	db.actor:disable_info_portion("doska_one_working_bar")
+	db.actor:disable_info_portion("bar_doska_quest_taken")
 	local time = math.random(96,466)
 	olr_timers.st_timer("doska_one_genbar", time, "olr_doska_bar.gen_rnd_item_find()")
 	olr_timers.del_timer("doska_one_gen_timer_fail_bar")
@@ -307,6 +319,7 @@ function two_complete_func_kill()
 	game_stats.money_quest_update(xvars.quest_two_cost_bar)
 	news_manager.relocate_money(db.actor, "in", xvars.quest_two_cost_bar)
 	db.actor:disable_info_portion("doska_two_working_bar")
+	db.actor:disable_info_portion("bar_doska_quest_taken")
 	local time = math.random(90,160)
 	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_bar.gen_kill_stalker()")
 	olr_doska_bar.clear_find_kill()
@@ -328,6 +341,7 @@ function doska_two_gen_timer_fail_bar()
 	olr_doska_bar.clear_find_kill()
 	olr_timers.st_timer("gen_kill_stalker", 26, "olr_doska_bar.gen_kill_stalker()")
 	db.actor:disable_info_portion("doska_two_working_bar")
+	db.actor:disable_info_portion("bar_doska_quest_taken")
 	db.actor:change_character_reputation(-20)
 end 
 

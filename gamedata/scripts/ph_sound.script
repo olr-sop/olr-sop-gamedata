@@ -70,6 +70,9 @@ function snd_source:update(delta)
 
 		if self.played_sound ~= nil then
 			self.played_sound:play_at_pos (self.object, self.object:position ())
+			if self.st.subtitles ~= nil and self.st.subtitles ~= "" then
+				game_subtitles.start_scene(self.st.subtitles)
+			end
 		else
 			self.st.signals["theme_end"] = true
 		end
@@ -125,6 +128,7 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	local st    = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 	st.logic    = xr_logic.cfg_get_switch_conditions(ini, section, npc)
 	st.theme    = utils.cfg_get_string(ini, section, "snd",	npc, false, "")
+	st.subtitles = utils.cfg_get_string(ini, section, "subtitles",	npc, false, "")
 	st.looped   = utils.cfg_get_bool (ini, section, "looped", npc, false, false)
 	st.random   = utils.cfg_get_bool (ini, section, "random", npc, false, true)
 	st.pause_min = utils.cfg_get_number (ini, section, "min_idle", npc, false, 0)

@@ -1,3 +1,5 @@
+---------------------- Stalkers are not blind ---------------------
+------------------------- Copyright Red75 -------------------------
 -- anomaly_holder.script
 -- Хранилище аномалий для NPC
 
@@ -158,3 +160,43 @@ function get_nearest_anomaly(npc, dirp)
         return false
     end
 end
+
+function get_nearest_anomaly_by_point(point)
+    if not db or not db.anoms_online then
+        return false
+    end
+
+    local anomid = nil
+    local mindist = 20
+    local pos1 = nil
+    local cls = 0
+    local anomdesc = nil
+
+    for id, _ in pairs(db.anoms_online) do
+        local o = get_online_anomaly_desc(id)
+        if o then
+            local dist = point:distance_to(o.pos) - o.radius
+            if dist < mindist then
+                mindist = dist
+                anomid = id
+                pos1 = o.pos
+                cls = o.clsid
+                anomdesc = o
+            end
+        end
+    end
+
+    if anomid then
+        return true, anomid, pos1, cls, mindist, anomdesc.radius, anomdesc.section
+    else
+        return false
+    end
+end
+
+--[[
+
+?сли вы собираетесь использовать данный скрипт целиком или частично в своих 
+разработках по игре S.T.A.L.K.E.R., пожалуйста не удал¤йте копирайты, указывайте насто¤щего 
+автора(ов) и не выдавайте чужие идеи и их реализацию за свои. —пасибо за понимание.
+
+]]--

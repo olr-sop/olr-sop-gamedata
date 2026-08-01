@@ -7,7 +7,7 @@
 local time_apdeyta_hit = 0
 local time_apdeyta = 0
 local loaded = false
-local blow_max = 3072 -- максимальное окно задержки
+local blow_max = 5000 -- максимальное окно задержки
 state_blow = 1
 local tmradd = 1125 -- выброс займет примерно 1.5 минуты
 
@@ -83,10 +83,6 @@ function upd()
 		if not snd_obj:playing() then
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
 		end
-	end
-
-	if xvars.blowout_timer >= 700 and has_alife_info("monolit_na_kordone") and not has_alife_info("start_freeplay_olr_start") then
-		olr_blowout.set_blow_timer(200)
 	end
 
 	--news_manager.send_tip(db.actor, "xvars.blowout_timer равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
@@ -320,7 +316,6 @@ function all_blowend_funcs()
 	spawen_arts_random()
 	spawn_esc_mil_group()
 	remove_onl_anoms()
-	ring_timer_1()
 
 	olr_timers.st_timer("clear_dead_monsters", 12, "olr_blowout.clear_dead_monsters()")
 	olr_timers.st_timer("xrs_trade_trading", 13, "xrs_trade.on_item_drop()")
@@ -329,11 +324,9 @@ function all_blowend_funcs()
 	olr_timers.st_timer("spawen_rtut_shars_random", 18, "olr_blowout.spawen_rtut_shars_random()")
 	olr_timers.st_timer("spawen_rtut_shars", 20, "olr_blowout.spawen_rtut_shars()")
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
-	olr_timers.st_timer("mg_spawn_zombies", 36, "olr_blowout.mg_spawn_zombies()")
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
 	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- всех локацций
 	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()")
-	olr_timers.st_timer("create_mil_stk", 69, "olr_voenstals.create_mil_stk()")
 	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()")
 	olr_timers.st_timer("set_walkers_rndways", 74, "olr_ai_tasks.set_walkers_rndways()")
 
@@ -361,28 +354,6 @@ function all_blowend_funcs()
 
 	olr_timers.st_timer("blowout_ending_info_end", 375, "olr_blowout.blowout_ending_info_end()")
 	-- на всякий случай
-end
-
----------------------------------------------
-
-function ring_timer_1()
-	if db.actor and has_alife_info("start_olr_mod") then
-		if not olr_timers.has_timer("zombies_task_select_timer") then
-			olr_timers.st_timer("zombies_task_select_timer", 5840, "olr_offline_task.zombies_task_select()")
-		end
-		if not olr_timers.has_timer("dogs_task_select_timer") then
-			olr_timers.st_timer("dogs_task_select_timer", 6400, "olr_offline_task.dogs_task_select()")
-		end
-		if not olr_timers.has_timer("stalkers_neutral_task_select_timer") then
-			olr_timers.st_timer("stalkers_neutral_task_select_timer", 3840, "olr_offline_task.stalkers_neutral_task_select()")
-		end
-		if not olr_timers.has_timer("stalkers_bandits_task_select_timer") then
-			olr_timers.st_timer("stalkers_bandits_task_select_timer", 2240, "olr_offline_task.bandits_neutral_task_select()")
-		end
-		if not olr_timers.has_timer("ecologs_neutral_task_select") then
-			olr_timers.st_timer("ecologs_neutral_task_select", 2880, "olr_offline_task.ecologs_neutral_task_select()")
-		end
-	end
 end
 
 ---------------------------------------------
@@ -420,38 +391,54 @@ end
 -------------------------------------------------
 
 function clear_trash_wars()
-	-- TODO ещё раз проверить имена объектов как они записаны в xvars
-	for key, value in pairs(xvars.foods()) do
-		local food_object = alife():object(key)
-		if not food_object then
-			log1(" DELDETED food " .. key .. " = " .. tostring(value) .. "")
+
+	for key, value in pairs(xvars.foods(true)) do
+		if type(value) ~= "table" then
+			--log1(" Invalid food entry for id " .. key .. ", type " .. type(value) .. ", removing")
 			xvars.foods[key] = nil
-			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "Место где проводили замеры учёные." )
+		else
+			--log1(" Key from tbl - "..tostring(key).."")
+			local food_object = alife():object(tonumber(key))
+			if not food_object then
+				--log1(" DELETED food " .. key .. " id")
+				xvars.foods[key] = nil
+			else
+				if value.sec and value.sec ~= food_object:section_name() then
+					xvars.foods[key] = nil
+				end
+			end
 		end
 	end
-	for key, value in pairs(xvars.weapons()) do
-		local wpn_object = alife():object(key)
-		if not wpn_object then
-			log1(" DELDETED WPN " .. key .. " = " .. tostring(value) .. "")
+
+	for key, value in pairs(xvars.weapons(true)) do
+		if type(value) ~= "table" then
+			--log1(" Invalid weapon entry for id " .. key .. ", type " .. type(value) .. ", removing")
 			xvars.weapons[key] = nil
-			--olr.add_spot_on_map( wpn.id,"crlc_mdl", "Место где проводили замеры учёные." )
+		else
+			local wpn_object = alife():object(tonumber(key))
+			if not wpn_object then
+				--log1(" DELETED WPN " .. key .. " id")
+				xvars.weapons[key] = nil
+			else
+				if value.sec and value.sec ~= wpn_object:section_name() then
+					xvars.weapons[key] = nil
+				end
+			end
 		end
 	end
+
+	-- Артефакты без изменений
 	for key, value in pairs(xvars.arts()) do
 		local art_object = alife():object(key)
-		if not art_object then -- если нет арта
-			--if xvars.arts[key]~=nil then	-- но есть его запись  weight cost
-			--	xvars.arts[key]=nil
-			--end
-			if xvars.arts[key .. game.translate_string("weight")] ~= nil then -- но есть его запись weight
+		if not art_object then
+			if xvars.arts[key .. game.translate_string("weight")] ~= nil then
 				xvars.arts[key .. game.translate_string("weight")] = nil
 			end
-			if xvars.arts[key .. game.translate_string("cost")] ~= nil then -- но есть его запись cost
+			if xvars.arts[key .. game.translate_string("cost")] ~= nil then
 				xvars.arts[key .. game.translate_string("cost")] = nil
 			end
 		end
 	end
-	--log1("--clear wars end--")
 end
 
 function clear_bolts()
@@ -493,7 +480,7 @@ function clear_bolts()
 				--log1("delhlam - add skelets 2")
 				--alife():release(trs, true)
 			end
-			if trs:section_name() == "zone_witches_galantine_banka" or trs:section_name() == "zone_buzz_dezint" then
+			if trs:section_name() == "zone_witches_galantine_banka" or trs:section_name() == "zone_witches_galantine_dezint" then
 				table.insert(tab_hlam, trs)
 				--log1("delhlam - add banka buzz")
 				--alife():release(trs, true)
@@ -638,122 +625,6 @@ end
 
 ---------------------------------------------
 
-function mg_spawn_zombies()
-	if has_alife_info("sokolov_kvest_dialog_done") then
-		local montabl = {
-			[clsid.respawn] = true
-		}
-
-		local sectionsa = {
-			"korpus_gas",
-			"fracture_strong",
-			"fracture_midle",
-			"pseudodog_weak",
-			"pseudodog_strong",
-			"pseudodog_normal",
-			"bloodsucker_strong"
-		}
-
-		local count = 0
-		local sim = alife()
-		for id = 1, 65534 do
-			local kill = sim:object(id)
-			if kill then
-				if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-					local section = sectionsa[math.random(table.getn(sectionsa))]
-					local rndz = math.random(1, 15)
-
-					if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndz == 1 then
-						local sobj = sim:create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-						amk.on_REspawn(sobj)
-						--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-						count = count + 1
-						--news_manager.send_tip(db.actor,"bloodsucker_strong and korpus_gas заспавнилось " .. count .. " нау ииии",nil,"freedom",9000)
-					end
-				end
-			end
-		end
-	end
-
-	if xvars.blow_count == 4 then
-		olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
-		olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
-		olr.spawn_on_obj("bloodsucker_strong", "lvl6_rostok_zone_radioactive_strong_0003")
-		olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
-		olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
-		olr.spawn_on_obj("korpus_gas", "lvl6_rostok_zone_radioactive_strong_0003")
-		news_manager.send_tip(db.actor, game.translate_string("mg_spawn_zombies_0"), nil, "unknown", 35000)
-		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0024")
-		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0024")
-		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0024")
-		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0027")
-		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0027")
-		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0027")
-		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_smart_terrain_0014")
-		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_smart_terrain_0014")
-		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_smart_terrain_0014")
-		olr.spawn_on_obj("pseudodog_weak", "lvl11_deadcity_smart_terrain_0014")
-		olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0030")
-		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0030")
-		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0030")
-		olr.spawn_on_obj("zombie_weak", "lvl11_deadcity_zone_radioactive_weak_0030")
-		olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0031")
-		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0031")
-		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0031")
-		olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0031")
-		olr.spawn_on_obj("zombie_plague", "lvl11_deadcity_zone_radioactive_weak_0034")
-		olr.spawn_on_obj("zombie_normal", "lvl11_deadcity_zone_radioactive_weak_0034")
-		olr.spawn_on_obj("m_zombie_e", "lvl11_deadcity_zone_radioactive_weak_0034")
-		olr.spawn_on_obj("zombie_strong", "lvl11_deadcity_zone_radioactive_weak_0034")
-		olr.spawn_on_obj("m_pseudodog_e", "lvl11_deadcity_zone_radioactive_weak_0026")
-		olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
-		olr.spawn_on_obj("dog_strong", "lvl11_deadcity_zone_radioactive_weak_0026")
-		olr.spawn_on_obj("dog_normal", "lvl11_deadcity_zone_radioactive_weak_0026")
-		olr.spawn_on_obj("m_pseudodog_e", "lvl11_deadcity_zone_radioactive_weak_0025")
-		olr.spawn_on_obj("zombie_plague_strong", "lvl11_deadcity_zone_radioactive_weak_0025")
-		olr.spawn_on_obj("dog_normal", "lvl11_deadcity_zone_radioactive_weak_0025")
-		olr.spawn_on_obj("dog_weak", "lvl11_deadcity_zone_radioactive_weak_0025")
-	end
-
-	if xvars.blow_count < 8 then
-		return
-	end
-
-	local montabl = {
-		[clsid.respawn] = true
-	}
-
-	local sectionsa = {
-		"dog_weak",
-		"dog_normal",
-		"pseudodog_weak",
-		"pseudodog_normal",
-		"zombie_plague",
-		"zombie_plague_strong"
-	}
-
-	local count = 0
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if montabl[kill:clsid()] and kill.level_name ~= "lvl5_bar" then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
-				local rndzz = math.random(1, 35)
-				if game_graph():valid_vertex_id(kill.m_game_vertex_id) and rndzz == 1 then
-					local sobj = alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-					amk.on_REspawn(sobj)
-					--olr.add_spot_on_map( sobj.id,"alife_presentation_smart_on",sobj:name() )
-					count = count + 1
-				end
-			end
-		end
-	end
-	--news_manager.send_tip(db.actor, "всего новых сталкеров заспавнилось " .. count .. " нау ииии", nil, "freedom", 9000)
-end
-
----------------------------------------------
-
 function fix_escape_restrs()
 	if xvars.blow_count < 2 then
 		return
@@ -843,10 +714,9 @@ local safe_zones = {
 	["lvl5_bar_space_restrictor_0114"] = true,
 	["lvl5_bar_space_restrictor_0115"] = true,
 	["lvl2_gar_blow_hide_restr_0004"] = true,
-	["lvl1_escape_blow_hide_restr_0007"] = true,
-	["lvl1_escape_blow_hide_restr_0008"] = true,
 	["lvl1_escape_space_restrictor_0100"] = true,
-	["lvl1_escape_space_restrictor_0101"] = true
+	["lvl1_escape_space_restrictor_0101"] = true,
+	["gar_blowout_hide_duty_restrictor_1"] = true
 }
 
 function update_hit()
@@ -1074,7 +944,6 @@ function blow_task_actor()
 		"st_olr_blowout_warning_3",
 		"st_olr_blowout_warning_4"
 	}
-	olr.beep()
 	news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "info", 15000)
 end
 ---------------------------------------------

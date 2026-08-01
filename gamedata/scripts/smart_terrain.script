@@ -9,8 +9,6 @@ if editor() then
 
 	function log1()
 	end
-	function set_save_marker()
-	end
 end
 
 local check_period
@@ -112,8 +110,6 @@ end
 function se_smart_terrain:STATE_Write( packet )
 --	log( "se_smart_terrain::STATE_Write called!" )
 	cse_alife_smart_zone.STATE_Write( self, packet )
-	
-	set_save_marker(packet, "save", false, "se_smart_terrain")	
 
 --	self:print()
 
@@ -147,8 +143,6 @@ function se_smart_terrain:STATE_Write( packet )
 	else
 		packet:w_bool( false )
 	end
-	
-	set_save_marker(packet, "save", true, "se_smart_terrain")	
 end
 
 -- восстановление
@@ -163,8 +157,7 @@ function se_smart_terrain:STATE_Read( packet, size )
 	if editor() then
 		return
 	end
-	
-	set_save_marker(packet, "load", false, "se_smart_terrain")	
+
 	self:read_params()
 
 --	printf( "name=%s, script_version=%d", self:name(), self.script_version )
@@ -204,12 +197,6 @@ function se_smart_terrain:STATE_Read( packet, size )
 --	printf( "after read [%s]", self:name())
 --	self:print()
 
-	--if packet:r_elapsed() >= 2 then
-		set_save_marker(packet, "load", true, "se_smart_terrain")
-	--else
-		--log1(string.format("[se_smart_terrain][STATE_Read][legacy-no-trailer] id=%s tell=%d elapsed=%d", tostring(self.id), packet:r_tell(), packet:r_elapsed()))
-	--	log1("Странная хуйня тут короче")
-	--end
 end
 
 -- инициализировать работу смарт террейна.
@@ -422,81 +409,26 @@ end
    подходит ли он гулагу, подходит ли он хоть на одну работу
 ]]
 
-local level_groups = {
-    lvl1_escape = "group1",
-    lvl2_garbage = "group1",
-    lvl3_agroprom = "group1",
-    lvl4_darkdolina = "group1",
-    lvl5_bar = "group1",
-    lvl6_rostok = "group1",
-    lvl7_yantar = "group1",
-    lvl8_swamp = "group1",
-    lvl9_military = "group1",
-    lvl10_radar = "group1",
-    lvl11_deadcity = "group1",
-    lvl12_radar_bunker = "group1",
-    lvl13_prip = "group1",
-    lvl14_stancia = "group1",
-    lvl15_sarcofag = "group1",
-    lvl16_generators = "group1",
-    lvl_level12 = "group1"
-}
-
 function se_smart_terrain:smart_terrain_accepts_obj( obj, obj_agreement )
 	if obj_agreement == disagreed then
 --		printf("[%s] disagreed", obj:name())
 		return false
 	end
 
---	if obj:name() == "esc_wolf" then
---		printf("before checking: pop = %s, cap = %s", tostring(self.gulag:get_non_exclusive_population()), tostring(self.gulag.capacity_non_exclusive))
---	end
-
-	if obj_agreement == agreed_exclusive or
-	   self.gulag:get_non_exclusive_population() < self.gulag.capacity_non_exclusive
-	then
+	if obj_agreement == agreed_exclusive or self.gulag:get_non_exclusive_population() < self.gulag.capacity_non_exclusive then
 		local community, is_stalker = self:get_obj_community( obj )
-
-        -- Проверка что смарттеррейн и НПС находятся в одном кластере уровней (чтобы не ходили через БАР)
-        local smart_level_group = self:get_level_name()
-        local npc_level_group = alife():level_name(game_graph():vertex(obj.m_game_vertex_id):level_id())
-
---		if obj:name() == "esc_wolf" then
---			printf("smart=%s stalker=%s", tostring(smart_level_group), tostring(npc_level_group))
---		end
-
-        if level_groups[smart_level_group] ~= level_groups[npc_level_group] then
-            return false
-        end
-    
-
---	if obj:name() == "esc_wolf" then
---		printf( "comm=%s is_stalker=%s", community, tostring( is_stalker ) )
---	end
 
 		if self.accepted_communities and not self.accepted_communities[community] then
 			return false
 		end
 
---		if obj:name() == "esc_wolf" then
---			printf( "community=%s rank=%d reputation=%d", community, obj:rank(), obj:reputation() )
---		end
-	
 		if obj_agreement ~= agreed_exclusive and not self:check_preset( community, obj:rank(), self.gparams.preset_name ) then
 			return false
 		end
 
---		if obj:name() == "esc_wolf" then
---			printf( "check_preset ok" )
---		end
-
 		if not xr_gulag.checkNpc( community, is_stalker, self.gparams.type, obj:rank(), obj ) then
 			return false
 		end
-
---	if obj:name() == "esc_wolf" then
---		printf( "checkNpc ok" )
---	end
 
 		return self.gulag:is_there_any_suitable_job( self:fill_npc_info( obj ), obj_agreement == agreed_exclusive )
 	else
@@ -598,34 +530,20 @@ end
 --   1) если объект уже бывал в других смартах, то чем больше свободных работ на уровне этого смарта, тем лучше
 --   2) иначе ближе - лучше
 -- TODO Оптимизировать
-function se_smart_terrain:suitable( obj )
---	if obj:name() == "esc_wolf" then
---		printf("[%s] suitable [%s]", self:name(), obj:name())
---	end
-
-	local v = 0
-	
+function se_smart_terrain:suitable(obj)
+    local v = 0
 	-- Повысить подходящесть эксклюзивного смарттеррейна
-	if self:obj_accepts_smart_terrain(obj) == agreed_exclusive then
-		v = 100000 --Так чтобы все эксклюзивные были заведомо лучше
-	end
+    if self:obj_accepts_smart_terrain(obj) == agreed_exclusive then
+        v = 100000 --Так чтобы все эксклюзивные были заведомо лучше
+    end
 
-	for id, strn in pairs( smart_terrains[self:get_level_name()] ) do
+    if self:is_gulag_available() then
+        v = v + (self.gulag.capacity - self.gulag:get_population())
+    end
 
-		if strn:is_gulag_available() then
-			v = v + strn.gulag.capacity - strn.gulag:get_population()
-		end
-	end
+    v = v + math.random() * 0.99 -- Рандом для большего разнообразия
 
---	if obj:name() == "esc_wolf" then
---		printf( "[smart_terrain %s] obj=%s suitable=%d was_in_smart_terrain=%s",
---		        self:name(),
---		        obj:name(),
---				v,
---		        tostring(obj.was_in_smart_terrain) )
---	end
-
-	return v
+    return v
 end
 
 -- добавить npc в smart terrain.
@@ -815,15 +733,9 @@ function se_smart_terrain:is_gulag_available()
 	if self.gparams.cond then
 		local bb = xr_logic.pick_section_from_condlist( db.actor_proxy, self, self.gparams.cond ) ~= nil
 		self:show_smart_debug_spot(bb)
---		if self:name() == "gar_bandit_agr" then
---			printf("[smartterrain %s] is_gulag_available = %s", self:name(), tostring(bb))
---		end
 		return bb
 	else
 		self:show_smart_debug_spot(true)
---		if self:name() == "gar_bandit_agr" then
---			printf("[smartterrain %s] is_gulag_available = %s extra", self:name(), tostring(true))
---		end
 		return true
 	end
 end

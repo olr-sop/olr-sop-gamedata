@@ -215,7 +215,10 @@ function MergerMenu:InitControls()
 	self.art_y2					= xml:ReadAttribFlt("background", 0, "art_y2", 450)
 	self.art_size_x 			= xml:ReadAttribFlt("background", 0, "art_size_x", 45)
 	self.art_size_y 			= xml:ReadAttribFlt("background", 0, "art_size_y", 50)
-	self.art_indent 			= xml:ReadAttribFlt("background", 0, "art_indent", 10)
+	self.art_indent2 			= xml:ReadAttribFlt("background", 0, "art_indent2", 10)
+	self.art_indent_x 			= xml:ReadAttribFlt("background", 0, "art_indent_x", 50)
+	self.art_indent_y 			= xml:ReadAttribFlt("background", 0, "art_indent_y", 70)
+	self.art_row	 			= xml:ReadAttribFlt("background", 0, "art_row", 7)
 	
 	self:ShowArtefactsIcons()
 end
@@ -263,7 +266,7 @@ function MergerMenu:AddArtefactIcon(obj, section)
 
 	self[reg_id] = CUIButton()
 	self:AttachChild(self[reg_id])
-	self[reg_id]:Init(self.art_x+50*cells_cnt.x, self.art_y+70*cells_cnt.y, self.art_size_x, self.art_size_y)
+	self[reg_id]:Init(self.art_x+self.art_indent_x*cells_cnt.x, self.art_y+self.art_indent_y*cells_cnt.y, self.art_size_x, self.art_size_y)
 	self[reg_id]:InitTexture("ui\\icons\\icons_equipment")
 	self[reg_id]:SetOriginalRect(x, y, 50, 50)
 	self[reg_id]:SetStretchTexture(true)
@@ -284,7 +287,7 @@ function MergerMenu:AddArtefactIcon(obj, section)
 	table.insert(reg_ids, reg_id)
 	used_section_button[section] = true
 	cells_cnt.x = cells_cnt.x + 1
-	if cells_cnt.x >= 7 then
+	if cells_cnt.x >= self.art_row then
 		cells_cnt.x = 0
 		cells_cnt.y = cells_cnt.y + 1
 	end
@@ -355,7 +358,7 @@ function MergerMenu:AddTo2Af(section, button)
 					local x, y = GetInvPos(section)
 					if self.af_slot_2 == nil then
 						self.af_slot_2 = CUIButton()
-						self.af_slot_2:Init(self.art_x2 + self.art_size_x + self.art_indent, self.art_y2, self.art_size_x * 0.95, self.art_size_y * 0.95)
+						self.af_slot_2:Init(self.art_x2 + self.art_size_x + self.art_indent2, self.art_y2, self.art_size_x * 0.95, self.art_size_y * 0.95)
 						self.af_slot_2:InitTexture("ui\\icons\\icons_equipment")
 						self.af_slot_2:SetOriginalRect(x, y, 50, 50)
 						self.af_slot_2:SetStretchTexture(true)

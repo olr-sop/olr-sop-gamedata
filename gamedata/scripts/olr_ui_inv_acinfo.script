@@ -7,16 +7,29 @@ local ptatt
 
 local repaintnow = false
 
-function get_vater(num)
-	if num >= 0 and num <= 0.1 then
-		return game.translate_string("st_very_strong")
-	elseif num > 0.1 and num <= 0.3 then
-		return game.translate_string("st_strong")
-	elseif num > 0.3 and num <= 0.4 then
-		return game.translate_string("st_middle")
-	elseif num > 0.4 then
-		return game.translate_string("st_none")
-	end
+function on_inventory_show()
+    if not att then
+        ptatt = ui.get_inventory_wnd()
+        att = olr_ui_inv_acinfo.ui_trade()
+        ptatt:AttachChild(att)
+        att:SetAutoDelete(true)
+        att:Show(true)
+    end
+end
+
+function on_inventory_hide()
+    if att and ptatt then
+        att:Show(false)
+        ptatt:DetachChild(att)
+        att = nil
+        ptatt = nil
+    end
+end
+
+function update(delta)
+    if att then
+        att:UpdateVolume()
+    end
 end
 
 function get_sleep(num)
@@ -33,41 +46,6 @@ function get_sleep(num)
 	end
 end
 
-vol_obem = 0
-
-function repaint()
-	repaintnow = true
-	local wait_time = 0
-  	wait_time = time_global() + 5
-  	level.add_call(
-    	function() return time_global() > wait_time end,
-    	function() repaintnow = false end
-  	)
-end
-
--- db.actor:has_info("ui_inventory")
-function update(delta)
-		if ui.get_inventory_wnd():IsShown() and repaintnow == false then
-			vol_obem = olr_ruck_limit.cur_amount
-			vol_obem_max = olr_ruck_limit.max_item_amount
-			if ui.get_inventory_wnd() and not att then
-				ptatt = ui.get_inventory_wnd()
-				att = olr_ui_inv_acinfo.ui_trade()
-				ptatt:AttachChild(att)
-				att:SetAutoDelete(true)
-				att:Show(true)
-				--ui.reinit_shown_ui()
-			end	
-		else
-			if att and ptatt then
-				att:Show(false)
-				ptatt:DetachChild(att)
-				att = nil
-				ptatt = nil
-			end
-		end
-end
-
 class "ui_trade" (CUIScriptWnd)
 
 function ui_trade:__init(owner) super()
@@ -75,11 +53,10 @@ function ui_trade:__init(owner) super()
 	self.comm = game.translate_string(db.actor:character_community())
 	self.rank = game.translate_string(level.get_rank_as_text(db.actor:character_rank()))
 	self.repa = game.translate_string(level.get_reputation_as_text(db.actor:character_reputation()))
-	--self.vater = get_vater(db.actor:get_actor_thirst())
 	self.sleep = get_sleep(db.actor.sleep)
 	self.blows = xvars.blow_count
-	self.inv_vol = vol_obem
-	self.inv_vol_max = vol_obem_max
+	self.inv_vol = db.actor:get_used_volume()
+	self.inv_vol_max = db.actor:get_max_volume()
 	self:InitControls()
 end
 
@@ -111,13 +88,9 @@ function ui_trade:InitControls()
 
 	self.vo = xml:InitStatic("volume_wnd", self.main)
 
-	--self.vt = xml:InitStatic("water_wnd", self.main)
-	--self.vt:SetTextST(string.format("%s: %s", game.translate_string("ui_inv_water_script"), self.vater))
-
 	self.so = xml:InitStatic("sleep_wnd", self.main)
 	self.so:SetTextST(sformat("%s: %s", game.translate_string("ui_inv_sleeping"),  self.sleep))
 
-	-- 
 	self.bw = xml:InitStatic("blowouts_wnd", self.main)
 	self.bw:SetTextST(sformat("%s: %s", game.translate_string("ui_inv_survived_blowouts"),  self.blows))
 
@@ -139,6 +112,18 @@ function ui_trade:InitControls()
 	self.vo:SetTextST(sformat("%s: %s / "..vol_cur_max.."", game.translate_string("ui_inv_volume_script"),  vol_cur))
 end
 
+function ui_trade:UpdateVolume()
+
+	if level.get_game_difficulty() < 2 then return end
+
+	local sformat = string.format
+	local cur_vol = db.actor:get_used_volume()
+	if cur_vol < 0 then cur_vol = 0 end
+	local max_vol = db.actor:get_max_volume()
+	
+	self.vo:SetTextST(sformat("%s: %1.1f / %1.0f", game.translate_string("ui_inv_volume_script"), cur_vol, max_vol))
+
+end
 
 function ui_trade:ActorInformation()
 end

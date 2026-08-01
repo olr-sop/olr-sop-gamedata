@@ -2,8 +2,8 @@
 GroupControlSection			= spawn_group_zone
 $spawn 						= "zones\mincer"
 $prefetch 					= 16
-$def_sphere 				= 3
-class						= Z_MINCER
+$def_sphere 				= 2
+class						= ZS_MINCE
 
 ef_anomaly_type				= 5
 ef_weapon_type				= 17
@@ -14,7 +14,7 @@ enable_effector				= true
 
 script_binding				= bind_anomaly.Init
 
-shape_transp_color			= 255, 0, 0, 60
+shape_transp_color			= 0, 160, 160, 60
 shape_edge_color			= 32, 32, 32, 255
 
 ;----------- Anomaly settings -----------------------
@@ -61,9 +61,9 @@ ignore_small				= false
 ignore_artefacts			= true
 
 blowout_light				= on
-light_color					= 1.4,1.6,1.3
-light_range					= 30.0
-light_time					= 0.8;0.35
+light_color					= 1.21, 1.09, 0.93
+light_range					= 24.0
+light_time					= 0.15
 light_height				= 1.5			;������ ��������� ����� �� ������
 
 idle_light					= off
@@ -77,8 +77,8 @@ blowout_light_time			= 100
 blowout_explosion_time		= 100
 
 ;��������� ���������� ��� ����
-throw_in_impulse			= 100	;���� �������� ���������� (��� ���� 100��)
-throw_out_impulse			= 16000	;���� ������������ �������
+throw_in_impulse			= 1	    ;���� �������� ���������� (��� ���� 100��)
+throw_out_impulse			= 100	;���� ������������ �������
 throw_in_impulse_alive		= 10	;���� �������� ���������� ��� �����
 throw_in_atten				= 2		;�����. ����������� (��� ������, ��� ������� ����������)
 blowout_radius_percent		= 1.2	;������ (� ��������� �� ����� �������) ��������������� �������
@@ -106,7 +106,7 @@ artefacts					= af_toadeye, 1.0
 ;во время срабатывания в online
 spawn_blowout_artefacts		= on								; рождение артефактов во время срабатывания, для true принимаются on/yes/true/1, иначе значение будет false
 
-artefact_spawn_probability	= 0.14								;вероятность, что во время срабатывания аномалии будет рожден артефакт
+artefact_spawn_probability	= 0.2								;вероятность, что во время срабатывания аномалии будет рожден артефакт
 artefact_spawn_cycles		= 2									; кол-во проходов при смерти сущности в аномалии, 2 по умолчанию
 artefact_spawn_particles	= anomaly2\gravi_anomaly_shield_00	;партиклы, которые отыграются на месте рождения артефакта (опционально)
 artefact_born_sound			= anomaly\mosquito_bald_hit			;звук, который отыграются на месте рождения артефакта (опционально)
@@ -121,14 +121,19 @@ hit_impulse_scale			= 1;0.1
 effective_radius			= 0.7
 
 ;----------- Anomaly settings -----------------------
-min_start_power				= 4.9
-max_start_power				= 5.0
+min_start_power				= 1.15
+max_start_power				= 1.4
 attenuation					= 1
 period						= 1
 min_artefact_count			= 0
 max_artefact_count			= 0
 artefact_spawn_idle			= 24  ;��������� ����� ������� ��������� � �������, � �����
 artefact_spawn_rnd			= 20  ;����������� ���������� �������� � ���������.
+
+artefacts					= af_toadeye, 0.4, af_deadhead, 0.03
+
+artefact_spawn_probability	= 0.2
+artefact_spawn_cycles		= 1
 
 blowout_sound				= anomaly\gravi_blowout4
 
@@ -149,13 +154,19 @@ max_artefact_count			= 0
 artefact_spawn_idle			= 24  ;��������� ����� ������� ��������� � �������, � �����
 
 [zone_mincer_average]:zone_mincer
+shape_transp_color			= 0, 145, 160, 60
 $spawn 						= "zones\mincer_average"
 hit_impulse_scale			= 1;0.3
 effective_radius			= 0.9 
 
+artefacts					= af_toadeye, 0.5, af_deadhead, 0.03
+
+artefact_spawn_probability	= 0.2
+artefact_spawn_cycles		= 1
+
 ;----------- Anomaly settings -----------------------
-min_start_power				= 6
-max_start_power				= 8
+min_start_power				= 1.4
+max_start_power				= 1.8
 attenuation					= 1
 period						= 1
 min_artefact_count			= 1
@@ -165,16 +176,23 @@ artefact_spawn_rnd			= 40  ;����������� ������
 
 actor_blowout_radius_percent=	0.75
 
+[zone_mincer_average_noart]:zone_mincer_average
+$spawn 						= "zones\mincer_average_noart"
+spawn_blowout_artefacts		= off
+min_artefact_count			= 0
+max_artefact_count			= 0
+artefact_spawn_idle			= 24  ;��������� ����� ������� ��������� � �������, � �����
 
 [zone_mincer_strong]:zone_mincer
+shape_transp_color			= 0, 70, 160, 60
 $spawn 						= "zones\mincer_strong"
 postprocess					= anomaly_witchesgalantine
 hit_impulse_scale			= 1;0.3
 effective_radius			= 0.9 
 
 ;----------- Anomaly settings -----------------------
-min_start_power				= 9.9
-max_start_power				= 10.0
+min_start_power				= 2.0
+max_start_power				= 2.5
 attenuation					= 1
 period						= 1
 min_artefact_count			= 1
@@ -182,7 +200,10 @@ max_artefact_count			= 1
 artefact_spawn_idle			= 24  ;��������� ����� ������� ��������� � �������, � �����
 artefact_spawn_rnd			= 40  ;����������� ���������� �������� � ���������.
 
-artefacts					= af_toadeye, 0.8, af_electrosphere, 0.2
+artefacts					= af_toadeye, 0.6, af_electrosphere, 0.4, af_deadhead, 0.03
+
+artefact_spawn_probability	= 0.2
+artefact_spawn_cycles		= 2
 
 idle_particles				= anomaly2\electra_idle ;anomaly\galantine_old00
 blowout_particles			= anomaly2\electra2_blast
@@ -203,9 +224,9 @@ entrance_sound				= anomaly\electra_hit
 body_tearing_sound			= anomaly\body_tearing
 
 blowout_light				= on
-light_color					= 0.8,0.9,1
-light_range					= 30.0
-light_time 					= 1;0.35
+light_color					= 0.75, 0.82, 1.0
+light_range					= 16.0
+light_time 					= 0.4
 light_height				= 1.5			;������ ��������� ����� �� ������
 
 idle_light					= on
@@ -213,3 +234,10 @@ idle_light_range			= 2.5
 idle_light_range_delta 		= 0.25
 idle_light_anim				= electra_01
 idle_light_height			= 0.70
+
+[zone_mincer_strong_noart]:zone_mincer_strong
+$spawn 						= "zones\mincer_strong_noart"
+spawn_blowout_artefacts		= off
+min_artefact_count			= 0
+max_artefact_count			= 0
+artefact_spawn_idle			= 24  ;��������� ����� ������� ��������� � �������, � �����

@@ -97,6 +97,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		olr.info("doska_one_working_yan")
 		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_find_item").." "..game.translate_string(xvars.quest_one_text_name_yan)..game.translate_string("st_olr_doska_yan_task_2"), 1, "item", 9000)
 		olr_timers.st_timer("doska_one_gen_timer_fail_yan", 8500, "olr_doska_yan.doska_one_gen_timer_fail_yan()")
+		db.actor:give_info_portion("yan_doska_quest_taken")
 	else
 		--log1("cannot take quest")
 	end
@@ -118,6 +119,7 @@ function ui_quests_table:button_take_quest_button_clicked()
 		
 		olr.add_spot_on_map( obj.id,"monster_part_location", "Заказ от Профессора на Янтаре: убить мутанта" )
 		olr_timers.st_timer("doska_two_gen_timer_fail_yan", 8500, "olr_doska_yan.doska_two_gen_timer_fail_yan()")
+		db.actor:give_info_portion("yan_doska_quest_taken")
 	else
 		--log1("cannot take quest")
 	end
@@ -137,9 +139,9 @@ function doska_one_gen_timer_fail_yan()
 	olr_doska_yan.clear_find_item()
 	olr_timers.st_timer("doska_one_gen_yan", 33, "olr_doska_yan.gen_rnd_item_find()")
 	db.actor:disable_info_portion("doska_one_working_yan")
+	db.actor:disable_info_portion("yan_doska_quest_taken")
 	db.actor:change_character_reputation(-20)
 end 
-
 
 -- преконд наличия итема
 function precond_user_task_doska_item()
@@ -152,7 +154,17 @@ function precond_user_task_doska_item()
 	if art and art:is_artefact() then
 		return false
 	end
-     return nik_dialog.item_much(obj_targ,1) ~= false 
+	return nik_dialog.item_much(obj_targ,1) ~= false 
+end
+
+function has_any_active_task_doska(first_speaker, second_speaker)
+	if xvars.quest_one_target_yan ~= "" then
+		return true
+	end
+	if xvars.quest_two_target_yan ~= "" then
+		return true
+	end
+	return false
 end
 
 function precond_user_task_doska_item_art()
@@ -166,8 +178,7 @@ function precond_user_task_doska_item_art()
 	end
 	if art and art:is_artefact() then
 		local known_inf = ini_sys:r_string(obj_targ, "known_info")
-		local known_inf_desc = game.translate_string(known_inf)
-     	return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf_desc)
+     	return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf)
 	end
 end
 
@@ -181,9 +192,11 @@ function one_complete_func_item()
 	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_yan.clear_find_item()
 	db.actor:disable_info_portion("doska_one_working_yan")
+	db.actor:disable_info_portion("yan_doska_quest_taken")
 	local time = math.random(96,466)
 	olr_timers.st_timer("doska_one_genyan", time, "olr_doska_yan.gen_rnd_item_find()")
 	olr_timers.del_timer("doska_one_gen_timer_fail_yan")
+
 end
 
 
@@ -263,6 +276,7 @@ function doska_two_gen_timer_fail_yan()
 	olr_doska_yan.clear_find_kill()
 	olr_timers.st_timer("gen_kill_monster", 26, "olr_doska_yan.gen_kill_stalker()")
 	db.actor:disable_info_portion("doska_two_working_yan")
+	db.actor:disable_info_portion("yan_doska_quest_taken")
 	db.actor:change_character_reputation(-20)
 end 
 
@@ -321,6 +335,7 @@ function two_complete_func_kill()
 	game_stats.money_quest_update(xvars.quest_two_cost_yan)
 	news_manager.relocate_money(db.actor, "in", xvars.quest_two_cost_yan)
 	db.actor:disable_info_portion("doska_two_working_yan")
+	db.actor:disable_info_portion("yan_doska_quest_taken")
 	local time = math.random(90,160)
 	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_yan.gen_kill_stalker()")
 	olr_doska_yan.clear_find_kill()

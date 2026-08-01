@@ -82,65 +82,7 @@ function update(delta)
 								--olr.add_spot_on_map( val.id,"green_location", val:name() )
 								return
 							end
-
-							--local callwalk, err_msg = pcall(procees, val)
-							--if not callwalk then
-							--	log1("ERROR: olr_offline_walk pcall FAIL - reason: " .. tostring(err_msg))
-							--	news_manager.send_tip(db.actor, "ERROR: olr_offline_walk pcall FAIL")
-							--end
-
 						end
-					end
-				end
-			end
-		end
-	end
-end
-
-function procees(val)
-	local tostr = tostring
-	if val then
-		if val.id then
-			if alife():object(val.id) then
-				if val.brain then
-					if val:brain() then
-
-						--local pt = profile_timer()
-						--pt:start()
-
-						if spots == true then
-							if IsMonster(val) then
-								olr.add_spot_on_map(val.id, "red_location", ""..tostr(val:name()).."	 ")
-							else
-								olr.add_spot_on_map(val.id, "green_location",""..tostr(val:name()).." -- "..tostr(xvars.npcs_tasks_rndway[val:name()]).." ")
-							end
-						end
-
-						--news_manager.send_tip(db.actor, game.translate_string("procees_0"), nil, "freedom", 9000)
-
-						local wait_time = 0
-						local rnd_tmr = math.random(10, 1950)
-						wait_time = time_global() + rnd_tmr
-						level.add_call(
-							function()
-								return time_global() > wait_time
-							end,
-							function()
-								run_safely(
-									function() val:brain():update(true) end,
-									"! olr_offline_task Error in brain update"
-								)
-								--olr.add_spot_on_map( val.id,"red_location", val:name() )
-								--news_manager.send_tip(db.actor, game.translate_string("procees_1"), nil, "freedom", 9000)
-							end
-						)
-
-					--pt:stop()
-					--log1("-----start-----")
-					--printf("работало "..pt:time().." ms")
-					--log1("-----end-----")
-
-					--news_manager.send_tip(db.actor, "brain update	 - "..tmr_cnt.." ", nil, "freedom", 9000)
 					end
 				end
 			end

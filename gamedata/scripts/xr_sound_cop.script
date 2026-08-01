@@ -1,0 +1,85 @@
+local snd_ini = ini_file("misc\\script_sound.ltx")
+
+function get_sound_path(key)
+	if snd_ini:section_exist(key) then
+		return snd_ini:r_string(key, "path")
+	end
+	--log1("![xr_sound_cop] get_sound_path: key [" .. key .. "] not found in script_sound.ltx")
+	return nil
+end
+
+looped_sound = {}
+
+function play_sound_looped(id, key)
+	if looped_sound[id] == nil then looped_sound[id] = {} end
+	if looped_sound[id][key] and looped_sound[id][key]:playing() then
+		--log1(" [xr_sound_cop] play_sound_looped(" .. id .. ", " .. key .. ") already playing, skip")
+		return
+	end
+	local path = get_sound_path(key)
+	if not path then
+		--log1("![xr_sound_cop] play_sound_looped(" .. id .. ", " .. key .. ") no path, abort")
+		return
+	end
+	--log1(" [xr_sound_cop] play_sound_looped(" .. id .. ", " .. key .. ") path=" .. path)
+	local snd = xr_sound.get_safe_sound_object(path)
+	snd:play(db.actor, 0, sound_object.looped + sound_object.s2d)
+	looped_sound[id][key] = snd
+end
+
+function stop_sound_looped(id, key)
+	if key then
+		if looped_sound[id] and looped_sound[id][key] then
+			if looped_sound[id][key]:playing() then
+				--log1(" [xr_sound_cop] stop_sound_looped(" .. id .. ", " .. key .. ")")
+				looped_sound[id][key]:stop()
+			end
+			looped_sound[id][key] = nil
+		end
+	else
+		if looped_sound[id] then
+			--log1(" [xr_sound_cop] stop_sound_looped(" .. id .. ", all) - stopping " .. #looped_sound[id] .. " sounds")
+			for k, v in pairs(looped_sound[id]) do
+				if v and v:playing() then v:stop() end
+			end
+			looped_sound[id] = nil
+		end
+	end
+end
+
+function set_volume_sound_looped(id, key, vol)
+	if looped_sound[id] and looped_sound[id][key] and looped_sound[id][key]:playing() then
+		looped_sound[id][key].volume = vol
+	end
+end
+
+function set_sound_play(id, key)
+	local path = get_sound_path(key)
+	if not path then
+		--log1("![xr_sound_cop] set_sound_play(" .. id .. ", " .. key .. ") no path, abort")
+		return
+	end
+	--log1(" [xr_sound_cop] set_sound_play(" .. id .. ", " .. key .. ") path=" .. path)
+	local snd = xr_sound.get_safe_sound_object(path)
+	snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
+end
+
+function stop_sounds_by_id(id)
+	if looped_sound[id] then
+		--log1(" [xr_sound_cop] stop_sounds_by_id(" .. id .. ")")
+		for k, v in pairs(looped_sound[id]) do
+			if v and v:playing() then v:stop() end
+		end
+		looped_sound[id] = nil
+	end
+end
+
+function stop_all_sounds()
+	--log1(" [xr_sound_cop] stop_all_sounds()")
+	for id, tbl in pairs(looped_sound) do
+		for k, v in pairs(tbl) do
+			if v and v:playing() then v:stop() end
+		end
+	end
+	looped_sound = {}
+end

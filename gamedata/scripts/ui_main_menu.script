@@ -111,6 +111,37 @@ function main_menu:InitControls()
 	
 	self.btn_save:Enable(level.present())
 
+	local lang_xml = CScriptXmlInit()
+	lang_xml:ParseFile("ui_mm_lang_select.xml")
+
+	self.lang_dialog = lang_xml:InitStatic("dialog", self)
+	self.lang_caption = lang_xml:InitStatic("dialog:caption", self.lang_dialog)
+	self.lang_list = lang_xml:InitList("dialog:list_language", self.lang_dialog)
+	self.lang_btn_done = lang_xml:Init3tButton("dialog:button_done", self.lang_dialog)
+
+	self.lang_dialog:Show(false)
+	self.lang_caption:Show(false)
+	self.lang_list:Show(false)
+	self.lang_btn_done:Show(false)
+
+	if get_console():get_integer("b_lang_wnd_shown") == 0 then
+		self.lang_dialog:Show(true)
+		self.lang_caption:Show(true)
+		self.lang_list:Show(true)
+		self.lang_btn_done:Show(true)
+		self.main_frame:Enable(false)
+	
+		self.btn_new_game:Enable(false)
+		self.btn_credits:Enable(false)
+		self.btn_load:Enable(false)
+		self.btn_lastsave:Enable(false)
+		self.btn_save:Enable(false)
+		self.btn_options:Enable(false)
+		self.btn_quit_to_mm:Enable(false)
+		self.btn_quit:Enable(false)
+
+		self:FillLanguageList()
+	end
 
 	self.message_box 				= CUIMessageBoxEx()
 	self:Register					(self.message_box, "msg_box")
@@ -119,7 +150,6 @@ function main_menu:InitControls()
 	
 	_ver:SetText					(olr.modver)
 	self:NeedCenterCursor			(true)
-	
 end
 
 function main_menu:InitMusic()
@@ -158,6 +188,80 @@ function Proxy_InitMusic()
 end
 
 function main_menu:Show(f)
+end
+
+function main_menu:OnLangDone()
+	local console = get_console()
+	console:execute("b_lang_wnd_shown 1")
+
+	local item = self.lang_list:GetItem(self.selected_lang_idx)
+	if item then
+		local raw = self.lang_map[item:GetText()]
+		if raw then
+			console:execute("language " .. raw)
+		end
+	end
+	console:execute("cfg_save")
+
+	self.lang_dialog:Show(false)
+	self.lang_caption:Show(false)
+	self.lang_list:Show(false)
+	self.lang_btn_done:Show(false)
+	self.main_frame:Enable(true)
+	
+	self.btn_new_game:Enable(true)
+	self.btn_credits:Enable(true)
+	self.btn_load:Enable(true)
+	self.btn_lastsave:Enable(true)
+	self.btn_save:Enable(true)
+	self.btn_options:Enable(true)
+	self.btn_quit_to_mm:Enable(true)
+	self.btn_quit:Enable(true)
+end
+
+function main_menu:FillLanguageList()
+	self.lang_list:RemoveAll()
+	self.lang_map = {}
+	self.selected_lang_idx = -1
+
+	local fs = getFS()
+	local folders = fs:file_list_open("$game_config$", "text\\", 10)
+
+	if folders then
+		for i = 0, folders:Size() - 1 do
+			local lang = folders:GetAt(i):gsub("\\$", "")
+			if lang ~= "map_desc" and not lang:find("_old") then
+				local display = game.translate_string(lang)
+				self.lang_map[display] = lang
+				local item = CUIListItem()
+				item:SetText(display)
+				item:SetTextAlign(2)
+				self.lang_list:AddItem(item, 20)
+			end
+		end
+		folders:Free()
+	end
+	
+	self:UpdateLangSelection()
+end
+
+function main_menu:UpdateLangSelection()
+	for i = 0, self.lang_list:GetSize() - 1 do
+		local item = self.lang_list:GetItem(i)
+		if i == self.selected_lang_idx then
+			item:SetTextColor(255, 255, 255, 255)
+		else
+			item:SetTextColor(216, 186, 140, 255)
+		end
+	end
+end
+
+function main_menu:OnLanguageItemClicked()
+	local idx = self.lang_list:GetSelectedItem()
+	if idx >= 0 then
+		self.selected_lang_idx = idx
+		self:UpdateLangSelection()
+	end
 end
 
 function main_menu:ShowTabs(menu_type)
@@ -314,6 +418,10 @@ function main_menu:InitCallBacks()
 
 	self:Register(self, "self")
 	self:AddCallback("self",	ui_events.MAIN_MENU_RELOADED, self.OnMenuReloaded, self)
+	self:Register(self.lang_list, "list_language")
+	self:Register(self.lang_btn_done, "button_done")
+	self:AddCallback("list_language", ui_events.LIST_ITEM_CLICKED, self.OnLanguageItemClicked, self)
+	self:AddCallback("button_done", ui_events.BUTTON_CLICKED, self.OnLangDone, self)
 end
 
 function main_menu:OnMsgOk()
@@ -539,6 +647,13 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
     CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
     local bind = dik_to_bind(dik)
     local console = get_console()
+	
+    if self.lang_dialog and self.lang_dialog:IsShown() then
+        if keyboard_action == ui_events.WINDOW_KEY_PRESSED and dik == DIK_keys.DIK_ESCAPE then
+            self:OnLangDone()
+            return true
+        end
+    end	
 
     if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 		if not level.present() and dik == DIK_keys.DIK_ESCAPE then
@@ -589,12 +704,6 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
             end
 
             if dik == DIK_keys.DIK_D then
-                if olr_timers.has_timer("zombies_task_select_timer") then
-                    log1(" zombies_task_select_timer HAS")
-                end
-                if olr_timers.has_timer("dogs_task_select_timer") then
-                    log1(" dogs_task_select_timer HAS")
-                end
                 if olr_timers.has_timer("artefact_merger_timer") then
                     log1(" artefact_merger_timer HAS")
                 end

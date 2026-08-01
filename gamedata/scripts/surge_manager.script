@@ -1,0 +1,652 @@
+local surge_manager = nil
+
+local surge_shock_pp_eff = 1
+local earthquake_cam_eff = 2
+local sleep_cam_eff = 3
+local sleep_fade_pp_eff = 4
+
+-- Время задаётся игровое
+-- Первый выброс через 2-3 дня
+-- Последующие через 2-5 дней
+local START_MIN_SURGE_TIME = 259200 -- Время в секундах
+local START_MAX_SURGE_TIME = 345600
+local MIN_SURGE_TIME = 172800
+local MAX_SURGE_TIME = 432000
+local prev_sec = 0
+
+
+
+no_blow_levels = {
+	["lvl_level12"] = true,
+	["lvl12_radar_bunker"] = true,
+	["lvl14_stancia"] = true,
+	["lvl15_sarcofag"] = true,
+	["lvl16_generators"] = true
+}
+
+class "CSurgeManager"
+function CSurgeManager:__init()
+end
+
+function CSurgeManager:initialize()
+	self.ini = ini_file("misc\\surge_manager.ltx")
+
+	self.started = false
+	self.finished = true
+	self.time_forwarded = false
+	self.skip_message = false
+
+	self.task_given = false
+	self.effector_set = false
+	self.second_message_given = false
+	self.ui_disabled = false
+	self.blowout_sound = false
+
+	self.surge_time = 190
+	self.inited_time = game.CTime()
+	self.last_surge_time = game.get_game_time()
+	self._delta = math.random(START_MIN_SURGE_TIME, START_MAX_SURGE_TIME)
+
+	self.count = 0
+	self.covers = {}
+
+	self.condlist = {}
+	self.survive = {}
+
+	local ini = self.ini
+	local cond_string = "true"
+	if (ini:line_exist("settings", "condlist")) then
+		cond_string = ini:r_string("settings", "condlist")
+	end
+	self.condlist = xr_logic.parse_condlist(nil, "surge_manager", "condlist", cond_string)
+
+	cond_string = "false"
+	if (ini:line_exist("settings", "survive")) then
+		cond_string = ini:r_string("settings", "survive")
+	end
+	self.survive = xr_logic.parse_condlist(nil, "surge_manager", "survive_condlist", cond_string)
+
+	self.need_reinit_covers = true
+
+	self.loaded = false
+end
+
+function CSurgeManager:init_surge_covers()
+	self.count = 0
+	self.covers = {}
+
+	local ini = self.ini
+	if not ini:section_exist("list") then
+		return
+	end
+
+	for k, v in pairs(ogsm_respawn.restrictor_list) do
+		local zone = level.object_by_id(v.id)
+
+		if zone ~= nil then
+			self.count = self.count + 1
+			self.covers[self.count] = {id = zone:id(), zone = zone, condlist = nil}
+		end
+	end
+
+	for i = 0, ini:line_count("list") - 1 do
+		local _, id, _ = ini:r_line("list", i, "", "")
+		local zone = db.zone_by_name[id]
+
+		if zone ~= nil then
+			self.count = self.count + 1
+			self.covers[self.count] = {id = zone:id(), zone = zone, condlist = nil}
+
+			if (ini:line_exist(id, "condlist")) then
+				self.covers[self.count].condlist = xr_logic.parse_condlist(nil, id, "condlist", ini:r_string(id, "condlist"))
+			end
+		end
+	end
+end
+
+function CSurgeManager:cover_allowed(cover)
+	if (cover == nil) or (cover.zone == nil) then
+		return false
+	end
+
+	if (cover.condlist == nil) then
+		return true
+	end
+
+	local sect = xr_logic.pick_section_from_condlist(db.actor, nil, cover.condlist)
+	return (sect == "true")
+end
+
+function CSurgeManager:actor_cover()
+	local actor_pos = db.actor:position()
+	for i = 1, self.count do
+		local cover = self.covers[i]
+		if (cover ~= nil) and self:cover_allowed(cover) then
+			local obj = cover.zone
+			if obj:inside(actor_pos) then
+				log1("---> surge: actor in cover!")
+				return true
+			end
+		end
+	end
+	
+	if not db.actor:is_actor_outdoors() then
+		log1("---> surge: actor in cover!")
+		return true
+	end	
+
+	log1("---> surge: actor is out of cover!")
+	return false
+end
+
+function CSurgeManager:get_nearest_cover()
+	local actor_pos = db.actor:position()
+	local nearest_cover_id = nil
+	local nearest_cover_dist = math.huge
+
+	for i = 1, self.count do
+		local cover = self.covers[i]
+		if (cover ~= nil) and self:cover_allowed(cover) then
+			local obj = cover.zone
+			if obj:inside(actor_pos) then
+				return obj.id
+			end
+
+			local dist = obj:position():distance_to(actor_pos)
+			if (dist < nearest_cover_dist) then
+				nearest_cover_dist = dist
+				nearest_cover_id = obj.id
+			end
+		end
+	end
+
+	for k, v in pairs(ogsm_respawn.restrictor_list) do
+		local obj = level.object_by_id(v.id)
+		if obj then
+			if obj:inside(actor_pos) then
+				return obj.id
+			end
+
+			local dist = obj:position():distance_to(actor_pos)
+			if (dist < nearest_cover_dist) then
+				nearest_cover_dist = dist
+				nearest_cover_id = obj.id
+			end
+		end
+	end
+
+	return nearest_cover_id
+end
+
+function CSurgeManager:get_nearest_cover_task()
+	local actor_pos = db.actor:position()
+	local nearest_cover = nil
+	local nearest_cover_dist = math.huge
+
+	for i = 1, self.count do
+		local cover = self.covers[i]
+		if (cover ~= nil) and self:cover_allowed(cover) then
+			local obj = cover.zone
+			if obj:inside(actor_pos) then
+				return obj
+			end
+
+			local dist = obj:position():distance_to(actor_pos)
+			if (dist < nearest_cover_dist) then
+				nearest_cover_dist = dist
+				nearest_cover = obj
+			end
+		end
+	end
+
+	for k, v in pairs(ogsm_respawn.restrictor_list) do
+		local obj = level.object_by_id(v.id)
+		if obj then
+			if obj:inside(actor_pos) then
+				return obj
+			end
+
+			local dist = obj:position():distance_to(actor_pos)
+			if (dist < nearest_cover_dist) then
+				nearest_cover_dist = dist
+				nearest_cover = obj
+			end
+		end
+	end
+
+	return nearest_cover
+end
+
+function CSurgeManager:update()
+	if (device().precache_frame > 1) then
+		return
+	end
+
+	if self.need_reinit_covers then
+		self:init_surge_covers()
+		log1("---> surge: reinit covers after load, count = "..tostring(self.count))
+		self.need_reinit_covers = false
+	end
+
+	if self.need_weather_restore then
+		local game_diff = math.ceil(game.get_game_time():diffSec(self.inited_time))
+		level.start_weather_fx_from_time("surge", game_diff)
+		log1("---> surge: restored weather_fx after loading " .. game_diff)
+		self.need_weather_restore = false
+	end
+
+	if not (self.started) then
+		local g_time = game.get_game_time()
+
+		if (self.time_forwarded) then
+			log1("---> surge: delta = "..tostring(self._delta))
+			log1("---> surge: diffSec = "..tostring(g_time:diffSec(self.last_surge_time)))
+			local diff = math.abs(self._delta - g_time:diffSec(self.last_surge_time))
+			log1("---> surge: diff = "..tostring(diff))
+			if (diff < 3600) then
+				self._delta = 3 * 3600 + g_time:diffSec(self.last_surge_time)
+			end
+			self.time_forwarded = false
+		end
+
+		if (g_time:diffSec(self.last_surge_time) < self._delta) then
+			return
+		end
+
+		if (xr_logic.pick_section_from_condlist(db.actor, nil, self.condlist) ~= "true") then
+			log1("---> surge: actor condlist ~= true")
+			return
+		end
+
+		if not (self:get_nearest_cover()) then
+			log1("---> surge: failed to get nearest cover")
+			return
+		end
+
+		self:start(true)
+		return
+	end
+
+	local diff_sec = math.ceil(game.get_game_time():diffSec(self.inited_time) / level.get_time_factor())
+
+	if (prev_sec ~= diff_sec) then
+		prev_sec = diff_sec
+		log1("---> surge: diff_sec = "..tostring(diff_sec))
+
+		if (self.count == 0) then
+			self:init_surge_covers()
+			return
+		end
+
+		local level_name = level.name()
+		if no_blow_levels[level_name] then
+			log1("---> surge: stopped because of level!")
+			self:end_surge()
+			return
+		end
+
+		if (diff_sec >= self.surge_time) then
+			db.actor:give_info_portion("olr_blowout_ended")
+			self:end_surge()
+		else
+			if (self.loaded) then
+				if (self.blowout_sound) then
+					xr_sound_cop.play_sound_looped(db.actor:id(), "blowout_rumble")
+				end
+				if (self.effector_set) then
+					level.add_pp_effector("surge_shock.ppe", surge_shock_pp_eff, true)
+				end
+				if (self.second_message_given) then
+					xr_sound_cop.play_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
+					level.add_cam_effector("camera_effects\\earthquake.anm", earthquake_cam_eff, true, "")
+				end
+				self.loaded = false
+			end
+
+			if (self.effector_set) then
+				level.set_pp_effector_factor(surge_shock_pp_eff, diff_sec / 90, 0.1)
+			end
+			if (self.blowout_sound) then
+				xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", diff_sec / 180)
+			end
+
+			if (diff_sec >= 140 and not self.ui_disabled and not self:actor_cover()) then
+				local att = 1 - (185 - diff_sec) / (185 - 140)
+				att = att * att * att * 0.5
+				local h = hit()
+				h.type = hit.strike
+				h.power = att
+				h.impulse = 0.0
+				h.direction = vector():set(0, 0, 1)
+				h.draftsman = db.actor
+				if (xr_logic.pick_section_from_condlist(db.actor, nil, self.survive) == "true") then
+					log1("---> surge: actor survive == true")
+					if (db.actor.health <= h.power) then
+						h.power = db.actor.health - 0.05
+						if (h.power < 0) then
+							h.power = 0
+						end
+					end
+				end
+				db.actor:hit(h)
+			end
+
+			if (diff_sec >= 185) and not (self.ui_disabled) then
+				self:kill_all_unhided()
+				self.ui_disabled = true
+				db.actor:give_info_portion("olr_blowout_phase_3")
+			elseif (diff_sec >= 140) and not (self.second_message_given) then
+				xr_sound_cop.play_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
+				level.add_cam_effector("camera_effects\\earthquake.anm", earthquake_cam_eff, true, "")
+				self.second_message_given = true
+				db.actor:give_info_portion("olr_blowout_phase_2")
+			elseif (diff_sec >= 100) and not (self.effector_set) then
+				level.add_pp_effector("surge_shock.ppe", surge_shock_pp_eff, true)
+				self.effector_set = true
+			elseif (diff_sec >= 35) and not (self.blowout_sound) then
+				xr_sound_cop.set_sound_play(db.actor:id(), "blowout_begin")
+				xr_sound_cop.play_sound_looped(db.actor:id(), "blowout_rumble")
+				xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", 0.25)
+				db.actor:give_info_portion("olr_blowout_phase_1")
+				self.blowout_sound = true
+			elseif (diff_sec >= 0) and not (self.task_given) then
+				local text_phrase = {
+					"st_olr_blowout_warning_1",
+					"st_olr_blowout_warning_2",
+					"st_olr_blowout_warning_3",
+					"st_olr_blowout_warning_4"
+				}
+				news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "info", 15000)
+				if not has_alife_info("olr_blowout_first_hideouts") then
+					db.actor:give_info_portion("olr_blowout_first_hideouts")
+					olr_timers.st_timer_game("olr_blowout_first_hideouts", 60, "nick.olr_blowout_first_hideouts()") -- „ерез игровую минуту ?аба напишет нам искать укрытие
+				end
+				level.set_weather_fx("surge")
+				-- “аски тоже отключаю дл¤ вас, нужны правки в движке на откат стадий тасков типа как в «ѕ (стекольщик сказал нахуй надо, поэтому увы...)
+				-- xvars.quests_all_ids = xvars.quests_all_ids + 1
+				-- self:give_surge_hide_task()
+				self.task_given = true
+			end
+		end
+	end
+end
+
+function CSurgeManager:start(manual)
+	local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
+	Y, M, D, h, m, s, ms = self.last_surge_time:get(Y, M, D, h, m, s, ms)
+
+	if (manual) then
+		self.inited_time = game.get_game_time()
+	else
+		self.inited_time:set(Y, M, D, h, m, s + self._delta, ms)
+	end
+
+	diff_sec = math.ceil(game.get_game_time():diffSec(self.inited_time) / level.get_time_factor())
+	log1("---> surge: start diff_sec = "..tostring(diff_sec))
+
+	local level_name = level.name()
+	if no_blow_levels[level_name] then
+		log1("---> surge: skipped because of level!")
+		self.skip_message = true
+		self:skip_surge()
+		return
+	end
+
+	if olr_sleep.check_actor_sleep() == true then
+		log1("---> surge: skipped while time forwarding!")
+		self:skip_surge()
+	else
+		self.started = true
+		self.finished = false
+	end
+
+	if olr_sleep.check_actor_sleep() ~= true then
+		save_manager.create_named_save("st_save_uni_surge_start")
+		log1("---> surge: create autosave!")
+	end
+end
+
+function CSurgeManager:skip_surge()
+	local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
+	Y, M, D, h, m, s, ms = self.inited_time:get(Y, M, D, h, m, s, ms)
+	self.last_surge_time:set(Y, M, D, h, m, s + self.surge_time, ms)
+
+	self.started = false
+	self.finished = true
+	self._delta = math.random(MIN_SURGE_TIME, MAX_SURGE_TIME)
+	self.task_given = false
+
+	self.effector_set = false
+	self.second_message_given = false
+	self.ui_disabled = false
+	self.blowout_sound = false
+	prev_sec = 0
+
+	-- “ут можно выдавать вс¤кие таймеры и очки в статистику за скип выброса (выброса не было - мы его скипнули сном или анабиотиком)
+	-- xr_statistic.inc_surges_counter()
+
+	db.actor:disable_info_portion("olr_blowout_phase_1")
+	db.actor:disable_info_portion("olr_blowout_phase_2")
+	db.actor:disable_info_portion("olr_blowout_phase_3")
+	db.actor:disable_info_portion("olr_blowout_ended")
+
+	-- «аху¤чил сюда дл¤ совместимости, хз лучше переделать по нормальному
+	olr_blowout.blowout_ending_set()
+
+	if (not self.skip_message) then
+		log1("---> surge: while asleep")
+		news_manager.send_tip(db.actor, "st_surge_while_asleep", 1, "info", 9000)
+		self.skip_message = true
+	end
+end
+
+function CSurgeManager:end_surge(manual)
+	self.started = false
+	self.finished = true
+	self.last_surge_time = game.get_game_time()
+	self._delta = math.random(MIN_SURGE_TIME, MAX_SURGE_TIME)
+	self.task_given = false
+
+	if (self.effector_set) then
+		xr_sound_cop.stop_sound_looped(db.actor:id(), "blowout_rumble")
+	end
+	if (self.second_message_given) then
+		xr_sound_cop.stop_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
+	end
+	level.remove_pp_effector(surge_shock_pp_eff)
+	level.remove_cam_effector(earthquake_cam_eff)
+
+	if (manual or self.time_forwarded) then
+		level.stop_weather_fx()
+	end
+
+	self.effector_set = false
+	self.second_message_given = false
+	self.ui_disabled = false
+	self.blowout_sound = false
+	prev_sec = 0
+
+	if self.loaded then
+		self:kill_all_unhided()
+	end
+
+	-- “ут можно выдавать вс¤кие таймеры и очки в статистику за окончание выброса (выброс был - мы его пережили)
+	-- xr_statistic.inc_surges_counter()
+
+	db.actor:disable_info_portion("olr_blowout_phase_1")
+	db.actor:disable_info_portion("olr_blowout_phase_2")
+	db.actor:disable_info_portion("olr_blowout_phase_3")
+	db.actor:disable_info_portion("olr_blowout_ended")
+
+	-- «аху¤чил сюда дл¤ совместимости, хз лучше переделать по нормальному
+	olr_blowout.blowout_ending_set()
+end
+
+function CSurgeManager:give_surge_hide_task()
+	local hideout_object = level.object_by_id(self:get_nearest_cover_task():id()):get_alife_object()
+	local surge_task = CGameTask()
+	local task_id = string.format(xvars.quests_all_ids)
+	surge_task:load(task_id, "hide_from_surge")
+	surge_task:set_title("hide_from_surge_name_1")
+
+	local SubTask = SGameTaskObjective(surge_task, 1)
+	SubTask:set_description("hide_from_surge_name_1")
+	SubTask:set_map_hint("surge_common_hide")
+	SubTask:set_map_location("defend_lager_location")
+	SubTask:set_object_id(hideout_object.id)
+	SubTask:add_complete_func("surge_manager.actor_in_cover")
+	surge_task:add_objective(SubTask)
+
+	local SubTask2 = SGameTaskObjective(surge_task, 2)
+	SubTask2:set_description("hide_from_surge_name_2")
+	surge_task:add_objective(SubTask2)
+	db.actor:give_task(surge_task, false)
+end
+
+function CSurgeManager:kill_all_unhided()
+	if (db.actor and db.actor:alive()) then
+		if not self:actor_cover() then
+			xr_effects.disable_ui(db.actor, nil)
+			if (xr_logic.pick_section_from_condlist(db.actor, nil, self.survive) ~= "true") then
+				db.actor:kill(db.actor)
+				return
+			else
+				level.add_cam_effector("camera_effects\\surge_02.anm", sleep_cam_eff, false, "surge_manager.surge_callback")
+				level.add_pp_effector("surge_fade.ppe", sleep_fade_pp_eff, false)
+				db.actor.health = db.actor.health - 0.05
+			end
+		end
+	end
+end
+
+function surge_callback()
+	level.add_cam_effector("camera_effects\\surge_01.anm", sleep_cam_eff, false, "surge_manager.surge_callback2")
+end
+
+function surge_callback2()
+	xr_effects.enable_ui(db.actor, nil)
+end
+
+function CSurgeManager:save(packet)
+	set_save_marker(packet, "save", false, "SurgeHide")
+	packet:w_bool(self.finished)
+	packet:w_bool(self.started)
+	utils.w_CTime(packet, self.last_surge_time)
+
+	if (self.started) then
+		utils.w_CTime(packet, self.inited_time)
+
+		packet:w_bool(self.task_given)
+		packet:w_bool(self.effector_set)
+		packet:w_bool(self.second_message_given)
+		packet:w_bool(self.ui_disabled)
+		packet:w_bool(self.blowout_sound)
+	end
+
+	packet:w_u32(self._delta)
+	set_save_marker(packet, "save", true, "SurgeHide")
+end
+
+function CSurgeManager:load(packet)
+	set_save_marker(packet, "load", false, "SurgeHide")
+	self:initialize()
+
+	self.finished = packet:r_bool()
+	self.started = packet:r_bool()
+	self.last_surge_time = utils.r_CTime(packet)
+
+	if (self.started) then
+		self.inited_time = utils.r_CTime(packet)
+
+		self.task_given = packet:r_bool()
+		self.effector_set = packet:r_bool()
+		self.second_message_given = packet:r_bool()
+		self.ui_disabled = packet:r_bool()
+		self.blowout_sound = packet:r_bool()
+
+		self.need_weather_restore = self.task_given
+	else
+		self.need_reinit_covers = true
+	end
+
+	self._delta = packet:r_u32()
+	self.loaded = true
+
+	set_save_marker(packet, "load", true, "SurgeHide")
+end
+
+function get_surge_manager()
+	if surge_manager == nil then
+		surge_manager = CSurgeManager()
+	end
+	return surge_manager
+end
+
+function start_surge(p)
+	local m = get_surge_manager()
+	if (m:get_nearest_cover()) then
+		m:start(true)
+	else
+		log1("---> surge: covers are not set!")
+	end
+end
+
+function actor_in_cover()
+	local m = get_surge_manager()
+	return m:actor_cover()
+end
+
+function stop_surge()
+	local m = get_surge_manager()
+	if (m.started) then
+		m:end_surge(true)
+	end
+end
+
+function get_task_target()
+	local m = get_surge_manager()
+	if (actor_in_cover()) then
+		return nil
+	end
+	return m:get_nearest_cover()
+end
+
+function is_started()
+	local m = get_surge_manager()
+	return m.started
+end
+
+function is_killing_all()
+	local m = get_surge_manager()
+	if (m.started and m.ui_disabled) then
+		return true
+	end
+	return false
+end
+
+function is_finished()
+	local m = get_surge_manager()
+	return m.finished == true
+end
+
+function resurrect_skip_message()
+	local m = get_surge_manager()
+	m.skip_message = false
+end
+
+function sound_started()
+	local m = get_surge_manager()
+	return m.started and m.blowout_sound
+end
+
+-- ѕолучаем сообщение о времени до следующего выброса в игровых часах (сделал дл¤ себ¤, у вас нигде не используетс¤)
+function get_time_until_next_surge()
+	local m = get_surge_manager()
+	local diff_time = game.get_game_time():diffSec(m.last_surge_time)
+	local diff = math.floor((m._delta - diff_time) / 3600)
+	if diff >= 1 then
+		news_manager.send_tip(db.actor, game.translate_string("until_next_surge").." "..diff.." "..game.translate_string("ui_st_hours"), nil, "saharov", 5000)
+	else
+		news_manager.send_tip(db.actor, game.translate_string("until_next_surge_soon"), nil, "saharov", 5000)
+	end
+end

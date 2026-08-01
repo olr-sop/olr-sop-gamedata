@@ -22,7 +22,7 @@ holder_fov_modifier		= 0.3              ; �� ������� ���
 
 item_amount = 9
 
-cost					= 400
+cost					= 250
 weapon_class			= assault_rifle	; Type of the weapon
 launch_speed = 0
 	
@@ -56,31 +56,29 @@ kill_msg_width			= 73
 kill_msg_height			= 30
 
 ;-----------------------------------------------------------------------------------
-;������� ���������
-fire_dispersion_base		= 0.25; 0.16	;���� (� ��������) ������� ��������� ������ (������ �������� � ������)
-control_inertion_factor		= 1.35f
+;базовая дисперсия
+fire_dispersion_base			= 0.14		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_condition_factor= 9			;увеличение дисперсии в процентах при максимальном износе 
+condition_shot_dec				= 0.00015	;увеличение износа при каждом выстреле
 
-;������
-cam_relax_speed        	= 6.5	;�������� �������� � �������� ���������
-cam_dispersion         	= 0.80	;���������� ���� (� ��������) � ������ ���������
-cam_dispersion_inc		= 0.09	;���������e cam_dispersion � ������ ���������
-cam_dispersion_frac		= 0.62	;����� ����� ���������� �� cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
-cam_max_angle			= 35.5	;������������ ���� ������
-cam_max_angle_horz		= 4.5	;(degree) maximum shot horizontal degree 
-cam_step_angle_horz		= 0.7	;(degree) size of step camera moved in horizontal position while shooting
+;отдача
+cam_dispersion					= 0.16		;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc				= 0.3		;увеличениe cam_dispersion с каждым выстрелом
+cam_dispersion_frac				= 0.9		;ствол будет подниматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
+cam_max_angle					= 38.0		;максимальный угол отдачи
+cam_max_angle_horz				= 18.0		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz				= 1.0		;(degree) size of step camera moved in horizontal position while shooting
+cam_relax_speed					= 5			;скорость возврата в исходное положение
 
-fire_dispersion_condition_factor = 2.2	;���������� ��������� � ��������� ��� ������������ ������ 
-misfire_probability 		= 0.003 ;����������� ������ ��� ������������ ������
-misfire_condition_k			= 0.05 
-condition_shot_dec 			= 0.0003 ;���������� ������ ��� ������ ��������
+control_inertion_factor			= 1.3
+misfire_probability				= 0.03		;вероятность осечки при максимальном износе 
+
+PDM_disp_crouch					= 1.05
+PDM_disp_crouch_no_acc			= 1.0
+PDM_disp_accel_factor			= 1.35
+PDM_disp_base					= 1.05
+PDM_disp_vel_factor				= 1.35
 ;-----------------------------------------------------------------------------------
-;parent dispersion modifiers
-PDM_disp_base 				= 1.0
-PDM_disp_vel_factor 		= 1.4
-PDM_disp_accel_factor 		= 1.4
-PDM_crouch	 				= 1.0
-PDM_crouch_no_acc 			= 1.0
-
 direction              		=  0, 0, 1
 fire_point             		=  0.0, 0.186, 0.435
 fire_point2            		=  0.0, 0.106, 0.468
@@ -93,16 +91,16 @@ shell_point		 			= 0.0, 0.186, 0.0
 shell_dir		 			= 0.0, 0.0, 0.4
 shell_particles	 			= weapons\generic_shells
 
-rpm_empty_click 	 		= 200
+rpm_empty_click				= 200
 
 ; ttc
-hit_power                	= 0.36
-hit_impulse		 			= 32
+hit_power					= 0.420
+hit_impulse					= 35.7
 hit_type 					= fire_wound 	
 
-fire_distance            	= 800
-bullet_speed				= 950	;��������� �������� ����
-rpm                      	= 650
+fire_distance				= 735
+bullet_speed				= 650
+rpm							= 650
 ; end ttc
 
 use_aim_bullet				= true		;�������������� �� ������ ������ ����
@@ -157,11 +155,11 @@ grenade_launcher_x 			= 128
 grenade_launcher_y 			= 28
 
 ;�����
-snd_draw			= weapons\akms\draw
+snd_draw			= weapons\general\draw
 snd_holster			= weapons\general\holster
-snd_shoot			= weapons\lr300\shoot
+snd_shoot			= weapons\l85\shoot
 snd_empty			= weapons\general\empty, 0.5
-snd_reload			= weapons\lr300\reload, 0.7, 0.4
+snd_reload			= weapons\l85\reload, 0.7, 0.4
 snd_shoot_grenade	= weapons\general\grenshoot
 snd_reload_grenade	= weapons\general\grenload, 1.0, 0.8
 snd_switch			= weapons\general\switch, 1.0, 0.5
@@ -201,7 +199,8 @@ anim_reload				= reload
 anim_draw				= draw
 anim_holster			= holster
 anim_shoot				= shoot
-anim_idle_sprint			= idle_sprint
+anim_idle_sprint		= idle_sprint
+anim_idle_sprint_gl		= idle_sprint_w_gl
 			
 ;�������� � ������������ ��������������
 ;(����� �������� �� �������������)

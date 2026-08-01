@@ -39,7 +39,7 @@ function use(obj)
 		local has_torch = db.actor:item_in_slot(9)
 		if has_torch == nil then
 			sim:create("battery_change_headlamp", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-			news_manager.send_tip(db.actor, game.translate_string("torch_check_0"), nil, "default", 3000)
+			news_manager.send_tip(db.actor, game.translate_string("torch_check_0"), nil, "info", 3000)
 		else
 			if has_torch:condition() < 1 then
 				db.actor:item_in_slot(9):get_torch():enable(false)
@@ -85,7 +85,7 @@ function use(obj)
 			return
 		end
 		olr.give_item("arg_jaba_voda_boloto")
-		news_manager.send_tip(db.actor, game.translate_string("use_4"))
+		news_manager.send_tip(db.actor, game.translate_string("use_4"), nil, "info")
 		return
 	end
 
@@ -185,11 +185,6 @@ function use(obj)
 			sim:create("energy_drink", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
 		end
 	end
-
-	if section == "crow_food" then
-		--log1("eat crow_food")
-		db.actor.radiation = 0.02315
-	end
 	
 	if section == "conserva" then
 		local bobj2 = sim:create("ph_food_conserv1_drop", db.actor:position():add(db.actor:direction():add(0.1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -211,10 +206,11 @@ function use(obj)
 	local cond = obj:condition()
 	
 	if g_food_table[section] then
-		if xvars.foods[obj:name()] == true then
-			xvars.foods[obj:name()] = nil
-			--log1("del food variable")
-		end
+		local e_food = xvars.foods[tostring(obj:id())]
+		if e_food and e_food.sec == section and e_food.rad then
+			db.actor.radiation = 0.1525 -- Поедание заражённой радиацией еды черевато
+		end		
+		xvars.foods[tostring(obj:id())] = nil -- Очищаем вообще в любом случае
 	end
 
 	if section == "snotvornoe" then

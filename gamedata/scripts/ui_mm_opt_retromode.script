@@ -1,0 +1,56 @@
+class "opt_retromode" (CUIWindow)
+
+function opt_retromode:__init() super()
+end
+
+function opt_retromode:__finalize()
+end
+
+function all_modes(render_id)
+	return true
+end
+
+function opt_retromode:InitControls(x, y, xml, handler)
+	local ctl
+	local _st
+
+	self:Init(x, y, 738, 416)
+	self:SetAutoDelete(true)
+
+	self.bk         = xml:InitFrame("frame_retromode", self)
+	self.scroll_v   = xml:InitScrollView("video_retromode:scroll_v", self)
+	handler.scroll_v_retromode = self.scroll_v
+
+	_st = xml:InitStatic("video_retromode:templ_item", nil)
+	xml:InitStatic("video_retromode:cap_retromode_color_depth", _st)
+	xml:InitTrackBar("video_retromode:track_retromode_color_depth", _st)
+	table.insert(handler.m_preconditions_retromode, {func=all_modes, control=_st})
+
+	_st = xml:InitStatic("video_retromode:templ_item", nil)
+	xml:InitStatic("video_retromode:cap_retromode_dither_scale", _st)
+	xml:InitTrackBar("video_retromode:track_retromode_dither_scale", _st)
+	table.insert(handler.m_preconditions_retromode, {func=all_modes, control=_st})
+
+	_st = xml:InitStatic("video_retromode:templ_item", nil)
+	xml:InitStatic("video_retromode:cap_retromode_dithering", _st)
+	xml:InitCheck("video_retromode:check_retromode_dithering", _st)
+	table.insert(handler.m_preconditions_retromode, {func=all_modes, control=_st})
+
+	_st = xml:InitStatic("video_retromode:templ_item", nil)
+	xml:InitStatic("video_retromode:cap_retromode_jitter", _st)
+	xml:InitTrackBar("video_retromode:track_retromode_jitter", _st)
+	table.insert(handler.m_preconditions_retromode, {func=all_modes, control=_st})
+
+	_st = xml:InitStatic("video_retromode:templ_item", nil)
+	xml:InitStatic("video_retromode:cap_retromode_res", _st)
+	xml:InitComboBox("video_retromode:list_retromode_res", _st)
+	table.insert(handler.m_preconditions_retromode, {func=all_modes, control=_st})
+
+	_st = xml:InitStatic("video_retromode:templ_item", nil)
+	xml:InitStatic("video_retromode:cap_retromode_resolution_scale", _st)
+	xml:InitTrackBar("video_retromode:track_retromode_resolution_scale", _st)
+	table.insert(handler.m_preconditions_retromode, {func=all_modes, control=_st})
+
+	btn = xml:Init3tButton("video_retromode:btn_to_retromode_simply", self)
+	handler:Register(btn, "btn_retromode_simply")
+end

@@ -1,0 +1,244 @@
+restrictor_list = {}
+
+-- Получаем ближайшее к НПС укрытие
+function get_nearest_hide(npc)
+	local hideout_list = {}
+	for k, v in pairs(restrictor_list) do
+		local radius = get_radius_hide(v)
+		local obj = level.object_by_id(v.id)
+		if obj then
+			local npc_pos = npc:position()
+			local hide_pos = obj:position()
+			local distance = npc_pos:distance_to(hide_pos)
+			local hide = {obj = obj, rad = radius, dist = distance}
+			table.insert(hideout_list, hide)
+		end
+	end
+	table.sort(hideout_list, function(a, b) return a.dist < b.dist end)
+	local nearest_hide = hideout_list[1]
+	return nearest_hide
+end
+
+function get_actor_hide()
+	for k, v in pairs(restrictor_list) do
+		local obj = level.object_by_id(v.id)
+		if obj then
+			local actor_pos = db.actor:position()
+			if obj:inside(actor_pos) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- Считываем параметры укрытия
+function get_radius_hide(obj)
+	if not obj then
+		return "none"
+	end
+	local packet = net_packet()
+	obj:STATE_Write(packet)
+	local game_vertex_id = packet:r_u16()
+	local cse_alife_object__unk1_f32 = packet:r_float()
+	local cse_alife_object__unk2_u32 = packet:r_s32()
+	local level_vertex_id = packet:r_s32()
+	local object_flags = packet:r_s32()
+	local custom_data = packet:r_stringZ()
+	local cd = parse_custom_data(custom_data)
+	if not cd.parameters then
+		return "none"
+	end
+	if not cd.parameters.radius then
+		return "none"
+	end
+	return cd.parameters.radius
+end
+
+-- Спавним укрытие как спейс-рестриктор
+function spawn_restrictor(p_level, p_vector, p_lv, p_gv, p_radius)
+	local p_name = p_level.."_hide_restrictor"
+
+	local obj = alife():create(p_name, p_vector, p_lv, p_gv)
+
+	local packet = net_packet()
+
+	obj:STATE_Write(packet)
+
+	-- свойства cse_alife_object
+	local game_vertex_id = packet:r_u16()
+	local cse_alife_object__unk1_f32 = packet:r_float()
+	local cse_alife_object__unk2_u32 = packet:r_s32()
+	local level_vertex_id = packet:r_s32()
+	local object_flags = packet:r_s32()
+	local custom_data = packet:r_stringZ()
+	local story_id = packet:r_s32()
+	local cse_alife_object__unk3_u32 = packet:r_s32()
+
+	-- свойства cse_shape
+	local shape_count = packet:r_u8()
+	local shape_type
+	local center
+	local radius
+
+	if shape_count == 0 then
+		shape_type = 0
+		center = vector():set(0, 0, 0)
+		radius = 10.0
+		shape_count = 1
+	else
+		for i = 1, shape_count do
+			local shape_type = packet:r_u8()
+			if shape_type == 0 then
+				local center = packet:r_vec3()
+				local radius = packet:r_float()
+			else
+				local v1 = packet:r_vec3()
+				local v2 = packet:r_vec3()
+				local v3 = packet:r_vec3()
+				local v4 = packet:r_vec3()
+			end
+		end
+	end
+
+	-- свойства cse_alife_space_restrictor
+	local restrictor_type = packet:r_u8()
+
+	-- свойства cse_alife_object
+	packet:w_u16(game_vertex_id)
+	packet:w_float(cse_alife_object__unk1_f32)
+	packet:w_s32(cse_alife_object__unk2_u32)
+	packet:w_s32(level_vertex_id)
+	packet:w_s32(object_flags)
+
+	local cd = parse_custom_data(custom_data)
+	if not cd then cd = {} end
+	if not cd.parameters then
+		cd.parameters = {}
+	end
+	cd.parameters.radius = p_radius
+	custom_data = gen_custom_data(cd)
+
+	packet:w_stringZ(custom_data)
+	packet:w_s32(story_id)
+	packet:w_s32(cse_alife_object__unk3_u32)
+
+	-- свойства cse_shape
+	packet:w_u8(shape_count)
+
+	for i = 1, shape_count do
+		packet:w_u8(shape_type)
+		if shape_type == 0 then
+			packet:w_vec3(center)
+			packet:w_float(p_radius)
+		else
+			packet:w_vec3(v1)
+			packet:w_vec3(v2)
+			packet:w_vec3(v3)
+			packet:w_vec3(v4)
+		end
+	end
+
+	-- свойства cse_alife_space_restrictor
+	packet:w_u8(restrictor_type)
+
+	obj:STATE_Read(packet, packet:w_tell() - packet:r_tell())
+
+	return obj
+end
+
+-- Получение списка всех укрытий на текущей локации
+function get_level_restrictors()
+	for i = 1, 65535 do
+		local obj = alife():object(i)
+		if obj then
+			if string.find(obj:name(), level.name().."_hide_restrictor") then
+				table.insert(restrictor_list, obj)
+			end
+		end
+	end
+end
+
+-- Парсинг и генерирование custom_data
+function parse_custom_data(str)
+	local t = {}
+	if str then
+		for section, section_data in string.gfind(str, "%s*%[([^%]]*)%]%s*([^%[%z]*)%s*") do
+			section = trim(section)
+			t[section] = {}
+			for line in string.gfind(trim(section_data), "([^\n]*)\n*") do
+				if string.find(line, "=") ~= nil then
+					for k, v in string.gfind(line, "([^=]-)%s*=%s*(.*)") do
+						k = trim(k)
+						if k ~= nil and k ~= '' and v ~= nil then
+							t[section][k] = trim(v)
+						end
+					end
+				else
+					for k, v in string.gfind(line, "(.*)") do
+						k = trim(k)
+						if k ~= nil and k ~= '' then
+							t[section][k] = "<<no_value>>"
+						end
+					end
+				end
+			end
+		end
+	end
+	return t
+end
+
+function gen_custom_data(tbl)
+	local str = ''
+	for key, value in pairs(tbl) do
+		str = str.."["..key.."]\n"
+		for k, v in pairs(value) do
+			if v ~= "<<no_value>>" then
+				str = str..k.." = "..v.."\n"
+			else
+				str = str..k.."\n"
+			end
+		end
+	end
+	return str
+end
+
+function trim(s)
+	return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
+
+-- Спавн ручных рестрикторов для укрытий при первом запуске мода
+-- Дополнительные рестрикторы добавлять не меняя уровень.
+-- значения для лв, гв брать откуда хотите но главное корректные, радиус ставьте исходя из размера нужного спейс рестриктора с укрытием
+function first_run()
+	-- Бункер Жабы
+	spawn_restrictor("lvl1_escape", vector():set(-217.4, -12.8, -123.3), 281922, 0, 4)
+	-- АТП пристройка к зданию
+	spawn_restrictor("lvl1_escape", vector():set(105.2, -0.3, -26.1), 276646, 0, 4)
+	-- АТП основное здание
+	spawn_restrictor("lvl1_escape", vector():set(111.7, -0.3, -47.3), 276646, 0, 4)
+	-- Бытовка командира на блок-посте
+	spawn_restrictor("lvl1_escape", vector():set(-141.3, -30.1, -350.6), 276646, 0, 4)
+	-- Ангар где лежит артефакт для Жабы
+	spawn_restrictor("lvl2_garbage", vector():set(-129.6, -7.6, 261.5), 276646, 0, 4)
+	-- Строение в районе центрального комплекса
+	spawn_restrictor("lvl3_agroprom", vector():set(16.8, 0, 14), 256750, 693, 6)
+	-- Строение центрального комплекса
+	spawn_restrictor("lvl3_agroprom", vector():set(39.9, 2.5, -10.5), 278041, 693, 6)
+	-- Казармы у подземелья
+	spawn_restrictor("lvl3_agroprom", vector():set(-158.2, 1.1, -151.2), 79088, 693, 5)
+	-- Казармы у НИИ
+	spawn_restrictor("lvl3_agroprom", vector():set(-153.3, 1.1, -166.6), 84356, 693, 5)
+	-- Строение у НИИ
+	spawn_restrictor("lvl3_agroprom", vector():set(-179.9, 0, -187.6), 56704, 693, 6)
+	-- Ангар с бандитами
+	spawn_restrictor("lvl4_darkdolina", vector():set(-183.7, 2.9, 125.5), 52128, 1041, 6)
+	-- Строение в районе ангара с бандитами
+	spawn_restrictor("lvl4_darkdolina", vector():set(-206.4, 5.8, 192.3), 52128, 1041, 6)
+	-- Строение в районе ангара с бандитами
+	spawn_restrictor("lvl4_darkdolina", vector():set(-168.3, 4.6, 101.2), 52128, 1041, 6)
+	-- Вход в здание где нас держали
+	spawn_restrictor("lvl4_darkdolina", vector():set(37.9, 4.9, -255.7), 52128, 1041, 6)
+	-- Труба рядом с базой черных слизней
+	spawn_restrictor("lvl4_darkdolina", vector():set(120.9, 4.5, -110.1), 52128, 1041, 6)
+end

@@ -21,16 +21,6 @@ function opt_video:InitControls(x, y, xml, handler)
 	handler.check_retromode 		= xml:InitCheck("tab_video:check_retromode", self)
 	handler:Register				(handler.check_retromode,			"check_retromode")
 
-
--- Эти настройки ретро-режима надо будет вынести отдельно
---	xml:InitStatic					("tab_video:cap_retromode_res",			self)
---	xml:InitStatic					("tab_video:cap_retromode_jitter",			self)
---	handler.list_retromode_res 		= xml:InitComboBox("tab_video:list_retromode_res",	self)
---	handler.track_retromode_jitter	= xml:InitTrackBar("tab_video:track_retromode_jitter",		self)
---	local get_check = handler.check_retromode:GetCheck()
---	handler.list_retromode_res:Enable(get_check)
---	handler.track_retromode_jitter:Enable(get_check)
-
 	xml:InitStatic					("tab_video:cap_fps_limiter_gameplay",		self)
 	xml:InitComboBox				("tab_video:list_fps_limiter_gameplay",		self)
 	
@@ -59,6 +49,12 @@ function opt_video:InitControls(x, y, xml, handler)
 	xml:InitStatic					("tab_video:cap_renderer",			self)
 	handler.combo_renderer			= xml:InitComboBox("tab_video:list_renderer",		self)
 	handler:Register				(handler.combo_renderer, "combo_renderer")
+
+	btn		= xml:Init3tButton		("tab_video:btn_retromode",	self)	
+	handler:Register				(btn, "btn_retromode_graphic")
+	handler.btn_retromode 			= btn
+	local retromode_check 			= handler.check_retromode:GetCheck()
+	btn:Enable(retromode_check)
 
 	btn		= xml:Init3tButton		("tab_video:btn_advanced",	self)	
 	handler:Register				(btn, "btn_advanced_graphic")	

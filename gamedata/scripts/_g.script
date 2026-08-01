@@ -352,17 +352,7 @@ local save_markers = {}
 function set_save_marker(p, mode, check, prefix)
 
 	-- определяем ключ маркера.
-	local result = ""
---	  if debug ~= nil then
---		  local info_table = debug.getinfo(2)
---		  local script_name = string.gsub(info_table.short_src, "%.script", "")
---		  script_name = string.gsub(script_name, "gamedata\\scripts\\", "")
---		  result = script_name
---	  end
-
---	  if prefix ~= nil then
-		result = result .. "_" .. prefix
---	  end
+	local result = (prefix or "")
 
 	if check == true then
 		if save_markers[result] == nil then
@@ -371,43 +361,57 @@ function set_save_marker(p, mode, check, prefix)
 
 		if mode == "save" then
 			local dif = p:w_tell() - save_markers[result]
-			--log1(result .. ": SAVE DIF: " .. tostring(dif))
 			if dif >= 8000 then
-				log1("~ WARNING! may be this is problem save point")
+				log1("~ WARNING! may be this is problem save point: " .. result)
 			end
-			if dif >= 10240 then
---				  abort("You are saving too much")
+			if dif >= 65535 then
+				abort("Marker dif too large for u16 [%s]: %d", result, dif)
 			end
 			p:w_u16(dif)
+			--log1(string.format("[SAVE_MARKER] %s: pos=%d dif=%d", result, p:w_tell(), dif))
 		else
 			local c_dif = p:r_tell() - save_markers[result]
-			
-			if prefix == "se_smart_terrain" and p:r_elapsed() < 2 then
-				--log1(string.format("[WARN][se_smart_terrain][save_marker][load] tell=%d elapsed=%d need=2 c_dif=%d base=%d", p:r_tell(), p:r_elapsed(), c_dif, save_markers[result]))
-				return
-			end			
-			
+
+			if p:r_eof() then
+				abort("SAVE BROKEN [%s]: reader at eof before marker check (pos=%d, elapsed=%d, expected_dif=%d)", result, p:r_tell(), p:r_elapsed(), c_dif)
+			end
+
+			if p:r_elapsed() < 2 then
+				abort("SAVE BROKEN [%s]: not enough bytes for marker check (elapsed=%d, need=2, expected_dif=%d)", result, p:r_elapsed(), c_dif)
+			end
+
 			local dif = p:r_u16()
 			 if dif ~= c_dif then
-				abort("INCORRECT LOAD [%s].[%s][%s]", result, dif, c_dif)
+				abort("INCORRECT LOAD [%s]: saved_dif=%d expected_dif=%d (pos=%d, marker_pos=%d)", result, dif, c_dif, p:r_tell(), save_markers[result])
 			 else
-				--log1(result .. ": LOAD DIF: " .. tostring(dif))
+				--log1(string.format("[LOAD_MARKER] %s: pos=%d dif=%d OK", result, p:r_tell(), dif))
 			 end
 		end
 		return
 	end
 
 	if mode == "save" then
-		--log1(result .. ": set save marker: " .. tostring(p:w_tell()))
 		save_markers[result] = p:w_tell()
 		if p:w_tell() > 16000 then
-			abort("You are saving too much")
+			abort("You are saving too much in marker %s: %d bytes", result, p:w_tell())
 		end
 	else
-		--log1(result .. ": set load marker: " .. tostring(p:r_tell()))
+		if p:r_eof() then
+			abort("SAVE BROKEN [%s]: reader at eof when setting load marker (pos=%d, elapsed=%d)", result, p:r_tell(), p:r_elapsed())
+		end
 		save_markers[result] = p:r_tell()
 	end
 
+end
+
+-- Безопасное чтение с проверкой перед каждым чтением
+function safe_r(reader, method_name, bytes_needed, context)
+	if reader:r_eof() then
+		abort("SAVE BROKEN [%s]: trying to read %s (%d bytes) but at eof (pos=%d, elapsed=%d)", context or "?", method_name, bytes_needed or 0, reader:r_tell(), reader:r_elapsed())
+	end
+	if reader:r_elapsed() < (bytes_needed or 1) then
+		abort("SAVE BROKEN [%s]: not enough bytes for %s (have=%d, need=%d, pos=%d)", context or "?", method_name, reader:r_elapsed(), bytes_needed, reader:r_tell())
+	end
 end
 
 -- Новая функция string.truncate
@@ -1121,6 +1125,7 @@ end
 function isArtefact(object)
     local id = get_clsid(object)
     if id == nil then return false end
+    if object:section_name() == "af_galantine_pot" then return false end
 
     if id == clsid.art_bast_artefact then return true
     elseif id == clsid.art_black_drops then return true
@@ -1945,13 +1950,16 @@ g_weapon_table = { -- всё оружие кроме аддонов (и кроме болтов с ножами)
 	["wpn_akms"] = true,
 	["wpn_aks74u"] = true,
 	["wpn_aps"] = true,
+	["wpn_beretta"] = true,
 	["wpn_bm16"] = true,
 	["wpn_colt1911"] = true,
+	["wpn_desert_eagle"] = true,
 	["wpn_fn2000"] = true,
 	["wpn_fort"] = true,
 	["wpn_g36"] = true,
 	["wpn_gauss"] = true,
 	["wpn_groza"] = true,
+	["wpn_gsh"] = true,
 	["wpn_hands_gravity"] = true,
 	["wpn_hpsa"] = true,
 	["wpn_l85"] = true,
@@ -1966,6 +1974,7 @@ g_weapon_table = { -- всё оружие кроме аддонов (и кроме болтов с ножами)
 	["wpn_rpk74"] = true,
 	["wpn_shotgra"] = true,
 	["wpn_sig220"] = true,
+	["wpn_sig550"] = true,
 	["wpn_spas12"] = true,
 	["wpn_svd"] = true,
 	["wpn_svu"] = true,

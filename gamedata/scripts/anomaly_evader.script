@@ -1,3 +1,5 @@
+---------------------- Stalkers are not blind ---------------------
+------------------------- Copyright Red75 -------------------------
 -- anomaly_evader.script
 -- Схема уклонения от аномалий с учётом ранга и боя
 
@@ -363,19 +365,14 @@ function add_to_binder(object, char_ini, scheme, section, st)
 	action:add_effect		  (world_property(1099, false))
 	manager:add_action(10032, action)
 	--log1("[ANOM_EVAL] action 10032 added")
-
-	-- Корректируем preconditions для стандартных действий (alife и combat_planner)
-	-- чтобы они не выполнялись, пока активен evaluator 1099
-	local alife_action = manager:action(xr_actions_id.alife) 
-	if alife_action then
-		alife_action:add_precondition(world_property(1099, false))
-		--log1("[ANOM_EVAL] precondition added to alife action")
-	end
-	local combat_action = manager:action(stalker_ids.action_combat_planner) 
-	if combat_action then
-		combat_action:add_precondition(world_property(1099, false))
-		--log1("[ANOM_EVAL] precondition added to combat_planner action")
-	end
+	
+	action = manager:action(xr_actions_id.alife)
+	action:add_precondition(world_property(1099, false))
+	--log1("[ANOM_EVAL] precondition added to alife action")
+	
+	action = manager:action(stalker_ids.action_combat_planner) 
+	action:add_precondition(world_property(1099, false))
+	--log1("[ANOM_EVAL] precondition added to combat_planner action")
 end
 
 function set_evade(npc, ini, scheme, section)
@@ -387,3 +384,11 @@ end
 function reset_evade(npc, scheme, st, section)
 	--log1("[ANOM_EVAL] reset_evade called for " .. npc:name())
 end
+
+--[[
+
+Если вы собираетесь использовать данный скрипт целиком или частично в своих 
+разработках по игре S.T.A.L.K.E.R., пожалуйста не удаляйте копирайты, указывайте настоящего 
+автора(ов) и не выдавайте чужие идеи и их реализацию за свои. Спасибо за понимание.
+
+]]--

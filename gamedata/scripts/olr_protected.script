@@ -1,11 +1,28 @@
 -- hi_flyer 24/12/16
+-- theysani 12.06.26
+
+-- Добавлена опциональная фича "снятие защиты"
+-- Теперь можно вместо true указать инфопорцию после получения которого объект не будет под защитой данного скрипта
+-- Например, труп некого сюжетного нпс, мы вешаем на него инфопорцию
+-- Пока у нас нет этой инфопорции он под защитой и его не удалит уборщик трупов, выброс и так далее
+-- После того как актор получил инфопорцию при след проходе уборщика трупов, выброса и его пост-выброс функцию, он уже не будет под защитой и удалится
+-- Пример:
+--	["some_npc_name"] = "info_portion_that_removes_protection",
+--	["some_item_name"] = "info_portion_that_removes_protection",
+-- Более явный пример;
+-- Сюжетная плоть на кордоне которую убиваем с диггером
+-- Ранее было
+-- ["lvl1_escape_flesh_weak"] = true,
+-- А теперь у нас будет
+-- ["lvl1_escape_flesh_weak"] = "kv_3_done",
+-- это значит что после того как актор получит инфопорцию kv_3_done то этот объект останется без защиты скрипта
+-- и уборщик трупов его удалит если сойдутся все его условия для удаления, но не ранее, пока у актора нет данной инфопорции то и защита не снимается
 
 local no_offline_alife_objs = {
 
-
 	["lvl1_escape_stalker_0030"] = true,
 	["lvl1_escape_stalker_0001"] = true,
-	["lvl1_escape_flesh_weak"] = true,
+	["lvl1_escape_flesh_weak"] = "kv_3_done",
 	["lvl1_escape_stalker_0002"] = true,
 	["lvl1_escape_stalker_0052"] = true,
 	["lvl1_escape_controller_tubeman"] = true,
@@ -31,16 +48,11 @@ local no_offline_alife_objs = {
 	["lvl1_escape_stalker_0023"] = true,
 	["lvl1_escape_stalker_000a"] = true,
 	["lvl1_escape_stalker_0004"] = true,
+	["lvl1_escape_stalker_0005"] = true,
 	["lvl1_escape_stalker_0034"] = true,
-
-
-
 
 	["lvl2_garbage_stalker_0037lloh_0000"] = true,
 	["lvl2_garbage_stalker_0037lloh"] = true,
-	["lvl2_garbage_stalker_0044"] = true,
-	["lvl2_garbage_stalker_0048"] = true,
-	["lvl2_garbage_stalker_0049"] = true,
 	["lvl2_garbage_staler_undead_olr_0001"] = true,
 	["lvl2_garbage_stalker_0030"] = true,
 	["lvl2_garbage_stalker_0040"] = true,
@@ -56,14 +68,10 @@ local no_offline_alife_objs = {
 	["lvl2_garbage_staler_undead_olr_0011"] = true,
 	["lvl2_garbage_staler_undead_olr_0012"] = true,
 	["lvl2_garbage_stalker_0055"] = true,
-	["gar_bandit_stroyka1"] = true,
-	["gar_bandit_stroyka2"] = true,
-	["gar_bandit_stroyka3"] = true,
-	["gar_bandit_stroyka4"] = true,
-
-
-
-
+	["lvl2_garbage_stalker_0052"] = true, 
+	["lvl2_garbage_stalker_0053"] = true,
+	["lvl2_garbage_stalker_0054"] = true,
+	
 	["lvl3_agroprom_stalker_0012"] = true,
 	["lvl3_agroprom_stalker_0004"] = true,
 	["lvl3_agroprom_stalker"] = true,
@@ -84,9 +92,8 @@ local no_offline_alife_objs = {
 	["lvl3_agroprom_staler_undead_olr"] = true,
 	["lvl3_agroprom_staler_undead_olr_0000"] = true,
 	["lvl3_agroprom_stalker_0045"] = true,
+	["lvl3_agroprom_stalker_0043"] = "agr_olr_1_dead_gopllit_found",
 
-
-	["lvl4u_darklab_stalker_0025"] = true,
 	["lvl4_darkdolina_stalker_0042"] = true,
 	["lvl4_darkdolina_stalker_0035"] = true,
 	["lvl4_darkdolina_stalker_0038"] = true,
@@ -136,9 +143,35 @@ local no_offline_alife_objs = {
 	["lvl4_darkdolina_stalker_0091"] = true,
 	["lvl4_darkdolina_stalker_0092"] = true,
 	["lvl4_darkdolina_staler_undead_olr"] = true,
+	["val_stalker"] = "tihonov_dialog_tri_done_finished",
 
-
-
+	["lvl4u_darklab_stalker"] = true,
+	["lvl4u_darklab_stalker_0000"] = true,
+	["lvl4u_darklab_stalker_0001"] = true,
+	["lvl4u_darklab_stalker_0002"] = true,
+	["lvl4u_darklab_stalker_0003"] = true,
+	["lvl4u_darklab_stalker_0004"] = true,
+	["lvl4u_darklab_stalker_0005"] = true,
+	["lvl4u_darklab_stalker_0006"] = true,
+	["lvl4u_darklab_stalker_0007"] = true,
+	["lvl4u_darklab_stalker_0008"] = true,
+	["lvl4u_darklab_stalker_0009"] = true,
+	["lvl4u_darklab_stalker_0010"] = true,
+	["lvl4u_darklab_stalker_0011"] = true,
+	["lvl4u_darklab_stalker_0012"] = true,
+	["lvl4u_darklab_stalker_0013"] = true,
+	["lvl4u_darklab_stalker_0014"] = true,
+	["lvl4u_darklab_stalker_0015"] = true,
+	["lvl4u_darklab_stalker_0016"] = true,
+	["lvl4u_darklab_stalker_0017"] = true,
+	["lvl4u_darklab_stalker_0018"] = true,
+	["lvl4u_darklab_stalker_0019"] = true,
+	["lvl4u_darklab_stalker_0020"] = true,
+	["lvl4u_darklab_stalker_0021"] = true,
+	["lvl4u_darklab_stalker_0022"] = true,
+	["lvl4u_darklab_stalker_0023"] = true,
+	["lvl4u_darklab_stalker_0024"] = true,
+	["lvl4u_darklab_stalker_0025"] = true,
 
 	["lvl5_bar_box_barmena"] = true,
 	["bar_dolg_bunker_0001"] = true,
@@ -154,6 +187,7 @@ local no_offline_alife_objs = {
 	["bar_dolg_petrenko"] = true,
 	["lvl5_bar_stalker_0051"] = true,
 	["lvl5_bar_stalker_0002"] = true,
+	["lvl5_bar_stalker_0063"] = "bar_killer_strt_chek_barm",
 	["lvl5_bar_staler_undead_olr_0001"] = true,
 	["lvl5_bar_staler_undead_olr_0002"] = true,
 	["lvl5_bar_bloodsucker_weak"] = true,
@@ -212,12 +246,11 @@ local no_offline_alife_objs = {
 	["lvl5_bar_inventory_box_dopseif"] = true,
 	["lvl5_bar_inventory_box_hid"] = true,
 	["lvl5_bar_inventory_box"] = true,
-
-
-
-
+	["bar_wpn_rpg7"] = true,
+	["bar_ammo_og-7b"] = true,
+	["bar_ammo_og-7b_0000"] = true,	
+	
 	["lvl6_rostok_bloodsucker_strong_0000"] = true,
-	["lvl6_rostok_stalker_0021"] = true,
 	["lvl6_rostok_stalker_0023"] = true,
 	["lvl6_rostok_bloodsucker_strong_0005"] = true,
 	["lvl6_rostok_stalker_0022"] = true,
@@ -236,11 +269,9 @@ local no_offline_alife_objs = {
 	["lvl6_rostok_bloodsucker_strong_0012"] = true,
 	["lvl6_rostok_box_rukzak_0000"] = true,
 	["lvl6_rostok_inventory_box"] = true,
-
-
-
-
-
+	["lvl6_rostok_stalker_0027"] = true,
+	["lvl6_rostok_stalker_0011"] = true,
+	["ros_stalker"] = "tihonov_dialog_tri_done_finished",
 
 	["lvl7_yantar_stalker_0002"] = true,
 	["lvl7_yantar_controller_normal"] = true,
@@ -252,22 +283,22 @@ local no_offline_alife_objs = {
 	["lvl7_yantar_stalker_0003"] = true,
 	["lvl7_yantar_controller_normal_0001"] = true,
 	["lvl7_yantar_stalker_0064"] = true,
-	["lvl7_uch_stalker_0004"] = true,
-	["lvl7_uch_stalker_0005"] = true,
-	["lvl7_uch_stalker_0002"] = true,
-	["lvl7_uch_stalker_0003"] = true,
+	["yan_stalker_guard_03"] = true,
+	["yan_stalker_guard_commander"] = true,
+	["yan_stalker_guard_02"] = true,
+	["yan_stalker_guard_01"] = true,
 	["lvl7_yantar_stalker"] = true,
 	["lvl7_yantar_stalker_0023"] = true,
 	["lvl7_yantar_staler_undead_olr"] = true,
 	["lvl7_yantar_stalker_0058"] = true,
-	["lvl7_yantar_stalker_sakharov"] = true,
+	["yan_scientist_gorbovsky"] = true,
 	["lvl7_yantar_stalker_0013"] = true,
 	["lvl7_yantar_staler_undead_olr_0000"] = true,
 	["lvl7_yantar_staler_undead_olr_0001"] = true,
 	["lvl7_yantar_bar_bar_visitors_3_2_0002"] = true,
 	["lvl7_yantar_stalker_0007"] = true,
 	["lvl7_yantar_stalker_0065"] = true,
-	["lvl7_uch_stalker_0006"] = true,
+	["yan_stalker_guard_04"] = true,
 	["lvl7_yantar_stalker_0067"] = true,
 	["lvl7_yantar_controller_normal_0002"] = true,
 	["lvl7_yantar_stalker_0068"] = true,
@@ -281,10 +312,7 @@ local no_offline_alife_objs = {
 	["lvl7_yantar_arts_box_profa"] = true,
 	["lvl7_yantar_stalker_0082"] = true,
 	["lvl7_yantar_m_fracture_e_0000"] = true,
-
-
-
-
+	["yan_stalker"] = "tihonov_dialog_tri_done_finished",
 
 	["lvl8_swamp_phantasm"] = true,
 	["lvl8_swamp_staler_undead_olr"] = true,
@@ -296,7 +324,6 @@ local no_offline_alife_objs = {
 	["lvl8_swamp_stalker_0021"] = true,
 	["lvl8_swamp_staler_undead_olr_0000"] = true,
 	["lvlswamp_quest_fracture_e"] = true,
-
 
 	["lvl9_military_stalker_0009"] = true,
 	["lvl9_military_stalker_0010"] = true,
@@ -320,6 +347,9 @@ local no_offline_alife_objs = {
 	["lvl9_military_stalker_0047"] = true,
 	["lvl9_military_stalker_0046"] = true,
 	["lvl9_military_stalker_0048"] = true,
+	["lvl9_military_stalker_0057"] = true,
+	["lvl9_military_stalker_0058"] = true,
+	["lvl9_military_stalker_0059"] = true,
 	["lvl9_military_big_safe_box"] = true,
 	["mil_plennny_stalker_0027"] = true,
 	["mil_plennny_stalker_0000"] = true,
@@ -339,11 +369,10 @@ local no_offline_alife_objs = {
 	["lvl9_military_stalker_0023"] = true,
 	["lvl9_military_stalker_0022"] = true,
 	["lvl9_military_stalker_0032"] = true,
-
-
-
-
-
+	["lvl9_military_stalker_0035"] = true,
+	["lvl9_military_stalker_0037"] = true,
+	["lvl9_military_stalker_0040"] = true,
+	["lvl9_military_stalker_0041"] = true,
 
 	["lvl10_radar_stalker_0031"] = true,
 	["lvl10_radar_stalker_0039"] = true,
@@ -355,15 +384,6 @@ local no_offline_alife_objs = {
 	["lvl10_radar_gigant_strong"] = true,
 	["lvl10_radar_flesh_strong_0000"] = true,
 	["lvl10_radar_shron_weapons"] = true,
-
-
-	["lvl9_military_stalker_0035"] = true,
-	["lvl9_military_stalker_0037"] = true,
-	["lvl9_military_stalker_0040"] = true,
-	["lvl9_military_stalker_0041"] = true,
-
-
-
 
 	["lvl12_radar_bunker_staler_undead_olr"] = true,
 	["lvl12_radar_bunker_staler_undead_olr_0000"] = true,
@@ -380,6 +400,9 @@ local no_offline_alife_objs = {
 	["lvl12_radar_bunker_staler_undead_olr_0011"] = true,
 	["lvl12_radar_bunker_staler_undead_olr_0012"] = true,
 	["lvl12_radar_bunker_staler_undead_olr_0013"] = true,
+	["lvl12_radar_bunker_stalker_0000"] = true,
+	["lvl12_radar_bunker_stalker_0004"] = true,
+	["ln9_stalker_scientist_corpse"] = true,
 	["lvl12_radar_bunker_box_rukzak_0001"] = true,
 
 	["lvl13_prip_stalker_0088"] = true,
@@ -388,7 +411,7 @@ local no_offline_alife_objs = {
 	["lvl13_prip_staler_undead_olr"] = true,
 	["pri_stalker"] = true,
 	["pri_stalker_0001"] = true,
-
+	["pri_jornal_7"] = true,
 
 	["lvl11_deadcity_stalker_0013"] = true,
 	["lvl11_deadcity_staler_undead_olr"] = true,
@@ -426,17 +449,12 @@ local no_offline_alife_objs = {
 	["lvl11_deadcity_stalker"] = true,
 	["lvl11_deadcity_box_rukzak_0000"] = true,
 
-
 	["lvl15_sarcofag_stalker_0002"] = true,
 	["lvl15_sarcofag_stalker_0003"] = true,
-
-
-	["pri_jornal_7"] = true,
 	
-
 	["lvl_level12_stalker"] = true,
 	["lvl_level12_big_container"] = true,
-
+	
 	["lvl16_generators_stalker_0035"] = true,
 	["lvl16_generators_stalker"] = true,
 	["lvl16_generators_stalker_0032"] = true,
@@ -454,15 +472,26 @@ local no_offline_alife_objs = {
 	["lvl16_generators_controller_tubeman_0000"] = true,
 	["lvl16_generators_m_posthuman_e"] = true,
 	["lvl16_generators_karlik"] = true,
-	["lvl16_generators_staler_undead_olr_0008"] = true
+	["lvl16_generators_staler_undead_olr_0008"] = true,
 
+	["lvl8_swamp_stalker_0006"] = true,
+	["lvl8_swamp_stalker_0010"] = true,
+	["lvl8_swamp_stalker_0011"] = true,
+	["lvl8_swamp_stalker_0012"] = true,
+	["lvl10_radar_stalker_0035"] = true,
+	["lvl10_radar_stalker_0040"] = true,
+	["lvl10_radar_stalker_0041"] = true
 
 }
 
 function is_no_offline_alife_obj(name)
-	return no_offline_alife_objs[name]
+    local val = no_offline_alife_objs[name]
+    if val == true then
+        return true
+    elseif type(val) == "string" then
+        if not has_alife_info(val) then
+            return true
+        end
+    end
+    return nil
 end
-
-
-
-

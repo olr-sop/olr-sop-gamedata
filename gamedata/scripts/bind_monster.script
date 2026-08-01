@@ -84,12 +84,11 @@ function generic_object_binder:use_callback(obj, who)
 		if not is_rat_variant[self_object_sec] then
             if ini_sys:line_exist(self_object_sec, "known_info") then
                 local known_inf = ini_sys:r_string(self_object_sec, "known_info") or ""
-                local known_inf_desc = game.translate_string(known_inf)
-                if not has_alife_info(known_inf_desc) then
+                if not has_alife_info(known_inf) then
                     --olr.hud_tip("", "У меня нет информации о этом мутанте...", 2)
                     --return
                 else
-                    --log1("HAS konwn ifo - "..known_inf_desc.." ")
+                    --log1("HAS konwn ifo - "..known_inf.." ")
                 end
                 self.object:iterate_inventory(
                     function(_, item)
@@ -123,7 +122,7 @@ function generic_object_binder:use_callback(obj, who)
                         end
                     end
                 )
-                if take_flag == 0 and has_alife_info(known_inf_desc) then
+                if take_flag == 0 and has_alife_info(known_inf) then
                     local wait_time = 0
                     wait_time = time_global() + 3000
                     level.add_call(
@@ -202,28 +201,31 @@ function generic_object_binder:update(delta)
 		end
 
 		--	not olr_protected.is_no_offline_alife_obj(self.object:name()) and
-		local blowout = olr_blowout.state_blow == 2 or olr_blowout.state_blow == 3
-		if not olr_blowout.no_blow_levels[level.name()] then
-			if blowout and (not self.control_override) then
-				if not self.object:action() then
-					-- Захватываем зверушку
-					xr_logic.mob_capture(self.object, true)
-					self.control_override = true
+		local m = surge_manager.get_surge_manager()
+		if (m.started) then
+			local diff_sec = math.ceil(game.get_game_time():diffSec(m.inited_time) / level.get_time_factor())
+			if not olr_blowout.no_blow_levels[level.name()] then
+				if diff_sec >= 35 and (not self.control_override) then
+					if not self.object:action() then
+						-- Захватываем зверушку
+						xr_logic.mob_capture(self.object, true)
+						self.control_override = true
+					end
+				elseif self.control_override and diff_sec >= 35 then
+					if not self.object:action() then
+						self.object:set_custom_panic_threshold(1)
+						local snds = {sound.take_damage, sound.panic, sound.idle}
+						local snd = snds[mrandom(1, table.getn(snds))]
+						action(self.object, anim(anim.lie_idle, 0), sound(snd), cond(cond.sound_end))
+					end
+				elseif self.control_override and diff_sec < 35 then
+					-- отпускаем зверушку
+					self.control_override = nil
+					xr_logic.mob_release(self.object)
+					self.object:set_default_panic_threshold()
+				elseif self.st.active_section ~= nil then
+					xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
 				end
-			elseif self.control_override and blowout then
-				if not self.object:action() then
-					self.object:set_custom_panic_threshold(1)
-					local snds = {sound.take_damage, sound.panic, sound.idle}
-					local snd = snds[mrandom(1, table.getn(snds))]
-					action(self.object, anim(anim.lie_idle, 0), sound(snd), cond(cond.sound_end))
-				end
-			elseif self.control_override and not blowout then
-				-- отпускаем зверушку
-				self.control_override = nil
-				xr_logic.mob_release(self.object)
-				self.object:set_default_panic_threshold()
-			elseif self.st.active_section ~= nil then
-				xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
 			end
 		end
 
@@ -513,7 +515,9 @@ function generic_object_binder:extrapolate_callback()
 	local patr = self.object:patrol()
 	if patr == "" then
 		--Такая ситуация - это норма, просто ванильный движок не вылетал при вызове patrol(""), а новый вылетает, проверено.
-		abort("!!["..script_name().."] Invalid patrol path name ["..patr.."] for object ["..self.object:name().."]")
+		--abort("!!["..script_name().."] Invalid patrol path name ["..patr.."] for object ["..self.object:name().."]")
+		log1("!!["..script_name().."] Invalid patrol path name ["..patr.."] for object ["..self.object:name().."]")
+		return false
 	elseif patrol(patr):flags(cur_pt):get() == 0 then
 		return true
 	end
@@ -568,7 +572,14 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 	if self.st.hit then
 		xr_logic.issue_event(self.object, self.st.hit, "hit_callback", obj, amount, local_direction, who, bone_index)
 	end
-	
+
+	local self_object_name = self.object:name()
+    if self_object_name == "lab_burer_elder_1" or self_object_name == "lab_burer_elder_2" then
+        if who:id() == db.actor:id() then
+            db.actor:kill(db.actor)
+        end
+    end
+
 end
 
 

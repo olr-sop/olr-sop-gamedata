@@ -31,7 +31,7 @@ local global_task_rnd_way = {
     [6] = {name = "lvl1_escape_smart_terrain_0023_kamp_1"}, -- esc wood
     [7] = {name = "way_dolg_gar_commander_look"}, -- gar dolg
     [8] = {name = "lvl2_garbage_smart_terrain_0034_kamp_1"}, -- gar angar
-    [9] = {name = "gar_bandit_stroyka_2_walk"}, -- gar bandits
+    [9] = {name = "lvl2_garbage_smart_terrain_0025_kamp_1"}, -- gar bandits
     [10] = {name = "kamp_center_svalka_nachalour"}, -- gar kran
     [11] = {name = "lvl3_agroprom_smart_terrain_0016_kamp_1"}, -- agr boloto
     [12] = {name = "lvl3_agroprom_smart_terrain_0024_kamp_1"}, -- arg nii
@@ -75,9 +75,9 @@ local global_task_rnd_way = {
     [49] = {name = "gar_kucha_one"},
     [50] = {name = "gar_holm_left"},
     [51] = {name = "gar_agr_niz"},
-    [52] = {name = "lvl2_garbage_smart_terrain_0032_kamp_1"},
+    [52] = {name = "lvl2_garbage_smart_terrain_0032_home_1"},
     [53] = {name = "gar_nizina"},
-    [54] = {name = "lvl2_garbage_smart_terrain_0031_kamp_1"},
+    [54] = {name = "lvl2_garbage_smart_terrain_0003_home_1"},
     [55] = {name = "gar_left_angar"},
     [56] = {name = "gar_holm_left"},
     [57] = {name = "gar_sever_angar"},
@@ -87,7 +87,7 @@ local global_task_rnd_way = {
     [61] = {name = "gar_lesok_reka"},
     [62] = {name = "lvl2_garbage_smart_terrain_0002_home_1"},
     [63] = {name = "gar_tunel_right"},
-    [64] = {name = "gar_bandit_stroyka_2_walk"},
+    [64] = {name = "lvl2_garbage_smart_terrain_0025_kamp_1"},
     [65] = {name = "gar_tennel_left"},
     [66] = {name = "agr_left_holm"},
     [67] = {name = "agr_centr_holm"},
@@ -187,7 +187,7 @@ local global_task_rnd_way = {
     [161] = {name = "cha_vorola"}
 }
 
--- регистрация основной миссии при появлении в зоне
+-- регистрация основной миссии при появлении в зоне (касается только тех сталкеров что спавнятся через респавн!)
 function on_spawn_npc(obj)
     if obj and IsStalker(obj) and xvars.npcs_tasks then
         if obj:community() == "monolith" or obj:community() == "military" or obj:community() == "zombied" then
@@ -212,6 +212,10 @@ end
 
 -------------smart_terrain-----
 function has_task(obj)
+
+	if not xvars or not xvars.npcs_tasks then return false end -- Так нужно так как se_stalker во время реги сталкера уже дёргаем ему первый апдейт который выбирает смарт куда тот пойдёт.
+															   -- и это может происходить пока у нас нет xvars или xvars.npcs_tasks, поэтому проверяем на наличие онных
+	
     if obj and IsStalker(obj) then
         --торговля бар
         if xvars.npc_ofl_trade[obj:name()] == true then
@@ -411,7 +415,7 @@ function check_complete_main(obj)
                         if level.name() == "lvl16_generators" then
                             return
                         end
-                        news_manager.send_tip(db.actor,game.translate_string("st_olr_ai_tasks_destruction_seeker_1") .." " .. name .. " " .. game.translate_string("st_olr_ai_tasks_destruction_seeker_2"),1,"default",15000)
+                        news_manager.send_tip(db.actor,game.translate_string("st_olr_ai_tasks_destruction_seeker_1") .." " .. name .. " " .. game.translate_string("st_olr_ai_tasks_destruction_seeker_2"),1,"news",15000)
                         flgmondr = true
                     end
                 end

@@ -13,19 +13,12 @@ function init()
 		local STbron = actor:object("stalker_outfit")
 		if STbron then
 			STbron:set_condition(mrandom(2,8)/100) -- состояние от 2 до 8%
-			--actor:move_to_slot(STbron) -- костюм в любом случае будет уже в слоте
-			level.add_call(
-				function() return time_global() > time_global() + 1500 end,
-				function() olr_ruck_limit.recheck_limit() end -- вызываем речек с задержкой так как коллбэк на одевание в слот не срабатывает при таком надевании
-			)
 		end
 		actor.satiety = -mrandom(20, 75)/100 -- гг голод
 		actor:change_actor_thirst(-mrandom(20, 75)/100) -- гг жажда
 		local torch_item = alife():create("device_torch", actor:position(), actor:level_vertex_id(), actor:game_vertex_id(), actor:id())
 		level.client_spawn_manager():add(torch_item.id, 0, function(id,obj) obj:set_condition((mrandom(15,45)/100)) end) -- портим сразу фонарик
 	end
-	
-	olr_blowout.set_blow_timer(23040) -- ставим таймер выброса
 
 	-- далее вместо трёх или сколько там было проходов по 65к объектов
 	-- делается один в котором сразу всё и происходит
@@ -101,13 +94,6 @@ function init()
 				end
 			end
 			
-			if not processed and items_to_remove[sect] and mrandom(2) == 1 and obj.parent_id ~= 0 then
-				if obj then
-					sim:release(obj)
-				end
-				processed = true
-			end
-
 			if not processed and montabl[clsid] and not obj.online and obj:alive() and obj:community() ~= "trader" then
 				local tbl = amk.read_stalker_params(obj)
 				local old_money = tbl.money or 0

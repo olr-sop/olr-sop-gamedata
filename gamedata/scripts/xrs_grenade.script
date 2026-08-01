@@ -482,31 +482,31 @@ end
 -- BINDER
 ----------------------------------------------------------------------------------------------------------------------
 function add_to_binder(object, ini, scheme, section, storage)
-  		local operators	= {}
-	  	local properties  = {}
+	local operators	= {}
+	local properties  = {}
 
-	   	local manager = object:motivation_action_manager()
+	local manager = object:motivation_action_manager()
 
-		operators["fire_in_the_hole"]			= actid_crazy_fire_in_the_hole
-		operators["run_from_grenade"]			= actid_run_from_grenade
+	operators["fire_in_the_hole"]			= actid_crazy_fire_in_the_hole
+	operators["run_from_grenade"]			= actid_run_from_grenade
 
-		properties["crazy_grenadier"]			= evid_crazy_grenadier
-		properties["aaa_grenade"]				= evid_aaa_grenade
+	properties["crazy_grenadier"]			= evid_crazy_grenadier
+	properties["aaa_grenade"]				= evid_aaa_grenade
 
-		local zombi=object:character_community()=="ecolog" or object:character_community()=="zombied" or object:character_community()=="trader" or object:name()=="mil_stalker0012" or object:name()=="yantar_ecolog_general"
+	local zombi=object:character_community()=="ecolog" or object:character_community()=="zombied" or object:character_community()=="trader" or object:name()=="mil_stalker0012" or object:name()=="yantar_ecolog_general"
 
-		if zombi then
-			manager:add_evaluator (properties["crazy_grenadier"], property_evaluator_const(false))
-			manager:add_evaluator (properties["aaa_grenade"], property_evaluator_const(false))
-		else
-			manager:add_evaluator (properties["crazy_grenadier"], evaluator_crazy_grenadier("crazy_grenadier", storage))
-			manager:add_evaluator (properties["aaa_grenade"], evaluator_aaa_grenade("aaa_grenade", storage))
-		end
-		
+	if zombi then
+		manager:add_evaluator (properties["crazy_grenadier"], property_evaluator_const(false))
+		manager:add_evaluator (properties["aaa_grenade"], property_evaluator_const(false))
+	else
+		manager:add_evaluator (properties["crazy_grenadier"], evaluator_crazy_grenadier("crazy_grenadier", storage))
+		manager:add_evaluator (properties["aaa_grenade"], evaluator_aaa_grenade("aaa_grenade", storage))
+	
 		local action = action_fire_in_the_hole (object,"fire_in_the_hole", storage)
 		action:add_precondition(world_property(stalker_ids.property_alive, true))
 		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
 		action:add_precondition	(world_property(properties["aaa_grenade"], false))
+		action:add_precondition(world_property(1099, false)) -- ѕровер€ем что мы не пытаемс€ обойти аномалии
 		action:add_precondition	(world_property(properties["crazy_grenadier"], true))
 		action:add_effect (world_property(properties["crazy_grenadier"], false))
 		manager:add_action (operators["fire_in_the_hole"], action)
@@ -530,7 +530,7 @@ function add_to_binder(object, ini, scheme, section, storage)
 		action = manager:action (stalker_ids.action_danger_planner)	
 		action:add_precondition	(world_property(properties["crazy_grenadier"], false))
 		action:add_precondition	(world_property(properties["aaa_grenade"], false))
-
+	end	
 end
 
 function set_scheme(ini, npc, scheme, section)

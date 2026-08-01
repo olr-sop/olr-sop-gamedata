@@ -36,7 +36,7 @@ ammo_limit		 			= 120
 ammo_current		 		= 96
 ammo_elapsed		 		= 8
 
-ammo_mag_size		 		= 8;7
+ammo_mag_size		 		= 8
 ammo_class		 			= ammo_9x18_fmj, ammo_9x18_pmm, ammo_9x18_pbp
 
 min_ammo_try_jammed                        = 3
@@ -65,22 +65,27 @@ kill_msg_height		= 23
 
 ;-----------------------------------------------------------------------------------
 ;базовая дисперсия
-control_inertion_factor		= 1.4
-fire_dispersion_base		= 0.18 	;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_base			= 0.18		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+fire_dispersion_condition_factor= 6			;увеличение дисперсии в процентах при максимальном износе 
+condition_shot_dec				= 0.0015	;увеличение износа при каждом выстреле
 
 ;отдача
-cam_relax_speed         	= 5.5;1.0	;скорость возврата в исходное положение
-cam_dispersion          	= 1.35	;увеличения угла (в градусах) с каждым выстрелом
-cam_dispersion_inc		= 0.25	;увеличениe cam_dispersion с каждым выстрелом
-cam_dispersion_frac		= 0.6	;ствол будет подыматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
-cam_max_angle			= 42.0	;максимальный угол отдачи
-cam_max_angle_horz		= 8.0	;(degree) maximum shot horizontal degree 
-cam_step_angle_horz		= 1.5	;(degree) size of step camera moved in horizontal position while shooting
+cam_dispersion					= 0.3		;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc				= 0.4		;увеличениe cam_dispersion с каждым выстрелом
+cam_dispersion_frac				= 0.85		;ствол будет подниматься на cam_dispersion*cam_dispersion_frac +- cam_dispersion*(1-cam_dispersion_frac)
+cam_max_angle					= 42.0		;максимальный угол отдачи
+cam_max_angle_horz				= 8.0		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz				= 1.5		;(degree) size of step camera moved in horizontal position while shooting
+cam_relax_speed					= 8			;скорость возврата в исходное положение
 
-fire_dispersion_condition_factor= 5	;увеличение дисперсии в процентах при максимальном износе 
-misfire_probability 		= 0.0019	;вероятность осечки при максимальном износе 
-misfire_condition_k			= 0.015
-condition_shot_dec 			= 0.001 ;увеличение износа при каждом выстреле
+control_inertion_factor			= 1
+misfire_probability				= 0.0019	;вероятность осечки при максимальном износе 
+
+PDM_disp_crouch					= 0.9
+PDM_disp_crouch_no_acc			= 0.85
+PDM_disp_accel_factor			= 1.2
+PDM_disp_base					= 0.9
+PDM_disp_vel_factor				= 1.2
 ;-----------------------------------------------------------------------------------
 
 direction                	= 0, 0, 1
@@ -93,23 +98,15 @@ shell_point		 			= 0.00, 0.127, 0.03
 shell_dir		 			= 0.0, 0.0, 0.4
 shell_particles	 			= weapons\generic_shells
 
-rpm_empty_click 	 		= 200
-
-PDM_disp_base 				= 0.5
-PDM_disp_vel_factor 		= 1.1
-PDM_disp_accel_factor 		= 1.1
-PDM_disp_crouch	 			= 1
-PDM_disp_crouch_no_acc 		= 1
-
 ; ttc
-hit_power			= 0.36
-hit_impulse			= 15
+hit_power			= 0.355
+hit_impulse			= 23.8
 hit_type = fire_wound
 
-fire_distance           = 50
-bullet_speed		= 215	;начальная скорость пули
-rpm                     = 270
-; end ttc
+fire_distance           = 40
+bullet_speed			= 315	;начальная скорость пули
+rpm                     = 250
+rpm_empty_click 	 	= 200
 
 use_aim_bullet				= true		;Поддерживается ли первая суппер пуля
 time_to_aim					= 1.0	
@@ -181,29 +178,31 @@ silencer_light_time 		= 0.2
 [wpn_pm_hud]
 allow_inertion = true
 
-shell_point		         = -0.04, 0, -0.01
-fire_point               = -0.04, 0, 0.05
-fire_bone = pistol 
+shell_point		         = -0.0, -0.0, 0.0
+fire_point               = -0.100000,0.000000,0.060000
+fire_bone                = wpn_body
 
-orientation              = 14, 0, -1
-position                 = 0.14, -0.14, 0.17
+;позиция и направление оружия с руками
+orientation              = 0,0,0
+position                 = 0.000000,-0.010000,-0.030000
 
 ;смещения HUD для режима приближения
-zoom_offset			= -0.237900,0.067400,-0.020000
-zoom_rotate_x		= 0.070000
-zoom_rotate_y		= 0.238001
+zoom_offset			= -0.371200,0.122200,0.000000
+zoom_rotate_x		= 0.106700
+zoom_rotate_y		= 0.278500
 
-
+;модель оружия с руками
 visual                   	= weapons\pm\pm_hud.ogf
 
+;анимации оружия
 anim_holster				= holster
 anim_idle					= idle
 anim_empty					= empty
-anim_reload					= reload
-anim_reload_empty			= reload_full
+anim_reload					= reload_full
+anim_reload_empty			= reload
 anim_draw					= draw
 anim_draw_empty				= draw_empty
-anim_shoot					= shoot0
+anim_shoot					= shoot1
 anim_shot_last				= shoot_last
 anim_close					= close
 anim_idle_aim				= idle_aim

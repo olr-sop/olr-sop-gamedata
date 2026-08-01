@@ -384,16 +384,15 @@ function se_respawn:create(prob)
 				)				
 				
 				local smart_terrain_id = obj:smart_terrain_id()
-          			--log1("SPAWN [%s] move_offline [%s], interactive [%s], smart_terrain_id [%s]", tostring(self:name()), tostring(self:move_offline()), tostring(self:interactive()), smart_terrain_id)
+				--log1(string.format("# [INFO][se_respawn][se_respawm] SPAWN [%s] move_offline [%s], interactive [%s], smart_terrain_id [%s]", tostring(self:name()), tostring(self:move_offline()), tostring(self:interactive()), smart_terrain_id))
 				if smart_terrain_id ~= 65535 then		
 					table.insert(self.spawned_obj ,obj.id)
 					local pos = obj.position
-					--log1("SPAWNING [%s] -> [%s], position [%s][%s][%s]", tostring(self:name()), spawn_section, pos.x, pos.y, pos.z)
+					--log1(string.format("# [INFO][se_respawn] SPAWN [%s] -> [%s], position [%s][%s][%s]", tostring(self:name()), spawn_section, pos.x, pos.y, pos.z))
 					local sm_obj = sim:object(smart_terrain_id)
-					--log1("SPAWNING for SMART [%s] : [%s] -> [%s]", self:name(), obj:name(), sm_obj:name())
+					--log1(string.format("# [INFO][se_respawn] SPAWN for SMART [%s] : [%s] -> [%s]", self:name(), obj:name(), sm_obj:name()))
 					if obj and IsStalker(obj) then
 						table.insert(olr_offline_walk.tabst, obj)
-						--olr_newnpc_eqp.on_spawn(obj) -- Пока что не нужно
 						olr_ai_tasks.on_spawn_npc(obj)
 					end
 					if obj and IsMonster(obj) then
@@ -401,8 +400,7 @@ function se_respawn:create(prob)
 					end
 					return true
 				else
-					--news_manager.send_tip(db.actor, "se_respawn DEL - "..obj:name().." on "..obj.level_name.." ", nil, "trader", 29000)
-					--log1("SPAWNING [%s] -> [%s], CANT SPAWN. NO SMART_TERRAIN AVAILABLE!!!", tostring(self:name()), spawn_section)
+					--log1(string.format("# [INFO][se_respawn] SPAWN [%s] -> [%s], CANT SPAWN. NO SMART_TERRAIN AVAILABLE!", tostring(self:name()), spawn_section))
 					if obj then
 						sim:release(obj, true)
 					end

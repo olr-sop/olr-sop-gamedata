@@ -19,36 +19,6 @@ function do_not_touch(item)
     )
 end
 
--- Проверка на то что предмет что хочет поднять непесь находится внутри аномалии
--- OGSE based но под соп
-function item_inside_anomaly(item, storage)
-    if item then
-        local hasanom, anomid, pos, cls, dist, radius, sect_anom = anomaly_holder.get_nearest_anomaly_by_point(item:position())
-        if hasanom then
-            local anom_obj = db.anoms_online[anomid]
-            if anom_obj and anom_obj:is_anom_enabled() and dist <= 5 then
-                storage.disabled_objects[item:id()] = true
-                storage.dest_lvid = nil
-                freeGObject(storage)
-                return true
-            end
-        end
-    end
-    return false
-end
-
-function object_inside_anomaly(obj)
-    if obj then
-        local hasanom, anomid, pos, cls, dist, radius, sect_anom = anomaly_holder.get_nearest_anomaly_by_point(obj:position())
-        if hasanom then
-            local anom_obj = db.anoms_online[anomid]
-            if anom_obj and anom_obj:is_anom_enabled() and dist <= 3 then
-                return true
-            end
-        end
-    end
-    return false
-end
 
 function cannot_take_that(npc)
 	local sfind = string.find
@@ -101,13 +71,6 @@ function bad_situation(npc)
 			if db.storage[npc:id()][actsch].no_loot then return true end --- если активная схема запрещает лут, возвращаем низзя
 		end
 		
-		local hasanom, anomid, pos, cls, dist, radius, anom_section = anomaly_holder.get_nearest_anomaly(npc)
-		if hasanom then
-			local anom_obj = db.anoms_online[anomid]
-			if anom_obj and anom_obj:is_anom_enabled() and dist <= 3 then
-				return true -- у аномалий не рыскаем
-			end
-		end		
 
 		--if db.storage[npc:id()].active_scheme == "test" then return true end --- если посланы игрой бежать куда-то
 		-- if db.storage[npc:id()].active_scheme == "walker" then return true end --- если посланы игрой бежать куда-то
@@ -147,7 +110,7 @@ local disabled_objects = {}
 local corpse_checked = {} -- true - has loot, false - hasn't loot, nil - not checked
 
 function checkCorpse(obj)
-	if (IsStalker(obj) or IsMonster(obj)) and obj:alive() == false and not object_inside_anomaly(obj) then
+	if (IsStalker(obj) or IsMonster(obj)) and obj:alive() == false then
 		if corpse_checked[obj:id()] ~= nil then
 			return corpse_checked[obj:id()]
 		end
@@ -230,7 +193,6 @@ end
 
 function isValuable(obj)
     local sec = obj:section()
-    if object_inside_anomaly(obj) then return false, false end
     if valuable_clsid[obj:clsid()] then
         return true, false
     end
@@ -273,7 +235,6 @@ end
 function getGObject(st)
 	if st.grabitemid then
 		local ret = level.object_by_id(st.grabitemid)
-		if ret and item_inside_anomaly(ret, st) then return nil end
 		if ret == nil then
 			st.grabitemid = nil
 		end
@@ -320,12 +281,19 @@ function ev_see_stuff:evaluate()
 	end
 	local res = getGObject(self.st) ~= nil
 	local npc = self.object
-	local actsch = db.storage[npc:id()].active_scheme
-	if actsch and db.actor then
-		xr_logic.try_switch_to_another_section(npc, db.storage[npc:id()][actsch], db.actor)
+	-- ПЕРФ: try_switch_to_another_section дорогая (парсинг condlist + see_actor), bad_situation (get_nearest_anomaly + iterate_inventory).
+	-- Кэшируем результат: тяжёлые проверки раз в WATCHER_CHECK_PERIOD мс, вместо каждого кадра.
+	local now = time_global()
+	if self.st._chk_time == nil or now >= self.st._chk_time then
+		self.st._chk_time = now + 1000
+		local actsch = db.storage[npc:id()].active_scheme
+		if actsch and db.actor then
+			xr_logic.try_switch_to_another_section(npc, db.storage[npc:id()][actsch], db.actor)
+		end
+		self.st._bad = bad_situation(npc)
 	end
 	local act_sec = db.storage[npc:id()].active_section or ""
-	if bad_situation(npc) then
+	if self.st._bad then
 		if res then
 			freeGObject(self.st)
 			--log1(npc:name().." distracted. sect "..act_sec,"grb")
@@ -351,7 +319,6 @@ function ev_see_stuff:evaluate()
 				end
 					if (not self.st.disabled_objects[obj:id()]) and (obj:parent() == nil or not IsStalker(obj:parent())) and
 							(obj_owner[obj:id()] == nil or obj_owner[obj:id()] == npc:id()) and npc:accessible(obj:level_vertex_id()) and
-							not item_inside_anomaly(obj, self.st) and
 							(db.actor == nil or db.actor:alive() == false or db.actor:position():distance_to_sqr(obj:position()) > 6) then
 					local valuable, corpse = isValuable(obj)
 					if valuable then
@@ -842,7 +809,6 @@ function add_to_binder(object, char_ini, scheme, section, st)
         action:add_precondition(world_property(evid_near_stuff, true))
         action:add_precondition(world_property(evid_see_body, false))
         action:add_precondition(world_property(prop_idlecombat, true))
-        action:add_precondition(world_property(1099, false)) -- <-- Добавлено
         action:add_effect(world_property(evid_near_stuff, false))
         action:add_effect(world_property(evid_see_stuff, false))
         action:add_effect(world_property(evid_see_body, true))
@@ -856,7 +822,6 @@ function add_to_binder(object, char_ini, scheme, section, st)
         action:add_precondition(world_property(evid_see_stuff, true))
         action:add_precondition(world_property(evid_see_body, true))
         action:add_precondition(world_property(evid_near_stuff, true))
-        action:add_precondition(world_property(1099, false)) -- <-- Добавлено
         action:add_effect(world_property(evid_near_stuff, false))
         action:add_effect(world_property(evid_see_stuff, false))
         action:add_effect(world_property(evid_see_body, false))
@@ -871,7 +836,6 @@ function add_to_binder(object, char_ini, scheme, section, st)
         action:add_precondition(world_property(evid_see_stuff, true))
         action:add_precondition(world_property(evid_near_stuff, false))
         action:add_precondition(world_property(prop_idlecombat, true))
-        action:add_precondition(world_property(1099, false)) -- <-- Добавлено
         action:add_effect(world_property(evid_near_stuff, true))
         manager:add_action(actid_reach_item, action)
 

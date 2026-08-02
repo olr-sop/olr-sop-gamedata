@@ -41,6 +41,14 @@ function evaluator_trading:evaluate()
 
 	-- ѕ≈–‘: дешЄвые early-out'ы первыми; дорогие has_alife_info / money / ruck_count Ч после.
 	local lvl = level.name()
+	
+	-- ѕ≈–‘: торгуют только на трЄх уровн€х Ч раньше этот случай доходил до money/has_alife_info.
+	-- теперь на выходим из схемы если уровень не один из трЄх ниже, нефиг еще думать
+	if lvl ~= "lvl1_escape" and lvl ~= "lvl9_military" and lvl ~= "lvl5_bar" then
+		self._ev_res = false
+		return false
+	end	
+	
 	local name = npc:name()
 	local comm = npc:character_community()
 
@@ -110,12 +118,6 @@ function evaluator_trading:evaluate()
 	--if xvars.npcs_tasks[npc:name()] == "cash" then
 	--	return false
 	--end
-
-	-- ѕ≈–‘: торгуют только на трЄх уровн€х Ч раньше этот случай доходил до money/has_alife_info.
-	if lvl ~= "lvl1_escape" and lvl ~= "lvl9_military" and lvl ~= "lvl5_bar" then
-		self._ev_res = false
-		return false
-	end
 
 	-- ∆аба
 	if lvl == "lvl1_escape" then

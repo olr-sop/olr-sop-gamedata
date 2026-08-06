@@ -1,1 +1,1 @@
-@start bin\Win32\Release\xr_3da.exe -ltx user_%USERNAME%.ltx -simple_script_lua_debug -simple_lua_debug
+@start bin\Win32\Release\xr_3da.exe -ltx user_%USERNAME%.ltx -nointro -simple_script_lua_debug -simple_lua_debug

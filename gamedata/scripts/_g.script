@@ -335,6 +335,18 @@ end
 
 end
 
+function binder_error_msg()
+	get_console():execute("flush")
+    local msg_crit_error = "Произошёл `отвал` биндера, сохранитесь, закройте игру и отправьте лог разработчику"
+    if level.present() then
+        if db and (db.actor ~= nil) then
+            if olr and olr.hud_tip_fatal then
+                olr.hud_tip_fatal(msg_crit_error)
+            end
+        end
+    end	
+end
+
 -- Глобальная функция для безопасного выполнения
 function run_safely(func, error_message)
     local success, error_msg = pcall(func)
@@ -1683,6 +1695,28 @@ function switch_offline (npc)
        sim:set_switch_online  (npc:id (), false)
        sim:set_switch_offline (npc:id (), true)
     end
+end
+
+-- Поддержка spawner cond в итемах наследующих CSE_ALifeItem (почти всё в игре кроме живых существ (нпс и мутанты))
+function check_item_spawner_cond(id)
+    --log1("[spawner] check_item_spawner_cond: item " .. id)
+    local sim = alife()
+	if not sim then return true end
+    --if not sim then log1("[spawner] no alife"); return true end
+    local obj = sim:object(id)
+    --if not obj then log1("[spawner] object " .. id .. " not found"); return true end
+	if not obj then return true end
+    local ini = obj:spawn_ini()
+    if ini and ini:section_exist("spawner") then
+        --log1("[spawner] found [spawner] cond in " .. obj:name())
+        local cond_data = xr_logic.cfg_get_condlist(ini, "spawner", "cond", obj)
+        if cond_data and cond_data.condlist then
+            local r = xr_logic.pick_section_from_condlist(db.actor, nil, cond_data.condlist)
+            --log1("[spawner] pick_section result: " .. tostring(r))
+            return r ~= nil
+        end
+    end
+    return true
 end
 -------------------------------------------------------------------------------------------
 function get_actor_id()

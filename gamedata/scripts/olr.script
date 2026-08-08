@@ -168,15 +168,6 @@ function actor_net_spawn()
 		log1("!create new actor pstor!")
     	db.storage[db.actor:id()].pstor = {}
   	end
-	
-	-- Первый запуск мода
-	if amk.load_variable("x_first_run", true) then
-		ogsm_respawn.first_run()
-		log1("[%s]: first run detected", script_name())
-		amk.save_variable("x_first_run", false)
-	end	
-
-	ogsm_respawn.get_level_restrictors()
 end
 
 function warning_sms()
@@ -930,19 +921,6 @@ function spawn_on_obj(obj, objpos, count)
     end
 end
 
--- удалить объект по имени
-function del_by_name(name_to_del)
-	local se_obj = alife():object(name_to_del)
-	if se_obj then
-		if olr.olrdbg == true then
-			log1("del by name: "..se_obj:name().." -on level- "..se_obj.level_name.."")
-		end
-		alife():release(se_obj, true)
-	else
-		log1("! olr.del_by_name - "..tostring(name_to_del).." return nil")		
-	end	
-end
-
 -- убить нпс по имени в оффлайне или онлайне, похуй, проверяем по level.object_by_id что у нас онлайн или оффлайн
 function kill_by_name(name_to_kill)
 	local se_obj = alife():object(name_to_kill)
@@ -953,6 +931,79 @@ function kill_by_name(name_to_kill)
 		else 					-- иначе пытаемся убить оффлайного через редактирование нет-пакета непеся
 			kill_offline_stalker(se_obj)
 		end
+	end
+end
+
+local dbg_delete_obj = true
+
+-- удалить объект по имени
+function del_by_name(name_to_del)
+	delete_object(name_to_del)
+end
+
+-- удалить объект
+function del(obj)
+	delete_object(obj)
+end
+
+-- удаляет корректно объекты, нпс и мутантов сначала убивает, потом удаляем
+function delete_object(obj)
+    if not obj then
+        return
+    end
+
+    -- Если таблица без .id — раскладываем как массив
+    if type(obj) == "table" and not obj.id then
+        for _, v in ipairs(obj) do
+            delete_object(v)
+        end
+        return
+    end
+
+    -- Дальше — только одиночный объект
+    local se_obj
+
+    if type(obj) == "string" then
+        se_obj = alife():object(obj)
+    elseif type(obj) == "number" then
+        se_obj = alife():object(obj)
+    elseif type(obj) == "table" then
+        if type(obj.id) == "number" then
+            se_obj = obj
+        elseif type(obj.id) == "function" then
+            se_obj = alife():object(obj:id())
+        end
+    elseif type(obj) == "userdata" then
+        se_obj = alife():object(obj:id())
+    end
+
+    if not se_obj then
+        log1("! delete_object - " .. ((pcall(tostring, obj) and tostring(obj)) or type(obj)) .. " return nil")
+        return
+    end
+	
+	if IsStalker(se_obj) or IsMonster(se_obj) then
+		-- Проверяем, онлайн ли объект сейчас
+		local cl_obj = level.object_by_id(se_obj.id)
+		if cl_obj then
+			-- Отправляем его в оффлайн и вызываем level.add_call
+			se_obj.force_offline = true -- сделано на манер огсе
+			level.add_call(
+				function()
+					return not level.object_by_id(se_obj.id) -- Переодическая проверка на онлайн, как только будет тру то сработает удаление
+				end,
+				function()
+					if dbg_delete_obj then log1("delete_object: " .. se_obj:name() .. " (id=" .. se_obj.id .. ") from " .. se_obj.level_name) end
+					alife():release(se_obj, true) -- Ушёл в оффлайн, можно удалить
+				end
+			)
+		else
+			if dbg_delete_obj then log1("delete_object: " .. se_obj:name() .. " (id=" .. se_obj.id .. ") from " .. se_obj.level_name) end
+			alife():release(se_obj, true) -- Он уже оффлайновый, удаляем
+		end
+	else
+		if dbg_delete_obj then log1("delete_object: " .. se_obj:name() .. " (id=" .. se_obj.id .. ") from " .. se_obj.level_name) end
+		alife():release(se_obj, true) -- Это не сталкер и мутант, поэтому удаляем сразу
 	end
 end
 
@@ -982,23 +1033,6 @@ function to_offline(obj)
 			sim:set_interactive(id, false)
 		end
 	end
-end
-
--- удалить объект
-function del(obj)
-	if obj then
-		local sobj = alife():object(obj:id())
-		if sobj then
-			--if olr.olrdbg == true then
-			--	log1(" ! olr del object - ["..obj:name().."]")
-			--end
-			alife():release(sobj, true)
-			return true
-		else
-			log1("! olr.del - "..tostring(obj:name()).." return nil")					
-		end
-	end
-	return false
 end
 
 function cough()

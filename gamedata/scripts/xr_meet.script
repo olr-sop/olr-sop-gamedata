@@ -13,17 +13,27 @@ function evaluator_contact:__init(name, storage) super(nil, name)
     self.a = storage
 end
 function evaluator_contact:evaluate()
+    -- ПЕРФ: результат кэшируем на 200 мс, чтобы не гонять meet_manager:update и вложенный evaluator' врага на каждый brain-update.
+    local now = time_global()
+    if self._ev_tm and now < self._ev_tm then
+        return self._ev_res
+    end
+    self._ev_tm = now + 200
+
     if self.a.meet_set ~= true then
+        self._ev_res = false
         return false
     end
 
     if db.actor then
         if not db.actor:alive() then
+            self._ev_res = false
             return false
         end
 
         if xr_wounded.is_wounded(self.object) then
             self.begtime = nil
+            self._ev_res = false
             return false
         end
 
@@ -32,9 +42,15 @@ function evaluator_contact:evaluate()
         if self.mgr == nil then
             self.mgr = self.object:motivation_action_manager()
         end
-        if self.mgr:evaluator(stalker_ids.property_enemy):evaluate() then
+        -- ПЕРФ: вложенный evaluator' врага кэшируем на 250 мс.
+        if self._enemy_tm == nil or now >= self._enemy_tm then
+            self._enemy_tm = now + 250
+            self._has_enemy = self.mgr:evaluator(stalker_ids.property_enemy):evaluate()
+        end
+        if self._has_enemy then
             self.object:disable_talk()
             self.begtime = nil
+            self._ev_res = false
             return false
         end
         -- Чтобы не стояли и не пялились часами
@@ -46,11 +62,14 @@ function evaluator_contact:evaluate()
             self.begtime = nil
         elseif self.begtime + 10000 < time_global() and (not istk) then
             -- 10 секунд посмотрели на меченного и хватит
+            self._ev_res = false
             return false
         end
 
-        return self.a.meet_manager.state ~= "nil"
+        self._ev_res = self.a.meet_manager.state ~= "nil"
+        return self._ev_res
     else
+        self._ev_res = false
         return false
     end
 end

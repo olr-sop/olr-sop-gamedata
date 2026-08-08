@@ -32,14 +32,12 @@ function kampfire_binder:net_spawn(data)
 		return false
 	end
 	
-	--db.anoms_online[self.object:id()] = self.object
 	
 	return true
 end
 
 function kampfire_binder:net_destroy()
 	object_binder.net_destroy(self)
-	--db.anoms_online[self.object:id()] = nil
 end
 
 function kampfire_binder:update(delta)
@@ -105,256 +103,245 @@ end
 class "mutant_part_item" (CUIListItemEx)
 
 function mutant_part_item:__init() super()
-    self:SetWndRect        (0,0,430,22)
-    
-    local ca = 255
-    local cr = 216
-    local cg = 186
-    local cb = 140
-    
-    self.fn                 = CUIStatic    ()
-    self.fn:SetAutoDelete    (true)
-    self:AttachChild        (self.fn)
-    self.fn:SetWndRect    (0,0,230,22)
-    self.fn:SetText            ("filename")
-    self.fn:SetFont            (GetFontLetterica18())
-    self.fn:SetBaseTextColor    (cr,cg,cb,ca)
+	self:SetWndRect		   (0,0,430,22)
+	
+	local ca = 255
+	local cr = 216
+	local cg = 186
+	local cb = 140
+	
+	self.fn					= CUIStatic	   ()
+	self.fn:SetAutoDelete	 (true)
+	self:AttachChild		(self.fn)
+	self.fn:SetWndRect	  (0,0,230,22)
+	self.fn:SetText			   ("filename")
+	self.fn:SetFont			   (GetFontLetterica18())
+	self.fn:SetBaseTextColor	(cr,cg,cb,ca)
 
-    self.fage                = CUIStatic    ()
-    self.fage:SetAutoDelete    (true)
-    self:AttachChild        (self.fage)
-    self.fage:SetWndRect    (230,0,200,22)
-    self.fage:SetText        ("fileage")
-    self.fage:SetFont        (GetFontLetterica16())
-    self.fage:SetBaseTextColor    (cr,cg,cb,ca)
+	self.fage				 = CUIStatic	()
+	self.fage:SetAutoDelete	   (true)
+	self:AttachChild		(self.fage)
+	self.fage:SetWndRect	(230,0,200,22)
+	self.fage:SetText		 ("fileage")
+	self.fage:SetFont		 (GetFontLetterica16())
+	self.fage:SetBaseTextColor	  (cr,cg,cb,ca)
 end
 
 -- Основное окно готовки
 class "ui_cooking_wnd" (CUIScriptWnd)
 
 function ui_cooking_wnd:__init() super()
-    self.item_data = {}  -- Таблица для хранения данных о предметах: {id, section}
-    self.items_by_id = {}  -- Таблица для быстрого поиска предметов по ID
-    
-    self:InitControls()
-    self:InitCallBacks()
+	self.item_data = {}	 -- Таблица для хранения данных о предметах: {id, section}
+	self.items_by_id = {}  -- Таблица для быстрого поиска предметов по ID
+	
+	self:InitControls()
+	self:InitCallBacks()
 end
 
 function ui_cooking_wnd:__finalize()
-    self.item_data = nil
-    self.items_by_id = nil
+	self.item_data = nil
+	self.items_by_id = nil
 end
 
 function ui_cooking_wnd:InitControls()
-    log1("~~~ Create new gui wnd")
+	log1("~~~ Create new gui wnd")
 
-    self:Init(0, 0, 1024, 768)
-    
-    local xml = CScriptXmlInit()
-    if xml:is_16_9_mode() then
-        xml:ParseFile("ui_cooking_wnd_16.xml")
-    else
-        xml:ParseFile("ui_cooking_wnd.xml")
-    end
-    
-    self.background = xml:InitStatic("background", self)
-    
-    self.btn_exit = xml:Init3tButton("background:btn_exit",    self.background)    
-    self:Register(self.btn_exit, "btn_exit")
-    
-    self.btn_cook = xml:Init3tButton("background:btn_cook",    self.background)    
-    self:Register(self.btn_cook, "btn_cook")
-    self.btn_cook:Enable(false)
+	self:Init(0, 0, 1024, 768)
+	
+	local xml = CScriptXmlInit()
+	if xml:is_16_9_mode() then
+		xml:ParseFile("ui_cooking_wnd_16.xml")
+	else
+		xml:ParseFile("ui_cooking_wnd.xml")
+	end
+	
+	self.background = xml:InitStatic("background", self)
+	
+	self.btn_exit = xml:Init3tButton("background:btn_exit",	   self.background)	   
+	self:Register(self.btn_exit, "btn_exit")
+	
+	self.btn_cook = xml:Init3tButton("background:btn_cook",	   self.background)	   
+	self:Register(self.btn_cook, "btn_cook")
+	self.btn_cook:Enable(false)
 
-    self.btn_cook_all = xml:Init3tButton("background:btn_cook_all",    self.background)    
-    self:Register(self.btn_cook_all, "btn_cook_all")
-    self.btn_cook_all:Enable(false)
-    
-    self.list_parts = xml:InitList("background:list_parts",    self.background)    
-    self:Register(self.list_parts, "list_parts")
-    self.list_parts:SetSelTextColor(255, 255, 255, 255)
-    self:FillListParts()
+	self.btn_cook_all = xml:Init3tButton("background:btn_cook_all",	   self.background)	   
+	self:Register(self.btn_cook_all, "btn_cook_all")
+	self.btn_cook_all:Enable(false)
+	
+	self.list_parts = xml:InitList("background:list_parts",	   self.background)	   
+	self:Register(self.list_parts, "list_parts")
+	self.list_parts:SetSelTextColor(255, 255, 255, 255)
+	self:FillListParts()
 end
 
 function ui_cooking_wnd:InitCallBacks()
-    self:AddCallback("btn_cook", ui_events.BUTTON_CLICKED, self.OnButton_cook_clicked, self)
-    self:AddCallback("btn_cook_all", ui_events.BUTTON_CLICKED, self.OnButton_cook_all_clicked, self)
-    self:AddCallback("btn_exit", ui_events.BUTTON_CLICKED, self.OnButton_exit_clicked, self)
-    self:AddCallback("list_parts", ui_events.LIST_ITEM_CLICKED, self.OnListItemClicked, self)
+	self:AddCallback("btn_cook", ui_events.BUTTON_CLICKED, self.OnButton_cook_clicked, self)
+	self:AddCallback("btn_cook_all", ui_events.BUTTON_CLICKED, self.OnButton_cook_all_clicked, self)
+	self:AddCallback("btn_exit", ui_events.BUTTON_CLICKED, self.OnButton_exit_clicked, self)
+	self:AddCallback("list_parts", ui_events.LIST_ITEM_CLICKED, self.OnListItemClicked, self)
 end
 
 function ui_cooking_wnd:OnListItemClicked()
-    local list        = self:GetListWnd("list_parts")
-    if list:GetSize()==0 then return end
+	local list		  = self:GetListWnd("list_parts")
+	if list:GetSize()==0 then return end
 
 	self.btn_cook:Enable(true)
 
-    local item_id        = list:GetFocusedItem()
-    local item            = list:GetItem(item_id)
-    list:ShowSelectedItemText(true)
-    log1("Selected item in list")
-    
-    if item==nil then return end
+	local item_id		 = list:GetFocusedItem()
+	local item			  = list:GetItem(item_id)
+	list:ShowSelectedItemText(true)
+	log1("Selected item in list")
+	
+	if item==nil then return end
 end
 
 function ui_cooking_wnd:OnButton_cook_clicked()
-    local list        = self:GetListWnd        ("list_parts")
-    list:ShowSelectedItemText(false)
-    if list:GetSize()==0 then return end
-    local index        = list:GetSelectedItem    ()
-    
-    if index == -1 then return end
+	local list		  = self:GetListWnd		   ("list_parts")
+	list:ShowSelectedItemText(false)
+	if list:GetSize()==0 then return end
+	local index		   = list:GetSelectedItem	 ()
+	
+	if index == -1 then return end
 
-    local item_data = self.item_data[index + 1]  -- +1 потому что Lua индексы с 1, а список с 0
-    
-    if item_data then
-        -- Получаем объект по ID и удаляем его
-        local obj = level.object_by_id(item_data.id)
-        if obj then
-            olr.del(obj)
-        end
-        
-        -- Создаем приготовленный предмет
-        local cooked_section = item_data.section .. "_coocked"
-        log1("Cooking " .. item_data.section .. " -> " .. cooked_section .. " (ID: " .. tostring(item_data.id) .. ")")
-        olr.give_item(cooked_section)
-    end
-    
-    -- Удаляем из внутренних таблиц
-    table.remove(self.item_data, index + 1)
-    self.items_by_id[item_data.id] = nil
-    
-    list:RemoveItem(index)
+	local item_data = self.item_data[index + 1]	 -- +1 потому что Lua индексы с 1, а список с 0
+	
+	if item_data then
+		-- Получаем объект по ID и удаляем его
+		local obj = level.object_by_id(item_data.id)
+		if obj then
+			olr.del(obj)
+		end
+		
+		-- Создаем приготовленный предмет
+		local cooked_section = item_data.section .. "_coocked"
+		log1("Cooking " .. item_data.section .. " -> " .. cooked_section .. " (ID: " .. tostring(item_data.id) .. ")")
+		olr.give_item(cooked_section)
+	end
+	
+	-- Удаляем из внутренних таблиц
+	table.remove(self.item_data, index + 1)
+	self.items_by_id[item_data.id] = nil
+	
+	list:RemoveItem(index)
 	
 	self.btn_cook:Enable(false)
-    
-    -- Обновляем состояние кнопок
-    if list:GetSize() == 0 then
-        self.btn_cook_all:Enable(false)
-    end
-    
-    log1("Item cooked successfully")
+	
+	-- Обновляем состояние кнопок
+	if list:GetSize() == 0 then
+		self.btn_cook_all:Enable(false)
+	end
+	
+	log1("Item cooked successfully")
 end
 
 function ui_cooking_wnd:OnButton_cook_all_clicked()
-    local tostr = tostring
-    local list        = self:GetListWnd        ("list_parts")    
-    if list:GetSize()==0 then return end
-    
-    log1("~~~ Cooking all items: "..tostr(list:GetSize()).." items in list")
-    
-    -- Создаем список приготовленных предметов для спавна
-    local cooked_items_to_spawn = {}
-    
-    -- Сначала собираем информацию о том, что нужно заспавнить
-    for i = 0, list:GetSize() - 1 do
-        local item_data = self.item_data[i + 1]  -- +1 потому что Lua индексы с 1
-        if item_data then
-            -- Добавляем в список для спавна
-            local cooked_section = item_data.section .. "_coocked"
-            table.insert(cooked_items_to_spawn, cooked_section)
-            log1("Will cook: " .. item_data.section .. " -> " .. cooked_section .. " (ID: " .. tostr(item_data.id) .. ")")
-        end
-    end
-    
-    -- Удаляем все сырые предметы
-    for i = 0, list:GetSize() - 1 do
-        local item_data = self.item_data[i + 1]
-        if item_data then
-            local obj = level.object_by_id(item_data.id)
-            if obj then
-                log1("Deleting raw item: ID="..tostr(item_data.id)..", section="..tostr(item_data.section))
-                olr.del(obj)
-            end
-        end
-    end
-    
-    -- Спавним приготовленные предметы
-    for _, cooked_section in ipairs(cooked_items_to_spawn) do
-        log1("Spawning cooked item: " .. cooked_section)
-        olr.give_item(cooked_section)
-    end
-    
-    -- Очищаем список
-    for i = list:GetSize() - 1, 0, -1 do
-        list:RemoveItem(i)
-    end
-    
-    -- Очищаем таблицы
-    self.item_data = {}
-    self.items_by_id = {}
-    
-    self.btn_cook:Enable(false)
-    self.btn_cook_all:Enable(false)
-    
-    log1("All items cooked successfully. Spawned " .. #cooked_items_to_spawn .. " cooked items.")
+	local list = self:GetListWnd("list_parts")
+	if list:GetSize() == 0 then return end
+
+	log1("~~~ Cooking all items: " .. list:GetSize() .. " items in list")
+
+	-- Собираем количество каждого типа приготовленных предметов и сразу удаляем сырые
+	local cooked_counts = {}
+	for i = 1, list:GetSize() do   -- индексы item_data с 1
+		local item_data = self.item_data[i]
+		if item_data then
+			local cooked_section = item_data.section .. "_coocked"
+			cooked_counts[cooked_section] = (cooked_counts[cooked_section] or 0) + 1
+
+			-- Удаляем исходный (сырой) предмет
+			local obj = level.object_by_id(item_data.id)
+			if obj then
+				log1("Deleting raw item: ID=" .. item_data.id .. ", section=" .. item_data.section)
+				olr.del(obj)
+			end
+		end
+	end
+
+	-- Одним вызовом на каждый тип переносим/создаём нужное количество приготовленных предметов
+	for cooked_section, count in pairs(cooked_counts) do
+		log1("Spawning " .. count .. " of " .. cooked_section)
+		dialogs.relocate_item_section(nil, cooked_section, "in", count)
+	end
+
+	-- Очищаем список UI (индексы 0-based, идём с конца)
+	for i = list:GetSize() - 1, 0, -1 do
+		list:RemoveItem(i)
+	end
+
+	-- Очищаем таблицы данных
+	self.item_data = {}
+	self.items_by_id = {}
+	self.btn_cook:Enable(false)
+	self.btn_cook_all:Enable(false)
+
+	log1("All items cooked successfully.")
 end
 
 function ui_cooking_wnd:Hide()
-    log1("~~~ Close gui wnd")
+	log1("~~~ Close gui wnd")
 
-    self.item_data = {}
-    self.items_by_id = {}	
+	self.item_data = {}
+	self.items_by_id = {}	
 	
-    self:GetHolder():start_stop_menu(self, false)
+	self:GetHolder():start_stop_menu(self, false)
 end
 
 function ui_cooking_wnd:OnButton_exit_clicked()
-    self:Hide()
+	self:Hide()
 end
 
 function ui_cooking_wnd:OnKeyboard(dik, keyboard_action)
-    CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
  
-    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-        if dik == DIK_keys.DIK_ESCAPE then
-            self:Hide()
-        end
-    end
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			self:Hide()
+		end
+	end
  
-    return true
+	return true
 end
 
 function ui_cooking_wnd:FillListParts()
-    local calc = function(npc, obj)
-        if obj ~= nil then
-            local section = obj:section()
-            if g_monster_parts_table[section] then
-                local item_id = obj:id()
+	local calc = function(npc, obj)
+		if obj ~= nil then
+			local section = obj:section()
+			if g_monster_parts_table[section] then
+				local item_id = obj:id()
 				local item_cond = obj:condition()
-                if not self.items_by_id[item_id] then
-                    log1("Add to list - "..tostring(section).." with ID: "..tostring(item_id))
-                    self:AddItemToList(obj, section, item_cond)
-                    self.btn_cook_all:Enable(true)
-                else
-                    log1("Item already in list: ID="..tostring(item_id))
-                end
-            end
-        end
-    end
-    db.actor:iterate_inventory(calc, db.actor)
+				if not self.items_by_id[item_id] then
+					log1("Add to list - "..tostring(section).." with ID: "..tostring(item_id))
+					self:AddItemToList(obj, section, item_cond)
+					self.btn_cook_all:Enable(true)
+				else
+					log1("Item already in list: ID="..tostring(item_id))
+				end
+			end
+		end
+	end
+	db.actor:iterate_inventory(calc, db.actor)
 end
 
 function ui_cooking_wnd:AddItemToList(obj, section, condition)
-    local get_short_name = game.translate_string(ini_sys:r_string(section,"inv_name"))
-    local cond_in_perc = string.format("%d%%", math.floor(condition * 100 + 0.5))
-    
-    local _itm            = mutant_part_item()
-    _itm.fn:SetText        (get_short_name)
-    _itm.fage:SetText    (cond_in_perc)
+	local get_short_name = game.translate_string(ini_sys:r_string(section,"inv_name"))
+	local cond_in_perc = string.format("%d%%", math.floor(condition * 100 + 0.5))
+	
+	local _itm			  = mutant_part_item()
+	_itm.fn:SetText		   (get_short_name)
+	_itm.fage:SetText	 (cond_in_perc)
 
-    local list_box        = self:GetListWnd("list_parts")
-    local index = list_box:AddItem    (_itm)
-    
-    -- Сохраняем данные о предмете в таблице по индексу
-    local item_id = obj:id()
-    local item_data = {
-        id = item_id,
-        section = section
-    }
-    
-    table.insert(self.item_data, item_data)
-    self.items_by_id[item_id] = true
-    
-    return index
+	local list_box		  = self:GetListWnd("list_parts")
+	local index = list_box:AddItem	  (_itm)
+	
+	-- Сохраняем данные о предмете в таблице по индексу
+	local item_id = obj:id()
+	local item_data = {
+		id = item_id,
+		section = section
+	}
+	
+	table.insert(self.item_data, item_data)
+	self.items_by_id[item_id] = true
+	
+	return index
 end

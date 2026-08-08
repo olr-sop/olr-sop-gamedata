@@ -40,6 +40,26 @@ simulation_document = {
 	["jurn_visual_device"] = true
 }
 
+local grenades_types = {
+	-- Гранаты
+	["grenade_f1"]							= true,
+	["grenade_f1_anom"]						= true,
+	["grenade_rgd5"]						= true,
+	["grenade_rgd5_anom"]					= true,
+	["wpn_addon_grenade_launcher"]			= true,
+	["wpn_addon_grenade_launcher_m203"]		= true,
+	["wpn_addon_grenade_launcher_aks_old"]	= true
+}
+
+local knife_types = {
+	-- Ножи
+	["wpn_knife"]				= true,
+	["wpn_knife_bayonet"]		= true,
+	["wpn_knife_bayonet_rusty"]	= true,
+	["wpn_knife_anom"]			= true,
+	["wpn_knife_m1"]			= true
+}
+
 local monster_params = {}
 
 local protected = {
@@ -2046,7 +2066,7 @@ function get_weapon_firepower(wpn)
 	local result = 0
 	if (wpn and isWeapon(wpn)) then
 		local sect = wpn:section_name()
-		if not (sect == "grenade_f1" or sect == "grenade_rgd5" or sect == "wpn_addon_grenade_launcher" or sect == "wpn_addon_grenade_launcher_aks_old" or sect == "wpn_addon_grenade_launcher_m203") then
+		if not grenades_types[sect] then
 			local priority = utils.cfg_get_number(ini_sys, wpn:section_name(), "ef_weapon_type", wpn, false, 1)
 			local priority2 = utils.cfg_get_number(ini_sys, wpn:section_name(), "ef_main_weapon_type", wpn, false, 0)
 			local GetRPM = ui_wpn_params.GetRPM(wpn:section_name())
@@ -2301,7 +2321,7 @@ function process_trade(npc)
 				local sect = v:section_name()
 				--printf("Process_trade: first pass - "..npc:name().." ["..m_comm.."] have "..sect.." ["..v:name().."]")
 				--log1("Process_trade: first pass - "..npc:name().." ["..m_comm.."] have "..sect.." ["..v:name().."]")
-				if isWeapon(v) and not (sect == "grenade_f1" or sect == "grenade_rgd5" or sect == "wpn_knife") then
+				if isWeapon(v) and not grenades_types[sect] and not knife_types[sect] then
 					local bOk = false
 					if m_comm == "military" then
 						if sect == "wpn_akms" or sect == "wpn_pm" or sect == "wpn_usp" or sect == "wpn_val" or sect == "wpn_walther" or sect == "wpn_svu" or sect == "wpn_fn2000" or sect == "wpn_vintorez" or sect == "wpn_groza" then

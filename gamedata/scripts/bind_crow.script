@@ -30,17 +30,85 @@ function crow_binder:hit_callback(obj, amount, local_direction, who, bone_index)
 	--news_manager.send_tip(db.actor, game.translate_string("crow_binderhit_callback_0"), nil, "default", 9000)
 end
 
+--[[
+
+st_butcher_badluck_1
+st_butcher_badluck_2
+st_butcher_badluck_3
+st_butcher_badluck_4
+
+game.translate_string("st_butcher_badluck_"..tostring(math.random(1,4)))
+
+st_butcher_success_1
+st_butcher_success_2
+st_butcher_success_3
+st_butcher_success_4
+
+game.translate_string("st_butcher_success_"..tostring(math.random(1,4)))
+
+st_butcher_damaged_1
+st_butcher_damaged_2
+st_butcher_damaged_3
+st_butcher_damaged_4
+
+game.translate_string("st_butcher_damaged_"..tostring(math.random(1,4)))
+
+st_butcher_unknown_1
+st_butcher_unknown_2
+st_butcher_unknown_3
+st_butcher_unknown_4
+
+game.translate_string("st_butcher_unknown_"..tostring(math.random(1,4)))
+
+--]]
+
 function crow_binder:use_callback(obj,who)
 	if not self.object:alive()  then
-		local bol_var = math.random(1,2)
-		if bol_var == 1 then
-			olr.hud_tip("", game.translate_string("st_bind_crow_itlldo"), 2, true) -- РїСѓСЃС‚СЊ Р±СѓРґРµС‚ РјС‹СЃР»РµР№, СЏРєРѕР±С‹ РѕРЅ РїРѕРґСѓРјР°Р» С‡С‚Рѕ СЃРіРѕРґРёС‚СЃСЏ
-        		local objj = alife():create("crow_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-        		level.client_spawn_manager():add(objj.id, 0, function(id,obj) obj:set_condition((math.random(30,55)/100)) end)
-			olr.del(self.object)
-		elseif bol_var == 2 then
-			olr.hud_tip("", game.translate_string("st_bind_crow_too_damaged"), 4, true) -- РїСѓСЃС‚СЊ Р±СѓРґРµС‚ РјС‹СЃР»РµР№, СЏРєРѕР±С‹ РѕРЅ РїРѕРґСѓРјР°Р» С‡С‚Рѕ РЅРµ РіРѕРґРёС‚СЃСЏ
-			olr.del(self.object)
+		self.sound_knife = sound_object("material\\collide\\knife\\knife_"..tostring(math.random(1, 2)))
+		if math.random(1, 3) == 1 then
+			olr.hud_tip("", game.translate_string("st_butcher_damaged_"..tostring(math.random(1,4))), 2, true)
+			self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)	
+			
+			local h = hit()
+			h.power = 0
+			h.direction = db.actor:position():sub(obj:position())
+			h.direction:normalize()
+			h.direction.y = h.direction.y + 0.3 + math.random() * 0.2  -- 0.3-0.5 вверх
+			h.direction:normalize()
+			h.draftsman = db.actor
+			h.impulse = 100 + math.random(0, 200)
+			h.type = hit.wound
+			obj:hit(h)			
+			
+			olr.delete_object(self.object) -- Удаляем тушку крысы
+		else
+			olr.hud_tip("", game.translate_string("st_butcher_success_"..tostring(math.random(1,4))), 2, true) -- активируем снятие
+			local item = alife():create("crow_food", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+			if item then
+				level.client_spawn_manager():add(item.id, 0,
+					function(id, obj)
+						if obj and g_food_table[obj:section()] then
+							obj:set_condition(math.random(35, 98) / 100) -- Состояние от 35 до 98%
+							xvars.foods[tostring(obj:id())] = {sec = obj:section(), rad = math.random() < 0.5} -- заносим в таблицу xvars.foods, шансы пока 50 на 50 как и везде
+						end
+					end
+				)
+			end
+			
+			local h = hit()
+			h.power = 0
+			h.direction = db.actor:position():sub(obj:position())
+			h.direction:normalize()
+			h.direction.y = h.direction.y + 0.3 + math.random() * 0.2  -- 0.3-0.5 вверх
+			h.direction:normalize()
+			h.draftsman = db.actor
+			h.impulse = 100 + math.random(0, 200)
+			h.type = hit.wound
+			obj:hit(h)			
+			
+			self.sound_knife:play_at_pos(self.object, self.object:position(), sound_object.s3d)			
+			news_manager.relocate_item(db.actor, "in", "crow_food") -- мессага
+			olr.delete_object(self.object) -- Удаляем тушку крысы
 		end
 	end	
 end

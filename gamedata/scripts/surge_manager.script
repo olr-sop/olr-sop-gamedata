@@ -80,15 +80,6 @@ function CSurgeManager:init_surge_covers()
 		return
 	end
 
-	for k, v in pairs(ogsm_respawn.restrictor_list) do
-		local zone = level.object_by_id(v.id)
-
-		if zone ~= nil then
-			self.count = self.count + 1
-			self.covers[self.count] = {id = zone:id(), zone = zone, condlist = nil}
-		end
-	end
-
 	for i = 0, ini:line_count("list") - 1 do
 		local _, id, _ = ini:r_line("list", i, "", "")
 		local zone = db.zone_by_name[id]
@@ -160,21 +151,6 @@ function CSurgeManager:get_nearest_cover()
 		end
 	end
 
-	for k, v in pairs(ogsm_respawn.restrictor_list) do
-		local obj = level.object_by_id(v.id)
-		if obj then
-			if obj:inside(actor_pos) then
-				return obj.id
-			end
-
-			local dist = obj:position():distance_to(actor_pos)
-			if (dist < nearest_cover_dist) then
-				nearest_cover_dist = dist
-				nearest_cover_id = obj.id
-			end
-		end
-	end
-
 	return nearest_cover_id
 end
 
@@ -187,21 +163,6 @@ function CSurgeManager:get_nearest_cover_task()
 		local cover = self.covers[i]
 		if (cover ~= nil) and self:cover_allowed(cover) then
 			local obj = cover.zone
-			if obj:inside(actor_pos) then
-				return obj
-			end
-
-			local dist = obj:position():distance_to(actor_pos)
-			if (dist < nearest_cover_dist) then
-				nearest_cover_dist = dist
-				nearest_cover = obj
-			end
-		end
-	end
-
-	for k, v in pairs(ogsm_respawn.restrictor_list) do
-		local obj = level.object_by_id(v.id)
-		if obj then
 			if obj:inside(actor_pos) then
 				return obj
 			end

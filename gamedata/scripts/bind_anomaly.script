@@ -38,30 +38,18 @@ function anomaly_binder:load(reader)
 	object_binder.load(self, reader)
 end
 
-local exception_zones = {
-    zone_radioactive = true,
-    zone_radioactive_weak = true,
-    zone_radioactive_average = true,
-    zone_radioactive_strong = true,
-}
 
 function anomaly_binder:net_spawn(data)
 	if not object_binder.net_spawn(self, data) then
 		return false
 	end
-	--log1("Test anoms on net-spawn id - "..tostring(self.object:id()).." radius - "..tostring(self.object:get_shape_radius()).." name - "..tostring(self.object:name()).."")
 	
-	-- Радиоционные зоны убираем, добавляем потом по аналогии любые другие
-	if not exception_zones[self.object:section()] then
-		db.anoms_online[self.object:id()] = self.object
-	end
 
 	return true
 end
 	
 function anomaly_binder:net_destroy()
 	object_binder.net_destroy(self)
-	db.anoms_online[self.object:id()] = nil
 end
 
 function anomaly_binder:update(delta)

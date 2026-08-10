@@ -37,7 +37,7 @@ surface_bumped                sload_i         ( p_bumped I)        // + texld, m
         S.base              =       tbase                (new_tc);                                // IN:  rgb.a
         S.normal            = 		Nu.wzyx + (NuE.xyz - 1.0h);							 // (Nu.wzyx - .5h) + (E-.5)
         S.gloss             =       Nu.x*Nu.x	;                                        //        S.gloss             =        Nu.x*Nu.x;
-        S.height            =       NuE.z       ;
+        S.height            =       NuE.w       ;
 
 #ifdef        USE_TDETAIL
         float4       detail  =		tex2D(s_detail,I.tcdbump)        	;
@@ -56,7 +56,7 @@ surface_bumped                sload_i         ( p_bumped I)
         S.base              =		tbase                (I.tcdh)		;                         // IN:  rgb.a
         S.normal            =		Nu.wzyx + (NuE.xyz - 1.0h)			;
         S.gloss             =		Nu.x*Nu.x							;                         //        S.gloss             =        Nu.x*Nu.x;
-        S.height            = 		NuE.z;
+        S.height            = 		NuE.w;
 
 #ifdef        USE_TDETAIL
         float4 detail		=        tex2D(s_detail,I.tcdbump)    ;

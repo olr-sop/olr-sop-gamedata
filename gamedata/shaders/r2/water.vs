@@ -17,11 +17,11 @@ struct   vf
         float2  	tbase        :           TEXCOORD0        ;  // base
         float2      tnorm0        :        TEXCOORD1        ;  // nm0
         float2      tnorm1        :        TEXCOORD2        ;  // nm1
-        half3       M1        :        TEXCOORD3        ;
-        half3       M2        :        TEXCOORD4        ;
-        half3       M3        	:        TEXCOORD5        ;
-        half3       v2point     :        TEXCOORD6        ;
-        half4        c0        :          COLOR0                ;
+        float3       M1        :        TEXCOORD3        ;
+        float3       M2        :        TEXCOORD4        ;
+        float3       M3        	:        TEXCOORD5        ;
+        float3       v2point     :        TEXCOORD6        ;
+        float4        c0        :          COLOR0                ;
         float          fog        :         FOG                ;
 };
 

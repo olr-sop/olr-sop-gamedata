@@ -11,6 +11,7 @@ struct vf
 	float4 hpos	: POSITION;
 	float2 tc	: TEXCOORD0;
 	float4 c	: COLOR0;
+	float  fog	: FOG;
 };
 
 vf main (vv v)
@@ -20,6 +21,7 @@ vf main (vv v)
 	o.hpos 		= mul	(m_WVP, v.P);		// xform, input in world coords
 	o.tc		= v.tc;				// copy tc
 	o.c		= v.c;				// copy color
-
+	o.fog 		= saturate(calc_fogging(v.P));
+	
 	return o;
 }

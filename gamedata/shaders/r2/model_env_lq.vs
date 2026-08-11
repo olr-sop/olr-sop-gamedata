@@ -6,7 +6,7 @@ struct 	vf
 	float4 hpos	: POSITION;
 	float2 tc0	: TEXCOORD0;		// base
 	float3 tc1	: TEXCOORD1;		// environment
-	float3 c0	: COLOR0;		// color
+	float4 c0	: COLOR0;		// color
 	float  fog	: FOG;
 };
 

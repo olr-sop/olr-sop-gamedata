@@ -29,18 +29,24 @@ void        hmodel                 (out float3 hdiffuse, out float3 hspecular, f
           float4         light                = tex3D                (s_material, float3(hscale, hspec, m) );                // sample material
 
         // diffuse color
-        float3         e0d               = texCUBE         (env_s0,nw);
-        float3         e1d               = texCUBE         (env_s1,nw);
+		
+		float3 diffuse_reflected_tc = float3(-nw.x, nw.y, nw.z);
+		
+        float3         e0d               = texCUBE         (env_s0,diffuse_reflected_tc);
+        float3         e1d               = texCUBE         (env_s1,diffuse_reflected_tc);
         float3         env_d             = env_color.xyz*lerp(e0d,e1d,env_color.w)        ;
 					env_d*=env_d;		// contrast
         hdiffuse                        = env_d * light.xyz + L_ambient.rgb;
 
         // specular color
-                        vreflect.y      = vreflect.y*2-1;                                                        // fake remapping
-        float3         e0s               = texCUBE         (env_s0,vreflect);
-        float3         e1s               = texCUBE         (env_s1,vreflect);
+                        vreflect.y      = vreflect.y*2-1; //TODO replace to true remapping
+						
+		float3 specular_reflected_tc = float3(-vreflect.x, vreflect.y, vreflect.z);
+		
+        float3         e0s               = texCUBE         (env_s0,specular_reflected_tc);
+        float3         e1s               = texCUBE         (env_s1,specular_reflected_tc);
         float3         env_s             = env_color.xyz*lerp(e0s,e1s,env_color.w)        ;
-					env_s*=env_s;		// contrast
+					env_s*=env_s;		// contrast (Remove?)
         hspecular                       = env_s*light.w*s;                //*h*m*s        ;        //env_s        *light.w         * s;
 }
 

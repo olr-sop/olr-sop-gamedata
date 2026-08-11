@@ -18,11 +18,13 @@ uniform samplerCUBE     s_sky1      : register(s1)	;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-#if 1
 _out         main               ( v2p I )
 {
-        float3         	s0  	= texCUBE        (s_sky0,I.tc0);
-        float3         	s1      = texCUBE        (s_sky1,I.tc1);
+		float3 reflected_tc0 = float3(-I.tc0.x, I.tc0.y, I.tc0.z);
+		float3 reflected_tc1 = float3(-I.tc1.x, I.tc1.y, I.tc1.z);	
+	
+        float3         	s0  	= texCUBE        (s_sky0,reflected_tc0);
+        float3         	s1      = texCUBE        (s_sky1,reflected_tc1);
         float3        	sky     = I.factor*lerp  (s0,s1,I.factor.w);
 
         // final tone-mapping
@@ -36,19 +38,3 @@ _out         main               ( v2p I )
 #endif
         return        	o;
 }
-#else
-_out         main               ( v2p I )
-{
-        float3         	s0  	= texCUBE        (s_sky0,I.tc0);
-        float3         	s1      = texCUBE        (s_sky1,I.tc1);
-        float3        	sky     = I.factor*lerp  (s0,s1,I.factor.w);
-
-        // final tone-mapping
-        _out        	o;
-        float    scale   = 1 + tex2D(s_tonemap,float2(.5h,.5h)).x;
-				sky		= sky*scale*2.0f		;
-        o.low        	= sky.xyzz        	;
-        o.high        	= o.low/def_hdr     ;
-        return        	o;
-}
-#endif

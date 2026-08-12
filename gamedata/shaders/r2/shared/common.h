@@ -7,6 +7,8 @@ uniform float4x4 	m_P;
 uniform float3x4	m_WV;
 uniform float4x4 	m_VP;
 uniform float4x4 	m_WVP;
+uniform float4x4 	m_texgen;
+uniform float4x4 	mVPTexgen;
 uniform float4		timers;
 uniform float4		fog_plane;
 uniform float4		fog_params;		// x=near*(1/(far-near)), ?,?, w = -1/(far-near)

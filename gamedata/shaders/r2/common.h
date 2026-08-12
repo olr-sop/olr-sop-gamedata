@@ -268,6 +268,17 @@ float3   p_hemi          (float2 tc)                         {
         return  dot     (t_lmh,1.h/3.h);
 }
 
+//	contrast function
+float Contrast(float Input, float ContrastPower)
+{
+     //piecewise contrast function
+     bool IsAboveHalf = Input > 0.5 ;
+     float ToRaise = saturate(2*(IsAboveHalf ? 1-Input : Input));
+     float Output = 0.5*pow(ToRaise, ContrastPower);
+     Output = IsAboveHalf ? 1-Output : Output;
+     return Output;
+}
+
 #define FXPS technique _render{pass _code{PixelShader=compile ps_3_0 main();}}
 #define FXVS technique _render{pass _code{VertexShader=compile vs_3_0 main();}}
 

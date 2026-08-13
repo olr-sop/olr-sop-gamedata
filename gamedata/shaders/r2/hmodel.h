@@ -14,7 +14,7 @@ void        hmodel                 (out float3 hdiffuse, out float3 hspecular, f
 {
         // hscale - something like diffuse reflection
         float3         nw                         = mul                 (m_v2w,normal);
-        float         hscale                 = h;                                //. *        (.5h + .5h*nw.y);
+        float hscale = h * (.5h + .5h*nw.y);
 #ifdef         USE_GAMMA_22
                         hscale                = (hscale*hscale);        // make it more linear
 #endif
@@ -22,7 +22,7 @@ void        hmodel                 (out float3 hdiffuse, out float3 hspecular, f
         // reflection vector
         float3        v2pointL        		= normalize        (point);
         float3         v2point               = mul                (m_v2w,v2pointL);
-        float3        vreflect        		= reflect         (v2point,nw);
+        float3        vreflect        		= reflect         (-v2point,nw);
         float         hspec                 	= .5h+.5h*dot        (vreflect,v2point);
 
         // material
@@ -35,7 +35,7 @@ void        hmodel                 (out float3 hdiffuse, out float3 hspecular, f
         float3         e0d               = texCUBE         (env_s0,diffuse_reflected_tc);
         float3         e1d               = texCUBE         (env_s1,diffuse_reflected_tc);
         float3         env_d             = env_color.xyz*lerp(e0d,e1d,env_color.w)        ;
-					env_d*=env_d;		// contrast
+
         hdiffuse                        = env_d * light.xyz + L_ambient.rgb;
 
         // specular color
@@ -46,7 +46,7 @@ void        hmodel                 (out float3 hdiffuse, out float3 hspecular, f
         float3         e0s               = texCUBE         (env_s0,specular_reflected_tc);
         float3         e1s               = texCUBE         (env_s1,specular_reflected_tc);
         float3         env_s             = env_color.xyz*lerp(e0s,e1s,env_color.w)        ;
-					env_s*=env_s;		// contrast (Remove?)
+
         hspecular                       = env_s*light.w*s;                //*h*m*s        ;        //env_s        *light.w         * s;
 }
 

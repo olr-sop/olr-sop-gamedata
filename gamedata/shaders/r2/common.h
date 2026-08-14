@@ -41,9 +41,13 @@
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////
 uniform float4                L_material;                            // 0,0,0,mid
+uniform float4                hemi_cube_pos_faces;
+uniform float4                hemi_cube_neg_faces;
 uniform float4                Ldynamic_color;                      // dynamic light color (rgb1)        - spot/point
 uniform float4                Ldynamic_pos;                       // dynamic light pos+1/range(w) - spot/point
 uniform float4                Ldynamic_dir;                        // dynamic light direction         - sun
+uniform float4                Lmodel_params;                     // x=attenuation_mode, y=rim_lighting
+uniform float4                Hmodel_params;                     // x=ambientcube, y=fresnel
 
 uniform float4                J_direct        [6];
 uniform float4                J_spot                [6];

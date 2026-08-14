@@ -13,7 +13,14 @@ p_flat 	_main	( v_model I )
 	O.N 		= mul		((float3x3)m_WV, (float3)I.N);
 
 	O.tcdh 		= float4	(I.tc.xyyy					);
-	O.position	= float4	(Pe, 		L_material.x	);
+
+	// Hemi cube lighting
+	float3	hc_pos		= hemi_cube_pos_faces.xyz;
+	float3	hc_neg		= hemi_cube_neg_faces.xyz;
+	float3	hc_mixed	= (N_w < 0) ? hc_neg : hc_pos;
+	float	hemi_val	= dot(hc_mixed, abs(N_w));
+			hemi_val	= saturate(hemi_val);
+	O.position	= float4	(Pe, hemi_val);
 
 #if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
 	O.tcdh.w	= L_material.y;							// (,,,dir-occlusion)

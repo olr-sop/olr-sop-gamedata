@@ -10,11 +10,7 @@ float4 	main		( float2 tc : TEXCOORD0, float4 tcJ : TEXCOORD1 ) : COLOR
   float4 	_P	= tex2D 	(s_position, 	tc);
 		_P.w 	= 1.f		;
 	float4 	PS	= mul		(m_shadow, 	_P);
-#ifdef 	USE_HWSMAP
-	float 	s 	= sunmask(_P)*sample_hw	(PS,float4(0,0,0,0) );
-#else
-	float 	s 	= sunmask(_P)*sample_sw	(PS.xy / PS.w, float2(0,0), PS.z);
-#endif
+	float 	s 	= sunmask(_P)*shadow_soft(PS);
 	return 	s	;
 }
 #else
@@ -33,16 +29,7 @@ float4 	main		( float2 tc : TEXCOORD0, float4 tcJ : TEXCOORD1 ) : COLOR
 	// ----- shadow
   	float4 	P4 	= float4	(_P.x,_P.y,_P.z,1);
 	float4 	PS	= mul		(m_shadow, 	P4);
-#ifdef	USE_HWSMAP
-	#ifdef USE_FETCH4
-		float 	s 	= sunmask(P4)*sample_hw_f4	(PS, float4(0,0,0,0) );
-	#else
-		float 	s 	= sunmask(P4)*sample_hw_pcf	(PS, float4(0,0,0,0) );
-	#endif
-#else
-	float 	s 	= sunmask(P4)*sample_sw	(PS.xy / PS.w, float2(0,0), PS.z);
-#endif
-
+	float 	s 	= sunmask(P4)*shadow_soft(PS);
 
 #ifdef 	SUN_FARPLANE
 	float f		= saturate	(_P.z/SUN_FARPLANE);

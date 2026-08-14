@@ -19,6 +19,7 @@ uniform half4		L_ambient;		// L_ambient.w = skynbox-lerp-factor
 uniform float3 		eye_position;
 uniform half3		eye_direction;
 uniform half3		eye_normal;
+uniform half4		rd_test;
 uniform	half4 		dt_params;
 
 half3 	unpack_normal	(half3 v)	{ return 2*v-1;			}

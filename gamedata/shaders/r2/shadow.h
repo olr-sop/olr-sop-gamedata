@@ -115,6 +115,63 @@ float 	shadow_hw_f4	(float4 tc)		{
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
+// soft shadows — larger Poisson-disk kernel for far cascade
+//////////////////////////////////////////////////////////////////////////////////////////
+static const float2 poisson_disk_12[12] =
+{
+	float2(-0.326212f, -0.405810f),
+	float2(-0.840144f, -0.073580f),
+	float2(-0.695914f,  0.457137f),
+	float2(-0.203345f,  0.620716f),
+	float2( 0.962340f, -0.194983f),
+	float2( 0.473434f, -0.480026f),
+	float2( 0.519456f,  0.767022f),
+	float2( 0.185461f, -0.893124f),
+	float2( 0.896420f,  0.412458f),
+	float2(-0.321940f, -0.932615f),
+	float2(-0.791559f, -0.597710f),
+	float2( 0.943696f, -0.588044f),
+};
+
+#ifdef USE_HWSMAP_PCF
+float shadow_soft(float4 tc)
+{
+	const float kernel_scale = 3.5f;
+	float s = 0;
+	for (int i = 0; i < 12; i++)
+	{
+		const float4 shift = float4(poisson_disk_12[i], 0, 0) * kernel_scale;
+		s += sample_hw_pcf(tc, shift).x;
+	}
+	return s / 12.0f;
+}
+#else
+	#ifdef USE_FETCH4
+	float shadow_soft(float4 tc)
+	{
+		const float kernel_scale = 3.5f;
+		float s = 0;
+		for (int i = 0; i < 12; i++)
+		{
+			const float4 shift = float4(poisson_disk_12[i], 0, 0) * kernel_scale;
+			s += sample_hw_f4(tc, shift);
+		}
+		return s / 12.0f;
+	}
+	#else
+	float shadow_soft(float4 tc)
+	{
+		const float kernel_scale = 3.5f;
+		float2 tc_dw = tc.xy / tc.w;
+		float s = 0;
+		for (int i = 0; i < 12; i++)
+			s += sample_sw(tc_dw, poisson_disk_12[i] * kernel_scale, tc.z);
+		return s / 12.0f;
+	}
+	#endif
+#endif
+
+//////////////////////////////////////////////////////////////////////////////////////////
 // testbed
 
 uniform sampler2D	jitter0;

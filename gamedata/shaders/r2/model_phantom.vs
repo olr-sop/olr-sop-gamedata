@@ -1,28 +1,36 @@
 #include "common.h"
 #include "skin.h"
 
-struct 	vf
-{
+struct vf {
 	float4 hpos	: POSITION;
-	float2 tc0	: TEXCOORD0;		// base
-	float3 tc1	: TEXCOORD1;		// environment
-	float4 c0	: COLOR0;		// color
+	float2 tc0	: TEXCOORD0;	// base
+	float3 tc1	: TEXCOORD1;	// environment
+	float4 c0	: COLOR0;		// color.(fog)
 	float  fog	: FOG;
+	float  riml	: TEXCOORD2;
 };
 
-vf 	_main (v_model v)
-{
+#define EDGE_INTENSITY 1.2
+#define EDGE_POWER 2.1
+
+vf	_main (v_model v) {
 	vf 		o;
 
-	float4 	pos 	= v.P;
+	float4 	pos 	= v.pos;
 	float3  pos_w 	= mul			(m_W, pos);
-	float3 	norm_w 	= normalize 		(mul(m_W,v.N));
+	float3 eye_dir = normalize(eye_position - pos_w);
+	float3 	norm_w 	= normalize 	(mul(m_W,v.norm));
+	float rim = 1.0 - saturate(dot(norm_w, eye_dir));
 
-	o.hpos 		= mul			(m_WVP, pos);		// xform, input in world coords
+	o.hpos = mul(m_WVP, pos); // xform, input in world coords
+
 	o.tc0		= v.tc.xy;					// copy tc
 	o.tc1		= calc_reflection	(pos_w, norm_w);
 	o.fog 		= saturate(calc_fogging 		(float4(pos_w,1)));	// fog, input in world coords
 	o.c0 		= float4(calc_model_lq_lighting(norm_w), o.fog );
+	
+	float edge_factor = pow(saturate(rim * EDGE_INTENSITY), EDGE_POWER);
+	o.riml		= edge_factor;
 
 	return o;
 }

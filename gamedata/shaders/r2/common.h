@@ -25,8 +25,8 @@
 // #define USE_TDETAIL                	//- shader defined
 // #define USE_LM_HEMI                	//- shader defined
 // #define USE_DISTORT                	//- shader defined
-// #define USE_SUNMASK                	//- shader defined
-//#define DBG_TMAPPING
+// #define USE_SUNMASK                		//- shader defined
+// #define DBG_TMAPPING
 //////////////////////////////////////////////////////////////////////////////////////////
 #ifndef SMAP_size
 #define SMAP_size        2048
@@ -35,26 +35,30 @@
 #define parallax float2(PARALLAX_H, -PARALLAX_H/2)
 
 #ifdef        USE_R2_STATIC_SUN
-#  define xmaterial half(1.0h/4.h)
+#  define xmaterial float(1.0h/4.h)
 #else
-#  define xmaterial half(L_material.w)
+#  define xmaterial float(L_material.w)
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////
-uniform half4                L_material;                            // 0,0,0,mid
-uniform half4                Ldynamic_color;                      // dynamic light color (rgb1)        - spot/point
-uniform half4                Ldynamic_pos;                       // dynamic light pos+1/range(w) - spot/point
-uniform half4                Ldynamic_dir;                        // dynamic light direction         - sun
+uniform float4                L_material;                            // 0,0,0,mid
+uniform float4                hemi_cube_pos_faces;
+uniform float4                hemi_cube_neg_faces;
+uniform float4                Ldynamic_color;                      // dynamic light color (rgb1)        - spot/point
+uniform float4                Ldynamic_pos;                       // dynamic light pos+1/range(w) - spot/point
+uniform float4                Ldynamic_dir;                        // dynamic light direction         - sun
+uniform float4                Lmodel_params;                     // x=attenuation_mode, y=rim_lighting
+uniform float4                Hmodel_params;                     // x=ambientcube, y=fresnel
 
-uniform half4                J_direct        [6];
-uniform half4                J_spot                [6];
+uniform float4                J_direct        [6];
+uniform float4                J_spot                [6];
 
-half          calc_fogging               (half4 w_pos)      { return dot(w_pos,fog_plane);         }
-half2         calc_detail                (half3 w_pos)      {
+float          calc_fogging               (float4 w_pos)      { return dot(w_pos,fog_plane);         }
+float2         calc_detail                (float3 w_pos)      {
         float                 dtl        = distance                (w_pos,eye_position)*dt_params.w;
                               dtl        = min              (dtl*dtl, 1);
-        half                  dt_mul     = 1  - dtl;        // dt*  [1 ..  0 ]
-        half                  dt_add     = .5 * dtl;        // dt+  [0 .. 0.5]
-        return                half2      (dt_mul,dt_add);
+        float                  dt_mul     = 1  - dtl;        // dt*  [1 ..  0 ]
+        float                  dt_add     = .5 * dtl;        // dt+  [0 .. 0.5]
+        return                float2      (dt_mul,dt_add);
 }
 float3         calc_reflection     (float3 pos_w, float3 norm_w)
 {
@@ -130,11 +134,11 @@ struct         p_bumped        {
         float2            tcdh        : TEXCOORD0;        // Texture coordinates
 #endif
         float4      position        : TEXCOORD1;        // position + hemi
-        half3       M1                : TEXCOORD2;        // nmap 2 eye - 1
-        half3       M2                : TEXCOORD3;        // nmap 2 eye - 2
-        half3       M3                : TEXCOORD4;        // nmap 2 eye - 3
+        float3       M1                : TEXCOORD2;        // nmap 2 eye - 1
+        float3       M2                : TEXCOORD3;        // nmap 2 eye - 2
+        float3       M3                : TEXCOORD4;        // nmap 2 eye - 3
 #ifdef USE_PARALLAX
-        half3       eye                : TEXCOORD5;        // vector to point in tangent space
+        float3       eye                : TEXCOORD5;        // vector to point in tangent space
   #ifdef USE_TDETAIL
         float2      tcdbump     : TEXCOORD6;        // d-bump
     #ifdef USE_LM_HEMI
@@ -167,7 +171,7 @@ struct         p_flat                  {
     float2                    tcdh        : TEXCOORD0;        // Texture coordinates
 #endif
         float4                position        : TEXCOORD1;        // position + hemi
-        half3                N                : TEXCOORD2;        // Eye-space normal        (for lighting)
+        float3                N                : TEXCOORD2;        // Eye-space normal        (for lighting)
   #ifdef USE_TDETAIL
         float2                tcdbump                : TEXCOORD3;        // d-bump
     #ifdef USE_LM_HEMI
@@ -182,9 +186,9 @@ struct         p_flat                  {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 struct                  f_deffer        		{
-        half4           position        		: COLOR0;        // px,py,pz, m-id
-        half4           Ne                		: COLOR1;        // nx,ny,nz, hemi
-        half4       	C                		: COLOR2;        // r, g, b,  gloss
+        float4           position        		: COLOR0;        // px,py,pz, m-id
+        float4           Ne                		: COLOR1;        // nx,ny,nz, hemi
+        float4       	C                		: COLOR2;        // r, g, b,  gloss
 };
 //////////////////////////////////////////////////////////////////////////////////////////
 struct  				p_screen                {
@@ -230,45 +234,53 @@ uniform sampler         s_image;                // used in various post-processi
 uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw + eps)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Defines                                		//
-#define def_gloss       half(2.f /255.f)
-#define def_aref        half(33.f/255.f)
-#define def_dbumph      half(0.333f)
-#define def_virtualh    half(.05f)              // 5cm
-#define def_distort     half(0.05f)             // we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
-#define def_hdr         half(8.h)         		// hight luminance range half(3.h)
-#define def_hdr_clip	half(0.75h)        		//
+#define def_gloss       float(2.f /255.f)
+#define def_aref        float(200.f/255.f)
+#define def_dbumph      float(0.333f)
+#define def_virtualh    float(.05f)              // 5cm
+#define def_distort     float(0.05f)             // we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it
+#define def_hdr         float(8.h)         		// hight luminance range float(3.h)
+#define def_hdr_clip	float(0.75h)        		//
 
 //////////////////////////////////////////////////////////////////////////////////////////
-#define	LUMINANCE_VECTOR                 half3(0.3f, 0.48f, 0.22f)
+#define	LUMINANCE_VECTOR                 float3(0.3f, 0.48f, 0.22f)
+void        tonemap              (out float4 low, out float4 high, float3 rgb, float scale)
+{
+        rgb     =      	rgb*scale       ;
+#ifdef	USE_BRANCHING		// ps_3_0
+        low		=       rgb.xyzz		;
+        high	=		low/def_hdr		;        // 8x dynamic range
+#else
+        low		=       float4           (rgb,           0 )	;
+        high	=       float4       	(rgb/def_hdr,   0 )	;		// 8x dynamic range
+#endif
 
-/*	tonmapper
-	Created: 10/12/19	(Vector)
-	Last Edit: 05/06/20	(Vector)
-*/
-void tonemap(out half4 low, out half4 high, half3 rgb, half scale) {
-	const float	A = 0.22, B = 0.3, C = .1, D = 0.2, E = .01, F = 0.4, X = 1.25;
-	const float WhSQR = 2.89f;
-	float3 h 	= 	max(float3(0.0,0.0,0.0),scale-float3(.004,.004,.004));
-	float tone 	= 	(h*((X*A)*h+X*float3(C*B,C*B,C*B))+X*float3(D*E,D*E,D*E)) / 
-					(h*(A*h+float3(B,B,B))+float3(D*F,D*F,D*F)) - X*float3(E/F,E/F,E/F);
-	float sat	= 	(scale-tone); // (tone*scale); 
-	rgb		=	((rgb*(sat/2))*(scale+tone))/*+rgb/2*/;
-
-	low		=	((rgb*(1+rgb/WhSQR))).xyzz;
-	high	= rgb.xyzz/def_hdr; // 8x dynamic range
+//		low		= 	float4	(rgb, 0);
+//		rgb		/=	def_hdr	;
+//		high	= 	float4	(rgb, dot(rgb,0.333f)-def_hdr_clip)		;
 }
-
-half4		combine_bloom        (half3  low, half4 high)	{
-        return        half4(low + high*high.a, 1.h);
+float4		combine_bloom        (float3  low, float4 high)	{
+        return        float4(low + high*high.a, 1.h);
 }
 
 float3	v_hemi        	(float3 n)                        	{        return L_hemi_color*(.5f + .5f*n.y);                   }
 float3	v_hemi_wrap     (float3 n, float w)                	{        return L_hemi_color*(w + (1-w)*n.y);                   }
 float3	v_sun           (float3 n)                        	{        return L_sun_color*dot(n,-L_sun_dir_w);                }
 float3	v_sun_wrap      (float3 n, float w)                	{        return L_sun_color*(w+(1-w)*dot(n,-L_sun_dir_w));      }
-half3   p_hemi          (float2 tc)                         {
-        half3        	t_lmh         = tex2D             	(s_hemi, tc);
+float3   p_hemi          (float2 tc)                         {
+        float3        	t_lmh         = tex2D             	(s_hemi, tc);
         return  dot     (t_lmh,1.h/3.h);
+}
+
+//	contrast function
+float Contrast(float Input, float ContrastPower)
+{
+     //piecewise contrast function
+     bool IsAboveHalf = Input > 0.5 ;
+     float ToRaise = saturate(2*(IsAboveHalf ? 1-Input : Input));
+     float Output = 0.5*pow(ToRaise, ContrastPower);
+     Output = IsAboveHalf ? 1-Output : Output;
+     return Output;
 }
 
 #define FXPS technique _render{pass _code{PixelShader=compile ps_3_0 main();}}

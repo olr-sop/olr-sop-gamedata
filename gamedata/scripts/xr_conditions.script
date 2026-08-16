@@ -110,18 +110,31 @@ function one_obj_in_zone(actor, zone, p)
     end
 end
 
+local actor_in_zone_debug = false   -- для отладки, пишет в консоль название рестриктора, позицию актора, позицию рестриктора и тру или фолс в зависимости от положения
+--[[
+	функция inside() проверяет так: строится сфера радиусом EPS_L (0.0001 м) в точке db.actor:position(), (если что db.actor:position() точка находится В НОГАХ актора, если надо на уровне груди то есть db.actor:center())
+	и проверяется, лежит ли эта микроточка внутри объёма рестриктора (бокс/сфера, собранные в prepare()). 
+	Для бокса — точка должна быть строго между всеми 6 плоскостями. Вышел на 1 мм за грань — уже не считается что внутри.
+--]]
 function actor_in_zone(actor, npc, p)
-    if not (db.actor) then 
-        return false 
-    end
+    if not (db.actor) then return false end
     for i=1,#p do
         local zone = db.zone_by_name[p[i]]
-        if (zone and zone:inside(db.actor:position())) then 
-            return true
+        if zone then
+            local inside = zone:inside(db.actor:position())
+            if actor_in_zone_debug then
+                local pos = db.actor:position()
+                local zp = zone:position()
+                log1(string.format("[actor_in_zone] zone='%s' actor_pos=(%.2f,%.2f,%.2f) zone_pos=(%.2f,%.2f,%.2f) inside=%s",
+                    p[i], pos.x, pos.y, pos.z, zp.x, zp.y, zp.z,
+                    inside and "TRUE" or "FALSE"))
+            end
+            if inside then return true end
         end
     end
     return false
 end
+
 function actor_out_zone(actor, npc, p)
 	local zone = db.zone_by_name[p[1]]
 	if zone == nil then

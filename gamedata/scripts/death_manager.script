@@ -28,49 +28,6 @@ local capsule_spawn_by_rank = {}
 -- Путь до конфига
 local death_ini = ini_file("misc\\death_generic.ltx")
 
--- Тут хранятся патроны которые надо удалить чуть чуть позже смерти непеся
-local deferred_release = {}
-
-function schedule_release(item)
-	if item and item:id() then
-		if not deferred_release[item:id()] then
-			deferred_release[item:id()] = time_global()
-		end
-	end
-end
-
-function release_deferred_ammo()
-	for k, v in pairs(deferred_release) do
-		local game_object = level.object_by_id(k)
-		local s_obj = alife():object(k)
-		if not s_obj and not game_object then
-			-- если нет ни геймобъекта ни серверного - удалилось как надо
-			deferred_release[k] = nil
-		elseif s_obj and game_object then
-			-- если есть и то и другое - все ок, удаляем
-			local parent = game_object:parent()
-			if v < time_global() then
-				if not parent then
-					--write_log("!!DEFFERED_DEBUG DEBUG_DELETING_NORMAL "..tostring(s_obj.id))
-					alife():release(s_obj, true)
-					deferred_release[k] = nil
-				else	
-					--write_log("!!DEFFERED_DEBUG DEBUG_TELEPORT "..tostring(s_obj.id))
-					parent:drop_item(game_object)
-				end
-			end
-		elseif s_obj then	
-			-- если только серверный - срочно убиваем
-			--write_log("!!DEFFERED_DEBUG DEBUG_DELETING_SRV "..tostring(s_obj.id))
-			alife():release(s_obj, true)
-			deferred_release[k] = nil
-		elseif game_object then
-			-- если только геймобъект - он ещё не успел сдохнуть, сцуко, не трогаем его
-			--write_log("!!DEFFERED_DEBUG DEBUG_DELETING_ONLY_GAMEOBJ")
-		end		
-	end
-end
-
 -- Кэшируем все артефакты и прочее в таблицы для быстрого доступа к ним
 function load_capsule_settings()
 
@@ -285,6 +242,9 @@ function drop_manager:create_release_item()
 	-- Проверка на отсутствие спауна лута
 	local ini = self.npc:spawn_ini()
 	local should_spawn_loot = not (ini and ini:section_exist("dont_spawn_loot"))
+	
+	-- В любом случае запускаем итератор на удаление предметов
+	self.npc:iterate_inventory(keep_item, self.npc)	
 
 	-- Доспавниваем необходимое количество итемов, если разрешено
 	if should_spawn_loot then
@@ -392,9 +352,6 @@ function drop_manager:create_release_item()
 			end
 		end
 	end
-
-	-- В любом случае запускаем итератор на удаление предметов
-	self.npc:iterate_inventory(keep_item, self.npc)
 end
 
 -- Функция выбирает какой тип патронов спавнить для данного оружия
@@ -482,12 +439,12 @@ function keep_item(npc, item)
 	end
 
 	if ammo_sections[section] and obj then
-		schedule_release(item)
+		sim:release(obj, true) -- Теперь можно сразу удалять патроны
 		return true
 	end
 
 	if obj and (section == "device_pda" or section == "guitar_a" or section == "yad" or section == "hand_radio" or section == "harmonica_a" or section == "kruglov_flash") then
-		sim:release(obj, true)			  
+		sim:release(obj, true)
 		return false
 	end
 

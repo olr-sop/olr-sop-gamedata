@@ -30,19 +30,20 @@ end
 
 -- evaluator
 function evaluator_trading:evaluate()
-	-- ѕ≈–‘: решение Ђторговать/нетї мен€етс€ медленно Ч кэшируем результат на 500 мс.
+	-- решение Ђторговать/нетї мен€етс€ медленно Ч кэшируем результат на 500 мс.
 	local now = time_global()
 	if self._ev_tm and now < self._ev_tm then
 		return self._ev_res
 	end
-	self._ev_tm = now + 500
+	if self.object:best_enemy() or self.object:is_talking() then
+		self._ev_tm = nil
+	end
+	self._ev_tm = now + cache_ttl(500)
 
 	local npc = self.object
-
-	-- ѕ≈–‘: дешЄвые early-out'ы первыми; дорогие has_alife_info / money / ruck_count Ч после.
 	local lvl = level.name()
 	
-	-- ѕ≈–‘: торгуют только на трЄх уровн€х Ч раньше этот случай доходил до money/has_alife_info.
+	-- торгуют только на трЄх уровн€х Ч раньше этот случай доходил до money/has_alife_info.
 	-- теперь на выходим из схемы если уровень не один из трЄх ниже, нефиг еще думать
 	if lvl ~= "lvl1_escape" and lvl ~= "lvl9_military" and lvl ~= "lvl5_bar" then
 		self._ev_res = false

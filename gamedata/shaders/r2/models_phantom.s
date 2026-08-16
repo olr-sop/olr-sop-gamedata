@@ -1,0 +1,20 @@
+function l_special	(shader, t_base, t_second, t_detail)
+	shader:begin	("model_distort4glass","particle_distort")
+		: sorting		(1, false)
+		: blend			(true,blend.srcalpha,blend.invsrcalpha)
+		: zb			(true,false)
+		: fog			(false)
+		: distort		(true)
+	shader:sampler	("s_base")		:texture(t_base)
+	shader:sampler	("s_distort")	:texture("fx\\distort\\generic_02i")
+end
+
+function normal		(shader, t_base, t_second, t_detail)
+	shader:begin	("model_phantom","model_phantom")
+		: fog			(true)
+		: zb			(true,false)
+		: blend			(true,blend.srccolor,blend.invsrcalpha)
+		: aref			(true,0)
+		: sorting		(3,true)
+	shader:sampler	("s_base")		:texture(t_base)
+end

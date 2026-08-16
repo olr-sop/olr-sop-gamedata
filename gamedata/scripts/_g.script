@@ -560,6 +560,18 @@ if nil == time_global then
 	time_global = function () return device():time_global() end
 end
 
+-- dynamic cache TTL. Scales with frame time so cache survives FPS drops.
+-- base_ms: minimum cache lifetime in ms.
+-- multiplier: min frames the cache lives (default 3).
+function cache_ttl(base_ms, multiplier)
+	multiplier = multiplier or 3
+	local dt = device().f_time_delta
+	if not dt or dt <= 0 then
+		return base_ms
+	end
+	return math.max(base_ms, dt * 1000 * multiplier)
+end
+
 function wait_game(time_to_wait)
     verify_if_thread_is_running()
     if (time_to_wait == nil) then

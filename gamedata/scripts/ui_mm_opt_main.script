@@ -16,12 +16,7 @@ function options_dialog:__init() super()
 	self:InitCallBacks		()
 	self:NeedCenterCursor	(false)
 	self.tab:SetActiveTab	("video")
-
-	--if not xrRender_test_r2_hw() then
 		self.combo_renderer:disable_id		(1)
-		self.combo_renderer:disable_id		(2)
-	--	self.combo_renderer:Enable			(false)
-	--end
 end
 
 function options_dialog:__finalize()
@@ -126,8 +121,18 @@ function options_dialog:SetCurrentValues()
 	self:UpdateDependControls()
 
 	if self.btn_retromode then
-		self.btn_retromode:Enable(self.check_retromode:GetCheck())
+		local retromode_supported = self:IsRetromodeSupported()
+		if not retromode_supported then
+			self.check_retromode:SetCheck(false)
+		end
+		self.check_retromode:Enable(retromode_supported)
+		self.btn_retromode:Enable(retromode_supported and self.check_retromode:GetCheck())
 	end
+end
+
+function options_dialog:IsRetromodeSupported()
+	local renderer = get_console():get_string("renderer")
+	return renderer == "renderer_r1" or renderer == "renderer_r1a"
 end
 
 function options_dialog:UpdateDependControls()
@@ -199,8 +204,11 @@ end
 
 function options_dialog:OnRetromodeChanged()
 	self:UpdateDependControls()
-	local get_check = self.check_retromode:GetCheck()
-	self.btn_retromode:Enable(get_check)
+	local retromode_supported = self:IsRetromodeSupported()
+	if not retromode_supported then
+		self.check_retromode:SetCheck(false)
+	end
+	self.btn_retromode:Enable(retromode_supported and self.check_retromode:GetCheck())
 end
 
 function options_dialog:OnBtnDefGraph()

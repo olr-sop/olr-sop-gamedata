@@ -1,0 +1,26 @@
+#include "common.h"
+//Fixed glows by skyloader
+struct v2p{
+	float2 	Tex0	: TEXCOORD0;
+	float4	Color	: COLOR;
+	float4  tctexgen: TEXCOORD1;
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+//////////////////////////////////////////////////////////////////////////////////////////
+#define	START_FADE_DISTANCE	6.f
+#define	END_FADE_DISTANCE	0.6f
+#define	CLIP_DISTANCE		0.4f
+
+float4 main( v2p I ): COLOR {
+	float4	t_base 	= tex2D(s_base, I.Tex0)*I.Color;
+
+	float4	_P	= tex2Dproj(s_position, I.tctexgen);
+	float spaceDepth = _P.z;
+	if (spaceDepth < 0.01f ) spaceDepth = 100000.0f; //  filter for skybox
+	clip(spaceDepth-CLIP_DISTANCE);
+    t_base 	*= smoothstep(END_FADE_DISTANCE, START_FADE_DISTANCE, I.tctexgen.z);
+
+	return  t_base;
+}

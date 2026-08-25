@@ -5,7 +5,7 @@ function on_netspawn()
 	local level_name = level.name()
 	local sim = alife()
 	-- фикс
-	if has_alife_info("karlik_gen_rush_goinfo") and sim:object("lvl16_generators_karlik") ~= nil and level_name == "lvl16_generators" then
+	if has_alife_info("karlik_gen_rush_goinfo") and sim:object("lvl16_generators_karlik") ~= nil and level_name == "l15_generators" then
 		--log1("fix karlk")
 		olr.del_by_name("lvl16_generators_karlik")
 	--olr.info("karlik_gen_rush_goinfo_delkarlik")
@@ -13,7 +13,7 @@ function on_netspawn()
 
 	--[[
 	if has_alife_info("monolit_na_kordone") and not has_alife_info("start_freeplay_olr_start") then
-		if level.name() ~= "lvl12_radar_bunker" or level.name() ~= "lvl16_generators" then
+		if level.name() ~= "l10u_bunker" or level.name() ~= "l15_generators" then
 			--log1("gen wea")
 			local wait_time = 0
 			wait_time = time_global() + 100
@@ -39,7 +39,7 @@ function on_netspawn()
 		end
 	end
 
-	if not has_alife_info("fin_rush_from_sarco_to_warlab_acess") and has_alife_info("fin_rush_from_sarco_to_warlab") and level_name == "lvl16_generators" then
+	if not has_alife_info("fin_rush_from_sarco_to_warlab_acess") and has_alife_info("fin_rush_from_sarco_to_warlab") and level_name == "l15_generators" then
 		olr.info("fin_rush_from_sarco_to_warlab_acess")
 		nick.from_sarco_to_cemetery()
 	end
@@ -51,29 +51,29 @@ function on_netspawn()
 	end
 
 	-- спавним группу биоисследований
-	if not has_alife_info("bio_group_spawen") and has_alife_info("prof_sos_talk_saved_done") and level_name ~= "lvl7_yantar" then
+	if not has_alife_info("bio_group_spawen") and has_alife_info("prof_sos_talk_saved_done") and level_name ~= "l07_yantar" then
 		olr_timers.st_timer("yan_biogroup_online", 18, "nick.yan_biogroup_online()")
 		db.actor:give_info_portion("bio_group_spawen")
 	end
 
-	if not has_alife_info("bar_killer_strt") and has_alife_info("open_bar_door_start_krisa") and level_name ~= "lvl5_bar" then
+	if not has_alife_info("bar_killer_strt") and has_alife_info("open_bar_door_start_krisa") and level_name ~= "l05_bar" then
 		olr_timers.st_timer("bar_killer_strts", 28, "nick.bar_killer_strts()")
 		db.actor:give_info_portion("bar_killer_strt")
 	end
 
-	if not has_alife_info("dolina_scient_strt") and has_alife_info("yan_1_kvest_start") and level_name == "lvl4_darkdolina" then
+	if not has_alife_info("dolina_scient_strt") and has_alife_info("yan_1_kvest_start") and level_name == "l04_darkvalley" then
 		olr_timers.st_timer("dolina_scient_strt", 18, "nick.scient_strt()")
 		db.actor:give_info_portion("dolina_scient_strt")
 	end
 
 	-- поиск экспедиции на холмах
-	if has_alife_info("greh_leader_key_info") and not has_alife_info("holmy_expedition_start") and level_name == "lvl7_yantar" then
+	if has_alife_info("greh_leader_key_info") and not has_alife_info("holmy_expedition_start") and level_name == "l07_yantar" then
 		db.actor:give_info_portion("holmy_expedition_start")
 		olr_timers.st_timer("holmy_expedition_start", 250, "nick.holmy_expedition_start_now()")
 	end
 
 	if not has_alife_info("fin_rush_from_sarco_to_warlab") then
-		if has_alife_info("gen_bunker_destr_alls_cutscene") and level_name == "lvl15_sarcofag" then
+		if has_alife_info("gen_bunker_destr_alls_cutscene") and level_name == "l14u_sarcofag" then
 			olr_timers.st_timer("last_gens", 1, "nick.back_to_gens()")
 			level.add_pp_effector("black.ppe", 203131, false)
 			--db.actor:give_info_portion("fin_rush_from_sarco_to_warlab")
@@ -82,29 +82,29 @@ function on_netspawn()
 
 	-- удаляем группу космос
 	if not has_alife_info("space_group_quest_delete") then
-		if has_alife_info("space_bar_zombied_camback_talked") and level_name ~= "lvl2_garbage" then
+		if has_alife_info("space_bar_zombied_camback_talked") and level_name ~= "l02_garbage" then
 			db.actor:give_info_portion("space_group_quest_delete")
 		end
 	end
 
-	if not has_alife_info("dolina_killers_acess") and has_alife_info("kvest_bar_1_dialog_start") and level_name == "lvl4_darkdolina" then
+	if not has_alife_info("dolina_killers_acess") and has_alife_info("kvest_bar_1_dialog_start") and level_name == "l04_darkvalley" then
 		olr_timers.st_timer("dolina_killers_acess", 12, "nick.dolina_killers_acessss()")
 		db.actor:give_info_portion("dolina_killers_acess")
 	end
 	
-	if has_alife_info("dolina_killers_acess") and has_alife_info("kvest_bar_1_dialog_start") and level_name == "lvl4_darkdolina" then
+	if has_alife_info("dolina_killers_acess") and has_alife_info("kvest_bar_1_dialog_start") and level_name == "l04_darkvalley" then
 		xr_gulag.setGulagRelation("val_x18_exit_base", game_object.friend, db.actor)
 	end
 
 	-- квест на гравимолот
-	if has_alife_info("bar_1_done") and not has_alife_info("kvest_gravimolot_start") and level_name == "lvl3_agroprom" then
+	if has_alife_info("bar_1_done") and not has_alife_info("kvest_gravimolot_start") and level_name == "l03_agroprom" then
 		olr_timers.st_timer("kvest_gravimolot_acess", 12, "nick.kvest_gravimolot_acessss()")
 		db.actor:give_info_portion("kvest_gravimolot_start")
 	end
 
 	-- удаляем группу магнит
 	if not has_alife_info("magnet_group_quest_delete") then
-		if has_alife_info("magnet_group_quest_done") and level_name ~= "lvl5_bar" then
+		if has_alife_info("magnet_group_quest_done") and level_name ~= "l05_bar" then
 			db.actor:give_info_portion("magnet_group_quest_delete")
 			olr_timers.st_timer("unic_rostor_vss", 850, "nick.rostok_spawn_unic_vss()")
 		end
@@ -112,14 +112,14 @@ function on_netspawn()
 	
 	-- удаляем группу проффесора
 	if not has_alife_info("proffecor_group_quest_delete") then
-		if has_alife_info("laborant_otpravlaet_spat_gg_final_done") and level_name ~= "lvl7_yantar" then
+		if has_alife_info("laborant_otpravlaet_spat_gg_final_done") and level_name ~= "l07_yantar" then
 			db.actor:give_info_portion("proffecor_group_quest_delete")
 		end
 	end
 
 	--квест на зачистку паразитов в городе (выдача задания)
 	if not has_alife_info("deadcity_paras_talk_to_dleader_pre") then
-		if has_alife_info("dec_first") and level_name ~= "lvl11_deadcity" then
+		if has_alife_info("dec_first") and level_name ~= "l11_deadcity" then
 			db.actor:give_info_portion("deadcity_paras_talk_to_dleader_pre")
 			olr_timers.st_timer("deadcity_paras_talk_to_dleader", 25, "nick.pre_deadcity_paras_talk_to_dleader()")
 		end
@@ -127,12 +127,12 @@ function on_netspawn()
 
 	-- проснулись у саркофага
 	if not has_alife_info("find_journalist_restore_sarcofag") then
-		if has_alife_info("find_journalist_restore_wep_done_info") and level_name == "lvl15_sarcofag" then
+		if has_alife_info("find_journalist_restore_wep_done_info") and level_name == "l14u_sarcofag" then
 			db.actor:give_info_portion("find_journalist_restore_sarcofag")
 		end
 	end
 
-	if level_name == "lvl16_generators" then
+	if level_name == "l15_generators" then
 		--nick.clear_all_bolezns()
 		db.actor:set_character_community("stalker", 0, 0)
 		local db_actor_id = db.actor:id()
@@ -144,7 +144,7 @@ function on_netspawn()
 	end
 
 	local actor = db.actor
-	if not has_alife_info("gar_first") and level_name == "lvl2_garbage" then
+	if not has_alife_info("gar_first") and level_name == "l02_garbage" then
 		actor:give_info_portion("gar_first")
 		olr.del_by_name("lvl2_garbage_physic_fog_center")
 		olr.spawn_crows(20, 90)
@@ -152,7 +152,7 @@ function on_netspawn()
 		olr.del_by_name("lvl1_escape_zone_mosquito_bald_weak_0009")
 	end
 
-	if not has_alife_info("agr_first") and level_name == "lvl3_agroprom" then
+	if not has_alife_info("agr_first") and level_name == "l03_agroprom" then
 		actor:give_info_portion("agr_first")
 		olr.del_by_name("lvl3_agroprom_physic_fog_center")
 		if not has_alife_info("s_kalashomvse") then
@@ -164,7 +164,7 @@ function on_netspawn()
 		olr_timers.st_timer("create_agro_case_del", 21, "nick.create_agro_case_del()")
 	end
 
-	if not has_alife_info("dol_first") and level_name == "lvl4_darkdolina" then
+	if not has_alife_info("dol_first") and level_name == "l04_darkvalley" then
 		actor:give_info_portion("dol_first")
 		olr_timers.st_timer("goaway_from_dolina()", 100, "nick.goaway_from_dolina()")
 		olr.del_by_name("lvl4_darkdolina_physic_fog_center")
@@ -172,7 +172,7 @@ function on_netspawn()
 		news_manager.send_tip(db.actor, game.translate_string("on_netspawn_1"), 26, "trader", 25000, nil, nil, true, "escape_trader_name")
 	end
 
-	if not has_alife_info("bar_first") and level_name == "lvl5_bar" then
+	if not has_alife_info("bar_first") and level_name == "l05_bar" then
 		actor:give_info_portion("bar_first")
 		olr_timers.st_timer("omsbar_first", 4500, "nick.bar_first_del_bar_alcoholics()")
 		nick.del_jabas_art_navodki()
@@ -187,13 +187,13 @@ function on_netspawn()
 		olr.spawn_crows(20, 90)
 	end
 
-	if not has_alife_info("ros_first") and level_name == "lvl6_rostok" then
+	if not has_alife_info("ros_first") and level_name == "l06_rostok" then
 		actor:give_info_portion("ros_first")
 		olr.to_offline("ros_box_rukzak")
 		olr.spawn_crows(15, 40)
 	end
 
-	if not has_alife_info("yan_first") and level_name == "lvl7_yantar" then
+	if not has_alife_info("yan_first") and level_name == "l07_yantar" then
 		actor:give_info_portion("yan_first")
 		olr.del_by_name("lvl7_yantar_physic_fog_center")
 		olr.del_by_name("lvl5_bar_physic_object_1452")
@@ -211,7 +211,7 @@ function on_netspawn()
 		olr.del_by_name("lvl5_bar_physic_object_1066")
 	end
 
-	if not has_alife_info("swp_first") and level_name == "lvl8_swamp" then
+	if not has_alife_info("swp_first") and level_name == "l08_swamp" then
 		actor:give_info_portion("swp_first")
 		olr.del_by_name("lvl8_swamp_physic_fog_center")
 		olr.del_by_name("lvl4_darkdolina_physic_object_0362")
@@ -221,7 +221,7 @@ function on_netspawn()
 		olr.del_by_name("lvl5_bar_stalker_0001")
 	end
 
-	if not has_alife_info("mil_first") and level_name == "lvl9_military" then
+	if not has_alife_info("mil_first") and level_name == "l09_military" then
 		actor:give_info_portion("mil_first")
 		actor:give_info_portion("bar_baout_special_med_shit")
 		olr.del_by_name("lvl9_military_physic_fog_center")
@@ -231,13 +231,13 @@ function on_netspawn()
 		olr.to_offline("mil_naparnik_niva_ph")
 	end
 
-	if not has_alife_info("rad_first") and level_name == "lvl10_radar" then
+	if not has_alife_info("rad_first") and level_name == "l10_radar" then
 		actor:give_info_portion("rad_first")
 		olr.del_by_name("lvl10_radar_physic_fog_center")
 		olr.blow_add(500)
 	end
 
-	if not has_alife_info("radlab_first") and level_name == "lvl12_radar_bunker" then
+	if not has_alife_info("radlab_first") and level_name == "l10u_bunker" then
 		actor:give_info_portion("radlab_first")
 		olr.to_offline("l10u_radar_bunker_physic_object_0008")
 		olr.to_offline("l10u_radar_bunker_physic_object_0007")
@@ -264,7 +264,7 @@ function on_netspawn()
 		olr_teleport.rad_bun_first_hello()
 	end
 
-	if not has_alife_info("dec_first") and level_name == "lvl11_deadcity" then
+	if not has_alife_info("dec_first") and level_name == "l11_deadcity" then
 		actor:give_info_portion("dec_first")
 		olr_timers.st_timer("deadcity_jaba_about", 12, "nick.deadcity_jaba_about()")
 		olr.del_by_name("lvl11_deadcity_physic_fog_center")
@@ -274,13 +274,13 @@ function on_netspawn()
 		olr_timers.st_timer("deadcity_izlom_about", 33, "nick.deadcity_izlom_about()")
 	end
 
-	if not has_alife_info("prp_first") and level_name == "lvl13_prip" then
+	if not has_alife_info("prp_first") and level_name == "l13_pripyat" then
 		actor:give_info_portion("prp_first")
 		olr.del_by_name("lvl13_prip_physic_fog_center")
 		olr.spawn_crows(20, 90)
 	end
 
-	if not has_alife_info("lvl12_first") and level_name == "lvl_level12" then
+	if not has_alife_info("lvl12_first") and level_name == "l12_barrow_downs" then
 		actor:give_info_portion("lvl12_first")
 		olr.del_by_name("lvl_level12_physic_fog_center")
 		olr.spawn_on_obj("conserva", "lvl_level12_stalker_0002")
@@ -296,7 +296,7 @@ function on_netspawn()
 		olr.spawn_crows(20, 90)
 	end
 
-	if not has_alife_info("sarco_first") and level_name == "lvl15_sarcofag" then
+	if not has_alife_info("sarco_first") and level_name == "l14u_sarcofag" then
 		actor:give_info_portion("sarco_first")
 		olr_timers.st_timer("sarcosms", 12, "nick.sarcosms()")
 		olr.to_offline("lvl15_sarcofag_physic_object_0038")
@@ -307,7 +307,7 @@ function on_netspawn()
 		olr.del_by_name("lvl10_radar_physic_object_0141")
 	end
 	
-	if not has_alife_info("stan_first") and level_name == "lvl14_stancia" then
+	if not has_alife_info("stan_first") and level_name == "l14_stancia" then
 		actor:give_info_portion("stan_first")
 		olr.del_by_name("lvl14_stancia_physic_fog_center")
 		olr.spawn_on_obj("chaes_deadscient_doc", "lvl14_stancia_stalker_0075")
@@ -315,7 +315,7 @@ function on_netspawn()
 		olr.spawn_crows(20, 190)
 	end
 
-	if not has_alife_info("gen_first") and level_name == "lvl16_generators" then
+	if not has_alife_info("gen_first") and level_name == "l15_generators" then
 		actor:give_info_portion("gen_first")
 		olr.del_by_name("lvl16_generators_physic_fog_center")
 		olr.info("military_radio_go_done")

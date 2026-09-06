@@ -5,6 +5,12 @@ local pda_news = xr_sound.get_safe_sound_object([[device\pda\pda_news]])
 local pda_tips = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])
 local pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 local pda_sos = xr_sound.get_safe_sound_object([[device\pda\pda_sos]])
+local sound_map = {
+	pda_news = pda_news,
+	pda_objective = pda_task,
+	pda_sos = pda_sos,
+	pda_tips = pda_tips
+}
 
 tips_icons = {
 	default					= { 3, 215},
@@ -105,90 +111,7 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id, kostyl, 
 	
 	--tip_text, tip_header, sender_icon, sound_name, timeout, showtime
 	send_tip_new(news_id, sender_name, sender, kostyl, timeout_msg, showtime_msg)
-	
-	-- Старый код, закомментирован
-	--[[
-	printf("try to send tips for [%s]", tostring(sender_id))
-	if sender_id ~= nil then
-		local sim = alife()
-		if sim ~= nil then
-			local npc = sim:story_object(sender_id)
-			if npc ~= nil then
-				if npc.online then
-					--в онлайне проверяем на раненность
-					if xr_wounded.is_heavy_wounded_by_id(npc.id) then
-						printf("[PDA]Cannot send tips [%s], sender is heavy wounded", tostring(news_id))
-						return false
-					end
-				end
-				-- в других случаях только на смерть
-				if npc:alive() == 1 then
-					printf("[PDA]Cannot send tips [%s], sender is dead", tostring(news_id))
-					return false
-				end
-			end
-		end
-	end
 
-	-- Настройка параметров по умолчанию
-	timeout = timeout or 0
-	showtime = showtime or 5000
-	show_tip_top = (show_tip_top ~= false)
-	sender = sender or "default"
-	
-	-- Проверка существования sender в таблице tips_icons
-	if tips_icons[sender] == nil then
-		log1(string.format("~~~ В sender '%s' отправили ту иконку которой нет в таблице", tostring(sender)))
-		sender = "default"
-	end	
-
-	-- Играем дефолтный звук или костыльно другой звук
-	local sound_map = {
-		pda_news = pda_news,
-		pda_tip = pda_tips,
-		pda_objective = pda_task,
-		pda_sos = pda_sos
-	}
-	
-	-- Определение задержки (в миллисекундах)
-	local timeout_msg
-	local timeout_snd = timeout
-	if timeout >= 100 then
-		-- Если timeout уже в миллисекундах (>=100), используем как есть
-		timeout_msg = timeout
-		timeout_snd = timeout / 1000 -- переводим из мс в сек для звука
-	else
-		-- Иначе конвертируем секунды в миллисекунды
-		timeout_msg = timeout * 1000
-	end		
-
-	local sound_to_play = sound_map[kostyl] or pda_tips
-	sound_to_play:play(db.actor, timeout_snd, sound_object.s2d)
-	
-	if sender == nil then
-		sender = "default"
-	end
-	local x = tips_icons[sender][1]
-	local y = tips_icons[sender][2]
-	
-	-- Определение текста сообщения в зависимости от show_tip_top
-	-- Переделать нахуй, надо убирать show_tip_top и оставлять только sender_name
-	local news_text, sender_text
-	if show_tip_top ~= false then
-		if sender_name then
-			sender_text = "%c[255,160,181,169]"..game.translate_string(sender_name)
-			news_text = "%c[255,245,240,218]"..game.translate_string(news_id)
-		else
-			sender_text = "%c[255,160,181,169]"..game.translate_string("st_tip")
-			news_text = "%c[255,245,240,218]"..game.translate_string(news_id)
-		end
-	else
-		sender_text = "%c[255,160,181,169]"..game.translate_string("st_tip")
-		news_text = "%c[255,255,255,255]"..game.translate_string(news_id) -- для сообщений где всё сформировано в одну строку
-	end
-	
-	db.actor:give_game_news(news_text, game.translate_string(sender_text), "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout_msg, showtime)
-	--]]
 	return true
 end
 
@@ -206,12 +129,12 @@ end
 	timeout - задержка перед отправкой в миллисекундах
 	showtime - время показа в миллисекундах
 --]]
-function send_tip_new(tip_text, tip_header, sender_icon, sound_name, timeout, showtime) -- сильно упрощённый, сугубо для сопа
+local function send_tip_core(tip_text, tip_header, sender_icon, sound_name, timeout, showtime, as_talk) -- сильно упрощённый, сугубо для сопа
 	if tip_text == nil then return end
 	
 	-- Настройка параметров по умолчанию
 	timeout = timeout or 0 -- в миллисекундах
-	timeout_sound = timeout / 1000 -- в секундах для задержки звука
+	local timeout_sound = timeout / 1000 -- в секундах для задержки звука
 	showtime = showtime or 5000 -- в миллисекундах
 	sender_icon = sender_icon or "default"
 	
@@ -225,22 +148,15 @@ function send_tip_new(tip_text, tip_header, sender_icon, sound_name, timeout, sh
 	local y = tips_icons[sender_icon][2]
 	
 	-- Проигрывание звука сообщения
-	local sound_map = {
-		pda_news = pda_news,
-		pda_tip = pda_tips,
-		pda_objective = pda_task,
-		pda_sos = pda_sos,
-		tips = pda_tips,
-		pda_tips = pda_tips
-	}
-	local sound_to_play = pda_tips
-	if sound_name and sound_map[sound_name] then
-		sound_to_play = sound_map[sound_name]
-	elseif sound_name then
-		log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
+	if sound_name ~= "none" then
+		local sound_to_play = pda_tips
+		if sound_name and sound_map[sound_name] then
+			sound_to_play = sound_map[sound_name]
+		elseif sound_name then
+			log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
+		end
+		sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
 	end
-	sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
-	
 	
 	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
 	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
@@ -252,9 +168,18 @@ function send_tip_new(tip_text, tip_header, sender_icon, sound_name, timeout, sh
 	end
 	
 	-- Отправляем сообщение
-	db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
+	if as_talk and db.actor:is_talking() then
+		local text = tip_header.."\\n"..tip_text
+		db.actor:give_talk_message(text, "ui\\icons\\icons_notifications", Frect():set(x, y, 50, 50), "iconed_answer_item")
+	else
+		db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
+	end
 	
 	return true
+end
+
+function send_tip_new(tip_text, tip_header, sender_icon, sound_name, timeout, showtime) -- сильно упрощённый, сугубо для сопа
+	return send_tip_core(tip_text, tip_header, sender_icon, sound_name, timeout, showtime, false)
 end
 
 --[[
@@ -272,59 +197,7 @@ end
 	showtime - время показа в миллисекундах
 --]]
 function send_tip_new_dlg(tip_text, tip_header, sender_icon, sound_name, timeout, showtime) -- сильно упрощённый, сугубо для сопа
-	if tip_text == nil then return end
-	
-	-- Настройка параметров по умолчанию
-	timeout = timeout or 0 -- в миллисекундах
-	timeout_sound = timeout / 1000 -- в секундах для задержки звука
-	showtime = showtime or 5000 -- в миллисекундах
-	sender_icon = sender_icon or "default"
-	
-	-- Задаём иконку сообщения
-	-- Проверка существования sender_icon в таблице tips_icons
-	if tips_icons[sender_icon] == nil then
-		log1(string.format("~~~ В sender_icon '%s' отправили ту иконку которой нет в таблице", tostring(sender_icon)))
-		sender_icon = "default"
-	end
-	local x = tips_icons[sender_icon][1]
-	local y = tips_icons[sender_icon][2]
-	
-	-- Проигрывание звука сообщения
-	local sound_map = {
-		pda_news = pda_news,
-		pda_tip = pda_tips,
-		pda_objective = pda_task,
-		pda_sos = pda_sos,
-		tips = pda_tips,
-		pda_tips = pda_tips
-	}
-	local sound_to_play = pda_tips
-	if sound_name and sound_map[sound_name] then
-		sound_to_play = sound_map[sound_name]
-	elseif sound_name then
-		log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
-	end
-	sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
-	
-	
-	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
-	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
-	
-	if not tip_header or tip_header == "" then
-		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
-	else
-		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
-	end
-	
-	-- Отправляем сообщение
-	if db.actor:is_talking() then
-		local text = tip_header.."\\n"..tip_text
-		db.actor:give_talk_message(text, "ui\\icons\\icons_notifications", Frect():set(x, y, 50, 50), "iconed_answer_item")
-	else	
-		db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
-	end
-	
-	return true
+	return send_tip_core(tip_text, tip_header, sender_icon, sound_name, timeout, showtime, true)
 end
 
 --[[
@@ -351,63 +224,13 @@ function send_tip_new_offline_alife(tip_text, tip_header, sender_icon, sound_nam
 		return 
 	end	
 	
-	-- Настройка параметров по умолчанию
-	timeout = timeout or 0 -- в миллисекундах
-	timeout_sound = timeout / 1000 -- в секундах для задержки звука
-	showtime = showtime or 5000 -- в миллисекундах
-	sender_icon = sender_icon or "default"
-	
-	-- Задаём иконку сообщения
-	-- Проверка существования sender_icon в таблице tips_icons
-	if tips_icons[sender_icon] == nil then
-		log1(string.format("~~~ В sender_icon '%s' отправили ту иконку которой нет в таблице", tostring(sender_icon)))
-		sender_icon = "default"
-	end
-	local x = tips_icons[sender_icon][1]
-	local y = tips_icons[sender_icon][2]
-	
-	-- Проигрывание звука сообщения
-	local sound_map = {
-		pda_news = pda_news,
-		pda_tip = pda_tips,
-		pda_objective = pda_task,
-		pda_sos = pda_sos,
-		tips = pda_tips,
-		pda_tips = pda_tips
-	}
-	local sound_to_play = pda_tips
-	if sound_name and sound_map[sound_name] then
-		sound_to_play = sound_map[sound_name]
-	elseif sound_name then
-		log1(string.format("В sound_name отправили некорректный звук которого нет в таблице '%s'", tostring(sound_name)))
-	end
-	sound_to_play:play(db.actor, timeout_sound, sound_object.s2d)
-	
-	
-	-- Задаём цвета сообщений и заголовка а так-же проверяем на наличие заголовка
-	tip_text = "%c[255,245,240,218]"..game.translate_string(tip_text)
-	
-	if not tip_header or tip_header == "" then
-		tip_header = "%c[255,160,181,169]"..game.translate_string("st_tip")
-	else
-		tip_header = "%c[255,160,181,169]"..game.translate_string(tip_header)
-	end
-	
-	db.actor:give_game_news(tip_text, tip_header, "ui\\icons\\icons_notifications", Frect():set(x,y,50,50), timeout, showtime)
-	
-	return true
+	return send_tip_core(tip_text, tip_header, sender_icon, sound_name, timeout, showtime, false)
 end
-
-local news = {} -- тут должны хранится специальные саунды озвучки, в тч это всякие звуковые сообщения.
-				-- например сообщение Сидоровича про аномалии или коды от дверей в лабах
 
 function send_tip_nosound(actor, news_id, timeout, sender) -- хоть эта функция и не используется в олр сделаю чтоб всё работало как надо
 	if news_id == nil then return end
-	timeout = 0
 	-- Играем дефолтный звук
-	pda_tips:play(db.actor, timeout, sound_object.s2d)
-	local news_sound = news[news_id]
-	return news_sound
+	pda_tips:play(db.actor, 0, sound_object.s2d)
 end
 
 --[[
@@ -525,78 +348,57 @@ function relocate_item(actor, type, item, amount)
 		amount = 1
 	end
 	
-	local news_text = ""
-	local news_text_wo_header = ""	
+	local relocate_info = {
+		["in"]	= { texture = "ui_notification_found_item", header = "general_in_item" },
+		["out"] = { texture = "ui_notification_lost_item",	header = "general_out_item" }
+	}
 	
-	-- Играем дефолтный звук
-	if type == "in" then
+	local info = relocate_info[type]
+	if not info then return end
 	
-		local task_texture, task_rect = get_texture_info("ui_notification_found_item")
-		local news_header = "%c[255,160,181,169]"..game.translate_string("general_in_item")
-		
-		if amount == 1 then
-			news_text_wo_header = game.translate_string(get_inv_name(item))
-			news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))
-		else
-			news_text_wo_header = game.translate_string(get_inv_name(item)).." x"..amount
-			news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item)).." x"..amount
-		end
-		
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
-		else
-			db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
-		end
-		
-	elseif type == "out" then
+	local task_texture, task_rect = get_texture_info(info.texture)
+	local news_header = "%c[255,160,181,169]"..game.translate_string(info.header)
+	local inv_name = game.translate_string(get_inv_name(item))
 	
-		local task_texture, task_rect = get_texture_info("ui_notification_lost_item")
-		local news_header = "%c[255,160,181,169]"..game.translate_string("general_out_item")
-
-		if amount == 1 then
-			news_text_wo_header = game.translate_string(get_inv_name(item))
-			news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))
-		else
-			news_text_wo_header = game.translate_string(get_inv_name(item)).." x"..amount
-			news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item)).." x"..amount
-		end
-		
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
-		else
-			db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
-		end		
+	local news_text_wo_header
+	local news_text
+	if amount == 1 then
+		news_text_wo_header = inv_name
+		news_text = news_header.."\\n".."%c[default]"..inv_name
+	else
+		news_text_wo_header = inv_name.." x"..amount
+		news_text = news_header.."\\n".."%c[default]"..inv_name.." x"..amount
+	end
+	
+	if db.actor:is_talking() then
+		db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
+	else
+		db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
 	end
 end
 
 function relocate_money(actor, type, amount)
 	local tostr = tostring
 	if db.actor == nil then return false end
-	-- Играем дефолтный звук
-	if type == "in" then
-		local task_texture, task_rect = get_texture_info("ui_notification_found_money")
-		local news_text = "%c[255,160,181,169]"..game.translate_string("general_in_money").."\\n".."%c[default]"..game.translate_string(tostr(amount))
-		
-		local news_text_wo_header = game.translate_string(tostr(amount))
-		local news_header = "%c[255,160,181,169]"..game.translate_string("general_in_money")			
-		
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-		else
-			db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
-		end		
-	elseif type == "out" then
-		local task_texture, task_rect = get_texture_info("ui_notification_lost_money")
-		local news_text = "%c[255,160,181,169]"..game.translate_string("general_out_money").."\\n".."%c[default]"..game.translate_string(tostr(amount))
-		
-		local news_text_wo_header = game.translate_string(tostr(amount))
-		local news_header = "%c[255,160,181,169]"..game.translate_string("general_out_money")
-		
-		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-		else
-			db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
-		end		
-	end
 	
+	local relocate_info = {
+		["in"]	= { texture = "ui_notification_found_money", header = "general_in_money" },
+		["out"] = { texture = "ui_notification_lost_money",	 header = "general_out_money" }
+	}
+	
+	local info = relocate_info[type]
+	if not info then return end
+	
+	local task_texture, task_rect = get_texture_info(info.texture)
+	local amount_str = game.translate_string(tostr(amount))
+	
+	local news_text = "%c[255,160,181,169]"..game.translate_string(info.header).."\\n".."%c[default]"..amount_str
+	local news_text_wo_header = amount_str
+	local news_header = "%c[255,160,181,169]"..game.translate_string(info.header)
+	
+	if db.actor:is_talking() then
+		db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
+	else
+		db.actor:give_game_news(news_text_wo_header, news_header, task_texture, task_rect, 0, 3000)
+	end
 end

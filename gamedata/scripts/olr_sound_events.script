@@ -1,0 +1,316 @@
+------------------------------------------------------------------------------------
+-- olr_sound_events.script
+-- Управление 3D-звуковыми событиями, привязанными к объектам ALife, на основе конфигурации.
+-- Архитектура следует шаблону синглтона surge_manager:
+-- локальный экземпляр CSoundEventsManager + тонкие обёртки на уровне модуля.
+--
+-- Конфигурация: config\misc\olr_sound_events.ltx
+--
+-- API уровня модуля (используется в bind_stalker и xr_effects):
+--   initialize()          прочитать конфигурацию (идемпотентно, безопасно вызывать повторно)
+--   play(event_name)      запустить событие; ничего не делает, если уже активно (идемпотентно)
+--   restart(event_name)   остановить, затем запустить
+--   stop(event_name)      остановить одно событие
+--   stop_all()            остановить все активные события
+--   update()              обновить ожидающие/играющие события (хук обновления актёра)
+--   save(packet) / load(packet)   блок сохранения в биндере актора
+--
+-- Текущее ограничение:
+--   у sound_object нет API для перемотки, поэтому играющее событие НЕ перезапускается после
+--   загрузки; его запись удаляется из сохранённых данных. Ожидание sound_delay восстанавливается.
+--   Прошедшее время сохраняется для будущего экспорта функции перемотки в движке.
+------------------------------------------------------------------------------------
+
+local CONFIG_FILE = "misc\\olr_sound_events.ltx"
+local CONFIG_SECTION = "olr_sound_events"
+
+class "CSoundEventsManager"
+
+function CSoundEventsManager:__init()
+	self.initialized = false
+	self.events = {}
+	self.active = {}
+end
+
+------------------------------------------------------------------------------------
+-- Конфигурация
+------------------------------------------------------------------------------------
+
+function CSoundEventsManager:read_string(ini, section, key, default)
+	if not ini:line_exist(section, key) then
+		return default
+	end
+	return ini:r_string(section, key)
+end
+
+function CSoundEventsManager:read_u32(ini, section, key, default)
+	if not ini:line_exist(section, key) then
+		return default
+	end
+	return ini:r_u32(section, key)
+end
+
+-- Числовое значение = story id; иначе строка сопоставляется с серверным объектом
+-- через name_replace() в alife():object().
+function CSoundEventsManager:resolve_object(value)
+	if value == nil or value == "" then
+		return nil
+	end
+
+	local sid = tonumber(value)
+	if sid ~= nil then
+		return level_object_by_sid(sid)
+	end
+
+	local sim = alife()
+	if sim == nil then
+		return nil
+	end
+
+	local server_object = sim:object(value)
+	if server_object == nil then
+		return nil
+	end
+
+	return level.object_by_id(server_object.id)
+end
+
+function CSoundEventsManager:load_event(ini, section)
+	local object_key = self:read_string(ini, section, "object", "")
+	local sound_path = self:read_string(ini, section, "sound_path", "")
+	if object_key == "" or sound_path == "" then
+		log1(string.format("olr_sound_events: неполная секция [%s]", section))
+		return nil
+	end
+
+	return {
+		name = section,
+		object_key = object_key,
+		sound_path = sound_path,
+		sound_delay = self:read_u32(ini, section, "sound_delay", 0),
+		sound = xr_sound.get_safe_sound_object(sound_path),
+	}
+end
+
+------------------------------------------------------------------------------------
+-- Инициализация
+------------------------------------------------------------------------------------
+
+function CSoundEventsManager:initialize()
+	self.events = {}
+	self.active = {}
+
+	local ini = ini_file(CONFIG_FILE)
+	local section_list = self:read_string(ini, CONFIG_SECTION, "events", "")
+	for section in string.gmatch(section_list, "([^,]+)") do
+		section = section:match("^%s*(.-)%s*$")
+		if section ~= "" then
+			local event = self:load_event(ini, section)
+			if event ~= nil then
+				self.events[event.name] = event
+			end
+		end
+	end
+
+	self.initialized = true
+end
+
+function CSoundEventsManager:ensure_initialized()
+	if not self.initialized then
+		self:initialize()
+	end
+end
+
+------------------------------------------------------------------------------------
+-- Основные функции
+------------------------------------------------------------------------------------
+
+function CSoundEventsManager:start_event(name, state)
+	local object = self:resolve_object(state.event.object_key)
+	if object == nil then
+		log1(string.format("olr_sound_events: объект [%s] недоступен или отсутствует", state.event.object_key))
+		self.active[name] = nil
+		return false
+	end
+
+	state.event.sound:play_at_pos(object, object:position())
+	state.target_id = object:id()
+	state.started_at = time_global()
+	state.elapsed = 0
+	return true
+end
+
+function CSoundEventsManager:play(name)
+	self:ensure_initialized()
+
+	local event = self.events[name]
+	if event == nil then
+		log1(string.format("olr_sound_events: неизвестное событие [%s]", tostring(name)))
+		return false
+	end
+
+	-- Идемпотентность: xr_logic может вызывать этот эффект многократно, пока
+	-- выполняется его условие.
+	if self.active[name] ~= nil then
+		return true
+	end
+
+	local now = time_global()
+	self.active[name] = {
+		event = event,
+		due_at = now + event.sound_delay,
+		started_at = nil,
+		elapsed = 0,
+	}
+
+	if event.sound_delay == 0 then
+		return self:start_event(name, self.active[name])
+	end
+	return true
+end
+
+function CSoundEventsManager:restart(name)
+	self:stop(name)
+	return self:play(name)
+end
+
+function CSoundEventsManager:stop(name)
+	local state = self.active[name]
+	if state == nil then
+		return
+	end
+
+	if state.started_at ~= nil and state.event.sound:playing() then
+		state.event.sound:stop()
+	end
+	self.active[name] = nil
+end
+
+function CSoundEventsManager:stop_all()
+	for name, state in pairs(self.active) do
+		if state.started_at ~= nil and state.event.sound:playing() then
+			state.event.sound:stop()
+		end
+	end
+	self.active = {}
+end
+
+function CSoundEventsManager:update()
+	if not self.initialized then
+		return
+	end
+
+	local now = time_global()
+	for name, state in pairs(self.active) do
+		if state.started_at == nil then
+			if now >= state.due_at then
+				self:start_event(name, state)
+			end
+		else
+			local object = level.object_by_id(state.target_id)
+			if object == nil then
+				self:stop(name)
+			elseif state.event.sound:playing() then
+				state.event.sound:set_position(object:position())
+				state.elapsed = now - state.started_at
+			else
+				state.elapsed = now - state.started_at
+				self.active[name] = nil
+			end
+		end
+	end
+end
+
+------------------------------------------------------------------------------------
+-- Сохранение / загрузка (блок в биндере актора)
+------------------------------------------------------------------------------------
+
+function CSoundEventsManager:save(packet)
+	local count = 0
+	for name, state in pairs(self.active) do
+		-- Пропускаем звуки, которые завершились, но ещё не были очищены update().
+		if state.started_at == nil or state.event.sound:playing() then
+			count = count + 1
+		end
+	end
+
+	packet:w_u16(count)
+	for name, state in pairs(self.active) do
+		if state.started_at == nil or state.event.sound:playing() then
+			packet:w_stringZ(name)
+			if state.started_at ~= nil then
+				packet:w_u8(1) -- играет; удаляется при загрузке (пока нет перемотки)
+				packet:w_u32(time_global() - state.started_at)
+			else
+				packet:w_u8(0) -- ожидает; восстановить оставшуюся задержку
+				packet:w_u32(math.max(0, state.due_at - time_global()))
+			end
+		end
+	end
+end
+
+function CSoundEventsManager:load(packet)
+	-- Сброс к состоянию по умолчанию, как в CSurgeManager:load().
+	self:initialize()
+
+	local count = packet:r_u16()
+	for index = 1, count do
+		local name = packet:r_stringZ()
+		local was_playing = packet:r_u8()
+		local saved_time = packet:r_u32()
+		local event = self.events[name]
+		if event ~= nil and was_playing == 0 then
+			self.active[name] = {
+				event = event,
+				due_at = time_global() + saved_time,
+				started_at = nil,
+				elapsed = 0,
+			}
+		end
+	end
+end
+
+------------------------------------------------------------------------------------
+-- Синглтон + обёртки уровня модуля
+------------------------------------------------------------------------------------
+
+local manager = nil
+
+local function get_manager()
+	if manager == nil then
+		manager = CSoundEventsManager()
+	end
+	return manager
+end
+
+function initialize()
+	get_manager():ensure_initialized()
+end
+
+function play(name)
+	get_manager():play(name)
+end
+
+function restart(name)
+	get_manager():restart(name)
+end
+
+function stop(name)
+	get_manager():stop(name)
+end
+
+function stop_all()
+	get_manager():stop_all()
+end
+
+function update()
+	get_manager():update()
+end
+
+function save(packet)
+	get_manager():save(packet)
+end
+
+function load(packet)
+	get_manager():load(packet)
+end

@@ -1,6 +1,3 @@
-#ifndef        HMODEL_H
-#define HMODEL_H
-
 #include "common.h"
 
 uniform samplerCUBE	env_s0;
@@ -29,26 +26,11 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float s
 
         // diffuse color
         float3 env_d;
-		if (Hmodel_params.x > 0.5) {
-			// аппроксимация valve ambient cube, не помню откуда подрезал, толи ES толи SSS, толи просто аномали, а может и еще откуда
-        	float3 nSq = nw * nw;
-        	float3 e0d = 0;
-        	e0d += nSq.x * texCUBE(env_s0, float3(-nw.x, 0.0001, 0.0001));
-        	e0d += nSq.y * texCUBE(env_s0, float3(0.0001, nw.y, 0.0001));
-        	e0d += nSq.z * texCUBE(env_s0, float3(0.0001, 0.0001, nw.z));
 
-        	float3 e1d = 0;
-        	e1d += nSq.x * texCUBE(env_s1, float3(-nw.x, 0.0001, 0.0001));
-        	e1d += nSq.y * texCUBE(env_s1, float3(0.0001, nw.y, 0.0001));
-        	e1d += nSq.z * texCUBE(env_s1, float3(0.0001, 0.0001, nw.z));
-
-        	env_d = env_color.xyz * lerp(e0d,e1d,env_color.w);
-		} else {
-			float3 diffuse_reflected_tc = float3(-nw.x, nw.y, nw.z);
-        	float3 e0d = texCUBE(env_s0,diffuse_reflected_tc);
-        	float3 e1d = texCUBE(env_s1,diffuse_reflected_tc);		
-        	env_d = env_color.xyz * lerp(e0d,e1d,env_color.w);
-		}
+		float3 diffuse_reflected_tc = float3(-nw.x, nw.y, nw.z);
+        float3 e0d = texCUBE(env_s0,diffuse_reflected_tc);
+        float3 e1d = texCUBE(env_s1,diffuse_reflected_tc);		
+        env_d = env_color.xyz * lerp(e0d,e1d,env_color.w);
 
         hdiffuse = env_d * light.xyz + L_ambient.rgb;
 
@@ -67,14 +49,5 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float s
 
 		//hspecular = env_s*light.w*s;
 		
-		if (Hmodel_params.y > 0.5) {
-			float F0 = 0.04; // диэлектрики, но нам в целом сойдёт
-			float NdotV = saturate(dot(nw, -v2point));
-			float fresnel = F0 + (1.0 - F0) * pow(1.0 - NdotV, 5.0);
-			hspecular = env_s * light.w * s * fresnel; // почему бы и да?
-		} else {
-			hspecular = env_s * light.w * s;
-		}
+		hspecular = env_s * light.w * s;
 }
-
-#endif

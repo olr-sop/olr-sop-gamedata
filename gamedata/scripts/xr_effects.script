@@ -1246,6 +1246,13 @@ function del_flyer_dolina()
 	olr.del_by_name("lvl4_darkdolina_stalker_0071")
 end
 
+function val_scientist_to_warlab()
+	if not has_alife_info("val_scientist_to_warlab") then
+		olr.del_by_name("lvl4_darkdolina_stalker_0021")
+		olr.info("val_scientist_to_warlab")
+	end
+end
+
 function dolina_pris_ecol()
 	if not has_alife_info("dolina_pris_ecol") then
 		news_manager.send_tip(db.actor, game.translate_string("dolina_pris_ecol_0"), nil, "ecolog", 5000)
@@ -1270,7 +1277,6 @@ end
 function dol_kumiry_1(actor, npc)
 	news_manager.send_tip(db.actor, game.translate_string("st_xr_effects_message_kumiry"), math.random(3000, 4000), "unknown", 15000, nil, "pda_objective", false)
 	soundtrack.darklab_start_bassz()
-	olr.kill_mon_in_radius(db.actor:position(), 65)
 end
 
 function dol_kumiry_2(actor, npc)
@@ -1368,23 +1374,17 @@ end
 function multicutscene_one(actor)
 	xr_effects.disable_ui(db.actor, nil)
 	level.add_pp_effector("blink.ppe", 20131, false) 
-	level.add_cam_effector2("camera_effects\\dolina_cam_1.anm", 30, false, "xr_effects.multicutscene_two")
+	level.add_cam_effector2("camera_effects\\lab_karlik_scene.anm", 115, false, "xr_effects.enable_newui")
 	--log1("1")
-end
-
-function multicutscene_two(actor)
-	level.add_cam_effector2("camera_effects\\dolina_cam_2.anm", 30, false, "xr_effects.multicutscene_tri")
-	--log1("2")
-end
-
-function multicutscene_tri(actor)
-	level.add_cam_effector2("camera_effects\\dolina_cam_3.anm", 30, false, "xr_effects.enable_newui")
-	--log1("3")
 end
 
 function enable_newui(actor)
 	xr_effects.enable_ui(db.actor, nil)
 	local se_obj = alife():object("lvl4_darkdolina_staler_undead_olr_0000")
+	if se_obj then
+		alife():release(se_obj, true)
+	end
+	se_obj = alife():object("lvl4u_darklab_karlik_000a")
 	if se_obj then
 		alife():release(se_obj, true)
 	end
@@ -1395,7 +1395,7 @@ end
 -- ----------------------------------------------------------------------------------------------------
 function bar_territory_logic(actor, npc)
 	local level = level.name()
-	if	level == "lvl5_bar" then
+	if	level == "l05_bar" then
 		if dialogs.actor_in_dolg(actor,npc) then
 			if has_alife_info("bar_dolg_territory_kill") then
 				--news_manager.send_tip(actor, "bar_territory_dolg_kill", nil, "dolg", nil, 507)
@@ -2724,7 +2724,7 @@ function try_radbun_antenaupr()	 -- вводим код
 	end
 	if has_alife_info("radbun_antena_bar") then
 		olr.info("pre_aes_antenna_off")
-		nick.set_level_choosen_zombied("lvl5_bar")
+		nick.set_level_choosen_zombied("l05_bar")
 		news_manager.send_tip(db.actor, game.translate_string("try_radbun_antenaupr_7"), 50, "dolg", 35000)
 		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
 		level.add_pp_effector("blink.ppe", 20131, false)
@@ -2732,7 +2732,7 @@ function try_radbun_antenaupr()	 -- вводим код
 	end
 	if has_alife_info("radbun_antena_mg") then
 		olr.info("pre_aes_antenna_off")
-		nick.set_level_choosen_zombied("lvl11_deadcity")
+		nick.set_level_choosen_zombied("l11_deadcity")
 		news_manager.send_tip(db.actor, game.translate_string("try_radbun_antenaupr_8"), 50, "freedom", 35000)
 		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
 		level.add_pp_effector("blink.ppe", 20131, false)
@@ -2740,7 +2740,7 @@ function try_radbun_antenaupr()	 -- вводим код
 	end
 	if has_alife_info("radbun_antena_yan") then
 		olr.info("pre_aes_antenna_off")
-		nick.set_level_choosen_zombied("lvl7_yantar")
+		nick.set_level_choosen_zombied("l07_yantar")
 		news_manager.send_tip(db.actor, game.translate_string("try_radbun_antenaupr_9"), 50, "ecolog", 35000)
 		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
 		level.add_pp_effector("blink.ppe", 20131, false)

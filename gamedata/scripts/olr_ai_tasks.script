@@ -346,7 +346,7 @@ local flgmondr = false
 -- проверка выполнени€ основного квеста. выполн€етс€ если есть has_task выше
 function check_complete_main(obj)
     -- офл торговл€ бар
-    if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true and obj.level_name == "lvl5_bar" then
+    if IsStalker(obj) and xvars.npc_ofl_trade[obj:name()] == true and obj.level_name == "l05_bar" then
         local bar_pos = vector():set(-107, -90, -231)
         if obj.position:distance_to(bar_pos) < 20 then
             --news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в бар и торгует сейчас", nil, "dolg", 15000)
@@ -355,7 +355,7 @@ function check_complete_main(obj)
         end
     end
     -- офл торговл€ €нтарь
-    if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true and obj.level_name == "lvl7_yantar" then
+    if IsStalker(obj) and xvars.npc_ofl_trade_yan[obj:name()] == true and obj.level_name == "l07_yantar" then
         local yan_pos = vector():set(-177, 6, 177)
         if obj.position:distance_to(yan_pos) < 10 then
             --news_manager.send_tip(db.actor, "сталкер "..obj:name().." пришел в €нтарь и торгует сейчас", nil, "dolg", 15000)
@@ -368,7 +368,7 @@ function check_complete_main(obj)
     -- добратьс€ до монолита и загадать желание (идем в саркофаг)
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "find_monolit" then
         local monolit_pos = vector():set(20, 51, 25)
-        if obj.level_name == "lvl15_sarcofag" and obj.position:distance_to(monolit_pos) < 20 then
+        if obj.level_name == "l14u_sarcofag" and obj.position:distance_to(monolit_pos) < 20 then
             local rndm = math.random(1, 10)
             if rndm == 3 then
                 local bos = level.object_by_id(obj.id)
@@ -384,7 +384,7 @@ function check_complete_main(obj)
                     pk:set(data)
                     smart_terrain.on_death(obj.id)
                     if flgmond == false then
-                        if level.name() == "lvl16_generators" then
+                        if level.name() == "l15_generators" then
                             return
                         end
                         news_manager.send_tip(db.actor,game.translate_string("st_olr_ai_tasks_monolith_searcher_1") .." " .. name .. " " .. game.translate_string("st_olr_ai_tasks_monolith_searcher_2"),1,"default",15000)
@@ -396,7 +396,7 @@ function check_complete_main(obj)
     end
     -- Ќайти причину возникновени€ «оны и добитьс€ ее исчезновени€ (добратьс€ на генераторы)
     if IsStalker(obj) and xvars.npcs_tasks[obj:name()] == "reason_zone" then
-        if obj.level_name == "lvl16_generators" then
+        if obj.level_name == "l15_generators" then
             local rndstn = math.random(1, 4)
             if rndstn == 2 then
                 local bos = level.object_by_id(obj.id)
@@ -412,7 +412,7 @@ function check_complete_main(obj)
                     pk:set(data)
                     smart_terrain.on_death(obj.id)
                     if flgmondr == false then
-                        if level.name() == "lvl16_generators" then
+                        if level.name() == "l15_generators" then
                             return
                         end
                         news_manager.send_tip(db.actor,game.translate_string("st_olr_ai_tasks_destruction_seeker_1") .." " .. name .. " " .. game.translate_string("st_olr_ai_tasks_destruction_seeker_2"),1,"news",15000)
@@ -498,7 +498,7 @@ function set_obj_rndway(obj)
 end
 
 function away_from_zone_cash(obj)
-    if obj:alive() and obj.level_name == "lvl1_escape" then
+    if obj:alive() and obj.level_name == "l01_escape" then
         local rnd = math.random(1, 12)
         if rnd == 2 then
             xvars.cash_need_summa_has[obj:name()] = nil
@@ -528,7 +528,7 @@ function away_from_zone_cash(obj)
 end
 
 function away_from_zone_tourism(obj)
-    if obj:alive() and obj.level_name == "lvl14_stancia" then
+    if obj:alive() and obj.level_name == "l14_stancia" then
         local rnd = math.random(1, 10)
         if rnd == 3 then
             local wait_time = 0
@@ -557,7 +557,7 @@ function away_from_zone_tourism(obj)
 end
 
 function away_from_zone_revenge(obj)
-    if obj and obj.level_name == "lvl1_escape" then
+    if obj and obj.level_name == "l01_escape" then
         local yan_pos = vector():set(147, 0, -13)
         if obj.position:distance_to(yan_pos) < 20 then
             local wait_time = 0
@@ -586,7 +586,7 @@ function away_from_zone_revenge(obj)
 end
 
 function away_from_zone(obj)
-    if obj and obj.level_name == "lvl1_escape" then
+    if obj and obj.level_name == "l01_escape" then
         local yan_pos = vector():set(147, 0, -13)
         if obj.position:distance_to(yan_pos) < 20 then
             local wait_time = 0
@@ -621,7 +621,7 @@ function set_maintask_substates(obj, rnd_quest)
 		for _, kill in ipairs(olr_offline_walk.tabst) do
 			if kill then
 				if IsStalker(kill) then
-					if kill.alive and kill:alive() and kill.level_name == "lvl1_escape" or kill.level_name == "lvl2_garbage" or kill.level_name == "lvl3_agroprom" or kill.level_name == "lvl4_darkdolina" then
+					if kill.alive and kill:alive() and kill.level_name == "l01_escape" or kill.level_name == "l02_garbage" or kill.level_name == "l03_agroprom" or kill.level_name == "l04_darkvalley" then
 						if not olr_protected.is_no_offline_alife_obj(kill:name()) then
 							table.insert(places, kill)
 						end

@@ -1,24 +1,28 @@
 ------------------------------------------------------------------------------------
 -- olr_sound_events.script
 -- Управление 3D-звуковыми событиями, привязанными к объектам ALife, на основе конфигурации.
--- Архитектура следует шаблону синглтона surge_manager:
--- локальный экземпляр CSoundEventsManager + тонкие обёртки на уровне модуля.
 --
 -- Конфигурация: config\misc\olr_sound_events.ltx
 --
 -- API уровня модуля (используется в bind_stalker и xr_effects):
---   initialize()          прочитать конфигурацию (идемпотентно, безопасно вызывать повторно)
---   play(event_name)      запустить событие; ничего не делает, если уже активно (идемпотентно)
---   restart(event_name)   остановить, затем запустить
---   stop(event_name)      остановить одно событие
---   stop_all()            остановить все активные события
---   update()              обновить ожидающие/играющие события (хук обновления актёра)
---   save(packet) / load(packet)   блок сохранения в биндере актора
+--	initialize()							прочитать конфигурацию (идемпотентно, безопасно вызывать повторно)
+--	olr_sound_events.play(event_name)		запустить событие; ничего не делает, если уже активно (идемпотентно)
+--	olr_sound_events.restart(event_name)	остановить, затем запустить
+--	olr_sound_events.stop(event_name)		остановить одно событие
+--	olr_sound_events.stop_all()				остановить все активные события
+--	olr_sound_events.update()				обновить ожидающие/играющие события (хук обновления актёра)
+--	save(packet) / load(packet)				блок сохранения в биндере актора
 --
 -- Текущее ограничение:
---   у sound_object нет API для перемотки, поэтому играющее событие НЕ перезапускается после
---   загрузки; его запись удаляется из сохранённых данных. Ожидание sound_delay восстанавливается.
---   Прошедшее время сохраняется для будущего экспорта функции перемотки в движке.
+--	у sound_object нет API для перемотки, поэтому играющее событие НЕ перезапускается после
+--	загрузки; его запись удаляется из сохранённых данных. Ожидание sound_delay восстанавливается.
+--	Прошедшее время сохраняется для будущего экспорта функции перемотки в движке.
+--
+-- Для мододелов:
+--	Вам достаточно использовать из скриптов, этого хватит. Остальное не трогайте
+--	 olr_sound_events.play(event_name)		запустить событие; ничего не делает, если уже активно
+--	 olr_sound_events.restart(event_name)	остановить, затем запустить
+--	 olr_sound_events.stop(event_name)		остановить одно событие
 ------------------------------------------------------------------------------------
 
 local CONFIG_FILE = "misc\\olr_sound_events.ltx"
@@ -50,9 +54,12 @@ function CSoundEventsManager:read_u32(ini, section, key, default)
 	return ini:r_u32(section, key)
 end
 
--- Числовое значение = story id; иначе строка сопоставляется с серверным объектом
--- через name_replace() в alife():object().
+-- Передаётся либо актор, либо нейм из спавна либо сид (стори айди)
 function CSoundEventsManager:resolve_object(value)
+	if value == "actor" then
+		return db.actor
+	end
+
 	if value == nil or value == "" then
 		return nil
 	end
@@ -133,7 +140,12 @@ function CSoundEventsManager:start_event(name, state)
 		return false
 	end
 
-	state.event.sound:play_at_pos(object, object:position())
+	if state.event.object_key == "actor" then
+		-- Играет в голове, позицию обновлять не нужно (и у метода play невозможно)
+		state.event.sound:play(object, 0, sound_object.s2d)
+	else
+		state.event.sound:play_at_pos(object, object:position())
+	end
 	state.target_id = object:id()
 	state.started_at = time_global()
 	state.elapsed = 0
@@ -208,7 +220,15 @@ function CSoundEventsManager:update()
 			end
 		else
 			local object = level.object_by_id(state.target_id)
-			if object == nil then
+			if state.event.object_key == "actor" then
+				-- Актор всегда в онлайне, ему позиция не обновляется (да и 2д звук играет в голове).
+				if state.event.sound:playing() then
+					state.elapsed = now - state.started_at
+				else
+					state.elapsed = now - state.started_at
+					self.active[name] = nil
+				end
+			elseif object == nil then
 				self:stop(name)
 			elseif state.event.sound:playing() then
 				state.event.sound:set_position(object:position())

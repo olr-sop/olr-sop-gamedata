@@ -465,7 +465,18 @@ function gulag:clear_dead(obj_id)
 	if self.ObjectJob[obj_id] then
 		self:changeCasualities( 1 )
 		local job = self.Job[self.ObjectJob[obj_id]]
-		job.idle_after_death_end = get_game_seconds_srp() + ( job.idle_after_death or job_idle_after_death )
+		-- «аглушка по вылету когда что-то оказываетс€ nil
+		local secs = get_game_seconds_srp()
+		local idle = job.idle_after_death or job_idle_after_death
+		--log1( string.format( "DIAG clear_dead [%s] obj=%s job=%s section=%s", tostring(self.name), tostring(obj_id), tostring(job), tostring(job and job.section) ) )
+		--log1( string.format( "DIAG clear_dead secs=%s idle=%s job.idle_after_death=%s upvalue_const=%s", tostring(secs), tostring(idle), tostring(job.idle_after_death), tostring(job_idle_after_death) ) )
+		if secs == nil then
+			log1( "! gulag:clear_dead secs == nil: secs=" .. tostring(secs) .. " idle=" .. tostring(idle) .. " just skip" )
+		elseif idle == nil then
+			log1( "! gulag:clear_dead idle == nil : secs=" .. tostring(secs) .. " idle=" .. tostring(idle) .. " just skip" )
+		else
+			job.idle_after_death_end = secs + idle
+		end
 	end
 
 	self.smrttrn:unregister_npc( self.npc_info[obj_id].se_obj )

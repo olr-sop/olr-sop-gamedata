@@ -30,15 +30,6 @@ end
 
 -- evaluator
 function evaluator_trading:evaluate()
-	-- решение Ђторговать/нетї мен€етс€ медленно Ч кэшируем результат на 500 мс.
-	local now = time_global()
-	if self._ev_tm and now < self._ev_tm then
-		return self._ev_res
-	end
-	if self.object:best_enemy() or self.object:is_talking() then
-		self._ev_tm = nil
-	end
-	self._ev_tm = now + cache_ttl(500)
 
 	local npc = self.object
 	local lvl = level.name()
@@ -46,7 +37,6 @@ function evaluator_trading:evaluate()
 	-- торгуют только на трЄх уровн€х Ч раньше этот случай доходил до money/has_alife_info.
 	-- теперь на выходим из схемы если уровень не один из трЄх ниже, нефиг еще думать
 	if lvl ~= "l01_escape" and lvl ~= "l09_military" and lvl ~= "l05_bar" then
-		self._ev_res = false
 		return false
 	end	
 	
@@ -54,12 +44,10 @@ function evaluator_trading:evaluate()
 	local comm = npc:character_community()
 
 	if npc:best_enemy() then
-		self._ev_res = false
 		return false
 	end
 
 	if npc:is_talking() then
-		self._ev_res = false
 		return false
 	end
 
@@ -67,7 +55,6 @@ function evaluator_trading:evaluate()
 		local npctalk = level:get_second_talker()
 		if npctalk:name() == "bar_barman" or npctalk:name() == "lvl9_military_m_trader" or npctalk:name() == "escape_trader_0000" then
 			--log1("nope")
-			self._ev_res = false
 			return false
 		end
 	end
@@ -76,17 +63,14 @@ function evaluator_trading:evaluate()
 	
 	local spawn_ini = npc:spawn_ini()
 	if spawn_ini and spawn_ini:section_exist("logic") then
-		self._ev_res = false
 		return false -- —талкеры имеющие логику в кастом дате так-же игнорируютс€
 	end
 	
 	if olr_protected.is_no_offline_alife_obj(name) then 
-		self._ev_res = false
 		return false --  вестовые защищенные и прочие непеси из этого списка Ќ≈ ƒќЋ∆Ќџ ЅЋя Ѕ≈∆ј“№ “ќ–√ќ¬ј“№
 	end
 
 	if has_alife_info("olr_traders_night") then
-		self._ev_res = false
 		return false
 	end
 
@@ -100,7 +84,6 @@ function evaluator_trading:evaluate()
 		or name == "lvl1_escape_stalker_0054" -- —ивый
 		or name == "lvl1_escape_stalker_0055" -- „Єрт
 	then
-		self._ev_res = false
 		return false
 	end
 
@@ -112,7 +95,6 @@ function evaluator_trading:evaluate()
 		or comm == "bandit"
 		or comm == "voenstals"
 		or comm == "sin"  then
-		self._ev_res = false
 		return false
 	end
 	-- копим бабло дл€ основной цели
@@ -123,30 +105,24 @@ function evaluator_trading:evaluate()
 	-- ∆аба
 	if lvl == "l01_escape" then
 		if has_alife_info("kvest_bar_2_dialog_start") then
-			self._ev_res = false
 			return false -- ∆аба свалил на ’олмы
 		end
 		if npc:money() > 1000 then
-			self._ev_res = true
 			return true
 		end
 		if npc:ruck_count() > 25 then
-			self._ev_res = true
 			return true
 		end
 	end
 	-- ∆аба мил
 	if lvl == "l09_military" then
 		if not has_alife_info("greh_leader_key_taken_docs_vetri") then
-			self._ev_res = false
 			return false -- ∆аба свалил на ’олмы
 		end
 		if npc:money() > 3000 then
-			self._ev_res = true
 			return true
 		end
 		if npc:ruck_count() > 25 then
-			self._ev_res = true
 			return true
 		end
 	end
@@ -154,29 +130,23 @@ function evaluator_trading:evaluate()
 	-- Ѕармен
 	if lvl == "l05_bar" then
 		if not has_alife_info("open_bar_door_start_krisa") then
-			self._ev_res = false
 			return false -- бармен ещЄ не по€вилс€ с начала
 		end
 		if has_alife_info("greh_leader_key_taken_docs_vetri") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
-			self._ev_res = false
 			return false -- бармен свалил и ещЄ не вернулс€
 		end
 		if has_alife_info("bun_antenna_off") then
-			self._ev_res = false
 			return false -- бармен свалил
 		end
 		if npc:money() > 5000 then
-			self._ev_res = true
 			return true
 		end
 		if npc:ruck_count() > 25 then
 			--log1("has to trade - "..npc:ruck_count().." ")
-			self._ev_res = true
 			return true
 		end
 	end
 
-	self._ev_res = false
 	return false
 end
 

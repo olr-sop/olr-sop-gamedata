@@ -5233,19 +5233,24 @@ end
 function hit_boss_atack()
 	local car = alife():object("lvl16_generators_staler_undead_olr_0002")
 	if car then
-		local h = hit()
-		h.power = 0.1
-		h.direction = vector():set(0, 100, 0)
-		h.impulse = 20
-		h.draftsman = db.actor
-		h.type = hit.strike
-		car:hit(h)
-		
+		local car_client = level.object_by_id(car.id)
+		if car_client then
+			local h = hit()
+			h.power = 0.1
+			h.direction = vector():set(0, 100, 0)
+			h.impulse = 20
+			h.draftsman = db.actor
+			h.type = hit.strike
+			car_client:hit(h)
+		else
+			log1("hit_boss_atack: client object not found for id=" .. tostring(car.id))
+		end
+
 		local pos = car:position()
 		particles_object([[anomaly\a-03-flash-sparks_old00]]):play_at_pos(pos)
 		particles_object([[anomaly\a-03-expl-sparks_00]]):play_at_pos(pos)
 		particles_object([[anomaly2\monolith_golo_death_olr]]):play_at_pos(pos)
-		
+
 		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\sob]])
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end

@@ -14,14 +14,6 @@ float4 plight_infinity(float m, float3 point, float3 normal, float3 light_direct
     float3 L		= -light_direction;
     float3 H		= normalize(L+V);
     float4 light	= tex3D(s_material, float3(saturate(dot(L,N)), dot(H,N), m));
-
-    // Back-rim: край светится когда солнце позади объекта
-    if (Lmodel_params.y > 0.5) {
-        float back  = saturate(-dot(N, L));
-        float edge  = pow(1.0 - saturate(dot(N, V)), 3.0);
-        float rim   = back * edge;
-        light.xyz  += rim * L_sun_color.xyz;
-    }
 	
     return light;
 }
@@ -42,14 +34,9 @@ float hl_atten(float rsqr, float inv_range_sq)
 {
 	float d2 = rsqr * inv_range_sq;
 	float att;
-	if (Lmodel_params.x < 0.5)
-		att = saturate(1.0 - d2);
-	else if (Lmodel_params.x < 1.5)
-		att = pow2(saturate(1.0 - d2));
-	else if (Lmodel_params.x < 2.5)
-		att = saturate(1.0 / (1.0 + d2 * 4.0));
-	else
-		att = saturate(1.0 / max(d2, 0.001)) * saturate(1.0 - d2 * 0.25);
+	
+	att = saturate(1.0 - d2);
+
 	return att;
 }
 
@@ -64,13 +51,6 @@ float4 plight_local(float m, float3 point, float3 normal, float3 light_position,
     float  att  = hl_atten(rsqr, light_range_rsq);
     float4 light = tex3D(s_material, float3(saturate(dot(L,N)), dot(H,N), m));
 
-    // Back-rim от локального источника — затухает с расстоянием
-    if (Lmodel_params.y > 0.5) {
-        float back  = saturate(-dot(N, L));
-        float edge  = pow(1.0 - saturate(dot(N, V)), 3.0);
-        float rim   = back * edge;
-        light.xyz  += rim * Ldynamic_color.xyz;
-    }
     return float4(att * light.xyz, att * light.w);
 }
 

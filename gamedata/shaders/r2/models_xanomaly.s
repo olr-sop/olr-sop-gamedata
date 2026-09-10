@@ -6,7 +6,7 @@ function normal   (shader, t_base, t_second, t_detail)
       : aref      (true,0)
       : sorting   (3,true)
   shader:sampler  ("s_base")       :texture    (t_base)
-  shader:sampler  ("s_env")        :texture    ("sky\\sky_01") : clamp()
+  shader:sampler  ("s_env")        :texture    ("$user$sky0") : clamp()
 end
 
 function l_special  (shader, t_base, t_second, t_detail)

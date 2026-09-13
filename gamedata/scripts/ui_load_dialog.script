@@ -74,7 +74,12 @@ function load_dialog:FillList()
 end
 
 function load_dialog:InitControls()
-	self:Init(0,0,1024,768)
+	-- [ui] uniform-scale support: center the authored 1024x768 group on the virtual canvas;
+	-- in legacy mode k is non-uniform and dx/dy degenerate to 0 (old behavior)
+	local ui_k  = math.min(device().width/1024, device().height/768)
+	local ui_dx = (device().width /ui_k - 1024)/2
+	local ui_dy = (device().height/ui_k - 768)/2
+	self:Init(ui_dx,ui_dy,1024,768)
 	
 	xml_init			 = CScriptXmlInit()
 	local ctrl
@@ -82,11 +87,23 @@ function load_dialog:InitControls()
 	
 	xml_init:InitStatic("back_video", self)
 	xml_init:InitStatic("background",				self)
-	if xml_init:NavigateToNode("back_left", 0) then
-		xml_init:InitStatic("back_left", self)
+	local bl = xml_init:InitStatic("back_left", self)
+	-- [ui] side stubs: cover canvas from screen edges to the centered group;
+	-- on square aspects (dx=0) the stubs are hidden (bg fills via canvas_h)
+	if ui_dx > 0 then
+		bl:SetWndPos(-ui_dx, 0)
+		bl:SetWidth(ui_dx)
+		bl:SetHeight(768)
+	else
+		bl:Show(false)
 	end
-	if xml_init:NavigateToNode("back_right", 0) then
-		xml_init:InitStatic("back_right", self)
+	local br = xml_init:InitStatic("back_right", self)
+	if ui_dx > 0 then
+		br:SetWndPos(1024, 0)
+		br:SetWidth(ui_dx)
+		br:SetHeight(768)
+	else
+		br:Show(false)
 	end
 
 	self.form = xml_init:InitStatic("form",			self)

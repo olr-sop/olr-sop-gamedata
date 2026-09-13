@@ -306,7 +306,11 @@ end
 function injector_info:InitControls()
 	local sformat = string.format
 	local xml = CScriptXmlInit()
-	self:Init(0,0,1024,768)
+	-- [ui] center authored 1024x768 root window on the virtual canvas (legacy mode: dx/dy = 0)
+	local ui_k  = math.min(device().width/1024, device().height/768)
+	local ui_dx = (device().width /ui_k - 1024)/2
+	local ui_dy = (device().height/ui_k - 768)/2
+	self:Init(ui_dx,ui_dy,1024,768)
 	xml:ParseFile("injector_info.xml")
 	self.frame3 = xml:InitFrame("frame3", self)
 	self:Register(xml:Init3tButton("frame3:button2", self.frame3), "button2")

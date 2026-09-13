@@ -12,10 +12,14 @@ function ui_best_stalkers:__finalize()
 end
 
 function ui_best_stalkers:InitControls()
-	self:Init(0, 0, 1024, 768)
+	-- [ui] center authored 1024x768 root window on the virtual canvas (legacy mode: dx/dy = 0)
+	local ui_k  = math.min(device().width/1024, device().height/768)
+	local ui_dx = (device().width /ui_k - 1024)/2
+	local ui_dy = (device().height/ui_k - 768)/2
+	self:Init(ui_dx,ui_dy,1024,768)
 	
 	local xml = CScriptXmlInit()
-	local xml_file = xml:is_16_9_mode() and "flyer\\best_stalkers_16.xml" or "flyer\\best_stalkers.xml"
+	local xml_file = "flyer\\best_stalkers.xml"
 	xml:ParseFile(xml_file)
 
 	self.back = xml:InitStatic("background", self)

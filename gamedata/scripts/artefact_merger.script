@@ -190,14 +190,18 @@ function MergerMenu:__finalize()
 end
 
 function MergerMenu:InitControls()
-	self:Init(0, 0, 1024, 768)
+	-- [ui] center authored 1024x768 root window on the virtual canvas (legacy mode: dx/dy = 0)
+	local ui_k  = math.min(device().width/1024, device().height/768)
+	local ui_dx = (device().width /ui_k - 1024)/2
+	local ui_dy = (device().height/ui_k - 768)/2
+	self:Init(ui_dx,ui_dy,1024,768)
 	
 	local xml = CScriptXmlInit()
-	if xml:is_16_9_mode() then
-		xml:ParseFile("flyer\\ui_artefact_merger_wnd_16.xml")
-	else
+--	if xml:is_16_9_mode() then
+--		xml:ParseFile("flyer\\ui_artefact_merger_wnd_16.xml")
+--	else
 		xml:ParseFile("flyer\\ui_artefact_merger_wnd.xml")
-	end
+--	end
 	
 	self.background = xml:InitStatic("background", self)
 	

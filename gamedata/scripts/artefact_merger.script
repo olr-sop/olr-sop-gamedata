@@ -191,9 +191,15 @@ end
 
 function MergerMenu:InitControls()
 	-- [ui] center authored 1024x768 root window on the virtual canvas (legacy mode: dx/dy = 0)
-	local ui_k  = math.min(device().width/1024, device().height/768)
-	local ui_dx = (device().width /ui_k - 1024)/2
-	local ui_dy = (device().height/ui_k - 768)/2
+	-- [ui] canvas offsets: wide screens carry extra width (centered 1024 group);
+	-- tall screens (5:4) are stretched by the engine to fill, so both offsets are 0.
+	local ui_kx = device().width /1024
+	local ui_ky = device().height/768
+	local ui_dx = 0
+	local ui_dy = 0
+	if ui_kx > ui_ky then
+		ui_dx = (device().width/ui_ky - 1024)/2
+	end
 	self:Init(ui_dx,ui_dy,1024,768)
 	
 	local xml = CScriptXmlInit()

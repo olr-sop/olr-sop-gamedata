@@ -73,12 +73,12 @@ end
 
 function mil_nap_on_base_blow_st()
 	level.set_weather_fx("surge")
-	level.add_pp_effector("vibros_p.ppe", 231, false)
+	level.add_pp_effector("event\\deprecated\\vibros_p.ppe", 231, false)
 end
 
 function mil_nap_on_base_blow_st_go()
 	level.set_weather_fx("surge")
-	level.add_pp_effector("vibros_p.ppe", 231, false)
+	level.add_pp_effector("event\\deprecated\\vibros_p.ppe", 231, false)
 	olr.kill_mon_in_radius(db.actor:position(), 50)
 	olr_sleep.sleep_main(5)
 end
@@ -88,7 +88,7 @@ function mil_monsters_qutscene_end()
 	level.show_indicators()
 	level.enable_input()
 	db.actor:restore_weapon()
-	level.add_pp_effector("total_recall.ppe", 204131, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 204131, false)
 	olr.info("mil_quest_art_spawn_naparnik_go")
 end
 
@@ -260,13 +260,13 @@ function mil_monsters_qutscene()
 	
 	olr.blow_add(1000)
 	level.set_weather_fx("surge")
-	level.add_pp_effector("vibros_p.ppe", 231, false)
-	level.add_cam_effector2("mil_mon_volna.anm", 3470, false, "nick.mil_monsters_qutscene_end")
+	level.add_pp_effector("event\\deprecated\\vibros_p.ppe", 231, false)
+	level.add_cam_effector2("mil_monsters_wave_cutscene_cam.anm", 3470, false, "nick.mil_monsters_qutscene_end")
 
 	olr.snd([[ambient\special\generators_kill_zombies]])
 	bind_stalker.hide_weapon()
-	level.add_pp_effector("black.ppe", 281, false)
-	level.add_pp_effector("total_recall.ppe", 176, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 281, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 176, false)
 	olr.disable_walk()
 	level.disable_input()
 
@@ -292,7 +292,7 @@ function zone_dead_zone_now_off()
 	db.actor:disable_info_portion("deadzone_eff_now")
 	level.remove_pp_effector(15233)
 	level.remove_pp_effector(16771)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 end
 
 function precond_dopseif_bar()
@@ -559,7 +559,7 @@ end
 
 function kill_zombs_gen()
 	olr.snd([[ambient\special\generators_kill_zombies]])
-	level.add_pp_effector("black.ppe", 231, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 231, false)
 	for k,v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
 		if npc and npc:position():distance_to(db.actor:position()) < 95 and npc:is_monster() then
@@ -686,7 +686,7 @@ function engame_fun_monolitc()
 		return
 	end
 
-	level.add_pp_effector("vibros.ppe", 2001, true)
+	level.add_pp_effector("event\\deprecated\\vibros.ppe", 2001, true)
 	if mrandom(1, 10) == 1 then
 		olr.spawen_phantoms()
 		snd_obj_eq = sound_object([[ambient\weather\earthquake]], sound_object.looped + sound_object.s2d)
@@ -866,8 +866,7 @@ function start_boss_firts_talk()
 	olr.snd([[ambient\special\radar_bunker_saint_appearing]])
 	bind_stalker.hide_weapon()
 	olr.del_by_name("lvl16_generators_stalker_0035")
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_pp_effector("proba_gray.ppe", 2032431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local point = patrol("actor_boss_talk_one_walk")
@@ -875,8 +874,8 @@ function start_boss_firts_talk()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("total_recall.ppe", 15876, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 15876, false)
 	level.add_cam_effector("camera_effects\\shell_shock.anm", 3496, false, "")
 	olr.disable_walk()
 	level.disable_input()
@@ -1048,8 +1047,8 @@ function post_suka_blyat()
 	level.hide_indicators()	
 	bind_stalker.hide_weapon()
 	olr.hide_inv()
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\gen_posthuman_1.anm", 90, false, "nick.posthuman_ending_2")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_posthuman_cam_1.anm", 90, false, "nick.posthuman_ending_2")
 --	level.set_weather("1865",true)
 end
 
@@ -1057,13 +1056,13 @@ function posthuman_ending_2()
 	olr.snd([[characters_voice\scenario\generators\end\ending_posthuman_2]])
 	olr.info("posthuman_cutscene_start")
 	olr_timers.st_timer("posthuman_ending_kill_posthuman", 14, "nick.posthuman_ending_kill_posthuman()")
-	level.add_cam_effector2("camera_effects\\gen_posthuman_2.anm", 90, false, "nick.posthuman_ending_3")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_posthuman_cam_2.anm", 90, false, "nick.posthuman_ending_3")
 end
 
 function posthuman_ending_3()
 	olr.snd([[characters_voice\scenario\generators\end\ending_posthuman_3]])
 	olr.info("gen_posthum_strelok_spawn")
-	level.add_cam_effector2("camera_effects\\gen_posthuman_3.anm", 90, false, "dialogs_aes.osoznanie_agree")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_posthuman_cam_3.anm", 90, false, "dialogs_aes.osoznanie_agree")
 end
 
 function posthuman_ending_kill_posthuman()
@@ -1116,7 +1115,7 @@ end
 function mg_raz_boloto_ubil()
 	olr.partice_on_obj("lvl11_deadcity_observer",[[anomaly2\group_items\body_tear_blood_01]])
 	olr.snd([[ambient\special\swamp_intelligent_bog_death]])
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\darklab_ambient]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1155,7 +1154,7 @@ function veterans_go_to_ploskd()
 end
 
 function barman_span_barwolf()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\darklab_ambient]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1163,7 +1162,7 @@ function barman_span_barwolf()
 end
 
 function oso_no()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	db.actor:set_actor_position(vector():set(171,16,-485))
 	local wait_time = 0
 	wait_time = time_global() + 111
@@ -1209,7 +1208,7 @@ end
 
 function chaes_actor_on_roof_now()
 	olr_blowout.blowout_additional_timer()
-	level.add_pp_effector("snd_shock.ppe", 20541, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 20541, false)
 end
 
 function delete_warl_projectors()
@@ -1744,7 +1743,7 @@ end
 
 function out_diagnostica_bolezney()
 	--olr.info("diagnostica_bolezney_dolg_started")
-	--level.add_pp_effector("black.ppe", 20131, false)
+	--level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	--local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
 	--if not snd_obj:playing() then 
 	--	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2037,7 +2036,7 @@ function kamaz_priehal_kordon_sav()
 	--log1("aa 4")
 	--get_console():execute("flush")
 	olr.snd([[ambient\special\escape_truck_arriving]])
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function tepel_act_kamaz()
@@ -2253,11 +2252,11 @@ function spawn_mons_rozd_sarco()
 end
 
 function podzem_sosatel_deadd()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[monsters\bloodsucker\eat_0]])
 	local snd_obj2 = xr_sound.get_safe_sound_object([[monsters\bloodsucker\eat_0]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_cam_effector2("camera_effects\\blood_suk_tennel_eating.anm", 30, false, "")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\rostok\\ros_bloodsucker_quest_cam_6.anm", 30, false, "")
 	local wait_time = 0
 	wait_time = time_global() + 5400
 	level.add_call(
@@ -2275,7 +2274,7 @@ function plosadka_sosatel_deadd()
 	local snd_obj = xr_sound.get_safe_sound_object([[monsters\bloodsucker\idle_0]])
 	local snd_obj2 = xr_sound.get_safe_sound_object([[monsters\bloodsucker\idle_0]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_cam_effector2("camera_effects\\blood_suk_tennel_go.anm", 30, false, "")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\rostok\\ros_bloodsucker_quest_cam_5.anm", 30, false, "")
 	olr.off_ui()
 	local wait_time = 0
 	wait_time = time_global() + 1400
@@ -2381,7 +2380,7 @@ function gen_del_accil_timer()
 	olr.del_by_name("genpart_sertr_0001")
 	olr.del_by_name("genpart_sertr_0002")
 	olr.del_by_name("genpart_sertr_0003")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\generators_ecolog_talk]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("tojaba", 3, "nick.gen_ecologs_talkerd()")	
@@ -2393,7 +2392,7 @@ function gen_ecologs_talkerd()
 end
 
 function teleojabagen()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("gen_esc_pre_last_walk")
 	local look = patrol("gen_esc_pre_last_walk")
 	db.actor:set_actor_position(point:point(0))
@@ -2404,20 +2403,20 @@ end
 function final_cutscene_start_two()	-- площадка
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\thunder_2]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_cam_effector2("camera_effects\\ending_two.anm", 30, false, "nick.final_cutscene_start_tri")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_checkpoint_cam_2.anm", 30, false, "nick.final_cutscene_start_tri")
 end
 
 function final_cutscene_start_tri() -- каморка
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\thunder_1]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_cam_effector2("camera_effects\\ending_tri.anm", 30, false, "nick.final_cutscene_start_end")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_checkpoint_cam_3.anm", 30, false, "nick.final_cutscene_start_end")
 	-- верт звук
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\generators\end\ending_helicopter]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
 
 function final_cutscene_start_end()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	news_manager.send_tip(db.actor, game.translate_string("final_cutscene_start_end_0"), 2, "ecolog", 39000)
 	olr_timers.st_timer("darkkk", 1, "nick.darkscreen()")
 	olr_timers.st_timer("darkkk", 2, "nick.darkscreen()")
@@ -2427,7 +2426,7 @@ function final_cutscene_start_end()
 end
 
 function darkscreen()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function edning_tv()
@@ -2571,7 +2570,7 @@ end
 
 function yan_figura_mosk_st()
 	olr.kill_mon_in_radius(db.actor:position(), 40)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("yan_figura_walk")
 	local look = patrol("sudaobtarno_look")
 	db.actor:set_actor_position(point:point(0))
@@ -2585,7 +2584,7 @@ function yan_figura_mosk_st()
 	olr.to_online("lvl7_yantar_physic_object_0598")
 	news_manager.send_tip(db.actor, game.translate_string("yan_figura_mosk_st_0"), 2, "unknown", 39000)
 	olr_timers.st_timer("ten2", 15, "nick.ten2()")
-	level.add_pp_effector("radar_wake.ppe", 2013781, false)
+	level.add_pp_effector("camera_postprocess\\brain_fog.ppe", 2013781, false)
 end
 
 function ten2()
@@ -2594,12 +2593,12 @@ function ten2()
 	level.show_indicators()
 	level.enable_input()
 	db.actor:restore_weapon()
-	level.add_pp_effector("total_recall.ppe", 204131, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 204131, false)
 	olr.del_by_name("lvl7_yantar_physic_object_0598")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("snd_shock.ppe", 201151, false)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 201151, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.info("yan_mosk_gluk_off")
 	olr.del_by_name("lvl7_yantar_staler_undead_olr_0009")
 	olr.del_by_name("lvl7_yantar_staler_undead_olr_0008")
@@ -2731,9 +2730,8 @@ end
 
 function mil_dok_feik_enable()
 	olr.enable_walk()
-	level.add_pp_effector("total_recall.ppe", 204131, false)
-	level.add_pp_effector("black.ppe", 20131, false)
-	--level.add_cam_effector2("camera_effects\\yan_mozg_off_1.anm", 90, false, "")
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 204131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.del_by_name("lvl9_military_physic_object_0435")
 	olr.del_by_name("lvl9_military_physic_object_0436")
 	--news_manager.send_tip(db.actor, game.translate_string("mil_dok_feik_enable_0"), 4, "hero", 9000)
@@ -2801,7 +2799,7 @@ end
 function from_sarco_to_cemetery()
 	level.add_cam_effector2("camera_effects\\punch_effector.anm", 90, false, "")
 	--olr.del_by_name("lvl16_generators_physic_object_0198")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("gen_derevna_way")
 	local look = patrol("gen_derevna_look")
 	db.actor:set_actor_position(point:point(0))
@@ -2828,8 +2826,8 @@ function chaes_city_ending()
 	level.hide_indicators()	
 	bind_stalker.hide_weapon()
 	olr.hide_inv()
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\gen_ending_city.anm", 90, false, "xr_effects.game_credits")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_city_cam.anm", 90, false, "xr_effects.game_credits")
 	news_manager.send_tip(db.actor, game.translate_string("chaes_city_ending_0"), 5, "hero", 9000)
 	news_manager.send_tip(db.actor, game.translate_string("chaes_city_ending_1"), 15, "hero", 9000)
 	news_manager.send_tip(db.actor, game.translate_string("chaes_city_ending_2"), 25, "hero", 9000)
@@ -2838,7 +2836,7 @@ function chaes_city_ending()
 end
 
 function radar_plot_dialog_talked()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local obj = alife():object("lvl10_radar_flesh_strong_0000")
 	local bos = level.object_by_id(obj.id)
 	bos:set_tip_text("")
@@ -2888,7 +2886,7 @@ function radar_pseudohuman_diattt()
 	db.actor.psy_health = -0.11
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\radar\pseudohumans\actor_stunning]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("teleport.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	local point = patrol("radar_pseudohum_gig_walk")
 	local look = patrol("radar_pseudohum_gig_look")
 	db.actor:set_actor_position(point:point(0))
@@ -3010,7 +3008,7 @@ function vorglaz_away_from_garbage()
 	end
 
 	nick.kill_all_dolgs_garbage()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	news_manager.send_tip(db.actor, game.translate_string("vorglaz_away_from_garbage_0"), nil, "dolg", 9000, nil, nil, true, "st_nick_character_name_croweye")
 	olr.del_by_name("lvl4_darkdolina_stalker_0036")
 end
@@ -3068,7 +3066,7 @@ function chaes_ratss()
 	olr_timers.st_timer("chaes_ratss2", 6, "nick.chaes_ratss_spawn()")
 	olr_timers.st_timer("chaes_ratss3", 10, "nick.chaes_ratss_spawn()")
 	olr_timers.st_timer("chaes_ratss4", 12, "nick.chaes_ratss_spawn()")
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\rostok_bloodsucker_call]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -3102,8 +3100,8 @@ end
 
 function killers_acess_cutscene()
 	olr.kill_mon_in_radius(db.actor:position(), 100)
-	level.add_cam_effector2("camera_effects\\dolina_cut_killers.anm", 64, false, "")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\darkvalley\\val_killers_major_cam.anm", 64, false, "")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("cutdol_kil_kam_walk")
 	local look = patrol("cutdol_kil_kam_look")
 	db.actor:set_actor_position(point:point(0))
@@ -3154,7 +3152,7 @@ end
 
 function dolcuttchse()
 	local sim = alife()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.kill_mon_in_radius(db.actor:position(), 100)
 	news_manager.send_tip(db.actor, game.translate_string("dolcuttchse_0"), nil, "killer", 29000)
 	local point = patrol("pre_base_walk")
@@ -3187,7 +3185,7 @@ end
 
 function kravcov_brother_spawn_bar()
 	news_manager.send_tip(db.actor, game.translate_string("kravcov_brother_spawn_bar_0"), nil, "dolg", 39000)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0011")
 	olr.spawn_on_obj("fracture_normal", "lvl2_garbage_smart_terrain_0026")
 	olr.spawn_on_obj("zombie_strong", "lvl2_garbage_smart_terrain_0026")
@@ -3465,7 +3463,7 @@ end
 function out_death_lamp()
 	news_manager.send_tip(db.actor, game.translate_string("out_death_lamp_0"), nil, "money_found", 39000)
 	get_console():execute("cam_inert 0.35")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	nik_dialog.out_item_much("af_lamp",1)
 	db.actor:give_money(3000)
 	game_stats.money_quest_update(3000)
@@ -3474,7 +3472,7 @@ end
 function out_death_lamp_osved()
 	news_manager.send_tip(db.actor, game.translate_string("out_death_lamp_osved_0"), nil, "money_found", 39000)
 	get_console():execute("cam_inert 0.35")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	nik_dialog.out_item_much("af_lamp",1)
 	db.actor:give_money(1500)
 	game_stats.money_quest_update(1500)
@@ -3488,8 +3486,8 @@ function look_garbage(obj)
 	if obj:name() == "lvl2_garbage_physic_object_0114" then
 		if not has_alife_info("lampa_finded_garbage") then
 			olr.info("lampa_finded_garbage")
-			level.add_pp_effector("black.ppe", 20131, false)
-			level.add_pp_effector("snd_shock.ppe", 2031, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+			level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]])
 			if not snd_obj:playing() then
 				snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -3507,8 +3505,8 @@ end
 
 function gar_lamp_one()
 	db.actor.psy_health = -0.14
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local point = patrol("killdolgkris_look")
 	local look = patrol("gar_dolg_blokpost_alarm_walk3")
 	db.actor:set_actor_position(point:point(0))
@@ -3529,8 +3527,8 @@ end
 
 function gar_lamp_two()
 	db.actor.psy_health = -0.14
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local point = patrol("fil_walk")
 	local look = patrol("fil_look")
 	db.actor:set_actor_position(point:point(0))
@@ -3551,8 +3549,8 @@ end
 
 function gar_lamp_tri()
 	db.actor.psy_health = -0.14
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local point = patrol("gar_lamp_one_walk")
 	local look = patrol("gar_lamp_one_look")
 	db.actor:set_actor_position(point:point(0))
@@ -3610,7 +3608,7 @@ end
 
 function bar_bart_to_dead_room()
 	olr.del_by_name("lvl5_bar_space_restrictor_0127")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("deadroom_bar_walk")
 	local look = patrol("deadroom_bar_look")
 	db.actor:set_actor_position(point:point(0))
@@ -3744,7 +3742,7 @@ function stancia_fake_anoms()
 					{
 						particle = "anomaly2\\gravi_anomaly_00",
 						pos = obj:position():add(dir:mul(dist)),
-						sound = "anomaly\\gravi_rumble"
+						sound = "anomaly\\mincer_idle"
 					}
 				)
 			elseif num == 7 then
@@ -3760,7 +3758,7 @@ function stancia_fake_anoms()
 					{
 						particle = "anomaly2\\mincer_idle",
 						pos = obj:position():add(dir:mul(dist)),
-						sound = "anomaly\\gravi_idle01"
+						sound = "anomaly\\mincer_idle"
 					}
 				)
 			elseif num == 9 then
@@ -3768,7 +3766,7 @@ function stancia_fake_anoms()
 					{
 						particle = "anomaly2\\gravity_idle",
 						pos = obj:position():add(dir:mul(dist)),
-						sound = "anomaly\\gravi_idle00"
+						sound = "anomaly\\mincer_idle"
 					}
 				)
 			elseif num == 10 then
@@ -3776,7 +3774,7 @@ function stancia_fake_anoms()
 					{
 						particle = "anomaly2\\gravity_blast_final00",
 						pos = obj:position():add(dir:mul(dist)),
-						sound = "anomaly\\gravi_blowout"
+						sound = "anomaly\\mincer_blowout"
 					}
 				)
 			elseif num == 11 then
@@ -3911,7 +3909,7 @@ function final_swapm_doctor_cutscene()
 	local pos = vector():set(110, 2, 146)
 	olr.kill_mon_in_radius(pos, 200)
 	xr_effects.disable_ui(db.actor, nil)
-	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 203131, false)
 	news_manager.send_tip(db.actor, game.translate_string("final_swapm_doctor_cutscene_0"), nil, "hero", 5000)
 	olr_timers.st_timer("dok1", 3, "nick.docutsc_1()")
 	olr_timers.st_timer("dok2", 5, "nick.docutsc_2()")
@@ -3924,7 +3922,7 @@ function final_swapm_doctor_cutscene()
 	olr_timers.st_timer("dok9", 21, "nick.docutsc_9()")
 	olr_timers.st_timer("dok10", 23, "nick.docutsc_10()")
 	olr_timers.st_timer("dok11", 24, "nick.docutsc_11()")
-	level.add_cam_effector2("camera_effects\\swapm_dok_one_cut.anm", 30, false, "nick.final_swapm_doctor_cutscene_two")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\swamp\\swa_doctor_cutscene_cam_1.anm", 30, false, "nick.final_swapm_doctor_cutscene_two")
 end
 
 function docutsc_1()
@@ -3976,7 +3974,7 @@ function kistrelfail()
 end
 
 function final_swapm_doctor_cutscene_two()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("medzalupa_doma_look")
 	local look = patrol("medzalupa_doma_look")
 	db.actor:set_actor_position(point:point(0))
@@ -3995,34 +3993,34 @@ end
 function swapm_dok_hello_to_stol()
 	olr.del_by_name("lvl8_swamp_staler_undead_olr_0000")
 	olr_timers.st_timer("swapm_dok_hello", 4, "nick.swapm_dok_hello_to_stol2()")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	news_manager.send_tip(db.actor, game.translate_string("swapm_dok_hello_to_stol_0"), 2,  "doctor", 5000)
 end
 
 function swapm_dok_hello_to_stol2()
 	olr.off_ui()
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\swapm_dok_one_stol.anm", 30, false, "nick.final_swapm_doctor_cutscene_two3")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\swamp\\swa_doctor_cutscene_cam_3.anm", 30, false, "nick.final_swapm_doctor_cutscene_two3")
 end
 
 function final_swapm_doctor_cutscene_two3()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.info("final_spawn_dok_swmp_cutscene")
 	news_manager.send_tip(db.actor, game.translate_string("final_swapm_doctor_cutscene_two3_0"), 2,  "doctor", 5000)
 	news_manager.send_tip(db.actor, game.translate_string("final_swapm_doctor_cutscene_two3_1"), 4,  "doctor", 5000)
 	news_manager.send_tip(db.actor, game.translate_string("final_swapm_doctor_cutscene_two3_2"), 8,  "doctor", 5000)
-	level.add_cam_effector2("camera_effects\\swapm_dok_one_stol_wakep.anm", 30, false, "nick.final_swapm_doctor_cutscene_two4")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\swamp\\swa_doctor_cutscene_cam_4.anm", 30, false, "nick.final_swapm_doctor_cutscene_two4")
 	olr_timers.st_timer("on_ui_start", 11, "olr.on_ui()")
 	db.actor:restore_weapon()
 end
 
 function final_swapm_doctor_cutscene_two4()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("way_wakup_walp")
 	local look = patrol("way_wakup_look")
 	db.actor:set_actor_position(point:point(0))
@@ -4041,7 +4039,7 @@ end
 function back_to_gens()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\generators_boss_scream_dead]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 203131, false)
 	olr.show_minimap(true)
 	db.actor:give_info_portion("fin_rush_from_sarco_to_warlab")
 	olr.hud_tip("", game.translate_string("back_to_gens_0"), 5, true)
@@ -4050,26 +4048,26 @@ function back_to_gens()
 end
 
 function gen_bunker_destr_alls_cutscene_start()
-	level.add_pp_effector("black.ppe", 203131, false)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 203131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	olr.to_online("lvl16_generators_physic_object_0199")
 	olr.to_online("lvl16_generators_physic_object_0200")
 	olr.to_online("lvl16_generators_physic_object_0231")
 	olr.to_online("lvl16_generators_physic_object_0230")
 	news_manager.send_tip(db.actor, game.translate_string("gen_bunker_destr_alls_cutscene_start_0"), 2, "hero", 5000)
 	xr_effects.disable_ui(db.actor, nil)		
-	level.add_cam_effector2("camera_effects\\gen_kids_one.anm", 30, false, "nick.gen_bunker_destr_alls_cutscene_two")	
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_kids_cutscene_cam_1.anm", 30, false, "nick.gen_bunker_destr_alls_cutscene_two")	
 end
 
 function gen_bunker_destr_alls_cutscene_two()
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	news_manager.send_tip(db.actor, game.translate_string("gen_bunker_destr_alls_cutscene_two_0"), 2, "hero", 5000)
-	level.add_cam_effector2("camera_effects\\gen_kids_two.anm", 30, false, "nick.gen_bunker_destr_alls_cutscene_tri")	
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_kids_cutscene_cam_2.anm", 30, false, "nick.gen_bunker_destr_alls_cutscene_tri")	
 end
 
 function gen_bunker_destr_alls_cutscene_tri()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("gen_wayout_sarcof")
 	local look = patrol("gen_wayout_sarcof")
 	db.actor:set_actor_position(point:point(0))
@@ -4140,7 +4138,7 @@ end
 
 function tlp_out_hmir_away()
 	db.actor:stop_talk()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr_timers.st_timer("del_hmirbar", 2, "nick.del_hmirbar()")
 	olr.spawn_on_obj("zap_killera_bar_posr", "lvl5_bar_space_restrictor_0125")
 	olr.to_online("lvl5_bar_box_rukzak")
@@ -4175,7 +4173,7 @@ end
 function tlp_out_kamera_killera()
 	db.actor:stop_talk()
 	db.actor:restore_weapon()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("out_kil_kam_walk")
 	local look = patrol("out_kil_kam_look")
 	db.actor:set_actor_position(point:point(0))
@@ -4187,7 +4185,7 @@ end
 function tlp_to_kamera_killera()
 	db.actor:stop_talk()
 	bind_stalker.hide_weapon()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("kill_kamera_walk")
 	local look = patrol("kill_kamera_look")
 	db.actor:set_actor_position(point:point(0))
@@ -4628,8 +4626,8 @@ function dolgmed_about_radwealech_otdaem()
 	db.actor:give_money(-500)
 	game_stats.money_quest_update(-500)
 	news_manager.relocate_money(db.actor, "out", 500)
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -4641,8 +4639,8 @@ function clear_zombied_bolezn()
 	--get_hud():RemoveCustomStatic("actor_bolezn",true)
 	--db.actor:give_money(-500)
 	--game_stats.money_quest_update(-500)
-	--level.add_pp_effector("black.ppe", 20131, false)
-	--level.add_pp_effector("snd_shock.ppe", 203342431, false)
+	--level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	--level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	--local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
 	--if not snd_obj:playing() then 
 	--	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -4709,8 +4707,8 @@ function clear_sibyazva_bolezn()
 	--get_hud():RemoveCustomStatic("actor_bolezn",true)
 	--db.actor:give_money(-500)
 	--game_stats.money_quest_update(-500)
-	--level.add_pp_effector("black.ppe", 20131, false)
-	--level.add_pp_effector("snd_shock.ppe", 203342431, false)
+	--level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	--level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	--local snd_obj = xr_sound.get_safe_sound_object([[actor\cough_3]])
 	--if not snd_obj:playing() then 
 	--	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -4753,8 +4751,8 @@ function clear_ratcrazy_bolezn()
 	get_hud():RemoveCustomStatic("actor_bolezn",true)
 	db.actor:give_money(-500)
 	game_stats.money_quest_update(-500)
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	db.actor:disable_info_portion("bolezn_ratcrazy_info")
 	db.actor:disable_info_portion("bolezn_ratcrazy_info_m")
 	if olr_timers.has_timer("bolezn_ratcrazy_timer") then
@@ -5027,15 +5025,15 @@ function gen_last_boss_dead_now() -- посследний босс расстрелян
 	olr_timers.st_timer("boss_part_zero1", 15, "nick.boss_part_zero()")
 	olr_timers.st_timer("57446", 16, "nick.boss_partcl_two()")
 	olr.del_by_name("lvl16_generators_staler_undead_olr_0002")
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("total_recall.ppe", 15876, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 15876, false)
 	olr.del_by_name("lvl16_generators_physic_object_0225")
 	olr.del_by_name("lvl16_generators_physic_object_0216")
 	olr.del_by_name("lvl16_generators_physic_object_0185")
 	db.actor:give_info_portion("oso_killed")
 	olr_blowout.blowout_additional_timer()
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_cam_effector2("camera_effects\\gen_boss_end_one.anm", 10, false, "")
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_boss_dying_cam_1.anm", 10, false, "")
 	olr.disable_walk()
 	level.disable_input()
 	level.hide_indicators()
@@ -5104,7 +5102,7 @@ end
 function tark_wt_et_one()
 	news_manager.send_tip(db.actor, game.translate_string("tark_wt_et_one_0"), 2, "unknown", 5000)
 	olr_timers.st_timer("57446", 6, "nick.tark_wt_et_two()")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	db.actor:set_actor_position(vector():set(249, -56.5, -366))
 end
 
@@ -5148,8 +5146,7 @@ function start_boss_podval_battle_now()
 		sim:set_interactive(id, true)
 		--log1(" box id"..id.."")
 	end
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_pp_effector("proba_gray.ppe", 2032431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local point = patrol("gen_ac_last_walk")
@@ -5157,8 +5154,8 @@ function start_boss_podval_battle_now()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("total_recall.ppe", 15876, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 15876, false)
 	level.add_cam_effector("camera_effects\\shell_shock.anm", 3496, false, "")
 
 	olr_timers.st_timer("a333t332333", 5, "nick.hit_boss_atack()")
@@ -5266,8 +5263,7 @@ function kill_zombies_around()
 end
 
 function start_boss_second_talk()
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_pp_effector("proba_gray.ppe", 2032431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local point = patrol("gen_ac_boss_two_walk")
@@ -5275,8 +5271,8 @@ function start_boss_second_talk()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("total_recall.ppe", 15876, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 15876, false)
 	level.add_cam_effector("camera_effects\\shell_shock.anm", 3496, false, "")
 	olr.disable_walk()
 	level.disable_input()
@@ -5291,8 +5287,7 @@ end
 
 function boss_talk_two_done()
 	olr.del_by_name("lvl16_generators_staler_undead_olr_0001")
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_pp_effector("proba_gray.ppe", 2032431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.enable_walk()
@@ -5341,7 +5336,7 @@ function fov_gen_out_eff_rub()
 	olr.enable_walk()
 	level.show_indicators()
 	level.enable_input()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	device():set_fov(xvars.cur_fov) -- восстанавливаем из xvars хранилища
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\fear_hata]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -5444,8 +5439,7 @@ function boss_talk_one_done()
 	olr.spawn_on_obj("m_zombie_e", "lvl16_generators_physic_object_0082", 3)
 	olr.spawn_on_obj("m_zombie_e", "lvl4u_darklab_physic_object_0364", 3)
 
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_pp_effector("proba_gray.ppe", 2032431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr.enable_walk()
@@ -5568,7 +5562,7 @@ function gen_first_etaj_zombies()
 				{
 					particle = "anomaly2\\gravi_anomaly_00",
 					pos = obj:position():add(dir:mul(dist)),
-					sound = "anomaly\\gravi_rumble"
+					sound = "anomaly\\mincer_idle"
 				}
 			)
 		elseif num == 7 then
@@ -5584,7 +5578,7 @@ function gen_first_etaj_zombies()
 				{
 					particle = "anomaly2\\mincer_idle",
 					pos = obj:position():add(dir:mul(dist)),
-					sound = "anomaly\\gravi_idle01"
+					sound = "anomaly\\mincer_idle"
 				}
 			)
 		elseif num == 9 then
@@ -5592,7 +5586,7 @@ function gen_first_etaj_zombies()
 				{
 					particle = "anomaly2\\gravity_idle",
 					pos = obj:position():add(dir:mul(dist)),
-					sound = "anomaly\\gravi_idle00"
+					sound = "anomaly\\mosquito_bald_idle"
 				}
 			)
 		elseif num == 10 then
@@ -5600,7 +5594,7 @@ function gen_first_etaj_zombies()
 				{
 					particle = "anomaly2\\gravity_blast_final00",
 					pos = obj:position():add(dir:mul(dist)),
-					sound = "anomaly\\gravi_blowout"
+					sound = "anomaly\\mosquito_bald_blowout"
 				}
 			)
 		elseif num == 11 then
@@ -5853,7 +5847,7 @@ function set_prip_mons()
 end
 
 function spawn_barman_prip_now()
-	level.add_pp_effector("fire_hit.ppe", 231, false)
+	level.add_pp_effector("camera_postprocess\\fire_hit.ppe", 231, false)
 	db.actor.power = -db.actor.power / math.random(2, 5)
 	level.add_cam_effector2("camera_effects\\punch_effector.anm", 950, false, "")
 	olr.blow_add(300)
@@ -5883,7 +5877,7 @@ function spawn_barman_prip_now_hi()
 		db.actor:set_actor_position(point:point(0))
 		local dir = look:point(0):sub(point:point(0))
 		db.actor:set_actor_direction(-dir:getH())
-		level.add_pp_effector("black.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 		olr.del_by_name("lvl13_prip_space_restrictor_0010")
 		olr_timers.st_timer("attak1", 14, "nick.pr_bar_angr1()")
 		olr.disable_walk()
@@ -6184,7 +6178,7 @@ end
 
 function kvest_gravimolot_acessss()
 	if xr_conditions.actor_in_zone(nil,nil,{"lvl3_agroprom_space_restrictor_0018"})	then
-		level.add_pp_effector("black.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	end
 	db.actor:give_info_portion("kvest_gravimolot_go")
 	news_manager.send_tip(db.actor, game.translate_string("kvest_gravimolot_acessss_0"), nil, "flash", 20000, nil, nil, false)
@@ -6261,7 +6255,7 @@ end
 function fov_gen_out2()
 	olr.kill_mon_in_radius(db.actor:position(), 95)
 	olr.disable_walk()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	device():set_fov(device():get_fov() - 3)
 	local obj = alife():create("nap_krest_psyh", db.actor:position():add(db.actor:direction():add(10)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
 	--clear_useful_for_ai(obj)
@@ -6277,7 +6271,7 @@ function fov_gen_out2()
 end
 
 function fov_gen_out_end()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	device():set_fov(xvars.cur_fov) -- восстанавливаем из xvars хранилища
 	xr_effects.game_credits()
 end
@@ -6288,7 +6282,7 @@ function zov_start_rat_ending()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	olr_timers.st_timer("morak_zombvoen", 23, "nick.killkrisageen()")
 end
 
@@ -6624,7 +6618,7 @@ function out_10_conserva_sciet_reward(first_speaker, second_speaker)
 end
 
 function esc_yan_seli()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	news_manager.send_tip(db.actor, game.translate_string("esc_yan_seli_0"), nil, "ecolog", 5000)
 	olr_timers.st_timer("del_vertuhaescsc_timer", 135, "nick.del_vertuhaescsc_timer()")
 	olr.del_by_name("esc_raid_scientist")
@@ -6682,8 +6676,8 @@ end
 
 function prof_zamer_donesms_psy()
 	news_manager.send_tip(db.actor, game.translate_string("prof_zamer_donesms_psy_0"), 3, "ecolog", 5000)
-	level.add_pp_effector("psy_antenna.ppe", 1875, true)
-	level.add_pp_effector("yantar_underground_psi.ppe", 15876, false)
+	level.add_pp_effector("camera_postprocess\\psy_antenna.ppe", 1875, true)
+	level.add_pp_effector("camera_postprocess\\duality_weak.ppe", 15876, false)
 	level.add_cam_effector("camera_effects\\shell_shock.anm", 3496, false, "")
 	level.add_cam_effector("camera_effects\\earthquake.anm", 3297, false, "")
 	db.actor.psy_health = -0.15 
@@ -6701,13 +6695,12 @@ function prof_zamer_donesms_psyoff()
 end
 
 function away_from_triway()
-	level.add_pp_effector("red_fade_out.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("away_from_triway_walk")
 	local look = patrol("away_from_triway_look")
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
 end
 
 function on_chhose_tri_way_gen_fin_room()
@@ -6721,7 +6714,7 @@ function on_chhose_tri_way_gen_fin_room()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	bind_stalker.hide_weapon()
 	olr_timers.st_timer("open_war_door_1", 5, "nick.what_you_want_1()")
 end
@@ -6751,7 +6744,7 @@ function open_war_door_tri()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr_timers.st_timer("open_war_door_napar", 4, "nick.open_war_door_napar()")
 end
 
@@ -6767,7 +6760,7 @@ function open_war_door_two()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function open_war_door_one()
@@ -6782,7 +6775,7 @@ function open_war_door_one()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-		level.add_pp_effector("black.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function triway_choose_door()
@@ -6808,13 +6801,13 @@ function on_chhose_tri_way_gen()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-		level.add_pp_effector("black.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function go_to_treeway_stop()
 	olr.del_by_name("lvl16_generators_space_restrictor_0042")
 	db.actor:give_info_portion("warlab_door_tri_open")
-	--level.add_pp_effector("black.ppe", 203131, false)
+	--level.add_pp_effector("camera_postprocess\\black.ppe", 203131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\generators_metal_large]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	olr_timers.st_timer("kill_zombs_gen", 6, "nick.kill_zombs_gen()")
@@ -6829,8 +6822,7 @@ end
 
 function go_to_treeway()
 	olr.snd([[ambient\special\generators_go_to_treeway_1]])
-	level.add_pp_effector("snd_shock.ppe", 203342431, false)
-	level.add_pp_effector("proba_gray.ppe", 2032431, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 203342431, false)
 --	level.set_weather("indoor",true)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -6847,7 +6839,7 @@ function go_to_treeway()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function jaba_ab_patrols()
@@ -6958,7 +6950,7 @@ function from_yan_dead_now()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 end
 
 function hit_yan_zombies()
@@ -7172,7 +7164,7 @@ function gen_ka_delkarlikg()
 	olr.del_by_name("lvl16_generators_physic_object_0239")
 	olr.del_by_name("lvl16_generators_physic_object_0240")
 
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 
 	olr_timers.st_timer("feak_laba_chaos", 5, "nick.feak_laba_chaos()")
 end
@@ -7850,7 +7842,7 @@ function selfdestruck_lab_start_explode()
 		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_1]])
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 		level.add_cam_effector("camera_effects\\earthquake.anm", 1488228, false)
-		level.add_pp_effector("blink.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 		xr_effects.kill_actor()
 		for i = 1, 65534 do
 			local lokobj = level.object_by_id(i)
@@ -7939,7 +7931,7 @@ function bun_swatoy_look_hey()
 	level.hide_indicators()
 	bind_stalker.hide_weapon()
 	olr.snd([[weapons\gauss\shoot]])
-	level.add_pp_effector("snd_shock.ppe", 2371, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2371, false)
 	olr.snd([[ambient\special\radar_bunker_saint_appearing]])
 end
 
@@ -8128,9 +8120,9 @@ end
 function bar_zombied_start_teleporting()
 	level.disable_input()
 	news_manager.send_tip(db.actor, game.translate_string("bar_zombied_start_teleporting_0"), nil, "ecolog", 10000, nil, nil, false)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	xr_effects.disable_ui(db.actor, nil)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	local point = patrol("space_telep_walk")
 	local look = patrol("space_telep_look")
 	db.actor:set_actor_position(point:point(0))
@@ -8141,10 +8133,10 @@ end
 
 function bar_zombied_start_teleporting2()
 	news_manager.send_tip(db.actor, game.translate_string("bar_zombied_start_teleporting2_0"), nil, "ecolog", 3000, nil, nil, false)
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_pp_effector("blink.ppe", 220131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 220131, false)
 	xr_effects.disable_ui(db.actor, nil)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	local point = patrol("dezint_walk")
 	local look = patrol("dezint_look")
 	db.actor:set_actor_position(point:point(0))
@@ -8161,7 +8153,7 @@ end
 function bar_zombied_start_teleporting_final()
 	news_manager.send_tip(db.actor, game.translate_string("bar_zombied_start_teleporting_final_0"), nil, "ecolog", 10000, nil, nil, false)
 	level.add_cam_effector("camera_effects\\hit_back.anm", 1, false)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	local point = patrol("space_telep_walk")
 	local look = patrol("space_telep_look")
 	db.actor:set_actor_position(point:point(0))
@@ -8177,7 +8169,7 @@ function bar_zombied_start_teleporting_final()
 end
 
 function dezint_qt_spawn_two()
-	level.add_pp_effector("blink.ppe", 220131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 220131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\teleport]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local sim = alife()
@@ -8309,7 +8301,7 @@ function del_rnd_zakaz_metka(id)
 end
 
 function gen_restore_sarcofag()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	sarcofag_dead_stalkers_teleport()
 	level.add_cam_effector2("camera_effects\\fusker.anm", 1523, false, "")
 end
@@ -8468,7 +8460,7 @@ function set_jrat_jaba()
 end
 
 function swp_first_scr()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function has_timer_bablo_patnashka_osved()
@@ -8709,11 +8701,11 @@ function greh_multicutscene_one(actor)
 	if bind_car.act_in_car_now() == true then
 		db.actor:detach_vehicle()
 	end
-	level.add_pp_effector("controller_psy.ppe", 2054131, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2054131, false)
 	olr.disable_walk()
 	olr_timers.st_timer("greh_multicutscene_one_strnt", 5, "nick.greh_multicutscene_one_strnt()")
 	olr.kill_mon_in_radius(db.actor:position(), 25)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	xr_effects.disable_ui(db.actor, nil)
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\military\sinners\actor_stunning]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -8721,7 +8713,7 @@ function greh_multicutscene_one(actor)
 end
 
 function greh_multicutscene_one_strnt(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 
 	local point = patrol("prisongreh_walk")
 	local look = patrol("prisongreh_look")
@@ -8729,7 +8721,7 @@ function greh_multicutscene_one_strnt(actor)
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
 
-	level.add_cam_effector2("camera_effects\\greh_cut_0.anm", 30, false, "nick.greh_multicutscene_two")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\military\\mil_sin_cam_1.anm", 30, false, "nick.greh_multicutscene_two")
 
 	olr.del_noparent_weapons()
 
@@ -8779,7 +8771,7 @@ function greh_multicutscene_two(actor)
 	local pos = vector():set(-25,-5,-16)
 	olr.kill_mon_in_radius(pos, 150)
 	olr.kill_mon_in_radius(db.actor:position(), 125)
-	level.add_cam_effector2("camera_effects\\greh_cut_1.anm", 30, false, "nick.greh_multicutscene_tri")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\military\\mil_sin_cam_2.anm", 30, false, "nick.greh_multicutscene_tri")
 	news_manager.send_tip(db.actor, game.translate_string("greh_multicutscene_two_0"), math.random(1000, 3000), "unknown", 5000, nil, "pda_objective", true, "st_greh_leader")
 	news_manager.send_tip(db.actor, game.translate_string("greh_multicutscene_two_1"), math.random(4000, 6000), "unknown", 7000, nil, "pda_objective", true, "st_greh_leader")
 	olr.del_by_name("lvl4_darkdolina_stalker_0096")
@@ -8790,8 +8782,8 @@ end
 
 function greh_multicutscene_tri(actor)
 	delete_netspawn_objects("lvl9_military_stalker_0047")
-	level.add_pp_effector("black.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\greh_cut_2.anm", 30, false, "nick.greh_enable_newui")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\military\\mil_sin_cam_3.anm", 30, false, "nick.greh_enable_newui")
 end
 
 function greh_enable_newui(actor)
@@ -8799,12 +8791,12 @@ function greh_enable_newui(actor)
 	olr.del_by_name("lvl5_bar_zone_acid_fog")
 	olr.del_by_name("lvl5_bar_zone_mosquito_bald_strong")
 	olr.enable_walk()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\military\sinners\actor_stunning]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	xr_effects.enable_ui(db.actor, nil)
 	level.add_cam_effector("camera_effects\\fusker.anm", 999, false, "")
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	olr.hud_tip("", game.translate_string("greh_enable_newui"), math.random(1, 3), true)
 	db.actor:give_info_portion("start_greh_prisoning")
 	olr_timers.st_timer("drop_gg_item_greh", 2, "nick.drop_gg_item_greh()")
@@ -8850,9 +8842,9 @@ function drop_gg_item_greh()
 end
 
 function start_sarcofag_cutscene_findmyself(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	xr_effects.disable_ui(db.actor, nil)
-	level.add_cam_effector2("camera_effects\\sarc_mon_0.anm", 30, false, "nick.start_sarcofag_cutscene_two")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_1.anm", 30, false, "nick.start_sarcofag_cutscene_two")
 	db.actor:give_info_portion("spawn_start_sarko_cut_find_myself")
 end
 
@@ -8862,9 +8854,9 @@ function start_sarcofag_cutscene_two(actor)
 	db.actor.satiety = 1
 	olr.spawn_on_obj("controller_normal", "lvl1_escape_space_restrictor_0030")
 	olr_timers.st_timer("fucnking_messer", 435, "nick.fucnking_messer()")
-	level.add_pp_effector("blink.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 	olr.hud_tip("", game.translate_string("start_sarcofag_cutscene_two"), 15, true)
-	level.add_cam_effector2("camera_effects\\sarc_mon_1.anm", 30, false, "nick.sarcof_multicutscene_tri")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_2.anm", 30, false, "nick.sarcof_multicutscene_tri")
 	local sim = alife()
 	for id = 1, 65534 do
 		local kill = sim:object(id)
@@ -8880,48 +8872,48 @@ function start_sarcofag_cutscene_two(actor)
 end
 
 function sarcof_multicutscene_tri(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_2.anm", 30, false, "nick.sarcof_multicutscene_for")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_3.anm", 30, false, "nick.sarcof_multicutscene_for")
 	in_head_shelk()
 end
 
 function sarcof_multicutscene_for(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_3.anm", 30, false, "nick.sarcof_multicutscene_fiv")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_4.anm", 30, false, "nick.sarcof_multicutscene_fiv")
 	in_head_shelk()
 end
 
 function sarcof_multicutscene_fiv(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_4.anm", 30, false, "nick.sarcof_multicutscene_six")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_5.anm", 30, false, "nick.sarcof_multicutscene_six")
 	in_head_shelk()
 end
 
 function sarcof_multicutscene_six(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_5.anm", 30, false, "nick.sarcof_multicutscene_sev")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_6.anm", 30, false, "nick.sarcof_multicutscene_sev")
 	in_head_shelk()
 end
 
 function sarcof_multicutscene_sev(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_6.anm", 30, false, "nick.sarcof_multicutscene_eig")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_7.anm", 30, false, "nick.sarcof_multicutscene_eig")
 	in_head_shelk()
 end
 
 function sarcof_multicutscene_eig(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_8.anm", 30, false, "nick.sarcof_multicutscene_nin")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_8.anm", 30, false, "nick.sarcof_multicutscene_nin")
 	in_head_shelk()
 end
 
 function sarcof_multicutscene_nin(actor)
-	level.add_pp_effector("blink.ppe", 20131, false)
-	level.add_cam_effector2("camera_effects\\sarc_mon_9.anm", 30, false, "nick.sarcof_multicutscene_done")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\sarcofag\\sar_monolith_find_myself_cam_9.anm", 30, false, "nick.sarcof_multicutscene_done")
 end
 
 function sarcof_multicutscene_done(actor)
-	level.add_pp_effector("blink.ppe", 20131, false) 
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false) 
 	xr_effects.enable_ui(db.actor, nil)
 	local point = patrol("aes2_teleport_walk_exit1")
 	local look = patrol("aes2_teleport_look_exit1")
@@ -9066,7 +9058,7 @@ end
 
 function bar_krisa_gavgav4()
 	news_manager.send_tip(db.actor, game.translate_string("bar_krisa_gavgav4"), math.random(5000, 7000), "barman", 5000, nil, "pda_objective", true, "st_barkeep_short")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.info("lonewolf_bar_talk_to_spawen_maiora_new")
 end
 
@@ -9093,7 +9085,7 @@ end
 
 -- переводим в ОФФЛАЙН КРЫСУ
 function set_barman_offline()
-	--level.add_pp_effector("black.ppe", 20131, false)
+	--level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	--news_manager.send_tip(db.actor, game.translate_string("set_barman_offline_0"), nil, "barman", 19000)
 	local sim = alife()
 	local se_obj = sim:story_object(500)
@@ -9106,14 +9098,14 @@ function set_barman_offline()
 end
 
 function set_barman_online()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	db.actor:give_info_portion("barmen_gtfo_vkamorku")
 	delete_netspawn_objects({ "bar_bar_guard_0001", "bar_bar_guard_0000" })
 end
 
 -- переводим в ОНЛАЙН КРЫСУ
 function set_barman_online_delhlam()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local sim = alife()
 	local se_obj = sim:story_object(500)
 	if se_obj then
@@ -9132,7 +9124,7 @@ function volk_sasesc_bar4()
 	if bind_car.act_in_car_now() == true then
 		db.actor:detach_vehicle()
 	end
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("lonewolf_bar_sit_look")
 	local look = patrol("lonewolf_bar_sit_walk")
 	db.actor:set_actor_position(point:point(0))
@@ -9218,7 +9210,7 @@ function bun_head_aai()
 	)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("duality_circle.ppe", 203123131, false)
+	level.add_pp_effector("camera_postprocess\\duality_strong.ppe", 203123131, false)
 end
 
 function rad_bun_tv_casuality_room()
@@ -9239,7 +9231,7 @@ end
 
 function bun_swatoy_rush_bun_swatoy_rush_del()
 	olr.kill_mon_in_radius(db.actor:position(), 150)
-	level.add_pp_effector("black.ppe", 203123131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 203123131, false)
 	delete_netspawn_objects("lvl12_radar_bunker_staler_undead_olr")
 end
 
@@ -9330,7 +9322,7 @@ function mg_mg_darkstalker_spawn4_check_allcool()
 end
 
 function mg_city_del_darkstalker3_del()
-	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 203131, false)
 	delete_netspawn_objects("lvl11_deadcity_staler_undead_olr_0002")
 end
 
@@ -9499,7 +9491,7 @@ function del_norm_papdu_karlik2()
 	if inv_window and inv_window:IsShown() then
 		level.start_stop_menu(inv_window,true)
 	end
-	level.add_pp_effector("black.ppe", 203131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 203131, false)
 	delete_netspawn_objects("lvl4u_darklab_karlik_0003")
 end
 
@@ -9541,7 +9533,7 @@ function karlik_kikandos_docs()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	level.add_cam_effector("camera_effects\\hit_back.anm", 1, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[actor\hit_fist]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -9608,7 +9600,7 @@ function kill_actor_now()
 end
 
 function rat_kill_actor_niznii_uroven_now()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	olr_timers.st_timer("kill_actor_now", 5, "nick.kill_actor_now()")
 	for i = 1, 35 do
 		alife():create("m_rat_e", db.actor:position():add(db.actor:direction():mul(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
@@ -9616,12 +9608,12 @@ function rat_kill_actor_niznii_uroven_now()
 end
 
 function blackened_city_darksalkertwo()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	delete_netspawn_objects("lvl11_deadcity_staler_undead_olr_0001")
 end
 
 function blackened_city_darksalkerone()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	delete_netspawn_objects("lvl11_deadcity_staler_undead_olr_0000")
 end
 
@@ -9657,7 +9649,7 @@ function olr_robber_all(first_speaker, second_speaker)
 end
 
 function del_prizrak_esk_most()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	soundtrack.esc_prizrak_agressive()
 	olr_timers.st_timer("del_prizrak_esk_timer", 5, "nick.del_prizrak_esk_most_deltimer()")
 	db.actor:disable_info_portion("esc_prizrak_lamp_info")
@@ -9679,7 +9671,7 @@ function del_prizrak_esk_most_deltimer()
 end
 
 function blacened_pp2()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	soundtrack.esc_prizrak_agressive()
 	db.actor.health = 0.05
 end
@@ -9687,7 +9679,7 @@ end
 function blacened_pp()
 	local sim = alife()
 	olr.blow_add(500)
-	level.add_pp_effector("black.ppe", 20131, false) 
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false) 
 	news_manager.send_tip(db.actor, game.translate_string("blacened_pp"), math.random(1000, 3000), "unknown", 15000, nil, "pda_objective", false)
 	db.actor:give_info_portion("esc_prizrak_lamp_info")
 	olr.kill_mon_in_radius(db.actor:position(), 60)
@@ -9725,7 +9717,7 @@ function start_neizv_zakaz_timer()
 end
 
 function sarcofag_dead_stalkers_teleport()
-	level.add_pp_effector("black.ppe", 20131, false) 
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false) 
 	local sectionsa = 
 	{ 
 		"dead_body_skelet",
@@ -9961,13 +9953,13 @@ end
 function yan_multicutscene_one()
 	nick.yan_zaval_onlin()
 	xr_effects.disable_ui(db.actor, nil)
-	level.add_pp_effector("blink.ppe", 20131, false) 
-	level.add_cam_effector2("camera_effects\\yan_mozg_off_1.anm", 30, false, "nick.yan_multicutscene_two")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false) 
+	level.add_cam_effector2("camera_effects\\scenario_cam\\yantar\\yan_brain_off_cutscene_cam_1.anm", 30, false, "nick.yan_multicutscene_two")
 	olr_timers.st_timer("pre_yantar_off_effs_eba", 85, "nick.pre_yantar_off_effs_ebaa()")
 end
 
 function yan_multicutscene_two()
-	level.add_cam_effector2("camera_effects\\yan_mozg_off_2.anm", 30, false, "nick.enable_newui")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\yantar\\yan_brain_off_cutscene_cam_2.anm", 30, false, "nick.enable_newui")
 --	level.set_weather("1865")
 	local point = patrol("kostil_ay_walk")
 	local look = patrol("kostil_ay_look")
@@ -9978,7 +9970,7 @@ end
 
 function enable_newui()
 	xr_effects.enable_ui(db.actor, nil)
-	level.add_pp_effector("blink.ppe", 20131, false) 
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false) 
 	local point = patrol("sudaobtarno_walk")
 	local look = patrol("sudaobtarno_look")
 	db.actor:set_actor_position(point:point(0))
@@ -10816,14 +10808,14 @@ function boloto_pizdez_actoru()
 	snd_underwater:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	snd_in_water:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	xr_effects.disable_ui(db.actor, nil)
-	--level.add_pp_effector("fire_hit.ppe", 1523, true)
+	--level.add_pp_effector("camera_postprocess\\fire_hit.ppe", 1523, true)
 	--level.set_pp_effector_factor(154523, 2.5)
 	olr_teleport.pesdets_swmp_tp()
 	--xr_effects.kill_actor()
 end
 
 function golg_attack_pizdez_actoru()
-	level.add_pp_effector("fire_hit.ppe", 1523, true)
+	level.add_pp_effector("camera_postprocess\\fire_hit.ppe", 1523, true)
 	level.set_pp_effector_factor(154523, 2.5)
 	soundtrack.ros_shoot_max()
 	xr_effects.kill_actor()
@@ -10831,7 +10823,7 @@ end
 
 function kill_actor_svd_yan()
 	if not has_alife_info("start_mission_yan_mon_done") then
-		level.add_pp_effector("fire_hit.ppe", 1523, true)
+		level.add_pp_effector("camera_postprocess\\fire_hit.ppe", 1523, true)
 		level.set_pp_effector_factor(254523, 2.5)
 		soundtrack.ros_shoot_max()
 		xr_effects.kill_actor()
@@ -10839,7 +10831,7 @@ function kill_actor_svd_yan()
 end
 
 function kill_actor_svd_esc()
-	level.add_pp_effector("fire_hit.ppe", 1523, true)
+	level.add_pp_effector("camera_postprocess\\fire_hit.ppe", 1523, true)
 	level.set_pp_effector_factor(254523, 2.5)
 	soundtrack.ros_shoot_max()
 	xr_effects.kill_actor()
@@ -12299,7 +12291,7 @@ end
 
 function Run_Vibros()
 	level.set_weather_fx ("surge")
-	level.add_pp_effector ("vibros.ppe", 1974228, false)
+	level.add_pp_effector ("event\\deprecated\\vibros.ppe", 1974228, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
@@ -12364,7 +12356,7 @@ function progulka_prisli_plos_lead4()
 	pm_shoot:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local tinnitus = xr_sound.get_safe_sound_object([[actor\tinnitus]])
 	tinnitus:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("teleport.ppe", 47231, false)
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 47231, false)
 end
 
 function progulka_prisli_plos_lead3()
@@ -12783,7 +12775,7 @@ end
 
 function prof_boloto_spawn_bandosov_smss4()
 	news_manager.send_tip(db.actor, "prof_boloto_spawn_bandosov_smss4", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_general_ecolog_name")
-	level.add_pp_effector("vibros_p.ppe", 231, false)
+	level.add_pp_effector("event\\deprecated\\vibros_p.ppe", 231, false)
 	nick.rnd_zombies_spawn()
 	for id = 1, 21 do
 		local tmr = math.random(10, 50)
@@ -12793,19 +12785,15 @@ end
 
 function rnd_ppe_eff()
 	local ppe = {
-		"alcohol.ppe",
-		"controller_hit.ppe",
-		"fire_hit.ppe",
-		"psy_antenna.ppe",
-		"psy_antenna_indoor.ppe",
-		"radar_psi.ppe",
-		"radar_stop.ppe",
-		"radar_wake.ppe",
-		"radiation.ppe",
-		"teleport.ppe",
-		"vibros.ppe",
-		"blink.ppe",
-		"dead_zone.ppe"
+		"camera_postprocess\\alcohol.ppe",
+		"camera_postprocess\\controller_hit.ppe",
+		"camera_postprocess\\fire_hit.ppe",
+		"camera_postprocess\\psy_antenna.ppe",
+		"camera_postprocess\\duality_average.ppe",
+		"anomaly\\radioactive.ppe",
+		"event\\deprecated\\vibros.ppe",
+		"camera_postprocess\\blink.ppe",
+		"camera_postprocess\\noise.ppe"
 	}
 	local col = math.random(1, 10)
 	for i = 1, col do
@@ -12854,7 +12842,7 @@ function yan_zamery_ucheny_gohome_proff()
 	wait_time = time_global() + 30000
 	level.add_call(
 		function() return time_global() > wait_time end,
-		function() level.add_pp_effector("psychic.ppe", 20131, false) end
+		function() level.add_pp_effector("camera_postprocess\\psy_antenna.ppe", 20131, false) end
 	)
 	news_manager.send_tip(db.actor, "yan_zamery_ucheny_gohome_proff", math.random(1000, 3000), "ecolog", 15000, nil, "pda_objective", true, "st_yan_ecolog_vasilyev_name")
 end
@@ -13234,7 +13222,7 @@ function dolg_pro_slizeny()
 end
 
 function poeh()
-	level.add_pp_effector("duality_circle.ppe", 207131, false)
+	level.add_pp_effector("camera_postprocess\\duality_strong.ppe", 207131, false)
 	news_manager.send_tip(db.actor, game.translate_string("poeh_0"), math.random(5000, 13000), "barman", 15000, nil, "pda_objective", true, "st_barkeep_short")
 	olr_timers.st_timer("blowout_additional_timer4", 13, "olr_blowout.blowout_additional_timer5()")
 end

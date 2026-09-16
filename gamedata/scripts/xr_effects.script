@@ -631,7 +631,7 @@ end
 function kill_actor_psy()
 	if db.actor:alive() then
 		db.actor.health = -1
-		level.add_pp_effector("black.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 		local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]])
 		if not snd_obj:playing() then 
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -878,7 +878,7 @@ function start_aah_shii_mesto_znak2(actor, npc)
 end
 
 function use_lestniza_esc()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr_teleport.tele_lestnica()
 end
 
@@ -910,7 +910,7 @@ function esc_prizrak_hitted()
 	end
 	
 	db.actor.health = -0.03
-	level.add_pp_effector("dead_zone.ppe", 971974, false)
+	level.add_pp_effector("camera_postprocess\\noise.ppe", 971974, false)
 	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 	db.actor.psy_health = -0.05
@@ -961,7 +961,7 @@ function esc_prizrak_hitted()
 end
 
 function del_horok_esc()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	local se_obj = alife():object("lvl1_escape_stalker")
 	if se_obj then
 		alife():release(se_obj, true)
@@ -1141,7 +1141,7 @@ function use_garage_door1()
 		return
 	end
 
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("esc_garage_in_walk")
 	local look = patrol("esc_garage_in_look")
 	db.actor:set_actor_position(point:point(0))
@@ -1150,7 +1150,7 @@ function use_garage_door1()
 end
 
 function use_garage_door2()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("esc_garage_out_walk")
 	local look = patrol("esc_garage_out_look")
 	db.actor:set_actor_position(point:point(0))
@@ -1207,13 +1207,13 @@ function drop_actor_inventory_dolina_killers(actor, npc, p)
 	--if has_art then
 	--	olr.del(has_art)
 	--end
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	local point = patrol("prison_killers_way")
 	local look = patrol("prison_killers_look")
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\darkvalley\killers\actor_stunning_1]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1240,13 +1240,11 @@ function drop_actor_inventory_dolina_killers(actor, npc, p)
 end
 
 function killers_second_sleep()
-	level.add_pp_effector("black.ppe", 201831, false)
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\darkvalley\killers\actor_stunning_2]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	end
-	olr.kill_mon_in_radius(db.actor:position(), 100)
+	olr.kill_mon_in_radius(db.actor:position(), 200)
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0002")
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0003")
 	olr.del_by_name("lvl4_darkdolina_staler_undead_olr_0004")
@@ -1398,8 +1396,8 @@ end
 
 function multicutscene_one(actor)
 	xr_effects.disable_ui(db.actor, nil)
-	level.add_pp_effector("blink.ppe", 20131, false) 
-	level.add_cam_effector2("camera_effects\\lab_karlik_scene.anm", 115, false, "xr_effects.enable_newui")
+	level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false) 
+	level.add_cam_effector2("camera_effects\\scenario_cam\\warlab\\lab_karlik_cutscene_cam.anm", 115, false, "xr_effects.enable_newui")
 	--log1("1")
 end
 
@@ -1526,7 +1524,7 @@ function bar_gop_fail()
 end
 
 function bar_away_to_wolf()
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	local point = patrol("bar_away_to_wolf_way")
 	local look = patrol("barman_kamorka_look")
 	db.actor:set_actor_position(point:point(0))
@@ -1664,7 +1662,7 @@ function use_lift_bar_verh()
 	end
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\power_on]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("bar_prison_down_walk")
 	local look = patrol("bar_prison_down_look")
 	db.actor:set_actor_position(point:point(0))
@@ -1679,7 +1677,7 @@ function use_lift_bar_niz()
 	end
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\power_on]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("bar_prison_verh_walk")
 	local look = patrol("agr_u_bandits_walk6")
 	db.actor:set_actor_position(point:point(0))
@@ -1861,7 +1859,7 @@ function yan_labirint_telep_dead_strahovka()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 end
 
 function yan_labirint_telep_dead()
@@ -1893,7 +1891,7 @@ function yan_labirint_telep_dead()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	for k, v in pairs(db.storage) do
 		local npc = level.object_by_id(k)
 		if npc then
@@ -1918,7 +1916,7 @@ function yan_labirint_telep_1()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1928,7 +1926,7 @@ function yan_labirint_telep_1()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1938,7 +1936,7 @@ function yan_labirint_telep_1()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1948,7 +1946,7 @@ function yan_labirint_telep_1()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1958,7 +1956,7 @@ function yan_labirint_telep_1()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1966,7 +1964,7 @@ function yan_labirint_telep_1()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1986,7 +1984,7 @@ function yan_labirint_telep_2()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -1996,7 +1994,7 @@ function yan_labirint_telep_2()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2006,7 +2004,7 @@ function yan_labirint_telep_2()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2016,7 +2014,7 @@ function yan_labirint_telep_2()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2026,7 +2024,7 @@ function yan_labirint_telep_2()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2046,7 +2044,7 @@ function yan_labirint_telep_3()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2056,7 +2054,7 @@ function yan_labirint_telep_3()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2066,7 +2064,7 @@ function yan_labirint_telep_3()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2076,7 +2074,7 @@ function yan_labirint_telep_3()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2086,7 +2084,7 @@ function yan_labirint_telep_3()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2106,7 +2104,7 @@ function yan_labirint_telep_4()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2116,7 +2114,7 @@ function yan_labirint_telep_4()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2126,7 +2124,7 @@ function yan_labirint_telep_4()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2136,7 +2134,7 @@ function yan_labirint_telep_4()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2146,7 +2144,7 @@ function yan_labirint_telep_4()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2166,7 +2164,7 @@ function yan_labirint_telep_5()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2176,7 +2174,7 @@ function yan_labirint_telep_5()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2186,7 +2184,7 @@ function yan_labirint_telep_5()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2196,7 +2194,7 @@ function yan_labirint_telep_5()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2206,7 +2204,7 @@ function yan_labirint_telep_5()
 			db.actor:set_actor_position(point:point(0))
 			local dir = look:point(0):sub(point:point(0))
 			db.actor:set_actor_direction(-dir:getH())
-			level.add_pp_effector("black.ppe", 201831, false)
+			level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 			xvars.yan_lab_tele = xvars.yan_lab_tele + 1
 			local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\yantar_demon_voice]])
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2293,7 +2291,7 @@ function take_psyhead_yan()
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 		end
 		alife():create("af_deadhead", db.actor:position(),db.actor:level_vertex_id(),  db.actor:game_vertex_id(),db.actor:id())
-		level.add_pp_effector("radar_wake.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\brain_fog.ppe", 20131, false)
 		db.actor:give_info_portion("take_psyhead_yan_have")
 		--nik_dialog.out_item_much("proto_psy_shap",1)
 	end
@@ -2362,8 +2360,7 @@ function phantsam_hitted()
 		local cur_weapon_sec = cur_weapon:section()
 		if effect_for_wpn[cur_weapon_sec] ~= nil then
 			db.actor.health = -0.06
-			level.add_pp_effector("dead_zone.ppe", 971974, false)
-			--level.add_cam_effector("camera_effects\\fatigue.anm", 19749, true, "")
+			level.add_pp_effector("camera_postprocess\\noise.ppe", 971974, false)
 			local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 			song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 			db.actor.psy_health = -0.1
@@ -2575,7 +2572,7 @@ function mg_boloto_hitted()
 
 	-- Применяем эффекты к актору
 	db.actor.health = -0.05
-	level.add_pp_effector("dead_zone.ppe", 971974, false)
+	level.add_pp_effector("camera_postprocess\\noise.ppe", 971974, false)
 	local song_start = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_fast]])
 	song_start:play_at_pos(db.actor, db.actor:position(), sound_object.s3d)
 	db.actor.psy_health = -0.05
@@ -2683,7 +2680,7 @@ function rad_psdhym_telep()
 	olr.del_by_name("lvl10_radar_space_restrictor_0009")
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\heartbeat_long]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("ps_hum_lead_look")
 	local look = patrol("ps_hum_lead_walk")
 	db.actor:set_actor_position(point:point(0))
@@ -2706,7 +2703,7 @@ function rad_bun_ne_lez_suda()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	--log1("ssg")
 end
 
@@ -2751,7 +2748,7 @@ function try_radbun_antenaupr()	 -- вводим код
 		nick.set_level_choosen_zombied("l05_bar")
 		news_manager.send_tip(db.actor, game.translate_string("try_radbun_antenaupr_7"), 50, "dolg", 35000)
 		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
-		level.add_pp_effector("blink.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 		return
 	end
 	if has_alife_info("radbun_antena_mg") then
@@ -2759,7 +2756,7 @@ function try_radbun_antenaupr()	 -- вводим код
 		nick.set_level_choosen_zombied("l11_deadcity")
 		news_manager.send_tip(db.actor, game.translate_string("try_radbun_antenaupr_8"), 50, "freedom", 35000)
 		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
-		level.add_pp_effector("blink.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 		return
 	end
 	if has_alife_info("radbun_antena_yan") then
@@ -2767,7 +2764,7 @@ function try_radbun_antenaupr()	 -- вводим код
 		nick.set_level_choosen_zombied("l07_yantar")
 		news_manager.send_tip(db.actor, game.translate_string("try_radbun_antenaupr_9"), 50, "ecolog", 35000)
 		olr.del_by_name("lvl12_radar_bunker_physic_shitok_zal_0000")
-		level.add_pp_effector("blink.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\blink.ppe", 20131, false)
 		return
 	end
 end
@@ -2874,7 +2871,7 @@ end
 function topim_actora_chaes()
 	if db.actor:alive() then
 		db.actor.health = -1
-		level.add_pp_effector("black.ppe", 20131, false)
+		level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 		local snd_obj = xr_sound.get_safe_sound_object([[actor\underwater]])
 		if not snd_obj:playing() then 
 			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -2920,7 +2917,7 @@ end
 -- ----------------------------------------------------------------------------------------------------
 function actro_hit_napgen()
 	xr_effects.kill_actor()
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\rostok_bloodsucker_call]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2951,14 +2948,14 @@ end
 function final_cutscene_start()
 	olr.snd([[characters_voice\scenario\generators\end\ending_checkpoint]])
 --	level.set_weather("1865",true)
-	level.add_cam_effector2("camera_effects\\ending_one.anm", 30, false, "nick.final_cutscene_start_two")
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_ending_checkpoint_cam_1.anm", 30, false, "nick.final_cutscene_start_two")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	local point = patrol("actor_plpkor_walk")
 	local look = patrol("actor_plpkor_look")
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("snd_shock.ppe", 2031, false)
+	level.add_pp_effector("camera_postprocess\\snd_shock.ppe", 2031, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\rostok_bloodsucker_call]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -2975,7 +2972,7 @@ function gen_labirint_telep()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 end
 
 function rat_ending_death_spawn()
@@ -2987,7 +2984,7 @@ function rat_ending_death_spawn()
 	)
 	--xr_effects.disable_ui(db.actor, nil)
 	alife():create("rat_volk_undead", db.actor:position():add(db.actor:direction():add(1)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 	olr_timers.st_timer("rat_fly_away", 10, "nick.rat_fly_away()")
 end
 
@@ -2997,7 +2994,7 @@ function rat_labirint_telep()
 	db.actor:set_actor_position(point:point(0))
 	local dir = look:point(0):sub(point:point(0))
 	db.actor:set_actor_direction(-dir:getH())
-	level.add_pp_effector("black.ppe", 201831, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 201831, false)
 end
 
 function gen_start_open_door_one()
@@ -3022,7 +3019,7 @@ function gen_wtoroy_etaj_start()
 	olr.del_by_name("lvl16_generators_space_restrictor_0053")
 	news_manager.send_tip(db.actor, game.translate_string("gen_wtoroy_etaj_start_0"), nil, "unknown", 5000)
 	olr_timers.st_timer("tark_wt_et", 5, "nick.tark_wt_et_one()")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\psy_noise]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -3031,13 +3028,13 @@ end
 
 function actor_podosel_boss()
 	db.actor:hide_weapon()
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_1]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
 	end
 	olr.del_by_name("lvl16_generators_space_restrictor_0056")
-	level.add_cam_effector2("camera_effects\\gen_boss_actor_close.anm", 22, false, "xr_effects.hid_bos_scream")
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_boss_actor_close_cam.anm", 22, false, "xr_effects.hid_bos_scream")
 	olr.disable_walk()
 	level.disable_input()
 	level.hide_indicators()	
@@ -3072,7 +3069,7 @@ function boss_dance_boom_black1()
 			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y + 1.6, bosp:position().z))
 		end
 	end
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_1]])
 	if not snd_obj:playing() then
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
@@ -3097,8 +3094,8 @@ function boss_dance_boom_black2()
 			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
 		end
 	end
-	level.add_cam_effector2("camera_effects\\gen_boss_black2.anm", 11, false, "")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_boss_dying_cam_2.anm", 11, false, "")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_2]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -3115,8 +3112,8 @@ function boss_dance_boom_black3()
 			boss_particle:play_at_pos(vector():set(bosp:position().x, bosp:position().y+1.6, bosp:position().z))
 		end
 	end
-	level.add_cam_effector2("camera_effects\\gen_boss_black3.anm", 11, false, "")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_cam_effector2("camera_effects\\scenario_cam\\generators\\gen_boss_dying_cam_3.anm", 11, false, "")
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\explosion_3]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -3134,7 +3131,7 @@ function boss_dance_boom_black4()
 		end
 	end
 	olr_timers.st_timer("molot_bure54r4s", 9, "xr_effects.en_gen_ui_deadboss()")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local snd_obj = xr_sound.get_safe_sound_object([[ambient\special\fear_hata]])
 	if not snd_obj:playing() then 
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)	
@@ -3225,7 +3222,7 @@ function gen_oso_killed_ecolgs()
 	olr_timers.del_timer("blowout_additional_timer3")
 	olr_timers.del_timer("blowout_additional_timer4")
 	olr_timers.del_timer("blowout_additional_timer5")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	olr.del_by_name("lvl16_generators_space_restrictor_0047")
 	olr.del_by_name("hidden_final_sr_rest")
 	olr.del_by_name("var_sms_1")
@@ -3251,7 +3248,7 @@ end
 
 function go_to_jaba_escgen()
 	olr.del_by_name("lvl16_generators_staler_undead_olr_0006")
-	level.add_pp_effector("black.ppe", 20131, false)
+	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	local point = patrol("ac_on_jaba_walk")
 	local look = patrol("ac_on_jaba_look")
 	db.actor:set_actor_position(point:point(0))

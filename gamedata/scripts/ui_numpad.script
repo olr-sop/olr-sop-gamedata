@@ -24,33 +24,46 @@ function numpad:__finalize()
 end
 
 function numpad:InitControls()
+	-- [ui] the numpad is authored in the virtual 1024x768 space: first build
+	-- the whole base canvas as the root window and center it on the real
+	-- canvas (wide screens carry extra width in ui_dx; tall screens are
+	-- stretched by the engine, so both offsets are 0).
+	local ui_kx = device().width /1024
+	local ui_ky = device().height/768
+	local ui_dx = 0
+	local ui_dy = 0
+	if ui_kx > ui_ky then
+		ui_dx = (device().width/ui_ky - 1024)/2
+	end
+	self:Init(ui_dx,ui_dy,1024,768)
 
-	self:Init(342,199,339,369)			  
-    local xml = CScriptXmlInit()
-    xml:ParseFile("ui_numpad_wnd.xml")
-	
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_numpad_wnd.xml")
+
 	local t
-     
-	xml:InitStatic("background", self)
-	t = xml:InitStatic("edit_box", self)
-	t:SetWindowName("edit_window")
-	self:Register(xml:Init3tButton("btn_0", self),"btn_0")
-	self:Register(xml:Init3tButton("btn_1", self),"btn_1")
-	self:Register(xml:Init3tButton("btn_2", self),"btn_2")
-	self:Register(xml:Init3tButton("btn_3", self),"btn_3")
-	self:Register(xml:Init3tButton("btn_4", self),"btn_4")
-	self:Register(xml:Init3tButton("btn_5", self),"btn_5")
-	self:Register(xml:Init3tButton("btn_6", self),"btn_6")
-	self:Register(xml:Init3tButton("btn_7", self),"btn_7")
-	self:Register(xml:Init3tButton("btn_8", self),"btn_8")
-	self:Register(xml:Init3tButton("btn_9", self),"btn_9")	
-	
-	self:Register(xml:Init3tButton("btn_c",			self),	"btn_c")
-	self:Register(xml:Init3tButton("btn_backspase",	self),	"btn_backspase")
-	self:Register(xml:Init3tButton("btn_enter",		self),	"btn_enter")
-	self:Register(xml:Init3tButton("btn_cancel",	self),	"btn_cancel")
-end
 
+	-- then place the numpad panel at its original authored rect (342,199,339,369)
+	-- inside that base canvas and hang all controls off it
+	local background = xml:InitStatic("background", self)
+	background:SetWndPos(342,199)
+	t = xml:InitStatic("edit_box", background)
+	t:SetWindowName("edit_window")
+	self:Register(xml:Init3tButton("btn_0", background),"btn_0")
+	self:Register(xml:Init3tButton("btn_1", background),"btn_1")
+	self:Register(xml:Init3tButton("btn_2", background),"btn_2")
+	self:Register(xml:Init3tButton("btn_3", background),"btn_3")
+	self:Register(xml:Init3tButton("btn_4", background),"btn_4")
+	self:Register(xml:Init3tButton("btn_5", background),"btn_5")
+	self:Register(xml:Init3tButton("btn_6", background),"btn_6")
+	self:Register(xml:Init3tButton("btn_7", background),"btn_7")
+	self:Register(xml:Init3tButton("btn_8", background),"btn_8")
+	self:Register(xml:Init3tButton("btn_9", background),"btn_9")
+
+	self:Register(xml:Init3tButton("btn_c",			background),	"btn_c")
+	self:Register(xml:Init3tButton("btn_backspase",	background),	"btn_backspase")
+	self:Register(xml:Init3tButton("btn_enter",		background),	"btn_enter")
+	self:Register(xml:Init3tButton("btn_cancel",	background),	"btn_cancel")
+end
 
 function numpad:InitCallBacks()
 	-- new game
@@ -88,7 +101,6 @@ function numpad:AddNumber(number)
 	local snd_obj = xr_sound.get_safe_sound_object([[device\pda\contact_1]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
-
 
 function numpad:OnButton_backspace_clicked()
 	local edit_window = self:GetStatic("edit_window")

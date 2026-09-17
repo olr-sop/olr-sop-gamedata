@@ -48,11 +48,11 @@ function st_timer_game(name, delay, action)
 		log1("! game timer start - "..xvars.game_timers_count.." ["..name.."] delay: "..delay.."s")
 	end
 	
-	-- Получаем текущее игровое время в миллисекундах
-	local current_game_time = get_game_mseconds()
+	-- Получаем текущее игровое время в секундах
+	local current_game_time = game.time_sec()
 	
 	-- Рассчитываем время срабатывания (delay в секундах игрового времени)
-	local trigger_time = current_game_time + delay * 1000
+	local trigger_time = current_game_time + delay
 	
 	-- Сохраняем данные таймера с префиксом "gt" (game timer)
 	save_xvars("gt_name_"..xvars.game_timers_count, name)			-- имя таймера
@@ -83,8 +83,8 @@ function st_timer_real(name, delay, action)
 		log1("! real timer start - "..xvars.real_timers_count.." ["..name.."] delay: "..delay.."s")
 	end
 	
-	local time = game.time64()
-	local trigger_time = time + delay * 1000 * time_factor
+	local time = game.time_sec()
+	local trigger_time = time + delay * time_factor
 	
 	-- Сохраняем данные таймера с префиксом "rt" (real timer)
 	save_xvars("rt_name_"..xvars.real_timers_count, name)
@@ -118,7 +118,7 @@ end
 function check_game_timers()
 	if xvars.game_timers_count <= 0 then return end
 	
-	local current_game_time = get_game_mseconds()
+	local current_game_time = game.time_sec()
 	
 	for i = 1, xvars.game_timers_count do
 		local timer_name = load_xvars("gt_name_"..i, nil)
@@ -126,7 +126,7 @@ function check_game_timers()
 			local trigger_time = load_xvars("gt_time_"..i, 0)
 			
 			if debug_msg and trigger_time > 0 then
-				log1(string.format("! Game Timer %d [%s]: trigger=%d, current=%d, remaining=%dms", 
+				log1(string.format("! Game Timer %d [%s]: trigger=%d, current=%d, remaining=%ds", 
 					i, timer_name, trigger_time, current_game_time, trigger_time - current_game_time))
 			end
 			
@@ -142,7 +142,7 @@ end
 function check_real_timers()
 	if xvars.real_timers_count <= 0 then return end
 	
-	local real_current_time = game.time64()
+	local real_current_time = game.time_sec()
 	
 	for i = 1, xvars.real_timers_count do
 		local timer_name = load_xvars("rt_name_"..i, nil)
@@ -150,7 +150,7 @@ function check_real_timers()
 			local trigger_time = load_xvars("rt_time_"..i, 0)
 			
 			if debug_msg and trigger_time > 0 then
-				log1(string.format("! Real Timer %d [%s]: trigger=%d, current=%d, remaining=%dms", 
+				log1(string.format("! Real Timer %d [%s]: trigger=%d, current=%d, remaining=%ds", 
 					i, timer_name, trigger_time, real_current_time, trigger_time - real_current_time))
 			end
 			
@@ -327,10 +327,10 @@ function get_game_timer_remaining(name)
 		local timer_name = load_xvars("gt_name_"..i, nil)
 		if timer_name and timer_name == name then
 			local trigger_time = load_xvars("gt_time_"..i, 0)
-			local current_game_time = get_game_mseconds()
+			local current_game_time = game.time_sec()
 			
 			if trigger_time > current_game_time then
-				return (trigger_time - current_game_time) / 1000
+				return (trigger_time - current_game_time)
 			else
 				return 0 -- Таймер уже сработал
 			end
@@ -350,10 +350,10 @@ function get_real_timer_remaining(name)
 		local timer_name = load_xvars("rt_name_"..i, nil)
 		if timer_name and timer_name == name then
 			local trigger_time = load_xvars("rt_time_"..i, 0)
-			local current_time = game.time64()
+			local current_time = game.time_sec()
 			
 			if trigger_time > current_time then
-				return (trigger_time - current_time) / (1000 * time_factor)
+				return (trigger_time - current_time) / time_factor
 			else
 				return 0 -- Таймер уже сработал
 			end
@@ -383,12 +383,12 @@ end
 
 -- Дамп активных таймеров в лог
 function dump_active_timers()
-	local game_seconds = get_game_seconds()
-	local real_time = game.time64()
+	local game_seconds = game.time_sec()
+	local real_time = game.time_sec()
 	
 	log1("=== ACTIVE TIMERS DUMP ===")
 	log1("Current game time: "..game_seconds.." seconds")
-	log1("Current real time: "..real_time.." ms")
+	log1("Current real time: "..real_time.." s")
 	
 	-- Дамп игровых таймеров
 	log1("\nGAME TIMERS:")
@@ -398,14 +398,14 @@ function dump_active_timers()
 		local timer_name = load_xvars("gt_name_"..i, nil)
 		if timer_name then
 			local trigger_time = load_xvars("gt_time_"..i, 0)
-			local current_game_time = get_game_mseconds()
+			local current_game_time = game.time_sec()
 			local remaining = 0
 			
 			if trigger_time > current_game_time then
-				remaining = (trigger_time - current_game_time) / 1000
+				remaining = (trigger_time - current_game_time)
 			end
 			
-			log1(string.format("  [%d] %s - trigger in %dms (%.1fs remaining)", 
+			log1(string.format("  [%d] %s - trigger in %ds (%.1fs remaining)", 
 				i, timer_name, trigger_time, remaining))
 		end
 	end
@@ -418,14 +418,14 @@ function dump_active_timers()
 		local timer_name = load_xvars("rt_name_"..i, nil)
 		if timer_name then
 			local trigger_time = load_xvars("rt_time_"..i, 0)
-			local current_time = game.time64()
+			local current_time = game.time_sec()
 			local remaining = 0
 			
 			if trigger_time > current_time then
-				remaining = (trigger_time - current_time) / (1000 * time_factor)
+				remaining = (trigger_time - current_time) / time_factor
 			end
 			
-			log1(string.format("  [%d] %s - trigger at %dms (%.1fs real time remaining)", 
+			log1(string.format("  [%d] %s - trigger at %ds (%.1fs real time remaining)", 
 				i, timer_name, trigger_time, remaining))
 		end
 	end

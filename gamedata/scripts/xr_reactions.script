@@ -151,7 +151,7 @@ function events:calculate()  -- Производить перерасчет и обновление раздражителе
 
 	-- удалять обработанные устаревшие раздражители
 	for k,v in pairs(self.used) do
-		if game.time_sec64() - v >= self.time_memory then
+		if game.time_sec() - v >= self.time_memory then
 			self.used[k] = nil
 		end
 	end
@@ -199,7 +199,7 @@ function events:calculateObject(v)
 	
 	arhive_vo.position 		= vo:position()
 	arhive_vo.visibility	= v.value
-	arhive_vo.time			= game.time64()
+	arhive_vo.time			= game.time_sec()
 	arhive_vo.id			= vo:id()
 end
 function events:get_event(tt)  -- Выдает наиболее приоритетный раздражитель
@@ -231,9 +231,9 @@ end
 function events:markAsUsed(npc)
 	if npc ~= nil then
 		if self.used[npc] ~= nil then
-			self.used[npc] = game.time64()
+			self.used[npc] = game.time_sec()
 		else
-			table.insert(self.used, npc, game.time64())
+			table.insert(self.used, npc, game.time_sec())
 		end
 	end
 end

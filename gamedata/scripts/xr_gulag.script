@@ -466,7 +466,7 @@ function gulag:clear_dead(obj_id)
 		self:changeCasualities( 1 )
 		local job = self.Job[self.ObjectJob[obj_id]]
 		-- Заглушка по вылету когда что-то оказывается nil
-		local secs = game.time_sec64()
+		local secs = game.time_sec()
 		local idle = job.idle_after_death or job_idle_after_death
 		--log1( string.format( "DIAG clear_dead [%s] obj=%s job=%s section=%s", tostring(self.name), tostring(obj_id), tostring(job), tostring(job and job.section) ) )
 		--log1( string.format( "DIAG clear_dead secs=%s idle=%s job.idle_after_death=%s upvalue_const=%s", tostring(secs), tostring(idle), tostring(job.idle_after_death), tostring(job_idle_after_death) ) )
@@ -585,12 +585,12 @@ end
 -- работа доступна, когда время idle истекло (или не задано)
 -- и занята работа, от которой зависит данная работа.
 function gulag:availJob(job)
-	if job.begin == nil or game.time_sec64() - job.begin > job.idle then
-		if job.idle_after_death_end == nil or job.idle_after_death_end < game.time_sec64() then
+	if job.begin == nil or game.time_sec() - job.begin > job.idle then
+		if job.idle_after_death_end == nil or job.idle_after_death_end < game.time_sec() then
 			if job.fill_idle ~= nil then
 				if job.fill_idle == idle_none then
 					return false
-				elseif job.fill_idle ~= idle_once and job.fill_idle < game.time_sec64() - job.begin then
+				elseif job.fill_idle ~= idle_once and job.fill_idle < game.time_sec() - job.begin then
 					return false
 				end
 			end
@@ -604,7 +604,7 @@ end
 -- Текущая работа доступна, если не истекло ее время и занята работа, от которой она зависит
 function gulag:availCurrent(job)
 	if job.timeout == nil or
-	   job.begin == nil or game.time_sec64() - job.begin < job.timeout
+	   job.begin == nil or game.time_sec() - job.begin < job.timeout
 	then
 		return true
 	else
@@ -950,7 +950,7 @@ function gulag:beginJob( obj_id )
 
 	self.Object_begin_job[obj_id] = true
 
-	job.begin = game.time_sec64()
+	job.begin = game.time_sec()
 
 	if job.fill_idle == idle_once then
 		job.fill_idle = idle_none

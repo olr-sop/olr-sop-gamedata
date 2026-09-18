@@ -481,6 +481,10 @@ function se_respawn:execute()
     if self.already_once_spawned == true then
         return
     end	
+	-- Если секция [respawn] отсутствовала - настройки не читались
+	if self.idle_spawn_min == nil or self.idle_spawn_max == nil then
+		return
+	end
 	-- Выходим, если у нас установлен событийный спавн.
 	if self.idle_spawn_min == -1 then
 		return
@@ -519,6 +523,9 @@ end
 function se_respawn:update_online()
 	--cse_alife_smart_zone.update( self )
 	--printf("RESPAWN: [%s] se_respawn update_online", tostring(self:name()))
+	if self.respawn_radius == nil then
+		return
+	end
 	if self.respawn_radius == -1 then
 		sim_statistic.respawn_enabled(self, false)
 		return
@@ -530,12 +537,16 @@ function se_respawn:update_online()
 	end
 end
 
-function spawn(name)
+function spawn(name, force)
 	local spawner = respawners[name]
 	if spawner == nil then
 		return
 	end
 	
+	if db.actor and not force and spawner.online then
+		return
+	end
+
 	for i=1,spawner.max_spawn do
 		if spawner.max_count ~= -1 and table.getn(spawner.spawned_obj) >= spawner.max_count then
 --			printf("SPAWNING [%s], CANT SPAWN. MAX COUNT REACHED!!!", tostring(spawner:name()))

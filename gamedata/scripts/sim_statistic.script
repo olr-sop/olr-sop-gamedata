@@ -112,25 +112,184 @@ end
 
 
 
--- Отметка всех сталкеров мапспотами. Дебаговая фича!!!
+-- Отметка всех сталкеров мапспотами. Дебаговая фича.
 show_stalker_spot = ENABLE_SPOTS_STALKERS
-function unmark_all_stalkers()
-	show_stalker_spot = false
-end
-function mark_all_stalkers()
-	show_stalker_spot = true
+show_monster_spot = ENABLE_SPOTS_MUTANTS
+
+-- Реестр всех живых NPC (server-object) для точечного показа/скрытия спотов.
+-- Движок не даёт перечисления всех server-объектов, поэтому ведём свой реестр.
+npc_registry = {}
+npc_spot_marked = {}
+
+-- Для лога: переносы строк из кода "\n" превращаем в настоящие \n
+function spot_text_for_log(txt)
+	return txt:gsub("\\n", "\n")
 end
 
--- Отметка всех монстров мапспотами. Дебаговая фича!!!
-show_monster_spot = ENABLE_SPOTS_MUTANTS
-function unmark_all_monsters()
-	show_monster_spot = false
+-- Имя смарт-террейна, к которому приписан NPC (0/65535 = нет)
+local function get_smart_name(se_obj)
+	local ok, sid = pcall(function()
+		if se_obj.smart_terrain_id then
+			return se_obj:smart_terrain_id()
+		end
+		return 0
+	end)
+	if not ok or not sid or sid == 0 or sid == 65535 then
+		return nil
+	end
+	local so = alife():object(sid)
+	if so then
+		return tostring(so:name())
+	end
+	return tostring(sid)
 end
-function mark_all_monsters()
-	if show_monster_spot == true then
-		unmark_all_monsters()
+
+-- Детальный хинт для спота NPC
+function npc_spot_text(se_obj)
+	local tostr = tostring
+	local name = tostr(se_obj:name() or "?")
+	local community, rank = getNpcType(se_obj)
+	local section = "?"
+	if se_obj.section_name then
+		local ok, s = pcall(function() return se_obj:section_name() end)
+		if ok and s then section = tostr(s) end
+	end
+	local lv, gv = "?", "?"
+	if se_obj.m_level_vertex_id ~= nil then
+		lv = tostr(se_obj.m_level_vertex_id)
+	end
+	if se_obj.m_game_vertex_id ~= nil and se_obj.m_game_vertex_id ~= 65535 then
+		gv = tostr(se_obj.m_game_vertex_id)
+	end
+	local status = "н/д"
+	if se_obj.alive then
+		local ok, a = pcall(function() return se_obj:alive() end)
+		if ok then status = a and "жив" or "мёртв" end
+	end
+	local squad, group = "0", "0"
+	if se_obj.g_squad then
+		local ok, v = pcall(function() return se_obj:g_squad() end)
+		if ok then squad = tostr(v) end
+	end
+	if se_obj.g_group then
+		local ok, v = pcall(function() return se_obj:g_group() end)
+		if ok then group = tostr(v) end
+	end
+	local smart = get_smart_name(se_obj)
+	local str = "НПС: " .. name .. "\\n" ..
+		"Сообщество: " .. community .. "\\n" ..
+		"Ранг: " .. rank .. "\\n" ..
+		"Секция: " .. section .. "\\n" ..
+		"LV: " .. lv .. "\\n" ..
+		"GV: " .. gv .. "\\n" ..
+		"Статус: " .. status
+	if smart then
+		str = str .. "\\nСмарт: " .. smart
+	end
+	str = str .. "\\nОтряд: " .. squad .. "\\nГруппа: " .. group
+	return str
+end
+
+-- Зарегистрировать NPC и показать его спот (если флаг включён)
+function mark_npc(se_obj)
+	if not se_obj then return end
+	local id = se_obj.id
+	npc_registry[id] = se_obj
+	if not (show_stalker_spot or show_monster_spot) then
 		return
 	end
+	if se_obj.alive then
+		local ok, alive = pcall(function() return se_obj:alive() end)
+		if ok and not alive then
+			return
+		end
+	end
+	local community, rank = getNpcType(se_obj)
+	local spot = "alife_presentation_monstr"
+	if IsStalker(se_obj) then
+		spot = "alife_presentation_" .. community
+	end
+	local want = (IsStalker(se_obj) and show_stalker_spot) or (IsMonster(se_obj) and show_monster_spot)
+	if not want then return end
+	if npc_spot_marked[id] == spot then
+		return
+	end
+	if npc_spot_marked[id] then
+		level.map_remove_object_spot(id, npc_spot_marked[id])
+	end
+	local txt = npc_spot_text(se_obj)
+	level.map_add_object_spot_ser(id, spot, txt)
+	npc_spot_marked[id] = spot
+end
+
+-- Снять спот с NPC и убрать его из реестра
+function unmark_npc(se_obj)
+	if not se_obj then return end
+	local id = se_obj.id
+	local spot = npc_spot_marked[id]
+	if spot then
+		level.map_remove_object_spot(id, spot)
+		npc_spot_marked[id] = nil
+	end
+	npc_registry[id] = nil
+end
+
+-- Обновить хинт спота NPC (сменился смарт/логика)
+function refresh_npc_spot(se_obj)
+	if not se_obj then return end
+	local id = se_obj.id
+	local spot = npc_spot_marked[id]
+	if not spot then return end
+	level.map_change_spot_hint(id, spot, npc_spot_text(se_obj))
+end
+
+-- Массовое перерисование спотов после смены флага типа
+local function refresh_spots(pred, want)
+	for id, se_obj in pairs(npc_registry) do
+		if pred(se_obj) then
+			local community, rank = getNpcType(se_obj)
+			local spot = "alife_presentation_monstr"
+			if IsStalker(se_obj) then
+				spot = "alife_presentation_" .. community
+			end
+			if want then
+				if npc_spot_marked[id] == nil then
+					local txt = npc_spot_text(se_obj)
+					level.map_add_object_spot_ser(id, spot, txt)
+					npc_spot_marked[id] = spot
+				end
+			else
+				if npc_spot_marked[id] then
+					level.map_remove_object_spot(id, npc_spot_marked[id])
+					npc_spot_marked[id] = nil
+				end
+			end
+		end
+	end
+end
+local is_stalker_type = function(o) return IsStalker(o) end
+local is_monster_type = function(o) return IsMonster(o) end
+
+-- Управление показом (вызывается и из _g)
+function set_all_stalkers(value)
+	show_stalker_spot = (value ~= false)
+	refresh_spots(is_stalker_type, show_stalker_spot)
+end
+function set_all_monsters(value)
+	show_monster_spot = (value ~= false)
+	refresh_spots(is_monster_type, show_monster_spot)
+end
+function mark_all_stalkers()
+	set_all_stalkers(true)
+end
+function unmark_all_stalkers()
+	set_all_stalkers(false)
+end
+function mark_all_monsters()
+	set_all_monsters(true)
+end
+function unmark_all_monsters()
+	set_all_monsters(false)
 end
 
 
@@ -140,24 +299,14 @@ local reg_objects_respawn = {}
 local show_respawn_spot = ENABLE_SPOTS_RESPAWN
 
 function register_respawn(obj)
-	-- Не отбражать респавнеры с событийным спауном
-	if obj.item_spawn ~= false then
-		return
-	end
-	
-	-- Формируем детальную информацию о секциях с вероятностями
+	local tostr = tostring
 	local section = "ВЕРОЯТНОСТЬ СПАВНА: " .. (obj.str_conditions or "0") .. "%\\n"
 	local total_prob = 0
-	
 	for k,v in pairs(obj.respawn_section) do
 		section = section .. "СЕКЦИЯ: " .. v.section .. " = " .. v.prob .. "\\n"
 		total_prob = total_prob + v.prob
 	end
-	
-	-- Добавляем общую информацию о весах
 	section = section .. "ОБЩИЙ ВЕС: " .. total_prob .. "\\n"
-	
-	-- Анализируем секции на наличие ошибок конфигурации
 	local config_errors = ""
 	for kk,vv in pairs(obj.respawn_section) do
 		local tt = obj.sectSpawnProps[vv.section]
@@ -165,20 +314,22 @@ function register_respawn(obj)
 			config_errors = config_errors .. "ОШИБКА: " .. vv.section .. "\\n"
 		end
 	end
-	
 	if config_errors ~= "" then
 		section = section .. "--- ОШИБКИ КОНФИГУРАЦИИ ---\\n" .. config_errors
 	end
-	
 	reg_objects_respawn[obj.id] = {
-		section = section, 
-		enabled = false, 
-		max_count = obj.max_count, 
+		section = section,
+		enabled = false,
+		max_count = obj.max_count,
 		count = 0,
 		name = tostring(obj:name()) or "unknown",
-		min_count = obj.min_count or 0
+		min_count = obj.min_count or 0,
+		radius   = obj.respawn_radius,
+		idle_min = obj.idle_spawn_min,
+		idle_max = obj.idle_spawn_max,
+		spawn_once = obj.spawn_once,
+		parent     = obj.parent
 	}
-	
 	if show_respawn_spot == true then
 		mark_respawn(obj.id)
 	end
@@ -192,35 +343,34 @@ function respawn_enabled(obj, enabled)
 	if obj.item_spawn ~= false then
 		return
 	end
+	local info = reg_objects_respawn[obj.id]
+	if info == nil then
+		return
+	end
 	local gg = table.getn(obj.spawned_obj)
-	if reg_objects_respawn[obj.id].enabled == enabled and
-	   reg_objects_respawn[obj.id].count == gg
-	then
+	if info.enabled == enabled and info.count == gg then
 		return
 	end
 	if show_respawn_spot == true then
 		unmark_respawn(obj.id)
 	end
-	reg_objects_respawn[obj.id].enabled = enabled
-	reg_objects_respawn[obj.id].count = gg
+	info.enabled = enabled
+	info.count = gg
 	if show_respawn_spot == true then
 		mark_respawn(obj.id)
 	end
 end
 
-function mark_respawn(obj_id)
+function respawn_spot_text(rr, obj_id)
 	local tostr = tostring
-	local rr = reg_objects_respawn[obj_id]
-	if rr.exist ~= true then
-		-- Детализированная информационная строка
-		local status_text = rr.enabled and "АКТИВЕН" or "НЕАКТИВЕН"
-		local spawn_status = rr.enabled and ("ЗАСПАВНЕНО: " .. tostr(rr.count) .. " из " .. tostr(rr.max_count)) or "РЕСПАВН ОТКЛЮЧЕН"
-		local min_max_info = "ЛИМИТЫ: " .. tostr(rr.min_count) .. "-" .. tostr(rr.max_count)
-		
-		-- Определяем статус заполненности
+		local max_txt = (rr.max_count == -1) and "безлимит" or tostr(rr.max_count)
+		local status_text = rr.enabled and "АКТИВЕН" or "ОЖИДАНИЕ"
+		local spawn_status = rr.enabled and ("ЗАСПАВНЕНО: " .. tostr(rr.count) .. " из " .. max_txt) or "СЕЙЧАС НЕ СПАВНИТ"
+		local min_max_info = "ЛИМИТЫ: " .. tostr(rr.min_count) .. "-" .. max_txt
+
 		local capacity_status = ""
 		if rr.enabled then
-			if rr.count >= rr.max_count then
+			if rr.max_count ~= -1 and rr.count >= rr.max_count then
 				capacity_status = "ПОЛНОСТЬЮ ЗАПОЛНЕН"
 			elseif rr.count >= rr.min_count then
 				capacity_status = "ЧАСТИЧНО ЗАПОЛНЕН"
@@ -228,16 +378,40 @@ function mark_respawn(obj_id)
 				capacity_status = "НЕДОСТАТОЧНО"
 			end
 		end
-		
-		local str = "РЕСПАВНЕР: " .. rr.name .. "\\n" ..
-				   "СТАТУС: " .. status_text .. "\\n" ..
-				   spawn_status .. "\\n" ..
-				   capacity_status .. "\\n" ..
-				   min_max_info .. "\\n" ..
-				   "ID: " .. tostr(obj_id) .. "\\n" ..
-				   "--- КОНФИГУРАЦИЯ ---\\n" ..
-				   rr.section
-		
+
+		local radius_txt = "н/д"
+		if rr.radius ~= nil then
+			if rr.radius == -1 then
+				radius_txt = "оффлайн (без радиуса)"
+			else
+				radius_txt = tostr(rr.radius) .. " м"
+			end
+		end
+		local idle_txt = tostr(rr.idle_min or "?") .. "-" .. tostr(rr.idle_max or "?") .. " сек"
+		local parent_txt = rr.parent and ("SID " .. tostr(rr.parent)) or "нет"
+		local once_txt = rr.spawn_once and "ДА" or "НЕТ"
+
+		return "РЕСПАВНЕР: " .. rr.name .. "\\n" ..
+			"СТАТУС: " .. status_text .. "\\n" ..
+			spawn_status .. "\\n" ..
+			capacity_status .. "\\n" ..
+			min_max_info .. "\\n" ..
+			"ID: " .. tostr(obj_id) .. "\\n" ..
+			"--- КОНФИГУРАЦИЯ ---\\n" ..
+			"IDLE_SPAWN: " .. idle_txt .. "\\n" ..
+			"РАДИУС: " .. radius_txt .. "\\n" ..
+			"РОДИТЕЛЬ: " .. parent_txt .. "\\n" ..
+			"SPAWN_ONCE: " .. once_txt .. "\\n" ..
+			"--- СЕКЦИИ ---\\n" ..
+			rr.section
+end
+function mark_respawn(obj_id)
+	local rr = reg_objects_respawn[obj_id]
+	if rr == nil then
+		return
+	end
+	if rr.exist ~= true then
+		local str = respawn_spot_text(rr, obj_id)
 		if rr.enabled then
 			level.map_add_object_spot(obj_id, "alife_presentation_respawn_on", str)
 		else
@@ -249,7 +423,7 @@ end
 
 function unmark_respawn(obj_id)
 	local rr = reg_objects_respawn[obj_id]
-	if rr.exist == true then
+	if rr and rr.exist == true then
 		if rr.enabled then
 			level.map_remove_object_spot(obj_id, "alife_presentation_respawn_on")
 		else
@@ -262,35 +436,127 @@ end
 function unmark_all_respawns()
 	show_respawn_spot = false
 	for k,v in pairs(reg_objects_respawn) do
-		unmark_respawn(k)			
+		unmark_respawn(k)
 	end
 end
 
 function mark_all_respawns()
-	if show_respawn_spot == true then
-		unmark_all_respawns()
-		return
-	end
 	show_respawn_spot = true
-	for k,v in pairs(reg_objects_respawn) do		
+	for k,v in pairs(reg_objects_respawn) do
 		mark_respawn(k)
 	end
 end
 
 -- Статистика смарттеррейнов
 show_smart_spot = ENABLE_SPOTS_SMARTS
-function unmark_all_smarts()
-	show_smart_spot = false
+function set_all_smarts(value)
+	show_smart_spot = (value ~= false)
 end
 function mark_all_smarts()
-	if show_smart_spot == true then
-		show_smart_spot = false
-		return
-	end
-	show_smart_spot = true
+	set_all_smarts(true)
+end
+function unmark_all_smarts()
+	set_all_smarts(false)
 end
 
 
+
+-- Детальный хинт для спота смарт-террейна (вызывается из smart_terrain.script)
+function smart_spot_text(se_smart, avail)
+	local tostr = tostring
+	local g = se_smart.gulag
+	local nm = se_smart:name()
+
+	local state_text = "Состояние: " .. tostr(g.state)
+	local population = "Население: " .. tostr(g:get_population()) .. " из " .. tostr(g.capacity)
+	local non_exclusive = "Неэксклюзивные: " .. tostr(g:get_non_exclusive_population()) .. " из " .. tostr(g.capacity_non_exclusive)
+	local comedians = "Пришедшие: " .. tostr(g:get_population_comed())
+	local exclusives = "Эксклюзивные: " .. tostr(se_smart.exclusives or 0)
+	local availability = "Доступность: " .. (avail and "ДА" or "НЕТ")
+	local preset_info = "Preset: " .. (se_smart.gparams.preset_name or "нет")
+	local type_info = "Тип: " .. (se_smart.gparams.type or "неизвестно")
+
+	local groups_info = "Группы: "
+	if se_smart.gparams.groups then
+		for _, group in ipairs(se_smart.gparams.groups) do
+			groups_info = groups_info .. group .. ", "
+		end
+	else
+		groups_info = groups_info .. "все"
+	end
+
+	local lock_info = "Приём заблокирован: " .. (se_smart.population_locked and "ДА" or "НЕТ")
+
+	local cond_info = "Условия: "
+	if se_smart.gparams.cond_raw and se_smart.gparams.cond_raw ~= "" then
+		cond_info = cond_info .. se_smart.gparams.cond_raw
+	else
+		cond_info = cond_info .. "нет"
+	end
+
+	local free_capacity = math.max(0, g.capacity - g:get_population())
+	local free_ne = math.max(0, g.capacity_non_exclusive - g:get_non_exclusive_population())
+	local jobs_total = g.Job and table.getn(g.Job) or 0
+	local roster_n = g.Job_avail_in_state and table.getn(g.Job_avail_in_state) or 0
+
+	local str = "Смарт-террейн: " .. nm .. "\\n" ..
+		"ID: " .. tostr(se_smart.id) .. "\\n" ..
+		"----------------------------\\n" ..
+		state_text .. "\\n" ..
+		population .. "\\n" ..
+		non_exclusive .. "\\n" ..
+		comedians .. "\\n" ..
+		exclusives .. "\\n" ..
+		"Свободных мест: " .. free_capacity .. " из " .. g.capacity .. "\\n" ..
+		"Свободно (неэкс): " .. free_ne .. " из " .. g.capacity_non_exclusive .. "\\n" ..
+		"Работ в стейте: " .. roster_n .. " из " .. jobs_total .. "\\n" ..
+		"----------------------------\\n" ..
+		availability .. "\\n" ..
+		lock_info .. "\\n" ..
+		cond_info .. "\\n" ..
+		preset_info .. "\\n" ..
+		type_info .. "\\n" ..
+		groups_info .. "\\n" ..
+		"Уровень: " .. se_smart:get_level_name()
+
+	str = str .. "\\n----------------------------\\nСОСТАВ СМАРТА:\\n"
+	local lines = {}
+	local i = 0
+	for obj_id, npc_info in pairs(se_smart.npc_info) do
+		i = i + 1
+		local o = alife():object(obj_id)
+		local o_name, o_comm, o_rank = "?", "?", "?"
+		if o then
+			o_name = tostr(o:name() or "?")
+			local ok, c, r = pcall(function() return getNpcType(o) end)
+			if ok then
+				o_comm = c or "?"
+				o_rank = r or "?"
+			end
+		end
+		local excl = npc_info.exclusive and "[экс]" or "[неэкс]"
+		local job_txt = "?"
+		local jobN = g.ObjectJob and g.ObjectJob[obj_id]
+		if jobN then
+			local path = g:get_obj_job_path_name(obj_id)
+			local job = g:getJob(obj_id)
+			job_txt = tostr(jobN) .. ":" .. (path or (job and job.section or "?"))
+		end
+		local o_status = "оффлайн"
+		if o then
+			local ot = type(g.Object[obj_id])
+			if ot == "userdata" then
+				o_status = "онлайн"
+			end
+		end
+		lines[i] = "" .. o_name .. " (" .. o_comm .. ", " .. o_rank .. ") " .. excl .. " job=" .. job_txt .. " " .. o_status
+	end
+	table.sort(lines)
+	for i, ln in ipairs(lines) do
+		str = str .. "\\n" .. ln
+	end
+	return str
+end
 
 function mark_all_npc()
 	mark_all_stalkers()
@@ -299,4 +565,29 @@ end
 function mark_all_addon()
 	mark_all_respawns()
 	mark_all_smarts()
+end
+
+-- Ручной вывод спотов в лог (вместо авто-логирования при включённых ENABLE_*)
+function log_npc_spots()
+	local count = 0
+	for id, se_obj in pairs(npc_registry) do
+		if se_obj then
+			local txt = npc_spot_text(se_obj)
+			log1(string.format("[NPC SPOT] %s", spot_text_for_log(txt)))
+			count = count + 1
+		end
+	end
+	return count
+end
+
+function log_respawn_spots()
+	local count = 0
+	for obj_id, rr in pairs(reg_objects_respawn) do
+		if rr then
+			local str = respawn_spot_text(rr, obj_id)
+			log1(string.format("[RESPAWN SPOT] %s", spot_text_for_log(str)))
+			count = count + 1
+		end
+	end
+	return count
 end

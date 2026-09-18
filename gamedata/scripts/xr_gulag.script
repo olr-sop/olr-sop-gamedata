@@ -38,6 +38,9 @@ local gulag_tasks_ltx        = ini_file( gulag_tasks_file_name )
 local job_position_threshold = 120 --50  -- расстояние до места работы при котором персонаж в онлайне считается достигшим места работы
 local job_idle_after_death   = 100 -- в течении такого периода времени после смерти персонажа его работа будет недоступна
 
+local elimination_idle_min   = 2*60*60
+local elimination_idle_max   = 4*60*60
+
 idle_nil  = nil
 idle_once = -1
 idle_none = -2
@@ -413,7 +416,8 @@ function gulag:removeObject( obj_id )
 	self:clear_restrictors_info( obj_id )
 
 	self.population = self.population - 1
-	if not self.npc_info[obj_id].exclusive then
+	local npc_info_ = self.npc_info[obj_id]
+	if npc_info_ and not npc_info_.exclusive then
 		self.population_non_exclusive = self.population_non_exclusive - 1
 	end
 end
@@ -459,6 +463,48 @@ function gulag:update_objs()
 end
 
 -- Убирание мертвого чувака. Вызывается из смарттеррейна
+function gulag:check_elimination(n)
+	local nc = self:get_population_comed()
+	if nc <= n then
+		return true
+	end
+	if self.population_non_exclusive == self.population then
+		return false
+	end
+	for obj_id, begun in pairs(self.Object_begin_job) do
+		if begun then
+			local npc = self.npc_info[obj_id]
+			local se = npc and npc.se_obj
+			if se and not se.online then
+				nc = nc - 1
+				if nc <= n then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+function gulag:set_elimination()
+	local gp = self.smrttrn and self.smrttrn.gparams
+	local mn = gp and gp.elimination_idle_min or elimination_idle_min
+	local mx = gp and gp.elimination_idle_max or elimination_idle_max
+	if not mn or mn <= 0 then
+		return
+	end
+	if not mx or mx < mn then
+		mx = mn
+	end
+	self.smrttrn:set_elimination( math.random(mn, mx) )
+end
+
+function gulag:clear_elimination()
+	if self.smrttrn and self.smrttrn.idle_end ~= nil then
+		self.smrttrn.idle_end = nil
+	end
+end
+
 function gulag:clear_dead(obj_id)
 	printf( "[smart_terrain %s] gulag: Clear_dead: obj=%s", self.name, self.npc_info[obj_id].name)
 
@@ -477,6 +523,10 @@ function gulag:clear_dead(obj_id)
 		else
 			job.idle_after_death_end = secs + idle
 		end
+	end
+
+	if self.Object_begin_job[obj_id] and not self.smrttrn:is_elimination_active() and self:check_elimination(1) then
+		self:set_elimination()
 	end
 
 	self.smrttrn:unregister_npc( self.npc_info[obj_id].se_obj )
@@ -977,7 +1027,11 @@ function gulag:beginJob( obj_id )
 		self.Object_didnt_begin_job[obj_id] = false
 	end
 	
-	self.population_comed = self.population_comed + 1 -- Увеличиваем счетчик пришедших персонажей
+	self.population_comed = self.population_comed + 1
+
+	if self.capacity > 0 and self:get_population_comed() >= self.capacity*0.5 then
+		self:clear_elimination()
+	end -- Увеличиваем счетчик пришедших персонажей
 end
 
 -- установить серверному объекту персонажа упраление переключения онлайн/офлайн
@@ -1082,7 +1136,8 @@ function gulag:free_obj( obj_id )
 
 		self.ObjectJobPathName[obj_id] = nil
 		
-		local npc = self.npc_info[obj_id].se_obj
+		local npc_info_ = self.npc_info[obj_id]
+		local npc = npc_info_ and npc_info_.se_obj
 
 		if npc then
 			self:setup_job_online( npc, nil )

@@ -185,19 +185,15 @@ function se_stalker:on_register()
     		end
 	end
 
-	-- Нарисовать мапспот с собой
-	if ENABLE_SPOTS_STALKERS and self:alive() then
-		local community, rank = sim_statistic.getNpcType(self)
-		level.map_add_object_spot_ser(self.id, "alife_presentation_"..community, self:name().." "..community)
-	end
+-- Нарисовать мапспот с собой (управляется sim_statistic.show_stalker_spot)
+	sim_statistic.mark_npc(self)
 end
 --------------------
 function se_stalker:on_unregister()
 	cse_alife_human_stalker.on_unregister(self)
 
-	-- Убрать мапспот с собой
-	local community, rank = sim_statistic.getNpcType(self)
-	level.map_remove_object_spot(self.id, "alife_presentation_"..community)
+-- Убрать мапспот с собой
+	sim_statistic.unmark_npc(self)
 
 	smart_terrain.unregister_npc(self)
 
@@ -228,9 +224,8 @@ end
 function se_stalker:on_death(killer)
 	cse_alife_human_stalker.on_death(self, killer)
 
-	-- Убрать мапспот с собой
-	local community, rank = sim_statistic.getNpcType(self)
-	level.map_remove_object_spot(self.id, "alife_presentation_"..community)
+-- Убрать мапспот с собой
+	sim_statistic.unmark_npc(self)
 	level.map_remove_object_spot(self.id, "map_sos")
 end
 --------------------

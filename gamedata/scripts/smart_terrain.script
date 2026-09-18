@@ -348,7 +348,8 @@ function se_smart_terrain:read_params()
 
 	--printf( "gp.stay_min=%d, gp.stay_max=%d", gp.stay_min * h2ms, gp.stay_max * h2ms )
 
-	gp.cond        = r_str( ini, sect, "cond" )
+	gp.cond_raw    = r_str( ini, sect, "cond" )
+	gp.cond        = gp.cond_raw
 	if gp.cond then
 		gp.cond = xr_logic.parse_condlist( nil, sect, "cond", gp.cond)
 	end
@@ -373,6 +374,10 @@ function se_smart_terrain:read_params()
 
 	self.rank_inc_min = ini_sys:r_string( "smart_terrain_rank_change", "min" )
 	self.rank_inc_max = ini_sys:r_string( "smart_terrain_rank_change", "max" )
+
+	gp.elimination_idle_min, gp.elimination_idle_max = r_2nums( ini, sect, 'elimination_idle', nil, nil )
+	if gp.elimination_idle_min then gp.elimination_idle_min = tonumber(gp.elimination_idle_min)*60 end
+	if gp.elimination_idle_max then gp.elimination_idle_max = tonumber(gp.elimination_idle_max)*60 end
 
 	self.population_locked = false
 
@@ -501,6 +506,10 @@ function se_smart_terrain:enabled(obj)
 	self:register_if_needed()
 	self:initialize_if_needed()
 
+	if self:is_elimination_active() then
+		return false
+	end
+
 	if self:is_gulag_available() and not self.population_locked then
 		local b = self:obj_accepts_smart_terrain( obj )
 		local a = self:smart_terrain_accepts_obj( obj, b )
@@ -598,6 +607,10 @@ function se_smart_terrain:register_npc( obj )
 
 	sim_statistic.add( obj )
 
+	if ENABLE_SOME_SPOTS_FROM_SMARTS and obj:alive() then
+		sim_statistic.refresh_npc_spot(obj)
+	end
+
 	self.gulag:update()
 
 
@@ -635,24 +648,20 @@ function se_smart_terrain:unregister_npc( obj )
 
 	self.gulag:removeObject( obj.id )
 
-	obj.squad = n.o_squad
-	obj.group = n.o_group
-
-	self.npc_info[obj.id] = nil
+	if n then
+		obj.squad = n.o_squad
+		obj.group = n.o_group
+		self.npc_info[obj.id] = nil
+	end
 
 	obj:clear_smart_terrain()
 	--log1("npc unregised "..obj:name().."")
 
 	sim_statistic.remove( obj )
 
+	-- Обновить спот NPC (смарт теперь другой/свободен)
 	if ENABLE_SOME_SPOTS_FROM_SMARTS and obj:alive() then
-		local community, rank = sim_statistic.getNpcType(obj)
-		local spot = "alife_presentation_monstr"
-		if IsStalker(obj) then
-			spot = "alife_presentation_"..community
-		end
-		local str = obj:name().." "..self:name().."\\n".."<<removed>>"
-		level.map_change_spot_hint(obj.id, spot, str)		
+		sim_statistic.refresh_npc_spot(obj)
 	end
 
 	--printf( "[smart_terrain %s] removed %s from gulag type=%s, strn_id=%s", self:name(), obj:name() or "<<<nil>>>", self.gparams.type, obj:smart_terrain_id())
@@ -725,6 +734,9 @@ function se_smart_terrain:task( obj )
 	end
 
 	--olr.add_spot_on_map( obj.id,"red_location",""..obj:name().."")
+	if ENABLE_SOME_SPOTS_FROM_SMARTS and obj:alive() then
+		sim_statistic.refresh_npc_spot(obj)
+	end
 	return CALifeSmartTerrainTask( path_name )
 end
 
@@ -742,90 +754,84 @@ end
 
 function se_smart_terrain:show_smart_debug_spot(avail)
     local tostr = tostring
-    if ENABLE_SPOTS_SMARTS then
-        -- Формируем детальную информационную строку
-        local state_text = "Состояние: " .. tostr(self.gulag.state)
-        local population = "Население: " .. tostr(self.gulag:get_population()) .. " из " .. tostr(self.gulag.capacity)
-        local non_exclusive = "Неэксклюзивные: " .. tostr(self.gulag:get_non_exclusive_population()) .. " из " .. tostr(self.gulag.capacity_non_exclusive)
-        local comedians = "Пришедшие: " .. tostr(self.gulag:get_population_comed())
-        local exclusives = "Эксклюзивные: " .. tostr(self.exclusives or 0)
-        
-        -- Добавляем информацию о доступности
-        local availability = "Доступность: " .. (avail and "ДА" or "НЕТ")
-        
-        -- Добавляем информацию о preset'е и типе
-        local preset_info = "Preset: " .. (self.gparams.preset_name or "нет")
-        local type_info = "Тип: " .. (self.gparams.type or "неизвестно")
-        
-        -- Добавляем информацию о группах
-        local groups_info = "Группы: "
-        if self.gparams.groups then
-            for _, group in ipairs(self.gparams.groups) do
-                groups_info = groups_info .. group .. ", "
-            end
-        else
-            groups_info = groups_info .. "все"
-        end
-        
-        -- Добавляем информацию о состоянии блокировки
-        local lock_info = "Блокировка: " .. (self.population_locked and "ДА" or "НЕТ")
-        
-        -- Добавляем информацию о условиях
-        local cond_info = "Условия: " .. (self.gparams.cond and "есть" or "нет")
-        
-        -- Формируем итоговую строку
-        local str = "Смарт-террейн: " .. self:name() .. "\\n" ..
-                   "ID: " .. tostr(self.id) .. "\\n" ..
-                   "----------------------------\\n" ..
-                   state_text .. "\\n" ..
-                   population .. "\\n" ..
-                   non_exclusive .. "\\n" ..
-                   comedians .. "\\n" ..
-                   exclusives .. "\\n" ..
-                   "----------------------------\\n" ..
-                   availability .. "\\n" ..
-                   lock_info .. "\\n" ..
-                   cond_info .. "\\n" ..
-                   preset_info .. "\\n" ..
-                   type_info .. "\\n" ..
-                   groups_info .. "\\n" ..
-                   "Уровень: " .. self:get_level_name()
-
-        if self.debug_avail ~= avail then
-            -- Удаляем старый маркер
-            if self.debug_avail == true then
-                level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
-            elseif self.debug_avail == false then
-                level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
-            end
-            
-            -- Создаем новый маркер
-            if avail == true then
-                level.map_add_object_spot(self.id, "alife_presentation_smart_on", str)
-            else
-                level.map_add_object_spot(self.id, "alife_presentation_smart_off", str)
-            end
-            self.debug_avail = avail
-        else
-            -- Обновляем подсказку существующего маркера
-            if avail == true then
-                level.map_change_spot_hint(self.id, "alife_presentation_smart_on", str)
-            else
-                level.map_change_spot_hint(self.id, "alife_presentation_smart_off", str)
-            end
-        end
-        self.spot_showed = true
-    else
+    -- Управление флагом - sim_statistic.show_smart_spot (см. set_all_smarts)
+    if sim_statistic.show_smart_spot ~= true then
         -- Убрать отметку
         if self.spot_showed == nil then
             return
         end
         self.spot_showed = nil
+        self._spot_sig = nil
+        self._spot_tick = nil
         if self.debug_avail == true then
             level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
         else
             level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
-        end        
+        end
+        self.debug_avail = nil
+        return
+    end
+
+    if not self.gulag then
+        return
+    end
+
+    -- Троттлинг: пересобираем не чаще раза в ~0.3 сек
+    if self._spot_tick then
+        local dt = time_global() - self._spot_tick
+        if dt < 300 then
+            return
+        end
+    end
+    self._spot_tick = time_global()
+
+    -- Подпись данных: пересобираем хинт, только если что-то реально изменилось
+    local g = self.gulag
+    local sig = 0
+    sig = sig * 33 + (avail and 1 or 0)
+    sig = sig * 33 + (self.gulag_working and 1 or 0)
+    sig = sig * 33 + (self.population_locked and 1 or 0)
+    sig = sig * 33 + math.floor(tostring(g.state):len())
+    sig = sig * 33 + (g:get_population() % 1000)
+    sig = sig * 33 + (g:get_non_exclusive_population() % 1000)
+    sig = sig * 33 + (g:get_population_comed() % 1000)
+    sig = sig * 33 + (self.exclusives or 0)
+    for obj_id, npc_info in pairs(self.npc_info) do
+        sig = sig * 33 + (npc_info.exclusive and 1 or 0) + (obj_id % 509)
+    end
+
+    if self._spot_sig ~= nil and self._spot_sig == sig and self.debug_avail == avail and self.spot_showed then
+        return
+    end
+    self._spot_sig = sig
+
+    local str = sim_statistic.smart_spot_text(self, avail)
+
+    if self.debug_avail ~= avail then
+        -- Сменилась доступность: пересоздаём маркер (другой тип иконки)
+        if self.debug_avail == true then
+            level.map_remove_object_spot(self.id, "alife_presentation_smart_on")
+        elseif self.debug_avail == false then
+            level.map_remove_object_spot(self.id, "alife_presentation_smart_off")
+        end
+        if avail == true then
+            level.map_add_object_spot(self.id, "alife_presentation_smart_on", str)
+        else
+            level.map_add_object_spot(self.id, "alife_presentation_smart_off", str)
+        end
+        self.debug_avail = avail
+        self.spot_showed = true
+    else
+        -- Обновляем подсказку существующего маркера
+        if avail == true then
+            level.map_change_spot_hint(self.id, "alife_presentation_smart_on", str)
+        else
+            level.map_change_spot_hint(self.id, "alife_presentation_smart_off", str)
+        end
+        if self.spot_showed ~= true then
+            self.spot_showed = true
+            self.debug_avail = avail
+        end
     end
 end
 
@@ -866,7 +872,9 @@ function se_smart_terrain:remove_gulag( disable )
 		self:unregister_npc( npc_info.se_obj )
 	end
 
-	if self.gparams.idle_max > 0 then
+	if self:is_elimination_active() then
+		-- keep elimination lock
+	elseif self.gparams.idle_max > 0 then
 		self.idle_end = game.CTime()
 --		self.idle_end:setHMSms( 0, 0, 0, math.random( self.gparams.idle_min * h2ms, self.gparams.idle_max * h2ms ) )
 		self.idle_end:setHMSms( math.random( self.gparams.idle_min, self.gparams.idle_max ), 0, 0, 0 )
@@ -1026,8 +1034,23 @@ function se_smart_terrain:on_unregister()
 end
 
 -- вызвать спавнер, если настроен.
+function se_smart_terrain:is_elimination_active()
+	return self.idle_end ~= nil and self.idle_end > game.get_game_time()
+end
+
+function se_smart_terrain:set_elimination( duration_sec )
+	local t = game.CTime()
+	t:setHMSms( math.floor(duration_sec/3600), math.floor((duration_sec%3600)/60), duration_sec%60, 0 )
+	t:add( game.get_game_time() )
+	self.idle_end = t
+	log1( 'SMART ELIMINATION [%s] locked for %d sec', self:name(), duration_sec )
+end
+
 function se_smart_terrain:call_respawn()
 	if self.gparams.respawn then
+		if self:is_elimination_active() then
+			return
+		end
 		se_respawn.spawn( self.gparams.respawn )
 	end
 end
@@ -1262,4 +1285,21 @@ function stat()
 	printf( "    Occupied jobs : %d",                    occupied )
 
 	printf( "--------------- Smart terrains statistics END ------------------------" )
+end
+
+-- Ручной вывод спотов смарт-террейнов в лог
+function log_smart_spots()
+	local count = 0
+	for name, smrt in pairs(smart_terrains_by_name) do
+		if smrt and smrt.gparams and smrt.gulag then
+			local avail = true
+			if smrt.gparams.cond then
+				avail = xr_logic.pick_section_from_condlist(db.actor_proxy, smrt, smrt.gparams.cond) ~= nil
+			end
+			local str = sim_statistic.smart_spot_text(smrt, avail)
+			log1(string.format("[SMART SPOT] %s", sim_statistic.spot_text_for_log(str)))
+			count = count + 1
+		end
+	end
+	return count
 end

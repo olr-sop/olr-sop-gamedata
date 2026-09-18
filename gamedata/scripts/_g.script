@@ -20,18 +20,35 @@ b_discard_settings_shown = false
 ini_sys = system_ini() 	-- global use for cached system_ini()
 
 ----------------------------------------------------------------------
--- Некоторый дебаг функционал
+-- Дебаг-споты на карте (sim_statistic)
+-- ENABLE_* ниже - значения ПО УМОЛЧАНИЮ, читаются при загрузке sim_statistic.script.
+-- Рантайм-тогглы: sim_statistic.set_all_stalkers(v)/set_all_monsters(v)/set_all_smarts(v)
+-- и флаги show_stalker_spot/show_monster_spot/show_smart_spot. Мгновенно: mark_all_*/unmark_all_*.
+-- Справка по полям спотов: MAP_SPOTS_DEBUG.md (в корне воркспейса).
 ----------------------------------------------------------------------
 
-ENABLE_SPOTS_STALKERS	 = false -- включает отображение спотов сталкерни (se_stalker)
-ENABLE_SPOTS_MUTANTS	 = false -- включает отображение спотов мутантов (se_monster)
-ENABLE_SPOTS_SMARTS		 = false -- включает отображение спотов смарт террейнов (smart_terrain) 
-ENABLE_SPOTS_RESPAWN	 = false -- включает отображение спотов респавнеров (sim_statistic)
+ENABLE_SPOTS_STALKERS   = false -- дефолт показа спотов сталкеров (se_stalker)
+ENABLE_SPOTS_MUTANTS    = false -- дефолт показа спотов мутантов (se_monster)
+ENABLE_SPOTS_SMARTS     = false -- дефолт показа спотов смарт-террейнов (smart_terrain)
+ENABLE_SPOTS_RESPAWN    = false -- дефолт показа спотов респавнеров (sim_statistic)
 
--- для странного кода, надо будет проверить 
--- включается при включённом ENABLE_SPOTS_STALKERS или ENABLE_SPOTS_MUTANTS
--- Вроде как добавляет информацию в спот сталкера или мутанта что он вышел из смарта
+-- Хинт спота НПС пересоздаётся при регистрации/задаче/выходе из смарта,
+-- а не вычёркивается строкой "<<removed>>".
 ENABLE_SOME_SPOTS_FROM_SMARTS = false
+
+----------------------------------------------------------------------
+-- Ручной вывод debug-спотов в лог (замена авто-логированию при ENABLE_*).
+-- Вызов (из консоли/скрипта):
+--   sim_statistic.log_npc_spots()      -- [NPC SPOT] по всем зарегистрированным NPC
+--   sim_statistic.log_respawn_spots()  -- [RESPAWN SPOT] по всем респавнерам
+--   smart_terrain.log_smart_spots()    -- [SMART SPOT] по всем смарт-террейнам
+--   log_all_spots()                    -- всё сразу (общая)
+----------------------------------------------------------------------
+function log_all_spots()
+	sim_statistic.log_npc_spots()
+	sim_statistic.log_respawn_spots()
+	smart_terrain.log_smart_spots()
+end
 
 ----------------------------------------------------------------------
 -- Отладочный код

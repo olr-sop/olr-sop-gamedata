@@ -1,13 +1,8 @@
 -- hi_flyer 21.01.16
 
 local walk_on = true
-local spots = false
-
-loadedsim = false
+local loadedsim = false
 tabst = {}
-
-local time_apdeyta = 0
-local timerup = 2056
 
 local montabl = {
 	[clsid.zombie_s] = true,
@@ -48,44 +43,6 @@ function update(delta)
 				end
 			end
 			--log1("offline walkers - ["..#tabst.."]")
-		end
-
-		if loadedsim == true then
-			if db.actor then
-				if time_global() > time_apdeyta then
-					time_apdeyta = time_global() + timerup
-
-					if device():frame_elapsed() > 15 then
-						--news_manager.send_tip(db.actor, "offline WALK low FPS - "..device():frame_elapsed().."", nil, "default", 30000)
-						return
-					end
-
-					for _, val in ipairs(tabst) do
-						if val and val ~= nil and not val.online and val.m_game_vertex_id and game_graph():valid_vertex_id(val.m_game_vertex_id) and val.health and val:alive() then
-							if val and val.id and val.level_name == level.name() then
-								local strn_id = val:smart_terrain_id()
-								if strn_id then
-									local smart = alife():object(strn_id)
-									--if smart and smart.level_name == level.name() and val.position:distance_to(smart.position) > 20 then
-									--	--log1("try set on smart ["..val:name().."] - smart id is ["..strn_id.."] ")
-									--	alife():teleport_object(val.id, smart.m_game_vertex_id, smart.m_level_vertex_id, smart.position)
-									--	--olr.add_spot_on_map( val.id,"red_location", val:name() )
-									--end
-									if smart and val.level_name == "l01_escape" and val.position:distance_to_xz(vector():set(-133, 1, 238)) < 30 then
-										--news_manager.send_tip(db.actor, "try set on smart from escape derevnya ["..val:name().."] - smart id is ["..strn_id.."]")
-										--log1("try set on smart from escape derevnya ["..val:name().."] - smart id is ["..strn_id.."] ")
-										alife():teleport_object(val.id, smart.m_game_vertex_id, smart.m_level_vertex_id, smart.position)
-									--olr.add_spot_on_map( val.id,"red_location", val:name() )
-									end
-								end
-								--log1("not update - this level ")
-								--olr.add_spot_on_map( val.id,"green_location", val:name() )
-								return
-							end
-						end
-					end
-				end
-			end
 		end
 	end
 end

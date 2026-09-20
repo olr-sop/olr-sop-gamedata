@@ -24,7 +24,6 @@ function blowout_ending_set()
 end
 
 function all_blowend_funcs()
-	-- на вс¤кий случай
 
 	del_vidrosovie_arts() -- удаляет "af_mercury_ball" "af_junk_bolt" "af_magnet" "af_junk_debris" с локаций с шансом у каждого артефакта 1 к 35
 	blow_info_count() -- выдаёт поршень про выбросы по условиям что мы на кордоне и притащили какой то ящик поршень medyasik_2_done, сам поршень что выдаётся высылает мессагу от жабы который спрашивает мессера мол ты живой
@@ -40,21 +39,25 @@ function all_blowend_funcs()
 	olr_timers.st_timer("spawen_radhlam_random", 16, "olr_blowout.spawen_radhlam_random()") -- обход по всем объектам, ищет радиоактивные зоны, с шансом 1 к 60 спавнит мусорные артефакты, список в функции
 	olr_timers.st_timer("spawen_rtut_shars_random", 18, "olr_blowout.spawen_rtut_shars_random()") -- обход по всем объектам, ищет zone_mincer, с шансом 1 к 65 спавнит ртутный шар
 	olr_timers.st_timer("spawen_rtut_shars", 20, "olr_blowout.spawen_rtut_shars()") -- пиздец... шанс 3 к 22, спавн ртутного шара на определенных координатах на кордоне и на свалке, 
-																					-- точнее так, делаем два рандома, 1-22, если уровень кордон и выпал 1 то первые координаты, если 2 то вторые, если 3 то третьи, на свалке аналогично. главное находится там актору...
+																					-- точнее так, делаем два рандома, 1-22, если уровень кордон и выпал 1 то первые координаты, если 2 то вторые, если 3 то третьи
+																					-- на свалке аналогично. главное находится там актору...
 	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()") -- срабатывает только если актора нет в баре. Выводит в оффлайн и выводит из онлайна пьяниц фейковых что сидят в баре
 																	-- сначала всех в оффлайн, потом с шансом 50 на 50 выгоняет в онлайн, всё работает по конкретному списку
 																	-- потом еще добавляет бабок бармену и петренке от 1000 до 4500
 	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()") -- с шансом 50 на 50 вызов удаления всего оружия без парента, потом если пережили более 6 выбросов
-																		-- вызывает del_rnd_anoms, clear_deadinoffline_wars, потом проход по всем объектам, удаляет физ мусор, скелеты, m_pseudohuman_e мёртвых, zone_witches_galantine_banka, дезинтеграторную аномалию
+																		-- вызывает del_rnd_anoms, clear_deadinoffline_wars, потом проход по всем объектам, удаляет 
+																		-- физ мусор, скелеты, m_pseudohuman_e мёртвых, zone_witches_galantine_banka, дезинтеграторную аномалию
 																		-- (кстати надо это убрать и удалять по иному, это может вызвать проблемы), 
 																		-- функция clear_deadinoffline_wars чистит всех кто помечен был мёртвым в оффлайне
 																		-- функция del_rnd_anoms удаляет радиоактивные зоны, колючки, с шансом 50 на 50 но не на том уровне где мы находимся
 	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- если более 2 выбросов пережили, проходит по всем объектам, если это сталкер или мутант очищает у них dynamic_in_restrictions в нет-пакетах
 	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()") -- чистит xvars foods, weapons, arts
-	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()") -- если пережито более 6 выбросов проход по всем объектам, если это сталкер, не живой и не под защитой olr_protected то записываем в xvars.npc_del_afterblow
+	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()") -- если пережито более 6 выбросов проход по всем объектам, если это сталкер, не живой и не под защитой olr_protected 
+																								-- то записываем в xvars.npc_del_afterblow
 																								-- потом уборщик трупов осмотрит их инвентари и если там ничего важного нет то удалит, хуйня кароче очередная
 	olr_timers.st_timer("set_walkers_rndways", 74, "olr_ai_tasks.set_walkers_rndways()") -- вызывает принудительную перетасовку смартов куда отправляются сталкеры которым выдан глобальный квест
-																						 -- с шансом 50% снимает с них квест (вроде как, ну нилит npcs_tasks_rndway), я так понял потом smart_terrain если ему из квеста пришёл false тот уже сам выберет куда ему идти
+																						 -- с шансом 50% снимает с них квест (вроде как, ну нилит npcs_tasks_rndway), 
+																						 -- я так понял потом smart_terrain если ему из квеста пришёл false тот уже сам выберет куда ему идти
 
 	if has_alife_info("rad_first") and not has_alife_info("gen_first") then -- если были на радаре, но еще не были на генераторах, то после каждого выброса
 																			-- вызываем 4 нахуй раза spawen_endgame_zombies
@@ -79,7 +82,7 @@ function all_blowend_funcs()
 																									  -- есть еще рандом 1 к 15 на каждый респавн что бы не слишком дохуя наспавнило
 	end
 
-	if has_alife_info("docent_zamer_vibros_done_pogo") then -- это квест с замером выброса от учёных в говне мочёных
+	if has_alife_info("docent_zamer_vibros_done_pogo") then -- это квест с замером выброса от учёных в говне мочёных какой то, не помню какой
 		if not has_alife_info("docent_zamer_vibros_daem") then
 			olr.info("docent_zamer_vibros_daem")
 			news_manager.send_tip(db.actor, game.translate_string("all_blowend_funcs_0"), 15, "ecolog", 39000, nil, nil, true, "st_sim_test_033_name")

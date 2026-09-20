@@ -1,8 +1,6 @@
 -- биндер еды и частей мутантов
 -- hi_flyer 10/03/15
 
-local time_apdeyta = 0
-local timerup = 1000
 
 -- секции торговцев для исключения заражения, хорошего состояния и медленной порчи
 -- уточнить торгует ли учённый на болотах в бункере который сидит
@@ -98,30 +96,4 @@ function CItemBinder:update(delta)
 		end
 	end
 
-	-- тут на апдейте портим еду раз в секунду
-	if time_global() > time_apdeyta then
-		time_apdeyta = time_global() + timerup
-		if ini_sys:line_exist(self.object:section(), "cor_time") and cond > 0.01 then
-			if self.object:parent() ~= nil and trader_profile[self.object:parent():name()] then
-				self.object:set_condition(cond - (self:TimeCondLost()*0.25)) -- у торговецв еда портится в 4 раза дольше
-				--log1("! Меняем состояние еды в апдейте у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
-			else
-				if g_monster_parts_cooked_table[self.object:section()] then
-					self.object:set_condition(cond - (self:TimeCondLost()*0.5)) -- приготовленная будет в два раза медленее чем сырая
-					--log1("! Меняем состояние приготовленной еды в апдейте не у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")
-				else
-					self.object:set_condition(cond - self:TimeCondLost())
-					--log1("! Меняем состояние еды в апдейте не у торговца - ["..self.object:name().."]  -- ["..self.object:condition().."] ")				
-				end
-			end
-		end
-	end
-end
-
-function CItemBinder:TimeCondLost()
-	local skis = ini_sys:r_float(self.object:section(), "cor_time")
-	if skis < 0 then
-		return 0
-	end
-	return 100 / skis / 24 / 100 / 60 * 100
 end

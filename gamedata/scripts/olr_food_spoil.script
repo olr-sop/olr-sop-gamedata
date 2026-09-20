@@ -1,0 +1,122 @@
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+-- name: olr_food_spoil.script
+-- desc: OLR порча еды. Серверные объекты еды регистрируются через серверный класс se_food (II_FOODS).
+-- Раз в один игровой час каждый отслеживаемый предмет теряет "spoilage_per_hour" процентов
+-- своего состояния. Работает для онлайн- и офлайн-предметов (на стороне сервера).
+-- update() вызывается из апдейта актора bind_stalker.
+-- author: theysani, на базе идеи hi_flyer
+-- date: 19.09.2026
+-- last edit: 20.09.2026
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+
+-- id -> true
+local foods = {}
+
+-- список торговцев по их name из спавна, проверить все ли тут
+local trader_names = {
+	escape_trader_0000 = true,
+	bar_barman = true,
+	yan_scientist_gorbovsky = true,
+	bar_dolg_petrenko = true,
+	lvl5_bar_stalker_0051 = true,
+	lvl9_military_m_trader = true,
+	lvl11_deadcity_stalker_0001 = true,
+}
+
+local trader_mul = 0.25 -- еда у торговца порится в 4 раза дольше
+
+local function section_rate_per_hour(section)
+	if not ini_sys:line_exist(section, "spoilage_per_hour") then
+		return 0
+	end
+	local pct = ini_sys:r_float(section, "spoilage_per_hour")
+	if pct == nil or pct <= 0 then
+		return 0
+	end
+	return pct / 100
+end
+
+local function is_trader_parent(sobj)
+	local pid = sobj.parent_id
+	if pid == nil or pid == 65535 then
+		return false
+	end
+	local p = alife():object(pid)
+	if p == nil then
+		return false
+	end
+	return trader_names[p:name()] == true
+end
+
+function register_food(sobj) -- вызывается из se_item
+	foods[sobj.id] = true
+end
+
+function unregister_food(sobj) -- вызывается из se_item
+	foods[sobj.id] = nil
+end
+
+local function spoil_food(hours)
+	local sim = alife()
+	if sim == nil then
+		return
+	end
+
+	for id in pairs(foods) do
+		local sobj = sim:object(id)
+		if sobj == nil then
+			foods[id] = nil
+		else
+			local rate = section_rate_per_hour(sobj:section_name())
+			if rate > 0 then
+				local cl = level.object_by_id(id)
+				local cond
+				if cl ~= nil then cond = cl:condition()
+				else cond = sobj.item_condition end				
+
+				if cond ~= nil and cond > 0 then
+					local mul = 1
+					if is_trader_parent(sobj) then
+						mul = trader_mul
+					end
+					local new_cond = cond - rate * mul * hours
+					if new_cond < 0 then
+						new_cond = 0
+					end
+
+					sobj.item_condition = new_cond
+
+					if cl ~= nil then
+						cl:set_condition(new_cond)
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Основная функция апдейта
+function update()
+	if xvars == nil then
+		return
+	end
+
+	if xvars.spoil_next_sec == nil then
+		xvars.spoil_next_sec = (math.floor(game.time_sec() / 3600) + 1) * 3600
+		return
+	end
+
+	local now = game.time_sec()
+	if now < xvars.spoil_next_sec then
+		return
+	end
+
+	-- Считаем сколько часов прошло фактически и округляем в меньшую сторону
+	local hours = math.floor((now - xvars.spoil_next_sec) / 3600) + 1
+	xvars.spoil_next_sec = xvars.spoil_next_sec + hours * 3600
+
+	spoil_food(hours)
+end

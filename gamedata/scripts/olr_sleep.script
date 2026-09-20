@@ -287,79 +287,30 @@ end
 
 function set_food_art_sleep()
 
-local function TimeCondLost(obj)
-	local skis = ini_sys:r_float(obj:section(), "cor_time") 
-	if skis < 0 then
-		return 0
-	end
-	return 100/skis/24/100/60 * 100 * 295
-end	
-
 local function TimeCondLostArts(obj)
 	return 100/120/24/100/60 * 100 * 295
 end
 
-
-	local foods = {}
 	local arts = {}
 	for i= 1, 65534 do
 		local obj = level.object_by_id(i)
 		if obj ~= nil then
-                                local section = obj:section()
-
-                                 if section == "conserva" or section == "bread" or section == "kolbasa" 
-
-				or section == "mutant_flesh_eye_coocked"
-				or section == "mutant_boar_leg_coocked"
-				or section == "mutant_dog_tail_coocked"
-				or section == "mutant_psevdodog_tail"
-				or section == "mutant_krovosos_jaw_coocked"
-				or section == "mutant_burer_hand_coocked"
-				or section == "mutant_zombie_hand_coocked" 
-
-				or section == "rat_food_coocked"
-				or section == "crow_food_coocked" 
-
-				or section == "rat_food"
-				or section == "crow_food" 
-
-				or section == "mutant_flesh_eye"
-				or section == "mutant_boar_leg"
-				or section == "mutant_dog_tail"
-				or section == "mutant_psevdodog_tail"
-				or section == "mutant_krovosos_jaw"
-				or section == "af_mercury_ball"
-				or section == "mutant_burer_hand"
-				or section == "mutant_zombie_hand" then
-
-					table.insert(foods, obj)
-				end
-				if obj:is_artefact() and db.actor:is_on_belt(obj)-- and obj:section() ~= "exo_acum_ob"
-				                                             then	
-					--log1("adda")
+			local section = obj:section()
+			if obj:is_artefact() and db.actor:is_on_belt(obj) then
+				table.insert(arts, obj)
+			end
+			if section == "detector_simple" or section == "detector_advances" or section == "detector_elite" then
+				if db.actor:is_on_belt(obj) then
 					table.insert(arts, obj)
 				end
-                                if section == "detector_simple" or section == "detector_advances" or section == "detector_elite" then 
-					if db.actor:is_on_belt(obj) then
-						table.insert(arts, obj)
-					end
-				end
-                  end
-            end
-
-	for i, obj in ipairs(foods) do
-		local nowcond = obj:condition()
-		local new_cond = nowcond - TimeCondLost(obj)
-		--log1(" food - obj:name() --- cond old - "..nowcond.." set cond -  "..new_cond.." ")
-		obj:set_condition(new_cond)
+			end
+		end
 	end
 
 	for i, obj in ipairs(arts) do
 		local nowcond = obj:condition()
 		local new_cond = nowcond - TimeCondLostArts(obj)
-		--log1(" art - obj:name() --- cond old - "..nowcond.." set cond -  "..new_cond.." ")
 		obj:set_condition(new_cond)
 	end
-
 
 end

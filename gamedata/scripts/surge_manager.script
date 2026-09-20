@@ -291,6 +291,21 @@ function CSurgeManager:update()
 					end
 				end
 				db.actor:hit(h)
+				-- у флаера было проще в плане того скока наносить урона, плюсом добавляло радейки и сносило пси-здоровье, нужно адаптировать
+				--db.actor.health = -0.05
+				--db.actor.radiation = 0.065
+				--db.actor.psy_health = -0.105
+				-- и добавить прибор который защищает
+				-- Проверка наличия прибора
+				--local iblocitm = actor:object("pribor_antivibros")
+				--if iblocitm then
+				--	local new_cond = iblocitm:condition() - 0.0039
+				--	iblocitm:set_condition(new_cond)
+				--	if new_cond <= 0.01 then
+				--		olr.del(iblocitm)
+				--	end
+				--	return
+				--end
 			end
 
 			if (diff_sec >= 185) and not (self.ui_disabled) then
@@ -321,7 +336,7 @@ function CSurgeManager:update()
 				news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "info", 15000)
 				if not has_alife_info("olr_blowout_first_hideouts") then
 					db.actor:give_info_portion("olr_blowout_first_hideouts")
-					olr_timers.st_timer_game("olr_blowout_first_hideouts", 60, "nick.olr_blowout_first_hideouts()") -- „ерез игровую минуту ?аба напишет нам искать укрытие
+					olr_timers.st_timer_game("olr_blowout_first_hideouts", 60, "nick.olr_blowout_first_hideouts()") -- Через игровую минуту Жаба напишет что бы искал укрытие
 				end
 				level.set_weather_fx("surge")
 				-- “аски тоже отключаю дл¤ вас, нужны правки в движке на откат стадий тасков типа как в «ѕ (стекольщик сказал нахуй надо, поэтому увы...)
@@ -442,6 +457,10 @@ function CSurgeManager:end_surge(manual)
 
 	-- «аху¤чил сюда дл¤ совместимости, хз лучше переделать по нормальному
 	olr_blowout.blowout_ending_set()
+	
+				olr_blowout.lomka_pda()
+				olr_blowout.golod_gg()
+				olr_blowout.psy_gg()	
 end
 
 function CSurgeManager:give_surge_hide_task()

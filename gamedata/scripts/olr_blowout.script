@@ -1,290 +1,8 @@
---- модуль выброса
---- hi_flyer 05/09/15
-
---[[
--- theysani
---]]
-local time_apdeyta_hit = 0
-local time_apdeyta = 0
-local loaded = false
-local blow_max = 5000 -- максимальное окно задержки
-state_blow = 1
-local tmradd = 1125 -- выброс займет примерно 1.5 минуты
-
-no_blow_levels = {
-	["l12_barrow_downs"] = true,
-	["l10u_bunker"] = true,
-	["l14_stancia"] = true,
-	["l14u_sarcofag"] = true,
-	["l15_generators"] = true
-}
-
-function blowout_snd_go()
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout]])
-	if not snd_obj:playing() then
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	end
-end
-
-function blowout_snd_pre()
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
-	if not snd_obj:playing() then
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	end
-end
-
------------------------------------------------
-
-function update()
-	if db.actor and level.present() then
-		update_val()
-		update_hit()
-	end
-end
-
------------------------------------------------
-
-function update_val()
-	if not alife() then
-		return
-	end
-	if time_global() > time_apdeyta then
-		time_apdeyta = time_global() + tmradd
-		xvars.blowout_timer = xvars.blowout_timer - 1
-		--news_manager.send_tip(db.actor, "ВЫБРОС равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
-		if xvars.blowout_timer > blow_max then
-			xvars.blowout_timer = blow_max
-		end
-		if xvars.blowout_timer < 1 then
-			xvars.blowout_timer = blow_max
-			state_blow = 1
-		end
-		upd()
-	end
-end
-
-function upd()
-	local level_name = level.name()
-	if xvars.blowout_timer == 100 then
-		if not no_blow_levels[level_name] and not has_alife_info("monolit_na_kordone") then
-			blow_task_actor()
-		end
-	end
-	
-	if xvars.blowout_timer == 65 then
-		local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_begin]])
-		if not snd_obj:playing() then
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-		end
-	end	
-
-	if xvars.blowout_timer == 60 then
-		local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\blowout_wave_1]])
-		if not snd_obj:playing() then
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-		end
-	end
-
-	--news_manager.send_tip(db.actor, "xvars.blowout_timer равно "..xvars.blowout_timer.." сейчас.", nil, "freedom", 9000)
-
-	if xvars.blowout_timer < blow_max and xvars.blowout_timer >= 60 then
-		if no_blow_levels[level_name] then
-			return
-		end
-
-		if has_alife_info("sr_cutscene_start_info") then
-			return
-		end
-
-		state_blow = 1
-
-		if not has_alife_info("olr_blowout_phase_0") then
-			db.actor:give_info_portion("olr_blowout_phase_0")
-
-			if has_alife_info("olr_blowout_phase_0") then
-				--news_manager.send_tip(db.actor, game.translate_string("upd_1"))
-
-				local curwweth = xvars.blow_cur_weather
-				if curwweth ~= "" then
-					level.set_weather(curwweth, true)
-				end
-
-				if loaded == true then
-					level.add_pp_effector("camera_postprocess\\blink.ppe", 2009, false)
-				end
-				level.remove_cam_effector(1974)
-				level.remove_cam_effector(19744)
-				level.remove_cam_effector(1975)
-				level.remove_cam_effector(1976)
-				level.remove_cam_effector(2004)
-				level.remove_cam_effector(12002)
-				level.remove_cam_effector(22002)
-				level.remove_cam_effector(32002)
-				level.remove_cam_effector(42002)
-				level.remove_cam_effector(52002)
-				level.remove_pp_effector(1974)
-				level.remove_pp_effector(5831)
-				level.remove_pp_effector(2299)
-			end
-		end
-	end
-
-	------------
-
-	-- для подземок дубль
-	if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
-		if not olr_timers.has_timer("blowout_ending_set_effs") then
-			olr_timers.st_timer("blowout_ending_set_effs", 150, "olr_blowout.blowout_ending_set()")
-			--news_manager.send_tip(db.actor, game.translate_string("upd_2"), nil, "freedom", 9000)
-		end
-	end
-	-- для подземок
-
-	if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
-		state_blow = 2
-
-		if no_blow_levels[level_name] then
-			return
-		end
-
-		if has_alife_info("sr_cutscene_start_info") then
-			return
-		end
-
-		if has_alife_info("olr_blowout_ended") then
-			return
-		end
-
-		if not has_alife_info("olr_blowout_phase_1") then
-			db.actor:give_info_portion("olr_blowout_phase_1")
-
-			if has_alife_info("olr_blowout_phase_1") then
-				local ini = ini_file("game.ltx")
-				local weather = utils.cfg_get_string(ini, level_name, "weathers", db.actor, false, "", "[default]")
-				--log1("olr_blowout: get weather from config " .. tostring(weather) .. "")
-				xvars.blow_cur_weather = weather
-
-				level.set_weather_fx("surge")
-				level.add_cam_effector("camera_effects\\shell_shock.anm", 1975, false, "")
-				blowout_snd_pre()
-				level.add_pp_effector("event\\deprecated\\vibros_p.ppe", 231, false)
-				blowout_particle_start2()
-				psy_gg()
-				if not olr_timers.has_timer("blowout_additional_timer") then
-					olr_timers.st_timer("blowout_additional_timer", 5, "olr_blowout.blowout_additional_timer()")
-				end
-				if not olr_timers.has_timer("blowout_ending_set_effs") then
-					olr_timers.st_timer("blowout_ending_set_effs", 150, "olr_blowout.blowout_ending_set()")
-					--news_manager.send_tip(db.actor, game.translate_string("upd_3"), nil, "freedom", 9000)
-				end
-			end
-		end
-	end
-
-	------------
-
-	if xvars.blowout_timer <= 40 and xvars.blowout_timer >= 20 then
-		--news_manager.send_tip(db.actor,"333blow_timer равно " .. xvars.blowout_timer .. " сейчас.",nil,"freedom",9000)
-
-		state_blow = 3
-
-		if no_blow_levels[level_name] then
-			return
-		end
-
-		if has_alife_info("sr_cutscene_start_info") then
-			return
-		end
-
-		if has_alife_info("olr_blowout_ended") then
-			return
-		end
-
-		if not has_alife_info("olr_blowout_phase_2") then
-			db.actor:give_info_portion("olr_blowout_phase_2")
-			if has_alife_info("olr_blowout_phase_2") then
-				level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
-				level.add_pp_effector("event\\deprecated\\test.ppe", 231, false)
-				level.add_pp_effector("event\\deprecated\\vibros.ppe", 1974, true)
-				level.set_weather_fx("surge")
-				local rndsn = math.random(1, 2)
-				if rndsn == 1 then
-					olr.horror_snd()
-				end
-				--log1("upd ADD PP EFFECTOR 2299")
-				blowout_snd_go()
-				olr_timers.st_timer("blwsnd1", 15, "olr_blowout.blowout_snd_go()")
-				olr_timers.st_timer("blwsnd2", 30, "olr_blowout.blowout_snd_go()")
-				spaven_rats()
-				blowout_particle_blow()
-				psy_gg()
-				--news_manager.send_tip(db.actor, game.translate_string("upd_4"))
-			end
-		end
-	end
-
-	------------
-
-	if xvars.blowout_timer <= 20 then
-		state_blow = 4
-
-		if no_blow_levels[level_name] then
-			return
-		end
-
-		if has_alife_info("sr_cutscene_start_info") then
-			return
-		end
-
-		if has_alife_info("olr_blowout_ended") then
-			return
-		end
-
-		if not has_alife_info("olr_blowout_phase_3") then
-			db.actor:give_info_portion("olr_blowout_phase_3")
-
-			if has_alife_info("olr_blowout_phase_3") then
-				level.add_pp_effector("camera_postprocess\\blink.ppe", 2009, false)
-				level.set_weather_fx("surge")
-				level.add_pp_effector("event\\deprecated\\vibros.ppe", 1974, true)
-				loaded = true
-
-				lomka_pda()
-				blowout_particle_norm()
-				golod_gg()
-				psy_gg()
-
-				local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx1]])
-				if not snd_obj:playing() then
-					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-				end
-				level.add_pp_effector("event\\deprecated\\test.ppe", 231, false)
-
-				db.actor:give_info_portion("olr_blowout_ended")
-				--news_manager.send_tip(db.actor, game.translate_string("upd_5"))
-			end
-		end
-	end
-end
-
 --------------------------------------------------------------------------------------------------------------------------------
-
-function blowout_ending_info_end()
-	db.actor:disable_info_portion("olr_blowout_ended")
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx1b]])
-	if not snd_obj:playing() then
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-	end
-end
 
 function blowout_ending_set()
 	if not no_blow_levels[level.name()] then
 		olr.spawn_crows(20, 90)
-	end
-
-	local snd_obj = xr_sound.get_safe_sound_object([[ambient\weather\fx2]])
-	if not snd_obj:playing() then
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
 	end
 
 	local bc = xvars.blow_count
@@ -306,53 +24,67 @@ function blowout_ending_set()
 end
 
 function all_blowend_funcs()
-	olr_timers.st_timer("blowout_ending_info_end", 355, "olr_blowout.blowout_ending_info_end()")
-	-- на всякий случай
+	-- на вс¤кий случай
 
-	del_vidrosovie_arts()
-	blow_info_count()
-	set_arts_cond_after_blowout()
-	spawen_arts_random()
-	spawn_esc_mil_group()
-	remove_onl_anoms()
+	del_vidrosovie_arts() -- удаляет "af_mercury_ball" "af_junk_bolt" "af_magnet" "af_junk_debris" с локаций с шансом у каждого артефакта 1 к 35
+	blow_info_count() -- выдаёт поршень про выбросы по условиям что мы на кордоне и притащили какой то ящик поршень medyasik_2_done, сам поршень что выдаётся высылает мессагу от жабы который спрашивает мессера мол ты живой
+	set_arts_cond_after_blowout() -- проходится по онлайновым артефактам, список в функции, с шансом 50 на 50 меняет состояние артефакта на матч.рандом чёто там, если состояние ниже 0.01 удаляет артефакт
+	spawen_arts_random() -- тупой спавен тупово гавна, ой артефактов в аномалиях, тупа рандомная хуйня, вырезать удалить написать нормальный, надо Рому
+						 -- работает так, есть пачка аномалий, и пачка артефактов, списки в функции, идём по всем объектам, находим аномалию, далее с шансом 1 к 180 на позиции данной аномалии заспавнится рандомный артефакт из таблицы
+	spawen_pseudohuman() -- лежало внутри функции выше, если пережили более 7 выбросов, то в радиоактивных зонах с шансом 1 к 580 спавнит мутанта там (кроме локации бар), список мутантов внутри функции
+	spawn_esc_mil_group() -- спавн военных научных групп, спавнятся если пережили не менее 5 и не более 8 выбросов, потом не менее 12 и не более 16, потом уже не менее 25 выбросов надо пережить и спавн будет после каждого выброса
+	remove_onl_anoms() -- проходится по нескольким clsid аномалий и включает их принудительно, список клсид в функции. Но это касается только онлайновых объектов, лол.
 
-	olr_timers.st_timer("clear_dead_monsters", 12, "olr_blowout.clear_dead_monsters()")
-	olr_timers.st_timer("xrs_trade_trading", 13, "xrs_trade.on_item_drop()")
-	olr_timers.st_timer("blowout_ending_info_end", 150, "olr_blowout.blowout_ending_info_end()")
-	olr_timers.st_timer("spawen_radhlam_random", 16, "olr_blowout.spawen_radhlam_random()")
-	olr_timers.st_timer("spawen_rtut_shars_random", 18, "olr_blowout.spawen_rtut_shars_random()")
-	olr_timers.st_timer("spawen_rtut_shars", 20, "olr_blowout.spawen_rtut_shars()")
-	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()")
-	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()")
-	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- всех локацций
-	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()")
-	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()")
-	olr_timers.st_timer("set_walkers_rndways", 74, "olr_ai_tasks.set_walkers_rndways()")
+	olr_timers.st_timer("clear_dead_monsters", 12, "olr_blowout.clear_dead_monsters()") -- удаляет трупы монстров по условиям, если монстр не живой и не под защитой olr_protected и если не умерший в оффлайне и не на том же уровне на котором мы
+	olr_timers.st_timer("xrs_trade_trading", 13, "xrs_trade.on_item_drop()") -- предложение поторговать, принудительно дёргает
+	olr_timers.st_timer("spawen_radhlam_random", 16, "olr_blowout.spawen_radhlam_random()") -- обход по всем объектам, ищет радиоактивные зоны, с шансом 1 к 60 спавнит мусорные артефакты, список в функции
+	olr_timers.st_timer("spawen_rtut_shars_random", 18, "olr_blowout.spawen_rtut_shars_random()") -- обход по всем объектам, ищет zone_mincer, с шансом 1 к 65 спавнит ртутный шар
+	olr_timers.st_timer("spawen_rtut_shars", 20, "olr_blowout.spawen_rtut_shars()") -- пиздец... шанс 3 к 22, спавн ртутного шара на определенных координатах на кордоне и на свалке, 
+																					-- точнее так, делаем два рандома, 1-22, если уровень кордон и выпал 1 то первые координаты, если 2 то вторые, если 3 то третьи, на свалке аналогично. главное находится там актору...
+	olr_timers.st_timer("bar_alcos", 33, "olr_blowout.bar_alcos()") -- срабатывает только если актора нет в баре. Выводит в оффлайн и выводит из онлайна пьяниц фейковых что сидят в баре
+																	-- сначала всех в оффлайн, потом с шансом 50 на 50 выгоняет в онлайн, всё работает по конкретному списку
+																	-- потом еще добавляет бабок бармену и петренке от 1000 до 4500
+	olr_timers.st_timer("clear_bolts", 44, "olr_blowout.clear_bolts()") -- с шансом 50 на 50 вызов удаления всего оружия без парента, потом если пережили более 6 выбросов
+																		-- вызывает del_rnd_anoms, clear_deadinoffline_wars, потом проход по всем объектам, удаляет физ мусор, скелеты, m_pseudohuman_e мёртвых, zone_witches_galantine_banka, дезинтеграторную аномалию
+																		-- (кстати надо это убрать и удалять по иному, это может вызвать проблемы), 
+																		-- функция clear_deadinoffline_wars чистит всех кто помечен был мёртвым в оффлайне
+																		-- функция del_rnd_anoms удаляет радиоактивные зоны, колючки, с шансом 50 на 50 но не на том уровне где мы находимся
+	olr_timers.st_timer("fix_escape_restrs", 4, "olr_blowout.fix_escape_restrs()") -- если более 2 выбросов пережили, проходит по всем объектам, если это сталкер или мутант очищает у них dynamic_in_restrictions в нет-пакетах
+	olr_timers.st_timer("clear_trash_wars", 59, "olr_blowout.clear_trash_wars()") -- чистит xvars foods, weapons, arts
+	olr_timers.st_timer("clear_afterblow_deadnpc", 79, "olr_blowout.clear_afterblow_deadnpc()") -- если пережито более 6 выбросов проход по всем объектам, если это сталкер, не живой и не под защитой olr_protected то записываем в xvars.npc_del_afterblow
+																								-- потом уборщик трупов осмотрит их инвентари и если там ничего важного нет то удалит, хуйня кароче очередная
+	olr_timers.st_timer("set_walkers_rndways", 74, "olr_ai_tasks.set_walkers_rndways()") -- вызывает принудительную перетасовку смартов куда отправляются сталкеры которым выдан глобальный квест
+																						 -- с шансом 50% снимает с них квест (вроде как, ну нилит npcs_tasks_rndway), я так понял потом smart_terrain если ему из квеста пришёл false тот уже сам выберет куда ему идти
 
-	if has_alife_info("rad_first") and not has_alife_info("gen_first") then
+	if has_alife_info("rad_first") and not has_alife_info("gen_first") then -- если были на радаре, но еще не были на генераторах, то после каждого выброса
+																			-- вызываем 4 нахуй раза spawen_endgame_zombies
+																			-- которая работает так
+																			-- обход по всем объектам, ищет clsid.respawn везде кроме бара, там спавнит мутантов по таблице см. функцию, и вписывает их в свои охуительные костыли
 		olr_blowout.spawen_endgame_zombies()
 		olr_timers.st_timer("spawen_endgame_zombies1", 19, "olr_blowout.spawen_endgame_zombies()")
 		olr_timers.st_timer("spawen_endgame_zombies2", 29, "olr_blowout.spawen_endgame_zombies()")
 		olr_timers.st_timer("spawen_endgame_zombies3", 39, "olr_blowout.spawen_endgame_zombies()")
 	end
 
-	if xvars.blow_count > 6 and not has_alife_info("gen_first") then
+	if xvars.blow_count > 6 and not has_alife_info("gen_first") then -- если пережили более 6 выбросов и не были на генераторах
+																	 -- то проверяем что мы уже были в баре по поршню bar_dolg_propusk_done
+																	 -- обходим все объекты и всех живых сталкеров, если у них есть свой смарт (т.е это не свободногуляющие где смарт ноне) strn_id ~= 65535 то записываем
+																	 -- если их более 50 то не вызываем принудительный респавн, а если менее то вызываем принудительный респавн по всем респавнерам
+																	 -- но я там еще добавил что шанс срабатывания принудительного респавна 1 к 15 будет у каждого респавнера
 		olr_timers.st_timer("respawn_now", 79, "olr_blowout.respawn_now()")
 	end
 
-	if has_alife_info("monolit_na_kordone") then
-		olr_timers.st_timer("spawen_endgame_posthuman", 39, "olr_blowout.spawen_endgame_posthuman()")
+	if has_alife_info("monolit_na_kordone") then -- если мы получили поршень monolit_na_kordone то начинаем вызывать еще и эту хуету
+		olr_timers.st_timer("spawen_endgame_posthuman", 39, "olr_blowout.spawen_endgame_posthuman()") -- спавнит мутантов по таблице в зонах респавна, химеры да постхуманы, проверяем валидность вертекс айди
+																									  -- есть еще рандом 1 к 15 на каждый респавн что бы не слишком дохуя наспавнило
 	end
 
-	if has_alife_info("docent_zamer_vibros_done_pogo") then
+	if has_alife_info("docent_zamer_vibros_done_pogo") then -- это квест с замером выброса от учёных в говне мочёных
 		if not has_alife_info("docent_zamer_vibros_daem") then
 			olr.info("docent_zamer_vibros_daem")
 			news_manager.send_tip(db.actor, game.translate_string("all_blowend_funcs_0"), 15, "ecolog", 39000, nil, nil, true, "st_sim_test_033_name")
 		end
 	end
-
-	olr_timers.st_timer("blowout_ending_info_end", 375, "olr_blowout.blowout_ending_info_end()")
-	-- на всякий случай
 end
 
 ---------------------------------------------
@@ -675,98 +407,6 @@ function remove_onl_anoms()
 	end
 end
 
----------------------------------------------
-
-	-- Таблица защитных зон для быстрой проверки
-local safe_zones = {
-	["lvl10_radar_space_blow_savezone"] = true,
-	["lvl2_garbage_hide_restrictor_0001"] = true,
-	["lvl2_garbage_space_restrictor_0023"] = true,
-	["lvl4_darkdolina_space_restrictor_0009"] = true,
-	["lvl7_yantar_space_restrictor_0053"] = true,
-	["central_complex"] = true,
-	["lvl2_gar_blow_hide_restr_0000"] = true,
-	["krusinye_podzemelya"] = true,
-	["lvl5_bar_space_restrictor_0018"] = true,
-	["lvl5_bar_space_restrictor_0097"] = true,
-	["lvl1_rastok_blow_hide_restr_0001"] = true,
-	["lvl1_rastok_blow_hide_restr"] = true,
-	["lvl6_rostok_space_restrictor_0034"] = true,
-	["lvl3_agr_blow_hide_restr_0003"] = true,
-	["lvl3_agr_blow_hide_restr_0001"] = true,
-	["lvl3_agr_blow_hide_restr_0002"] = true,
-	["agr_polter_zone"] = true,
-	["lvl3_agr_blow_hide_restr"] = true,
-	["svoboda_bazar"] = true,
-	["poltery_zone"] = true,
-	["lvl11_deadcity_space_restrictor_0017"] = true,
-	["lvl11_deadcity_space_restrictor_0018"] = true,
-	["lvl11_deadcity_space_restrictor_0019"] = true,
-	["lvl11_deadcity_space_restrictor_0020"] = true,
-	["lvl11_deadcity_space_restrictor_dom_sosatela"] = true,
-	["lvl5_bar_space_restrictor_0111"] = true,
-	["lvl5_bar_space_restrictor_0011"] = true,
-	["lvl2_garbage_space_restrictor_0019"] = true,
-	["lvl2_garbage_space_restrictor_0020"] = true,
-	["lvl5_bar_space_restrictor_0112"] = true,
-	["lvl5_bar_space_restrictor_0113"] = true,
-	["lvl5_bar_space_restrictor_0114"] = true,
-	["lvl5_bar_space_restrictor_0115"] = true,
-	["lvl2_gar_blow_hide_restr_0004"] = true,
-	["lvl1_escape_space_restrictor_0100"] = true,
-	["lvl1_escape_space_restrictor_0101"] = true,
-	["gar_blowout_hide_duty_restrictor_1"] = true
-}
-
-function update_hit()
-	local current_time = time_global()
-	if current_time <= time_apdeyta_hit then
-		return
-	end
-	time_apdeyta_hit = current_time + math.random(1000, 1500)
-
-	local actor = db.actor
-	if not actor:alive() then
-		return
-	end
-
-	if not actor:has_info("olr_blowout_phase_2") then
-		return
-	end
-
-	-- Кэшируем часто используемые значения
-	local level_name = level.name()
-	if no_blow_levels[level_name] then
-		return
-	end
-
-	if not actor:is_actor_outdoors() then
-		return
-	end
-
-	-- Проверка наличия прибора
-	local iblocitm = actor:object("pribor_antivibros")
-	if iblocitm then
-		local new_cond = iblocitm:condition() - 0.0039
-		iblocitm:set_condition(new_cond)
-		if new_cond <= 0.01 then
-			olr.del(iblocitm)
-		end
-		return
-	end
-
-	-- Проверка всех зон одним вызовом
-	if xr_conditions.actor_in_zone(nil, nil, safe_zones) then
-		return
-	end
-
-	-- Применение урона, если все проверки пройдены
-	actor.health = -0.05
-	actor.radiation = 0.065
-	actor.psy_health = -0.105
-	level.add_cam_effector("camera_effects\\shell_shock.anm", 1976, false, "")
-end
-
 ----------------------------------------------
 
 function del_vidrosovie_arts()
@@ -825,44 +465,9 @@ function psy_gg()
 		db.actor.psy_health = -db.actor.psy_health / math.random(1, 5)
 	end
 end
-------------------------------------------------------
-function blowout_particle_start()
-	if db.actor:is_actor_outdoors() == false then
-		return
-	end
-	local pos = db.actor:position()
-	local x, y, z = pos.x, pos.y, pos.z
-	particles_object([[nature\vortex_01]]):play_at_pos(vector():set(x, y, z))
-end
 
-function blowout_particle_start2()
-	if db.actor:is_actor_outdoors() == false then
-		return
-	end
-	local pos = db.actor:position()
-	local x, y, z = pos.x, pos.y, pos.z
-	particles_object([[nature\fog_stormy_04]]):play_at_pos(vector():set(x, y, z))
-end
-
-function blowout_particle_blow()
-	if db.actor:is_actor_outdoors() == false then
-		return
-	end
-	local pos = db.actor:position()
-	local x, y, z = pos.x, pos.y, pos.z
-	particles_object([[nature\fog_stormy_05]]):play_at_pos(vector():set(x, y, z))
-end
-
-function blowout_particle_norm()
-	if db.actor:is_actor_outdoors() == false then
-		return
-	end
-	local pos = db.actor:position()
-	local x, y, z = pos.x, pos.y, pos.z
-	particles_object([[nature\tornado_01]]):play_at_pos(vector():set(x, y, z))
-end
 -----------------------------------------------------
-function Kill_Monsters(gulag1)
+function Kill_Monsters(gulag1) -- вызывается из биндера смарт террейна, убивает онлайновых мутантов
 	if gulag1 ~= nil then
 		for k, v in pairs(gulag1.Object) do
 			if level.object_by_id(k) ~= nil then
@@ -874,26 +479,7 @@ function Kill_Monsters(gulag1)
 		end
 	end
 end
------------------------------------------------------
-local no_rats_levels = {
-	["l01_escape"] = true,
-	["l05_bar"] = true,
-	["l14_stancia"] = true,
-	["l14u_sarcofag"] = true,
-	["l15_generators"] = true
-}
 
-function spaven_rats()
-	if no_rats_levels[level.name()] then
-		return
-	end
-	if db.actor:is_actor_outdoors() == false then
-		return
-	end
-	for i = 1, math.random(5, 11) do
-		alife():create("m_rat_new", db.actor:position():add(db.actor:direction():mul(60)), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	end
-end
 -----------------------------------------------
 function set_arts_cond_after_blowout()
 	local valid_sections = {
@@ -930,21 +516,7 @@ end
 function deletor()
 	return math.random(5, 85) / 100
 end
------------------------------------------------
-function blow_task_actor()
-	olr.snd([[ambient\special\swamp_intelligent_bog_death]])
-	if not has_alife_info("olr_blowout_first_hideouts") then
-		db.actor:give_info_portion("olr_blowout_first_hideouts")
-		olr_timers.st_timer("olr_blowout_first_hideouts", 11, "nick.olr_blowout_first_hideouts()")
-	end
-	local text_phrase = {
-		"st_olr_blowout_warning_1",
-		"st_olr_blowout_warning_2",
-		"st_olr_blowout_warning_3",
-		"st_olr_blowout_warning_4"
-	}
-	news_manager.send_tip(db.actor, game.translate_string(text_phrase[math.random(#text_phrase)]), math.random(1000, 3000), "info", 15000)
-end
+
 ---------------------------------------------
 function spawen_rtut_shars()
 	local sim = alife()
@@ -1148,7 +720,6 @@ end
 ----------------------------------------------
 
 function spawen_arts_random()
-	olr_blowout.spawen_pseudohuman()
 
 	local montabl = {
 		[clsid.nogravity_zone] = true,
@@ -1277,7 +848,7 @@ function bar_alcos()
 end
 
 ----------------------------------------------
-
+-- Эта залупа по сюжету где будет использоваться, накидывать всякие эффекты что бы ебало трясло нахуй
 function blowout_additional_timer()
 	--log1("blowout_additional_timer ADD CAM EFFECTOR 2004")
 	level.add_cam_effector("camera_effects\\shell_shock.anm", 2004, false, "")
@@ -1347,7 +918,7 @@ function blowout_additional_timer6()
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
 ----------------------------------------------
-
+-- Надо тоже убрать это всё, у нас другой таймер и по другому надо добавлять время до выброса
 function get_blow_timer()
 	return xvars.blowout_timer
 end
@@ -1362,122 +933,4 @@ end
 
 function min_blow_timer(a)
 	xvars.blowout_timer = xvars.blowout_timer - a
-end
----------------------------------------------
-
-function set_blow_timer_agroblow()
-	if xvars.blowout_timer > 60 then
-		xvars.blowout_timer = 80
-	end
-end
-
--------------------------------------------------
-
-function on_game_load()
-	if xvars.blowout_timer then
-		if has_alife_info("olr_blowout_phase_0") then
-			--log1("on_game_load REMOVE CAM EFFECTOR 1974")
-			level.remove_cam_effector(1974)
-			level.remove_cam_effector(19744)
-			--log1("on_game_load REMOVE CAM EFFECTOR 1975")
-			level.remove_cam_effector(1975)
-			--log1("on_game_load REMOVE CAM EFFECTOR 1976")
-			level.remove_cam_effector(1976)
-			--log1("on_game_load REMOVE PP EFFECTOR 1974")
-			level.remove_pp_effector(1974)
-			--log1("on_game_load REMOVE PP EFFECTOR 2299")
-			level.remove_pp_effector(2299)
-			--log1("on_game_load REMOVE CAM EFFECTOR 12002")
-			level.remove_cam_effector(12002)
-			--log1("on_game_load REMOVE CAM EFFECTOR 22002")
-			level.remove_cam_effector(22002)
-			--log1("on_game_load REMOVE CAM EFFECTOR 32002")
-			level.remove_cam_effector(32002)
-			--log1("on_game_load REMOVE CAM EFFECTOR 42002")
-			level.remove_cam_effector(42002)
-			--log1("on_game_load REMOVE CAM EFFECTOR 52002")
-			level.remove_cam_effector(52002)
-			--news_manager.send_tip(db.actor, "афтер лоад 0", nil, "freedom", 9000)
-		end
-
-		----------
-
-		if xvars.blowout_timer <= 60 and xvars.blowout_timer >= 40 then
-			if no_blow_levels[level.name()] then
-				return
-			end
-
-			if has_alife_info("sr_cutscene_start_info") then
-				return
-			end
-
-			if has_alife_info("olr_blowout_ended") then
-				return
-			end
-
-			level.set_weather_fx("surge")
-			--log1("on_game_load ADD CAM EFFECTOR 1974")
-			level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
-			--log1("on_game_load ADD PP EFFECTOR 1974")
-			level.add_pp_effector("event\\deprecated\\vibros.ppe", 1974, true)
-			blowout_snd_go()
-
-			if level.get_weather() ~= "stancia" then
-				level.set_weather("levels\\stancia", true)
-				--news_manager.send_tip(db.actor, game.translate_string("on_game_load_1"), nil, "freedom", 9000)
-			end
-		end
-		----------
-
-		if xvars.blowout_timer <= 40 and xvars.blowout_timer >= 20 then
-			if has_alife_info("sr_cutscene_start_info") then
-				return
-			end
-
-			if no_blow_levels[level.name()] then
-				return
-			end
-
-			if has_alife_info("olr_blowout_ended") then
-				return
-			end
-
-			level.set_weather_fx("surge")
-			--log1("on_game_load ADD CAM EFFECTOR 1974")
-			level.add_cam_effector("camera_effects\\earthquake.anm", 1974, true, "")
-			--log1("on_game_load ADD PP EFFECTOR 1974")
-			level.add_pp_effector("event\\deprecated\\vibros.ppe", 1974, true)
-			blowout_snd_go()
-
-			if level.get_weather() ~= "stancia" then
-				level.set_weather("levels\\stancia", true)
-			end
-			level.set_weather_fx("surge")
-			--log1("on_game_load ADD CAM EFFECTOR 1974")
-			level.add_cam_effector("camera_effects\\earthquake.anm", 19744, true, "")
-			--news_manager.send_tip(db.actor, game.translate_string("on_game_load_2"), nil, "freedom", 9000)
-		end
-	end
-	----------
-
-	if xvars.blowout_timer and xvars.blowout_timer <= 20 then
-		if no_blow_levels[level.name()] then
-			return
-		end
-
-		if has_alife_info("sr_cutscene_start_info") then
-			return
-		end
-
-		if has_alife_info("olr_blowout_ended") then
-			return
-		end
-
-		level.set_weather("levels\\stancia", true)
-		level.set_weather_fx("surge")
-		--log1("on_game_load ADD PP EFFECTOR 1974")
-		level.add_pp_effector("event\\deprecated\\vibros.ppe", 1974, true)
-		blowout_snd_go()
-		--news_manager.send_tip(db.actor, game.translate_string("on_game_load_3"), nil, "freedom", 9000)
-	end
 end

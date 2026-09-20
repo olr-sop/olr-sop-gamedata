@@ -51,13 +51,24 @@ local function is_trader_parent(sobj)
 	return trader_names[p:name()] == true
 end
 
-function register_food(sobj) -- вызывается из se_item
-	foods[sobj.id] = true
-end
-
-function unregister_food(sobj) -- вызывается из se_item
-	foods[sobj.id] = nil
-end
+local LEVEL_CHECKS = {
+	["l02_garbage"] = "gar_first",
+	["l03_agroprom"] = "agr_first",
+	["l04_darkvalley"] = "dol_first",
+	["l05_bar"] = "bar_first",
+	["l06_rostok"] = "ros_first",
+	["l07_yantar"] = "yan_first",
+	["l08_swamp"] = "swp_first",
+	["l09_military"] = "mil_first",
+	["l10_radar"] = "rad_first",
+	["l10u_bunker"] = "radlab_first",
+	["l11_deadcity"] = "dec_first",
+	["l13_pripyat"] = "prp_first",
+	["l12_barrow_downs"] = "lvl12_first",
+	["l14u_sarcofag"] = "sarco_first",
+	["l14_stancia"] = "stan_first",
+	["l15_generators"] = "gen_first"
+}
 
 local function spoil_food(hours)
 	local sim = alife()
@@ -65,32 +76,46 @@ local function spoil_food(hours)
 		return
 	end
 
+	local current_level = level.name()
+
 	for id in pairs(foods) do
 		local sobj = sim:object(id)
 		if sobj == nil then
 			foods[id] = nil
 		else
-			local rate = section_rate_per_hour(sobj:section_name())
-			if rate > 0 then
-				local cl = level.object_by_id(id)
-				local cond
-				if cl ~= nil then cond = cl:condition()
-				else cond = sobj.item_condition end				
+			local cl = level.object_by_id(id)
 
-				if cond ~= nil and cond > 0 then
-					local mul = 1
-					if is_trader_parent(sobj) then
-						mul = trader_mul
-					end
-					local new_cond = cond - rate * mul * hours
-					if new_cond < 0 then
-						new_cond = 0
-					end
+			-- портим офлайн еду только на уже посещённых уровнях
+			local can_spoil = true
+			if cl == nil and sobj.level_name ~= nil and sobj.level_name ~= current_level then
+				local flag = LEVEL_CHECKS[sobj.level_name]
+				if flag == nil or not has_alife_info(flag) then
+					can_spoil = false
+				end
+			end
 
-					sobj.item_condition = new_cond
+			if can_spoil then
+				local rate = section_rate_per_hour(sobj:section_name())
+				if rate > 0 then
+					local cond
+					if cl ~= nil then cond = cl:condition()
+					else cond = sobj.item_condition end
 
-					if cl ~= nil then
-						cl:set_condition(new_cond)
+					if cond ~= nil and cond > 0 then
+						local mul = 1
+						if is_trader_parent(sobj) then
+							mul = trader_mul
+						end
+						local new_cond = cond - rate * mul * hours
+						if new_cond < 0 then
+							new_cond = 0
+						end
+
+						sobj.item_condition = new_cond
+
+						if cl ~= nil then
+							cl:set_condition(new_cond)
+						end
 					end
 				end
 			end
@@ -119,4 +144,12 @@ function update()
 	xvars.spoil_next_sec = xvars.spoil_next_sec + hours * 3600
 
 	spoil_food(hours)
+end
+
+function register_food(sobj) -- вызывается из se_item
+	foods[sobj.id] = true
+end
+
+function unregister_food(sobj) -- вызывается из se_item
+	foods[sobj.id] = nil
 end

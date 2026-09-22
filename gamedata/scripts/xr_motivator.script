@@ -115,6 +115,9 @@ function motivator_binder:net_spawn(sobject)
 ------------------------------------------------------------
 
 	if not self.object:alive() then
+            if level.map_has_object_spot(self.object:id(), "map_sos") == 1 then
+                level.map_remove_object_spot(self.object:id(), "map_sos")
+            end
 		if level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 1 then
 			level.map_remove_object_spot(self.object:id(), "tutorial_wounded_location")
 		end
@@ -434,6 +437,9 @@ function motivator_binder:update(delta)
         end
 
         if not self.object:alive() then
+            if level.map_has_object_spot(self.object:id(), "map_sos") == 1 then
+                level.map_remove_object_spot(self.object:id(), "map_sos")
+            end
             if level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 1 then
                 level.map_remove_object_spot(self.object:id(), "tutorial_wounded_location")
             end
@@ -504,44 +510,27 @@ function motivator_binder:update(delta)
                 --news_manager.send_tip(db.actor, "ранены пытаемся лечится - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
 
                 if not xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
-                    --news_manager.send_tip(db.actor, "лечится ПОПЫТКА 1 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
-
-                    if not xr_wounded.is_heavy_wounded_by_id(self.object:id()) then
-                        --news_manager.send_tip(db.actor, "лечится ПОПЫТКА 2 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
-
-                        if self.object:relation(db.actor) == game_object.neutral or self.object:relation(db.actor) == game_object.friend then
-                            --news_manager.send_tip(db.actor, "лечится ПОПЫТКА 3 - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
-							
-                            local npc = self.object
-                            local yad = npc:object("yad")
-                            if not yad then
-                                alife():create("yad", self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id())
-                            --news_manager.send_tip(db.actor, "create YAD - ["..self.object:name().."]  ", nil, "freedom", 9000)
-                            end
-                            if self.object:object("medkit") ~= nil then
-                                --level.map_add_object_spot(self.object:id(), "green_location", "вылечился съел аптечку")
-                                --news_manager.send_tip(db.actor, "ранены ВЫЛЕЧИЛИСЬ medkit - ["..self.object:name().."] -- ХП ["..self.object.health.."] ", nil, "freedom", 9000)
-                                if yad then
-                                    yad:enable_attachable_item(true)
-                                    --log1("enable yad")
-                                    local wait_time = 0
-                                    wait_time = time_global() + 5000
-                                    level.add_call(
-                                        function()
-                                            return time_global() > wait_time
-                                        end,
-                                        function()
-                                            yad:enable_attachable_item(false)
-                                        end
-                                    )
+                    local npc = self.object
+                    local yad = npc:object("yad")
+                    if not yad then
+                        alife():create("yad", self.object:position(), self.object:level_vertex_id(), self.object:game_vertex_id(), self.object:id())
+                    end
+                    if self.object:object("medkit") ~= nil then
+                        if yad then
+                            yad:enable_attachable_item(true)
+                            local wait_time = 0
+                            wait_time = time_global() + 5000
+                            level.add_call(
+                                function()
+                                    return time_global() > wait_time
+                                end,
+                                function()
+                                    yad:enable_attachable_item(false)
                                 end
-                                olr.npc_healing_sms(self.object:character_name())
-                                self.object:eat(self.object:object("medkit"))
-                                self.object.health = 1
-                            else
-                                --news_manager.send_tip(db.actor, "NO MEDKIT (аптечку братцы, я без аптечки + флаг) !!! - ["..self.object:name().."]  ", nil, "freedom", 9000)
-                            end
+                            )
                         end
+                        self.object:eat(self.object:object("medkit"))
+                        self.object.health = 1
                     end
                 end
             end

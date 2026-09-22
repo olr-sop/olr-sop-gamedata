@@ -113,6 +113,7 @@ local search_intensivity = 100 --интенсивность поиска (количество отрабатываемых
 local max_rounds = 10 -- продолжительность боев
 local health_wound = 0.20 -- ѕри каком уровне здоровь€ Ќѕ— считаетс€ раненым
 local health_wound_set = 0.02
+local offline_wound_drain_step = 0.05
 
 -- Ёталон firepower\distance при distance = 1 который снимет 100% health
 local base_fp = 1400
@@ -170,6 +171,17 @@ end
 
 function add_fresh_meat(obj)
 	local sim = alife()
+	-- OLR: slow death of offline wounded stalkers (not protected, not online)
+	if obj and IsStalker(obj) and obj.alive and obj:alive() and not obj.online
+	   and obj.health and obj:health() > 0 and obj:health() <= health_wound
+	   and not olr_protected.is_no_offline_alife_obj(obj:name()) then
+		local h = obj:health() - offline_wound_drain_step
+		if h <= 0 then
+			set_npc_health(obj, 0)
+		else
+			set_npc_health(obj, h)
+		end
+	end
 	if obj and not olr_protected.is_no_offline_alife_obj(obj:name()) and obj.m_game_vertex_id and db.actor and db.actor:id() ~= obj.id and not this.has_been_spawned(obj.id) then
 		if game_graph():valid_vertex_id(obj.m_game_vertex_id) then
 			local map = sim:level_name(game_graph():vertex(obj.m_game_vertex_id):level_id())

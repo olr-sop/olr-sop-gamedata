@@ -5,6 +5,11 @@
 ----------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------------------------
+local WOUNDED_SELF_HEAL_DELAY = 30000 -- мс: через сколько раненый сам тянется за аптечкой
+local WOUNDED_DRAIN_RATE = 0.0002 -- дельта урона в секунду (медленно, ~5+ мин)
+local WOUNDED_DRAIN_INTERVAL = 1000 -- мс: троттлинг дренажа
+local WOUNDED_HEAL_AMOUNT = 0.6 -- дельта восстановления после аптечки (с учётом аптечки выйдет как раз около еденицы)
+
 --Evaluators
 ----------------------------------------------------------------------------------------------------------------------
 class "evaluator_wound" (property_evaluator) 
@@ -91,14 +96,29 @@ function action_wounded:execute ()
 		self.object:enable_talk()
 	end
 
-	if level.map_has_object_spot(self.object:id(), "tutorial_wounded_location") == 0 and self.object:alive() and not nick.is_pda_dead() then
-		self.object:disable_trade()
-		if self.object:character_community() == "stalker" then
-			level.map_add_object_spot(self.object:id(), "tutorial_wounded_location", "SOS")
-			local sobj = alife():object(self.object:id())
-			local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-			news_manager.send_tip(db.actor, self.object:character_name()..". "..pos.."", 5, "sos", 25000, nil, nil, true, "st_xr_wounded_sos_signal")
-		end	
+	if self.a.wound_manager then
+		self.a.wound_manager:update()
+	end
+	local wounded_state_now = xr_logic.pstor_retrieve(self.object, "wounded_state")
+	if wounded_state_now and wounded_state_now ~= "nil" then
+		local begin_t = xr_logic.pstor_retrieve(self.object, "wounded_begin")
+		if not begin_t then
+			begin_t = time_global()
+			xr_logic.pstor_store(self.object, "wounded_begin", begin_t)
+			olr.npc_healing_sms(self.object:character_name())
+			if level.map_has_object_spot(self.object:id(), "map_sos") == 0 then
+				level.map_add_object_spot_ser(self.object:id(), "map_sos", "st_xr_wounded_sos_signal")
+			end
+		end
+		if self.a.use_medkit and not self.a.wound_manager.can_use_medkit
+		   and time_global() - begin_t > WOUNDED_SELF_HEAL_DELAY
+		   and self.object:object("medkit") then
+			self.a.wound_manager:unlock_medkit()
+		end
+	else
+		if db.storage[self.object:id()].pstor then
+			db.storage[self.object:id()].pstor.wounded_begin = nil
+		end
 	end
 	
     
@@ -230,6 +250,9 @@ function action_wounded:finalize ()
     self.object:disable_talk()
     xr_sound.set_sound(self.object, nil)
     self.object:wounded(false)
+	if level.map_has_object_spot(self.object:id(), "map_sos") == 1 then
+		level.map_remove_object_spot(self.object:id(), "map_sos")
+	end
 end    
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -270,15 +293,24 @@ function Cwound_manager:update()
 	xr_logic.pstor_store(self.npc, "wounded_sound", self.sound)
 	xr_logic.pstor_store(self.npc, "wounded_fight", self.fight)	
 	xr_logic.pstor_store(self.npc, "wounded_victim", self.victim)
+	if self.state ~= nil and self.state ~= "nil" then
+		if not olr_protected.is_no_offline_alife_obj(self.npc:name()) and not self.can_use_medkit then
+			if not self.last_drain or time_global() - self.last_drain > WOUNDED_DRAIN_INTERVAL then
+				self.last_drain = time_global()
+				self.npc.health = -WOUNDED_DRAIN_RATE
+			end
+		end
+	end
 end
 function Cwound_manager:unlock_medkit()
-	self.can_use_medkit = true
+	if self.npc:object("medkit") ~= nil then
+		self.can_use_medkit = true
+	end
 end
 function Cwound_manager:eat_medkit()
-	if self.can_use_medkit == true then
-		if self.npc:object("medkit") ~= nil then
-			self.npc:eat(self.npc:object("medkit"))
-		end
+	if self.can_use_medkit == true and self.npc:object("medkit") ~= nil then
+		self.npc:eat(self.npc:object("medkit"))
+		self.npc.health = WOUNDED_HEAL_AMOUNT
 	end
 	self.can_use_medkit = false
 	self:hit_callback()

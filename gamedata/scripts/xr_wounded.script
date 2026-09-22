@@ -217,7 +217,10 @@ function action_wounded:execute ()
 			emerg = {animation_nout = true}
 		end
 		--log1(" wonded anin - "..wound_manager_state.." ")
-		state_mgr.set_state(self.object, wound_manager_state, nil, nil, {look_object = victim}, emerg, synsound)
+		if wound_manager_state and wound_manager_state ~= "nil"
+		   and state_lib.states[wound_manager_state] then
+			state_mgr.set_state(self.object, wound_manager_state, nil, nil, {look_object = victim}, emerg, synsound)
+		end
 	end
 
 	if synsound == nil then

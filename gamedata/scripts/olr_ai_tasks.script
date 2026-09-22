@@ -682,9 +682,12 @@ end
 local walker_tasks = { cash = true, tourism = true, revenge = true, find_himself = true }
 
 function set_walkers_rndways()
+    if not (xvars and xvars.npcs_tasks) then
+        return
+    end
     local cnt = 0
     local sim = alife()
-    for npc_name, task in pairs(xvars.npcs_tasks) do
+    for npc_name, task in pairs(xvars.npcs_tasks(true)) do
         if walker_tasks[task] then
             local kill = sim:object(npc_name)
             if kill and IsStalker(kill) and kill:alive() then
@@ -700,4 +703,60 @@ function set_walkers_rndways()
         end
     end
     printf("olr_ai_tasks.set_walkers_rndways count = " .. tostring(cnt) .. "")
+end
+
+
+function dump_tasks()
+    if not (xvars and xvars.npcs_tasks) then
+        log1("[olr_ai_tasks][DUMP] xvars.npcs_tasks is nil")
+        return
+    end
+    local sim = alife()
+    local total, active, offline = 0, 0, 0
+    local lines = {}
+
+    for name, task in pairs(xvars.npcs_tasks(true)) do
+        total = total + 1
+        local sobj = sim and sim:object(name) or nil
+        local cobj = sobj and level.object_by_id(sobj.id) or nil
+        local obj  = cobj or sobj
+
+        local lvl   = obj and obj.level_name or "?"
+        local alive = (obj and obj:alive()) and "alive" or "dead"
+        local poss  = "?"
+        local p = (cobj and cobj.position) or (sobj and sobj.position)
+        if p then poss = string.format("%.0f,%.0f,%.0f", p.x, p.y, p.z) end
+
+        local rndway = tostring(xvars.npcs_tasks_rndway and xvars.npcs_tasks_rndway[name])
+        local rev    = tostring(xvars.npcs_tasks_revenge_targets[name])
+        local cash   = xvars.cash_need_summa_has[name] and "cash+" or ""
+        local rank   = "-"
+        if cobj then
+            local ok, r = pcall(function() return cobj:rank() end)
+            if ok and r then rank = tostring(r) end
+        end
+
+        local has, walk = "no", "-"
+        if obj then
+            local okh, h = pcall(function() return has_task(obj) end)
+            if okh and h then
+                has = "yes"; active = active + 1
+                local okw, w = pcall(function() return get_task_walk(obj) end)
+                if okw and w then walk = tostring(w) end
+            end
+        end
+
+        local sm_id = sobj and tostring(sobj:smart_terrain_id()) or "?"
+        table.insert(lines, string.format(
+            "%02d) %-32s task=%-12s way=%-40s walk=%-28s lvl=%-14s pos=[%s] %s %s smart=%s rank=%s %s%s",
+            total, name, tostring(task), rndway, walk, lvl, poss,
+            cobj and "ON" or "off", alive, sm_id, rank,
+            has == "yes" and "TASK " or "", cash))
+    end
+
+    for _, o in ipairs(olr_offline_walk.tabst) do if o then offline = offline + 1 end end
+
+    log1(string.format(
+        "[olr_ai_tasks][DUMP] assigned=%d active=%d offline_walkers=%d\n%s",
+        total, active, offline, table.concat(lines, "\n")))
 end

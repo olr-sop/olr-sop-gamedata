@@ -621,6 +621,18 @@ function sound_started()
 end
 
 -- ѕолучаем сообщение о времени до следующего выброса в игровых часах (сделал дл¤ себ¤, у вас нигде не используетс¤)
+function get_time_until_next_surge_hours()
+	local m = get_surge_manager()
+	if m.started then return nil end
+	local diff_time = game.get_game_time():diffSec(m.last_surge_time)
+	return (m._delta - diff_time) / 3600
+end
+
+function is_surge_active()
+	local m = get_surge_manager()
+	return m.started == true
+end
+
 function get_time_until_next_surge()
 	local m = get_surge_manager()
 	local diff_time = game.get_game_time():diffSec(m.last_surge_time)

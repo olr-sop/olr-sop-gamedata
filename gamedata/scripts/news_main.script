@@ -4,6 +4,11 @@ local _debug = false
 local prob = 0.5
 local bInit = false
 
+local timer_blow_showed = 0
+local timer_blow_freq = 10 * 60
+local pending_daytime = {}
+local daytime_slot = 0
+
 -- Задаём промежуток для рандома проверки игровых новостей
 local min_time_rnd = utils.cfg_get_float(ini_sys, "news_main_settings", "min_time_checknews", 180)
 local max_time_rnd = utils.cfg_get_float(ini_sys, "news_main_settings", "max_time_checknews", 1980)
@@ -156,6 +161,9 @@ function init()
 		timer_last_showed = get_game_minutes()
 		timer_alife_showed = get_game_minutes() - math.random(timer_alife_freq)
 		timer_daytime_showed = get_game_minutes() - math.random(timer_daytime_freq)
+		timer_blow_showed = get_game_minutes() - math.random(timer_blow_freq)
+		pending_daytime = {}
+		daytime_slot = 0
 		
 		rel_enemy,rel_friend = utils.cfg_get_number(ini_sys, "game_relations", "goodwill_enemy", nil, false, -1000), utils.cfg_get_number(ini_sys, "game_relations", "goodwill_friend", nil, false, 1000)
 	
@@ -859,31 +867,33 @@ function add_news(news_text, news_from, news_type, news_timeout, news_showtime, 
 	end
 	local sim = alife()
 	local sobj = sim:object(npcid)
-	if xvars and xvars.npc_seeing_news then
+	if sobj and xvars and xvars.npc_seeing_news then
 		xvars.npc_seeing_news[sobj:name()] = tostring(npcnews)
 		--news_manager.send_tip(db.actor, "запоминаем новость "..npcnews.." у  "..sobj:name().." левел "..sobj.level_name.."", nil, "freedom", 9000)
 	end
 end
 
 function show_news(text, from, timeout, showtime, section)
-	if (isIsolatedLevel(level.name()) == true) then return end
-	if (text == "") then return end
-	if (from == "") then return end
-	
-	-- А надо ли? Пусть будет.
-	--if db.actor:is_actor_sleeping() then return end
-	
+	if (isIsolatedLevel(level.name()) == true) then return false end
+	if (text == "") then return false end
+	if (from == "") then return false end
+
+	if (olr_sleep.check_actor_sleep()) then return false end
+	if (surge_manager.is_surge_active()) then return false end
+
 	if (text == nil) then text = "nil" end
 	if (from == nil) then from = "nil" end
-	
+	if (timeout == nil) then timeout = 0 end
+
 	if (timeout > 1000) then timeout = math.random(timer_general, timer_general * 4) end
 
-	--log1("show_news ==> ["..timeout.."] "..from..": "..text)
-	
 	table.insert(spammers, from)
-	
-	news_manager.send_tip_new_offline_alife(text, from, section, nil, timeout * 1000, showtime * 1000) -- текст сообщения, от кого, иконка, звук (стандартный), таймаут и шоутайм множим на 1000 т.к тут они в секундах!!
-	timer_last_showed = get_game_minutes()
+
+	local shown = news_manager.send_tip_new_offline_alife(text, from, section, nil, timeout * 1000, showtime * 1000)
+	if (shown == true) then
+		timer_last_showed = get_game_minutes()
+	end
+	return shown == true
 end
 
 function format_death_by_monster(obj)
@@ -1699,31 +1709,60 @@ function add_killed_by_actor(obj)
 	end	
 end
 
+-- Текущий период суток: morning / evening / night (или nil)
+function get_day_period()
+	local m_t = level:get_time_hours() * 60 + level:get_time_minutes()
+	if (m_t >= 4*60+30 and m_t <= 6*60) then
+		return "morning"
+	elseif (m_t >= 20*60+30 and m_t <= 22*60) then
+		return "evening"
+	elseif (m_t >= 23*60) or (m_t <= 4*60) then
+		return "night"
+	end
+	return nil
+end
+
+-- Планирует сообщение, привязанное к периоду суток.
+-- Если период сменился (сон, переброс времени) - сообщение отбрасывается.
+function schedule_daytime(text, from, delay, showtime, section, period)
+	daytime_slot = daytime_slot + 1
+	local slot = daytime_slot
+	pending_daytime[slot] = {text = text, from = from, showtime = showtime, section = section, period = period}
+	olr_timers.st_timer_game("news_daytime_"..slot, delay, "news_main.show_daytime_pending("..slot..")")
+end
+
+function show_daytime_pending(slot)
+	local p = pending_daytime[slot]
+	if (p == nil) then return end
+	pending_daytime[slot] = nil
+	if (get_day_period() ~= p.period) then return end
+	show_news(p.text, p.from, 0, p.showtime, p.section)
+end
+
 function on_daytime()
 -- ночь, рассвет, закат...
+	if (olr_sleep.check_actor_sleep()) then return end
 	if (get_game_minutes() - timer_daytime_showed > timer_daytime_freq) then
-		local m_h = level:get_time_hours()
-		local m_m = level:get_time_minutes()
-		local m_t = m_h * 60 + m_m
+		local period = get_day_period()
 		local s_text = ""
-		if (m_t >= 4*60+30 and m_t <= 6*60) then 
+		if (period == "morning") then
 			-- 04:30 - 06:00 Рассвет
 			if (math.random() < prob) then
 				s_text = game.translate_string(news_data.morning_templates[math.random(table.getn(news_data.morning_templates))])
 				local name, sname = news_main.get_strings()
-				show_news(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news")
+				schedule_daytime(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news", "morning")
 				timer_daytime_showed = get_game_minutes()
 			end
-		elseif(m_t >= 20*60+30 and m_t <= 22*60) then 
+		elseif (period == "evening") then
 			-- 20:30 - 22:00 Закат
 			if (math.random() < prob) then
 				s_text = game.translate_string(news_data.evening_templates[math.random(table.getn(news_data.evening_templates))])
 				local name, sname = news_main.get_strings()
-				show_news(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news")
+				schedule_daytime(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news", "evening")
 				timer_daytime_showed = get_game_minutes()
 			end
-		elseif(m_t >= 23*60 and m_t <= 24*60) or (m_t >= 0*60 and m_t <= 4*60) then 
-			--23:00 - 04:00 Ночь			
+		elseif (period == "night") then
+			--23:00 - 04:00 Ночь
 			if (math.random() < prob) then
 				local tbl = news_data.night_templates[math.random(#news_data.night_templates)]
 				local texts = tbl.texts
@@ -1734,23 +1773,22 @@ function on_daytime()
 					local name = game.translate_string("st_news_main_unknown_brackets")
 					local i = 0
 					for k, v in pairs(texts) do
-					if (comments == nil) then
-						local name_, sname_ = news_main.get_strings()
-						name = name_.." "..sname_
-					end
+						if (comments == nil) then
+							local name_, sname_ = news_main.get_strings()
+							name = name_.." "..sname_
+						end
 						s_text = game.translate_string(v)
-						show_news(s_text, name, base_wait + k * 2, 10, "news")
+						schedule_daytime(s_text, name, base_wait + k * 2, 10, "news", "night")
 						i = i + 1
 					end
 					if (probl and comments and news_data.comments_templates[comments] and math.random() < probl) then
 						s_text = game.translate_string(news_data.comments_templates[comments][math.random(table.getn(news_data.comments_templates[comments]))])
 						local name, sname = news_main.get_strings()
-						show_news(s_text, name.." "..sname, base_wait + (i+1) * 3, 15, "news")
+						schedule_daytime(s_text, name.." "..sname, base_wait + (i+1) * 3, 15, "news", "night")
 					end
 					timer_daytime_showed = get_game_minutes()
-				end				 
+				end
 			end
-			
 		end
 	end
 end
@@ -1864,102 +1902,130 @@ function on_wound(obj)
 end
 
 
-function news_sort(a,b)
-	if (a.priority==1 and b.priority ~=1) then
-		return false
+function news_sort(a, b)
+	local pa = a.priority or 0
+	local pb = b.priority or 0
+	if (pa ~= pb) then
+		return pa > pb
 	end
-	return a.created < b.created
-	--return a.timeout < b.timeout
+	if (a.created ~= b.created) then
+		return a.created < b.created
+	end
+	return tostring(a.text) < tostring(b.text)
 end
 
 
 function on_news()
-    local avail = {}
-    if news_stack then
-        for k, v in pairs(news_stack) do
-            if v.activated == nil then
-                if (v.lifetime > get_game_minutes()) then
-                    if (v.timeout < get_game_minutes()) then -- Новость актуальна.
-                        --table.insert(avail, k)
-                    else
-                        --log1("Not ready yet - ".. v.from) -- Еще не время.
-                    end
-                else -- Новость устарела.
-                    --log1("Too old - "..v.from..": "..v.text)
-                    table.remove(news_stack, k)
-                end
-            else -- Новость уже была.
-                table.remove(news_stack, k)
-            end
-        end
-        -- Отсортируем.
-        table.sort(news_stack, news_sort)
-        for k, v in pairs(news_stack) do
-            if v.activated == nil then
-                if (v.lifetime > get_game_minutes()) then
-                    if (v.timeout < get_game_minutes()) then -- Новость актуальна.
-                        table.insert(avail, k)
-                    else
-                        --log1("Not ready yet - ".. v.from..": "..v.text) -- Еще не время.
-                    end
-                else -- Новость устарела.
-                    --log1("Too old - "..v.from..": "..v.text)
-                    table.remove(news_stack, k)
-                end
-            else -- Новость уже была.
-                table.remove(news_stack, k)
-            end
-        end
-    end
+	if news_stack then
+		local keep = {}
+		for k, v in pairs(news_stack) do
+			if (v.activated == nil and v.lifetime > get_game_minutes()) then
+				table.insert(keep, v)
+			end
+		end
+		news_stack = keep
+	end
 
-    if avail and table.getn(avail) > 0 then
-        --local t = avail[math.random(table.getn(avail))]
-        local t = avail[1]
-        local z = news_stack[t]
-        if (z) then
-            local bAlive = false
-            local m_author_id = tonumber(z.author_id)
-            if (m_author_id ~= nil) then
-                bAlive = false
-                local obj = alife():object(m_author_id)
-                if (obj) then
-                    if (IsStalker(obj)) then
-                        if IsNpcStalker(obj) then
-                            if (obj.alive and obj:alive() == true and obj.health and obj:health() > 0) then
-                                if (_debug == true) then
-                                    amk.add_spot_on_map(obj.id, "red_location", z.from .. ": " .. z.text)
-                                end
-                                bAlive = true
-                            end
-                        end
-                    end
-                end
-            else
-                bAlive = true
-            end
-            if (bAlive == true) then
-                --show_news(z.from, z.text, z.timeout, z.showtime, z.section)
-                show_news(z.text, z.from, 0, z.showtime, z.section)
-                z.activated = get_game_minutes()
-            end
-        end
-    else
-        --log1("on_news [5] - no news ")
-    end
+	local avail = {}
+	if news_stack then
+		table.sort(news_stack, news_sort)
+		for k, v in pairs(news_stack) do
+			if (v.timeout < get_game_minutes()) then
+				table.insert(avail, k)
+			end
+		end
+	end
 
-    local gtime = get_game_minutes()
+	if avail and table.getn(avail) > 0 then
+		local t = avail[1]
+		local z = news_stack[t]
+		if (z) then
+			local bAlive = false
+			local m_author_id = tonumber(z.author_id)
+			if (m_author_id ~= nil) then
+				bAlive = false
+				local obj = alife():object(m_author_id)
+				if (obj) then
+					if (IsStalker(obj)) then
+						if IsNpcStalker(obj) then
+							if (obj.alive and obj:alive() == true and obj.health and obj:health() > 0) then
+								if (_debug == true) then
+									amk.add_spot_on_map(obj.id, "red_location", z.from .. ": " .. z.text)
+								end
+								bAlive = true
+							end
+						end
+					end
+				end
+			else
+				bAlive = true
+			end
+			if (bAlive == true) then
+				if (show_news(z.text, z.from, 0, z.showtime, z.section) == true) then
+					z.activated = get_game_minutes()
+				end
+			end
+		end
+	end
 
-    if (gtime - timer_alife_showed > timer_alife_freq) then
-        amk_offline_alife.offline_alife()
-        timer_alife_showed = get_game_minutes()
-    end
+	local gtime = get_game_minutes()
 
-    --log1(" on_news 4")
+	if (gtime - timer_alife_showed > timer_alife_freq) then
+		amk_offline_alife.offline_alife()
+		timer_alife_showed = get_game_minutes()
+	end
 
-    if (gtime - timer_daytime_showed > timer_daytime_freq) then
-        on_daytime()
-    end
-    --log1(" on_news 5")
+	if (gtime - timer_daytime_showed > timer_daytime_freq) then
+		on_daytime()
+	end
+
+	if (gtime - timer_blow_showed > timer_blow_freq) then
+		do_blow_news()
+	end
+end
+
+-- Предсказание выброса на основе таймингов surge_manager
+function do_blow_news()
+	if (olr_sleep.check_actor_sleep()) then return end
+	if (surge_manager.is_surge_active()) then return end
+	if (surge_manager.no_blow_levels[level.name()]) then return end
+
+	local hours = surge_manager.get_time_until_next_surge_hours()
+	if (hours == nil) then return end
+	if (hours < 1) then return end
+
+	local item = news_data.blowout_templates[math.random(table.getn(news_data.blowout_templates))]
+	if (item == nil) then return end
+	local stext = item["text"]
+	local alive = tonumber(item["alive"])
+	if (alive and isAlive(alive) == false) then return end
+	if (stext == nil) then return end
+
+	local when = ""
+	if (hours < 2) then
+		when = game.translate_string("st_news_manager_data_blowout_when_1")
+	elseif (hours >= 2 and hours <= 4) then
+		when = game.translate_string("st_news_manager_data_blowout_when_2")
+	elseif (hours > 4 and hours <= 8) then
+		when = game.translate_string("st_news_manager_data_blowout_when_3")
+	else
+		local n_h = level:get_time_hours() + math.floor(hours)
+		if (n_h >= 9 and n_h < 11) then when = game.translate_string("st_news_manager_data_blowout_when_4") end
+		if (n_h >= 11 and n_h < 14) then when = game.translate_string("st_news_manager_data_blowout_when_5") end
+		if (n_h >= 14 and n_h < 18) then when = game.translate_string("st_news_manager_data_blowout_when_6") end
+		if (n_h >= 18 and n_h < 22) then when = game.translate_string("st_news_manager_data_blowout_when_7") end
+		if (n_h >= 22 and n_h < 30) then when = game.translate_string("st_news_manager_data_blowout_when_8") end
+		if (n_h >= 30 and n_h < 34) then when = game.translate_string("st_news_manager_data_blowout_when_9") end
+		if (n_h >= 34 and n_h < 38) then when = game.translate_string("st_news_manager_data_blowout_when_10") end
+		if (n_h >= 38 and n_h < 42) then when = game.translate_string("st_news_manager_data_blowout_when_11") end
+		if (n_h >= 42 and n_h < 50) then when = game.translate_string("st_news_manager_data_blowout_when_12") end
+	end
+	if (when == "") then return end
+
+	local m_s = string.gsub(game.translate_string(stext), "%$when", when)
+	local name, sname = news_main.get_strings()
+	show_news(m_s, name.." "..sname, 0, 10, "news")
+	timer_blow_showed = get_game_minutes()
 end
 
 function on_offline_item_found(who, object)

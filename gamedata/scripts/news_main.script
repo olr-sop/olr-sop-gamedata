@@ -12,6 +12,8 @@ local daytime_slot = 0
 -- «адаЄм промежуток дл€ рандома проверки игровых новостей
 local min_time_rnd = utils.cfg_get_float(ini_sys, "news_main_settings", "min_time_checknews", 180)
 local max_time_rnd = utils.cfg_get_float(ini_sys, "news_main_settings", "max_time_checknews", 1980)
+-- —мещение рандома промежутков к коротким: 1 = обычный рандом, >1 = уклон в короткие
+local delay_bias = utils.cfg_get_float(ini_sys, "news_main_settings", "news_delay_bias", 2)
 
 local timer_stalker_death 			= 7  	-- —ообщение о смерти сталкера
 local timer_corpse 				= 120 -- 40 	-- —ообщение о найденом трупе
@@ -145,6 +147,19 @@ function get_strings()
 	local name = game.translate_string(fnames[math.random(table.getn(fnames))])
 	local sname = game.translate_string(snames[math.random(table.getn(snames))])
 	return name,sname
+end
+
+-- ¬звешенный рандом промежутка: bias > 1 смещает шансы к коротким значени€м, 1 = обычный рандом
+function get_weighted_delay(min_v, max_v, bias)
+	if (max_v <= min_v) then return min_v end
+	local b = tonumber(bias) or delay_bias or 1
+	local r = math.random()
+	if (b > 1) then
+		r = r ^ b
+	elseif (b > 0 and b < 1) then
+		r = 1 - (1 - r) ^ (1 / b)
+	end
+	return math.floor(min_v + (max_v - min_v) * r + 0.5)
 end
 
 
@@ -1584,7 +1599,7 @@ function check_news()
 		--log1("~~~ Remove news_check timer")
 		olr_timers.del_game_timer("news_check")
 		--log1("~~~ Create new news_check timer")
-		olr_timers.st_timer_game("news_check", math.random(min_time_rnd, max_time_rnd), "news_main.check_news()")
+		olr_timers.st_timer_game("news_check", get_weighted_delay(min_time_rnd, max_time_rnd), "news_main.check_news()")
 	end
 end
 
@@ -1750,7 +1765,7 @@ function on_daytime()
 			if (math.random() < prob) then
 				s_text = game.translate_string(news_data.morning_templates[math.random(table.getn(news_data.morning_templates))])
 				local name, sname = news_main.get_strings()
-				schedule_daytime(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news", "morning")
+				schedule_daytime(s_text, name.." "..sname, get_weighted_delay(timer_weather, timer_weather * 5), 15, "news", "morning")
 				timer_daytime_showed = get_game_minutes()
 			end
 		elseif (period == "evening") then
@@ -1758,7 +1773,7 @@ function on_daytime()
 			if (math.random() < prob) then
 				s_text = game.translate_string(news_data.evening_templates[math.random(table.getn(news_data.evening_templates))])
 				local name, sname = news_main.get_strings()
-				schedule_daytime(s_text, name.." "..sname, math.random(timer_weather, timer_weather * 5), 15, "news", "evening")
+				schedule_daytime(s_text, name.." "..sname, get_weighted_delay(timer_weather, timer_weather * 5), 15, "news", "evening")
 				timer_daytime_showed = get_game_minutes()
 			end
 		elseif (period == "night") then
@@ -1768,7 +1783,7 @@ function on_daytime()
 				local texts = tbl.texts
 				local comments = tbl.comments
 				local probl = tonumber(tbl.prob)
-				local base_wait = math.random(timer_weather, timer_weather * 5)
+				local base_wait = get_weighted_delay(timer_weather, timer_weather * 5)
 				if (texts) then
 					local name = game.translate_string("st_news_main_unknown_brackets")
 					local i = 0

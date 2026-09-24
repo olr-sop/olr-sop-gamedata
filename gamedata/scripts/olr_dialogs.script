@@ -1,0 +1,197 @@
+-- OLR: переработка диалога «об этом месте» (sim_dialog_about_level).
+-- Тексты вариантов ответа лежат в config/text/<язык>/ui_st_about_level.xml.
+-- Конвенция ID: st_sim_dialog_about_level_<локация>_<ранг>_<номер>.
+-- Варианты пишутся с номера 1 и строго подряд; отсутствие строки = конец списка.
+-- Если для текущей локации и ранга NPC вариантов нет — движок выберет фоллбэк «не знаю».
+-- Дополнительно есть шанс rude_chance%, что NPC грубо откажется говорить (пул rude-реплик),
+-- и шанс ignore_chance%, что он ответит «ничего не знаю» (тот же фоллбэк-пул) даже при наличии текстов.
+
+local levels = {
+	"l01_escape",
+	"l02_garbage",
+	"l03_agroprom",
+	"l04_darkvalley",
+	"l04u_warlab",
+	"l05_bar",
+	"l06_rostok",
+	"l07_yantar",
+	"l08_swamp",
+	"l09_military",
+	"l10_radar",
+	"l10u_bunker",
+	"l11_deadcity",
+	"l12_barrow_downs",
+	"l13_pripyat",
+	"l14_stancia",
+	"l14u_sarcofag",
+	"l15_generators"
+}
+
+local ranks_order = { "novice", "experienced", "veteran", "master" }
+
+local max_rank_variants = 8
+local max_unknown_variants = 4
+local max_rude_variants = 4
+local rude_chance = 20
+local ignore_chance = 20
+
+local about_level_req = nil
+local about_level_variants = nil
+local about_level_mode = nil
+local about_level_rude_count = 0
+local about_level_unknown_count = 0
+
+local function add_about_level_phrase(dlg, str_id, phrase_id, precondition)
+	local phr = dlg:AddPhrase(str_id, phrase_id, "0", -10000)
+	if phr ~= nil then
+		phr:GetPhraseScript():AddPrecondition(precondition)
+	end
+	return phr
+end
+
+local function about_level_mode_of(npc)
+	if about_level_mode == nil or npc == nil then
+		return nil
+	end
+	return about_level_mode[npc:id()]
+end
+
+-- Генератор динамического графа диалога. Вызывается движком один раз на сессию
+-- (shared-данные диалога), поэтому текущую локацию здесь использовать НЕЛЬЗЯ —
+-- добавляются сразу все уровни, фильтрация идёт в прекондишенах в рантайме.
+function init_about_level_dialog(dlg)
+	about_level_req = {}
+	about_level_variants = {}
+	about_level_mode = {}
+
+	local question = dlg:AddPhrase("st_sim_dialog_about_level_q", "0", "", -10000)
+	if question ~= nil then
+		question:GetPhraseScript():AddAction("olr_dialogs.about_level_open")
+	end
+
+	local built = 0
+	for _, lv in ipairs(levels) do
+		for _, rk in ipairs(ranks_order) do
+			for n = 1, max_rank_variants do
+				local str_id = string.format("st_sim_dialog_about_level_%s_%s_%d", lv, rk, n)
+				if game.translate_string(str_id) == str_id then
+					break
+				end
+				local phrase_id = string.format("about_%s_%s_%d", lv, rk, n)
+				if add_about_level_phrase(dlg, str_id, phrase_id, "olr_dialogs.about_level_precondition") ~= nil then
+					about_level_req[phrase_id] = { level = lv, rank = rk }
+					if about_level_variants[lv] == nil then
+						about_level_variants[lv] = {}
+					end
+					about_level_variants[lv][rk] = true
+					built = built + 1
+				end
+			end
+		end
+	end
+
+	local unknown = 0
+	for n = 1, max_unknown_variants do
+		local str_id = string.format("st_sim_dialog_about_level_unknown_%d", n)
+		if game.translate_string(str_id) == str_id then
+			break
+		end
+		if add_about_level_phrase(dlg, str_id, "about_unknown_"..n, "olr_dialogs.about_level_fallback") ~= nil then
+			unknown = unknown + 1
+		end
+	end
+	about_level_unknown_count = unknown
+
+	local rude = 0
+	for n = 1, max_rude_variants do
+		local str_id = string.format("st_sim_dialog_about_level_rude_%d", n)
+		if game.translate_string(str_id) == str_id then
+			break
+		end
+		if add_about_level_phrase(dlg, str_id, "about_rude_"..n, "olr_dialogs.about_level_rude_precondition") ~= nil then
+			rude = rude + 1
+		end
+	end
+	about_level_rude_count = rude
+
+	log1(string.format("[olr_dialogs] about_level phrases built: %d, unknown variants: %d, rude variants: %d", built, unknown, rude))
+end
+
+-- Экшен фразы 0: движок вызывает его при каждом открытии диалога и ДО построения
+-- списка ответов, поэтому здесь бросаем «настроение» на один разговор.
+-- Порядок розыгрыша: сначала грубый отказ, затем «ничего не знаю», иначе — информация.
+function about_level_open(first_speaker, second_speaker, dialog_id, phrase_id)
+	if about_level_mode == nil then
+		return
+	end
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc == nil then
+		return
+	end
+
+	local roll = math.random(100)
+	local mode = nil
+	local threshold = 0
+
+	if about_level_rude_count > 0 then
+		threshold = threshold + rude_chance
+		if roll <= threshold then
+			mode = "rude"
+		end
+	end
+
+	if mode == nil and about_level_unknown_count > 0 then
+		threshold = threshold + ignore_chance
+		if roll <= threshold then
+			mode = "ignore"
+		end
+	end
+
+	about_level_mode[npc:id()] = mode
+end
+
+-- Прекондишен фразы-варианта: сверяем локацию и ранговый тир NPC по ID фразы.
+function about_level_precondition(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc == nil then
+		return false
+	end
+	if about_level_mode_of(npc) ~= nil then
+		return false
+	end
+	local req = about_level_req and about_level_req[next_phrase_id]
+	if req == nil then
+		return false
+	end
+	return level.name() == req.level and ranks.get_obj_rank_name(npc) == req.rank
+end
+
+-- Прекондишен грубого ответа: действует, только если на этот разговор выпал отказ.
+function about_level_rude_precondition(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc == nil then
+		return false
+	end
+	return about_level_mode_of(npc) == "rude"
+end
+
+-- Фоллбэк «ничего не знаю»: срабатывает по шансу ignore_chance (см. about_level_open)
+-- либо если для локации/ранга NPC реальных вариантов нет.
+function about_level_fallback(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	if about_level_variants == nil then
+		return false
+	end
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc == nil then
+		return false
+	end
+	local mode = about_level_mode_of(npc)
+	if mode == "rude" then
+		return false
+	end
+	if mode == "ignore" then
+		return true
+	end
+	local variants = about_level_variants[level.name()]
+	return variants == nil or variants[ranks.get_obj_rank_name(npc)] == nil
+end

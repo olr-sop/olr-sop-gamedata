@@ -7,9 +7,16 @@ local fake_enabled = utils.cfg_get_bool(ini_sys, "news_main_settings", "enable_f
 -- Группы фейковых сообщений. Каждая группа - список записей {header, text, timeout}.
 -- timeout (мс) - задержка перед отправкой именно этого сообщения; задаётся вручную для каждого,
 -- поэтому для последовательного вывода нужно самому указывать возрастающие значения (0, 2500, 5000...).
+--
+-- Необязательные ключи группы:
+--   pool_add     - инфопорция: группа в пуле, пока порция выдана;
+--   pool_exclude - инфопорция: пока выдана, группа исключена из пула (приоритетнее pool_add).
+-- Если порции не заданы, группа участвует в пуле всегда.
 
 -- шаблон
 -- {header = "Заголовок", text = "Текст сообщения", timeout = 0},
+-- шаблон с порциями
+-- {pool_add = "start_portion", pool_exclude = "stop_portion", {header = "Заголовок", text = "Текст", timeout = 0}},
 
 local table_msg = {
 
@@ -41,10 +48,34 @@ local table_msg = {
 		{header = "Лысый", text = "Губка Гоп, спортивные штаны. Увидите - пристрелите.", timeout = 0},
 	},
 	
-	-- Пример использования стрингов
---	fake_msg_7 = {
---		{header = "zov_kontakta_pda", text = "zona_end_ressurect_0", timeout = 0},
---	},
+	--[[
+	-- 1) Всегда в пуле: поршни не заданы
+	fake_msg_1 = {
+		{header = "Квад", text = "Наблюдаем волну мутантов, идёт с северо-запада, см. приложенные координаты.", timeout = 0},
+	},
+
+	-- 2) Появляется только при выданном поршне (напр. после сюжетного события)
+	fake_msg_2 = {
+		pool_add = "fake_news_td_visited",
+		{header = "Тест", text = "Мародёры, твари...", timeout = 0},
+		{header = "Потап", text = "Мы догадываемся.", timeout = 1000},
+	},
+
+	-- 3) Живёт "от поршня до поршня" видна пока выдан add и не выдан exclude
+	fake_msg_3 = {
+		pool_add = "fake_news_chapter_2",
+		pool_exclude = "fake_news_chapter_3",
+		{header = "Тест", text = "Псевдособака набросилась, еле пристрелил!", timeout = 0},
+		{header = "Потап", text = "Молодец.", timeout = 250},
+	},
+
+	-- 4) По умолчанию в пуле, но выключается порцией
+	fake_msg_4 = {
+		pool_exclude = "fake_news_agroprom_cleared",
+		{header = "Тест", text = "Блин! Ё-моё, снова зомби полным-полно на Янтаре! Аккуратней там, народ!", timeout = 0},
+		{header = "Потап", text = "Уникальная информация...", timeout = 2500},
+	},
+	--]]
 }
 
 -- Индекс групп для случайного выбора (ключи fake_msg_N не годятся для table.getn)
@@ -53,8 +84,26 @@ for k, v in pairs(table_msg) do
 	table.insert(msg_groups, v)
 end
 
+-- Исключающий поршень имеет приоритет над добавляющей
+local function group_allowed(group)
+	if (group.pool_exclude ~= nil and has_alife_info(group.pool_exclude) == true) then
+		return false
+	end
+	if (group.pool_add ~= nil and has_alife_info(group.pool_add) ~= true) then
+		return false
+	end
+	return true
+end
+
 function get_group()
-	return msg_groups[math.random(table.getn(msg_groups))]
+	local pool = {}
+	for k, v in pairs(msg_groups) do
+		if group_allowed(v) then
+			table.insert(pool, v)
+		end
+	end
+	if (table.getn(pool) == 0) then return nil end
+	return pool[math.random(table.getn(pool))]
 end
 
 function init_check_timer()

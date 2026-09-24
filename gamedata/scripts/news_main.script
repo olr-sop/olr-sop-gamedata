@@ -29,7 +29,7 @@ local time_factor 			= 1
 local timer_alife_showed		= 0			-- Последнее событие в оффлайн
 local timer_alife_freq 			= 10 		-- Как часто генерить события в оффлайн (игровые минуты)
 local timer_daytime_showed 		= 0 		-- Последняя новость о времени суток
-local timer_daytime_freq 		= 5 		-- Как часто новости о времени суток показывать (игровые минуты)
+local timer_daytime_freq 		= 5 * 60 		-- Как часто новости о времени суток показывать (игровые минуты)
 
 if (_debug == true) then 
 	timer_alife_freq 			= 5 	-- Как часто генерить события в оффлайн
@@ -83,7 +83,7 @@ local fnames={
 "st_news_manager_main_fnames_27",
 "st_news_manager_main_fnames_28",
 "st_news_manager_main_fnames_29",
-"st_news_manager_main_fnames_3",
+"st_news_manager_main_fnames_30",
 "st_news_manager_main_fnames_31"
 }
 
@@ -295,6 +295,7 @@ function on_stalker_death(victim_, killer_)
 	local m_killer = ""
 	local m_killer_s = ""
 	local m_victim = ""
+	local m_killer_str = ""
 	local victim
 	if (isGameObject(victim_)) then
 		victim = victim_
@@ -340,7 +341,7 @@ function on_stalker_death(victim_, killer_)
 				m_s_weapon2 = get_weapon_type(m_o_weapon2)
 				if (m_s_weapon2 < 5) then m_killer_str = game.translate_string("st_stalker_death_bullet") end
 				if (m_s_weapon2 == 6) then m_killer_str = game.translate_string("st_stalker_death_knife") end
-				if (m_s_weapon == 8) then m_killer_str = game.translate_string("st_stalker_death_burn") end
+				if (m_s_weapon2 == 8) then m_killer_str = game.translate_string("st_stalker_death_burn") end
 				if (m_s_weapon2 == 7 or m_s_weapon2 == 5) then m_killer_str = game.translate_string("st_stalker_death_grenade") end
 			end
 			m_killer = format_death_by_stalker(killer)
@@ -351,6 +352,7 @@ function on_stalker_death(victim_, killer_)
 		end
 	end
 	if (m_killer_str==nil or m_killer_str=="") then m_killer_str = game.translate_string("st_unknown_death_reason") end
+	local m_stringsms = ""
 	local rnd_dead = math.random(1,2)
 	if rnd_dead == 1 then
 		m_stringsms = m_name..". "..m_level..", "..m_killer_str.."."
@@ -454,7 +456,7 @@ function on_npc_death(victim_, killer_)
 				aid = author.id
 			end
 		else
-			if (math.random() < 0.5 and db.actor and db.actor:id() ~= killer:id()) and (IsNpcStalker(killer)) then
+			if (math.random() < 0.5 and killer and IsNpcStalker(killer) and db.actor and db.actor:id() ~= killer:id() then
 				m_str = format_template_killer_act(victim)
 				s_from = get_npc_name(killer)
 			else
@@ -498,20 +500,6 @@ function get_level_name(level_, index)
 		end
 	end
 	return m_tmp_str
-end
-
-function get_level_subname()
-	return level.name()
-end
-
-function get_current_time()
-	local m_time = "00:00"
-	if (level) then
-		local m_h = level:get_time_hours()
-		local m_m = level:get_time_minutes()
-		m_time = m_h..":"..m_m
-	end
-	return m_time
 end
 
 function get_npc_name(obj)
@@ -764,19 +752,6 @@ function get_npc_rank(obj)
 	return m_rank
 end
 
-function get_monster_rank(obj)
-	local m_rank = ""
-	if (obj) then
-		if (obj and _g.IsMonster(obj)) then
-			m_rank = ranks.get_obj_rank_name(obj)
-			if (m_rank == nil) then
-				m_rank = ""
-			end
-		end
-	end
-	return m_rank
-end
-
 function get_anomaly_name(obj, index)
 	local m_name = ""
 	local m_n = ""
@@ -847,8 +822,8 @@ end
 
 
 function do_news(text, from, timeout, showtime, section, author_id, priority)
-	if (text == nil) then text = "nil" end
-	if (from == nil) then from = "nil" end
+	if (text == nil or text == "") then return end
+	if (from == nil or from == "") then return end
 	if _debug then printf("add_news ==> "..text..": "..from) end
 	if (timeout == nil) then timeout = 0 end
 	if (priority == nil) then priority = 0 end
@@ -856,7 +831,7 @@ function do_news(text, from, timeout, showtime, section, author_id, priority)
 end
 
 function add_news(news_text, news_from, news_type, news_timeout, news_showtime, news_section, author_id, priority)
-	newsitem = {
+	local newsitem = {
 		eventType = news_type,
 		created = get_game_minutes(),
 		text = news_text,
@@ -1660,11 +1635,16 @@ function add_spawned_object(obj)
 		if table_spawned then
 			for k, v in pairs(table_spawned) do
 				if (v.community == s_comm and v.level == lev) then
+					if (v.ids and v.ids[s_id]) then
+						return
+					end
 					local mpos = v.position
 					if (mpos) then
 						local dist = pos:distance_to(mpos)
 						if (dist < distance_close) then
 							v.count = v.count + 1
+							v.ids = v.ids or {}
+							v.ids[s_id] = true
 							b_added = true
 							break
 						end
@@ -1673,7 +1653,7 @@ function add_spawned_object(obj)
 			end
 		end
 		if (b_added == false) then
-			t = {id = s_id, community = s_comm, count = 1, level = lev, position = pos, o_type = obj_type}
+			local t = {id = s_id, ids = {[s_id] = true}, community = s_comm, count = 1, level = lev, position = pos, o_type = obj_type}
 			table.insert(table_spawned, t)
 		else
 		end
@@ -1717,7 +1697,7 @@ function add_killed_by_actor(obj)
 			end
 		end
 		if (b_added == false) then
-			t = {id = s_id, community = s_comm, count = 1, level = lev, position = pos, o_type = obj_type}
+			local t = {id = s_id, community = s_comm, count = 1, level = lev, position = pos, o_type = obj_type}
 			table.insert(table_killed_by_actor, t)
 		else
 		end
@@ -1952,31 +1932,29 @@ function on_news()
 	end
 
 	if avail and table.getn(avail) > 0 then
-		local t = avail[1]
-		local z = news_stack[t]
-		if (z) then
-			local bAlive = false
-			local m_author_id = tonumber(z.author_id)
-			if (m_author_id ~= nil) then
-				bAlive = false
-				local obj = alife():object(m_author_id)
-				if (obj) then
-					if (IsStalker(obj)) then
-						if IsNpcStalker(obj) then
-							if (obj.alive and obj:alive() == true and obj.health and obj:health() > 0) then
-								if (_debug == true) then
-									amk.add_spot_on_map(obj.id, "red_location", z.from .. ": " .. z.text)
-								end
-								bAlive = true
-							end
-						end
+		for ai = 1, table.getn(avail) do
+			local z = news_stack[avail[ai]]
+			if (z) then
+				local bAlive = false
+				local m_author_id = tonumber(z.author_id)
+				if (m_author_id ~= nil) then
+					local obj = alife():object(m_author_id)
+					if (obj and IsStalker(obj) and IsNpcStalker(obj)
+					 and obj.alive and obj:alive() == true and obj.health and obj:health() > 0) then
+					bAlive = true
 					end
+				else
+					bAlive = true
 				end
-			else
-				bAlive = true
-			end
-			if (bAlive == true) then
-				if (show_news(z.text, z.from, 0, z.showtime, z.section) == true) then
+				if (bAlive == true) then
+					if (_debug == true and z.author_id) then
+						amk.add_spot_on_map(z.author_id, "red_location", z.from .. ": " .. z.text)
+					end
+					if (show_news(z.text, z.from, 0, z.showtime, z.section) == true) then
+						z.activated = get_game_minutes()
+					end
+					break
+				else
 					z.activated = get_game_minutes()
 				end
 			end
@@ -2043,44 +2021,6 @@ function do_blow_news()
 	timer_blow_showed = get_game_minutes()
 end
 
-function on_offline_item_found(who, object)
-	if (who and object) then
-		log1(get_npc_name(who)..game.translate_string("st_news_manager_main_found")..get_object_name(object))
-	end
-end
-
-function on_offline_artifact_found(who, object)
-	if (who and object) then
-		log1(get_npc_name(who)..game.translate_string("st_news_manager_main_found")..get_object_name(object))
-	end	
-end
-
-function on_offline_weapon_found(who, object)
-	if (who and object) then
-		log1(get_npc_name(who)..game.translate_string("st_news_manager_main_found")..get_object_name(object))
-	end
-end
-
-function on_offline_monster_found(who, object)
-	if (who and object) then
-		local s_enemy = ""
-		if (_g.IsMonster(object)) then
-			s_enemy = get_monster_name(object, 2)
-		end
-		log1(get_npc_name(who)..game.translate_string("st_news_manager_main_fighting_with")..s_enemy)
-	end	
-end
-
-function on_offline_enemy_found(who, object)
-	if (who and object) then
-		local s_enemy = ""
-		if (_g.IsStalker(object)) then
-			s_enemy = get_npc_community(object)
-		end
-		log1(get_npc_name(who)..game.translate_string("st_news_manager_main_fighting_with")..s_enemy)
-	end
-end
-
 -- Кого-то грохнули в оффлайн.
 function on_offline_death(victim, killer, weapon)
 	if (victim and killer) then
@@ -2101,6 +2041,7 @@ function on_offline_stalker_death(victim_, killer_, weapon_)
 	local m_killer = ""
 	local m_killer_s = ""
 	local m_victim = ""
+	local m_killer_str = ""
 	local aid = nil
 	local m_name  = get_npc_name(victim_)
 	m_victim = format_death_stalker_corpse(victim_)
@@ -2141,6 +2082,7 @@ function on_offline_stalker_death(victim_, killer_, weapon_)
 		end
 	end
 	if (m_killer_str==nil or m_killer_str=="") then m_killer_str = game.translate_string("st_news_main_death_reason_unknown") end
+	local m_stringsofl = ""
 	local rnds = math.random(1,2)
 	if rnds == 1 then
 		m_stringsofl = m_name..", "..m_level..", "..m_killer_str.."."
@@ -2249,15 +2191,6 @@ function on_offline_wound(victim)
 	end
 end
 
-function on_offline_fight(team_A, team_B)
- -- Была перестрелка с . Всех перебили
--- Нарвался (Нарвались) на . Всех перебили
--- Была перестрелка с . 2 положили.
--- Нарвался (Нарвались) на . 4 положили.
--- Была перестрелка с . 2 наших положили.
--- Нарвался (Нарвались) на . 4 наших положили.
-end
-
 function on_offline_corpse_found(who, object)
 	if (who and object) then
 		if IsStalker(who) and IsNpcStalker(who) then
@@ -2282,11 +2215,38 @@ function on_offline_corpse_found(who, object)
 	end
 end
 
+local trade_ignore_prefixes = {
+	"ammo_"
+}
+
+function get_object_section(obj)
+	if (obj == nil) then return "" end
+	local s = ""
+	if (obj.section) then
+		s = obj:section()
+	elseif (obj.section_name) then
+		s = obj:section_name()
+	end
+	if (s == nil) then s = "" end
+	return s
+end
+
+function is_trade_news_ignored(section)
+	if (section == nil or section == "") then return false end
+	for k, v in pairs(trade_ignore_prefixes) do
+		if (string.find(section, "^"..v) ~= nil) then
+			return true
+		end
+	end
+	return false
+end
+
 function on_offline_trade(npc, item)
 
 	if olr_protected.is_no_offline_alife_obj(npc:name()) then return end
 	if amk_offline_alife.has_been_spawned(npc.id) then return end
 	if npc.level_name == "l13_pripyat" then return end
+	if (is_trade_news_ignored(get_object_section(item))) then return end
 
 	if (npc and item and math.random() < 0.25) then
 		local m_from = get_npc_name(npc)
@@ -2458,10 +2418,6 @@ function isAlive(story_id)
 		end
 	end
 	return result
-end
-
-function on_info(info_id)
-
 end
 
 function isRadarDeactivated()

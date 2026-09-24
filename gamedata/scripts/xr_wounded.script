@@ -105,7 +105,7 @@ function action_wounded:execute ()
 		if not begin_t then
 			begin_t = time_global()
 			xr_logic.pstor_store(self.object, "wounded_begin", begin_t)
-			if self.object:relation(db.actor) ~= game_object.enemy then
+			if self.object:relation(db.actor) ~= game_object.enemy and not olr_protected.is_no_offline_alife_obj(self.object:name()) then
 				olr.npc_healing_sms(self.object:character_name())
 				if level.map_has_object_spot(self.object:id(), "map_sos") == 0 then
 					level.map_add_object_spot_ser(self.object:id(), "map_sos", "st_xr_wounded_sos_signal")

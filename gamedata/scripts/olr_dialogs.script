@@ -3,8 +3,20 @@
 -- Конвенция ID: st_sim_dialog_about_level_<локация>_<ранг>_<номер>.
 -- Варианты пишутся с номера 1 и строго подряд; отсутствие строки = конец списка.
 -- Если для текущей локации и ранга NPC вариантов нет — движок выберет фоллбэк «не знаю».
--- Дополнительно есть шанс rude_chance%, что NPC грубо откажется говорить (пул rude-реплик),
--- и шанс ignore_chance%, что он ответит «ничего не знаю» (тот же фоллбэк-пул) даже при наличии текстов.
+-- Дополнительно есть шанс rude_chance%, что NPC грубо откажется говорить,
+-- и шанс ignore_chance%, что он ответит «ничего не знаю» даже при наличии текстов.
+--
+-- ВАЖНО: при загрузке сейва внутри сессии движок пересоздаёт Lua-стейт (скрипты
+-- переинициализируются), но C++-граф диалога живёт до выгрузки DLL и init_func
+-- повторно не вызывается. Поэтому состояние (списки ID/вариантов) должно уметь
+-- восстанавливаться без объекта диалога — см. rebuild_about_level_state.
+-- Основной путь: вызов olr_dialogs.about_level_ensure_state() из _g.script
+-- start_game_callback (по аналогии с dialog_manager.fill_phrase_table).
+-- Ленивые вызовы ensure_state в экшене/прекондишенах — дешёвая подстраховка.
+-- Строение состояния:
+--   about_level_req            [phrase_id] = {level, rank} — для прекондишена вариантов
+--   about_level_variants       [level][rank] = true — для структурного фоллбэка
+--   about_level_info_list / _rude_list / _unknown_list — списки для сборки графа
 
 local levels = {
 	"l01_escape",
@@ -30,7 +42,7 @@ local levels = {
 local ranks_order = { "novice", "experienced", "veteran", "master" }
 
 local max_rank_variants = 8
-local max_unknown_variants = 4
+local max_unknown_variants = 3
 local max_rude_variants = 4
 local rude_chance = 20
 local ignore_chance = 20
@@ -40,6 +52,9 @@ local about_level_variants = nil
 local about_level_mode = nil
 local about_level_rude_count = 0
 local about_level_unknown_count = 0
+local about_level_info_list = nil
+local about_level_rude_list = nil
+local about_level_unknown_list = nil
 
 local function add_about_level_phrase(dlg, str_id, phrase_id, precondition)
 	local phr = dlg:AddPhrase(str_id, phrase_id, "0", -10000)
@@ -56,18 +71,14 @@ local function about_level_mode_of(npc)
 	return about_level_mode[npc:id()]
 end
 
--- Генератор динамического графа диалога. Вызывается движком один раз на сессию
--- (shared-данные диалога), поэтому текущую локацию здесь использовать НЕЛЬЗЯ —
--- добавляются сразу все уровни, фильтрация идёт в прекондишенах в рантайме.
-function init_about_level_dialog(dlg)
+-- Сбор состояния по строковым таблицам (проба game.translate_string).
+-- Не требует объекта диалога: вызывается и при построении графа, и после реинициализации Lua.
+local function rebuild_about_level_state()
 	about_level_req = {}
 	about_level_variants = {}
-	about_level_mode = {}
-
-	local question = dlg:AddPhrase("st_sim_dialog_about_level_q", "0", "", -10000)
-	if question ~= nil then
-		question:GetPhraseScript():AddAction("olr_dialogs.about_level_open")
-	end
+	about_level_info_list = {}
+	about_level_rude_list = {}
+	about_level_unknown_list = {}
 
 	local built = 0
 	for _, lv in ipairs(levels) do
@@ -78,14 +89,13 @@ function init_about_level_dialog(dlg)
 					break
 				end
 				local phrase_id = string.format("about_%s_%s_%d", lv, rk, n)
-				if add_about_level_phrase(dlg, str_id, phrase_id, "olr_dialogs.about_level_precondition") ~= nil then
-					about_level_req[phrase_id] = { level = lv, rank = rk }
-					if about_level_variants[lv] == nil then
-						about_level_variants[lv] = {}
-					end
-					about_level_variants[lv][rk] = true
-					built = built + 1
+				about_level_req[phrase_id] = { level = lv, rank = rk }
+				if about_level_variants[lv] == nil then
+					about_level_variants[lv] = {}
 				end
+				about_level_variants[lv][rk] = true
+				about_level_info_list[#about_level_info_list + 1] = { phrase_id = phrase_id, str_id = str_id }
+				built = built + 1
 			end
 		end
 	end
@@ -96,9 +106,8 @@ function init_about_level_dialog(dlg)
 		if game.translate_string(str_id) == str_id then
 			break
 		end
-		if add_about_level_phrase(dlg, str_id, "about_unknown_"..n, "olr_dialogs.about_level_fallback") ~= nil then
-			unknown = unknown + 1
-		end
+		about_level_unknown_list[#about_level_unknown_list + 1] = { phrase_id = "about_unknown_"..n, str_id = str_id }
+		unknown = unknown + 1
 	end
 	about_level_unknown_count = unknown
 
@@ -108,11 +117,47 @@ function init_about_level_dialog(dlg)
 		if game.translate_string(str_id) == str_id then
 			break
 		end
-		if add_about_level_phrase(dlg, str_id, "about_rude_"..n, "olr_dialogs.about_level_rude_precondition") ~= nil then
-			rude = rude + 1
-		end
+		about_level_rude_list[#about_level_rude_list + 1] = { phrase_id = "about_rude_"..n, str_id = str_id }
+		rude = rude + 1
 	end
 	about_level_rude_count = rude
+
+	if about_level_mode == nil then
+		about_level_mode = {}
+	end
+
+	return built, unknown, rude
+end
+
+-- Восстановление состояния после переинициализации Lua (вызывается из _g.script
+-- start_game_callback, а также лениво из экшена/прекондишенов как подстраховка).
+function about_level_ensure_state()
+	if about_level_req == nil then
+		rebuild_about_level_state()
+		log1("[olr_dialogs] about_level state rebuilt")
+	end
+end
+
+-- Генератор динамического графа диалога. Вызывается движком один раз на процесс
+-- (shared-данные диалога), поэтому текущую локацию здесь использовать НЕЛЬЗЯ —
+-- добавляются сразу все уровни, фильтрация идёт в прекондишенах в рантайме.
+function init_about_level_dialog(dlg)
+	local built, unknown, rude = rebuild_about_level_state()
+
+	local question = dlg:AddPhrase("st_sim_dialog_about_level_q", "0", "", -10000)
+	if question ~= nil then
+		question:GetPhraseScript():AddAction("olr_dialogs.about_level_open")
+	end
+
+	for _, v in ipairs(about_level_info_list) do
+		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_precondition")
+	end
+	for _, v in ipairs(about_level_unknown_list) do
+		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_fallback")
+	end
+	for _, v in ipairs(about_level_rude_list) do
+		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_rude_precondition")
+	end
 
 	log1(string.format("[olr_dialogs] about_level phrases built: %d, unknown variants: %d, rude variants: %d", built, unknown, rude))
 end
@@ -121,8 +166,9 @@ end
 -- списка ответов, поэтому здесь бросаем «настроение» на один разговор.
 -- Порядок розыгрыша: сначала грубый отказ, затем «ничего не знаю», иначе — информация.
 function about_level_open(first_speaker, second_speaker, dialog_id, phrase_id)
+	about_level_ensure_state()
 	if about_level_mode == nil then
-		return
+		about_level_mode = {}
 	end
 	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
 	if npc == nil then
@@ -152,6 +198,7 @@ end
 
 -- Прекондишен фразы-варианта: сверяем локацию и ранговый тир NPC по ID фразы.
 function about_level_precondition(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	about_level_ensure_state()
 	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
 	if npc == nil then
 		return false
@@ -168,6 +215,7 @@ end
 
 -- Прекондишен грубого ответа: действует, только если на этот разговор выпал отказ.
 function about_level_rude_precondition(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	about_level_ensure_state()
 	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
 	if npc == nil then
 		return false
@@ -178,6 +226,7 @@ end
 -- Фоллбэк «ничего не знаю»: срабатывает по шансу ignore_chance (см. about_level_open)
 -- либо если для локации/ранга NPC реальных вариантов нет.
 function about_level_fallback(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	about_level_ensure_state()
 	if about_level_variants == nil then
 		return false
 	end

@@ -4,9 +4,10 @@ local min_time_fake = utils.cfg_get_float(ini_sys, "news_main_settings", "min_ti
 local max_time_fake = utils.cfg_get_float(ini_sys, "news_main_settings", "max_time_fakenews", 80)
 local fake_enabled = utils.cfg_get_bool(ini_sys, "news_main_settings", "enable_fakenews", nil, false, true)
 
--- Группы фейковых сообщений. Каждая группа - список записей {header, text, timeout}.
+-- Группы фейковых сообщений. Каждая группа - список записей {header, text, sender_icon, timeout}.
 -- timeout (мс) - задержка перед отправкой именно этого сообщения; задаётся вручную для каждого,
 -- поэтому для последовательного вывода нужно самому указывать возрастающие значения (0, 2500, 5000...).
+-- sender_icon - иконка сообщения из news_manager.tips_icons ("news", "mutants", "trader" и т.п.); по умолчанию "news".
 --
 -- Необязательные ключи группы:
 --   pool_add     - инфопорция: группа в пуле, пока порция выдана;
@@ -14,9 +15,9 @@ local fake_enabled = utils.cfg_get_bool(ini_sys, "news_main_settings", "enable_f
 -- Если порции не заданы, группа участвует в пуле всегда.
 
 -- шаблон
--- {header = "Заголовок", text = "Текст сообщения", timeout = 0},
+-- {header = "Заголовок", text = "Текст сообщения", sender_icon = "news", timeout = 0},
 -- шаблон с порциями
--- {pool_add = "start_portion", pool_exclude = "stop_portion", {header = "Заголовок", text = "Текст", timeout = 0}},
+-- {pool_add = "start_portion", pool_exclude = "stop_portion", {header = "Заголовок", text = "Текст", sender_icon = "news", timeout = 0}},
 
 local table_msg = {
 
@@ -128,7 +129,7 @@ function check_show()
 	for i = 1, table.getn(group) do
 		local msg = group[i]
 		if (msg and msg.text) then
-			news_manager.send_tip_new_offline_alife(msg.text, msg.header, "news", "pda_news", tonumber(msg.timeout) or 0, 7500)
+			news_manager.send_tip_new_offline_alife(msg.text, msg.header, msg.sender_icon or "news", "pda_news", tonumber(msg.timeout) or 0, 7500)
 		end
 	end
 end

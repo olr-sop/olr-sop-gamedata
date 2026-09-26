@@ -19,6 +19,7 @@ local iTime = -1
 -- Как часто делать апдейты, игровые минуты
 local iFreq = 60 * 3
 local initialized = false
+local announced_trade = {}
 
 simulation_document = {
 	["gar_train_doki"] = true,
@@ -109,7 +110,7 @@ local rel_enemy, rel_friend
 local look_radius_arts = 40
 local look_radius_anom = 30 --радиус "обзора" аномалий
 local look_radius = 50 --радиус "обзора"
-local search_intensivity = 100 --интенсивность поиска (количество отрабатываемых неписей)
+local search_intensivity = 60 --интенсивность поиска (количество отрабатываемых неписей)
 local max_rounds = 10 -- продолжительность боев
 local health_wound = 0.20 -- При каком уровне здоровья НПС считается раненым
 local health_wound_set = 0.02
@@ -432,30 +433,6 @@ function update_npc_tables()
 	iCounter = 1
 end
 
-function update_tables(level)
-	local sim = alife()
-	off_npcs[level] = {monsters = {}, stalkers = {}, weapons = {}, artefacts = {}, inv_boxes = {}, documents = {}, anoms = {}}
-	local obj
-	for a = 1, 65534 do
-		obj = sim:object(a)
-		if (obj and sim:level_name(game_graph():vertex(obj.m_game_vertex_id):level_id()) == level) then
-			this.add_fresh_meat(obj)
-		elseif (obj and obj.parent_id ~= nil) then
-			local p_obj = sim:object(obj.parent_id)
-			if (p_obj) then
-				local p_map = sim:level_name(game_graph():vertex(p_obj.m_game_vertex_id):level_id())
-				if (p_map == level) then
-					this.add_fresh_meat(obj)
-				end
-			end
-		end
-	end
-end
-
-function trim(s)
-	return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
-end
-
 --генерируем оффлайн события
 function offline_alife(lvl)
 	local tostr = tostring
@@ -515,31 +492,29 @@ function offline_alife(lvl)
 	if st > 0 then
 		--log1(" CRASH offline_alife 4")
 
-		--local cnt_npcs = olr_offline_walk.ofl_walkers_cnt or search_intensivity
-		--log1("ofl alife cnt upd - "..cnt_npcs.."")
-
 		if db.actor then
-			--log1(" CRASH fr offline_alife 1")
+			local stl = off_npcs[lname].stalkers
+			local take = search_intensivity
+			if st < take then
+				take = st
+			end
+			local pool = {}
+			for i = 1, st do
+				pool[i] = i
+			end
+			for i = 1, take do
+				local j = math.random(i, st)
+				local tmp = pool[i]
+				pool[i] = pool[j]
+				pool[j] = tmp
+			end
 
-			local rnd = math.random(st)
+			for npcl = 1, take do
+				local rnd = pool[npcl]
+				local victim = alife():object(stl[rnd].id)
 
-			for npcl = 1, table.getn(off_npcs[lname].stalkers) do
-				--if off_npcs[lname].stalkers[rnd] then
+				if victim and not victim.online and victim.health and victim.can_switch_online and victim:health() > 0 and victim:can_switch_online() and victim:name() == stl[rnd].name then
 
-				--log1(" CRASH fr offline_alife 2")
-
-				--if nid ~= nil then
-				--	local victim = alife():object(nid)
-				--	log1(" custom victim id - "..victim.id.."")
-				--else
-				--local victim = alife():object(off_npcs[lname].stalkers[rnd].id)
-				--log1(" default victim id - "..victim.id.."")
-				--end
-
-				local victim = alife():object(off_npcs[lname].stalkers[npcl].id)
-
-
-				if victim and not victim.online and victim.health and victim.can_switch_online and victim:health() > 0 and victim:can_switch_online() and victim:name() == off_npcs[lname].stalkers[npcl].name then
 					--log1("ofl alife victim upd - "..victim:name().." -- "..lname.."")
 
 					--log1(" CRASH fr offline_alife 3")
@@ -1043,9 +1018,14 @@ function on_enemies_found(victim, vdata)
 		distances[from.id] = {}
 		for b = 1, table.getn(team_B) do
 			local to = team_B[b].player
-			distances[to.id] = {}
+			if not distances[to.id] then
+				distances[to.id] = {}
+			end
 			if (from and to and from.id and to.id) then
 				local dist = mfloor(from.position:distance_to(to.position))
+				if (dist < 1) then
+					dist = 1
+				end
 				local fp_A = mfloor(team_A[a].firepower / (dist / dist_coeff))
 				local fp_B = mfloor(team_B[b].firepower / (dist / dist_coeff))
 				local item = {distance = dist, fpA = fp_A, fpB = fp_B}
@@ -1249,7 +1229,8 @@ function on_enemies_found(victim, vdata)
 			break
 		end
 		-- Почистим таблицы от трупов
-		for kk, vv in pairs(team_A) do
+		for kk = table.getn(team_A), 1, -1 do
+			local vv = team_A[kk]
 			if (vv.health <= 0) then
 				--log1("Участник команды А погиб. "..vv.player:name())
 				set_npc_health(vv.player, 0)
@@ -1262,7 +1243,8 @@ function on_enemies_found(victim, vdata)
 				tremove(team_A, kk)
 			end
 		end
-		for kk, vv in pairs(team_B) do
+		for kk = table.getn(team_B), 1, -1 do
+			local vv = team_B[kk]
 			if (vv.health <= 0) then
 				--log1("Участник команды B погиб. "..vv.player:name())
 				set_npc_health(vv.player, 0)
@@ -1379,9 +1361,14 @@ function on_monsters_found(victim, vdata)
 		distances[from.id] = {}
 		for b = 1, table.getn(team_B) do
 			local to = team_B[b].player
-			distances[to.id] = {}
+			if not distances[to.id] then
+				distances[to.id] = {}
+			end
 			if (from and to and from.id and to.id) then
 				local dist = mfloor(from.position:distance_to(to.position))
+				if (dist < 1) then
+					dist = 1
+				end
 				local fp_A = mfloor(team_A[a].firepower / (dist / dist_coeff))
 				local fp_B = mfloor(team_B[b].firepower)
 				local item = {distance = dist, fpA = fp_A, fpB = fp_B}
@@ -1555,7 +1542,8 @@ function on_monsters_found(victim, vdata)
 			break
 		end
 		-- Почистим таблицы от трупов
-		for kk, vv in pairs(team_A) do
+		for kk = table.getn(team_A), 1, -1 do
+			local vv = team_A[kk]
 			if (vv.health <= 0) then
 				--log1("Участник команды А погиб. "..vv.player:name())
 				set_npc_health(vv.player, 0)
@@ -1568,7 +1556,8 @@ function on_monsters_found(victim, vdata)
 				tremove(team_A, kk)
 			end
 		end
-		for kk, vv in pairs(team_B) do
+		for kk = table.getn(team_B), 1, -1 do
+			local vv = team_B[kk]
 			if (vv.health <= 0) then
 				--log1("Участник команды B погиб. "..vv.player:name())
 				set_npc_health(vv.player, 0)
@@ -1715,7 +1704,7 @@ function on_anoms_found(victim, vdata)
 					--this.on_death(victim.id) -- зачем еще раз если мы и так в olr.kill_offline_stalker это делаем
 					news_main.on_offline_death(victim, object, nil)
 					--xvars.dead_in_offline[victim:name()] = true -- аналогично
-					olr.kill_offline_stalker(victim)
+					set_npc_health(victim, 0)
 					local sect = object:section_name()
 					if is_no_expl_anoms(sect) then
 						--log1("cталкер ТЕЛЕП В АНОМАЛИЮ "..victim:name().." умер в аномалии "..object:name().." на уровне "..object.level_name.."")
@@ -1898,6 +1887,7 @@ function on_inv_boxes_found(victim, vdata)
 	for i = 1, table.getn(vdata.inv_boxes) do
 		v_obj = vdata.inv_boxes[i]
 		if (v_obj) then
+			local took_something = false
 			object = alife():object(v_obj.id)
 			if (object and object:name() == v_obj.name) then
 				--news_manager.send_tip(db.actor, " try to check box 2 has box - "..object:name().."  on -- "..object.level_name.." ", nil, "dolg", 9000)
@@ -1909,14 +1899,13 @@ function on_inv_boxes_found(victim, vdata)
 							if (itA and itA:name() == v_itA.name and itA.parent_id == v_obj.id) then
 								--news_manager.send_tip("on_inv_boxes_found 3 - found "..itA:section_name().." in "..object:name())
 								---news_manager.send_tip(db.actor, " try to check box 3 has item in box - "..itA:name().."	--- "..itA.level_name.." ", nil, "default", 9000)
-								printf("on_inv_boxes_found - found " .. itA:section_name() .. " in " .. object:name())
 								-- Решим, подбираем или нет?
 								local bTake = is_valuable(itA)
 								if bTake then
-									news_manager.send_tip("on_inv_boxes_found 313 - found "..itA:section_name().." in "..object:name())
 									--if v_obj:name() == "lvl5_bar_inventory_box" then
 									--	news_manager.send_tip(db.actor, game.translate_string("on_inv_boxes_found_1"), nil, "default", 19000)
 									--end
+									took_something = true
 									pick_item_box(victim, itA)
 								end
 							else
@@ -1934,7 +1923,7 @@ function on_inv_boxes_found(victim, vdata)
 				end
 			end
 		end
-		if (b_stalker == true) then
+		if (b_stalker == true and took_something == true) then
 			victim:set_rank(victim:rank() + rate_art_found)
 		end
 	end
@@ -2054,13 +2043,16 @@ function get_npc_weapon(npc)
 	local obj = nil
 	local fp = 0
 	if (npc) then
-		for k, v in pairs(items[npc.id]) do
-			local wpn = alife():object(v.id)
-			if wpn and isWeapon(wpn) and wpn:name() == v.name and wpn.parent_id == npc.id then
-				local cur_fp = get_weapon_firepower(wpn)
-				if cur_fp > fp then
-					fp = cur_fp
-					obj = wpn
+		local npc_items = items[npc.id]
+		if (npc_items) then
+			for k, v in pairs(npc_items) do
+				local wpn = alife():object(v.id)
+				if wpn and isWeapon(wpn) and wpn:name() == v.name and wpn.parent_id == npc.id then
+					local cur_fp = get_weapon_firepower(wpn)
+					if cur_fp > fp then
+						fp = cur_fp
+						obj = wpn
+					end
 				end
 			end
 		end
@@ -2151,18 +2143,6 @@ function list_npc_items(obj)
 				if (_g.isWeapon(it)) then
 					find = it.id
 				end
-			end
-		end
-	end
-end
-
-function dbg_show_team(team)
-	if (team) then
-		for k, player in pairs(team) do
-			if (player.weapon) then
-				--log1("Team: "..player.player:name().." health="..player.health.." rank="..player.rank.." community="..player.player:community().." weapon="..player.weapon:name().." firepower="..player.firepower)
-			else
-				--log1("Team: "..player.player:name().." health="..player.health.." rank="..player.rank.." community="..player.player:community().." weapon=none firepower="..player.firepower)
 			end
 		end
 	end
@@ -2465,7 +2445,10 @@ function process_trade(npc)
 				local zz = sell_list[1]
 				if zz and b_stalker == true and (get_item_cost(zz) >= sell_limit) then
 					--log1("Offline: "..npc:name().." собирается продать через новости "..zz:name())
-					news_main.on_offline_trade(npc, zz)
+					if not announced_trade[zz.id] then
+						announced_trade[zz.id] = true
+						news_main.on_offline_trade(npc, zz)
+					end
 					table.remove(sell_list, 1)
 				end
 			end
@@ -2501,72 +2484,72 @@ function now_trade_ofl_bar(obj)
 	local sim = alife()
 	local jan_profesor = sim:object("lvl5_bar_box_barmena") -- ящик бармена
 	if obj then
-		local sim = alife()
-		for id = 1, 65534 do
-			local itm = sim:object(id)
-			if itm then
-				if isArtefact(itm) or isWeapon(itm) then
-					if itm.parent_id == obj.id then
+		local list = items[obj.id]
+		if list then
+			for idx = table.getn(list), 1, -1 do
+				local itm = sim:object(list[idx].id)
+				if itm and itm:name() == list[idx].name and itm.parent_id == obj.id then
+					if isArtefact(itm) or isWeapon(itm) then
 						art_cnt = art_cnt + 1
-						if itm then
-							if jan_profesor then
-								sim:create(itm:section_name(), jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+						if jan_profesor then
+							sim:create(itm:section_name(), jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+						end
+						if this.get_weapon_cost(itm) >= 1500 then
+							if flgwpn == false then
+								local rnd = math.random(1, 12)
+								if rnd == 1 then
+									flgwpn = true
+									news_manager.send_tip(db.actor, game.translate_string("now_trade_ofl_bar_0"), 15, "barman", 39000, nil, nil, true, "st_barkeep_short")
+								end
 							end
-							if this.get_weapon_cost(itm) >= 1500 then
-								if flgwpn == false then
-									local rnd = math.random(1, 12)
-									if rnd == 1 then
-										flgwpn = true
-										news_manager.send_tip(db.actor, game.translate_string("now_trade_ofl_bar_0"), 15, "barman", 39000, nil, nil, true, "st_barkeep_short")
+						end
+						if jan_profesor then
+							olr.del_by_name(itm:name())
+							table.remove(list, idx)
+						end
+					elseif isAmmo(itm) then
+						art_cnt = art_cnt + 1
+						if jan_profesor then
+							local pk = get_netpk(itm, 1)
+							if pk then
+								local data = pk:get()
+								sizepack = data.ammo_left
+							end
+							local rndtob = math.random(1, 2)
+							if rndtob == 1 then
+								sim:create(itm:section_name(), jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
+								se_respawn.create_ammo(itm:section_name(),jan_profesor.position,jan_profesor.m_level_vertex_id,jan_profesor.m_game_vertex_id,jan_profesor.id,sizepack)
+							end
+							--log1("sell ammo bar")
+							if flgwpna == false then
+								local rnd = math.random(1, 12)
+								if rnd == 1 then
+									local bAllowNews = true
+									if not has_alife_info("open_bar_door_start_krisa") then
+										bAllowNews = false
+									end
+									if has_alife_info("greh_leader_key_taken_docs_vetri") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
+										bAllowNews = false
+									end
+									if has_alife_info("bun_antenna_off") then
+										bAllowNews = false
+									end
+									if bAllowNews then
+										flgwpna = true
+										news_manager.send_tip(db.actor, game.translate_string("now_trade_ofl_bar_1"), 15, "barman", 39000, nil, nil, true, "st_barkeep_short")
 									end
 								end
 							end
 							olr.del_by_name(itm:name())
+							table.remove(list, idx)
 						end
 					end
-				end
-				if isAmmo(itm) then
-					if itm.parent_id == obj.id then
-						art_cnt = art_cnt + 1
-						if itm then
-							if jan_profesor then
-								local pk = get_netpk(itm, 1)
-								if pk then
-									local data = pk:get()
-									sizepack = data.ammo_left
-								end
-								local rndtob = math.random(1, 2)
-								if rndtob == 1 then
-									sim:create(itm:section_name(), jan_profesor.position, jan_profesor.m_level_vertex_id, jan_profesor.m_game_vertex_id, jan_profesor.id)
-									se_respawn.create_ammo(itm:section_name(),jan_profesor.position,jan_profesor.m_level_vertex_id,jan_profesor.m_game_vertex_id,jan_profesor.id,sizepack)
-								end
-								--log1("sell ammo bar")
-								if flgwpna == false then
-									local rnd = math.random(1, 12)
-									if rnd == 1 then
-										flgwpna = true
-										if not has_alife_info("open_bar_door_start_krisa") then
-											return -- бармен ещё не появился с начала
-										end
-										if
-											has_alife_info("greh_leader_key_taken_docs_vetri") and
-												not has_alife_info("bar_krisa_vernulsya_after_greh")
-										 then
-											return -- бармен свалил и ещё не вернулся
-										end
-										if has_alife_info("bun_antenna_off") then
-											return -- бармен свалил
-										end
-										news_manager.send_tip(db.actor, game.translate_string("now_trade_ofl_bar_1"), 15, "barman", 39000, nil, nil, true, "st_barkeep_short")
-									end
-								end
-								olr.del_by_name(itm:name())
-							end
-						end
-					end
+				else
+					table.remove(list, idx)
 				end
 			end
 		end
+	end
 
 		local npcname = ""
 
@@ -2647,23 +2630,6 @@ function sobj_is_far(obj, distance)
 					result = false
 				end
 			end
-		end
-	end
-	return result
-end
-
-function have_ammo(npc, weapon)
-	local result = false
-	if npc and weapon and IsStalker(npc) and isWeapon(weapon) then
-		local ammo_str = utils.cfg_get_number(ini_sys, weapon:section_name(), "ammo_class", weapon, false, "")
-		if ammo_str == "" then -- Болт или граната
-			return false
-		end
-		local ammo_list = parse_names(ammo_str)
-		for k, v in items[npc.id] do
-			if string.find(obj:section_name(), "^ammo_") then
-			end
-			--if v:section_name() ==
 		end
 	end
 	return result

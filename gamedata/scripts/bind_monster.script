@@ -405,54 +405,7 @@ function generic_object_binder:update(delta)
 
 		---------------------------------------------------------__hi_flyer__end__-------------------------------------------------------------
 
-		-- Удар контролёра руками (Автор: demover123)
-		if cls == clsid.controller_s then
-			local target = self.object:get_enemy()
-			if target and self.object:see(target) and IsStalker(target) then
-				local dist = self.object:position():distance_to(target:position())
-				if dist <= 1.7 then
-					if not self.get_hit then
-						self.get_hit = time_global() + 200
-						self.start_anim_hit_cont = true
-					elseif self.get_hit <= time_global() then
-						if self.start_anim_hit_cont then
---							if self.object:animation_count() > 0 then
---								self.object:clear_animations()
---							end
-							self.object:play_cycle("stand_attack_1", true)
 
-							local song_start = xr_sound.get_safe_sound_object("monsters\\controller\\take_damage_0")
-							song_start:play_at_pos(self.object, self.object:position(), sound_object.s3d)
-							self.start_anim_hit_cont = false
-						end
-						if not self.hit_to_enemy then
-							self.hit_to_enemy = time_global() + 500
-						elseif self.hit_to_enemy <= time_global() then
-							level.add_cam_effector("camera_effects\\hit_front.anm", 8, false, "")
-
-							local h = hit()
-							h.draftsman = self.object
-							h.direction = vector():set(0, 0, 0)
-							h:bone("bip01_spine")
-							h.power = 0.40
-							h.impulse = 10
-							h.type = hit.wound
-							target:hit(h)
-
-							self.hit_to_enemy = nil
-							self.get_hit = nil
-						end
-					end
-				else
-					self.hit_to_enemy = nil
-					self.get_hit = nil
-				end
-			end
-		--if self.object:animation_count() < 1 then
-			--local i = math.random(0,5)
-			--self.object:add_animation("stand_walk_fwd_"..i, true)
-		--end
-		end
 	end
 
 	if self.st.active_section ~= nil then

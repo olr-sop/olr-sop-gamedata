@@ -635,13 +635,15 @@ function generic_object_binder:death_callback(victim, who)
 	if self.st.active_section then
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", victim, who)
 	end
+
+	smart_terrain.on_death( self.object:id() )
+	
+	news_main.on_death(victim, who) -- Потерялось, мэх	
 	
 	-- Отрубаем коллбэки
 	victim:set_callback(callback.death,nil)
 	victim:set_callback(callback.patrol_path_in_point,nil)
 	victim:set_callback(callback.hit,nil)
-
-	smart_terrain.on_death( self.object:id() )
 
 end
 

@@ -66,15 +66,21 @@ function lamp_binder:update(delta)
 	--]]
 	if time_global() > self.time_apdeyta then
 		self.time_apdeyta = time_global() + self.timerup
-		local m = surge_manager.get_surge_manager()
-		if (m.started) then
-			local diff_sec = math.ceil(game.get_game_time():diffSec(m.inited_time) / level.get_time_factor())
-			if diff_sec >= 140 and level.name() ~= "l15_generators" then
-				local brg_var = math.random(10,250) / 100
-				local ran_var = math.random(1,6)
-	       		self.lamp:set_brightness(brg_var)
-       			self.lamp:set_range(ran_var, 0)
+		if (has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3")) and level.name() ~= "l15_generators" then
+			if not self.surge_saved and self.lamp.get_brightness and self.lamp.get_range then
+				self.surge_saved = {
+					brightness = self.lamp:get_brightness(),
+					range = self.lamp:get_range()
+				}
 			end
+			local brg_var = math.random(10,250) / 100
+			local ran_var = math.random(1,6)
+			self.lamp:set_brightness(brg_var)
+			self.lamp:set_range(ran_var, 0)
+		elseif self.surge_saved then
+			self.lamp:set_brightness(self.surge_saved.brightness)
+			self.lamp:set_range(self.surge_saved.range, 0)
+			self.surge_saved = nil
 		end
 	end
 

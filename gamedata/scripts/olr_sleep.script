@@ -20,6 +20,9 @@ local sleep_in_safety_place = false
 -- передадим в актор апдейт, там будем контролить голодуху и желание наебнуть воды
 local actor_sleep = false
 
+-- сон был обрезан из-за приближающегося выброса (просыпаемся раньше, чтобы успеть в укрытие)
+local sleep_capped = false
+
 -- константа скорости уменьшения сна за 1 игровую секунду
 local SLEEP_DECREASE_PER_SEC = 0.00000771605   -- sleep_v
 
@@ -40,17 +43,36 @@ function sleep_main(hours, minutes, safety_place) -- Основная функция
         minutes = math.floor((needed_seconds % 3600) / 60)
     end	
 	
+	if surge_manager.is_started() then
+		news_manager.send_tip(db.actor, game.translate_string("st_sleep_blowout"), nil, "info")
+		return
+	end
+
+	local capped = false
 	if not safety_place then
+		local until_min = surge_manager.get_time_until_next_surge_minutes()
+		if until_min then
+			local allowed = until_min - 10
+			if allowed <= 0 then
+				news_manager.send_tip(db.actor, game.translate_string("st_sleep_blowout"), nil, "info")
+				return
+			end
+			if (hours * 60 + minutes) > allowed then
+				hours = math.floor(allowed / 60)
+				minutes = math.floor(allowed % 60)
+				capped = true
+			end
+		end
 		if sleep_check_not_safety() then
-			start_sleep(hours, minutes, false)
+			start_sleep(hours, minutes, false, capped)
 		else
 			log1("Пока шо ваще жопа, страшна спать")
 		end
 	else
-		start_sleep(hours, minutes, true)
+		start_sleep(hours, minutes, true, capped)
 	end
 end
-function start_sleep(hours, minutes, safety_place) -- вызывается из основной функции sleep_main
+function start_sleep(hours, minutes, safety_place, capped) -- вызывается из основной функции sleep_main
 	--log1("* [INFO] Call start_sleep, times set to ["..tostring(hours)..":"..tostring(minutes).."]")
 	--log1("* [INFO] Actor start_sleep")
 	xr_effects.disable_ui(db.actor, nil) -- Отключаем интерфейс
@@ -59,7 +81,7 @@ function start_sleep(hours, minutes, safety_place) -- вызывается из основной фун
 	minutes_to_sleep = minutes -- записываем скока спим минуты
 	sleep_in_safety_place = safety_place -- заносим значение безопасного места для сна
 	actor_sleep = true -- говорим что мы спим
-	blow_sleep_timer_low(hours_to_sleep) -- Задаём время до выброса (Думаю лучше тут перед сном сдвинуть время до выброса)
+	sleep_capped = capped
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback") -- старт анимки, запуск скрипта в конце
 	level.add_pp_effector("camera_postprocess\\sleep_fade.ppe", 11, false) -- запуск затемненеия
 	surge_manager.resurrect_skip_message()
@@ -102,10 +124,14 @@ function dream_callback2() -- вызывается из dream_callback
 	minutes_to_sleep = 0 -- обнуляем
 	sleep_in_safety_place = false -- обнуляем
 	actor_sleep = false -- обнуляем
-	surge_manager.get_surge_manager().time_forwarded = true
+	if not sleep_capped then
+		surge_manager.get_surge_manager().time_forwarded = true
+	end
+	sleep_capped = false
 	if surge_manager.is_started() then
 		level.stop_weather_fx()
 	end
+	surge_manager.notify_wake()
 end
 
 function sleep_check_not_safety() -- проврека на выброс (добавить остальные проверки)
@@ -161,6 +187,15 @@ function sleep_main_special(hours, minutes) -- Специальная функция, отключены вс
     if hours == nil then hours = 0 end
     if minutes == nil then minutes = 0 end
 
+	if surge_manager.is_started() then
+		surge_manager.skip_surge_silent()
+	else
+		local until_min = surge_manager.get_time_until_next_surge_minutes()
+		if until_min and until_min <= (hours * 60 + minutes) then
+			surge_manager.skip_surge_silent()
+		end
+	end
+
 	start_sleep_special(hours, minutes, true)
 end
 
@@ -174,7 +209,6 @@ function start_sleep_special(hours, minutes, safety_place) -- вызывается из осно
 	minutes_to_sleep = minutes -- записываем скока спим минуты
 	sleep_in_safety_place = safety_place -- заносим значение безопасного места для сна
 	actor_sleep = true -- говорим что мы спим
-	blow_sleep_timer_low(hours_to_sleep) -- Задаём время до выброса (Думаю лучше тут перед сном сдвинуть время до выброса)
 	level.add_cam_effector("camera_effects\\sleep.anm", 10, false, "olr_sleep.dream_callback_special") -- старт анимки, запуск скрипта в конце
 	level.add_pp_effector("camera_postprocess\\sleep_fade.ppe", 11, false) -- запуск затемненеия
 end
@@ -216,14 +250,7 @@ end
 
 ------------------------------------------------------------------------------------------------------------------------ 
 
-function blow_sleep_timer_low(scale)
-	local tec = olr_blowout.get_blow_timer()
-	if tec < 420 then
-		return
-	end
-	local tmr = 50 + scale * 20
-	olr_blowout.min_blow_timer(tmr)
-end
+-- Функция blow_sleep_timer_low удалена: время до выброса теперь учитывается в sleep_main (кап длительности сна)
 
 
 function yan_dead_call()

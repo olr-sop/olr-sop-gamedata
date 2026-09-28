@@ -13,7 +13,10 @@ local SURGE_PRE_SAVE_SEC = 30
 local SURGE_ATTACK_START = 30
 local SURGE_ATTACK_RAMP = 10
 local SURGE_ATTACK_MIN_FACTOR = 0.001
-local SURGE_EARTHQUAKE_START = 90 -- землетрясение (anm + звук) стартует за 50с до gain (140)
+local SURGE_EARTHQUAKE_START = 90 -- землетрясение (anm + звук) стартует на 90с
+local SURGE_EARTHQUAKE_MAX = 170 -- к этой секунде тряска на максимуме
+local SURGE_HIT_TIMES = {110, 140, 160, 180} -- моменты ударов выброса (surge_gain + звук)
+local SURGE_HIT_SOUNDS = {"surge_hit_sound_1", "surge_hit_sound_2", "surge_hit_sound_3", "surge_hit_sound_4"}
 
 -- Время задаётся игровое
 -- Первый выброс через 2-3 дня
@@ -64,8 +67,11 @@ function CSurgeManager:initialize()
 	self.pre_save_done = false
 	self.attack_pending = false
 	self.attack_len = 0
-	self.attack_t0 = 0
 	self.asleep_surge_pending = false
+	self.moan_played = false
+	self.start_fx_played = false
+	self.hits_fired = 0
+	self.quake_t0 = nil
 	self.moan_played = false
 
 	self.condlist = {}
@@ -297,6 +303,14 @@ function CSurgeManager:update()
 		end
 	end
 
+	if (self.second_message_given) then
+		local quake_progress = (time_global() - (self.quake_t0 or time_global())) / ((SURGE_EARTHQUAKE_MAX - SURGE_EARTHQUAKE_START) * 1000)
+		if (quake_progress > 1) then
+			quake_progress = 1
+		end
+		level.set_cam_effector_factor(earthquake_cam_eff, quake_progress)
+	end
+
 	local diff_sec = math.ceil(game.get_game_time():diffSec(self.inited_time) / level.get_time_factor())
 
 	if (prev_sec ~= diff_sec) then
@@ -331,17 +345,35 @@ function CSurgeManager:update()
 				end
 				if (self.second_message_given) then
 					xr_sound_cop.play_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
-					level.add_cam_effector("camera_effects\\earthquake.anm", earthquake_cam_eff, true, "")
+					level.add_cam_effector_lerp("camera_effects\\earthquake.anm", earthquake_cam_eff, true)
+					self.quake_t0 = time_global() - math.max(0, diff_sec - SURGE_EARTHQUAKE_START) * 1000
 				end
+				local hits_n = 0
+				for i = 1, #SURGE_HIT_TIMES do
+					if (diff_sec >= SURGE_HIT_TIMES[i]) then
+						hits_n = i
+					end
+				end
+				self.hits_fired = hits_n
 				self.loaded = false
+			end
+
+			-- Удары выброса: 4 gain-эффекта со своими звуками (self-переменная, без поршней)
+			while (self.hits_fired < #SURGE_HIT_TIMES) and (diff_sec >= SURGE_HIT_TIMES[self.hits_fired + 1]) do
+				self.hits_fired = self.hits_fired + 1
+				level.add_pp_effector("event\\surge_gain.ppe", surge_gain_pp_eff, false)
+				xr_sound_cop.set_sound_play(db.actor:id(), SURGE_HIT_SOUNDS[self.hits_fired])
+				if (self.hits_fired == 1) then
+					db.actor:give_info_portion("olr_blowout_phase_2")
+				end
 			end
 
 			if (self.blowout_sound) then
 				xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", diff_sec / 180)
 			end
 
-			if (diff_sec >= 140 and not self.ui_disabled and not self:actor_cover()) then
-				local att = 1 - (185 - diff_sec) / (185 - 140)
+			if (diff_sec >= 110 and not self.ui_disabled and not self:actor_cover()) then
+				local att = 1 - (185 - diff_sec) / (185 - 110)
 				att = att * att * att * 0.5
 				local h = hit()
 				h.type = hit.strike
@@ -380,13 +412,10 @@ function CSurgeManager:update()
 				self:kill_all_unhided()
 				self.ui_disabled = true
 				db.actor:give_info_portion("olr_blowout_phase_3")
-			elseif (diff_sec >= 140) and not has_alife_info("olr_blowout_phase_2") then
-				level.add_pp_effector("event\\surge_gain.ppe", surge_gain_pp_eff, false)
-				xr_sound_cop.set_sound_play(db.actor:id(), "surge_gain_sound")
-				db.actor:give_info_portion("olr_blowout_phase_2")
 			elseif (diff_sec >= SURGE_EARTHQUAKE_START) and not (self.second_message_given) then
 				xr_sound_cop.play_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
-				level.add_cam_effector("camera_effects\\earthquake.anm", earthquake_cam_eff, true, "")
+				level.add_cam_effector_lerp("camera_effects\\earthquake.anm", earthquake_cam_eff, true)
+				self.quake_t0 = time_global()
 				self.second_message_given = true
 			elseif (diff_sec >= SURGE_ATTACK_START) and not (self.attack_pending) and not (self.effector_set) then
 				if (diff_sec >= SURGE_ATTACK_START + self:get_attack_len()) then
@@ -403,9 +432,12 @@ function CSurgeManager:update()
 				xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", 0.25)
 				db.actor:give_info_portion("olr_blowout_phase_1")
 				self.blowout_sound = true
-			elseif (diff_sec >= 5) and (diff_sec < 15) and not (self.moan_played) then
-				xr_sound_cop.set_sound_play(db.actor:id(), "surge_start_sound")
+			elseif (diff_sec >= 27) and (diff_sec < 37) and not (self.moan_played) then
+				xr_sound_cop.set_sound_play(db.actor:id(), "surge_moan_sound")
 				self.moan_played = true
+			elseif (diff_sec >= 5) and (diff_sec < 15) and not (self.start_fx_played) then
+				xr_sound_cop.set_sound_play(db.actor:id(), "surge_start_sound")
+				self.start_fx_played = true
 			elseif (diff_sec >= 0) and not (self.task_given) then
 				local text_phrase = {
 					"st_olr_blowout_warning_1",
@@ -481,6 +513,10 @@ function CSurgeManager:skip_surge()
 	self.ui_disabled = false
 	self.blowout_sound = false
 	self.attack_pending = false
+	self.hits_fired = 0
+	self.start_fx_played = false
+	self.moan_played = false
+	self.quake_t0 = nil
 	prev_sec = 0
 
 	-- Тут можно выдавать всякие таймеры и очки в статистику за скип выброса (выброса не было - мы его скипнули сном или анабиотиком)
@@ -532,6 +568,10 @@ function CSurgeManager:end_surge(manual)
 	self.ui_disabled = false
 	self.blowout_sound = false
 	self.attack_pending = false
+	self.hits_fired = 0
+	self.start_fx_played = false
+	self.moan_played = false
+	self.quake_t0 = nil
 	prev_sec = 0
 
 	-- Тут можно выдавать всякие таймеры и очки в статистику за окончание выброса (выброс был - мы его пережили)

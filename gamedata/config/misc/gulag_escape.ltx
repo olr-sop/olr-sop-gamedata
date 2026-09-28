@@ -16,38 +16,75 @@
 [logic@esc_blockpost_patrol1]
 active = patrol@esc_blokpost_day_patrol_commander
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [on_hit@esc_blokppost_hit]
 on_info = {=hit_by_actor} %+esc_actor_atak_militarys%
 
+[death@esc_blokppost_death]
+on_info = {=killed_by_actor} %=esc_military_killed_counter%
+
 [patrol@esc_blokpost_day_patrol_commander]
 path_walk = day_patrol_walk
-path_look = day_patrol_look
 formation = back
 commander = true
+danger = danger_condition@patrol
+on_signal = patrol_bridge | %+esc_chekpoint_patrol_end_point% patrol2@esc_blokpost_day_patrol_commander
 
+[patrol2@esc_blokpost_day_patrol_commander]
+path_walk = day_patrol_walk2
+formation = back
+commander = true
+danger = danger_condition@patrol
+on_signal = patrol_checkpoint | %-esc_chekpoint_patrol_end_point% patrol@esc_blokpost_day_patrol_commander
 
 [logic@esc_blockpost_follower1]
 active = patrol@esc_blokpost_day_patrol_follower1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [patrol@esc_blokpost_day_patrol_follower1]
 path_walk = day_patrol_walk
-path_look = day_patrol_look
 formation = back
 commander = false
+danger = danger_condition@patrol
+on_info = {+esc_chekpoint_patrol_end_point} patrol2@esc_blokpost_day_patrol_follower1
 
+[patrol2@esc_blokpost_day_patrol_follower1]
+path_walk = day_patrol_walk2
+formation = back
+commander = false
+danger = danger_condition@patrol
+on_info = {-esc_chekpoint_patrol_end_point} patrol@esc_blokpost_day_patrol_follower1
 
 [logic@esc_blockpost_follower2]
 active = patrol@esc_blokpost_day_patrol_follower2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [patrol@esc_blokpost_day_patrol_follower2]
 path_walk = day_patrol_walk
-path_look = day_patrol_look
 formation = back
 commander = false
+danger = danger_condition@patrol
+on_info = {+esc_chekpoint_patrol_end_point} patrol2@esc_blokpost_day_patrol_follower2
 
+[patrol2@esc_blokpost_day_patrol_follower2]
+path_walk = day_patrol_walk2
+formation = back
+commander = false
+danger = danger_condition@patrol
+on_info = {-esc_chekpoint_patrol_end_point} patrol@esc_blokpost_day_patrol_follower2
+
+[danger_condition@patrol]
+ignore_distance_corpse = 0
+ignore_distance_sound = 0
+ignore_distance = 5
+danger_inertion_time_grenade = 0
+danger_inertion_time_hit = 4000
+danger_inertion_time_ricochet = 0
+danger_inertion_time_corpse = 0
+danger_inertion_time_sound = 0
 
 [logic@esc_blockpost_commander_day]
 active = camper@esc_blockpost_commander_day
@@ -59,12 +96,13 @@ path_walk = commander_walk
 path_look = commander_look
 
 [death@commander]
-on_info = %+esc_commander_die%
-
+on_info = {!killed_by_actor} %+esc_commander_die% 
+on_info2 = {=killed_by_actor} %+esc_commander_die =esc_military_killed_counter%
 
 [logic@esc_blockpost_post1]
 active = walker@esc_blockpost_post1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_post1]
 path_walk = post_walk1
@@ -74,6 +112,7 @@ path_look = post_look1
 [logic@esc_blockpost_post2]
 active = walker@esc_blockpost_post2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_post2]
 path_walk = post_walk2
@@ -83,6 +122,7 @@ path_look = post_look2
 [logic@esc_blockpost_camper_day]
 active = camper@esc_blockpost_camper_day
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [camper@esc_blockpost_camper_day]
 path_walk = camper_day_walk
@@ -94,6 +134,7 @@ def_state_campering = threat
 [logic@esc_blockpost_patrol_yard]
 active = walker@esc_blockpost_patrol_yard
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_patrol_yard]
 path_walk = patrol_yard_walk
@@ -102,6 +143,7 @@ path_walk = patrol_yard_walk
 [logic@esc_blockpost_watch_tv1]
 active = walker@esc_blockpost_watch_tv1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_watch_tv1]
 path_walk = watch_walk1
@@ -111,6 +153,7 @@ path_look = watch_look1
 [logic@esc_blockpost_watch_tv2]
 active = walker@esc_blockpost_watch_tv2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_watch_tv2]
 path_walk = watch_walk2
@@ -120,6 +163,7 @@ path_look = watch_look2
 [logic@esc_blockpost_kamp1]
 active = kamp@esc_blockpost_kamp1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [kamp@esc_blockpost_kamp1]
 center_point = kamp
@@ -141,6 +185,7 @@ soundgroup = esc_blokpost_soldier
 [logic@esc_blockpost_sleep1]
 active = sleeper@esc_blockpost_sleep1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [sleeper@esc_blockpost_sleep1]
 path_main = sleep1
@@ -150,6 +195,7 @@ wakeable = false
 [logic@esc_blockpost_sleep2]
 active = sleeper@esc_blockpost_sleep2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [sleeper@esc_blockpost_sleep2]
 path_main = sleep2
@@ -159,6 +205,7 @@ wakeable = false
 [logic@esc_blockpost_sleep3]
 active = sleeper@esc_blockpost_sleep3
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [sleeper@esc_blockpost_sleep3]
 path_main = sleep3
@@ -168,6 +215,7 @@ wakeable = false
 [logic@esc_blockpost_sleep4]
 active = sleeper@esc_blockpost_sleep4
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [sleeper@esc_blockpost_sleep4]
 path_main = sleep4
@@ -177,6 +225,7 @@ wakeable = false
 [logic@esc_blockpost_comander_guard1]
 active = walker@esc_blockpost_comander_guard1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_comander_guard1]
 path_walk = guard_walk1
@@ -186,6 +235,7 @@ path_look = guard_look1
 [logic@esc_blockpost_comander_guard2]
 active = walker@esc_blockpost_comander_guard2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_comander_guard2]
 path_walk = guard_walk2
@@ -195,6 +245,7 @@ path_look = guard_look2
 [logic@esc_blockpost_camper1]
 active = camper@esc_blockpost_camper1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [camper@esc_blockpost_camper1]
 path_walk = camper1_walk
@@ -205,6 +256,7 @@ sniper = true
 [logic@esc_blockpost_camper2]
 active = camper@esc_blockpost_camper2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [camper@esc_blockpost_camper2]
 path_walk = camper2_walk
@@ -215,6 +267,7 @@ sniper = true
 [logic@esc_blockpost_alarm_patrol1]
 active = walker@esc_blockpost_alarm_patrol1
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_alarm_patrol1]
 path_walk = alarm1_walk
@@ -223,6 +276,7 @@ path_walk = alarm1_walk
 [logic@esc_blockpost_alarm_patrol2]
 active = walker@esc_blockpost_alarm_patrol2
 on_hit = on_hit@esc_blokppost_hit
+on_death = death@esc_blokppost_death
 
 [walker@esc_blockpost_alarm_patrol2]
 path_walk = alarm2_walk

@@ -1,10 +1,21 @@
 [logic]
 active = heli_move@idle
+on_hit = hit
+
+[hit]
+on_info = {=hit_by_actor} heli_move@fly
 
 [heli_move@idle]
-path_move = heli_blockpost_idle_move_olr
+path_move = heli_idle_move
 engine_sound = false
-on_info = {+esc_actor_atak_militarys} heli_move@fly
+on_info = {+esc_chekpoint_actor_butcher} heli_move@fly
+on_timer = 250000 | heli_move@patrol
+combat_safe_altitude = -50
+
+[heli_move@patrol]
+path_move = heli_patrol_move
+on_info = {+esc_chekpoint_actor_butcher} heli_move@fly
+on_signal = path_end | heli_move@idle
 combat_safe_altitude = -50
 
 [heli_move@fly]
@@ -14,17 +25,13 @@ combat_enemy = actor
 combat_use_rocket = false
 combat_use_mgun = true
 rocket_delay = 3000
-combat_safe_altitude = -90
-on_timer = 120000 | heli_move@retreat
+combat_safe_altitude = -50
+on_timer = 120000 | %-esc_chekpoint_actor_butcher% heli_move@retreat
 
 [heli_move@retreat]
-path_move = heli_blockpost_idle_move_2_olr
+path_move = heli_idle_move
 engine_sound = true
 combat_use_rocket = false
 combat_use_mgun = false
 combat_safe_altitude = -50
-on_timer = 120000 | heli_move@stop
-
-[heli_move@stop]
-path_move = heli_blockpost_idle_move_olr
-engine_sound = false
+on_timer = 120000 | heli_move@idle

@@ -53,7 +53,8 @@ function set_volume_sound_looped(id, key, vol)
 	end
 end
 
-function set_sound_play(id, key)
+function set_sound_play(id, key, vol)
+	if not vol then vol = 1 end
 	local path = get_sound_path(key)
 	if not path then
 		--log1("![xr_sound_cop] set_sound_play(" .. id .. ", " .. key .. ") no path, abort")
@@ -61,7 +62,7 @@ function set_sound_play(id, key)
 	end
 	--log1(" [xr_sound_cop] set_sound_play(" .. id .. ", " .. key .. ") path=" .. path)
 	local snd = xr_sound.get_safe_sound_object(path)
-	snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1)
+	snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), vol)
 end
 
 function stop_sounds_by_id(id)

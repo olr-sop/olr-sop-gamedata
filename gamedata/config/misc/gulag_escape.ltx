@@ -15,8 +15,12 @@
 ;-------------------------------------------------------------------------------------------------
 [logic@esc_blockpost_patrol1]
 active = patrol@esc_blokpost_day_patrol_commander
+combat_ignore = combat_ignore@esc_blockpost_patrol
 on_hit = on_hit@esc_blokppost_hit
 on_death = death@esc_blokppost_death
+
+[combat_ignore@esc_blockpost_patrol]
+combat_ignore_cond = {=fighting_dist_ge(10)}
 
 [on_hit@esc_blokppost_hit]
 on_info = {=hit_by_actor} %+esc_actor_atak_militarys%
@@ -28,18 +32,17 @@ on_info = {=killed_by_actor} %=esc_military_killed_counter%
 path_walk = day_patrol_walk
 formation = back
 commander = true
-danger = danger_condition@patrol
 on_signal = patrol_bridge | %+esc_chekpoint_patrol_end_point% patrol2@esc_blokpost_day_patrol_commander
 
 [patrol2@esc_blokpost_day_patrol_commander]
 path_walk = day_patrol_walk2
 formation = back
 commander = true
-danger = danger_condition@patrol
 on_signal = patrol_checkpoint | %-esc_chekpoint_patrol_end_point% patrol@esc_blokpost_day_patrol_commander
 
 [logic@esc_blockpost_follower1]
 active = patrol@esc_blokpost_day_patrol_follower1
+combat_ignore = combat_ignore@esc_blockpost_patrol
 on_hit = on_hit@esc_blokppost_hit
 on_death = death@esc_blokppost_death
 
@@ -47,18 +50,17 @@ on_death = death@esc_blokppost_death
 path_walk = day_patrol_walk
 formation = back
 commander = false
-danger = danger_condition@patrol
 on_info = {+esc_chekpoint_patrol_end_point} patrol2@esc_blokpost_day_patrol_follower1
 
 [patrol2@esc_blokpost_day_patrol_follower1]
 path_walk = day_patrol_walk2
 formation = back
 commander = false
-danger = danger_condition@patrol
 on_info = {-esc_chekpoint_patrol_end_point} patrol@esc_blokpost_day_patrol_follower1
 
 [logic@esc_blockpost_follower2]
 active = patrol@esc_blokpost_day_patrol_follower2
+combat_ignore = combat_ignore@esc_blockpost_patrol
 on_hit = on_hit@esc_blokppost_hit
 on_death = death@esc_blokppost_death
 
@@ -66,25 +68,13 @@ on_death = death@esc_blokppost_death
 path_walk = day_patrol_walk
 formation = back
 commander = false
-danger = danger_condition@patrol
 on_info = {+esc_chekpoint_patrol_end_point} patrol2@esc_blokpost_day_patrol_follower2
 
 [patrol2@esc_blokpost_day_patrol_follower2]
 path_walk = day_patrol_walk2
 formation = back
 commander = false
-danger = danger_condition@patrol
 on_info = {-esc_chekpoint_patrol_end_point} patrol@esc_blokpost_day_patrol_follower2
-
-[danger_condition@patrol]
-ignore_distance_corpse = 0
-ignore_distance_sound = 0
-ignore_distance = 5
-danger_inertion_time_grenade = 0
-danger_inertion_time_hit = 4000
-danger_inertion_time_ricochet = 0
-danger_inertion_time_corpse = 0
-danger_inertion_time_sound = 0
 
 [logic@esc_blockpost_commander_day]
 active = camper@esc_blockpost_commander_day

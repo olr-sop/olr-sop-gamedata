@@ -15,11 +15,12 @@ local SURGE_ATTACK_RAMP = 10
 local SURGE_ATTACK_MIN_FACTOR = 0.001
 local SURGE_EARTHQUAKE_START = 90 -- землетрясение (anm + звук) стартует на 90с
 local SURGE_EARTHQUAKE_MAX = 170 -- к этой секунде тряска на максимуме
-local SURGE_HIT_TIMES = {130, 145, 160, 180} -- моменты ударов выброса (surge_gain + звук), последний — финальный
+local SURGE_HIT_TIMES = {130, 145, 160, 180} -- моменты запуска ppe ударов, последний — финальный
 local SURGE_HIT_SOUNDS = {"surge_hit_sound_1", "surge_hit_sound_2", "surge_hit_sound_3", "surge_hit_sound_4"}
+local SURGE_HIT_CAM_IDS = {17, 18, 19, 20} -- уникальные id cam-эффекторов ударов (anm наслаиваются, а не перекрываются)
+local SURGE_HIT_IMPACT_DELAY = 3 -- через сколько секунд после ppe наносится удар (урон + звук + anm)
 local SURGE_DAMAGE_WINDOW = 10 -- сколько секунд после удара идёт урон
 local SURGE_PSY_HIT_DAMAGE = 0.3 -- мгновенный съём пси-здоровья за удар
-local SURGE_FINAL_VERDICT_DELAY = 3 -- через сколько секунд после финального удара вердикт (180 + 3 = 183)
 local SURGE_PSY_TICK_BASE = 0.005 -- базовый урон в секунду в окне удара
 local SURGE_PSY_TICK_GROW = 0.00005 -- прирост урона за каждую секунду выброса
 local ANTIVIBROS_HIT_COND = 0.1 -- износ pribor_antivibros за мгновенный удар
@@ -84,6 +85,8 @@ function CSurgeManager:initialize()
 	self.message_given = false
 	self.message_time = nil
 	self.damage_until = nil
+	self.hit_impact_at = nil
+	self.hit_impact_index = nil
 
 	self.condlist = {}
 	self.survive = {}
@@ -368,25 +371,37 @@ function CSurgeManager:update()
 				end
 				self.hits_fired = hits_n
 				if (hits_n > 0) then
-					if (hits_n == #SURGE_HIT_TIMES) then
-						self.damage_until = SURGE_HIT_TIMES[hits_n] + SURGE_FINAL_VERDICT_DELAY
-					else
-						self.damage_until = SURGE_HIT_TIMES[hits_n] + SURGE_DAMAGE_WINDOW
+					local impact_at = SURGE_HIT_TIMES[hits_n] + SURGE_HIT_IMPACT_DELAY
+					if (diff_sec < impact_at) then
+						self.hit_impact_at = impact_at
+						self.hit_impact_index = hits_n
+					elseif (hits_n < #SURGE_HIT_TIMES) then
+						self.damage_until = impact_at + SURGE_DAMAGE_WINDOW
 					end
 				end
 				self.loaded = false
 			end
 
-			-- Удары выброса: 4 gain-эффекта со звуками; последний — финальный (окно до вердикта)
+			-- Удары выброса: запускаем ppe, урон/звук/anm — через SURGE_HIT_IMPACT_DELAY секунд
 			while (self.hits_fired < #SURGE_HIT_TIMES) and (diff_sec >= SURGE_HIT_TIMES[self.hits_fired + 1]) do
 				self.hits_fired = self.hits_fired + 1
-				if (self.hits_fired == #SURGE_HIT_TIMES) then
-					self.damage_until = SURGE_HIT_TIMES[self.hits_fired] + SURGE_FINAL_VERDICT_DELAY
-				else
-					self.damage_until = SURGE_HIT_TIMES[self.hits_fired] + SURGE_DAMAGE_WINDOW
-				end
+				self.hit_impact_at = SURGE_HIT_TIMES[self.hits_fired] + SURGE_HIT_IMPACT_DELAY
+				self.hit_impact_index = self.hits_fired
 				level.add_pp_effector("event\\surge_gain.ppe", surge_gain_pp_eff, false)
-				xr_sound_cop.set_sound_play(db.actor:id(), SURGE_HIT_SOUNDS[self.hits_fired], SURGE_SOUND_VOL.hits[self.hits_fired])
+				if (self.hits_fired == 1) then
+					db.actor:give_info_portion("olr_blowout_phase_2")
+				end
+			end
+
+			-- Момент удара: урон + звук + cam-anm (в укрытии или с защитой — fatigue, иначе drunk)
+			if (self.hit_impact_at) and (diff_sec >= self.hit_impact_at) then
+				local hit_i = self.hit_impact_index
+				local impact_at = self.hit_impact_at
+				self.hit_impact_at = nil
+				self.hit_impact_index = nil
+
+				xr_sound_cop.set_sound_play(db.actor:id(), SURGE_HIT_SOUNDS[hit_i], SURGE_SOUND_VOL.hits[hit_i])
+
 				if (not self:actor_cover()) then
 					self:apply_psy_damage(SURGE_PSY_HIT_DAMAGE, ANTIVIBROS_HIT_COND)
 					local stam_to = math.random(10, 20) / 100
@@ -394,19 +409,26 @@ function CSurgeManager:update()
 						db.actor.power = stam_to
 					end
 				end
-				if (self.hits_fired == 1) then
-					db.actor:give_info_portion("olr_blowout_phase_2")
+
+				if (hit_i < #SURGE_HIT_TIMES) then
+					self.damage_until = impact_at + SURGE_DAMAGE_WINDOW
 				end
+
+				local cam_path = "camera_effects\\drunk.anm"
+				if (self:actor_cover()) or (self:has_protection()) then
+					cam_path = "camera_effects\\fatigue.anm"
+				end
+				level.add_cam_effector(cam_path, SURGE_HIT_CAM_IDS[hit_i], false, "")
 			end
 
 			if (self.blowout_sound) then
 				xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", diff_sec / 180)
 			end
 
-			-- Первое сообщение о выбросе — со случайной задержкой 10-50с, не по секундомеру
+			-- Первое сообщение о выбросе — со случайной задержкой 10-33с, не по секундомеру
 			if (not self.message_given) then
 				if (not self.message_time) then
-					self.message_time = math.random(10, 50)
+					self.message_time = math.random(10, 33)
 				end
 				if (diff_sec >= self.message_time) then
 					local text_phrase = {
@@ -423,8 +445,8 @@ function CSurgeManager:update()
 				self:apply_psy_damage(SURGE_PSY_TICK_BASE + diff_sec * SURGE_PSY_TICK_GROW, ANTIVIBROS_TICK_COND)
 			end
 
-			-- Финальный вердикт: укрытие / защита (прибор или condlist) / смерть
-			if (diff_sec >= SURGE_HIT_TIMES[#SURGE_HIT_TIMES] + SURGE_FINAL_VERDICT_DELAY) and not (self.ui_disabled) then
+			-- Финальный вердикт: укрытие / защита (прибор или condlist) / смерть — в секунду финального удара
+			if (diff_sec >= SURGE_HIT_TIMES[#SURGE_HIT_TIMES] + SURGE_HIT_IMPACT_DELAY) and not (self.ui_disabled) then
 				self:kill_all_unhided()
 				self.ui_disabled = true
 				db.actor:give_info_portion("olr_blowout_phase_3")
@@ -528,6 +550,8 @@ function CSurgeManager:skip_surge()
 	self.start_fx_played = false
 	self.moan_played = false
 	self.quake_t0 = nil
+	self.hit_impact_at = nil
+	self.hit_impact_index = nil
 	self.message_given = false
 	self.message_time = nil
 	self.damage_until = nil
@@ -586,6 +610,8 @@ function CSurgeManager:end_surge(manual)
 	self.start_fx_played = false
 	self.moan_played = false
 	self.quake_t0 = nil
+	self.hit_impact_at = nil
+	self.hit_impact_index = nil
 	self.message_given = false
 	self.message_time = nil
 	self.damage_until = nil
@@ -623,6 +649,18 @@ function CSurgeManager:give_surge_hide_task()
 	SubTask2:set_description("hide_from_surge_name_2")
 	surge_task:add_objective(SubTask2)
 	db.actor:give_task(surge_task, false)
+end
+
+function CSurgeManager:has_protection()
+	local item = nil
+	if (db.actor) then
+		item = db.actor:object("pribor_antivibros")
+	end
+	if (item) and (item:condition() > 0.01) then
+		return true
+	end
+
+	return (xr_logic.pick_section_from_condlist(db.actor, nil, self.survive) == "true")
 end
 
 function CSurgeManager:antivibros_absorb(amount)

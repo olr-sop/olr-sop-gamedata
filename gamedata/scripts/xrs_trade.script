@@ -10,6 +10,7 @@ function init()
 	core.ac("load_scheme", xrs_load_scheme)
 	core.ac("logic_disable_schemes", disable_scheme)
 	core.ac("logic_enable_schemes", set_scheme)
+	core.ac("actor_net_spawn", on_actor_net_spawn)
 
 	--core.ac("actor_net_spawn",restore_data)
 	--core.ac("actor_save",save_data)			
@@ -163,6 +164,46 @@ function on_sms_trade_otvet(npc) -- предлагаем сталкерам по
 
 	if not npc or not rand_obj2 then return end
 	add_trade_pair(npc:id(), rand_obj2:id())
+end
+
+-------------------------------------------------------------------------------------
+-- [olr] событийные точки входа в бартер (с кулдауном, вместо частых тиков)
+-------------------------------------------------------------------------------------
+local last_random_trade_time = 0   -- game-время последней попытки
+local random_trade_gap      = 180  -- минимальный интервал между попытками, игровые секунды
+local random_trade_prob     = 40   -- шанс срабатывания по умолчанию, %
+
+function on_random_trade_request(tag, prob)
+	if no_levels[level.name()] then
+		return
+	end
+	if not has_alife_info("esc_kill_gunslinger") then
+		return
+	end
+	local tsec = game.time_sec()
+	if tsec < last_random_trade_time + random_trade_gap then
+		return
+	end
+	last_random_trade_time = tsec
+	if math.random(100) > (prob or random_trade_prob) then
+		return
+	end
+	if olr.olrdbg == true then
+		log1(" DBG xrs_trade random trade ["..tostring(tag).."]")
+	end
+	on_item_drop()
+end
+
+function on_actor_net_spawn() -- вход на уровень
+	if not olr_timers.has_timer("xrs_trade_lvl_start") then
+		olr_timers.st_timer_real("xrs_trade_lvl_start", 60, "xrs_trade.on_random_trade_request('level_start', 50)")
+	end
+end
+
+function on_after_sleep() -- после сна игрока
+	if not olr_timers.has_timer("xrs_trade_after_sleep") then
+		olr_timers.st_timer_real("xrs_trade_after_sleep", 20, "xrs_trade.on_random_trade_request('after_sleep', 50)")
+	end
 end
 
 -- load scheme

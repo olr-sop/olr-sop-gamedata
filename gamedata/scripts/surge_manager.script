@@ -10,11 +10,11 @@ local surge_loop_pp_eff = 6
 local surge_gain_pp_eff = 7
 local surge_release_pp_eff = 8
 local SURGE_PRE_SAVE_SEC = 30
-local SURGE_ATTACK_START = 30
+local SURGE_ATTACK_START = 90
 local SURGE_ATTACK_RAMP = 10
 local SURGE_ATTACK_MIN_FACTOR = 0.001
 local SURGE_EARTHQUAKE_START = 90 -- землетр€сение (anm + звук) стартует на 90с
-local SURGE_EARTHQUAKE_MAX = 170 -- к этой секунде тр€ска на максимуме
+local SURGE_EARTHQUAKE_MAX = 130 -- к этой секунде тр€ска на максимуме
 local SURGE_HIT_TIMES = {130, 145, 160, 180} -- моменты запуска ppe ударов, последний Ч финальный
 local SURGE_HIT_SOUNDS = {"surge_hit_sound_1", "surge_hit_sound_2", "surge_hit_sound_3", "surge_hit_sound_4"}
 local SURGE_HIT_CAM_IDS = {17, 18, 19, 20} -- уникальные id cam-эффекторов ударов (anm наслаиваютс€, а не перекрываютс€)
@@ -26,7 +26,7 @@ local SURGE_PSY_TICK_GROW = 0.00005 -- прирост урона за каждую секунду выброса
 local ANTIVIBROS_HIT_COND = 0.1 -- износ pribor_antivibros за мгновенный удар
 local ANTIVIBROS_TICK_COND = 0.01 -- износ pribor_antivibros за секунду урона
 -- √ромкости звуков выброса (крутить тут, 1 = как в файле)
-local SURGE_SOUND_VOL = {start = 1, moan = 1, hits = {1, 1, 1, 1}, quake = 1, finish = 1}
+local SURGE_SOUND_VOL = {start = 0.66, moan = 0.6, hits = {1, 1, 1, 1}, finish = 1}
 
 -- ¬рем€ задаЄтс€ игровое
 -- ѕервый выброс через 2-3 дн€
@@ -323,6 +323,7 @@ function CSurgeManager:update()
 			quake_progress = 1
 		end
 		level.set_cam_effector_factor(earthquake_cam_eff, quake_progress)
+		xr_sound_cop.set_volume_sound_looped(db.actor:id(), "surge_earthquake_sound_looped", quake_progress)
 	end
 
 	local diff_sec = math.ceil(game.get_game_time():diffSec(self.inited_time) / level.get_time_factor())
@@ -359,7 +360,6 @@ function CSurgeManager:update()
 				end
 				if (self.second_message_given) then
 					xr_sound_cop.play_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
-					xr_sound_cop.set_volume_sound_looped(db.actor:id(), "surge_earthquake_sound_looped", SURGE_SOUND_VOL.quake)
 					level.add_cam_effector_lerp("camera_effects\\earthquake.anm", earthquake_cam_eff, true)
 					self.quake_t0 = time_global() - math.max(0, diff_sec - SURGE_EARTHQUAKE_START) * 1000
 				end
@@ -425,10 +425,10 @@ function CSurgeManager:update()
 				xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", diff_sec / 180)
 			end
 
-			-- ѕервое сообщение о выбросе Ч со случайной задержкой 10-33с, не по секундомеру
+			-- ѕервое сообщение о выбросе Ч со случайной задержкой 5-45с, не по секундомеру
 			if (not self.message_given) then
 				if (not self.message_time) then
-					self.message_time = math.random(10, 33)
+					self.message_time = math.random(5, 45)
 				end
 				if (diff_sec >= self.message_time) then
 					local text_phrase = {
@@ -480,7 +480,7 @@ function CSurgeManager:update()
 			elseif (diff_sec >= 0) and not (self.task_given) then
 				if not has_alife_info("olr_blowout_first_hideouts") then
 					db.actor:give_info_portion("olr_blowout_first_hideouts")
-					olr_timers.st_timer_game("olr_blowout_first_hideouts", 60, "nick.olr_blowout_first_hideouts()") -- „ерез игровую минуту ∆аба напишет что бы искал укрытие
+					olr_timers.st_timer_game("olr_blowout_first_hideouts", math.random(120, 720), "nick.olr_blowout_first_hideouts()") -- „ерез 120-720 секунд (2 минуты - 12 минут) ∆аба напишет что бы искал укрытие
 				end
 				level.set_weather_fx("surge")
 				-- “аски тоже отключаю дл€ вас, нужны правки в движке на откат стадий тасков типа как в «ѕ (стекольщик сказал нахуй надо, поэтому увы...)

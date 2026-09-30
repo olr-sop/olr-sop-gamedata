@@ -87,7 +87,7 @@ function job_desctiption(first_speaker, second_speaker)
 			local bos = level.object_by_id(level.get_second_talker():id())
 			_s:InitTexture(bos:character_icon())
 			local str = lm_where
-			local who = bos:character_name()
+			local who = get_npc_real_name(bos)
 			db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
 		end
 	end
@@ -110,7 +110,7 @@ function job_desctiption_in_progress(first_speaker, second_speaker)
 			local bos = level.object_by_id(level.get_second_talker():id())
 			_s:InitTexture(bos:character_icon())
 			local str = lm_where
-			local who = bos:character_name()
+			local who = get_npc_real_name(bos)
 			db.actor:add_answer_news(game.translate_string(who), game.translate_string(str), bos:character_icon(), _s:GetOriginalRect())
 		end
 	end
@@ -148,9 +148,9 @@ function take_quest(first_speaker, second_speaker)
 			--end
 			local obj_inf_name = game.translate_string(inv_name)
 	
-			local fulltext = ""..prosba_text.." "..npc:character_name().."\\n"..""..prosba_textfind.." "..obj_inf_name..""
+			local fulltext = ""..prosba_text.." "..get_npc_real_name(npc).."\\n"..""..prosba_textfind.." "..obj_inf_name..""
 			local find_text = ""..prosba_textfind.." "..obj_inf_name..""
-			local header_text = ""..prosba_text.." "..npc:character_name()..""
+			local header_text = ""..prosba_text.." "..get_npc_real_name(npc)..""
 			news_manager.send_tip_new_dlg(find_text, header_text, "item", nil, nil, 10000)
 	
 			olr.add_spot_on_map(sobj.id, "find_item_location", fulltext)

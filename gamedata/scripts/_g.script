@@ -1119,6 +1119,38 @@ function IsStalker (object, class_id)
     return false
 end
 
+-- функция возвращает реальное имя NPC вместо заглушки "Неизвестный сталкер" т.к стандартный character_name сейчас возвращает её если мы не знаем сталкера
+-- работает с клиентскими и серверными объектами
+function get_npc_real_name(object)
+    if (object == nil) then
+        return ""
+    end
+    local variant = type(object)
+    if (variant ~= "userdata" and variant ~= "table") then
+        return ""
+    end
+    local sobj = object
+    if (object.real_character_name == nil) then
+        local id = object.id
+        if (type(id) == "function") then
+            id = object:id()
+        end
+        if (type(id) == "number") then
+            local srv = alife():object(id)
+            if (srv ~= nil) then
+                sobj = srv
+            end
+        end
+    end
+    if (sobj.real_character_name ~= nil) then
+        return sobj:real_character_name() or ""
+    end
+    if (object.character_name ~= nil) then
+        return object:character_name() or ""
+    end
+    return ""
+end
+
 -- проверяет оружие ли это (передавать game_object)
 function isWeapon(object)
     local id = get_clsid(object)

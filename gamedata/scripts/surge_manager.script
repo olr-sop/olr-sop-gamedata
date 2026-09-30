@@ -330,13 +330,13 @@ function CSurgeManager:update()
 
 	if (self.shock_t0) then
 		local shock_t = (time_global() - self.shock_t0) / 1000
-		if (shock_t >= 6) then
+		if (shock_t >= 8) then
 			level.remove_cam_effector(shell_shock_cam_eff)
 			self.shock_t0 = nil
-		elseif (shock_t <= 3) then
-			level.set_cam_effector_factor(shell_shock_cam_eff, shock_t / 3)
+		elseif (shock_t <= 4) then
+			level.set_cam_effector_factor(shell_shock_cam_eff, shock_t / 4)
 		else
-			level.set_cam_effector_factor(shell_shock_cam_eff, 1 - (shock_t - 3) / 3)
+			level.set_cam_effector_factor(shell_shock_cam_eff, 1 - (shock_t - 4) / 4)
 		end
 	end
 
@@ -648,6 +648,14 @@ function CSurgeManager:end_surge(manual)
 	olr_blowout.lomka_pda()
 	olr_blowout.golod_gg()
 	olr_blowout.psy_gg()
+	-- рождение артефактов в аномали€х после выброса ( artefacts_after_surge )
+	local spawned_artefacts = 0
+	if (alife().spawn_artefacts_after_surge) then
+		spawned_artefacts = alife():spawn_artefacts_after_surge()
+	end
+	if (spawned_artefacts and spawned_artefacts > 0) then
+		log1(string.format("[OLR-SURGE] artefacts spawned in anomalies after the surge: %d", spawned_artefacts))
+	end
 end
 
 function CSurgeManager:give_surge_hide_task()

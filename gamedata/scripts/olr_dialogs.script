@@ -5,6 +5,10 @@
 -- ≈сли дл€ текущей локации и ранга NPC вариантов нет Ч движок выберет фоллбэк Ђне знаюї.
 -- ƒополнительно есть шанс rude_chance%, что NPC грубо откажетс€ говорить,
 -- и шанс ignore_chance%, что он ответит Ђничего не знаюї даже при наличии текстов.
+-- NPC отвечает по существу только ќƒ»Ќ раз (любой исход Ч инфо/грубо/Ђне знаюї Ч сжигает
+-- попытку). ‘лаг Ђуже спросилиї хранитс€ в db.storage[npc:id()].about_level.told и
+-- сбрасываетс€ при загрузке сейва/респавне объекта Ч это ожидаемое поведение.
+-- Ќа повторный вопрос отвечает пул about_level_again (st_sim_dialog_about_level_again_N).
 --
 -- ¬ј∆Ќќ: при загрузке сейва внутри сессии движок пересоздаЄт Lua-стейт (скрипты
 -- переинициализируютс€), но C++-граф диалога живЄт до выгрузки DLL и init_func
@@ -16,7 +20,7 @@
 -- —троение состо€ни€:
 --   about_level_req            [phrase_id] = {level, rank} Ч дл€ прекондишена вариантов
 --   about_level_variants       [level][rank] = true Ч дл€ структурного фоллбэка
---   about_level_info_list / _rude_list / _unknown_list Ч списки дл€ сборки графа
+--   about_level_info_list / _rude_list / _unknown_list / _again_list Ч списки дл€ сборки графа
 
 local levels = {
 	"l01_escape",
@@ -44,6 +48,7 @@ local ranks_order = { "novice", "experienced", "veteran", "master" }
 local max_rank_variants = 8
 local max_unknown_variants = 3
 local max_rude_variants = 4
+local max_again_variants = 3
 local rude_chance = 20
 local ignore_chance = 20
 
@@ -52,9 +57,11 @@ local about_level_variants = nil
 local about_level_mode = nil
 local about_level_rude_count = 0
 local about_level_unknown_count = 0
+local about_level_again_count = 0
 local about_level_info_list = nil
 local about_level_rude_list = nil
 local about_level_unknown_list = nil
+local about_level_again_list = nil
 
 local function add_about_level_phrase(dlg, str_id, phrase_id, precondition)
 	local phr = dlg:AddPhrase(str_id, phrase_id, "0", -10000)
@@ -71,6 +78,32 @@ local function about_level_mode_of(npc)
 	return about_level_mode[npc:id()]
 end
 
+-- ‘лаг Ђэтот NPC уже отвечал про локациюї (сессионный, db.storage).
+local function about_level_told(npc)
+	if npc == nil then
+		return false
+	end
+	local st = db.storage[npc:id()]
+	if st == nil or st.about_level == nil then
+		return false
+	end
+	return st.about_level.told == true
+end
+
+local function about_level_mark_told(npc)
+	if npc == nil then
+		return
+	end
+	local st = db.storage[npc:id()]
+	if st == nil then
+		return
+	end
+	if st.about_level == nil then
+		st.about_level = {}
+	end
+	st.about_level.told = true
+end
+
 -- —бор состо€ни€ по строковым таблицам (проба game.translate_string).
 -- Ќе требует объекта диалога: вызываетс€ и при построении графа, и после реинициализации Lua.
 local function rebuild_about_level_state()
@@ -79,6 +112,7 @@ local function rebuild_about_level_state()
 	about_level_info_list = {}
 	about_level_rude_list = {}
 	about_level_unknown_list = {}
+	about_level_again_list = {}
 
 	local built = 0
 	for _, lv in ipairs(levels) do
@@ -122,11 +156,22 @@ local function rebuild_about_level_state()
 	end
 	about_level_rude_count = rude
 
+	local again = 0
+	for n = 1, max_again_variants do
+		local str_id = string.format("st_sim_dialog_about_level_again_%d", n)
+		if game.translate_string(str_id) == str_id then
+			break
+		end
+		about_level_again_list[#about_level_again_list + 1] = { phrase_id = "about_again_"..n, str_id = str_id }
+		again = again + 1
+	end
+	about_level_again_count = again
+
 	if about_level_mode == nil then
 		about_level_mode = {}
 	end
 
-	return built, unknown, rude
+	return built, unknown, rude, again
 end
 
 -- ¬осстановление состо€ни€ после переинициализации Lua (вызываетс€ из _g.script
@@ -142,29 +187,45 @@ end
 -- (shared-данные диалога), поэтому текущую локацию здесь использовать Ќ≈Ћ№«я Ч
 -- добавл€ютс€ сразу все уровни, фильтраци€ идЄт в прекондишенах в рантайме.
 function init_about_level_dialog(dlg)
-	local built, unknown, rude = rebuild_about_level_state()
+	local built, unknown, rude, again = rebuild_about_level_state()
 
 	local question = dlg:AddPhrase("st_sim_dialog_about_level_q", "0", "", -10000)
 	if question ~= nil then
 		question:GetPhraseScript():AddAction("olr_dialogs.about_level_open")
 	end
 
+	-- »нфо/грубо/Ђне знаюї Ч любой сказанный ответ сжигает попытку NPC.
 	for _, v in ipairs(about_level_info_list) do
-		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_precondition")
+		local phr = add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_precondition")
+		if phr ~= nil then
+			phr:GetPhraseScript():AddAction("olr_dialogs.about_level_answered")
+		end
 	end
 	for _, v in ipairs(about_level_unknown_list) do
-		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_fallback")
+		local phr = add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_fallback")
+		if phr ~= nil then
+			phr:GetPhraseScript():AddAction("olr_dialogs.about_level_answered")
+		end
 	end
 	for _, v in ipairs(about_level_rude_list) do
-		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_rude_precondition")
+		local phr = add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_rude_precondition")
+		if phr ~= nil then
+			phr:GetPhraseScript():AddAction("olr_dialogs.about_level_answered")
+		end
 	end
 
-	log1(string.format("[olr_dialogs] about_level phrases built: %d, unknown variants: %d, rude variants: %d", built, unknown, rude))
+	-- ѕул повторного вопроса Ч попытку не трогает.
+	for _, v in ipairs(about_level_again_list) do
+		add_about_level_phrase(dlg, v.str_id, v.phrase_id, "olr_dialogs.about_level_again_precondition")
+	end
+
+	log1(string.format("[olr_dialogs] about_level phrases built: %d, unknown variants: %d, rude variants: %d, again variants: %d", built, unknown, rude, again))
 end
 
 -- Ёкшен фразы 0: движок вызывает его при каждом открытии диалога и ƒќ построени€
 -- списка ответов, поэтому здесь бросаем Ђнастроениеї на один разговор.
--- ѕор€док розыгрыша: сначала грубый отказ, затем Ђничего не знаюї, иначе Ч информаци€.
+-- ≈сли NPC уже отвечал (db.storage) Ч только Ђуже говорилї.
+-- »наче пор€док розыгрыша: сначала грубый отказ, затем Ђничего не знаюї, иначе Ч информаци€.
 function about_level_open(first_speaker, second_speaker, dialog_id, phrase_id)
 	about_level_ensure_state()
 	if about_level_mode == nil then
@@ -175,25 +236,35 @@ function about_level_open(first_speaker, second_speaker, dialog_id, phrase_id)
 		return
 	end
 
-	local roll = math.random(100)
 	local mode = nil
-	local threshold = 0
+	if about_level_told(npc) and about_level_again_count > 0 then
+		mode = "again"
+	else
+		local roll = math.random(100)
+		local threshold = 0
 
-	if about_level_rude_count > 0 then
-		threshold = threshold + rude_chance
-		if roll <= threshold then
-			mode = "rude"
+		if about_level_rude_count > 0 then
+			threshold = threshold + rude_chance
+			if roll <= threshold then
+				mode = "rude"
+			end
 		end
-	end
 
-	if mode == nil and about_level_unknown_count > 0 then
-		threshold = threshold + ignore_chance
-		if roll <= threshold then
-			mode = "ignore"
+		if mode == nil and about_level_unknown_count > 0 then
+			threshold = threshold + ignore_chance
+			if roll <= threshold then
+				mode = "ignore"
+			end
 		end
 	end
 
 	about_level_mode[npc:id()] = mode
+end
+
+-- Ёкшен фразы-ответа: любой исход (инфо/грубо/Ђне знаюї) сжигает единственную попытку NPC.
+function about_level_answered(first_speaker, second_speaker, dialog_id, phrase_id)
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	about_level_mark_told(npc)
 end
 
 -- ѕрекондишен фразы-варианта: свер€ем локацию и ранговый тир NPC по ID фразы.
@@ -223,6 +294,16 @@ function about_level_rude_precondition(first_speaker, second_speaker, dialog_id,
 	return about_level_mode_of(npc) == "rude"
 end
 
+-- ѕрекондишен ответа Ђуже говорилї: только когда попытка уже потрачена.
+function about_level_again_precondition(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
+	about_level_ensure_state()
+	local npc = dialogs.who_is_npc(first_speaker, second_speaker)
+	if npc == nil then
+		return false
+	end
+	return about_level_mode_of(npc) == "again"
+end
+
 -- ‘оллбэк Ђничего не знаюї: срабатывает по шансу ignore_chance (см. about_level_open)
 -- либо если дл€ локации/ранга NPC реальных вариантов нет.
 function about_level_fallback(first_speaker, second_speaker, dialog_id, prev_phrase_id, next_phrase_id)
@@ -235,7 +316,7 @@ function about_level_fallback(first_speaker, second_speaker, dialog_id, prev_phr
 		return false
 	end
 	local mode = about_level_mode_of(npc)
-	if mode == "rude" then
+	if mode == "rude" or mode == "again" then
 		return false
 	end
 	if mode == "ignore" then

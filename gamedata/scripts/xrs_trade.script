@@ -38,7 +38,92 @@ local no_levels = {
 	["l15_generators"] = true
 }
 
+-- [olr] группировки, которые в бартере не участвуют
+local excluded_comms = {
+	["zombied"] = true,
+	["sin"] = true,
+	["military"] = true,
+	["bandit"] = true,
+	["voenstals"] = true,
+	["trader"] = true,
+	["monolith"] = true,
+	["killer"] = true
+}
+
+-- максимум одновременных пар бартера на уровне
+local max_pairs = 2
+
+-- пара считается занятой, только если оба NPC живы и находятся онлайн
+local function npc_busy_in_trade(id)
+	for dummy, v in pairs(traders) do
+		if v.base and v.client and (v.base == id or v.client == id) then
+			local b = level.object_by_id(v.base)
+			local c = level.object_by_id(v.client)
+			if b and c and b:alive() and c:alive() then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- количество реально играющихся пар (мёртвые/оффлайн не считаются)
+local function trade_pairs_count()
+	local n = 0
+	for dummy, v in pairs(traders) do
+		if v.base and v.client then
+			local b = level.object_by_id(v.base)
+			local c = level.object_by_id(v.client)
+			if b and c and b:alive() and c:alive() then
+				n = n + 1
+			end
+		end
+	end
+	return n
+end
+
+-- создать пару: разные NPC, никто не занят, лимит пар
+local function add_trade_pair(base_id, client_id)
+	if not base_id or not client_id or base_id == client_id then
+		return false
+	end
+	if npc_busy_in_trade(base_id) or npc_busy_in_trade(client_id) then
+		return false
+	end
+	local cnt = trade_pairs_count()
+	if cnt >= max_pairs then
+		return false
+	end
+	table.insert(traders, { base = base_id, client = client_id, data = { stage = 0 } })
+	if olr.olrdbg == true then
+		log1(" DBG xrs_trade pair "..base_id.." - "..client_id..", pairs "..(cnt + 1))
+	end
+	return true
+end
+
 local places = {}
+
+-- [olr] единая точка сбора NPC-кандидатов для бартера
+local function collect_trade_places()
+	places = {}
+	for a=1,65534 do
+		local obj = level.object_by_id(a)
+		if obj then
+			if not obj:is_actor() then
+			if obj:is_stalker() and obj:alive() then
+			if not olr_protected.is_no_offline_alife_obj(obj:name()) then
+				if not excluded_comms[obj:character_community()] then
+					--log1(" add places - "..obj:name().." ")
+					table.insert(places, obj)
+				end
+			end
+			end
+			end
+		end
+	end
+	return #places
+end
+
 function on_item_drop() -- торговля меж сталкеров
 
 	if not has_alife_info("esc_kill_gunslinger") then
@@ -49,78 +134,35 @@ function on_item_drop() -- торговля меж сталкеров
 		return
 	end
 
-	places = {}
-	for a=1,65534 do
-		local obj = level.object_by_id(a)
-		if obj then
-			if not obj:is_actor() then
-			if obj:is_stalker() and obj:alive() then
-			if not olr_protected.is_no_offline_alife_obj(obj:name()) then
-				if obj:character_community() ~= "neutral" 
-					or obj:character_community() ~= "zombied"
-					or obj:character_community() ~= "sin" then
-					--log1(" add places - "..obj:name().." ")
-					table.insert(places, obj)	
-				end
-			end
-			end
-			end
-		end
-	end
-
-	if #places < 4 then
+	local cnt = collect_trade_places()
+	if cnt < 4 then
 		return
 	end
 
-	--log1(" places - "..#places.." ")
+	--log1(" places - "..cnt.." ")
 
-	local rand_obj1 = places[math.random(#places)]
-	local rand_obj2 = places[math.random(#places)]
+	local rand_obj1 = places[math.random(cnt)]
+	local rand_obj2 = places[math.random(cnt)]
 
 	local stobj1 = level.object_by_id(rand_obj1:id())
 	local stobj2 = level.object_by_id(rand_obj2:id())
 
+	if not stobj1 or not stobj2 then return end
 	if stobj1:id() == stobj2:id() then return end
-	if stobj1 == nil then return end
-	if stobj2 == nil then return end
-	if stobj1:id() == nil then return end
-	if stobj2:id() == nil then return end
-	table.insert( traders, { base = stobj1:id(), client = stobj2:id(), data = { stage = 0 } } )
+	add_trade_pair(stobj1:id(), stobj2:id())
 end
 
 
-function on_sms_trade_otvet(npc) -- предлагам сталкерам поторговать
-	
-	for a=1,65534 do
-		local obj = level.object_by_id(a)
-		if obj then
-			if not obj:is_actor() then
-			if obj:is_stalker() and obj:alive() then
-			if not olr_protected.is_no_offline_alife_obj(obj:name()) then
-				if obj:character_community() ~= "neutral" 
-					or obj:character_community() ~= "zombied"
-					or obj:character_community() ~= "sin" then
-					--log1(" add places - "..obj:name().." ")
-					table.insert(places, obj)	
-				end
-			end
-			end
-			end
-		end
-	end
-
-	if #places < 4 then
+function on_sms_trade_otvet(npc) -- предлагаем сталкерам поторговать
+	local cnt = collect_trade_places()
+	if cnt < 4 then
 		return
 	end
 
-	local rand_obj2 = places[math.random(#places)]
+	local rand_obj2 = places[math.random(cnt)]
 
-	if npc and rand_obj2 then
-		local sobj = alife():object(rand_obj2:name())
-		--local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()), vector():set(sobj.position.x,sobj.position.y,sobj.position.z))
-		--news_manager.send_tip(db.actor, ""..""..rand_obj2:character_name()..":".."\\n".."Давай поторгуем... ".."".."\n", 3, "default", 30000)
-		table.insert( traders, { base = npc:id(), client = rand_obj2:id(), data = { stage = 0 } } )
-	end
+	if not npc or not rand_obj2 then return end
+	add_trade_pair(npc:id(), rand_obj2:id())
 end
 
 -- load scheme
@@ -139,6 +181,10 @@ end
 -- evaluator
 function evaluator_is_trade:evaluate()
 	local npc = self.object
+	-- исключённые группировки в бартере не участвуют
+	if excluded_comms[npc:character_community()] then
+		return false
+	end
 	
 	if self.st.table_key then
 		if not traders[self.st.table_key] then
@@ -380,7 +426,7 @@ function celling_habar_svoi(npc,target)
 	if cl_barman then
 		npc:iterate_inventory( function(_, item)
 			if item then
-				if item:is_artefact() or item:is_ammo() then
+				if item:is_artefact() or item:is_ammo() or (item:is_weapon() and npc:is_in_ruck(item)) then
 					if olr.olrdbg == true then log1(" DBG xrs_trade celling "..npc:name().." to "..target:name().." - "..item:name().." ") end
 					npc:transfer_item(item, cl_barman)
 					npc:give_money(item:cost())
@@ -394,12 +440,16 @@ function celling_habar_svoi(npc,target)
 end
 
 function action_trade:get_state()
-	return traders[self.st.table_key].data.stage or 0
+	local tr = traders[self.st.table_key]
+	return (tr and tr.data.stage) or 0
 end
 
 function action_trade:change_state()
-	traders[self.st.table_key].data.stage = (traders[self.st.table_key].data.stage or 0) + 1
-	--log1("stage "..traders[self.st.table_key].data.stage)
+	local tr = traders[self.st.table_key]
+	if tr then
+		tr.data.stage = (tr.data.stage or 0) + 1
+		--log1("stage "..tr.data.stage)
+	end
 end
 
 -- finalize

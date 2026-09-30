@@ -3,6 +3,7 @@ local surge_manager = nil
 local earthquake_cam_eff = 2
 local sleep_cam_eff = 3
 local sleep_fade_pp_eff = 4
+local shell_shock_cam_eff = 21 -- cam-эффектор shell_shock (тряска при запуске ppe удара)
 
 -- id пост-эффектов выброса (attack -> loop -> gain -> release)
 local surge_attack_pp_eff = 5
@@ -87,6 +88,7 @@ function CSurgeManager:initialize()
 	self.damage_until = nil
 	self.hit_impact_at = nil
 	self.hit_impact_index = nil
+	self.shock_t0 = nil
 
 	self.condlist = {}
 	self.survive = {}
@@ -326,6 +328,18 @@ function CSurgeManager:update()
 		xr_sound_cop.set_volume_sound_looped(db.actor:id(), "surge_earthquake_sound_looped", quake_progress)
 	end
 
+	if (self.shock_t0) then
+		local shock_t = (time_global() - self.shock_t0) / 1000
+		if (shock_t >= 6) then
+			level.remove_cam_effector(shell_shock_cam_eff)
+			self.shock_t0 = nil
+		elseif (shock_t <= 3) then
+			level.set_cam_effector_factor(shell_shock_cam_eff, shock_t / 3)
+		else
+			level.set_cam_effector_factor(shell_shock_cam_eff, 1 - (shock_t - 3) / 3)
+		end
+	end
+
 	local diff_sec = math.ceil(game.get_game_time():diffSec(self.inited_time) / level.get_time_factor())
 
 	if (prev_sec ~= diff_sec) then
@@ -388,6 +402,9 @@ function CSurgeManager:update()
 				self.hit_impact_at = SURGE_HIT_TIMES[self.hits_fired] + SURGE_HIT_IMPACT_DELAY
 				self.hit_impact_index = self.hits_fired
 				level.add_pp_effector("event\\surge_gain.ppe", surge_gain_pp_eff, false)
+				level.add_cam_effector_lerp("camera_effects\\shell_shock.anm", shell_shock_cam_eff, true)
+				level.set_cam_effector_factor(shell_shock_cam_eff, 0)
+				self.shock_t0 = time_global()
 				if (self.hits_fired == 1) then
 					db.actor:give_info_portion("olr_blowout_phase_2")
 				end
@@ -552,6 +569,7 @@ function CSurgeManager:skip_surge()
 	self.quake_t0 = nil
 	self.hit_impact_at = nil
 	self.hit_impact_index = nil
+	self.shock_t0 = nil
 	self.message_given = false
 	self.message_time = nil
 	self.damage_until = nil
@@ -596,6 +614,7 @@ function CSurgeManager:end_surge(manual)
 	level.remove_pp_effector(surge_gain_pp_eff)
 	level.add_pp_effector("event\\surge_fade_release.ppe", surge_release_pp_eff, false)
 	level.remove_cam_effector(earthquake_cam_eff)
+	level.remove_cam_effector(shell_shock_cam_eff)
 
 	if (manual or self.time_forwarded) then
 		level.stop_weather_fx()
@@ -612,6 +631,7 @@ function CSurgeManager:end_surge(manual)
 	self.quake_t0 = nil
 	self.hit_impact_at = nil
 	self.hit_impact_index = nil
+	self.shock_t0 = nil
 	self.message_given = false
 	self.message_time = nil
 	self.damage_until = nil

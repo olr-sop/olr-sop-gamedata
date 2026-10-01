@@ -5,9 +5,14 @@
 local state_waiting = 0
 local anim_time = 600000 -- 30 минут, пока так, поебать	  -- время ожидания (мс)
 
--- Уникальные ID для evaluator и action
-local ev_trade_agree = stalker_ids.property_script + 1000
-local act_shake_hand = stalker_ids.action_script + 1000
+-- Уникальные ID для evaluator и action.
+-- Держим их в отдельном высоком диапазоне (как olr_ai_trade.script = 21860), чтобы
+-- гарантированно не пересечься с базами из xr_actions_id.script / xr_evaluators_id.script.
+-- Раньше здесь было stalker_ids.property_script + 1000 = 1044, а это ровно
+-- xr_evaluators_id.stohe_tradeseller_base - одноимённый id у чужой схемы.
+local base_id_trade_agree = 22860
+local ev_trade_agree = base_id_trade_agree + 1
+local act_shake_hand = base_id_trade_agree + 1
 
 ----------------------------------------------------------------------------------------------------------------------
 -- Включение схемы
@@ -29,14 +34,48 @@ function enable_scheme(npc, ini, scheme, section)
 end
 
 ----------------------------------------------------------------------------------------------------------------------
+-- ХРАНИЛИЩЕ СХЕМЫ И ГЛОБАЛЬНЫЙ ФЛАГ
+----------------------------------------------------------------------------------------------------------------------
+
+-- storage схемы для NPC (nil, если схема ещё ни разу не включалась).
+-- Флаг живёт в db.storage[npc:id()].trade_agree.enabled - это то самое "глобальное"
+-- состояние, по которому и схема, и диалоги понимают, что NPC уже ждёт нас на торг.
+function scheme_storage(npc)
+	if npc == nil then return nil end
+	local st = db.storage[npc:id()]
+	if st == nil then return nil end
+	return st["trade_agree"]
+end
+
+function is_active(npc)
+	local st = scheme_storage(npc)
+	return st ~= nil and st.enabled == true
+end
+
+----------------------------------------------------------------------------------------------------------------------
 -- Отключение схемы
 ----------------------------------------------------------------------------------------------------------------------
 
 function disable_scheme(npc, scheme)
-	local st = db.storage[npc:id()]["trade_agree"]
+	local st = scheme_storage(npc)
 	if st then
 		st.enabled = false
 	end
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- ПРЕДУСЛОВИЕ ДИАЛОГА
+-- Пока NPC уже идёт торговать с нами, повторное предложение торговли в списке
+-- доступных диалогов показываться не должно.
+----------------------------------------------------------------------------------------------------------------------
+
+function precond_not_active(first_speaker, second_speaker)
+	local npc = second_speaker
+	if db.actor ~= nil and npc ~= nil and db.actor:id() == npc:id() then
+		npc = first_speaker
+	end
+	if npc == nil then return true end
+	return not is_active(npc)
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -68,7 +107,16 @@ end
 function shake_hand:initialize()
 	action_base.initialize(self)
 	local npc = self.object
-	log1(string.format("trade_agree: shake_hand:initialize for npc %s", npc:name()))
+
+	-- Экшен переживает finalize, поэтому storage должен остаться живым.
+	-- Раньше cleanup() обнулял его, и второй запуск схемы на том же NPC падал
+	-- в nil-индекс на self.storage.timer_name. На всякий случай перечитываем.
+	if self.storage == nil then
+		self.storage = scheme_storage(npc)
+	end
+	if self.storage == nil then
+		return
+	end
 
 	npc:set_desired_position()
 	npc:set_desired_direction()
@@ -83,7 +131,10 @@ function shake_hand:initialize()
 
 	local spot_text = game.translate_string("st_olr_ai_agree_trade_lets").." "..get_npc_real_name(npc)..""
 	olr.add_spot_on_map(npc:id(), "alife_combat_fight", spot_text)
-	
+
+	-- enable_talk() тут намеренно НЕ отключается на финише: он снимает тот самый
+	-- случайный шанс, что NPC откажется с нами разговаривать. В cleanup() только
+	-- disable_trade() - торг закрывается, разговор остаётся доступным.
 	npc:enable_talk()
 	npc:enable_trade()
 
@@ -93,20 +144,15 @@ function shake_hand:initialize()
 
 	self.state = state_waiting
 	self.timer = time_global() + anim_time
-	log1(string.format("trade_agree: timer set to %d (current %d)", self.timer, time_global()))
+	log1(string.format("trade_agree: '%s' включена, ждём до %d", npc:name(), self.timer))
 end
 
 function shake_hand:execute()
 	action_base.execute(self)
 	local npc = self.object
 	local cur_time = time_global()
-	--log1(string.format("trade_agree: execute, cur_time=%d, self.timer=%s", cur_time, tostring(self.timer)))
-	--if self.timer then
-	--	  log1(string.format("	timer condition: %d <= %d = %s", self.timer, cur_time, tostring(self.timer <= cur_time)))
-	--end
 
-	if not db.actor:alive() then
-	--	  log1("trade_agree: actor dead, disabling scheme")
+	if db.actor == nil or not db.actor:alive() then
 		disable_scheme(npc, "trade_agree")
 		return
 	end
@@ -120,41 +166,44 @@ function shake_hand:execute()
 	end
 
 	if self.timer and self.timer <= cur_time then
-		log1("trade_agree: timer expired, disabling scheme")
 		disable_scheme(npc, "trade_agree")
 	end
 end
 
--- Вызывается при переключении схемы через switch_to_section
+-- C++ дергает у скриптовых экшенов только initialize/execute/finalize.
+-- deactivate приходит лишь из xr_logic.switch_to_section для активной схемы,
+-- а trade_agree активной схемой не является - оставляем как страховку.
 function shake_hand:deactivate()
-	log1("trade_agree: deactivate called")
-	self:cleanup()
+	self:stop()
 end
 
--- Вызывается при удалении действия из планировщика
+-- Вызывается движком при ЛЮБОЙ смене действия в планировщике: бой, опасность,
+-- аномалия и т.д. Схему выключаем всегда, иначе она молча взводится заново
+-- с новым таймером и новой меткой, как только бой закончится.
 function shake_hand:finalize()
-	log1("trade_agree: finalize called")
-	self:cleanup()
+	self:stop()
 	action_base.finalize(self)
 end
 
--- Общая функция очистки ресурсов
-function shake_hand:cleanup()
-	log1("trade_agree: cleanup")
+-- Единая точка финиша: снимаем флаг, отдаём таймер и метку, закрываем ТОЛЬКО торговлю.
+function shake_hand:stop()
 	local npc = self.object
-	if not npc then return end
+	if npc == nil then return end
+
+	if self.storage ~= nil then
+		if self.storage.timer_name ~= nil then
+			olr_timers.del_timer(self.storage.timer_name)
+			self.storage.timer_name = nil
+		end
+		self.storage.enabled = false
+	end
 
 	level.map_remove_object_spot(npc:id(), "alife_combat_fight")
 
-	if self.storage and self.storage.timer_name then
-		olr_timers.del_timer(self.storage.timer_name)
-		self.storage.timer_name = nil
-	end
-
 	npc:disable_trade()
 	npc:clear_animations()
+	-- npc:disable_talk() намеренно НЕ вызываем - см. комментарий в initialize().
 
-	self.storage = nil
 	self.timer = nil
 	self.state = nil
 end
@@ -164,7 +213,6 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 
 function remove_spot_timer(id)
-	log1(string.format("trade_agree: remove_spot_timer for id %d", id))
 	local sobj = alife():object(id)
 	if sobj then
 		level.map_remove_object_spot(sobj.id, "alife_combat_fight")
@@ -172,34 +220,18 @@ function remove_spot_timer(id)
 end
 
 ----------------------------------------------------------------------------------------------------------------------
--- СОХРАНЕНИЕ / ЗАГРУЗКА (Не активны, не работают, код закоменчен наглуха)
+-- СОХРАНЕНИЕ / ЗАГРУЗКА
+-- Схема намеренно НЕ сохраняется в сейв. Она аддитивная и короткоживущая: после
+-- загрузки NPC просто продолжает свою обычную логику. Старые npc_load/npc_save,
+-- которые опирались на pstor-ключ "active_npc_ids" (его больше никто не пишет),
+-- удалены - они были мёртвым кодом.
 ----------------------------------------------------------------------------------------------------------------------
-
-function npc_load(p, obj)
-	if xr_logic.pstor_retrieve(obj, "active_npc_ids", false) == true then
-		local gulag = xr_gulag.get_npc_gulag(obj)
-		if gulag ~= nil then
-			gulag:load_obj(p, obj:id())
-		end
-		enable_scheme(obj, nil, "trade_agree")
-	end
-end
-
-function npc_save(p, obj)
-	if xr_logic.pstor_retrieve(obj, "active_npc_ids", false) == true then
-		local gulag = xr_gulag.get_npc_gulag(obj)
-		if gulag ~= nil then
-			gulag:save_obj(p, obj:id())
-		end
-	end
-end
 
 ----------------------------------------------------------------------------------------------------------------------
 -- BINDER
 ----------------------------------------------------------------------------------------------------------------------
 
 function add_to_binder(npc, ini, scheme, section, storage)
-	log1(string.format("trade_agree: add_to_binder for npc %s", npc:name()))
 	local manager = npc:motivation_action_manager()
 
 	manager:add_evaluator(ev_trade_agree, trade_evaluator("trade_evaluator", storage))

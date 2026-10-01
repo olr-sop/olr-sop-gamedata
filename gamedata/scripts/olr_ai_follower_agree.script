@@ -1,109 +1,205 @@
 --[[-----------------------------------------------------------------------------------------------
- Description  : Follower for PDA communication (Зовём по ПДА на помощь)
- Copyright    : OLR mod
- Author       : _Boolean_, proger_Dencheek, hi_flyer
- Date         : 11.05.2014
- Last edit    : 24.05.2014
- -- теперь если рядом враги, то можно по ПДА позвать сталкера на помощь
---]]-----------------------------------------------------------------------------------------------
+  Description  : OLR: вызов помощи через ПДА. NPC бежит к игроку, пока он в бою.
+                 Как только NPC добежал (или его выбило из плана - увидел врага,
+                 граната, начался разговор) - схема выключается и NPC продолжает
+                 свою обычную логику: свои дела, смарт-террейн, либо бой, если
+                 враг для игрока закономерно враг и для него.
+  Copyright    : OLR mod
+  Author       : _Boolean_, proger_Dencheek, hi_flyer
+  Date         : 11.05.2014
+  Reworked     : 2026, pstor-ошибки, починены прекондишены экшена, финализация
+
+  ВАЖНО ПРО УСТРОЙСТВО СХЕМЫ
+  Схема полностью аддитивная:
+   * не пишет в pstor (pstor принимает только boolean/string/number, всё остальное
+     в xr_logic.pstor_store уходит в abort());
+   * не трогает db.storage[id].active_scheme / active_section;
+   * не зовёт reset_npc_logic, switch_to_section и xr_gulag.resetJob;
+   * не пытается определять "кончился ли бой"
+  Благодаря этому NPC после выключения схемы просто продолжает свою LTX-логику -
+  восстанавливать ему ничего не нужно.
+
+  ПОЧЕМУ ЗДЕСЬ НЕТ ПРОВЕРКИ "БОЙ КОНЧИЛСЯ"
+  Движок не отдаёт в Lua врага игрока: CScriptGameObject::GetBestEnemy() делает
+  smart_cast<const CCustomMonster*>, а CActor от CCustomMonster НЕ наследуется
+  (Actor.h:75), поэтому db.actor:best_enemy() ВСЕГДА nil. Определять конец боя
+  пришлось бы на Lua, но и не нужно: враг для игрока практически всегда враг и для
+  NPC, поэтому NPC сам уходит в свой combat-планировщик, как только видит цель.
+  Наша задача - только позвать и доставить.
+  -----------------------------------------------------------------------------------------------]]
+
+-- Свои id в отдельном высоком диапазоне (как olr_ai_trade.script = 21860,
+-- olr_ai_trade_agree = 22860), чтобы не пересечься с базами из
+-- xr_actions_id.script / xr_evaluators_id.script.
+-- Раньше здесь стояли sidor_attendant_eva / sidor_attendant_act - те же самые id,
+-- что у xr_attendant.script, а add_operator/add_evaluator делают THROW на дубликат.
+local base_id_follower_agree = 24860
+local ev_follower_agree   = base_id_follower_agree + 1
+local act_follower_agree = base_id_follower_agree + 1
+
+local scheme_name = "follower_agree"
+
+-- Сколько NPC максимум бежит/ждёт на помощи (реальные мс).
+local assist_timeout = 120000   -- 2 минуты
+-- Аварийный срок жизни флага схемы. Нужен на случай, когда экшен так и не попал
+-- в план (например NPC ушёл в разговор) и finalize() не вызвался.
+local hard_timeout   = 600000   -- 10 минут
+
+-- Дистанции (метры).
+local sprint_distance = 17       -- дальше этого - спринт
+local arrive_distance = 5        -- дошли на позицию, схема своё дело сделала
+local radius_stalker  = 30       -- радиус угрозы для прекондишена диалога
+local radius_monster  = 25
+
+-- Кэш скана угроз. Прекондишен диалога дёргается из CUIPdaContactsWnd::UpdateQuestions(),
+-- а тот внутри себя рекурсивен (UIPdaContactsWnd.cpp:556), поэтому без кэша один клик
+-- по контакту может запустить скан несколько раз подряд.
+local scan_period   = 1000       -- мс между сканами
 
 local state_waiting = 0
-local anim_time = 10000
 
 ----------------------------------------------------------------------------------------------------------------------
--- BINDER
+-- ХРАНИЛИЩЕ СХЕМЫ И ГЛОБАЛЬНЫЙ ФЛАГ
 ----------------------------------------------------------------------------------------------------------------------
-local property_base = 79945
-local Property = property_base + 1
-local Property_run = property_base + 2
-local act_base = 79950
-local Operator = act_base + 1
 
-function add_to_binder(npc, ini, scheme, section, storage)
-	local operators = {}
-	local properties = {}
-	xr_logic.pstor_store(npc, "active_npc_ids_follower", true)
-	
-	local manager = npc:motivation_action_manager ()
-	
-	properties["follower_evaluator"] = xr_evaluators_id.sidor_attendant_eva + 0
-	properties["attendant_follow"] = xr_evaluators_id.sidor_attendant_eva + 1
-
-    operators["follower_action"] = xr_actions_id.sidor_attendant_act + 0
-    operators["attendant_follow"] = xr_actions_id.sidor_attendant_act + 1
-    
-    manager:add_evaluator(properties["follower_evaluator"], this.follower_evaluator ("follower_evaluator", storage))
-
-    local action = this.follower_action ("follower_action", storage)
-    action:add_precondition(world_property(stalker_ids.property_alive, true))
-    action:add_precondition(world_property(stalker_ids.property_enemy, false))
-    action:add_precondition(world_property(stalker_ids.property_danger,	false))
-    action:add_precondition(world_property(properties["follower_evaluator"], true))
-    action:add_precondition(world_property(properties["follower_action"], true))
-    action:add_effect(world_property(properties["follower_action"], false))
-    manager:add_action (operators["follower_action"], action)
-    xr_logic.subscribe_action_for_events (npc, storage, action)
-    
-    --xr_logic.subscribe_action_for_events (npc, storage, action)
-    
-    action = manager:action(xr_actions_id.alife)
-    action:add_precondition(world_property (properties["follower_action"], false))
-    
+function scheme_storage(npc)
+	if npc == nil then return nil end
+	local st = db.storage[npc:id()]
+	if st == nil then return nil end
+	return st["follower_agree"]
 end
+
+function is_active(npc)
+	local st = scheme_storage(npc)
+	return st ~= nil and st.enabled == true
+end
+
 ----------------------------------------------------------------------------------------------------------------------
--- ENABLE SCHEME
+-- СКАН УГРОЗЫ ДЛЯ ПРЕКОНДИШЕНА ДИАЛОГА
+-- Порядок проверок - от дешёвого к дорогому:
+--   get_clsid (отсекает предметы/машины/аномалии, ~95% записей db.storage)
+--   -> alive -> дистанция -> see_right_now -> relation
+--
+-- see_right_now(), а НЕ see(): у них разница в 5 секунд инерции.
+--   CVisualMemoryManager::visible_now() (visual_memory_manager.cpp:184) проверяет
+--   только флаг m_visible, а он гасится лишь когда
+--   m_level_time + m_still_visible_time < now, а still_visible_time в
+--   config/creatures/actor.ltx:121 = 5000 мс. То есть see() = "видел в последние
+--   5 секунд" - ровно тот false-positive, который нам не нужен.
+--   visible_right_now() (:169) дополнительно требует m_level_time >= m_last_update_time,
+--   т.е. объект попал в feel_vision_get в последнем цикле обновления зрения.
 ----------------------------------------------------------------------------------------------------------------------
+
+local hostile_stalker_clsid = { [clsid.script_stalker] = true }
+
+local function scan_threats()
+	if db.actor == nil then return false end
+
+	-- Самая дешёвая проверка, без скана вообще.
+	if db.actor.health < 0.25 then return true end
+
+	local actor_pos = db.actor:position()
+
+	for id in pairs(db.storage) do
+		local obj = level.object_by_id(id)
+		-- db.actor сам лежит в db.storage, а IsStalker() в _g.script возвращает
+		-- true ещё и для clsid.actor - без этой проверки relation() дёргался бы на игроке.
+		if obj ~= nil and obj ~= db.actor and obj:alive() then
+			local c = get_clsid(obj)
+
+			if hostile_stalker_clsid[c] then
+				if obj:position():distance_to(actor_pos) < radius_stalker then
+					if obj:see_right_now(db.actor) then
+						if obj:relation(db.actor) == game_object.enemy then
+							return true
+						end
+					end
+				end
+
+			elseif c ~= clsid.rat_s and IsMonster(obj, c) then
+				-- Мутантам see() не требуется: близкий мутант - угроза по определению,
+				-- а из-за спины он может не попасть в собственный FOV и тогда пункт
+				-- "позвать помощь" не показался бы в самый нужный момент.
+				if obj:position():distance_to(actor_pos) < radius_monster then
+					return true
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+local scan_cache = { time = -1000000, value = false }
+
+function enemy_around()
+	if db.actor == nil then return false end
+	local now = time_global()
+	if now - scan_cache.time >= scan_period then
+		scan_cache.time = now
+		scan_cache.value = scan_threats()
+	end
+	return scan_cache.value
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- ВКЛЮЧЕНИЕ СХЕМЫ (вызывается из xr_effects.def_save_me_1_end)
+----------------------------------------------------------------------------------------------------------------------
+
 function enable_scheme(npc, ini, scheme, section)
-	--if not xvars.nap_id then
-	--xvars.nap_id = npc:id()
-	--log1("вербуем "..npc:name().." id - "..xvars.nap_id.."")
-	--end
-	xr_logic.pstor_store(npc, "active_npc_section_follower", db.storage[npc:id()].active_section)
-
-	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme_name, scheme_name)
 	st.enabled = true
+	st.deadline = time_global() + hard_timeout
+	log1(string.format("follower_agree: '%s' вызвана на помощь", npc:name()))
 end
 
 ----------------------------------------------------------------------------------------------------------------------
--- DISABLE SCHEME
+-- ВЫКЛЮЧЕНИЕ СХЕМЫ
+-- Только снимаем флаг. Всё остальное NPC делает сам: evaluator возвращает false,
+-- planner выкидывает действие и вызывает finalize(), а LTX-логика NPC при этом
+-- не прерывалась ни разу.
 ----------------------------------------------------------------------------------------------------------------------
+
 function disable_scheme(npc, scheme)
-	local st = db.storage[npc:id()][scheme]
-	if st then
+	local st = scheme_storage(npc)
+	if st ~= nil then
+		if st.enabled == true then
+			log1(string.format("follower_agree: '%s' вернулся к своим делам", npc:name()))
+		end
 		st.enabled = false
 	end
-	db.storage[npc:id()].pstor["active_npc_ids_follower"] = nil
-	
-	local gulag = xr_gulag.get_npc_gulag(npc)
-
-	if gulag ~= nil then
-		xr_gulag.resetJob(npc)
-   	 else
-		xr_logic.switch_to_section(
-			npc,
-			{ini = npc:spawn_ini()},
-			xr_logic.pstor_retrieve(npc, "active_npc_section_follower", "")
-		)
-		db.storage[npc:id()].pstor["active_npc_section_follower"] = nil
-    end
 end
+
 ----------------------------------------------------------------------------------------------------------------------
--- EVALUATORs
+-- EVALUATOR
 ----------------------------------------------------------------------------------------------------------------------
+
 class "follower_evaluator" (property_evaluator)
 function follower_evaluator:__init(name, storage) super (nil, "follower_evaluator")
-	self.a = storage
+	self.storage = storage
 end
 
 function follower_evaluator:evaluate()
+	if self.storage == nil or self.storage.enabled ~= true then return false end
+
+	-- Аварийный сброс флага, чтобы пункт "позвать помощь" не пропадал навсегда
+	-- у NPC, к которому экшен так и не дошёл.
+	if self.storage.deadline ~= nil and time_global() >= self.storage.deadline then
+		self.storage.enabled = false
+		self.storage.deadline = nil
+		return false
+	end
+
 	return true
 end
+
 ----------------------------------------------------------------------------------------------------------------------
--- ACTIONs
+-- ACTION
 ----------------------------------------------------------------------------------------------------------------------
+
 class "follower_action" (action_base)
-function follower_action:__init(npc_name, action_name, storage) super(nil, "follower_action")
-	self.a = storage
+function follower_action:__init(npc_name, action_name, storage) super (nil, "follower_action")
+	self.storage = storage
 	self.timer = nil
 	self.state = nil
 end
@@ -112,133 +208,135 @@ function follower_action:initialize()
 	action_base.initialize(self)
 	local npc = self.object
 
-	npc:set_desired_position()
-	npc:set_desired_direction()
+	-- Экшен переживает finalize, поэтому storage должен остаться живым
+	-- (обнулять его нельзя - следующий initialize() упадёт в nil-индекс).
+	if self.storage == nil then
+		self.storage = scheme_storage(npc)
+	end
+	if self.storage == nil then
+		return
+	end
 
-	state_mgr.set_state(npc,"wait_na", nil, nil, {look_object = db.actor}, {animation = true})
-	self.state = state_waiting
+	npc:set_desired_position()
+
+	self.timer      = time_global() + assist_timeout
+	self.state      = state_waiting
 end
 
 function follower_action:execute()
 	action_base.execute(self)
 	local npc = self.object
 
-	--news_manager.send_tip(db.actor, game.translate_string("follower_actionexecute_0"))
-	
+	if self.storage == nil then
+		self.storage = scheme_storage(npc)
+	end
+	if self.storage == nil then
+		return
+	end
+
 	if db.actor == nil or not db.actor:alive() then
-		self:free()
-		return nil
+		disable_scheme(npc, scheme_name)
+		return
 	end
-	
-	local gv = npc:game_vertex_id()
-	if level.name() ~= alife():level_name(game_graph():vertex(gv):level_id()) then
-		self:free()
-		return nil
+
+	if self.timer ~= nil and time_global() >= self.timer then
+		disable_scheme(npc, scheme_name)
+		return
 	end
-	
-	local vdist = npc:position():distance_to(db.actor:position())
-	
-	if vdist <= 5 then   
-		self:free()
-		return nil
+
+	local dist = npc:position():distance_to(db.actor:position())
+
+	if dist <= arrive_distance then
+		disable_scheme(npc, scheme_name)
+		return
+	end
+
+	-- Разворачивать NPC лицом к игроку НЕ нужно: set_desired_direction перебивает
+	-- ориентацию движения, и в канонической xr_attendant.script:200-210 для этого
+	-- используется leader:direction() - направление ДВИЖЕНИЯ, а не взгляд на него.
+	-- "Смотреть на игрока" приходит штатно через state_mgr с {look_object = ...}.
+	npc:set_dest_level_vertex_id(db.actor:level_vertex_id())
+	npc:set_desired_position(db.actor:position())
+	npc:set_detail_path_type(move.line)
+	npc:set_path_type(game_object.level_path)
+
+	if dist > sprint_distance then
+		state_mgr.set_state(npc, "sprint")
 	else
-		npc:set_dest_level_vertex_id(db.actor:level_vertex_id())
-		npc:set_desired_position(db.actor:position())
-		local dir = vector()
-		local pos = db.actor:position()
-		local cen = db.actor:center()
-		dir = cen:sub(pos)
-		dir:normalize()
-		npc:set_desired_direction(dir)
-		npc:set_detail_path_type(move.line)
-		npc:set_path_type(game_object.level_path)
-		if vdist > 17 then
-			state_mgr.set_state(npc, "sprint")
-		elseif vdist < 10 then
-			state_mgr.set_state(npc, "patrol")
-		elseif vdist >= 10 then
-			state_mgr.set_state(npc, "run")
-		end
+		state_mgr.set_state(npc, "run")
 	end
-       
 end
 
---function follower_action:death_callback(npc)
---	news_manager.send_tip(db.actor, game.translate_string("follower_actiondeath_callback_0"))
---end
-
-function follower_action:free()
-	disable_scheme(self.object, "follower_agree")
+-- C++ дергает у скриптовых экшенов только initialize/execute/finalize.
+-- deactivate приходит лишь из xr_logic.switch_to_section для активной схемы,
+-- а follower_agree активной схемой не является - оставляем как страховку.
+function follower_action:deactivate()
+	self:leave_planner()
 end
 
+-- Вызывается движком при ЛЮБОЙ смене действия в планировщике. Именно сюда NPC
+-- попадает, когда увидел врага и ушёл в свой combat-планировщик, - схема тут
+-- и своё дело заканчивает.
 function follower_action:finalize()
+	self:leave_planner()
 	action_base.finalize(self)
 end
 
-function npc_load(p, obj)
-	if xr_logic.pstor_retrieve(obj, "active_npc_ids_follower", false) == true then
-		local gulag = xr_gulag.get_npc_gulag(obj)
-		if gulag ~= nil then
-			gulag:load_obj(p, obj:id())
-		end
-		olr_ai_trade_agree.enable_scheme(
-			obj, nil, "follower_agree"
-		)
-	end
+function follower_action:leave_planner()
+	disable_scheme(self.object, scheme_name)
+	self:stop()
 end
 
-function npc_save(p, obj)
-	if xr_logic.pstor_retrieve(obj, "active_npc_ids_follower", false) == true then
-		local gulag = xr_gulag.get_npc_gulag(obj)
-		if gulag ~= nil then
-			gulag:save_obj(p, obj:id())
-		end
-	end
+-- Освобождение ресурсов. Флаг схемы тут НЕ трогаем - этим занимается
+-- disable_scheme().
+function follower_action:stop()
+	local npc = self.object
+	if npc == nil then return end
+
+	npc:set_desired_position()
+	npc:clear_animations()
+	state_mgr.set_state(npc, "idle")
+
+	self.timer = nil
+	self.state = nil
 end
 
+----------------------------------------------------------------------------------------------------------------------
+-- ПРЕДУСЛОВИЕ ДИАЛОГА
+-- Пока NPC уже бежит на помощь, повторно звать его нельзя.
+----------------------------------------------------------------------------------------------------------------------
 
-
-function enemy_around()
-    	for k,v in pairs(db.storage) do
-        local stalker = level.object_by_id(k)
-            	if stalker and (get_clsid(stalker)==clsid.script_stalker) and stalker:alive() and stalker:relation(db.actor)==game_object.enemy then
-				if stalker:position():distance_to(db.actor:position()) < 25 then
-			    		return true
-				end
-		end
+function precond_not_active(first_speaker, second_speaker)
+	local npc = second_speaker
+	if db.actor ~= nil and npc ~= nil and db.actor:id() == npc:id() then
+		npc = first_speaker
 	end
-    	for k,v in pairs(db.storage) do
-        local stalker = level.object_by_id(k)
-            	if stalker and (get_clsid(stalker)==clsid.bloodsucker_s or get_clsid(stalker)==clsid.burer_s or get_clsid(stalker)==clsid.chimera_s or get_clsid(stalker)==clsid.controller_s) and stalker:alive() then
-				if stalker:position():distance_to(db.actor:position()) < 20 then
-			    		return true
-				end
-		end
-	end
-	if db.actor.health < 0.25 then
-		return true
-	end
-	return false
+	if npc == nil then return true end
+	return not is_active(npc)
 end
 
--------------------------------------------------- телепорт напарника --------------------------------------------------
---[[
-function naparnik_teleport()
-if xvars.nap_id ~= -1 then
-local sim = alife()
-	for id=1, 65534 do
-	local nap = sim:object(id)
-	if nap then
-	if nap.id == xvars.nap_id then
-	alife():teleport_object(nap.id, db.actor:game_vertex_id(), db.actor:level_vertex_id(), db.actor:position():add(db.actor:direction():mul(4)))
-	--olr_ai_follower_agree.enable_scheme(npc, nil, "follower_agree")
-	--local npc = level.object_by_id(nap)
-	--local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
-	--st.enabled = true
-	log1("naparnik teleport")
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+-- Вызывается ОДИН раз за жизнь NPC: xr_logic.assign_storage_and_bind дергает
+-- add_to_binder только если db.storage[id][scheme] ещё не существует.
+----------------------------------------------------------------------------------------------------------------------
+
+function add_to_binder(npc, ini, scheme, section, storage)
+	local manager = npc:motivation_action_manager()
+
+	manager:add_evaluator(ev_follower_agree, follower_evaluator("follower_evaluator", storage))
+
+	local action = follower_action("follower_action", storage)
+	action:add_precondition(world_property(stalker_ids.property_alive, true))
+	action:add_precondition(world_property(stalker_ids.property_enemy, false))
+	action:add_precondition(world_property(stalker_ids.property_danger, false))
+	action:add_precondition(world_property(ev_follower_agree, true))
+	action:add_effect(world_property(ev_follower_agree, false))
+	manager:add_action(act_follower_agree, action)
+
+	xr_logic.subscribe_action_for_events(npc, storage, action)
+
+	-- Пока NPC бежит на помощь, его нельзя увести в обычную ALife-работу.
+	local alife_action = manager:action(xr_actions_id.alife)
+	alife_action:add_precondition(world_property(ev_follower_agree, false))
 end
-end
-end
-end
-end
-]]

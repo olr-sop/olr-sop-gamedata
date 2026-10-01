@@ -27,14 +27,26 @@ olr_blowout_phase_0 (он гасит 1/2/3).
     Никакого рандома и перенаводки: иначе direction_turn снова
     крутит корпус. Подробнее — у hold_hide и entrance_point.
 
-  * zone:level_vertex_id() у space_restrictor условно возвращает u32(-1),
-    а npc:accessible() на невалидной вершине делает THROW. Поэтому точку
-    стояния ищем через npc:accessible_nearest от центра зоны.
+  * Вершины внутри зоны собираются ОДИН раз (zone_verts) и кэшируются:
+    чешем сеткой описанную сферу (center=zone:center(), radius=zone.radius)
+    и берём всё, что zone:inside(vertex_position(v)). Так работают и
+    СОСТАВНЫЕ зоны (несколько сшитых боксов), где center() вообще вне
+    фигуры, и зоны, чей position() (угол трансформа) вне AI-сетки.
+    NPC берёт ЛЮБОЕ свободное место из списка, а не «то самое».
 
-  * zone:inside(pos) БЕЗ допуска — это EPS_L = 0.001 (1 мм), см. vector.h:48.
-    Таким тестом «стою ли я в укрытии» практически невозможно попасть.
-    Поэтому везде zone:inside(pos, inside_tol) с одним и тем же допуском:
-    тогда «место принято» и «я спрятался» согласованы.
+  * npc:accessible_nearest НЕ используем: он обходит ГРАНИЦУ рестрикторов
+    NPC (space_restriction_bridge_inline.h:24-70) и у свободно ходящего
+    сталкера возвращает мусорный id. level.vertex_id используем только
+    как пробу по сетке, результат всегда проверяем через zone:inside.
+
+  * seat_tol = cover_tol = 0.0 — только СТРОГО внутри зоны, без допусков.
+    zone:inside(pos) без аргумента даёт EPS_L = 1 мм (vector.h:48), поэтому
+    передаём явный 0.0.
+
+  * Прибытие ловим ещё и по ПРОГРЕССУ к цели: npc:accessible() проверяет
+    только рестрикторы, а не наличие пути, поэтому физически недостижимая
+    вершина может выглядеть «доступной». Нет приближения за progress_timeout
+    -> перевыбор, зона уходит в skip.
 ------------------------------------------------------------------]]
 
 local debug = true
@@ -54,7 +66,8 @@ local BADV = 4294967295                        -- u32(-1)
 -- Настройки. Правятся здесь, в файле.
 local enabled       = true    -- общий выключатель схемы
 local search_radius = 150.0   -- м, максимальный радиус поиска зоны укрытия
-local inside_tol    = 2.0     -- м, допуск zone:inside. ОДИН и тот же и для посадки, и для проверки
+local seat_tol      = 0.0     -- м, допуск zone:inside: 0 = СТРОГО внутри зоны
+local cover_tol     = 0.0     -- м, допуск zone:inside при проверке "я укрыт"
 local recheck       = 3.0     -- сек между проверками достижимости маршрута
 local stall_timeout = 12.0    -- сек без движения -> перевыбор места
 local stall_eps     = 0.36    -- м^2, порог "стою на месте" (0.6 * 0.6)
@@ -65,6 +78,12 @@ local kill_power    = 5.0     -- мощность взрыва при kill_unhided
 local default_max_npc = 0      -- 0 = без лимита; переопределяется ключом max_npc
 local cover_attempts  = 3      -- сколько зон перебрать, если не нашлось точки стояния
 local allow_overfill  = true   -- true: всё занято -> идти в ближайшее разрешённое всё равно
+local progress_timeout   = 8.0   -- сек без приближения к цели -> перевыбор
+local progress_eps       = 1.5   -- м, насколько надо приблизиться для "прогресса"
+local arrive_tol         = 1.5   -- м, насколько надо подойти к своему месту, чтобы сесть
+local arrive_timeout     = 6.0   -- сек попыток дойти до места, потом садимся где стоим
+local zone_scan_min_step = 2.0   -- м, минимальный шаг сетки при сборе вершин внутри зоны
+local dump_covers_on_prep  = true  -- печатать дамп всех укрытий при первой подготовке списка
 
 -- Необязательные per-zone ключи в misc\surge_manager.ltx, читаются если есть:
 --   [<имя зоны>] npc_list    = false    -- зона только для игрока, NPC её игнорируют
@@ -108,6 +127,7 @@ end
 -- ==================================================================
 
 local st_claims       = {}   -- [level_vertex_id] = npc:id(), чтобы не слипались
+local zone_verts_cache = {}  -- [имя зоны] = { vid, ... } — AI-вершины СТРОГО внутри
 local entrance_cache  = {}   -- [имя зоны] = vid или 0
 local zone_skip_cache = {}   -- [имя зоны] = true, если npc_list = false
 local zone_comm_cache = {}   -- [имя зоны] = { allowed = set|nil, disallowed = set|nil }
@@ -142,6 +162,12 @@ local function zone_npc_ok(c)
 	local skip = (v == false)
 	zone_skip_cache[name] = skip
 	return not skip
+end
+
+-- Вершина пригодна к использованию. Отсекаем u32(-1) и мусор от нативных
+-- вызовов ДО level.vertex_position: иначе он читает память за графом.
+local function valid_vid(v)
+	return type(v) == "number" and v >= 0 and v < 2147483647
 end
 
 local function zone_entrance(c)
@@ -277,10 +303,11 @@ local function prep_covers(m)
 	zone_prep_ref = m.covers
 
 	-- список зон мог измениться -> кэши пересобираем целиком
-	zone_skip_cache = {}
-	entrance_cache  = {}
-	zone_comm_cache = {}
-	zone_cap_cache  = {}
+	zone_skip_cache   = {}
+	entrance_cache    = {}
+	zone_comm_cache   = {}
+	zone_cap_cache    = {}
+	zone_verts_cache  = {}
 
 	local n_comm, n_cap = 0, 0
 	for i = 1, (m.count or 0) do
@@ -297,6 +324,7 @@ local function prep_covers(m)
 
 	dbg("зоны подготовлены: %d, с фильтром группировок %d, с лимитом %d",
 	    m.count or 0, n_comm, n_cap)
+	if debug and dump_covers_on_prep then dump_covers() end
 end
 
 -- Общая проверка зоны для NPC: npc_list, condlist, community.
@@ -325,7 +353,7 @@ local function covered_by(npc, st)
 
 	local p = npc:position()
 	local t = st and st.target
-	if t ~= nil and t.zone ~= nil and t.zone:inside(p, inside_tol) and zone_ok(m, t, npc) then
+	if t ~= nil and t.zone ~= nil and t.zone:inside(p, cover_tol) and zone_ok(m, t, npc) then
 		st.scan_t = time_global()
 		return t
 	end
@@ -336,7 +364,7 @@ local function covered_by(npc, st)
 
 	for i = 1, m.count do
 		local c = m.covers[i]
-		if c ~= nil and c.zone ~= nil and c.zone:inside(p, inside_tol) and zone_ok(m, c, npc) then
+		if c ~= nil and c.zone ~= nil and c.zone:inside(p, cover_tol) and zone_ok(m, c, npc) then
 			if st then st.target = c end
 			return c
 		end
@@ -369,7 +397,7 @@ local function nearest_cover(npc, with_room, skip)
 		if c ~= nil and c.zone ~= nil then
 			local name = c.zone:name()
 			if (skip == nil or skip[name] ~= true) and zone_ok(m, c, npc) then
-				local d = p:distance_to_sqr(c.zone:position())
+				local d = p:distance_to_sqr(c.zone:center())
 				if d <= r2 and (best_d == nil or d < best_d)
 				   and (not with_room or zone_has_room(c, id)) then
 					best, best_d = c, d
@@ -379,61 +407,89 @@ local function nearest_cover(npc, with_room, skip)
 	end
 	return best
 end
-
 -- ==================================================================
--- Точка стояния внутри зоны
+-- Вершины внутри зоны: собираем ОДИН раз и кэшируем по имени зоны
 -- ==================================================================
 
-local function seat_in_zone(npc, c, claim_id)
+-- level.vertex_id(pos) ищет вершину по ЯЧЕЙКЕ XZ (level_graph.cpp:209-223)
+-- и отдаёт u32(-1), если в ячейке нет AI-вершины. Поэтому одной удачной
+-- вершины в центре не хватает: у части зон центр вне сетки (по логу 15501
+-- отказ), а зона бывает СОСТАВНОЙ (несколько сшитых боксов), где center()
+-- вообще лежит вне фигуры. Поэтому чешем сеткой ВСЮ описанную сферу зоны
+-- и запоминаем все AI-вершины СТРОГО ВНУТРИ. Дальше NPC просто берут
+-- любое свободное место — без спиралей и поиска «той самой» вершины.
+local function zone_verts(c)
 	local zone = c.zone
+	local name = zone:name()
+	local cached = zone_verts_cache[name]
+	if cached ~= nil then return cached end
 
-	-- 1) Ближайшая достижимая вершина к центру зоны. Одна выборка вместо
-	--    перебора направлений, и заведомо достижимая (accessible_nearest).
-	local tmp = vector()
-	local vid = npc:accessible_nearest(zone:position(), tmp)
-	if vid == BADV or not npc:accessible(vid) then vid = BADV end
+	local list, seen = {}, {}
+	local center = zone:center()
+	local radius = zone.radius or 0
+	if radius <= 0 then radius = 10.0 end
 
-	if vid ~= BADV
-	   and zone:inside(level.vertex_position(vid), inside_tol)
-	   and (st_claims[vid] == nil or st_claims[vid] == claim_id) then
-		st_claims[vid] = claim_id
-		return vid, "nearest"
-	end
+	-- сначала грубая сетка; если ничего не нашла — тонкая
+	local fine = math.max(zone_scan_min_step, radius / 16)
+	local steps = { fine }
+	if fine > zone_scan_min_step + 0.01 then steps[#steps + 1] = zone_scan_min_step end
 
-	-- 2) Кольцо проб от NPC в сторону зоны.
-	local from = npc:level_vertex_id()
-	local p, zp = npc:position(), zone:position()
-	local dir  = zp:sub(p)
-	local dist = dir:magnitude()
-	if dist < 0.5 then
-		dir = vector():set(math.random() * 2 - 1, 0, math.random() * 2 - 1)
-		if dir:magnitude() < 0.05 then dir = vector():set(0, 0, 1) end
-		dist = 1.0
-	end
-	dir:normalize()
-
-	local yaw0 = math.random(0, 359)
-	for step = 1, 5 do
-		local d = dist * (step / 5.0) + 1.0
-		for k = 0, 7 do
-			local v = npc:vertex_in_direction(from, vector_rotate_y(dir, yaw0 + k * 45), d)
-			if v ~= from and v ~= BADV
-			   and npc:accessible(v)
-			   and zone:inside(level.vertex_position(v), inside_tol)
-			   and (st_claims[v] == nil or st_claims[v] == claim_id) then
-				st_claims[v] = claim_id
-				return v, "ring"
+	for s = 1, #steps do
+		local step = steps[s]
+		local x = center.x - radius
+		while x <= center.x + radius do
+			local z = center.z - radius
+			while z <= center.z + radius do
+				local v = level.vertex_id(vector():set(x, center.y, z))
+				if valid_vid(v) and not seen[v] then
+					if zone:inside(level.vertex_position(v), seat_tol) then
+						seen[v] = true
+						list[#list + 1] = v
+					end
+				end
+				z = z + step
 			end
+			x = x + step
+		end
+		if #list > 0 then break end
+	end
+
+	-- перемешиваем, чтобы NPC не липли к началу списка
+	for i = #list, 2, -1 do
+		local j = math.random(i)
+		list[i], list[j] = list[j], list[i]
+	end
+
+	zone_verts_cache[name] = list
+	dbg("зона %s: радиус=%.0f, вершин строго внутри %d", name, radius, #list)
+	return list
+end
+
+-- Точка стояния: ЛЮБОЕ свободное место СТРОГО ВНУТРИ зоны.
+-- allow_crowded=false -> если свободных нет, вернуть nil, чтобы drive_to
+-- попробовал СЛЕДУЮЩУЮ зону (иначе все липнут в одну).
+local function seat_in_zone(npc, c, claim_id, avoid, allow_crowded)
+	local list = zone_verts(c)
+	local n = #list
+	if n == 0 then return nil, "no_vertex" end
+
+	local start = math.random(n)
+	for k = 0, n - 1 do
+		local v = list[(start + k - 1) % n + 1]
+		if v ~= avoid and npc:accessible(v)
+		   and (st_claims[v] == nil or st_claims[v] == claim_id) then
+			st_claims[v] = claim_id
+			return v, "free"
 		end
 	end
 
-	-- 3) Зона недостижима по графу — идём к её центру тем, что нашли.
-	--    NPC встанет максимально близко к укрытию.
-	if vid ~= BADV then
-		st_claims[vid] = claim_id
-		return vid, "fallback"
+	if allow_crowded then
+		local v = list[start]
+		st_claims[v] = claim_id
+		dbg("%s: в %s все %d мест заняты, сажусь в любое", npc:name(), c.zone:name(), n)
+		return v, "crowded"
 	end
-	return nil, "none"
+	return nil, "busy"
 end
 
 -- Единственная точка взгляда, которую мы вообще задаём, — entrance из
@@ -538,39 +594,46 @@ function action_olr_hideout:initialize()
 	st.last_pos             = npc:position()
 	st.killed               = false
 	st.giveup_t             = 0
+	st.best_d, st.best_t     = nil, nil
+	st.bad_zone, st.bad_vid  = nil, nil
+	st.arrive_t, st.arrive_give = nil, false
 
-	local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "не удалось выбрать укрытие") end
+	local ok, why = self:drive_to(nil, "initialize"); if not ok then self:panic_here(why or "не удалось выбрать укрытие") end
 end
 
--- Отправить NPC в укрытие. c == nil -> выбрать ближайшую зону.
-function action_olr_hideout:drive_to(c)
+-- Отправить NPC в укрытие. c == nil -> выбрать зону.
+-- who — источник вызова, только для лога.
+function action_olr_hideout:drive_to(c, who)
 	local npc, st = self.object, self.st
 	local id = npc:id()
 	local vid, how
+	who = who or "?"
 
 	if c == nil then
 		-- Фаза A: до cover_attempts попыток взять ближайшую зону, где ЕСТЬ
 		-- свободное место. Провалившиеся по посадке помечаем в skip на этот
-		-- цикл, чтобы не долбиться в них повторно.
+		-- цикл, плюс заранее исключаем зону, к которой NPC не смог доехать.
 		local skip = {}
+		if st.bad_zone ~= nil then skip[st.bad_zone] = true end
 		for _ = 1, cover_attempts do
 			local cand = nearest_cover(npc, true, skip)
 			if cand == nil then break end
-			vid, how = seat_in_zone(npc, cand, id)
+			vid, how = seat_in_zone(npc, cand, id, st.bad_vid, false)
 			if vid ~= nil then c = cand; break end
 			skip[cand.zone:name()] = true
-			dbg("%s: в %s нет свободного места, пробую дальше", npc:name(), cand.zone:name())
+			dbg("%s [%s]: в %s нет точки стояния, пробую дальше", npc:name(), who, cand.zone:name())
 		end
 
-		-- Фаза B: всё занято -> идём в ближайшую разрешённую всё равно.
-		-- NPC не должен залипать на месте из-за лимита вместимости.
+		-- Фаза B: всё занято -> ближайшая разрешённая всё равно. skip НЕ применяем:
+		-- исключаем лишь конкретную проваленную вершину, чтобы попробовать ту же
+		-- зону с другой точки.
 		if c == nil and allow_overfill then
-			local cand = nearest_cover(npc, false, skip)
+			local cand = nearest_cover(npc, false, nil)
 			if cand ~= nil then
-				local v2, h2 = seat_in_zone(npc, cand, id)
+				local v2, h2 = seat_in_zone(npc, cand, id, st.bad_vid, true)
 				if v2 ~= nil then
 					c, vid, how = cand, v2, h2
-					dbg("%s: всё занято, иду в %s (переполнение)", npc:name(), cand.zone:name())
+					dbg("%s [%s]: всё занято, иду в %s (переполнение)", npc:name(), who, cand.zone:name())
 				end
 			end
 		end
@@ -578,14 +641,15 @@ function action_olr_hideout:drive_to(c)
 		if c == nil then
 			st.target, st.vid = nil, nil
 			local m = get_mgr()
-			dbg("%s (%s): нет подходящей зоны укрытия, всего зон %d",
-			    npc:name(), npc:character_community(), m and m.count or -1)
+			dbg("%s (%s) [%s]: нет подходящей зоны, всего зон %d",
+			    npc:name(), npc:character_community(), who, m and m.count or -1)
 			return false, "нет подходящей зоны укрытия"
 		end
 	else
-		vid, how = seat_in_zone(npc, c, id)
+		vid, how = seat_in_zone(npc, c, id, st.bad_vid)
 		if vid == nil then
 			st.target, st.vid = c, nil
+			dbg("%s [%s]: в %s нет точки стояния", npc:name(), who, c.zone:name())
 			return false, "нет точки стояния в зоне " .. c.zone:name()
 		end
 	end
@@ -594,6 +658,8 @@ function action_olr_hideout:drive_to(c)
 	if old_vid ~= nil and old_vid ~= vid then st_claims[old_vid] = nil end
 
 	st.target, st.vid = c, vid
+	st.bad_zone, st.bad_vid = nil, nil
+	st.arrive_t, st.arrive_give = nil, false
 	claim_zone(c, id)
 
 	npc:set_dest_level_vertex_id(vid)
@@ -606,7 +672,15 @@ function action_olr_hideout:drive_to(c)
 	st.last_pos = npc:position()
 	st.stall_t  = time_global()
 
-	dbg("%s -> %s, vid=%d (%s)", npc:name(), c.zone:name(), vid, how)
+	do
+		local vz = level.vertex_position(vid)
+		st.best_d = st.last_pos:distance_to(vz)
+		st.best_t = st.stall_t
+		dbg("%s [%s] -> %s, vid=%d (%s), vert=(%.0f,%.0f,%.0f) dist_center=%.1f dist_npc=%.1f",
+		    npc:name(), who, c.zone:name(), vid, how,
+		    vz.x, vz.y, vz.z,
+		    vz:distance_to(c.zone:center()), st.best_d)
+	end
 	return true
 end
 
@@ -642,19 +716,37 @@ function action_olr_hideout:execute()
 
 	local npc, st = self.object, self.st
 	local now = time_global()
+	local p   = npc:position()
 
 	local zone = covered_by(npc, st)
 
 	-- =================== ВНУТРИ УКРЫТИЯ ===================
 	if zone ~= nil then
+		-- Садимся ТОЛЬКО дойдя до своего места: иначе NPC залипает у входа
+		-- в укрытие. Ждём не дольше arrive_timeout, потом садимся где стоим,
+		-- чтобы физически недостижимое место не гоняло его бесконечно.
+		local d_seat = (st.vid ~= nil)
+		                and p:distance_to(level.vertex_position(st.vid)) or 0
+		if st.vid ~= nil and d_seat > arrive_tol and not st.arrive_give then
+			if st.arrive_t == nil then st.arrive_t = now end
+			if now - st.arrive_t <= arrive_timeout then
+				npc:set_dest_level_vertex_id(st.vid)
+				npc:set_desired_position(level.vertex_position(st.vid))
+				npc:set_movement_type(move.run)
+				set_state(npc, "assault")
+				return
+			end
+			st.arrive_give = true
+			dbg("%s: не дошёл до {vid=%s} за %.0f с (осталось %.1f м), сажусь где стою в %s",
+			    npc:name(), tostring(st.vid), arrive_timeout, d_seat, zone.zone:name())
+		end
+
 		if st.holding and st.hold_zone ~= zone then
-			-- оказались внутри ДРУГОЙ зоны: пересаживаемся и запоминаем новую.
-			-- (старый код не обновлял hold_zone -> drive_to звался каждый тик,
-			--  а seat_in_zone рандомит вершину кольца -> скачка цели каждый кадр)
+			-- оказались внутри ДРУГОЙ зоны: пересаживаемся
 			st.hold_zone = zone
 			st.look_pos  = entrance_point(zone)
 			claim_zone(zone, npc:id())
-			self:drive_to(zone)
+			self:drive_to(zone, "пересадка")
 		elseif not st.holding then
 			st.holding, st.hold_zone = true, zone
 			st.look_pos = entrance_point(zone)          -- ОДИН раз, без рандома
@@ -662,11 +754,18 @@ function action_olr_hideout:execute()
 			hold_hide(npc, st.look_pos)
 			npc:set_desired_position()
 			npc:set_movement_type(move.stand)
-			dbg("%s спрятался в %s", npc:name(), zone.zone:name())
+			do
+				local cp = zone.zone:center()
+				dbg("%s спрятался в %s | pos=(%.0f,%.0f,%.0f) center=(%.0f,%.0f,%.0f) dist_center=%.1f vert=%s дошёл=%.1f inside0=%s inside_strict=%s",
+				    npc:name(), zone.zone:name(),
+				    p.x, p.y, p.z, cp.x, cp.y, cp.z,
+				    p:distance_to(cp), tostring(st.vid), d_seat,
+				    tostring(zone.zone:inside(p, 0.0)),
+				    tostring(zone.zone:inside(p, cover_tol)))
+			end
 		elseif npc:level_vertex_id() == st.vid
 		   and state_mgr.get_state(npc) ~= "hide_na" then
-			-- страховка: кто-то перебил target_state, пока мы на месте.
-			-- Только на своей вершине — иначе помешаем переходу "assault".
+			-- страховка: кто-то перебил target_state, пока мы на месте
 			hold_hide(npc, st.look_pos)
 			dbg("%s: вернул hide_na в %s", npc:name(), zone.zone:name())
 		end
@@ -679,22 +778,39 @@ function action_olr_hideout:execute()
 	if st.vid == nil then
 		-- укрытия нет: держим psycho_pain, но не мечемся каждый тик
 		if now - st.giveup_t > cover_retry then
-			local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "подобрать укрытие не вышло") end
+			local ok, why = self:drive_to(nil, "нет цели"); if not ok then self:panic_here(why or "подобрать укрытие не вышло") end
 		end
 		if st.vid == nil then self:panic_here() end
 		return
 	end
 
-	local p  = npc:position()
 	local sp = st.last_pos
 
 	-- застрял: не двигаемся дольше stall_timeout
 	if sp ~= nil and sp:distance_to_sqr(p) < stall_eps and now - st.stall_t > stall_timeout then
 		st.stall_t = now
-		local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "застрял, перевыбор не помог") end
+		local ok, why = self:drive_to(nil, "стою на месте"); if not ok then self:panic_here(why or "застрял, перевыбор не помог") end
 		return
 	end
 	st.last_pos = p
+
+	local vz = level.vertex_position(st.vid)
+	local d_to_target = p:distance_to(vz)
+
+	-- НЕТ ПРОГРЕССА: цель есть, но NPC к ней не приближается.
+	-- npc:accessible() проверяет только рестрикторы, а не наличие пути,
+	-- поэтому вершина бывает "доступной", но физически недостижимой.
+	if st.best_d == nil or d_to_target < st.best_d - progress_eps then
+		st.best_d, st.best_t = d_to_target, now
+	elseif now - st.best_t > progress_timeout then
+		st.bad_vid  = st.vid
+		st.bad_zone = st.target and st.target.zone:name() or nil
+		st.best_d, st.best_t = nil, nil
+		dbg("%s: нет прогресса к {vid=%s, dist=%.1f} за %.0f с, перевыбор (зона %s в skip)",
+		    npc:name(), tostring(st.vid), d_to_target, progress_timeout, tostring(st.bad_zone))
+		local ok, why = self:drive_to(nil, "нет прогресса"); if not ok then self:panic_here(why or "не доехал до укрытия") end
+		return
+	end
 
 	-- маршрут могли перебить, вершина стала недоступной или зона запрещена
 	if now - st.retry_t > recheck then
@@ -702,15 +818,15 @@ function action_olr_hideout:execute()
 		local m = get_mgr()
 		if (m ~= nil and st.target ~= nil and not zone_ok(m, st.target, npc))
 		   or not npc:accessible(st.vid)
-		   or p:distance_to_sqr(level.vertex_position(st.vid)) > 400 then
-			local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "маршрут сбит, перевыбор не помог") end
+		   or d_to_target > 20.0 then
+			local ok, why = self:drive_to(nil, "recheck"); if not ok then self:panic_here(why or "маршрут сбит, перевыбор не помог") end
 			return
 		end
 	end
 
 	-- маршрут пере-выдаём каждый тик (идиома olr_ai_follower_agree / xr_attendant)
 	npc:set_dest_level_vertex_id(st.vid)
-	npc:set_desired_position(level.vertex_position(st.vid))
+	npc:set_desired_position(vz)
 	npc:set_movement_type(move.run)
 	set_state(npc, "assault")
 end
@@ -744,6 +860,9 @@ function action_olr_hideout:finalize()
 	st.killed               = false
 	st.look_pos              = nil
 	st.giveup_t              = 0
+	st.best_d, st.best_t     = nil, nil
+	st.bad_zone, st.bad_vid  = nil, nil
+	st.arrive_t, st.arrive_give = nil, false
 
 	-- Состояние НЕ восстанавливаем: act_state_mgr_to_idle вернёт "idle"
 	-- сам, как только мы снимем гейт state_mgr+1/+2 на следующем цикле
@@ -816,6 +935,47 @@ local function enemy_callback(_, npc, enemy)
 	end
 	return true
 end
+-- ==================================================================
+-- ОТЛАДКА: пройтись по ВСЕМ укрытиям и проверить их вершины.
+-- Вызов из консоли игры:  run_string olr_ai_hideout.dump_covers()
+-- ==================================================================
+function dump_covers()
+	local m = get_mgr()
+	if m == nil or m.count == nil then
+		log1("[olr_hideout] dump_covers: нет surge_manager")
+		return
+	end
+
+	zone_verts_cache = {}   -- собираем всё заново
+	local no_vert = 0
+	log1("[olr_hideout] ==== dump_covers: зон " .. tostring(m.count) .. " ====")
+
+	for i = 1, m.count do
+		local c = m.covers[i]
+		if c ~= nil and c.zone ~= nil then
+			local zone = c.zone
+			local name = zone:name()
+			local pos  = zone:position()
+			local ctr  = zone:center()
+			local rad  = zone.radius or 0
+			local list = zone_verts(c)
+			if #list == 0 then no_vert = no_vert + 1 end
+
+			-- сколько найденных мест сейчас занято
+			local busy = 0
+			for k = 1, #list do
+				if st_claims[list[k]] ~= nil then busy = busy + 1 end
+			end
+
+			log1(string.format(
+				"[olr_hideout] %-28s pos=(%.0f,%.0f,%.0f) center=(%.0f,%.0f,%.0f) r=%.0f вершин=%d занято=%d",
+				name, pos.x, pos.y, pos.z, ctr.x, ctr.y, ctr.z, rad, #list, busy))
+		end
+	end
+
+	log1(string.format("[olr_hideout] ==== dump_covers: зон без вершин внутри: %d ====", no_vert))
+end
+
 function add_to_binder(object, char_ini, scheme, section, st)
 	local manager = object:motivation_action_manager()
 

@@ -1,0 +1,547 @@
+--[[------------------------------------------------------------------
+olr_ai_hideout — AI-схема укрытия сталкеров во время выброса.
+
+Схема берёт те же зоны *_surge_hide, что и surge_manager.script для
+игрока (секция [list] файла misc\surge_manager.ltx -> db.zone_by_name).
+
+Осознанные решения, проверенные по движку:
+
+  * НИКАКИХ add_restrictions / remove_all_restrictions.
+      - CSpaceRestrictor::net_Spawn не регистрирует рестриктор с типом
+        "NOT A restrictor", после чего CSpaceRestriction::accessible()
+        fail-open отдаёт true -> ограничения нет. Молча, без лога, без abort.
+      - remove_all_restrictions() сносит ВСЕ динамические рестрикторы NPC,
+        включая навешенные xrs_ladder и olr_npc_first_upd.script.
+      - Укрытие держим чистой геометрией + проверкой zone:inside().
+
+  * НИКАКОГО is_obj_outdoors — гейт только по зонам укрытия.
+
+  * Одно свойство-режим (ev_hideout) + одно действие. Планировщик держит
+    действие выбранным весь выброс, ветвление внутри execute().
+    Состояние живёт в st (db.storage[id]) — самочистится в net_destroy.
+
+  * zone:level_vertex_id() у space_restrictor условно возвращает u32(-1),
+    а npc:accessible() на невалидной вершине делает THROW. Поэтому точку
+    стояния ищем от NPC по графу и подтверждаем через zone:inside().
+------------------------------------------------------------------]]
+
+local debug = false
+
+local base_id_hideout = 26860
+local ev_hideout      = base_id_hideout + 1    -- 26861  свойство
+local act_hideout     = base_id_hideout + 11   -- 26871  оператор
+
+local R2D  = 0.017453292519943295769236907684886
+local BADV = 4294967295                        -- u32(-1)
+
+-- Настройки. Правятся здесь, в файле.
+local enabled       = true    -- общий выключатель схемы
+local search_radius = 150.0   -- м, максимальный радиус поиска зоны укрытия
+local recheck       = 3.0     -- сек между проверками достижимости маршрута
+local stall_timeout = 12.0    -- сек без движения -> перевыбор места
+local stall_eps     = 0.36    -- м^2, порог "стою на месте" (0.6 * 0.6)
+local scan_period   = 0.4     -- сек, как часто полный скан зон на NPC
+local look_distance = 20.0    -- м, на каком расстоянии строим точку взгляда
+local look_period   = 12.0    -- сек, как часто NPC переводит взгляд
+local kill_unhided  = false   -- ВАРИАНТ 2: убивать не укрывшихся на фазе 3
+local kill_power    = 5.0     -- мощность взрыва при kill_unhided
+
+-- Необязательные per-zone ключи в misc\surge_manager.ltx, читаются если есть:
+--   [<имя зоны>] npc_list  = false   -- зона только для игрока, NPC её игнорируют
+--   [<имя зоны>] entrance  = <vid>   -- level_vertex_id, куда NPC смотрит из укрытия
+-- По умолчанию NPC смотрит в случайный угол.
+
+-- ==================================================================
+-- Кэш зон укрытия
+-- ==================================================================
+
+local covers       = {}       -- [{name, zone, pos, condlist, entrance}]
+local covers_level = nil      -- на каком уровне кэш собран
+local build_tries  = 0        -- защита от бесконечных пересборок
+local st_claims    = {}       -- [level_vertex_id] = npc:id(), чтобы не слипались
+
+local function zone_ok(c, npc)
+	if c.condlist == nil then return true end
+	return xr_logic.pick_section_from_condlist(db.actor, npc, c.condlist) == "true"
+end
+
+local function rebuild_covers()
+	local lvl = level.name()
+	if covers_level == lvl and #covers > 0 then return end
+	if covers_level == lvl and build_tries >= 8 then return end
+
+	build_tries  = build_tries + 1
+	covers       = {}
+	covers_level = lvl
+
+	local ini = ini_file("misc\\surge_manager.ltx")
+	if not ini:section_exist("list") then return end
+
+	for i = 0, ini:line_count("list") - 1 do
+		local _, id = ini:r_line("list", i, "", "")
+
+		local npc_ok = true
+		if id ~= "" and ini:line_exist(id, "npc_list") then
+			npc_ok = ini:r_bool(id, "npc_list")
+		end
+
+		if id ~= "" and npc_ok then
+			local z = db.zone_by_name[id]
+			if z ~= nil then
+				local condlist = nil
+				if ini:line_exist(id, "condlist") then
+					condlist = xr_logic.parse_condlist(nil, id, "condlist", ini:r_string(id, "condlist"))
+				end
+
+				local entrance = 0
+				if ini:line_exist(id, "entrance") then
+					entrance = tonumber(ini:r_string(id, "entrance")) or 0
+					if entrance < 0 then entrance = 0 end
+				end
+
+				covers[#covers + 1] = {
+					name     = id,
+					zone     = z,
+					pos      = z:position(),
+					condlist = condlist,
+					entrance = entrance,
+				}
+			end
+		end
+	end
+end
+
+-- Горячий путь. Частый вызов: сначала проверяем только текущую зону NPC
+-- (один нативный inside), полный скан не чаще scan_period на NPC.
+local function covered_by(npc, st)
+	rebuild_covers()
+
+	local p = npc:position()
+	if st and st.target and st.target.zone:inside(p) then
+		st.scan_t = time_global()
+		return st.target
+	end
+
+	local now = time_global()
+	if st and st.scan_t and (now - st.scan_t) < scan_period then
+		return nil
+	end
+	if st then st.scan_t = now end
+
+	for i = 1, #covers do
+		local c = covers[i]
+		if c.zone:inside(p) and zone_ok(c, npc) then
+			if st then st.target = c end
+			return c
+		end
+	end
+	return nil
+end
+
+-- Ближайшая доступная зона. Вызывается только из initialize и при пере-выборе.
+local function nearest_cover(npc)
+	rebuild_covers()
+
+	local p    = npc:position()
+	local r2   = search_radius * search_radius
+	local best, best_d = nil, nil
+
+	for i = 1, #covers do
+		local c = covers[i]
+		local d = p:distance_to_sqr(c.pos)
+		if d <= r2 and (best_d == nil or d < best_d) and zone_ok(c, npc) then
+			best, best_d = c, d
+		end
+	end
+	return best
+end
+
+-- ==================================================================
+-- Точка стояния внутри зоны
+-- ==================================================================
+
+-- zone:level_vertex_id() может быть u32(-1), поэтому идём от NPC к зоне
+-- по графу: 6 дистанций x 8 азимутов, берём первую вершину, которая
+-- одновременно доступна NPC, свободна и реально лежит внутри зоны.
+local function seat_in_zone(npc, zone, claim_id)
+	local from = npc:level_vertex_id()
+	local p, zp = npc:position(), zone:position()
+
+	local dir  = zp:sub(p)
+	local dist = dir:length()
+	if dist < 0.5 then
+		dir = vector():set(math.random() * 2 - 1, 0, math.random() * 2 - 1)
+		if dir:length() < 0.05 then dir = vector():set(0, 0, 1) end
+		dist = 1.0
+	end
+	dir:normalize()
+
+	local base_yaw = math.random(0, 359)
+	for step = 1, 6 do
+		local d = dist * (step / 6.0) + 1.5
+		for k = 0, 7 do
+			local vid = npc:vertex_in_direction(from, vector_rotate_y(dir, base_yaw + k * 45), d)
+			if vid ~= from and vid ~= BADV
+			   and npc:accessible(vid)
+			   and zone:inside(level.vertex_position(vid))
+			   and (st_claims[vid] == nil or st_claims[vid] == claim_id) then
+				st_claims[vid] = claim_id
+				return vid
+			end
+		end
+	end
+	return nil
+end
+
+-- Куда смотреть из укрытия: заданный entrance, иначе случайный угол.
+local function look_point(npc, c)
+	if c.entrance and c.entrance > 0 and c.entrance ~= BADV then
+		local p = level.vertex_position(c.entrance)
+		if p ~= nil then return p end
+	end
+
+	local yaw = math.random(0, 359) * R2D
+	local vid = level.vertex_in_direction(npc:level_vertex_id(),
+	                                       vector():set(math.sin(yaw), 0, math.cos(yaw)),
+	                                       look_distance)
+	if vid == BADV then vid = npc:level_vertex_id() end
+	return level.vertex_position(vid)
+end
+
+-- state_mgr.set_state пишет в лог на КАЖДЫЙ вызов -> не спамим.
+-- Для hide_na так нельзя: точка взгляда передаётся через set_state, поэтому
+-- обновлять её нужно даже когда состояние уже то же. Это отдельный хелпер.
+local function set_state(npc, name)
+	if state_mgr.get_state(npc) == name then return end
+	state_mgr.set_state(npc, name)
+end
+
+-- Присесть в укрытии и смотреть наружу. hide_na единственное pointable
+-- состояние семейства hide (animation = nil -> смотрим в 3D, state_mgr_direction:159).
+local function hold_hide(npc, zone)
+	state_mgr.set_state(npc, "hide_na", nil, nil,
+	                    {look_position = look_point(npc, zone)},
+	                    nil, nil, {yaw_delta = 0.2})
+end
+
+-- ==================================================================
+-- Кэш фазы выброса
+-- ==================================================================
+-- Три has_alife_info раз в 500 мс вместо трёх на каждого NPC каждый тик.
+
+local phase_cache, phase_t = 0, 0
+
+local function surge_phase()
+	local now = time_global()
+	if now - phase_t < 500 then return phase_cache end
+	phase_t = now
+
+	local m = surge_manager.get_surge_manager()
+	if m == nil or not m.started then
+		phase_cache = 0
+	elseif has_alife_info("olr_blowout_phase_3") then
+		phase_cache = 3
+	elseif has_alife_info("olr_blowout_phase_2") then
+		phase_cache = 2
+	elseif has_alife_info("olr_blowout_phase_1") then
+		phase_cache = 1
+	else
+		phase_cache = 0
+	end
+	return phase_cache
+end
+
+-- ==================================================================
+-- Действие
+-- ==================================================================
+
+class "action_olr_hideout" (action_base)
+
+function action_olr_hideout:__init(st)
+	super(nil, "action_olr_hideout")
+	self.st = st
+end
+
+function action_olr_hideout:initialize()
+	action_base.initialize(self)
+
+	local npc, st = self.object, self.st
+
+	npc:disable_talk()
+	npc:clear_animations()
+	npc:set_desired_position()
+	npc:set_desired_direction()
+	npc:set_detail_path_type(move.line)
+	npc:set_path_type(game_object.level_path)
+	npc:set_body_state(move.standing)
+	npc:movement_enabled(true)
+
+	if st.saved_mental == nil then st.saved_mental = npc:mental_state() end
+	npc:set_mental_state(anim.danger)
+
+	st.holding, st.hold_zone = false, nil
+	st.retry_t, st.stall_t   = time_global(), time_global()
+	st.scan_t               = 0
+	st.last_pos             = npc:position()
+	st.killed, st.look_t    = false, 0
+
+	if not self:drive_to(nil) then self:panic_here() end
+end
+
+-- Отправить NPC в укрытие. c == nil -> выбрать ближайшую зону.
+function action_olr_hideout:drive_to(c)
+	local npc, st = self.object, self.st
+
+	if c == nil then c = nearest_cover(npc) end
+	if c == nil then
+		st.target, st.vid = nil, nil
+		return false
+	end
+
+	local old_vid = st.vid
+	local vid = seat_in_zone(npc, c.zone, npc:id())
+	if old_vid ~= nil and old_vid ~= vid then st_claims[old_vid] = nil end
+
+	if vid == nil then
+		st.target, st.vid = c, nil
+		return false
+	end
+
+	st.target, st.vid = c, vid
+	npc:set_dest_level_vertex_id(vid)
+	npc:set_desired_position(level.vertex_position(vid))
+	npc:set_detail_path_type(move.line)
+	npc:set_path_type(game_object.level_path)
+	npc:set_movement_type(move.run)
+	set_state(npc, "assault")
+
+	st.last_pos = npc:position()
+	st.stall_t  = time_global()
+
+	if debug then log1("[olr_hideout] " .. npc:name() .. " -> " .. c.name) end
+	return true
+end
+
+-- Укрытия нет: замирает на месте. Опционально — умирает на фазе 3.
+function action_olr_hideout:panic_here()
+	local npc, st = self.object, self.st
+
+	set_state(npc, "psycho_pain")
+	npc:set_desired_position()
+	npc:set_movement_type(move.stand)
+
+	if kill_unhided and not st.killed and surge_phase() >= 3 then
+		st.killed = true
+		local h = hit()
+		h.type      = hit.explosion
+		h.power     = kill_power
+		h.impulse   = 0
+		h.direction = vector():set(0, 0, 1)
+		h.draftsman = npc
+		npc:hit(h)
+		if debug then log1("[olr_hideout] killed " .. npc:name()) end
+	end
+end
+
+function action_olr_hideout:execute()
+	action_base.execute(self)
+
+	local npc, st = self.object, self.st
+	local now = time_global()
+
+	local zone = covered_by(npc, st)
+
+	-- =================== ВНУТРИ УКРЫТИЯ ===================
+	if zone ~= nil then
+		if st.holding and st.hold_zone ~= zone then
+			self:drive_to(zone)                                  -- переехал в другую зону
+		elseif not st.holding then
+			st.holding, st.hold_zone = true, zone
+			hold_hide(npc, zone)
+			npc:set_desired_position()
+			npc:set_movement_type(move.stand)
+			st.look_t = now
+			if debug then log1("[olr_hideout] " .. npc:name() .. " hides in " .. zone.name) end
+		elseif now - st.look_t > look_period then
+			st.look_t = now
+			hold_hide(npc, zone)
+		end
+		return
+	end
+
+	-- =================== НЕ В УКРЫТИИ ===================
+	st.holding, st.hold_zone = false, nil
+
+	if st.vid == nil then
+		self:panic_here()
+		return
+	end
+
+	local p  = npc:position()
+	local sp = st.last_pos
+
+	-- застрял: не двигаемся дольше stall_timeout
+	if sp ~= nil and sp:distance_to_sqr(p) < stall_eps and now - st.stall_t > stall_timeout then
+		st.stall_t = now
+		if not self:drive_to(nil) then self:panic_here() end
+		return
+	end
+	st.last_pos = p
+
+	-- маршрут могли перебить или вершина стала недоступной
+	if now - st.retry_t > recheck then
+		st.retry_t = now
+		if not npc:accessible(st.vid)
+		   or p:distance_to_sqr(level.vertex_position(st.vid)) > 400 then
+			if not self:drive_to(nil) then self:panic_here() end
+			return
+		end
+	end
+
+	-- маршрут пере-выдаём каждый тик (идиома olr_ai_follower_agree / xr_attendant)
+	npc:set_dest_level_vertex_id(st.vid)
+	npc:set_desired_position(level.vertex_position(st.vid))
+	npc:set_movement_type(move.run)
+	set_state(npc, "assault")
+end
+
+function action_olr_hideout:finalize()
+	action_base.finalize(self)
+
+	local npc, st = self.object, self.st
+	if npc == nil then return end
+
+	if st.vid ~= nil then st_claims[st.vid] = nil end
+
+	npc:set_desired_position()
+	npc:set_desired_direction()
+	npc:set_movement_type(move.stand)
+	npc:clear_animations()
+	npc:enable_talk()
+
+	if db.storage[npc:id()] ~= nil
+	and st.saved_mental ~= nil
+	and npc:mental_state() == anim.danger then
+		npc:set_mental_state(st.saved_mental)
+	end
+
+	st.saved_mental          = nil
+	st.holding, st.hold_zone = false, nil
+	st.target, st.vid        = nil, nil
+	st.last_pos, st.scan_t   = nil, 0
+	st.retry_t, st.stall_t   = nil, nil
+	st.killed, st.look_t     = false, 0
+
+	-- Состояние НЕ восстанавливаем: act_state_mgr_to_idle вернёт "idle"
+	-- сам, как только мы снимем гейт state_mgr+1/+2 на следующем цикле
+	-- планировщика. Не дёргаем set_state сами — не спорим с state_mgr.
+end
+
+-- ==================================================================
+-- Эвалюатор
+-- ==================================================================
+
+class "evaluator_olr_hideout" (property_evaluator)
+
+function evaluator_olr_hideout:__init(st)
+	super(nil, "evaluator_olr_hideout")
+	self.st = st
+end
+
+function evaluator_olr_hideout:evaluate()
+	local st = self.st
+	if st == nil or not st.enabled or not enabled then return false end
+
+	-- самый дешёвый ранний выход: вне выброса стоит одно чтение поля
+	local m = surge_manager.get_surge_manager()
+	if m == nil or not m.started then return false end
+	if surge_manager.no_blow_levels[level.name()] then return false end
+	if surge_phase() < 1 then return false end
+
+	local npc = self.object
+	if olr_protected.is_no_offline_alife_obj(npc:name()) then return false end
+	if covered_by(npc, st) ~= nil then return false end
+
+	return true
+end
+
+-- ==================================================================
+-- Привязка к планировщику
+-- ==================================================================
+
+-- Глобальный хук: вешаем прекондишен на ВСЕ чужие действия, которые
+-- прошли через xr_motivator.addCommonPrecondition (19 точек вызова:
+-- walker, kamp, patrol, camper, sleeper, remark, guide, robbers, test,
+-- zoneguard, comm_ptr, trade, trade_agree). Собственное действие
+-- исключаем флагом, иначе оно станет невыбираемым.
+local function on_common_precondition(action)
+	if action == nil or action.olr_hideout_own then return end
+	action:add_precondition(world_property(ev_hideout, false))
+end
+
+function add_to_binder(object, char_ini, scheme, section, st)
+	local manager = object:motivation_action_manager()
+
+	manager:add_evaluator(ev_hideout, evaluator_olr_hideout(st))
+
+	local action = action_olr_hideout(st)
+	action.olr_hideout_own = true
+	action:add_precondition(world_property(stalker_ids.property_alive,   true))
+	action:add_precondition(world_property(stalker_ids.property_enemy,   false))
+	action:add_precondition(world_property(stalker_ids.property_danger,  false))
+	action:add_precondition(world_property(stalker_ids.property_anomaly, false))
+	action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+	action:add_precondition(world_property(ev_hideout, true))
+	manager:add_action(act_hideout, action)
+
+	-- Глушим чужие операторы.
+	-- state_mgr+1/+2 критичны: act_state_mgr_to_idle сбрасывает наш hide
+	-- в "idle" каждый цикл планировщика, если их не запереть.
+	-- Проверка на nil потому, что state_mgr биндится в xr_motivator:reinit
+	-- (строка 48) отрабатывает до net_spawn -> configure_schemes, так что
+	-- 162/163 обычно уже на месте, но на всякий случай не падаем.
+
+	local operator = manager:action(stalker_ids.action_alife_planner)
+	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+
+	operator = manager:action(stalker_ids.action_combat_planner)
+	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+
+	operator = manager:action(stalker_ids.action_anomaly_planner)
+	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+
+	operator = manager:action(stalker_ids.action_danger_planner)
+	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+
+	operator = manager:action(xr_actions_id.state_mgr + 1)
+	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+
+	operator = manager:action(xr_actions_id.state_mgr + 2)
+	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+end
+
+-- ==================================================================
+-- Регистрация
+-- ==================================================================
+
+function init()
+	core.ac("load_scheme", xrs_load_scheme)
+	core.ac("logic_enable_schemes", set_scheme)
+	core.ac("logic_disable_schemes", disable_scheme)
+	core.ac("motivator_addCommonPrecondition", on_common_precondition)
+end
+
+function xrs_load_scheme()
+	load_scheme("olr_ai_hideout", "olr_hideout", modules.stype_stalker)
+end
+
+function set_scheme(ini, object, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(object, ini, "olr_hideout", "olr_hideout")
+	st.enabled = true
+end
+
+function disable_scheme(npc, scheme)
+	local s  = db.storage[npc:id()]
+	local st = s and s["olr_hideout"]
+	if st then st.enabled = false end
+end

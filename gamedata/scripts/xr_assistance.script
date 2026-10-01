@@ -174,6 +174,9 @@ function add_to_binder(npc, char_ini)
 	local action = action_assistance(npc, "action_assistance", db.storage[npc:id()].assistance)
 	action:add_precondition (world_property(stalker_ids.property_alive,			true))
 	action:add_precondition (world_property(stalker_ids.property_enemy,			false))
+	if olr_ai_hideout and olr_ai_hideout.olr_hideout_prop then
+		action:add_precondition(world_property(olr_ai_hideout.olr_hideout_prop, false))
+	end
 	action:add_precondition (world_property(properties["need_assistance"],		true))
 	action:add_effect (world_property(properties["need_assistance"], false))
 	manager:add_action (operators["action_assistance"], action)

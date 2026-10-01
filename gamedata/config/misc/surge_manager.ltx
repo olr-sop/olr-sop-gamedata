@@ -237,6 +237,28 @@ pri_surge_hide_0011
 pri_surge_hide_0012
 pri_surge_hide_0013
 
-;для них так же можно делать кондишены, тобишь пока не получили поршень это не укрытие (например на базе ученых до допуска в бункер не будем считать его укрытием и тд.)
+;--------------------------------------------------------------------
+; Настройки укрытий для NPC (читает olr_ai_hideout.script).
+; Секция = имя зоны из [list]. Все ключи необязательные.
+;
+;   max_npc              = <N>    ; лимит NPC в зоне (0 или нет ключа = без лимита)
+;   allowed_community    = a, b   ; в зону могут ТОЛЬКО эти группировки
+;   disallowed_community = a, b   ; в зону могут ВСЕ, КРОМЕ этих
+;   npc_list             = false  ; зона только для игрока, NPC её игнорируют
+;   entrance             = <vid>  ; level_vertex_id, куда NPC смотрит из укрытия
+;   condlist             = ...    ; для них так же можно делать кондишены, тобишь пока не получили поршень это не укрытие (например на базе ученых до допуска в бункер не будем считать его укрытием и тд.)
+;
+; Если заданы оба community-ключа — применяются оба условия (AND).
+; Имена группировок — как в npc:character_community():
+;   stalker, bandit, dolg, freedom, military, killer, monolith, ecolog,
+;   zombied, trader, neutral, sin, sky, iskateli, lastday, deads,
+;   voenstals, sliznyaki
+;
+; Пример: военные не заходят в сталкерские укрытия, и наоборот.
+;   [esc_surge_hide]
+;   disallowed_community = military
+;   [esc_surge_hide_0001]
+;   allowed_community = military
+;--------------------------------------------------------------------
 [esc_surge_hide]
 condlist = {+start_olr_mod} true, false

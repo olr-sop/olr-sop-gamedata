@@ -303,6 +303,9 @@ function add_to_binder(npc)
 	local new_action = this.action_talker_activity(npc, "action_talker_activity", xr_motivator.storage[npc:id()].talker)
 	new_action:add_precondition    (world_property(stalker_ids.property_alive,   true))
 	new_action:add_precondition    (world_property(stalker_ids.property_enemy,   false))
+	if olr_ai_hideout and olr_ai_hideout.olr_hideout_prop then
+		action:add_precondition(world_property(olr_ai_hideout.olr_hideout_prop, false))
+	end
 	new_action:add_precondition    (world_property(properties["need_talker"],   true))
 	new_action:add_effect(world_property(properties["need_talker"], false))
 	manager:add_action(operators["action_talker"], new_action)

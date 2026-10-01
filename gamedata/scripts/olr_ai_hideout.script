@@ -1,8 +1,12 @@
 --[[------------------------------------------------------------------
 olr_ai_hideout — AI-схема укрытия сталкеров во время выброса.
 
-Схема берёт те же зоны *_surge_hide, что и surge_manager.script для
-игрока (секция [list] файла misc\surge_manager.ltx -> db.zone_by_name).
+Список зон берётся ГОТОВЫМ у surge_manager (self.covers / self.count /
+cover_allowed) — он сам собирает его на load() и на start() и пересобирает,
+так что гонки со spawn рестрикторов здесь нет.
+
+Гейт: olr_blowout_phase_1 / _2 / _3. Выход — когда ни одной нет, то есть
+olr_blowout_phase_0 (он гасит 1/2/3).
 
 Осознанные решения, проверенные по движку:
 
@@ -12,125 +16,327 @@ olr_ai_hideout — AI-схема укрытия сталкеров во время выброса.
         fail-open отдаёт true -> ограничения нет. Молча, без лога, без abort.
       - remove_all_restrictions() сносит ВСЕ динамические рестрикторы NPC,
         включая навешенные xrs_ladder и olr_npc_first_upd.script.
-      - Укрытие держим чистой геометрией + проверкой zone:inside().
 
   * НИКАКОГО is_obj_outdoors — гейт только по зонам укрытия.
 
   * Одно свойство-режим (ev_hideout) + одно действие. Планировщик держит
     действие выбранным весь выброс, ветвление внутри execute().
     Состояние живёт в st (db.storage[id]) — самочистится в net_destroy.
+  * Взгляд в укрытии отдан движку (look.danger = eSightTypeCover),
+    как в OGSM/OGSE. Точку задаём только при наличии entrance.
+    Никакого рандома и перенаводки: иначе direction_turn снова
+    крутит корпус. Подробнее — у hold_hide и entrance_point.
 
   * zone:level_vertex_id() у space_restrictor условно возвращает u32(-1),
     а npc:accessible() на невалидной вершине делает THROW. Поэтому точку
-    стояния ищем от NPC по графу и подтверждаем через zone:inside().
+    стояния ищем через npc:accessible_nearest от центра зоны.
+
+  * zone:inside(pos) БЕЗ допуска — это EPS_L = 0.001 (1 мм), см. vector.h:48.
+    Таким тестом «стою ли я в укрытии» практически невозможно попасть.
+    Поэтому везде zone:inside(pos, inside_tol) с одним и тем же допуском:
+    тогда «место принято» и «я спрятался» согласованы.
 ------------------------------------------------------------------]]
 
-local debug = false
+local debug = true
 
-local base_id_hideout = 26860
-local ev_hideout      = base_id_hideout + 1    -- 26861  свойство
-local act_hideout     = base_id_hideout + 11   -- 26871  оператор
+-- Идентификаторы ОБЪЯВЛЕНЫ ГЛОБАЛЬНО (без local): на них ссылаются
+-- xr_motivator.script и остальные схемы как olr_ai_hideout.olr_hideout_prop.
+-- Так же: NLC7 evid_blowout=18572, OGSM property_base=12221,
+-- SIMBION-SHOC evid_ai_blowout, SIMBION-CS evid_blowout=18572.
+olr_hideout_prop     = 26861   -- свойство "нужно в укрытие"
+olr_hideout_operator = 26871   -- оператор
 
-local R2D  = 0.017453292519943295769236907684886
+local ev_hideout  = olr_hideout_prop
+local act_hideout = olr_hideout_operator
+
 local BADV = 4294967295                        -- u32(-1)
 
 -- Настройки. Правятся здесь, в файле.
 local enabled       = true    -- общий выключатель схемы
 local search_radius = 150.0   -- м, максимальный радиус поиска зоны укрытия
+local inside_tol    = 2.0     -- м, допуск zone:inside. ОДИН и тот же и для посадки, и для проверки
 local recheck       = 3.0     -- сек между проверками достижимости маршрута
 local stall_timeout = 12.0    -- сек без движения -> перевыбор места
 local stall_eps     = 0.36    -- м^2, порог "стою на месте" (0.6 * 0.6)
 local scan_period   = 0.4     -- сек, как часто полный скан зон на NPC
-local look_distance = 20.0    -- м, на каком расстоянии строим точку взгляда
-local look_period   = 12.0    -- сек, как часто NPC переводит взгляд
+local cover_retry   = 10.0    -- сек между попытками найти укрытие, если не вышло
 local kill_unhided  = false   -- ВАРИАНТ 2: убивать не укрывшихся на фазе 3
 local kill_power    = 5.0     -- мощность взрыва при kill_unhided
+local default_max_npc = 0      -- 0 = без лимита; переопределяется ключом max_npc
+local cover_attempts  = 3      -- сколько зон перебрать, если не нашлось точки стояния
+local allow_overfill  = true   -- true: всё занято -> идти в ближайшее разрешённое всё равно
 
 -- Необязательные per-zone ключи в misc\surge_manager.ltx, читаются если есть:
---   [<имя зоны>] npc_list  = false   -- зона только для игрока, NPC её игнорируют
---   [<имя зоны>] entrance  = <vid>   -- level_vertex_id, куда NPC смотрит из укрытия
--- По умолчанию NPC смотрит в случайный угол.
+--   [<имя зоны>] npc_list    = false    -- зона только для игрока, NPC её игнорируют
+--   [<имя зоны>] entrance    = <vid>    -- level_vertex_id, куда NPC смотрит из укрытия
+--   [<имя зоны>] max_npc     = <N>      -- лимит NPC в зоне (0 или нет ключа = без лимита)
+--   [<имя зоны>] allowed_community    = a, b -- в зону могут ТОЛЬКО эти группировки
+--   [<имя зоны>] disallowed_community = a, b -- в зону могут ВСЕ, КРОМЕ этих
+-- Если заданы оба community-ключа — применяются оба условия (AND).
+-- Имена группировок — как в npc:character_community(): stalker, bandit,
+-- dolg, freedom, military, killer, monolith, ecolog, zombied, trader,
+-- neutral, sin, sky, iskateli, lastday, deads, voenstals, sliznyaki.
+-- Без entrance направление взгляда выбирает движок (look.danger).
 
 -- ==================================================================
--- Кэш зон укрытия
+-- Диагностика
 -- ==================================================================
 
-local covers       = {}       -- [{name, zone, pos, condlist, entrance}]
-local covers_level = nil      -- на каком уровне кэш собран
-local build_tries  = 0        -- защита от бесконечных пересборок
-local st_claims    = {}       -- [level_vertex_id] = npc:id(), чтобы не слипались
-
-local function zone_ok(c, npc)
-	if c.condlist == nil then return true end
-	return xr_logic.pick_section_from_condlist(db.actor, npc, c.condlist) == "true"
-end
-
-local function rebuild_covers()
-	local lvl = level.name()
-	if covers_level == lvl and #covers > 0 then return end
-	if covers_level == lvl and build_tries >= 8 then return end
-
-	build_tries  = build_tries + 1
-	covers       = {}
-	covers_level = lvl
-
-	local ini = ini_file("misc\\surge_manager.ltx")
-	if not ini:section_exist("list") then return end
-
-	for i = 0, ini:line_count("list") - 1 do
-		local _, id = ini:r_line("list", i, "", "")
-
-		local npc_ok = true
-		if id ~= "" and ini:line_exist(id, "npc_list") then
-			npc_ok = ini:r_bool(id, "npc_list")
-		end
-
-		if id ~= "" and npc_ok then
-			local z = db.zone_by_name[id]
-			if z ~= nil then
-				local condlist = nil
-				if ini:line_exist(id, "condlist") then
-					condlist = xr_logic.parse_condlist(nil, id, "condlist", ini:r_string(id, "condlist"))
-				end
-
-				local entrance = 0
-				if ini:line_exist(id, "entrance") then
-					entrance = tonumber(ini:r_string(id, "entrance")) or 0
-					if entrance < 0 then entrance = 0 end
-				end
-
-				covers[#covers + 1] = {
-					name     = id,
-					zone     = z,
-					pos      = z:position(),
-					condlist = condlist,
-					entrance = entrance,
-				}
-			end
-		end
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[olr_hideout] " .. string.format(fmt, ...))
+	else
+		log1("[olr_hideout] " .. fmt)
 	end
 end
 
--- Горячий путь. Частый вызов: сначала проверяем только текущую зону NPC
--- (один нативный inside), полный скан не чаще scan_period на NPC.
+-- Троттлинг: та же строка не чаще чем раз в period мс.
+local dbg_last = {}
+
+local function dbg_throttled(period, fmt, ...)
+	if not debug then return end
+	local key = tostring(fmt)
+	local now = time_global()
+	if dbg_last[key] ~= nil and (now - dbg_last[key]) < period then return end
+	dbg_last[key] = now
+	dbg(fmt, ...)
+end
+
+-- ==================================================================
+-- Зоны укрытия: список и доступность от surge_manager
+-- ==================================================================
+
+local st_claims       = {}   -- [level_vertex_id] = npc:id(), чтобы не слипались
+local entrance_cache  = {}   -- [имя зоны] = vid или 0
+local zone_skip_cache = {}   -- [имя зоны] = true, если npc_list = false
+local zone_comm_cache = {}   -- [имя зоны] = { allowed = set|nil, disallowed = set|nil }
+local zone_cap_cache  = {}   -- [имя зоны] = max_npc (0 = без лимита)
+local zone_claims     = {}   -- [имя зоны] = { [npc_id] = true } — кто идёт/сидит
+local npc_claim       = {}   -- [npc_id]   = имя зоны
+
+-- surge_manager.covers[i] = {id = <vid зоны>, zone = <объект>, condlist = ...}
+local function get_mgr()
+	local m = surge_manager.get_surge_manager()
+	if m == nil then return nil end
+	return m
+end
+
+-- Необязательные per-zone ключи читаем из того же ini, что и surge_manager.
+local function zone_flag(name, key)
+	local m = get_mgr()
+	if m == nil or m.ini == nil then return nil end
+	if not m.ini:line_exist(name, key) then return nil end
+	if key == "npc_list" then return m.ini:r_bool(name, key) end
+	local v = tonumber(m.ini:r_string(name, key)) or 0
+	if v < 0 then v = 0 end
+	return v
+end
+
+local function zone_npc_ok(c)
+	local name = c.zone and c.zone:name() or nil
+	if name == nil then return false end
+	local cached = zone_skip_cache[name]
+	if cached ~= nil then return not cached end
+	local v = zone_flag(name, "npc_list")
+	local skip = (v == false)
+	zone_skip_cache[name] = skip
+	return not skip
+end
+
+local function zone_entrance(c)
+	local name = c.zone and c.zone:name() or nil
+	if name == nil then return 0 end
+	local cached = entrance_cache[name]
+	if cached ~= nil then return cached end
+	local v = zone_flag(name, "entrance") or 0
+	entrance_cache[name] = v
+	return v
+end
+
+-- ==================================================================
+-- Per-zone настройки из misc\surge_manager.ltx (прогреваются prep_covers)
+-- ==================================================================
+
+-- Строковое значение ключа (nil, если ключа нет).
+local function zone_flag_str(name, key)
+	local m = get_mgr()
+	if m == nil or m.ini == nil then return nil end
+	if not m.ini:line_exist(name, key) then return nil end
+	return m.ini:r_string(name, key)
+end
+
+-- "a, b, c" / "a b c" -> { a=true, b=true, c=true }; nil если пусто.
+-- gmatch сам съедает запятые и пробелы, а лишний ';' (неотрезанный
+-- комментарий из ltx) в множество не попадает.
+local function parse_set(s)
+	if s == nil then return nil end
+	local t = nil
+	for w in s:gmatch("[^,%s;]+") do
+		t = t or {}
+		t[w] = true
+	end
+	return t
+end
+
+local function zone_comm(name)
+	local e = zone_comm_cache[name]
+	if e == nil then
+		e = {
+			allowed    = parse_set(zone_flag_str(name, "allowed_community")),
+			disallowed = parse_set(zone_flag_str(name, "disallowed_community")),
+		}
+		zone_comm_cache[name] = e
+	end
+	return e
+end
+
+local function zone_max_npc(name)
+	local v = zone_cap_cache[name]
+	if v == nil then
+		v = tonumber(zone_flag_str(name, "max_npc") or "") or default_max_npc
+		if v < 0 then v = 0 end
+		zone_cap_cache[name] = v
+	end
+	return v
+end
+
+-- ==================================================================
+-- Занятость укрытий (вместимость). Считаем и тех, кто ещё бежит.
+-- ==================================================================
+
+local function claims_reset()
+	zone_claims = {}
+	npc_claim   = {}
+end
+
+local function release_claim(npc_id)
+	local name = npc_claim[npc_id]
+	if name == nil then return end
+	local t = zone_claims[name]
+	if t ~= nil then
+		t[npc_id] = nil
+		if next(t) == nil then zone_claims[name] = nil end
+	end
+	npc_claim[npc_id] = nil
+end
+
+local function claim_zone(c, npc_id)
+	local name = c.zone:name()
+	if npc_claim[npc_id] == name then return end
+	release_claim(npc_id)
+	local t = zone_claims[name]
+	if t == nil then t = {}; zone_claims[name] = t end
+	t[npc_id] = true
+	npc_claim[npc_id] = name
+end
+
+-- Самоочищение: выкидываем записи, где NPC уже нацелен на другую зону или
+-- чей storage пропал (умер/уничтожен). Так утечка от оффлайна и смерти
+-- не съедает вместимость навсегда.
+local function claims_purge(name)
+	local t = zone_claims[name]
+	if t == nil then return nil end
+	for id in pairs(t) do
+		if npc_claim[id] ~= name or db.storage[id] == nil then
+			t[id] = nil
+			if npc_claim[id] == name then npc_claim[id] = nil end
+		end
+	end
+	if next(t) == nil then
+		zone_claims[name] = nil
+		return nil
+	end
+	return t
+end
+
+local function zone_has_room(c, npc_id)
+	local cap = zone_max_npc(c.zone:name())
+	if cap == 0 then return true end
+	local t = claims_purge(c.zone:name())
+	if t == nil then return true end
+	local n = 0
+	for id in pairs(t) do
+		if id ~= npc_id then n = n + 1 end
+	end
+	return n < cap
+end
+
+-- ==================================================================
+-- Предзаполнение настроек по ВСЕМ зонам сразу
+-- ==================================================================
+
+-- Заполняем кэши на весь список укрытий, а не по одной зоне в горячем
+-- пути. Пересборка списка в surge_manager (init_surge_covers делает
+-- self.covers = {}) ловится по идентичности таблицы m.covers.
+local zone_prep_ref = nil
+
+local function prep_covers(m)
+	if m == nil or m.covers == nil then return end
+	if zone_prep_ref == m.covers then return end
+	zone_prep_ref = m.covers
+
+	-- список зон мог измениться -> кэши пересобираем целиком
+	zone_skip_cache = {}
+	entrance_cache  = {}
+	zone_comm_cache = {}
+	zone_cap_cache  = {}
+
+	local n_comm, n_cap = 0, 0
+	for i = 1, (m.count or 0) do
+		local c = m.covers[i]
+		local name = c and c.zone and c.zone:name() or nil
+		if name ~= nil and zone_comm_cache[name] == nil then
+			local e = zone_comm(name)
+			if e.allowed ~= nil or e.disallowed ~= nil then n_comm = n_comm + 1 end
+			if zone_max_npc(name) > 0 then n_cap = n_cap + 1 end
+			zone_skip_cache[name] = (zone_flag(name, "npc_list") == false)
+			entrance_cache[name]  = zone_flag(name, "entrance") or 0
+		end
+	end
+
+	dbg("зоны подготовлены: %d, с фильтром группировок %d, с лимитом %d",
+	    m.count or 0, n_comm, n_cap)
+end
+
+-- Общая проверка зоны для NPC: npc_list, condlist, community.
+-- Вместимость здесь НАМЕРЕННО не проверяется: иначе уже сидящий NPC
+-- считал бы себя лишним и выселялся. Вместимость — только в nearest_cover.
+local function zone_ok(m, c, npc)
+	if c == nil or c.zone == nil then return false end
+	if not zone_npc_ok(c) then return false end
+	if not m:cover_allowed(c) then return false end
+
+	local e = zone_comm(c.zone:name())
+	if e.allowed ~= nil or e.disallowed ~= nil then
+		local cc = npc:character_community()
+		if e.allowed    ~= nil and not e.allowed[cc]  then return false end
+		if e.disallowed ~= nil and     e.disallowed[cc] then return false end
+	end
+	return true
+end
+
+-- Частый вызов. Сначала проверяем только текущую зону NPC (один нативный
+-- inside), полный скан не чаще scan_period на NPC.
 local function covered_by(npc, st)
-	rebuild_covers()
+	local m = get_mgr()
+	if m == nil or m.count == nil or m.count == 0 then return nil end
+	prep_covers(m)
 
 	local p = npc:position()
-	if st and st.target and st.target.zone:inside(p) then
+	local t = st and st.target
+	if t ~= nil and t.zone ~= nil and t.zone:inside(p, inside_tol) and zone_ok(m, t, npc) then
 		st.scan_t = time_global()
-		return st.target
+		return t
 	end
 
 	local now = time_global()
-	if st and st.scan_t and (now - st.scan_t) < scan_period then
-		return nil
-	end
+	if st and st.scan_t and (now - st.scan_t) < scan_period then return nil end
 	if st then st.scan_t = now end
 
-	for i = 1, #covers do
-		local c = covers[i]
-		if c.zone:inside(p) and zone_ok(c, npc) then
+	for i = 1, m.count do
+		local c = m.covers[i]
+		if c ~= nil and c.zone ~= nil and c.zone:inside(p, inside_tol) and zone_ok(m, c, npc) then
 			if st then st.target = c end
 			return c
 		end
@@ -138,19 +344,37 @@ local function covered_by(npc, st)
 	return nil
 end
 
--- Ближайшая доступная зона. Вызывается только из initialize и при пере-выборе.
-local function nearest_cover(npc)
-	rebuild_covers()
+-- Ближайшая зона-кандидат.
+--   with_room = true -> только там, где есть свободное место (zone_has_room)
+--   skip -> таблица [имя зоны]=true для уже проваленных попыток
+local function nearest_cover(npc, with_room, skip)
+	local m = get_mgr()
+	if m == nil then
+		dbg("nearest_cover: НЕТ surge_manager")
+		return nil
+	end
+	if m.count == nil or m.count == 0 then
+		dbg("nearest_cover: surge_manager.count = 0 (список укрытий пуст)")
+		return nil
+	end
+	prep_covers(m)
 
 	local p    = npc:position()
 	local r2   = search_radius * search_radius
+	local id   = npc:id()
 	local best, best_d = nil, nil
 
-	for i = 1, #covers do
-		local c = covers[i]
-		local d = p:distance_to_sqr(c.pos)
-		if d <= r2 and (best_d == nil or d < best_d) and zone_ok(c, npc) then
-			best, best_d = c, d
+	for i = 1, m.count do
+		local c = m.covers[i]
+		if c ~= nil and c.zone ~= nil then
+			local name = c.zone:name()
+			if (skip == nil or skip[name] ~= true) and zone_ok(m, c, npc) then
+				local d = p:distance_to_sqr(c.zone:position())
+				if d <= r2 and (best_d == nil or d < best_d)
+				   and (not with_room or zone_has_room(c, id)) then
+					best, best_d = c, d
+				end
+			end
 		end
 	end
 	return best
@@ -160,86 +384,106 @@ end
 -- Точка стояния внутри зоны
 -- ==================================================================
 
--- zone:level_vertex_id() может быть u32(-1), поэтому идём от NPC к зоне
--- по графу: 6 дистанций x 8 азимутов, берём первую вершину, которая
--- одновременно доступна NPC, свободна и реально лежит внутри зоны.
-local function seat_in_zone(npc, zone, claim_id)
+local function seat_in_zone(npc, c, claim_id)
+	local zone = c.zone
+
+	-- 1) Ближайшая достижимая вершина к центру зоны. Одна выборка вместо
+	--    перебора направлений, и заведомо достижимая (accessible_nearest).
+	local tmp = vector()
+	local vid = npc:accessible_nearest(zone:position(), tmp)
+	if vid == BADV or not npc:accessible(vid) then vid = BADV end
+
+	if vid ~= BADV
+	   and zone:inside(level.vertex_position(vid), inside_tol)
+	   and (st_claims[vid] == nil or st_claims[vid] == claim_id) then
+		st_claims[vid] = claim_id
+		return vid, "nearest"
+	end
+
+	-- 2) Кольцо проб от NPC в сторону зоны.
 	local from = npc:level_vertex_id()
 	local p, zp = npc:position(), zone:position()
-
 	local dir  = zp:sub(p)
-	local dist = dir:length()
+	local dist = dir:magnitude()
 	if dist < 0.5 then
 		dir = vector():set(math.random() * 2 - 1, 0, math.random() * 2 - 1)
-		if dir:length() < 0.05 then dir = vector():set(0, 0, 1) end
+		if dir:magnitude() < 0.05 then dir = vector():set(0, 0, 1) end
 		dist = 1.0
 	end
 	dir:normalize()
 
-	local base_yaw = math.random(0, 359)
-	for step = 1, 6 do
-		local d = dist * (step / 6.0) + 1.5
+	local yaw0 = math.random(0, 359)
+	for step = 1, 5 do
+		local d = dist * (step / 5.0) + 1.0
 		for k = 0, 7 do
-			local vid = npc:vertex_in_direction(from, vector_rotate_y(dir, base_yaw + k * 45), d)
-			if vid ~= from and vid ~= BADV
-			   and npc:accessible(vid)
-			   and zone:inside(level.vertex_position(vid))
-			   and (st_claims[vid] == nil or st_claims[vid] == claim_id) then
-				st_claims[vid] = claim_id
-				return vid
+			local v = npc:vertex_in_direction(from, vector_rotate_y(dir, yaw0 + k * 45), d)
+			if v ~= from and v ~= BADV
+			   and npc:accessible(v)
+			   and zone:inside(level.vertex_position(v), inside_tol)
+			   and (st_claims[v] == nil or st_claims[v] == claim_id) then
+				st_claims[v] = claim_id
+				return v, "ring"
 			end
 		end
+	end
+
+	-- 3) Зона недостижима по графу — идём к её центру тем, что нашли.
+	--    NPC встанет максимально близко к укрытию.
+	if vid ~= BADV then
+		st_claims[vid] = claim_id
+		return vid, "fallback"
+	end
+	return nil, "none"
+end
+
+-- Единственная точка взгляда, которую мы вообще задаём, — entrance из
+-- misc\surge_manager.ltx (необязательный ключ у секции зоны). Если её
+-- нет, цель не передаётся вовсе, и направление выбирает движок.
+-- Так же в OGSM/OGSE: они вообще не задают look_position для hide_na.
+local function entrance_point(c)
+	local e = zone_entrance(c)
+	if e > 0 and e ~= BADV then
+		local p = level.vertex_position(e)
+		if p ~= nil then return p end
 	end
 	return nil
 end
 
--- Куда смотреть из укрытия: заданный entrance, иначе случайный угол.
-local function look_point(npc, c)
-	if c.entrance and c.entrance > 0 and c.entrance ~= BADV then
-		local p = level.vertex_position(c.entrance)
-		if p ~= nil then return p end
-	end
-
-	local yaw = math.random(0, 359) * R2D
-	local vid = level.vertex_in_direction(npc:level_vertex_id(),
-	                                       vector():set(math.sin(yaw), 0, math.cos(yaw)),
-	                                       look_distance)
-	if vid == BADV then vid = npc:level_vertex_id() end
-	return level.vertex_position(vid)
-end
-
--- state_mgr.set_state пишет в лог на КАЖДЫЙ вызов -> не спамим.
--- Для hide_na так нельзя: точка взгляда передаётся через set_state, поэтому
--- обновлять её нужно даже когда состояние уже то же. Это отдельный хелпер.
+-- state_mgr.set_state пишет в лог на КАЖДЫЙ вызов -> не спамим, когда
+-- состояние уже то же. Для hide_na есть отдельный hold_hide.
 local function set_state(npc, name)
 	if state_mgr.get_state(npc) == name then return end
 	state_mgr.set_state(npc, name)
 end
 
--- Присесть в укрытии и смотреть наружу. hide_na единственное pointable
--- состояние семейства hide (animation = nil -> смотрим в 3D, state_mgr_direction:159).
-local function hold_hide(npc, zone)
-	state_mgr.set_state(npc, "hide_na", nil, nil,
-	                    {look_position = look_point(npc, zone)},
-	                    nil, nil, {yaw_delta = 0.2})
+-- Присесть в укрытии. Точку взгляда задаём ТОЛЬКО при наличии entrance
+-- у зоны, иначе target = nil -> look.danger -> eSightTypeCover: движок
+-- сам выбирает наименее прикрытое направление. Так сделано в OGSM/OGSE.
+-- Рандома и перенаводки нет: каждый set_state с новой look_position
+-- заставляет act_state_mgr_direction_turn снова крутить корпус
+-- (state_mgr_direction.script:101-104) — это и давало вращение на месте.
+local function hold_hide(npc, pt)
+	if pt ~= nil then
+		state_mgr.set_state(npc, "hide_na", nil, nil,
+		                    {look_position = pt}, nil, nil, {yaw_delta = 0.2})
+	else
+		state_mgr.set_state(npc, "hide_na")
+	end
 end
 
 -- ==================================================================
--- Кэш фазы выброса
+-- Фаза выброса: три has_alife_info раз в 500 мс вместо трёх на NPC за тик
 -- ==================================================================
--- Три has_alife_info раз в 500 мс вместо трёх на каждого NPC каждый тик.
 
-local phase_cache, phase_t = 0, 0
+local phase_cache, phase_t = 0, -1
 
 local function surge_phase()
 	local now = time_global()
-	if now - phase_t < 500 then return phase_cache end
+	if phase_t >= 0 and (now - phase_t) < 500 then return phase_cache end
 	phase_t = now
 
-	local m = surge_manager.get_surge_manager()
-	if m == nil or not m.started then
-		phase_cache = 0
-	elseif has_alife_info("olr_blowout_phase_3") then
+	local prev = phase_cache
+	if has_alife_info("olr_blowout_phase_3") then
 		phase_cache = 3
 	elseif has_alife_info("olr_blowout_phase_2") then
 		phase_cache = 2
@@ -248,6 +492,14 @@ local function surge_phase()
 	else
 		phase_cache = 0
 	end
+
+	-- Выброс кончился: снимаем занятость укрытий. Оффлайн-NPC не вызовут
+	-- finalize, поэтому чистим таблицы целиком, а не по одному.
+	if phase_cache == 0 and prev > 0 then
+		claims_reset()
+		dbg("выброс кончился: занятость укрытий сброшена")
+	end
+
 	return phase_cache
 end
 
@@ -266,6 +518,7 @@ function action_olr_hideout:initialize()
 	action_base.initialize(self)
 
 	local npc, st = self.object, self.st
+	dbg("%s: ДЕЙСТВИЕ ВЫБРАНО планировщиком, фаза %d", npc:name(), surge_phase())
 
 	npc:disable_talk()
 	npc:clear_animations()
@@ -283,31 +536,66 @@ function action_olr_hideout:initialize()
 	st.retry_t, st.stall_t   = time_global(), time_global()
 	st.scan_t               = 0
 	st.last_pos             = npc:position()
-	st.killed, st.look_t    = false, 0
+	st.killed               = false
+	st.giveup_t             = 0
 
-	if not self:drive_to(nil) then self:panic_here() end
+	local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "не удалось выбрать укрытие") end
 end
 
 -- Отправить NPC в укрытие. c == nil -> выбрать ближайшую зону.
 function action_olr_hideout:drive_to(c)
 	local npc, st = self.object, self.st
+	local id = npc:id()
+	local vid, how
 
-	if c == nil then c = nearest_cover(npc) end
 	if c == nil then
-		st.target, st.vid = nil, nil
-		return false
+		-- Фаза A: до cover_attempts попыток взять ближайшую зону, где ЕСТЬ
+		-- свободное место. Провалившиеся по посадке помечаем в skip на этот
+		-- цикл, чтобы не долбиться в них повторно.
+		local skip = {}
+		for _ = 1, cover_attempts do
+			local cand = nearest_cover(npc, true, skip)
+			if cand == nil then break end
+			vid, how = seat_in_zone(npc, cand, id)
+			if vid ~= nil then c = cand; break end
+			skip[cand.zone:name()] = true
+			dbg("%s: в %s нет свободного места, пробую дальше", npc:name(), cand.zone:name())
+		end
+
+		-- Фаза B: всё занято -> идём в ближайшую разрешённую всё равно.
+		-- NPC не должен залипать на месте из-за лимита вместимости.
+		if c == nil and allow_overfill then
+			local cand = nearest_cover(npc, false, skip)
+			if cand ~= nil then
+				local v2, h2 = seat_in_zone(npc, cand, id)
+				if v2 ~= nil then
+					c, vid, how = cand, v2, h2
+					dbg("%s: всё занято, иду в %s (переполнение)", npc:name(), cand.zone:name())
+				end
+			end
+		end
+
+		if c == nil then
+			st.target, st.vid = nil, nil
+			local m = get_mgr()
+			dbg("%s (%s): нет подходящей зоны укрытия, всего зон %d",
+			    npc:name(), npc:character_community(), m and m.count or -1)
+			return false, "нет подходящей зоны укрытия"
+		end
+	else
+		vid, how = seat_in_zone(npc, c, id)
+		if vid == nil then
+			st.target, st.vid = c, nil
+			return false, "нет точки стояния в зоне " .. c.zone:name()
+		end
 	end
 
 	local old_vid = st.vid
-	local vid = seat_in_zone(npc, c.zone, npc:id())
 	if old_vid ~= nil and old_vid ~= vid then st_claims[old_vid] = nil end
 
-	if vid == nil then
-		st.target, st.vid = c, nil
-		return false
-	end
-
 	st.target, st.vid = c, vid
+	claim_zone(c, id)
+
 	npc:set_dest_level_vertex_id(vid)
 	npc:set_desired_position(level.vertex_position(vid))
 	npc:set_detail_path_type(move.line)
@@ -318,17 +606,23 @@ function action_olr_hideout:drive_to(c)
 	st.last_pos = npc:position()
 	st.stall_t  = time_global()
 
-	if debug then log1("[olr_hideout] " .. npc:name() .. " -> " .. c.name) end
+	dbg("%s -> %s, vid=%d (%s)", npc:name(), c.zone:name(), vid, how)
 	return true
 end
 
 -- Укрытия нет: замирает на месте. Опционально — умирает на фазе 3.
-function action_olr_hideout:panic_here()
+-- Логирует ВСЕГДА, это главный диагностический путь.
+function action_olr_hideout:panic_here(why)
 	local npc, st = self.object, self.st
 
 	set_state(npc, "psycho_pain")
 	npc:set_desired_position()
 	npc:set_movement_type(move.stand)
+
+	if why ~= nil then
+		st.giveup_t = time_global()
+		dbg("%s остаётся на месте: %s", npc:name(), why)
+	end
 
 	if kill_unhided and not st.killed and surge_phase() >= 3 then
 		st.killed = true
@@ -339,7 +633,7 @@ function action_olr_hideout:panic_here()
 		h.direction = vector():set(0, 0, 1)
 		h.draftsman = npc
 		npc:hit(h)
-		if debug then log1("[olr_hideout] killed " .. npc:name()) end
+		dbg("%s убит (kill_unhided)", npc:name())
 	end
 end
 
@@ -354,17 +648,27 @@ function action_olr_hideout:execute()
 	-- =================== ВНУТРИ УКРЫТИЯ ===================
 	if zone ~= nil then
 		if st.holding and st.hold_zone ~= zone then
-			self:drive_to(zone)                                  -- переехал в другую зону
+			-- оказались внутри ДРУГОЙ зоны: пересаживаемся и запоминаем новую.
+			-- (старый код не обновлял hold_zone -> drive_to звался каждый тик,
+			--  а seat_in_zone рандомит вершину кольца -> скачка цели каждый кадр)
+			st.hold_zone = zone
+			st.look_pos  = entrance_point(zone)
+			claim_zone(zone, npc:id())
+			self:drive_to(zone)
 		elseif not st.holding then
 			st.holding, st.hold_zone = true, zone
-			hold_hide(npc, zone)
+			st.look_pos = entrance_point(zone)          -- ОДИН раз, без рандома
+			claim_zone(zone, npc:id())
+			hold_hide(npc, st.look_pos)
 			npc:set_desired_position()
 			npc:set_movement_type(move.stand)
-			st.look_t = now
-			if debug then log1("[olr_hideout] " .. npc:name() .. " hides in " .. zone.name) end
-		elseif now - st.look_t > look_period then
-			st.look_t = now
-			hold_hide(npc, zone)
+			dbg("%s спрятался в %s", npc:name(), zone.zone:name())
+		elseif npc:level_vertex_id() == st.vid
+		   and state_mgr.get_state(npc) ~= "hide_na" then
+			-- страховка: кто-то перебил target_state, пока мы на месте.
+			-- Только на своей вершине — иначе помешаем переходу "assault".
+			hold_hide(npc, st.look_pos)
+			dbg("%s: вернул hide_na в %s", npc:name(), zone.zone:name())
 		end
 		return
 	end
@@ -373,7 +677,11 @@ function action_olr_hideout:execute()
 	st.holding, st.hold_zone = false, nil
 
 	if st.vid == nil then
-		self:panic_here()
+		-- укрытия нет: держим psycho_pain, но не мечемся каждый тик
+		if now - st.giveup_t > cover_retry then
+			local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "подобрать укрытие не вышло") end
+		end
+		if st.vid == nil then self:panic_here() end
 		return
 	end
 
@@ -383,17 +691,19 @@ function action_olr_hideout:execute()
 	-- застрял: не двигаемся дольше stall_timeout
 	if sp ~= nil and sp:distance_to_sqr(p) < stall_eps and now - st.stall_t > stall_timeout then
 		st.stall_t = now
-		if not self:drive_to(nil) then self:panic_here() end
+		local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "застрял, перевыбор не помог") end
 		return
 	end
 	st.last_pos = p
 
-	-- маршрут могли перебить или вершина стала недоступной
+	-- маршрут могли перебить, вершина стала недоступной или зона запрещена
 	if now - st.retry_t > recheck then
 		st.retry_t = now
-		if not npc:accessible(st.vid)
+		local m = get_mgr()
+		if (m ~= nil and st.target ~= nil and not zone_ok(m, st.target, npc))
+		   or not npc:accessible(st.vid)
 		   or p:distance_to_sqr(level.vertex_position(st.vid)) > 400 then
-			if not self:drive_to(nil) then self:panic_here() end
+			local ok, why = self:drive_to(nil); if not ok then self:panic_here(why or "маршрут сбит, перевыбор не помог") end
 			return
 		end
 	end
@@ -412,6 +722,7 @@ function action_olr_hideout:finalize()
 	if npc == nil then return end
 
 	if st.vid ~= nil then st_claims[st.vid] = nil end
+	release_claim(npc:id())
 
 	npc:set_desired_position()
 	npc:set_desired_direction()
@@ -430,7 +741,9 @@ function action_olr_hideout:finalize()
 	st.target, st.vid        = nil, nil
 	st.last_pos, st.scan_t   = nil, 0
 	st.retry_t, st.stall_t   = nil, nil
-	st.killed, st.look_t     = false, 0
+	st.killed               = false
+	st.look_pos              = nil
+	st.giveup_t              = 0
 
 	-- Состояние НЕ восстанавливаем: act_state_mgr_to_idle вернёт "idle"
 	-- сам, как только мы снимем гейт state_mgr+1/+2 на следующем цикле
@@ -453,15 +766,27 @@ function evaluator_olr_hideout:evaluate()
 	if st == nil or not st.enabled or not enabled then return false end
 
 	-- самый дешёвый ранний выход: вне выброса стоит одно чтение поля
-	local m = surge_manager.get_surge_manager()
-	if m == nil or not m.started then return false end
+	local m = get_mgr()
+	if m == nil then return false end
+	if m.started ~= true then
+		dbg_throttled(2000, "ждём выброса: started=%s, укрытий в реестре %d",
+			tostring(m.started), m.count or -1)
+		return false
+	end
+
 	if surge_manager.no_blow_levels[level.name()] then return false end
 	if surge_phase() < 1 then return false end
 
 	local npc = self.object
 	if olr_protected.is_no_offline_alife_obj(npc:name()) then return false end
-	if covered_by(npc, st) ~= nil then return false end
 
+	if debug then
+		local now = time_global()
+		if st.say_t == nil or (now - st.say_t) > 2000 then
+			st.say_t = now
+			dbg("%s бежит в укрытие (фаза %d)", npc:name(), surge_phase())
+		end
+	end
 	return true
 end
 
@@ -469,29 +794,55 @@ end
 -- Привязка к планировщику
 -- ==================================================================
 
--- Глобальный хук: вешаем прекондишен на ВСЕ чужие действия, которые
--- прошли через xr_motivator.addCommonPrecondition (19 точек вызова:
--- walker, kamp, patrol, camper, sleeper, remark, guide, robbers, test,
--- zoneguard, comm_ptr, trade, trade_agree). Собственное действие
--- исключаем флагом, иначе оно станет невыбираемым.
-local function on_common_precondition(action)
-	if action == nil or action.olr_hideout_own then return end
-	action:add_precondition(world_property(ev_hideout, false))
-end
+-- Враг не должен удерживать NPC в бою, пока идёт выброс.
+-- Механизм из NLC7 blowout_scheme.script (функция ecall) и
+-- SIMBION-SHOC m_ai_blowout.script:600-616.
+-- Вне выброса ведём себя как обычно, поэтому гейт по surge_phase.
+-- Цепочка к combat_ignore обязательна: xr_combat_ignore.script:94
+-- тоже ставит set_enemy_callback и перетрёт наш.
+local forget_dist = 130.0    -- м, дальше этого расстояния враг забывается
 
+local function enemy_callback(_, npc, enemy)
+	local st = db.storage[npc:id()]
+	if st ~= nil and surge_phase() >= 1 then
+		if npc:position():distance_to(enemy:position()) > forget_dist then
+			npc:enable_memory_object(enemy, false)
+			return false
+		end
+	end
+	if st ~= nil and st.combat_ignore ~= nil and st.combat_ignore.action ~= nil
+	and st.combat_ignore.action.enemy_callback ~= nil then
+		return st.combat_ignore.action:enemy_callback(npc, enemy)
+	end
+	return true
+end
 function add_to_binder(object, char_ini, scheme, section, st)
 	local manager = object:motivation_action_manager()
 
 	manager:add_evaluator(ev_hideout, evaluator_olr_hideout(st))
 
 	local action = action_olr_hideout(st)
-	action.olr_hideout_own = true
+	-- property_enemy / danger / anomaly НАМЕРЕННО НЕ выставлены: действие
+	-- "бежать в укрытие" обязано выигрывать у боя, иначе NPC с врагом
+	-- вообще не выберется. Так же в NLC7 action_runtohide и SIMBION-SHOC
+	-- ac_runtohide. Запрет на бой есть только на действии "сидеть в укрытии"
+	-- (ветка zone ~= nil внутри execute).
+	--
+	-- add_effect НИЖЕ ОБЯЗАТЕЛЕН. Планировщик сталкера - GOAP, не список
+	-- приоритетов: action_planner_inline.h:65 solve() -> A*, цель
+	-- {PuzzleSolved=true} (stalker_planner.cpp:67), её даёт только alife_planner
+	-- (stalker_planner.cpp:160), а он закрыт нами через ev_hideout == false.
+	-- Оператор без эффектов - петля сама на себя, A* её не берёт, и
+	-- solution().front() никогда не станет act_hideout. Эффект снимает блокер
+	-- в СИМУЛЯЦИИ, план становится
+	-- [act_hideout -> (combat/danger/anomaly) -> alife_planner],
+	-- и первым шагом идём мы. Вне симуляции значение всегда даёт evaluator,
+	-- поэтому ev_hideout == true весь выброс (см. evaluator_olr_hideout).
+	-- Так же NLC7 blowout_scheme.script:638-640 и OGSM/OGSE/SHOC.
 	action:add_precondition(world_property(stalker_ids.property_alive,   true))
-	action:add_precondition(world_property(stalker_ids.property_enemy,   false))
-	action:add_precondition(world_property(stalker_ids.property_danger,  false))
-	action:add_precondition(world_property(stalker_ids.property_anomaly, false))
 	action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
 	action:add_precondition(world_property(ev_hideout, true))
+	action:add_effect(world_property(ev_hideout, false))
 	manager:add_action(act_hideout, action)
 
 	-- Глушим чужие операторы.
@@ -501,23 +852,31 @@ function add_to_binder(object, char_ini, scheme, section, st)
 	-- (строка 48) отрабатывает до net_spawn -> configure_schemes, так что
 	-- 162/163 обычно уже на месте, но на всякий случай не падаем.
 
+	local gated = 0
 	local operator = manager:action(stalker_ids.action_alife_planner)
-	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+	if operator then operator:add_precondition(world_property(ev_hideout, false)); gated = gated + 1 end
 
 	operator = manager:action(stalker_ids.action_combat_planner)
-	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+	if operator then operator:add_precondition(world_property(ev_hideout, false)); gated = gated + 1 end
 
 	operator = manager:action(stalker_ids.action_anomaly_planner)
-	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+	if operator then operator:add_precondition(world_property(ev_hideout, false)); gated = gated + 1 end
 
 	operator = manager:action(stalker_ids.action_danger_planner)
-	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+	if operator then operator:add_precondition(world_property(ev_hideout, false)); gated = gated + 1 end
 
 	operator = manager:action(xr_actions_id.state_mgr + 1)
-	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+	if operator then operator:add_precondition(world_property(ev_hideout, false)); gated = gated + 1 end
 
 	operator = manager:action(xr_actions_id.state_mgr + 2)
-	if operator then operator:add_precondition(world_property(ev_hideout, false)) end
+	if operator then operator:add_precondition(world_property(ev_hideout, false)); gated = gated + 1 end
+
+	object:set_enemy_callback(enemy_callback, nil)
+
+	if db.storage[object:id()].olr_hideout ~= nil and db.storage[object:id()].olr_hideout.bound == nil then
+		db.storage[object:id()].olr_hideout.bound = true
+		dbg("%s: бинд схемы, закрыто операторов: %d", object:name(), gated)
+	end
 end
 
 -- ==================================================================
@@ -525,19 +884,22 @@ end
 -- ==================================================================
 
 function init()
+	dbg("модуль загружен, схема olr_hideout, ev=%d act=%d", ev_hideout, act_hideout)
 	core.ac("load_scheme", xrs_load_scheme)
 	core.ac("logic_enable_schemes", set_scheme)
 	core.ac("logic_disable_schemes", disable_scheme)
-	core.ac("motivator_addCommonPrecondition", on_common_precondition)
 end
 
 function xrs_load_scheme()
 	load_scheme("olr_ai_hideout", "olr_hideout", modules.stype_stalker)
+	dbg("схема зарегистрирована")
 end
 
 function set_scheme(ini, object, scheme, section)
+	local first = db.storage[object:id()].olr_hideout == nil
 	local st = xr_logic.assign_storage_and_bind(object, ini, "olr_hideout", "olr_hideout")
 	st.enabled = true
+	if first then dbg("%s: set_scheme, первый bind", object:name()) end
 end
 
 function disable_scheme(npc, scheme)

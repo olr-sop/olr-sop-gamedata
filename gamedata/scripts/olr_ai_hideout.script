@@ -1023,7 +1023,8 @@ end
 -- (стадия reinit), задолго до выброса; ~1.5 с при 60 fps.
 -- ==================================================================
 
-local zone_pre_i, zone_pre_t, zone_pre_done = 1, 0, false
+local zone_pre_i, zone_pre_done = 1, false
+local zone_pre_budget = 2   -- мс на вызов (кадр), чтобы не ловить фризы
 local zone_pre_ref = nil
 local zone_pre_noseat = 0
 local zone_pre_noseat_names = {}
@@ -1037,25 +1038,25 @@ local function precompute_step(m)
 		zone_pre_noseat, zone_pre_noseat_names = 0, {}
 	end
 
-	local now = time_global()
-	if now - zone_pre_t < 50 then return end
-	zone_pre_t = now
-
-	local c = m.covers[zone_pre_i]
-	if c ~= nil and c.zone ~= nil then
-		local list = zone_verts(c)
-		if #list == 0 then
-			zone_pre_noseat = zone_pre_noseat + 1
-			zone_pre_noseat_names[#zone_pre_noseat_names + 1] = c.zone:name()
+	-- бюджет по времени кадра: считаем зоны, пока не потратили zone_pre_budget мс
+	local t0 = time_global()
+	while (not zone_pre_done) and (time_global() - t0) < zone_pre_budget do
+		local c = m.covers[zone_pre_i]
+		if c ~= nil and c.zone ~= nil then
+			local list = zone_verts(c)
+			if #list == 0 then
+				zone_pre_noseat = zone_pre_noseat + 1
+				zone_pre_noseat_names[#zone_pre_noseat_names + 1] = c.zone:name()
+			end
 		end
-	end
 
-	zone_pre_i = zone_pre_i + 1
-	if zone_pre_i > m.count then
-		zone_pre_done = true
-		dbg("разогрев зон завершён: %d, без мест %d%s", m.count, zone_pre_noseat,
-		    (#zone_pre_noseat_names > 0)
-		        and (": " .. table.concat(zone_pre_noseat_names, ", ")) or "")
+		zone_pre_i = zone_pre_i + 1
+		if zone_pre_i > m.count then
+			zone_pre_done = true
+			dbg("разогрев зон завершён: %d, без мест %d%s", m.count, zone_pre_noseat,
+			    (#zone_pre_noseat_names > 0)
+			        and (": " .. table.concat(zone_pre_noseat_names, ", ")) or "")
+		end
 	end
 end
 
@@ -1084,6 +1085,13 @@ function evaluator_olr_hideout:evaluate()
 	if m.started ~= true then
 		dbg_throttled(2000, "ждём выброса: started=%s, укрытий в реестре %d",
 			tostring(m.started), m.count or -1)
+		return false
+	end
+
+	-- укрытия ещё не построены (первый кадр после загрузки сейва/уровня):
+	-- не выбираем действие, иначе panic_here + 10-секундный ретрай
+	if (m.count or 0) == 0 then
+		dbg_throttled(2000, "ждём список укрытий: count=0")
 		return false
 	end
 

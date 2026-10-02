@@ -70,13 +70,12 @@ local act_hideout = olr_hideout_operator
 
 local BADV = 4294967295                        -- u32(-1)
 
--- Настройки. Правятся здесь, в файле.
+-- Настройки.
 local enabled       = true    -- общий выключатель схемы
 local search_radius = 150.0   -- м, максимальный радиус поиска зоны укрытия
 local seat_tol      = 0.0     -- м, допуск zone:inside: 0 = СТРОГО внутри зоны
 local cover_tol     = 0.0     -- м, допуск zone:inside при проверке "я укрыт"
 local recheck       = 3000    -- МС между проверками достижимости маршрута (time_global в мс)
-local scan_period   = 400     -- МС, как часто полный скан зон на NPC
 local cover_retry   = 10000   -- МС между попытками найти укрытие, если не вышло
 local kill_unhided  = false   -- ВАРИАНТ 2: убивать не укрывшихся на фазе 3
 local kill_power    = 5.0     -- мощность взрыва при kill_unhided
@@ -92,7 +91,13 @@ local zone_scan_max_half = 25.0  -- м, предел роста скана зоны (укрытия небольши
 local zone_clear_max     = 8.0   -- м, максимум просвета места (дальше не считаем)
 local zone_clear_step    = 0.5   -- м, шаг луча при замере просвета
 local seat_progress_eps  = 1.0   -- м, шаг «приблизился к своему месту»
-local dump_covers_on_prep  = true  -- печатать дамп всех укрытий при первой подготовке списка
+
+-- Поза в укрытии: случайная из набора (как в ванильном ЧН xr_surge_hide.script)
+-- плюс курение; смена раз в 10-15 ИГРОВЫХ минут.
+local hold_states    = { "wait", "sit", "sit_ass", "sit_knee", "kurit_stoya", "kurit_sidya" }
+local hold_sec_min   = 600    -- игровых секунд до смены позы (10 мин)
+local hold_sec_max   = 900    -- игровых секунд до смены позы (15 мин)
+local hold_check_ms  = 10000  -- реальных мс между проверками игрового таймера
 
 -- Необязательные per-zone ключи в misc\surge_manager.ltx, читаются если есть:
 --   [<имя зоны>] npc_list    = false    -- зона только для игрока, NPC её игнорируют
@@ -333,7 +338,6 @@ local function prep_covers(m)
 
 	dbg("зоны подготовлены: %d, с фильтром группировок %d, с лимитом %d",
 	    m.count or 0, n_comm, n_cap)
-	if debug and dump_covers_on_prep then dump_covers() end
 end
 
 -- Общая проверка зоны для NPC: npc_list, condlist, community.
@@ -351,34 +355,6 @@ local function zone_ok(m, c, npc)
 		if e.disallowed ~= nil and     e.disallowed[cc] then return false end
 	end
 	return true
-end
-
--- Частый вызов. Сначала проверяем только текущую зону NPC (один нативный
--- inside), полный скан не чаще scan_period на NPC.
-local function covered_by(npc, st)
-	local m = get_mgr()
-	if m == nil or m.count == nil or m.count == 0 then return nil end
-	prep_covers(m)
-
-	local p = npc:position()
-	local t = st and st.target
-	if t ~= nil and t.zone ~= nil and t.zone:inside(p, cover_tol) and zone_ok(m, t, npc) then
-		st.scan_t = time_global()
-		return t
-	end
-
-	local now = time_global()
-	if st and st.scan_t and (now - st.scan_t) < scan_period then return nil end
-	if st then st.scan_t = now end
-
-	for i = 1, m.count do
-		local c = m.covers[i]
-		if c ~= nil and c.zone ~= nil and c.zone:inside(p, cover_tol) and zone_ok(m, c, npc) then
-			if st then st.target = c end
-			return c
-		end
-	end
-	return nil
 end
 
 -- Ближайшая зона-кандидат.
@@ -655,18 +631,26 @@ local function set_state(npc, name)
 	state_mgr.set_state(npc, name)
 end
 
--- Присесть в укрытии. Точку взгляда задаём ТОЛЬКО при наличии entrance
--- у зоны, иначе target = nil -> look.danger -> eSightTypeCover: движок
--- сам выбирает наименее прикрытое направление. Так сделано в OGSM/OGSE.
--- Рандома и перенаводки нет: каждый set_state с новой look_position
--- заставляет act_state_mgr_direction_turn снова крутить корпус
+-- Случайное направление взгляда: азимут выбирается ОДИН раз на посадку,
+-- чтобы NPC не вертелись и не смотрели все в одну точку (как в ЧН).
+local function random_look_point(npc)
+	local p = npc:position()
+	local dir = vector_rotate_y(vector():set(1, 0, 0), math.random(0, 359))
+	return vector():set(p.x + dir.x * 10.0, p.y, p.z + dir.z * 10.0)
+end
+
+-- Садимся в укрытии. Поза — из hold_states; взгляд: entrance зоны, иначе
+-- случайный азимут. Взгляд задаётся ОДИН раз и при смене позы не меняется:
+-- каждый set_state с новой look_position заставляет
+-- act_state_mgr_direction_turn снова крутить корпус
 -- (state_mgr_direction.script:101-104) — это и давало вращение на месте.
-local function hold_hide(npc, pt)
+local function hold_hide(npc, pt, state_name)
+	state_name = state_name or "wait"
 	if pt ~= nil then
-		state_mgr.set_state(npc, "hide_na", nil, nil,
+		state_mgr.set_state(npc, state_name, nil, nil,
 		                    {look_position = pt}, nil, nil, {yaw_delta = 0.2})
 	else
-		state_mgr.set_state(npc, "hide_na")
+		state_mgr.set_state(npc, state_name)
 	end
 end
 
@@ -732,14 +716,13 @@ function action_olr_hideout:initialize()
 	npc:set_mental_state(anim.danger)
 
 	st.holding, st.hold_zone = false, nil
-	st.retry_t, st.stall_t   = time_global(), time_global()
-	st.scan_t               = 0
-	st.last_pos             = npc:position()
+	st.retry_t              = time_global()
 	st.killed               = false
 	st.giveup_t             = 0
-	st.best_d, st.best_t     = nil, nil
 	st.seat_t, st.seat_give, st.seat_best  = time_global(), false, nil
+	st.seat_pos             = nil
 	st.skip_zone             = {}
+	st.hold_state, st.hold_time, st.hold_next, st.hold_check = nil, nil, nil, nil
 
 	local ok, why = self:drive_to(nil, "initialize"); if not ok then self:panic_here(why or "не удалось выбрать укрытие") end
 end
@@ -799,27 +782,23 @@ function action_olr_hideout:drive_to(c, who)
 	if old_vid ~= nil and old_vid ~= vid then st_claims[old_vid] = nil end
 
 	st.target, st.vid = c, vid
+	st.seat_pos = level.vertex_position(vid)
 	st.seat_t, st.seat_give, st.seat_best = time_global(), false, nil
 	claim_zone(c, id)
 
 	npc:set_dest_level_vertex_id(vid)
-	npc:set_desired_position(level.vertex_position(vid))
+	npc:set_desired_position(st.seat_pos)
 	npc:set_detail_path_type(move.line)
 	npc:set_path_type(game_object.level_path)
 	npc:set_movement_type(move.run)
-	set_state(npc, "assault")
-
-	st.last_pos = npc:position()
-	st.stall_t  = time_global()
+	set_state(npc, "run")
 
 	do
-		local vz = level.vertex_position(vid)
-		st.best_d = st.last_pos:distance_to(vz)
-		st.best_t = st.stall_t
+		local vz = st.seat_pos
 		dbg("%s [%s] -> %s, vid=%d (%s), vert=(%.0f,%.0f,%.0f) dist_center=%.1f dist_npc=%.1f",
 		    npc:name(), who, c.zone:name(), vid, how,
 		    vz.x, vz.y, vz.z,
-		    vz:distance_to(c.zone:center()), st.best_d)
+		    vz:distance_to(c.zone:center()), npc:position():distance_to(vz))
 	end
 	return true
 end
@@ -887,15 +866,16 @@ function action_olr_hideout:execute()
 
 		-- предохранитель по ПРОГРЕССУ (не по времени): стоим на месте ->
 		-- место/зона физически недостижимы, перевыбираем (снаружи не садимся).
-		local dseat = p:distance_to(level.vertex_position(st.vid))
+		local seat_pos = st.seat_pos or level.vertex_position(st.vid)
+		local dseat = p:distance_to(seat_pos)
 		if st.seat_best == nil or dseat < st.seat_best - seat_progress_eps then
 			st.seat_best, st.seat_t = dseat, now
 		end
 		if now - st.seat_t <= progress_timeout then
 			npc:set_dest_level_vertex_id(st.vid)
-			npc:set_desired_position(level.vertex_position(st.vid))
+			npc:set_desired_position(seat_pos)
 			npc:set_movement_type(move.run)
-			set_state(npc, "assault")
+			set_state(npc, "run")
 			return
 		end
 
@@ -921,12 +901,13 @@ function action_olr_hideout:execute()
 	-- своего места нет или его перехватили -> берём свободное ЗДЕСЬ
 	if st.vid ~= nil then
 		local owner = st_claims[st.vid]
-		if owner ~= nil and owner ~= id then st.vid = nil end
+		if owner ~= nil and owner ~= id then st.vid, st.seat_pos = nil, nil end
 	end
 	if st.vid == nil then
 		st.holding, st.hold_zone = false, nil
 		st.vid = seat_in_zone(npc, c, id, nil, false)
 		if st.vid ~= nil then
+			st.seat_pos = level.vertex_position(st.vid)
 			st.seat_t, st.seat_give, st.seat_best = now, false, nil
 		else
 			-- свободных мест в этом укрытии нет -> помечаем его и идём в другое
@@ -941,7 +922,8 @@ function action_olr_hideout:execute()
 	-- фиксированному времени, а по отсутствию ПРОГРЕССА: иначе NPC бросает
 	-- глубокое место просто потому, что идёт медленно.
 	if not st.seat_give then
-		local dseat = p:distance_to(level.vertex_position(st.vid))
+		local seat_pos = st.seat_pos or level.vertex_position(st.vid)
+		local dseat = p:distance_to(seat_pos)
 		if dseat > arrive_near then
 			st.holding, st.hold_zone = false, nil
 			if st.seat_best == nil or dseat < st.seat_best - seat_progress_eps then
@@ -949,9 +931,9 @@ function action_olr_hideout:execute()
 			end
 			if now - st.seat_t <= progress_timeout then
 				npc:set_dest_level_vertex_id(st.vid)
-				npc:set_desired_position(level.vertex_position(st.vid))
+				npc:set_desired_position(seat_pos)
 				npc:set_movement_type(move.run)
-				set_state(npc, "assault")
+				set_state(npc, "run")
 				return
 			end
 			st.seat_give = true
@@ -960,21 +942,40 @@ function action_olr_hideout:execute()
 		end
 	end
 
-	-- садимся. hold_hide зовём ОДИН раз на входе (или если состояние
-	-- перебили) — state_mgr пишет лог на каждый вызов и перепланирует.
+	-- садимся. Поза выбирается случайно из hold_states и меняется раз в
+	-- 10-15 игровых минут; взгляд задаётся ОДИН раз (entrance или случайный
+	-- азимут) и при смене позы не меняется — иначе NPC начнут вертеться.
 	if not st.holding then
 		st.holding, st.hold_zone = true, c
-		st.look_pos = entrance_point(c)
+		st.look_pos   = entrance_point(c) or random_look_point(npc)
+		st.hold_state = hold_states[math.random(#hold_states)]
+		st.hold_time  = game.get_game_time()
+		st.hold_next  = math.random(hold_sec_min, hold_sec_max)
+		st.hold_check = now
 		claim_zone(c, id)
-		hold_hide(npc, st.look_pos)
+		hold_hide(npc, st.look_pos, st.hold_state)
 		npc:set_desired_position()
 		npc:set_movement_type(move.stand)
-		dbg("%s спрятался в %s | pos=(%.0f,%.0f,%.0f) vid=%s inside=%s",
-		    npc:name(), c.zone:name(), p.x, p.y, p.z, tostring(st.vid),
+		dbg("%s спрятался в %s | поза=%s pos=(%.0f,%.0f,%.0f) vid=%s inside=%s",
+		    npc:name(), c.zone:name(), st.hold_state, p.x, p.y, p.z, tostring(st.vid),
 		    tostring(c.zone:inside(p, cover_tol)))
-	elseif state_mgr.get_state(npc) ~= "hide_na" then
-		hold_hide(npc, st.look_pos)
-		dbg("%s: вернул hide_na", npc:name())
+	else
+		-- смена позы по ИГРОВЫМ минутам (проверка не чаще hold_check_ms,
+		-- чтобы не создавать userdata game.get_game_time() каждый кадр)
+		if now - (st.hold_check or 0) >= hold_check_ms then
+			st.hold_check = now
+			if game.get_game_time():diffSec(st.hold_time) >= (st.hold_next or hold_sec_min) then
+				st.hold_state = hold_states[math.random(#hold_states)]
+				st.hold_time  = game.get_game_time()
+				st.hold_next  = math.random(hold_sec_min, hold_sec_max)
+				hold_hide(npc, st.look_pos, st.hold_state)
+			end
+		end
+		local cur = state_mgr.get_state(npc)
+		if cur ~= nil and cur ~= st.hold_state then
+			hold_hide(npc, st.look_pos, st.hold_state)
+			dbg("%s: вернул состояние укрытия (%s)", npc:name(), tostring(st.hold_state))
+		end
 	end
 end
 
@@ -1002,18 +1003,60 @@ function action_olr_hideout:finalize()
 	st.saved_mental          = nil
 	st.holding, st.hold_zone = false, nil
 	st.target, st.vid        = nil, nil
-	st.last_pos, st.scan_t   = nil, 0
-	st.retry_t, st.stall_t   = nil, nil
+	st.retry_t               = nil
 	st.killed               = false
 	st.look_pos              = nil
 	st.giveup_t              = 0
-	st.best_d, st.best_t     = nil, nil
 	st.seat_t, st.seat_give, st.seat_best = nil, false, nil
+	st.seat_pos              = nil
 	st.skip_zone             = {}
+	st.hold_state, st.hold_time, st.hold_next, st.hold_check = nil, nil, nil, nil
 
 	-- Состояние НЕ восстанавливаем: act_state_mgr_to_idle вернёт "idle"
 	-- сам, как только мы снимем гейт state_mgr+1/+2 на следующем цикле
 	-- планировщика. Не дёргаем set_state сами — не спорим с state_mgr.
+end
+
+-- ==================================================================
+-- Разогрев кэша зон (по одной за вызов): к моменту выбора укрытия NPC
+-- уже знает куда бежать. Запускается, как только укрытия загружены
+-- (стадия reinit), задолго до выброса; ~1.5 с при 60 fps.
+-- ==================================================================
+
+local zone_pre_i, zone_pre_t, zone_pre_done = 1, 0, false
+local zone_pre_ref = nil
+local zone_pre_noseat = 0
+local zone_pre_noseat_names = {}
+
+local function precompute_step(m)
+	if zone_pre_done or m == nil or m.covers == nil or (m.count or 0) == 0 then return end
+
+	-- список зон сменился (перезагрузка уровня) -> начинаем заново
+	if zone_pre_ref ~= m.covers then
+		zone_pre_ref, zone_pre_i, zone_pre_done = m.covers, 1, false
+		zone_pre_noseat, zone_pre_noseat_names = 0, {}
+	end
+
+	local now = time_global()
+	if now - zone_pre_t < 50 then return end
+	zone_pre_t = now
+
+	local c = m.covers[zone_pre_i]
+	if c ~= nil and c.zone ~= nil then
+		local list = zone_verts(c)
+		if #list == 0 then
+			zone_pre_noseat = zone_pre_noseat + 1
+			zone_pre_noseat_names[#zone_pre_noseat_names + 1] = c.zone:name()
+		end
+	end
+
+	zone_pre_i = zone_pre_i + 1
+	if zone_pre_i > m.count then
+		zone_pre_done = true
+		dbg("разогрев зон завершён: %d, без мест %d%s", m.count, zone_pre_noseat,
+		    (#zone_pre_noseat_names > 0)
+		        and (": " .. table.concat(zone_pre_noseat_names, ", ")) or "")
+	end
 end
 
 -- ==================================================================
@@ -1034,6 +1077,10 @@ function evaluator_olr_hideout:evaluate()
 	-- самый дешёвый ранний выход: вне выброса стоит одно чтение поля
 	local m = get_mgr()
 	if m == nil then return false end
+
+	-- разогрев кэша зон (идёт и вне выброса): по одной зоне за вызов
+	precompute_step(m)
+
 	if m.started ~= true then
 		dbg_throttled(2000, "ждём выброса: started=%s, укрытий в реестре %d",
 			tostring(m.started), m.count or -1)
@@ -1082,54 +1129,8 @@ local function enemy_callback(_, npc, enemy)
 	end
 	return true
 end
--- ==================================================================
--- ОТЛАДКА: пройтись по ВСЕМ укрытиям и проверить их вершины.
--- Вызов из консоли игры:  run_string olr_ai_hideout.dump_covers()
--- ==================================================================
-function dump_covers()
-	local m = get_mgr()
-	if m == nil or m.count == nil then
-		log1("[olr_hideout] dump_covers: нет surge_manager")
-		return
-	end
-
-	zone_verts_cache = {}   -- собираем всё заново
-	local no_vert = 0
-	log1("[olr_hideout] ==== dump_covers: зон " .. tostring(m.count) .. " ====")
-
-	for i = 1, m.count do
-		local c = m.covers[i]
-		if c ~= nil and c.zone ~= nil then
-			local zone = c.zone
-			local name = zone:name()
-			local pos  = zone:position()
-			local ctr  = zone:center()
-			local list = zone_verts(c)
-			if #list == 0 then no_vert = no_vert + 1 end
-
-			-- сколько найденных мест сейчас занято
-			local busy = 0
-			for k = 1, #list do
-				if st_claims[list[k]] ~= nil then busy = busy + 1 end
-			end
-
-			-- list[1] после сортировки = место с максимальным просветом
-			local bc = list.best_clear or 0
-			local bx, by, bz = -9999, -9999, -9999
-			if list[1] ~= nil then
-				local bp = level.vertex_position(list[1])
-				bx, by, bz = bp.x, bp.y, bp.z
-			end
-
-			log1(string.format(
-				"[olr_hideout] %-28s pos=(%.0f,%.0f,%.0f) center=(%.0f,%.0f,%.0f) скан=%.0fм вершин=%d просвет=%.1f лучшее=(%.0f,%.0f,%.0f) занято=%d",
-				name, pos.x, pos.y, pos.z, ctr.x, ctr.y, ctr.z,
-				list.scan_half or 0, #list, bc, bx, by, bz, busy))
-		end
-	end
-
-	log1(string.format("[olr_hideout] ==== dump_covers: зон без вершин внутри: %d ====", no_vert))
-end
+-- Диагностический дамп укрытий переехал в olr_zone_dump.script
+-- (run_string olr_zone_dump.dump_covers()).
 
 function add_to_binder(object, char_ini, scheme, section, st)
 	local manager = object:motivation_action_manager()

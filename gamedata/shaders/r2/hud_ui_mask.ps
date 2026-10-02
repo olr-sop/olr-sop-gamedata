@@ -1,0 +1,30 @@
+struct v2p
+{
+	float2 tc0	: TEXCOORD0;
+	float4 c0	: COLOR0;
+	float2 msk	: TEXCOORD1;	// screen-space mask uv, computed on CPU per vertex
+};
+
+uniform sampler2D s_base;
+uniform sampler2D s_mask;
+uniform float4 c_mask_params;
+	// x = alpha mode: 1 = base.a * mask, 2 = mask * cut-out(base.a), 3 = debug mask
+
+float4 main (v2p I) : COLOR
+{
+	float4	base = tex2D (s_base, I.tc0);
+	float4	ms   = tex2D (s_mask, I.msk);
+	float	m    = ms.r;
+	float	mode = c_mask_params.x;
+
+	// 1 = base.a * mask (default), 2 = mask * cut-out(base.a)
+	float a = base.a * m;
+	a = lerp (a, m * smoothstep (0.0, 0.5, base.a), step (1.5, mode));
+
+	float4 outc = float4 (base.rgb * I.c0.rgb, a);
+
+	// 3 = debug: show mask (grayscale)
+	outc = lerp (outc, float4 (m, m, m, 1.0), step (2.5, mode));
+
+	return outc;
+}

@@ -717,9 +717,13 @@ function show_minimap(bool)
 	end
 	local wnd = get_main_window()
 	if wnd then
-		local st = wnd:GetStatic("minimap")
-		if st then	
-			st:Show(bool)
+		if wnd.SetMinimapNoise then
+			wnd:SetMinimapNoise(not bool)
+		else
+			local st = wnd:GetStatic("minimap")
+			if st then
+				st:Show(bool)
+			end
 		end
 	end
 end

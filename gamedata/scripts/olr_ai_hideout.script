@@ -75,17 +75,19 @@ local enabled       = true    -- общий выключатель схемы
 local search_radius = 150.0   -- м, максимальный радиус поиска зоны укрытия
 local seat_tol      = 0.0     -- м, допуск zone:inside: 0 = СТРОГО внутри зоны
 local cover_tol     = 0.0     -- м, допуск zone:inside при проверке "я укрыт"
-local recheck       = 3.0     -- сек между проверками достижимости маршрута
-local scan_period   = 0.4     -- сек, как часто полный скан зон на NPC
-local cover_retry   = 10.0    -- сек между попытками найти укрытие, если не вышло
+local recheck       = 3000    -- МС между проверками достижимости маршрута (time_global в мс)
+local scan_period   = 400     -- МС, как часто полный скан зон на NPC
+local cover_retry   = 10000   -- МС между попытками найти укрытие, если не вышло
 local kill_unhided  = false   -- ВАРИАНТ 2: убивать не укрывшихся на фазе 3
 local kill_power    = 5.0     -- мощность взрыва при kill_unhided
 local default_max_npc = 0      -- 0 = без лимита; переопределяется ключом max_npc
 local cover_attempts  = 3      -- сколько зон перебрать, если не нашлось точки стояния
 local allow_overfill  = true   -- true: всё занято -> идти в ближайшее разрешённое всё равно
-local progress_timeout   = 8.0   -- сек без приближения к цели -> перевыбор
+local progress_timeout   = 8000  -- МС без приближения к цели -> перевыбор
 local arrive_near         = 2.0   -- м, считаем "пришёл" вплотную к своему месту
-local zone_scan_min_step = 2.0   -- м, минимальный шаг сетки при сборе вершин внутри зоны
+local zone_scan_min_step = 2.0   -- м, шаг сетки при сборе вершин внутри зоны (старый скан)
+local zone_shape_step     = 1.0  -- м, шаг сетки по ТОЧНЫМ габаритам фигур (zone:get_shapes)
+local zone_shape_step_big = 2.0  -- м, шаг для зон крупнее 30 м (экономия проб)
 local zone_scan_max_half = 25.0  -- м, предел роста скана зоны (укрытия небольшие)
 local zone_clear_max     = 8.0   -- м, максимум просвета места (дальше не считаем)
 local zone_clear_step    = 0.5   -- м, шаг луча при замере просвета
@@ -433,6 +435,49 @@ end
 -- вообще лежит вне фигуры. Поэтому чешем сеткой ВСЮ описанную сферу зоны
 -- и запоминаем все AI-вершины СТРОГО ВНУТРИ. Дальше NPC просто берут
 -- любое свободное место — без спиралей и поиска «той самой» вершины.
+-- Точные габариты зоны из движкового zone:get_shapes() (движок с экспортом).
+-- Возвращает mn, mx, ys (Y центров фигур) или nil, если экспорта нет.
+local function zone_scan_bbox(zone)
+	local ok, shapes = pcall(function() return zone:get_shapes() end)
+	if not ok or type(shapes) ~= "table" or #shapes == 0 then return nil end
+
+	local mn = { x = 1e9,  y = 1e9,  z = 1e9 }
+	local mx = { x = -1e9, y = -1e9, z = -1e9 }
+	local ys = {}
+	local function add(p)
+		if p.x < mn.x then mn.x = p.x end
+		if p.y < mn.y then mn.y = p.y end
+		if p.z < mn.z then mn.z = p.z end
+		if p.x > mx.x then mx.x = p.x end
+		if p.y > mx.y then mx.y = p.y end
+		if p.z > mx.z then mx.z = p.z end
+	end
+
+	for i = 1, #shapes do
+		local s = shapes[i]
+		if s.kind == 0 then
+			add({ x = s.center.x - s.radius, y = s.center.y - s.radius, z = s.center.z - s.radius })
+			add({ x = s.center.x + s.radius, y = s.center.y + s.radius, z = s.center.z + s.radius })
+			ys[#ys + 1] = s.center.y
+		elseif s.corners ~= nil then
+			for k = 1, 8 do add(s.corners[k]) end
+			if s.center ~= nil then ys[#ys + 1] = s.center.y end
+		end
+	end
+	if mn.x > mx.x then return nil end
+
+	-- уникальные Y-уровни (ближе 0.75 м считаем одним этажом)
+	local uys = {}
+	for i = 1, #ys do
+		local dup = false
+		for j = 1, #uys do
+			if math.abs(ys[i] - uys[j]) < 0.75 then dup = true break end
+		end
+		if not dup then uys[#uys + 1] = ys[i] end
+	end
+	return mn, mx, uys
+end
+
 local function zone_verts(c)
 	local zone = c.zone
 	local name = zone:name()
@@ -441,37 +486,68 @@ local function zone_verts(c)
 
 	local list, seen = {}, {}
 	local center = zone:center()
+	local hit_half = 0.0
 
-	-- РАСТУЩИЙ СКАН. zone.radius использовать НЕЛЬЗЯ: у рестрикторов он
-	-- возвращает 0 (по логу r=0 у ВСЕХ зон), из-за чего скан молча обрезался
-	-- на 10 м от центра и дальние шейпы составных зон (подвал под лестницей,
-	-- комната за входом) в список вообще НЕ ПОПАДАЛИ. Каждый проход обходит
-	-- только НОВОЕ кольцо; стоп, когда кольцо не добавило ни одной вершины.
-	local prev, half, hit_half = 0.0, 12.0, 0.0
-	while half <= zone_scan_max_half do
-		local added = 0
-		local x = center.x - half
-		while x <= center.x + half do
-			local z = center.z - half
-			while z <= center.z + half do
-				if math.abs(x - center.x) > prev or math.abs(z - center.z) > prev then
-					local v = level.vertex_id(vector():set(x, center.y, z))
+	-- ТОЧНАЯ СЕТКА ПО ГАБАРИТАМ ФИГУР (движок с zone:get_shapes).
+	-- Мелкие зоны (1.5 м) при старом шаге 2 м не находили ни одной вершины,
+	-- а центр составной зоны часто лежит вне фигуры. Если экспорта нет —
+	-- работает старый растущий скан (ниже).
+	local bmn, bmx, shape_ys = zone_scan_bbox(zone)
+	if bmn ~= nil then
+		local dx, dz = bmx.x - bmn.x, bmx.z - bmn.z
+		local step = (math.max(dx, dz) <= 30.0) and zone_shape_step or zone_shape_step_big
+		local ys = shape_ys
+		if #ys == 0 then ys = { center.y } end
+
+		local x = bmn.x
+		while x <= bmx.x + 0.001 do
+			local z = bmn.z
+			while z <= bmx.z + 0.001 do
+				for k = 1, #ys do
+					local v = level.vertex_id(vector():set(x, ys[k], z))
 					if valid_vid(v) and not seen[v] then
 						if zone:inside(level.vertex_position(v), seat_tol) then
 							seen[v] = true
 							list[#list + 1] = v
-							added = added + 1
 						end
 					end
 				end
-				z = z + zone_scan_min_step
+				z = z + step
 			end
-			x = x + zone_scan_min_step
+			x = x + step
 		end
-		if added == 0 and #list > 0 then break end
-		if added > 0 then hit_half = half end
-		prev = half
-		half = half + 12.0
+		hit_half = math.max(dx, dz) * 0.5
+	else
+		-- РАСТУЩИЙ СКАН (движок без get_shapes). zone.radius использовать
+		-- НЕЛЬЗЯ: у рестрикторов он равен 0, из-за чего скан молча обрезается.
+		-- Каждый проход обходит только НОВОЕ кольцо; стоп, когда кольцо
+		-- не добавило ни одной вершины.
+		local prev, half = 0.0, 12.0
+		while half <= zone_scan_max_half do
+			local added = 0
+			local x = center.x - half
+			while x <= center.x + half do
+				local z = center.z - half
+				while z <= center.z + half do
+					if math.abs(x - center.x) > prev or math.abs(z - center.z) > prev then
+						local v = level.vertex_id(vector():set(x, center.y, z))
+						if valid_vid(v) and not seen[v] then
+							if zone:inside(level.vertex_position(v), seat_tol) then
+								seen[v] = true
+								list[#list + 1] = v
+								added = added + 1
+							end
+						end
+					end
+					z = z + zone_scan_min_step
+				end
+				x = x + zone_scan_min_step
+			end
+			if added == 0 and #list > 0 then break end
+			if added > 0 then hit_half = half end
+			prev = half
+			half = half + 12.0
+		end
 	end
 
 	if #list == 0 then
@@ -783,19 +859,18 @@ function action_olr_hideout:execute()
 	local p   = npc:position()
 	local id  = npc:id()
 
-	-- "Пришли" = СТРОГО внутри СВОЕЙ целевой зоны, либо уже вплотную к своему
-	-- месту. Тест "внутри любой зоны" не годится: NPC мог просто пробегать
-	-- через чужое укрытие по пути.
+	-- "Укрылся" = СТРОГО внутри СВОЕЙ целевой зоны (допуск 0). Тест "внутри
+	-- любой зоны" не годится: NPC мог просто пробегать через чужое укрытие.
 	local in_shelter = (st.target ~= nil and st.target.zone ~= nil
 	                    and st.target.zone:inside(p, cover_tol))
-	local at_seat    = (st.vid ~= nil
-	                    and p:distance_to(level.vertex_position(st.vid)) <= arrive_near)
 
 	-- =================== ЕЩЁ ИДЁМ: НИКАКИХ ПЕРЕВЫБОРОВ ===================
-	-- Решаем только по прибытии. Единственное исключение — цель вообще
-	-- отпала (зону сняли/запретили или вершина стала недоступной).
-	if st.vid ~= nil and not in_shelter and not at_seat then
+	-- Садимся ТОЛЬКО СТРОГО ВНУТРИ зоны. Пока не вошли — идём к своему месту
+	-- (без остановок у входа/на границе). Исключения: цель отпала (зону сняли/
+	-- запретили, вершина недоступна) или НЕТ ПРОГРЕССА — тогда перевыбор.
+	if st.vid ~= nil and not in_shelter then
 		st.holding, st.hold_zone = false, nil
+		if st.seat_give then st.seat_best, st.seat_t = nil, now end
 
 		if now - st.retry_t > recheck then
 			st.retry_t = now
@@ -810,14 +885,28 @@ function action_olr_hideout:execute()
 			end
 		end
 
-		npc:set_dest_level_vertex_id(st.vid)
-		npc:set_desired_position(level.vertex_position(st.vid))
-		npc:set_movement_type(move.run)
-		set_state(npc, "assault")
+		-- предохранитель по ПРОГРЕССУ (не по времени): стоим на месте ->
+		-- место/зона физически недостижимы, перевыбираем (снаружи не садимся).
+		local dseat = p:distance_to(level.vertex_position(st.vid))
+		if st.seat_best == nil or dseat < st.seat_best - seat_progress_eps then
+			st.seat_best, st.seat_t = dseat, now
+		end
+		if now - st.seat_t <= progress_timeout then
+			npc:set_dest_level_vertex_id(st.vid)
+			npc:set_desired_position(level.vertex_position(st.vid))
+			npc:set_movement_type(move.run)
+			set_state(npc, "assault")
+			return
+		end
+
+		skip_zone(st, st.target)
+		dbg("%s [%s]: нет прогресса к месту (осталось %.1f м), беру другое укрытие",
+		    npc:name(), st.target and st.target.zone:name() or "?", dseat)
+		local ok, why = self:drive_to(nil, "место недостижимо"); if not ok then self:panic_here(why or "нет подходящего укрытия") end
 		return
 	end
 
-	-- =================== ПРИШЛИ: ищем место ЗДЕСЬ ===================
+	-- ============ ВНУТРИ ЗОНЫ (или отказ): место и посадка ============
 	local c = st.target
 	if c == nil then
 		-- цели нет вообще

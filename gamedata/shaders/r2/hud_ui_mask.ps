@@ -8,23 +8,43 @@ struct v2p
 uniform sampler2D s_base;
 uniform sampler2D s_mask;
 uniform float4 c_mask_params;
-	// x = alpha mode: 1 = base.a * mask, 2 = mask * cut-out(base.a), 3 = debug mask
+	// x = mode: 1 = base.a * mask, 2 = binary clip (spots), 3 = debug mask,
+	//            4 = procedural noise * mask (y = time, z = has_mask)
+
+float rand (float2 coord)
+{
+	return frac (sin (dot (coord, float2 (12.9898f, 78.233f))) * 43758.5453f);
+}
 
 float4 main (v2p I) : COLOR
 {
 	float4	base = tex2D (s_base, I.tc0);
 	float4	ms   = tex2D (s_mask, I.msk);
-	float	m    = ms.r;
+
 	float	mode = c_mask_params.x;
+	float	m    = ms.r;
 
-	// 1 = base.a * mask (default), 2 = mask * cut-out(base.a)
-	float a = base.a * m;
-	a = lerp (a, m * smoothstep (0.0, 0.5, base.a), step (1.5, mode));
+	// mode 4: animated procedural noise instead of the base texture
+	float	nm = step (3.5f, mode);
+	float	t  = frac (c_mask_params.y * 60.0f);
+	float2	r  = float2 (rand (float2 (I.tc0.x * 640.0f, t)),
+	                   rand (float2 (t, I.tc0.y * 480.0f)));
+	float	n  = rand (r + t);
 
+	base.rgb = lerp (base.rgb, n.xxx, nm);
+	base.a   = lerp (base.a, 1.0f, nm);
+	m        = lerp (m, lerp (1.0f, m, c_mask_params.z), nm);
+
+	// mode 2 (spots): discard pixels where the mask is black, keep the icon alpha untouched
+	float clip_mode = step (1.5f, mode) * (1.0f - step (2.5f, mode));
+	clip (lerp (1.0f, m * 2.0f - 1.0f, clip_mode));
+
+	float a = lerp (base.a * m, base.a, clip_mode);
 	float4 outc = float4 (base.rgb * I.c0.rgb, a);
 
-	// 3 = debug: show mask (grayscale)
-	outc = lerp (outc, float4 (m, m, m, 1.0), step (2.5, mode));
+	// mode 3: debug - show the mask (grayscale)
+	float dbg_mode = step (2.5f, mode) * (1.0f - step (3.5f, mode));
+	outc = lerp (outc, float4 (m, m, m, 1.0f), dbg_mode);
 
 	return outc;
 }

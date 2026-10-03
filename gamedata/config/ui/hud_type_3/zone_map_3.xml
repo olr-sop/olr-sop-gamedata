@@ -1,21 +1,25 @@
 <?xml version='1.0' encoding="UTF-8"?>
 <window>
 	<minimap>
-		<!-- <noise/> - процедурный шум ПДА, <noise>ui\ui_noise</noise> - текстура, без ноды шум отключён -->
-		<noise/>
+
 		<level_frame x="18" y="14" width="164" height="161">
 			<map_color a="255"/>
 		</level_frame>
 
 		<background x="7" y="0" width="165" height="168" stretch="0"> 
 			<texture>ui_mg_hud_map</texture>
-			<!-- mask: red channel, 255 = fully visible, 0 = hidden, midtones = smooth transparency.
-			    Mask is drawn in the coordinates of this background frame (its real drawn rect), NOT of level_frame.
-			    x/y/width/height - optional sub-rect inside the mask texture; dx/dy/dw/dh - optional destination offset from level_frame -->
-			<mask>ui\ui_hud_mask</mask>
-			<!-- optional 1-bit (black/white) mask for spots: spots keep their own alpha, black = not drawn.
-			    Without it the main <mask> above is used for spots too. -->
-			<spots_mask>ui\ui_hud_mask_spots</spots_mask>
+
+			<!-- 
+				Основная нода маски мини-карты, использует КРАСНЫЙ канал Ч/Б текстуры (оптимально сохранять в L8, но можно и в DXT1).
+			    маска рисуется под бэкграундом, соотвественно для упрощения работы надо нарисовать маску и задать такие же размеры что и у основого бэкграуда.
+			    Подгонка маски: src (x/y/width/height) — область внутри текстуры, dst  (dx/dy/dw/dh от level_frame) — позиция; по умолчанию dst = прямоугольник background.
+			-->
+			<!-- <mask>ui\ui_hud_mask</mask> -->
+			<!-- 
+				Опционально, 1-битная (Ч/Б) маска для спотов: споты не меняют своей альфы, данная маска нужна для подгонки места отрисовки спотов.
+				Без неё используя базовая маска из ноды mask. 
+			-->
+			<!-- <spots_mask>ui\ui_hud_mask_spots</spots_mask> -->
 
 			<dist_text x="60" y="153" width="150" height="20">
 				<text align="l" font="graffiti19" r="139" g="124" b="117" a="255" text_shadow="0"/>
@@ -29,6 +33,13 @@
 		<center width="4" height="4" alignment="c" stretch="1"> 
 			<texture r="0" b="0">ui_minimap_point</texture>
 		</center>
+		
+		<!-- 
+			Отсуствие ноды noise отключает фичу с шумом вместо отключения мини-карты
+			<noise/> - процедурный шум ПДА, 
+			<noise>ui\ui_noise</noise> - текстура, без ноды шум отключён 
+		-->
+		<noise/>
 
 	</minimap>
 

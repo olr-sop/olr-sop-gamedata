@@ -9,7 +9,7 @@ uniform sampler2D s_base;
 uniform sampler2D s_mask;
 uniform float4 c_mask_params;
 	// x = mode: 1 = base.a * mask, 2 = binary clip (spots), 3 = debug mask,
-	//            4 = procedural noise * mask (y = time, z = has_mask)
+	//            4 = animated hash noise (y = time, z = has_mask)
 
 float rand (float2 coord)
 {
@@ -24,12 +24,15 @@ float4 main (v2p I) : COLOR
 	float	mode = c_mask_params.x;
 	float	m    = ms.r;
 
-	// mode 4: animated procedural noise instead of the base texture
+	// mode 4: animated hash noise (TV snow). The time goes into the hash raw:
+	// frac(time * k) aliases with a stable frame delta and caused periodical
+	// "resets", while the sine hash decorrelates per frame on its own
 	float	nm = step (3.5f, mode);
-	float	t  = frac (c_mask_params.y * 60.0f);
-	float2	r  = float2 (rand (float2 (I.tc0.x * 640.0f, t)),
-	                   rand (float2 (t, I.tc0.y * 480.0f)));
-	float	n  = rand (r + t);
+	float	t  = c_mask_params.y;			// seconds
+
+	float2	r  = float2 (rand (float2 (I.tc0.x * 640.0f, t * 7.31f)),
+	                   rand (float2 (t * 5.13f, I.tc0.y * 480.0f)));
+	float	n  = rand (r + t * 3.17f);
 
 	base.rgb = lerp (base.rgb, n.xxx, nm);
 	base.a   = lerp (base.a, 1.0f, nm);

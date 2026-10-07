@@ -475,61 +475,26 @@ end
 --end--
 
 class "CKampManager"
-function CKampManager:__init(path, avoid_spots)
+function CKampManager:__init(path, avoid_spots, radius)
 	self.kamp_name = path
 	self.patrol = patrol(path)
 	self.center = self.patrol:level_vertex_id(0)
 	self.center_pos = level.vertex_position(self.center)
-	self.radius = 2
-	self.position = {{dir = vector():set(1, 0, 0),	used = nil},
-					 {dir = vector():set(1, 0, 1),	used = nil},
-					 {dir = vector():set(0, 0, 1),	used = nil},
-					 {dir = vector():set(-1, 0, 1),	used = nil},
-					 {dir = vector():set(-1, 0, 0),	used = nil},
-					 {dir = vector():set(-1, 0, -1),used = nil},
-					 {dir = vector():set(0, 0, -1),	used = nil},
-					 {dir = vector():set(1, 0, -1),	used = nil}}
+	self.radius = math.max(radius or 2, 1.5)
 	self.npc = {}
 	self.population = 0
-	self.kamp_state = "idle"	
-	-- √де то здесь распарсим патрульный путь и проапдейтим вектор позиций.
-	-- 0 вершина - центр лагер€.
-	-- 1 флаг - сектор зан€т, в поинте можно сидеть.
-	-- 2 флаг - сектор зан€т, в поинте нельз€ сидеть.
-	for k = 1, self.patrol:count() - 1 do
-		-- если есть 1 или 2 флажок - отметить сектор как зан€тый
-		if self.patrol:flag(k,1) or
-		   self.patrol:flag(k,2)
-		then
-			-- отметить сектор как зан€тый
-			for key,value in pairs(self.position) do
-				dir = vector():sub(level.vertex_position(self.patrol:level_vertex_id(k)), level.vertex_position(self.center))
-				if value.dir then
-					yaw = yaw_degree(dir, value.dir)
-					if yaw <=23 then
-						--log1(string.format("xr_camp : KAMP node[%s], sector[%s,] yaw[%s]", k, key, yaw_degree(dir, value.dir)))
-						value.used = -1
-						break						
-					end
-				end
-			end
-			
-		end
-		
-		-- если есть 1 флажок - создать место дл€ сидени€ в точке пути
-		if self.patrol:flag(k,1) then
-			-- создать точку дл€ сидени€
-			table.insert(self.position, {vertex = self.patrol:level_vertex_id(k)})
-		end		
-	end
-	-- nv130127 (ZRP): avoid_pos - битова€ маска запрещЄнных секторов 1..8
-	if avoid_spots and avoid_spots > 0 then
-		for i = 1, math.min(8, table.getn(self.position)) do
-			if bit_and(avoid_spots, 2^(i-1)) > 0 then
-				self.position[i].used = -1
-			end
-		end
-	end
+	self.kamp_state = "idle"
+	-- 8 канонических направлений секторов (маска avoid_pos 1..8)
+	self.base_dirs = {vector():set(1, 0, 0),
+					  vector():set(1, 0, 1),
+					  vector():set(0, 0, 1),
+					  vector():set(-1, 0, 1),
+					  vector():set(-1, 0, 0),
+					  vector():set(-1, 0, -1),
+					  vector():set(0, 0, -1),
+					  vector():set(1, 0, -1)}
+	self.position = {}
+	self:buildSeats(avoid_spots)
 	--“аблица соответствий состо€ни€ лагер€ и допустимых анимаций и звуков.	
 	self.avail_state = {idle				= { directed	= { "wait", "sit", "sit_ass", "sit_knee", "eat_kolbasa", "eat_vodka", "eat_energy", "eat_bread", "trans"}},
 						pre_harmonica		= { directed	= { "wait_harmonica"},
@@ -601,51 +566,113 @@ function CKampManager:__init(path, avoid_spots)
 	-- ’ранилище дл€ режиссера лагер€. –ежиссерем €вл€етс€ сталкер, зате€вший необычное поведение
 	self.director = nil
 end
-
-function CKampManager:selectPosition(npc, exclude_index)
-	-- создаем список доступных позиций
-	local free = {}
-	for k,v in pairs(self.position) do
-		if v.used == nil then
-			table.insert(free, k)
-		end
+-- ѕул уникальных мест вокруг центра (“„-метод: обход AI-сетки, без сдвигов и дублей)
+function CKampManager:buildSeats(avoid_spots)
+	self.position = {}
+	local used_vertex = {}
+	local function add_seat(vertex)
+		if vertex == nil or vertex == 4294967295 or vertex == self.center then return end
+		if used_vertex[vertex] ~= nil then return end
+		used_vertex[vertex] = true
+		table.insert(self.position, {vertex = vertex, used = nil})
 	end
-	
-	-- затем из доступных позиций выбрать ближайшую к NPC (ZRP nv160827)
-	if #free > 0 then
-		local npc_id = npc:id()
-		local selected_position = nil
-		local npc_pos = npc:position()
-		local best_dist = nil
-		for _, idx in pairs(free) do
-			if idx ~= exclude_index then
-				local target = nil
-				local pos_rec = self.position[idx]
-				if pos_rec.vertex ~= nil then
-					target = level.vertex_position(pos_rec.vertex)
-				elseif pos_rec.dir ~= nil then
-					local vertex = level.vertex_in_direction(self.center, pos_rec.dir, self.radius or 2)
-					if vertex then
-						target = level.vertex_position(vertex)
-					end
-				end
-				if target then
-					local dist = npc_pos:distance_to_sqr(target)
-					if best_dist == nil or dist < best_dist then
-						best_dist = dist
-						selected_position = idx
+	-- 1) места из точек патрул€ с флагом 1; флаги 1/2 блокируют ближний сектор
+	local blocked = {}
+	for k = 1, self.patrol:count() - 1 do
+		if self.patrol:flag(k,1) or self.patrol:flag(k,2) then
+			local dir_v = vector():sub(level.vertex_position(self.patrol:level_vertex_id(k)), self.center_pos)
+			dir_v.y = 0
+			if dir_v:magnitude() > 0.01 then
+				for i, d in ipairs(self.base_dirs) do
+					if yaw_degree(dir_v, d) <= 23 then
+						blocked[i] = true
+						break
 					end
 				end
 			end
 		end
-		if selected_position == nil then
-			selected_position = free[math.random(1, #free)]
+		if self.patrol:flag(k,1) then
+			add_seat(self.patrol:level_vertex_id(k))
 		end
-		self.position[selected_position].used = npc_id
-		self.npc[npc_id].position = selected_position
-	else
-		dbg("no free position for NPC [%s] at kamp [%s]", tostring(npc:id()), tostring(self.kamp_name))
 	end
+	-- 2) кольцо вершин по 8 каноническим направлени€м (“„: граф, всегда валидна€ вершина)
+	for i, d in ipairs(self.base_dirs) do
+		if not blocked[i] and (avoid_spots == nil or bit_and(avoid_spots, 2^(i-1)) == 0) then
+			add_seat(level.vertex_in_direction(self.center, d, self.radius))
+		end
+	end
+	-- 3) тесные места: добираем углами и меньшим радиусом (если avoid_pos не режет секторы)
+	if avoid_spots == nil or avoid_spots == 0 then
+		local extra_radii = {self.radius, math.max(1.5, self.radius * 0.75)}
+		for ri = 1, #extra_radii do
+			if #self.position >= 16 then break end
+			for ang = 15, 345, 15 do
+				if #self.position >= 16 then break end
+				add_seat(level.vertex_in_direction(self.center, vector_rotate_y(self.base_dirs[1], ang), extra_radii[ri]))
+			end
+		end
+	end
+	dbg("seats [%s]: %d", tostring(self.kamp_name), #self.position)
+end
+
+function CKampManager:selectPosition(npc, exclude_index)
+	local npc_id = npc:id()
+	local free = {}
+	for k, v in pairs(self.position) do
+		if v.used == nil and v.vertex ~= nil then
+			table.insert(free, k)
+		end
+	end
+	if #free == 0 then
+		dbg("no free position for NPC [%s] at kamp [%s]", tostring(npc_id), tostring(self.kamp_name))
+		return
+	end
+
+	-- сначала только места, доступные этому NPC; иначе - любые свободные
+	local candidates = {}
+	for _, idx in pairs(free) do
+		if idx ~= exclude_index and npc:accessible(self.position[idx].vertex) then
+			table.insert(candidates, idx)
+		end
+	end
+	if #candidates == 0 then
+		for _, idx in pairs(free) do
+			if idx ~= exclude_index then
+				table.insert(candidates, idx)
+			end
+		end
+	end
+	if #candidates == 0 then
+		dbg("no selectable seat for [%s] (exclude %s)", tostring(npc_id), tostring(exclude_index))
+		return
+	end
+
+	-- равномерна€ рассадка: максимально далеко от зан€тых, при равенстве - ближе к NPC
+	local npc_pos = npc:position()
+	local selected_position = nil
+	local best_spread = nil
+	local best_to_npc = nil
+	for _, idx in pairs(candidates) do
+		local seat_pos = level.vertex_position(self.position[idx].vertex)
+		local min_dist = nil
+		for _, v in pairs(self.position) do
+			if v.used ~= nil and v.vertex ~= nil then
+				local d = seat_pos:distance_to_sqr(level.vertex_position(v.vertex))
+				if min_dist == nil or d < min_dist then
+					min_dist = d
+				end
+			end
+		end
+		if min_dist == nil then min_dist = -1 end
+		local to_npc = npc_pos:distance_to_sqr(seat_pos)
+		if best_spread == nil or min_dist > best_spread or (min_dist == best_spread and to_npc < best_to_npc) then
+			best_spread = min_dist
+			best_to_npc = to_npc
+			selected_position = idx
+		end
+	end
+	self.position[selected_position].used = npc_id
+	self.npc[npc_id].position = selected_position
 end
 
 function CKampManager:reselectNpc(npc)
@@ -683,46 +710,24 @@ function CKampManager:getDestVertex(npc, radius)
 
 	local position_index = self.npc[npc_id].position
 	local position = self.position[position_index]
-	if position.vertex ~= nil then
-		return position.vertex, position_index
+	local vertex = position ~= nil and position.vertex or nil
+
+	if vertex == nil then
+		-- резерв: место без вершины - разводим по npc_id, чтобы не собратьс€ в одну точку
+		vertex = level.vertex_in_direction(self.center, vector_rotate_y(self.base_dirs[1], (npc_id % 8) * 45), radius or self.radius)
+	end
+	if vertex == nil or vertex == 4294967295 or vertex == self.center then
+		return nil, nil
 	end
 
-	-- Ќовый расчЄт вершины
-	local pp = self.patrol:point(0)  -- точка центра
-	-- локальна€ копи€, чтобы не мутировать общий вектор сектора
-	local dir = vector():set(position.dir.x, position.dir.y, position.dir.z)
-
-	-- —лучайное отклонение направлени€
-	dir.x = dir.x + math.random(-1, 1) / 5
-	dir.z = dir.z + math.random(-1, 1) / 5
-	dir:normalize()
-
-	local cur_radius = radius + math.random(-3, 3) / 10
-
-	local dest_vertex = 4294967295  -- невалидный ID
-	while dest_vertex == 4294967295 do
-		local tmp_pos = vector():set(0, 0, 0)
-		tmp_pos.x = pp.x + dir.x * cur_radius
-		tmp_pos.z = pp.z + dir.z * cur_radius
-		tmp_pos.y = pp.y
-		dest_vertex = level.vertex_id(tmp_pos)
-		if dest_vertex == 4294967295 then
-			if cur_radius < 1 then
-				dbg("invalid AI map at kamp point [%s]", tostring(self.kamp_name))
-				return nil, nil
-			else
-				cur_radius = cur_radius - 0.5
-			end
-		end
+	if not npc:accessible(vertex) then
+		vertex = npc:accessible_nearest(level.vertex_position(vertex), vector():set(0,0,0))
+	end
+	if vertex == nil or vertex == 4294967295 then
+		return nil, nil
 	end
 
-	if not npc:accessible(dest_vertex) then
-		local vp = level.vertex_position(dest_vertex)
-		local nearest_vertex = npc:accessible_nearest(vp, vector():set(0,0,0))
-		return nearest_vertex, position_index
-	end
-
-	return dest_vertex, position_index
+	return vertex, position_index
 end
 -- ћожет ли этот NPC вести данное состо€ние лагер€ (инструмент/истори€ - только владелец)
 function CKampManager:canLeadState(state_name, npc_id)
@@ -888,7 +893,21 @@ function CKampManager:proceedRole(npc, director)
 		else
 			sound = self.avail_sound[self.kamp_state].undirected
 		end
-		state = self.npc[npc_id].state_selected	
+		state = self.npc[npc_id].state_selected
+		-- Ђлипкоеї состо€ние допустимо только дл€ текущей роли/фазы
+		local role_states = director and self.avail_state[self.kamp_state].directed or self.avail_state[self.kamp_state].undirected
+		local state_valid = false
+		for i = 1, table.getn(role_states) do
+			if role_states[i] == state then
+				state_valid = true
+				break
+			end
+		end
+		if not state_valid then
+			dbg("stale state [%s] for [%s] (%s) -> reselect", tostring(state), npc:name(), tostring(self.kamp_state))
+			self.npc[npc_id].begin = nil
+			return self:proceedRole(npc, director)
+		end
 	end
 	--log1(string.format("xr_camp : Proceed Role state [%s] sound [%s]", state, sound))
 	return state, sound
@@ -1278,9 +1297,8 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	st.avoid_pos	= utils.cfg_get_number(ini, section, "avoid_pos", npc, false, 0)
 	
 	if kamps[st.center_point] == nil then
-		kamps[st.center_point] = CKampManager(st.center_point, st.avoid_pos)
+		kamps[st.center_point] = CKampManager(st.center_point, st.avoid_pos, st.radius)
 	end
-	kamps[st.center_point].radius = st.radius
 	kamps[st.center_point]:addNpc(npc)
 	st.pos_vertex = nil
 

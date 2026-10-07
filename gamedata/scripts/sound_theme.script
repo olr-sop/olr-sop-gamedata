@@ -589,12 +589,34 @@ function check_prefix(s)
 	return flag, string.sub(s, 3)
 end
 
+local snd_warned = {}
+
+local function snd_warn_missing(theme_name, section, path, prefix)
+	local key
+	if section == nil then
+		key = tostring(theme_name).."|not_in_ltx"
+	else
+		key = tostring(theme_name).."|"..tostring(section).."|"..tostring(path).."|"..tostring(prefix)
+	end
+	if snd_warned[key] then return end
+	snd_warned[key] = true
+	if section == nil then
+		log1(string.format("![xr_sound] theme '%s' not found in script_sound.ltx", tostring(theme_name)))
+	else
+		log1(string.format("![xr_sound] theme '%s' found in script_sound.ltx, but sound files are missing (section [%s], path '%s', voice '%s')",
+			tostring(theme_name), tostring(section), tostring(path), tostring(prefix)))
+	end
+end
+
 function load_sound(obj)
 	local k,v = 0,0
 	
 	-- загрузка звуков на основе данных ltx
 	function load_sound_from_ltx(obj, name, tbl)		
 		tbl.max_ids[obj:id()] = {}
+		if not (snd_ini:section_exist(name.."_rnd") or snd_ini:section_exist(name.."_seq") or snd_ini:section_exist(name.."_single")) then
+			snd_warn_missing(name, nil, nil, nil)
+		end
 		if snd_ini:section_exist(name.."_rnd") then		
 			local s = select_sound_from_ltx(obj, name.."_rnd", snd_ini)			
 			if s then
@@ -605,7 +627,12 @@ function load_sound(obj)
 				end
 					
 				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
-				tbl.max_ids[obj:id()].rnd_max = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.rnd_id)
+				local use_prefix = obj:sound_prefix()
+				local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.rnd_id)
+				tbl.max_ids[obj:id()].rnd_max = cnt
+				if cnt == nil or cnt == 0 then
+					snd_warn_missing(name, name.."_rnd", path, use_prefix)
+				end
 
 				if flag == "0" then
 					obj:sound_prefix(character_prefix)
@@ -622,8 +649,13 @@ function load_sound(obj)
 				end
 
 				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
-				tbl.max_ids[obj:id()].into_max = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
+				local use_prefix = obj:sound_prefix()
+				local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
+				tbl.max_ids[obj:id()].into_max = cnt
 				tbl.max_ids[obj:id()].into_cycled = true
+				if cnt == nil or cnt == 0 then
+					snd_warn_missing(name, name.."_seq", path, use_prefix)
+				end
 
 				if flag == "0" then
 					obj:sound_prefix(character_prefix)
@@ -640,8 +672,13 @@ function load_sound(obj)
 				end
 
 				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
-				tbl.max_ids[obj:id()].into_max = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
+				local use_prefix = obj:sound_prefix()
+				local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
+				tbl.max_ids[obj:id()].into_max = cnt
 				tbl.max_ids[obj:id()].into_cycled = false
+				if cnt == nil or cnt == 0 then
+					snd_warn_missing(name, name.."_single", path, use_prefix)
+				end
 
 				if flag == "0" then
 					obj:sound_prefix(character_prefix)

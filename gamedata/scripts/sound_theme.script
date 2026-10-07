@@ -608,100 +608,116 @@ local function snd_warn_missing(theme_name, section, path, prefix)
 	end
 end
 
+-- [OLR] Ленивая загрузка тем звуков: тема читается из LTX при первом реальном
+-- использовании, а не на каждый спавн. Для отладки: local debug = true.
+local debug = false
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[sound_theme] " .. string.format(fmt, ...))
+	else
+		log1("[sound_theme] " .. fmt)
+	end
+end
+
+local function load_sound_from_ltx(obj, name, tbl)
+	tbl.max_ids[obj:id()] = {}
+	if not (snd_ini:section_exist(name.."_rnd") or snd_ini:section_exist(name.."_seq") or snd_ini:section_exist(name.."_single")) then
+		snd_warn_missing(name, nil, nil, nil)
+	end
+	if snd_ini:section_exist(name.."_rnd") then
+		local s = select_sound_from_ltx(obj, name.."_rnd", snd_ini)
+		if s then
+			local flag, path = check_prefix(s)
+			if flag == "0" then
+				character_prefix = obj:sound_prefix()
+				obj:sound_prefix(default_prefix)
+			end
+
+			--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
+			local use_prefix = obj:sound_prefix()
+			local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.rnd_id)
+			tbl.max_ids[obj:id()].rnd_max = cnt
+			if cnt == nil or cnt == 0 then
+				snd_warn_missing(name, name.."_rnd", path, use_prefix)
+			end
+
+			if flag == "0" then
+				obj:sound_prefix(character_prefix)
+			end
+		end
+	end
+	if snd_ini:section_exist(name.."_seq") then
+		local s = select_sound_from_ltx(obj, name.."_seq", snd_ini)
+		if s then
+			local flag, path = check_prefix(s)
+			if flag == "0" then
+				character_prefix = obj:sound_prefix()
+				obj:sound_prefix(default_prefix)
+			end
+
+			--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
+			local use_prefix = obj:sound_prefix()
+			local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
+			tbl.max_ids[obj:id()].into_max = cnt
+			tbl.max_ids[obj:id()].into_cycled = true
+			if cnt == nil or cnt == 0 then
+				snd_warn_missing(name, name.."_seq", path, use_prefix)
+			end
+
+			if flag == "0" then
+				obj:sound_prefix(character_prefix)
+			end
+		end
+	end
+	if snd_ini:section_exist(name.."_single") then
+		local s = select_sound_from_ltx(obj, name.."_single", snd_ini)
+		if s then
+			local flag, path = check_prefix(s)
+			if flag == "0" then
+				character_prefix = obj:sound_prefix()
+				obj:sound_prefix(default_prefix)
+			end
+
+			--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
+			local use_prefix = obj:sound_prefix()
+			local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
+			tbl.max_ids[obj:id()].into_max = cnt
+			tbl.max_ids[obj:id()].into_cycled = false
+			if cnt == nil or cnt == 0 then
+				snd_warn_missing(name, name.."_single", path, use_prefix)
+			end
+
+			if flag == "0" then
+				obj:sound_prefix(character_prefix)
+			end
+		end
+	end
+end
+
+-- [OLR] Идемпотентная загрузка одной темы для NPC: вызывается из xr_sound.
+function ensure_theme(npc, name)
+	local v = theme[name]
+	if v == nil then return end
+	if v.types == nil then
+		if v.max_ids ~= nil and v.max_ids[npc:id()] == nil then
+			local t0 = time_global()
+			load_sound_from_ltx(npc, name, v)
+			dbg("lazy load theme '%s' for '%s': %d ms", name, npc:name(), time_global() - t0)
+		end
+	else
+		for k, tt in pairs(v.types) do
+			if tt.max_ids ~= nil and tt.max_ids[npc:id()] == nil then
+				local t0 = time_global()
+				load_sound_from_ltx(npc, k, tt)
+				dbg("lazy load theme '%s' for '%s': %d ms", k, npc:name(), time_global() - t0)
+			end
+		end
+	end
+end
+
 function load_sound(obj)
-	local k,v = 0,0
-	
-	-- загрузка звуков на основе данных ltx
-	function load_sound_from_ltx(obj, name, tbl)		
-		tbl.max_ids[obj:id()] = {}
-		if not (snd_ini:section_exist(name.."_rnd") or snd_ini:section_exist(name.."_seq") or snd_ini:section_exist(name.."_single")) then
-			snd_warn_missing(name, nil, nil, nil)
-		end
-		if snd_ini:section_exist(name.."_rnd") then		
-			local s = select_sound_from_ltx(obj, name.."_rnd", snd_ini)			
-			if s then
-				local flag, path = check_prefix(s)
-				if flag == "0" then
-					character_prefix = obj:sound_prefix()
-					obj:sound_prefix(default_prefix)
-				end
-					
-				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
-				local use_prefix = obj:sound_prefix()
-				local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.rnd_id)
-				tbl.max_ids[obj:id()].rnd_max = cnt
-				if cnt == nil or cnt == 0 then
-					snd_warn_missing(name, name.."_rnd", path, use_prefix)
-				end
-
-				if flag == "0" then
-					obj:sound_prefix(character_prefix)
-				end
-			end
-		end
-		if snd_ini:section_exist(name.."_seq") then
-			local s = select_sound_from_ltx(obj, name.."_seq", snd_ini)
-			if s then
-				local flag, path = check_prefix(s)
-				if flag == "0" then
-					character_prefix = obj:sound_prefix()
-					obj:sound_prefix(default_prefix)
-				end
-
-				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
-				local use_prefix = obj:sound_prefix()
-				local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
-				tbl.max_ids[obj:id()].into_max = cnt
-				tbl.max_ids[obj:id()].into_cycled = true
-				if cnt == nil or cnt == 0 then
-					snd_warn_missing(name, name.."_seq", path, use_prefix)
-				end
-
-				if flag == "0" then
-					obj:sound_prefix(character_prefix)
-				end
-			end
-		end
-		if snd_ini:section_exist(name.."_single") then
-			local s = select_sound_from_ltx(obj, name.."_single", snd_ini)
-			if s then
-				local flag, path = check_prefix(s)
-				if flag == "0" then
-					character_prefix = obj:sound_prefix()
-					obj:sound_prefix(default_prefix)
-				end
-
-				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", obj:name(), flag, obj:sound_prefix(), path)
-				local use_prefix = obj:sound_prefix()
-				local cnt = obj:add_sound(path, nstl, snd_type.talk, 2, 1, tbl.into_id)
-				tbl.max_ids[obj:id()].into_max = cnt
-				tbl.max_ids[obj:id()].into_cycled = false
-				if cnt == nil or cnt == 0 then
-					snd_warn_missing(name, name.."_single", path, use_prefix)
-				end
-
-				if flag == "0" then
-					obj:sound_prefix(character_prefix)
-				end			
-			end
-		end
-	end
-	
-	function load_theme_sound(npc, tbl)
-		for k,v in pairs(tbl) do
-			if v.types == nil then
-				load_sound_from_ltx(npc, k, v)
-			else
-				load_theme_sound(npc, v.types)
-			end
-		end
-	end
-
-	load_theme_sound(obj, theme)
-
-	-- делаем заготовку в db.sound
+	-- [OLR] Оставлено только создание записи в db.sound; темы подгружаются
+	-- лениво в xr_sound (set_sound / play_sound / get_last_IDS).
 	db.sound[obj:id()] = {}
-	
-----	printf("All sounds loaded for %s, section %s", obj:name(), obj:section())
----	print_table(theme)
 end

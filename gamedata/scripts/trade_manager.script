@@ -33,6 +33,18 @@ local actor = db.actor
 local t_data = {}
 local t_ini = {}
 
+-- [OLR] Кэш разобранных condlist по строке конфига: строки одинаковы для всех NPC с одним cfg.
+local parse_cache = {}
+
+local function parse_condlist_cached( src )
+	local t = parse_cache[src]
+	if not t then
+		t = parse_condlist1( src )
+		parse_cache[src] = t
+	end
+	return t
+end
+
 function trade_init( npc, cfg )
 	local ini = t_ini[cfg]
 	if not ini then
@@ -52,17 +64,17 @@ function trade_init( npc, cfg )
 		and ini:r_string( "trader", "buy_condition" ) )
 		or printf( "trade_init, invalid section: [trader], line: [buy_condition], file: %s (%s)",
 			cfg or "nil", npc:name() )
-	t.buy_condition = parse_condlist1( s )	-- коэфициенты покупки
+	t.buy_condition = parse_condlist_cached( s )	-- коэфициенты покупки
 
 
 	s = ( ini:line_exist( "trader", "sell_condition" ) and ini:r_string( "trader", "sell_condition" ) )
 		or printf( "trade_init, invalid section: [trader], line: [sell_condition], in file: %s (%s)",
 			cfg, npc:name() )
-	t.sell_condition = parse_condlist1( s )	-- коэфициенты продажи
+	t.sell_condition = parse_condlist_cached( s )	-- коэфициенты продажи
 	
 	-- наличие товара
 	s = ini:line_exist( "trader", "buy_supplies" ) and ini:r_string( "trader", "buy_supplies" )
-	if s then t.buy_supplies = parse_condlist1( s ) end
+	if s then t.buy_supplies = parse_condlist_cached( s ) end
 	-- if npc:clsid() == clsid.script_trader then
 	--	log( "info", "init: %s", npc:name() )
 	-- end

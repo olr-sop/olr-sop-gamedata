@@ -10,6 +10,8 @@ function get_sound(path, tt, npc)
 	if path == nil then return nil end
 	if path.exec == nil then
 		-- чтение настроек темы
+		-- [OLR] Страховка от незагруженной темы: если максимум неизвестен, звук не играем.
+		if path.max_ids == nil or path.max_ids[npc:id()] == nil then return nil end
 		tt.into_id = path.into_id
 		tt.into_max = path.max_ids[npc:id()].into_max
 		tt.into_last = nil
@@ -75,6 +77,10 @@ function set_sound(npc, sound, now, into_timeout)
 		if db.sound[npc_id] == nil then db.sound[npc_id] = {} end
 		db.sound[npc_id].theme = sound
 		db.sound[npc_id].snd = parse_names(sound)
+		-- [OLR] Ленивая подгрузка тем при смене темы.
+		for k,v in pairs(db.sound[npc_id].snd) do
+			sound_theme.ensure_theme(npc, v)
+		end
 		if db.sound[npc_id].last_snd == nil then
 			db.sound[npc_id].last_snd = {}
 		else	
@@ -177,6 +183,7 @@ function play_sound(npc, themes, timeout)
 		snd_table[t] = {}
 		if sound_theme.theme[v] ~= nil then
 			snd_table[t].theme = v
+			sound_theme.ensure_theme(npc, v)
 			get_sound(sound_theme.theme[v], snd_table[t], npc)
 		else
 			log1(string.format("!!! ERROR: ILLEGAL PLAY SOUND!!! [%s] for [%s]", v, npc:name()))
@@ -255,6 +262,9 @@ function get_last_IDS(npc, theme)
 	local last_table = db.sound[npc:id()] and db.sound[npc:id()].last_snd
 	local snd_table = {}
 	local theme_rec = theme ~= nil and sound_theme.theme[theme] or nil
+	if theme_rec ~= nil then
+		sound_theme.ensure_theme(npc, theme)
+	end
 	if theme_rec ~= nil and theme_rec.max_ids ~= nil and theme_rec.max_ids[npc:id()] ~= nil then
 		get_sound(theme_rec, snd_table, npc)
 	end

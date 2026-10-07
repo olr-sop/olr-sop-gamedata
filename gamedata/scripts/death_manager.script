@@ -1,12 +1,13 @@
 -- Ключем является группировка персонажа. Значением является таблица, содержашая имена секций предметов.
 local item_by_community = {}
 
--- Зависимости в спауне предметов. Предмет спауниться только если есть хотя бы один из зависимых.
-local item_dependence = {}
 
 -- Множители и минимаксы для выпадения вещей в зависимости от уровня
 local mul_by_level = {}
 local count_by_level = {}
+
+-- Чистые количества патронов без множителя уровня: патроны следуют за оружием NPC
+local ammo_count_base = {}
 
 -- Предметы, которые нельзя удалять (квестовые например)
 local always_keep_item = {}
@@ -18,6 +19,12 @@ local ammo_sections = {}
 local ammo_base_multiplier = {}
 local difficulty_multipliers = {}
 
+-- отложенное удаление старых патронов, чтобы не пересечься со спавном лута
+local deferred_release = {}
+
+-- настройки дропа патронов
+local ammo_drop_settings = {}
+
 -- Кэш для множителей рангов
 local rank_multipliers_cache = {}
 
@@ -27,6 +34,26 @@ local capsule_spawn_by_rank = {}
 
 -- Путь до конфига
 local death_ini = ini_file("misc\\death_generic.ltx")
+
+-- отложенное удаление патронов погибших NPC (вызывается из bind_stalker)
+function schedule_release(item)
+	if item and item:id() then
+		deferred_release[item:id()] = true
+	end
+end
+
+function release_deferred_ammo()
+	if next(deferred_release) == nil then
+		return
+	end
+	for id in pairs(deferred_release) do
+		local s_obj = alife():object(id)
+		if s_obj then
+			alife():release(s_obj, true)
+		end
+		deferred_release[id] = nil
+	end
+end
 
 -- Кэшируем все артефакты и прочее в таблицы для быстрого доступа к ним
 function load_capsule_settings()
@@ -111,18 +138,7 @@ function init_drop_settings()
 		end
 	end
 
-	-- Заполняем таблицу зависимостей
-	local n = death_ini:line_count("item_dependence")
-	local id, value = "", ""
-	for i = 0, n - 1 do
-		result, id, value = death_ini:r_line("item_dependence", i, "", "")
-		item_dependence[id] = {}
-		local vvv = parse_names(value)
-		for k, v in pairs(vvv) do
-			item_dependence[id][v] = true
-		end
-	end
-
+	
 	-- Множители и минимаксы для выпадения вещей в зависимости от уровня
 	local level_name = level.name()
 
@@ -137,6 +153,7 @@ function init_drop_settings()
 		mul_by_level[id] = tonum(value)
 	end
 
+	ammo_count_base = {}
 	local item_count_section = "item_count_" .. level.get_game_difficulty()
 	local n = death_ini:line_count(item_count_section)
 	for i = 0, n - 1 do
@@ -151,6 +168,9 @@ function init_drop_settings()
 		if max == nil then
 			max = min
 		end
+
+		-- Патроны: чистое количество для спавна от оружия (без множителя уровня)
+		ammo_count_base[id] = {min = tonum(min), max = tonum(max)}
 
 		if mul_by_level[id] == nil then
 			mul_by_level[id] = 0
@@ -187,6 +207,28 @@ function init_drop_settings()
 		for i = 0, n - 1 do
 			result, id, value = death_ini:r_line("ammo_base_multiplier", i, "", "")
 			ammo_base_multiplier[id] = tonum(value) or 0.5
+		end
+	end
+	
+	-- настройки дропа патронов
+	ammo_drop_settings = {
+		second_type_chance = 0.25,
+		second_type_count_mult = 0.5,
+		inventory_weapon_ammo_chance = 0.2,
+		inventory_ammo_count_mult = 0.5
+	}
+	if death_ini:section_exist("ammo_drop") then
+		if death_ini:line_exist("ammo_drop", "second_type_chance") then
+			ammo_drop_settings.second_type_chance = tonum(death_ini:r_string("ammo_drop", "second_type_chance")) or 0.25
+		end
+		if death_ini:line_exist("ammo_drop", "second_type_count_mult") then
+			ammo_drop_settings.second_type_count_mult = tonum(death_ini:r_string("ammo_drop", "second_type_count_mult")) or 0.5
+		end
+		if death_ini:line_exist("ammo_drop", "inventory_weapon_ammo_chance") then
+			ammo_drop_settings.inventory_weapon_ammo_chance = tonum(death_ini:r_string("ammo_drop", "inventory_weapon_ammo_chance")) or 0.2
+		end
+		if death_ini:line_exist("ammo_drop", "inventory_ammo_count_mult") then
+			ammo_drop_settings.inventory_ammo_count_mult = tonum(death_ini:r_string("ammo_drop", "inventory_ammo_count_mult")) or 0.5
 		end
 	end
 
@@ -232,129 +274,168 @@ end
 
 function drop_manager:create_release_item()
 	local pairs_ = pairs
-	-- Спрашиваем у серверного объекта генерились ли предметы
+	-- защита от повторного создания лута
 	local se_obj = alife():object(self.npc:id())
 	if se_obj.death_droped == true then
 		return
 	end
 	se_obj.death_droped = true
 
-	-- Проверка на отсутствие спауна лута
+	-- проверка на запрет спавна лута
 	local ini = self.npc:spawn_ini()
 	local should_spawn_loot = not (ini and ini:section_exist("dont_spawn_loot"))
-	
-	-- В любом случае запускаем итератор на удаление предметов
-	self.npc:iterate_inventory(keep_item, self.npc)	
 
-	-- Доспавниваем необходимое количество итемов, если разрешено
-	if should_spawn_loot then
-		-- Сначала собираем все оружие в слотах
-		local slot_weapons = {}
-		local slot_1_item = self.npc:item_in_slot(1)
-		local slot_2_item = self.npc:item_in_slot(2)
-		
-		if slot_1_item and slot_1_item:is_weapon() then
-			slot_weapons[slot_1_item:section()] = true
-		end
-		if slot_2_item and slot_2_item:is_weapon() then
-			slot_weapons[slot_2_item:section()] = true
-		end
-		
-		local inventory_weapons = {}
-		self.npc:iterate_inventory(
-			function(dummy, item)
-				if item:is_weapon() then
-					local ws = item:section()
-					if not slot_weapons[ws] then
-						inventory_weapons[ws] = true
-					end
-				end
-			end,
-			nil
-		)
-		
-		local available_ammo = {}
-		local spawn_items = item_by_community[self.npc:character_community()]
-		
-		for ammo_section, chance in pairs_(spawn_items) do
-			-- Проверяем только патроны
-			if ammo_sections[ammo_section] then
-				-- Проверяем зависимости для этого типа патронов
-				if check_item_dependence(self.npc, ammo_section) then
-					available_ammo[ammo_section] = chance
+	-- старые патроны удаляем отложенно (см. schedule_release), чтобы не пересечься со спавном
+	self.npc:iterate_inventory(keep_item, self.npc)
+
+	if not should_spawn_loot then
+		return
+	end
+
+	local spawn_items = item_by_community[self.npc:character_community()]
+	if not spawn_items then
+		return
+	end
+
+	-- оружие в слотах -- основной источник патронов
+	local slot_weapons = {}
+	local slot_1_item = self.npc:item_in_slot(1)
+	local slot_2_item = self.npc:item_in_slot(2)
+	if slot_1_item and slot_1_item:is_weapon() then
+		slot_weapons[slot_1_item:section()] = true
+	end
+	if slot_2_item and slot_2_item:is_weapon() then
+		slot_weapons[slot_2_item:section()] = true
+	end
+
+	-- оружие, лежащее просто в рюкзаке
+	local inventory_weapons = {}
+	self.npc:iterate_inventory(
+		function(_, item)
+			if item and item:is_weapon() then
+				local ws = item:section()
+				if not slot_weapons[ws] then
+					inventory_weapons[ws] = true
 				end
 			end
+		end,
+		nil
+	)
+
+	-- патроны с оружия из слотов
+	for weapon_section, _ in pairs_(slot_weapons) do
+		spawn_weapon_ammo(self.npc, weapon_section, spawn_items, false)
+	end
+
+	-- патроны с оружия в рюкзаке: сильно меньший шанс и меньшее количество
+	local inv_chance = ammo_drop_settings.inventory_weapon_ammo_chance or 0.2
+	for weapon_section, _ in pairs_(inventory_weapons) do
+		if math.random() <= inv_chance then
+			spawn_weapon_ammo(self.npc, weapon_section, spawn_items, true)
 		end
-		
-		-- Группируем патроны по оружию
-		local ammo_by_weapon = {}
-		for ammo_section, _ in pairs_(available_ammo) do
-			if item_dependence[ammo_section] then
-				for weapon_section, _ in pairs_(item_dependence[ammo_section]) do
-					if slot_weapons[weapon_section] then
-						if not ammo_by_weapon[weapon_section] then
-							ammo_by_weapon[weapon_section] = {}
-						end
-						ammo_by_weapon[weapon_section][ammo_section] = true
-					end
-				end
-			end
-		end
-		
-		-- Для каждого оружия выбираем только один тип патронов
-		local selected_ammo = {}
-		for weapon_section, ammo_types in pairs_(ammo_by_weapon) do
-			local ammo_list = {}
-			for ammo_section, _ in pairs_(ammo_types) do
-				table.insert(ammo_list, ammo_section)
-			end
-			
-			local chosen_ammo = select_ammo_type_for_weapon(self.npc, weapon_section, ammo_list)
-			if chosen_ammo then
-				selected_ammo[chosen_ammo] = available_ammo[chosen_ammo]
-			end
-		end
-		
-		-- Спавним выбранные патроны
-		for ammo_section, chance in pairs_(selected_ammo) do
-			local number = math.random(count_by_level[ammo_section].min, count_by_level[ammo_section].max)
-			create_items(self.npc, ammo_section, number, chance)
-		end
-		
-		for weapon_section, _ in pairs_(inventory_weapons) do
-			local ammo_list = {}
-			for ammo_section, _ in pairs_(available_ammo) do
-				if item_dependence[ammo_section] then
-					for dep_weapon, _ in pairs_(item_dependence[ammo_section]) do
-						if dep_weapon == weapon_section then
-							ammo_list[#ammo_list + 1] = ammo_section
-							break
-						end
-					end
-				end
-			end
-			if #ammo_list > 0 then
-				local chosen_ammo = ammo_list[math.random(#ammo_list)]
-				local counts = count_by_level[chosen_ammo]
-				local number = math.max(1, math.floor(counts.max * 0.1))
-				local chance = available_ammo[chosen_ammo] or 1000
-				create_items(self.npc, chosen_ammo, number, chance)
-			end
-		end
-		
-		-- Спавним остальные предметы (не патроны)
-		for item_section, chance in pairs_(spawn_items) do
-			if not ammo_sections[item_section] then
-				if check_item_dependence(self.npc, item_section) then
-					local number = math.random(count_by_level[item_section].min, count_by_level[item_section].max)
-					create_items(self.npc, item_section, number, chance)
-				end
+	end
+
+	-- остальные предметы из таблицы коммунити
+	for item_section, chance in pairs_(spawn_items) do
+		if not ammo_sections[item_section] then
+			local counts = count_by_level[item_section]
+			if counts then
+				local number = math.random(counts.min, counts.max)
+				create_items(self.npc, item_section, number, chance)
 			end
 		end
 	end
 end
 
--- Функция выбирает какой тип патронов спавнить для данного оружия
+-- токенайзер строки ammo_class (секции с точками и дефисами)
+function parse_ammo_class_names(s)
+	local t = {}
+	if not s then
+		return t
+	end
+	for name in string.gmatch(s, "([%w_%.%-]+)") do
+		t[#t + 1] = name
+	end
+	return t
+end
+
+-- список патронов, подходящих стволу (из его ammo_class)
+function get_weapon_ammo_list(weapon_section)
+	local raw = utils.cfg_get_string(ini_sys, weapon_section, "ammo_class", weapon_section, false, "", "")
+	if not raw or raw == "" then
+		return nil
+	end
+	local list = parse_ammo_class_names(raw)
+	if #list == 0 then
+		return nil
+	end
+	return list
+end
+
+-- спавн патронов под конкретный ствол
+function spawn_weapon_ammo(npc, weapon_section, spawn_items, from_inventory)
+	local ammo_list = get_weapon_ammo_list(weapon_section)
+	if not ammo_list then
+		return
+	end
+
+	-- оставляем только патроны, которые есть в таблице коммунити
+	local candidates = {}
+	for _, ammo_section in ipairs(ammo_list) do
+		if ammo_sections[ammo_section] and spawn_items[ammo_section] then
+			candidates[#candidates + 1] = ammo_section
+		end
+	end
+
+	if #candidates == 0 then
+		return
+	end
+
+	-- основной тип: взвешенный выбор (базовый вес * множитель ранга NPC)
+	local chosen_ammo = select_ammo_type_for_weapon(npc, weapon_section, candidates)
+	if not chosen_ammo then
+		return
+	end
+
+	local count_mult = 1.0
+	if from_inventory then
+		count_mult = ammo_drop_settings.inventory_ammo_count_mult or 0.5
+	end
+
+	spawn_ammo_count(npc, chosen_ammo, count_mult)
+
+	-- второй тип патронов -- с шансом из конфига
+	local second_chance = ammo_drop_settings.second_type_chance or 0.25
+	if #candidates > 1 and math.random() <= second_chance then
+		local second_list = {}
+		for _, ammo_section in ipairs(candidates) do
+			if ammo_section ~= chosen_ammo then
+				second_list[#second_list + 1] = ammo_section
+			end
+		end
+		if #second_list > 0 then
+			local second_ammo = select_ammo_type_for_weapon(npc, weapon_section, second_list)
+			if second_ammo then
+				spawn_ammo_count(npc, second_ammo, count_mult * (ammo_drop_settings.second_type_count_mult or 0.5))
+			end
+		end
+	end
+end
+
+-- спавн патронов с количеством из таблиц (множитель сложности применяется в create_items)
+function spawn_ammo_count(npc, ammo_section, count_mult)
+	local counts = ammo_count_base[ammo_section] or count_by_level[ammo_section]
+	if not counts or counts.max <= 0 then
+		return
+	end
+	local number = math.floor(math.random(counts.min, counts.max) * (count_mult or 1.0))
+	if number < 1 then
+		number = 1
+	end
+	create_items(npc, ammo_section, number, 1000)
+end
+
+-- выбор одного типа патронов под ствол (веса: ammo_base_multiplier * rank_*)
 function select_ammo_type_for_weapon(npc, weapon_section, available_ammo_types)
 	if not available_ammo_types or #available_ammo_types == 0 then
 		return nil
@@ -439,23 +520,23 @@ function keep_item(npc, item)
 	end
 
 	if ammo_sections[section] and obj then
-		sim:release(obj, true) -- Теперь можно сразу удалять патроны
+		schedule_release(item) -- старые патроны удаляем отложенно
 		return true
 	end
 
 	if obj and (section == "device_pda" or section == "guitar_a" or section == "yad" or section == "hand_radio" or section == "harmonica_a" or section == "kruglov_flash") then
-		sim:release(obj, true)
+		schedule_release(item)
 		return false
 	end
 
 	local medrnd = mrandom(1, 5)
 	if obj and medrnd ~= 5 and item:is_medkit() then
-		sim:release(obj, true)
+		schedule_release(item)
 		return false
 	end
 
 	if npc:character_community() == "trader" and obj then
-		sim:release(obj, true)
+		schedule_release(item)
 		return false
 	end	   
 
@@ -587,30 +668,6 @@ function create_items(npc, section, number, rnd)
 	end
 end
 
--- Функция проверяет есть ли хоть один из зависимых объектов у персонажа
-function check_item_dependence(npc, section)
-	if item_dependence[section] == nil then
-		return true
-	end
-
-	-- Проверяем оружие в слотах
-	local slot_1_item = npc:item_in_slot(1) -- Пистолетный слот
-	local slot_2_item = npc:item_in_slot(2) -- Автоматный слот
-
-	local slot_1_section = slot_1_item and slot_1_item:section()
-	local slot_2_section = slot_2_item and slot_2_item:section()
-
-	-- Проходим по всем зависимостям для данного предмета
-	for weapon_section, _ in pairs(item_dependence[section]) do
-		-- Если секция оружия из зависимости совпадает с секцией оружия в любом из слотов
-		if weapon_section == slot_1_section or weapon_section == slot_2_section then
-			return true
-		end
-	end
-
-	-- Если ни одно из зависимых оружий не было найдено в слотах
-	return false
-end
 
 function set_rad_flag(obj)
 	if xvars and xvars.weapons and obj then
@@ -662,17 +719,6 @@ function dump_drop_tables()
 		end
 	end
 
-	--=== 3. Зависимости ===--
-	add_line("\n\n--- ЗАВИСИМОСТИ ПРЕДМЕТОВ ---")
-	add_line("(Предмет выпадет только если есть хотя бы один из зависимых)")
-	for item, deps in pairs_(item_dependence) do
-		local keys = {}
-		for k, _ in pairs_(deps) do
-			keys[#keys+1] = k
-		end
-		local deps_str = table.concat(keys, ", ")
-		add_line(sformat("%-20s > Требует: %s", item, deps_str))
-	end
 
 	--=== 4. Патроны ===--
 	add_line("\n\n--- НАСТРОЙКИ ПАТРОНОВ ---")

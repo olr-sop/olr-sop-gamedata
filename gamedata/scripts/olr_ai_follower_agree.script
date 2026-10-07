@@ -75,52 +75,58 @@ function is_active(npc)
 end
 
 ----------------------------------------------------------------------------------------------------------------------
--- СКАН УГРОЗЫ ДЛЯ ПРЕКОНДИШЕНА ДИАЛОГА
--- Порядок проверок - от дешёвого к дорогому:
---   get_clsid (отсекает предметы/машины/аномалии, ~95% записей db.storage)
---   -> alive -> дистанция -> see_right_now -> relation
+-- порядок проверок в scan_threats: clsid -> alive -> дистанция -> see -> relation.
+-- clsid стоит ПЕРЕД alive(): CScriptGameObject::Alive (script_game_object_use.cpp:110)
+-- делает smart_cast<CEntity*> и для не-сущностей пишет в лог ошибку
+-- "CSciptEntity : cannot access class member Alive!". В db.storage живут не только
+-- сталкеры и монстры: restrictor, level_changer (CLevelChanger : public CGameObject),
+-- physic_object (CPhysicsShellHolder) - они не CEntity. Ветки scan_threats ниже
+-- гарантированно CEntity: сталкеры (CAI_Stalker) и мутанты
+-- (CCustomMonster : CEntityAlive, CustomMonster.h:31) - им alive() нужен,
+-- чтобы не считать труп противником.
+-- db.actor (clsid.actor) в hostile_stalker_clsid не состоит - сам себя не ищем.
 --
--- see_right_now(), а НЕ see(): у них разница в 5 секунд инерции.
+-- see_right_now(), а не see(): у памяти есть "хвост" в 5 секунд.
 --   CVisualMemoryManager::visible_now() (visual_memory_manager.cpp:184) проверяет
---   только флаг m_visible, а он гасится лишь когда
---   m_level_time + m_still_visible_time < now, а still_visible_time в
+--   только таблицу m_visible, а не условие "объект ещё виден"
+--   m_level_time + m_still_visible_time < now, а still_visible_time берётся из
 --   config/creatures/actor.ltx:121 = 5000 мс. То есть see() = "видел в последние
---   5 секунд" - ровно тот false-positive, который нам не нужен.
---   visible_right_now() (:169) дополнительно требует m_level_time >= m_last_update_time,
---   т.е. объект попал в feel_vision_get в последнем цикле обновления зрения.
-----------------------------------------------------------------------------------------------------------------------
+--   5 секунд" - даёт false-positive, когда объект уже убежал.
+--   visible_right_now() (:169) проверяет условие m_level_time >= m_last_update_time,
+--   т.е. "объект был виден на кадре feel_vision_get" - значит он в кадре прямо сейчас.
+----------------------------------------------------------------------------------------------
 
 local hostile_stalker_clsid = { [clsid.script_stalker] = true }
 
 local function scan_threats()
 	if db.actor == nil then return false end
 
-	-- Самая дешёвая проверка, без скана вообще.
+	-- самый дешёвый триггер, сразу выходим.
 	if db.actor.health < 0.25 then return true end
 
 	local actor_pos = db.actor:position()
 
 	for id in pairs(db.storage) do
 		local obj = level.object_by_id(id)
-		-- db.actor сам лежит в db.storage, а IsStalker() в _g.script возвращает
-		-- true ещё и для clsid.actor - без этой проверки relation() дёргался бы на игроке.
-		if obj ~= nil and obj:id() ~= 0 and obj:alive() then
+		if obj ~= nil and obj:id() ~= 0 then
 			local c = get_clsid(obj)
 
 			if hostile_stalker_clsid[c] then
-				if obj:position():distance_to(actor_pos) < radius_stalker then
-					if obj:see_right_now(db.actor) then
-						if obj:relation(db.actor) == game_object.enemy then
-							return true
+				if obj:alive() then
+					if obj:position():distance_to(actor_pos) < radius_stalker then
+						if obj:see_right_now(db.actor) then
+							if obj:relation(db.actor) == game_object.enemy then
+								return true
+							end
 						end
 					end
 				end
 
 			elseif c ~= clsid.rat_s and IsMonster(obj, c) then
-				-- Мутантам see() не требуется: близкий мутант - угроза по определению,
-				-- а из-за спины он может не попасть в собственный FOV и тогда пункт
-				-- "позвать помощь" не показался бы в самый нужный момент.
-				if obj:position():distance_to(actor_pos) < radius_monster then
+				-- мутантам see() не нужен: хищник за спиной - уже угроза,
+				-- а из-за ограниченного FOV "они в спину" не всегда попадают
+				-- в поле зрения актёра.
+				if obj:alive() and obj:position():distance_to(actor_pos) < radius_monster then
 					return true
 				end
 			end

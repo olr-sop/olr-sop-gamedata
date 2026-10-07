@@ -8,6 +8,17 @@
 aim_ratio = 1000/50
 min_ratio = 1500
 
+-- Отладочный лог state_mgr (включать при необходимости)
+local debug = false
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[state_mgr] " .. string.format(fmt, ...))
+	else
+		log1("[state_mgr] " .. fmt)
+	end
+end
+
 -- Эвалуатор, который синхронизирует менеджер.
 -- Мы уже в безраличном состоянии idle или нет
 class "evaluator_state_mgr_idle" (property_evaluator)
@@ -417,6 +428,7 @@ function state_manager:set_state(state_name, callback, timeout, target, emerg, s
 		self.target_state = state_name	
 		self.current_object = nil
 		switched = true
+		dbg("%s: %s -> %s", self.npc:name(), tostring(last_state), tostring(state_name))
 	end
 
 	if state_lib.states[state_name].reset == true then

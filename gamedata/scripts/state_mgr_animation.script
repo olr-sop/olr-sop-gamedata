@@ -2,6 +2,17 @@ local anima=0
 local tmp_table = {}
 local k,v = 0,0
 
+-- Отладочный лог state_mgr_animation (включать при необходимости)
+local debug = false
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[state_mgr_anim] " .. string.format(fmt, ...))
+	else
+		log1("[state_mgr_anim] " .. fmt)
+	end
+end
+
 -- Анимации персонажа
 -- мы уже находимся в необходимом состоянии?
 class "eva_state_mgr_animation" (property_evaluator)
@@ -168,6 +179,7 @@ function animation:__init(npc, mgr)
 end
 -- установка нового состояния
 function animation:set_state(id, reset)
+	dbg("%s animation:set_state -> %s", self.npc:name(), tostring(id))
 	local pairs_ = pairs
 	local type_ = type
 
@@ -364,6 +376,7 @@ function animation:update()
 		self.npc:clear_animations()
 		self:set_state(nil)
 		self.states.current_state = nil
+		dbg("%s hard animation reset (emerg.animation)", self.npc:name())
 		self.mgr.emerg.animation = nil
 
 		return

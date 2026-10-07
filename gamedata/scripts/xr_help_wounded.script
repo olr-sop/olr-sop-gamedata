@@ -6,7 +6,7 @@
 
 local allow_help_wounded = true -- OLR: enabled by default (GameConstants gate removed)
 
-local debug = true -- xr_help_wounded verbose logging (false = quiet)
+local debug = false -- xr_help_wounded verbose logging (false = quiet)
 
 local function dbg(fmt, ...)
 	if not debug then return end
@@ -71,7 +71,7 @@ function evaluator_wounded_exist:evaluate()
 		local npc_id = npc:id()
 		
 		--printf(" %s wounded_already_selected %s", id, tostring(db.storage[id].wounded_already_selected))
-		if npc:see(vo) and xr_wounded.is_wounded(vo) and (db.storage[id].wounded_already_selected == nil or db.storage[id].wounded_already_selected == npc_id) and vo:alive() and vo:story_id() >= 65535 and not olr_protected.is_no_offline_alife_obj(vo:name()) then
+		if npc:see(vo) and xr_wounded.is_wounded(vo) and vo:relation(npc) ~= game_object.enemy and (db.storage[id].wounded_already_selected == nil or db.storage[id].wounded_already_selected == npc_id) and vo:alive() and vo:story_id() >= 65535 and not olr_protected.is_no_offline_alife_obj(vo:name()) then
 			if db.storage[id].wounded.not_for_help ~= true then
 				local npc_position = npc:position() 
 				local vo_position = vo:position()
@@ -132,6 +132,12 @@ function action_help_wounded:initialize()
 end
 function action_help_wounded:execute ()
 	action_base.execute(self)
+	if xr_wounded.is_wounded(self.object) then
+		self.object:set_desired_position()
+		self.object:set_desired_direction()
+		dbg("action help ABORT (helper is wounded): %s (%d)", self.object:name(), self.object:id())
+		return
+	end
 
 	if self.object:position():distance_to_sqr(self.a.vertex_position) > 2 then
 		return

@@ -31,9 +31,19 @@ function evaluator_kamp_end:__init(name, storage) super (nil, name)
 end
 function evaluator_kamp_end:evaluate()
 	if xr_wounded.is_wounded(self.object) then
+		if self.dbg_last ~= "wounded" then
+			self.dbg_last = "wounded"
+			dbg("%s kamp_end -> true (wounded)", self.object:name())
+		end
 		return true
 	end
-	return not xr_logic.is_active(self.object, self.a)
+	local res = not xr_logic.is_active(self.object, self.a)
+	local v = res and "true" or "false"
+	if self.dbg_last ~= v then
+		self.dbg_last = v
+		dbg("%s kamp_end -> %s", self.object:name(), v)
+	end
+	return res
 end
 -- Ќаходимс€ ли мы на заданной позиции
 class "evaluator_on_position" (property_evaluator)
@@ -270,6 +280,13 @@ function action_wait:activate_scheme()
 end
 function action_wait:execute()
 	action_base.execute (self)
+	if xr_kamp_debug and xr_wounded.is_wounded(self.object) then
+		local now_t = time_global()
+		if not self.dbg_w or now_t - self.dbg_w > 1000 then
+			self.dbg_w = now_t
+			dbg("%s action_wait EXECUTING while wounded (state_mgr=%s)", self.object:name(), tostring(state_mgr.get_state(self.object)))
+		end
+	end
 	if db.actor then
 		if xr_logic.try_switch_to_another_section(self.object, self.a, db.actor) then
 			return
@@ -282,6 +299,7 @@ function action_wait:execute()
 	xr_sound.set_sound(self.object, sound)
 end
 function action_wait:finalize()
+	dbg("%s action_wait FINALIZE", self.object:name())
 	-- если в руках осталс€ инструмент - заглушить (Complete 2025)
 	local stop_sound = false
 	for i, s in ipairs({"guitar_a", "harmonica_a"}) do
@@ -301,6 +319,7 @@ function action_wait:decreasePopsSafe()
 	kamps[self.a.center_point]:decreasePops(self.object)
 end
 function action_wait:deactivate(npc)
+	dbg("%s action_wait DEACTIVATE", (npc ~= nil) and npc:name() or "nil")
 	kamps[self.a.center_point]:removeNpc(npc)
 end
 function action_wait:death_callback(npc)
@@ -705,6 +724,21 @@ function CKampManager:getDestVertex(npc, radius)
 
 	return dest_vertex, position_index
 end
+-- ћожет ли этот NPC вести данное состо€ние лагер€ (инструмент/истори€ - только владелец)
+function CKampManager:canLeadState(state_name, npc_id)
+	local rec = self.npc[npc_id]
+	if rec == nil then return false end
+	if state_name == "pre_harmonica" or state_name == "harmonica" or state_name == "post_harmonica" then
+		return rec.states["wait_harmonica"] == true
+	elseif state_name == "pre_guitar" or state_name == "guitar" or state_name == "post_guitar" then
+		return rec.states["wait_guitar"] == true
+	elseif state_name == "story" or state_name == "post_story" then
+		return self.population > 1 and db.story_by_id[npc_id] ~= nil
+	elseif state_name == "pre_joke" or state_name == "joke" or state_name == "post_joke" then
+		return self.population > 1
+	end
+	return true
+end
 
 function CKampManager:proceedState(npc)
 	local pairs_ = pairs
@@ -751,7 +785,7 @@ function CKampManager:proceedState(npc)
 	local max_rnd = 0
 	for k,v in pairs_(self.trans_kamp[self.kamp_state]) do		
 		-- ќпредел€ютс€ допустимые состо€ни€ дл€ лагер€.
-		if self.kamp_states[k] == true then
+		if self:canLeadState(k, npc_id) then
 			temp[k] = v
 			max_rnd = max_rnd + v
 		end
@@ -835,7 +869,17 @@ function CKampManager:proceedRole(npc, director)
 		end
 
 		self.npc[npc_id].begin = time_global()
-		state = temp[math.random(table.getn(temp))]
+		if table.getn(temp) == 0 then
+			-- нет допустимых состо€ний - безопасный фолбэк (не рон€ем math.random)
+			dbg("no states for [%s] in [%s]", npc:name(), tostring(self.kamp_state))
+			if self.npc[npc_id].states["wait"] then
+				state = "wait"
+			else
+				state = "declarate"
+			end
+		else
+			state = temp[math.random(table.getn(temp))]
+		end
 		self.npc[npc_id].state_selected = state
 		self.npc[npc_id].state_idle = math.random(15000,20000)		
 	else

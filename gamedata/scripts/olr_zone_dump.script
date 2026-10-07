@@ -1,0 +1,558 @@
+--[[ ==================================================================
+	olr_zone_dump.script — диагностический дамп всех укрытий выброса.
+
+	Что даёт:
+	 * точную геометрию зон из движкового zone:get_shapes(): сферы и
+	   боксы, мировые центры/размеры/углы — видны СОСТАВНЫЕ зоны из
+	   нескольких сшитых боксов (у них нет никакого radius);
+	 * связь фигур с AI-сеткой: сколько вершин в габаритах зоны, какие
+	   ВНУТРИ фигуры, и минимальный вертикальный подъём dY, при котором
+	   вершина попадает внутрь («рестриктор чуть выше сетки» виден сразу);
+	 * ASCII-карту следа зоны вместе с вершинами сетки;
+	 * вердикт по зоне.
+
+	Вызов в игре:
+	  run_string olr_zone_dump.dump_zones()        -- все зоны + карты
+	  run_string olr_zone_dump.dump_zones(false)   -- все зоны без карт
+	  run_string olr_zone_dump.dump_zone("esc_surge_hide_0006")  -- одна зона
+	  run_string olr_zone_dump.dump_covers()       -- компактная сводка по всем
+	  run_string olr_zone_dump.write_ltx()         -- заготовка surge_manager.seats.ltx
+
+	Требуется движковый экспорт CSpaceRestrictor:get_shapes(). Если его
+	нет (старый движок), дамп честно скажет об этом и продолжит по
+	center()/radius.
+-- ================================================================== ]]
+
+local tag = "[zone_dump] "
+
+local function out(fmt, ...)
+	if select("#", ...) > 0 then
+		log1(tag .. string.format(fmt, ...))
+	else
+		log1(tag .. fmt)
+	end
+end
+
+local function valid_vid(v)
+	return type(v) == "number" and v >= 0 and v < 2147483647
+end
+
+local function mk(x, y, z)
+	return vector():set(x, y, z)
+end
+
+local function vt(p)
+	return string.format("(%.1f,%.1f,%.1f)", p.x, p.y, p.z)
+end
+
+-- ============================== данные ==============================
+
+local function get_mgr()
+	if surge_manager == nil or surge_manager.get_surge_manager == nil then
+		return nil
+	end
+	return surge_manager.get_surge_manager()
+end
+
+local function zone_shapes(zone)
+	local ok_fn, fn = pcall(function() return zone.get_shapes end)
+	if not ok_fn then
+		return nil, "zone.get_shapes: ошибка доступа (" .. tostring(fn) .. ")"
+	end
+	if type(fn) ~= "function" then
+		return nil, "zone.get_shapes = " .. tostring(fn) .. " (нет движкового экспорта)"
+	end
+	local ok, res = pcall(fn, zone)
+	if not ok then
+		return nil, "zone:get_shapes() ошибка: " .. tostring(res)
+	end
+	if type(res) ~= "table" then
+		return nil, "zone:get_shapes() вернул " .. type(res) .. " (" .. tostring(res) .. ")"
+	end
+	if #res == 0 then
+		return nil, "zone:get_shapes() вернул пустую таблицу (0 фигур)"
+	end
+	return res, nil
+end
+
+local function aabb_merge(mn, mx, p)
+	if p.x < mn.x then mn.x = p.x end
+	if p.y < mn.y then mn.y = p.y end
+	if p.z < mn.z then mn.z = p.z end
+	if p.x > mx.x then mx.x = p.x end
+	if p.y > mx.y then mx.y = p.y end
+	if p.z > mx.z then mx.z = p.z end
+end
+
+local function zone_aabb(zone, shapes)
+	local mn = { x = 1e9,  y = 1e9,  z = 1e9 }
+	local mx = { x = -1e9, y = -1e9, z = -1e9 }
+
+	if shapes ~= nil then
+		for i = 1, #shapes do
+			local s = shapes[i]
+			if s.kind == 0 then
+				aabb_merge(mn, mx, { x = s.center.x - s.radius, y = s.center.y - s.radius, z = s.center.z - s.radius })
+				aabb_merge(mn, mx, { x = s.center.x + s.radius, y = s.center.y + s.radius, z = s.center.z + s.radius })
+			elseif s.corners ~= nil then
+				for k = 1, 8 do aabb_merge(mn, mx, s.corners[k]) end
+			end
+		end
+	end
+
+	if mn.x > mx.x then
+		local c = zone:center()
+		local r = zone.radius or 0
+		if r <= 0 then r = 10.0 end
+		mn = { x = c.x - r, y = c.y - r, z = c.z - r }
+		mx = { x = c.x + r, y = c.y + r, z = c.z + r }
+	end
+	return mn, mx
+end
+
+-- ============================ измерения =============================
+
+local function print_shapes(shapes, detailed, reason)
+	if shapes == nil then
+		out("  геометрия недоступна: %s", reason or "нет zone:get_shapes")
+		return
+	end
+
+	local ns, nb = 0, 0
+	for i = 1, #shapes do
+		if shapes[i].kind == 0 then ns = ns + 1 else nb = nb + 1 end
+	end
+	out("  фигур: %d (сфер %d, боксов %d)", #shapes, ns, nb)
+
+	for i = 1, #shapes do
+		local s = shapes[i]
+		if s.kind == 0 then
+			out("    сфера#%d центр=%s r=%.2f", i, vt(s.center), s.radius)
+		else
+			local sz = s.size or { x = 0, y = 0, z = 0 }
+			out("    бокс#%d центр=%s размер(лок)=%.1fx%.1fx%.1f", i, vt(s.center), sz.x, sz.y, sz.z)
+			if detailed and s.corners ~= nil then
+				for k = 1, 8 do
+					out("      угол[%d]=%s", k, vt(s.corners[k]))
+				end
+			end
+		end
+	end
+end
+
+local function profile_runs(zone, cx, cy, cz)
+	local runs, cur = {}, nil
+	local y = -20.0
+	while y <= 20.0 + 1e-6 do
+		local ins = zone:inside(mk(cx, cy + y, cz), 0.0)
+		if ins and cur == nil then cur = y end
+		if (not ins) and cur ~= nil then
+			runs[#runs + 1] = { cur, y - 0.25 }
+			cur = nil
+		end
+		y = y + 0.25
+	end
+	if cur ~= nil then runs[#runs + 1] = { cur, 20.0 } end
+	return runs
+end
+
+local function profile_str(runs)
+	if #runs == 0 then return "центр вне фигуры" end
+	local parts = {}
+	for i = 1, #runs do
+		parts[#parts + 1] = string.format("%+.2f..%+.2f", runs[i][1], runs[i][2])
+	end
+	return table.concat(parts, ", ")
+end
+
+local function scan_vertices(mn, mx, step, ys)
+	local seen, list = {}, {}
+	local x = mn.x
+	while x <= mx.x + 1e-6 do
+		local z = mn.z
+		while z <= mx.z + 1e-6 do
+			for k = 1, #ys do
+				local v = level.vertex_id(mk(x, ys[k], z))
+				if valid_vid(v) and not seen[v] then
+					seen[v] = true
+					local vp = level.vertex_position(v)
+					list[#list + 1] = { vid = v, p = { x = vp.x, y = vp.y, z = vp.z } }
+				end
+			end
+			z = z + step
+		end
+		x = x + step
+	end
+	return list
+end
+
+local function vertex_dy(zone, p)
+	if zone:inside(mk(p.x, p.y, p.z), 0.0) then return 0 end
+	for d = 1, 40 do
+		local dy = d * 0.25
+		if zone:inside(mk(p.x, p.y + dy, p.z), 0.0) then return dy end
+	end
+	for d = 1, 40 do
+		local dy = -d * 0.25
+		if zone:inside(mk(p.x, p.y + dy, p.z), 0.0) then return dy end
+	end
+	return nil
+end
+
+local function vertex_clear(zone, p)
+	local dirs = {
+		{ 1.0, 0.0 }, { 0.7071, 0.7071 }, { 0.0, 1.0 }, { -0.7071, 0.7071 },
+		{ -1.0, 0.0 }, { -0.7071, -0.7071 }, { 0.0, -1.0 }, { 0.7071, -0.7071 }
+	}
+	local m = 8.0
+	for d = 1, 8 do
+		local dist = 0.0
+		while dist < 8.0 do
+			dist = dist + 0.5
+			local q = mk(p.x + dirs[d][1] * dist, p.y, p.z + dirs[d][2] * dist)
+			if not zone:inside(q, 0.0) then break end
+		end
+		local cl = dist - 0.5
+		if cl < m then m = cl end
+		if m <= 0 then break end
+	end
+	return m
+end
+
+local function build_map(zone, mn, mx, y, step)
+	local rows = {}
+	local z = mn.z
+	while z <= mx.z + 1e-6 do
+		local s = ""
+		local x = mn.x
+		while x <= mx.x + 1e-6 do
+			local ins = zone:inside(mk(x, y, z), 0.0)
+			local v = level.vertex_id(mk(x, y, z))
+			local has = valid_vid(v)
+			if ins then
+				s = s .. (has and "#" or ".")
+			else
+				s = s .. (has and "v" or " ")
+			end
+			x = x + step
+		end
+		rows[#rows + 1] = s
+		z = z + step
+	end
+	return rows
+end
+
+-- ============================ одна зона =============================
+
+local function dump_one(zone, allowed, show_map, detailed)
+	local name    = zone:name()
+	local pos     = zone:position()
+	local ctr     = zone:center()
+	local shapes, sreason = zone_shapes(zone)
+	local mn, mx  = zone_aabb(zone, shapes)
+	local runs    = profile_runs(zone, ctr.x, ctr.y, ctr.z)
+
+	out("[%s] id=%d allowed=%s type=%s", name, zone:id(), tostring(allowed), tostring(zone.restrictor_type))
+	out("  pos=%s center=%s radius=%.2f", vt(pos), vt(ctr), zone.radius or 0)
+	print_shapes(shapes, detailed, sreason)
+	out("  AABB %s .. %s", vt(mn), vt(mx))
+	out("  Y-профиль в колонке центра: %s", profile_str(runs))
+
+	local dx = mx.x - mn.x
+	local dz = mx.z - mn.z
+	local step = math.max(1.5, math.ceil(math.max(dx, dz) / 32))
+	if detailed then
+		step = math.max(1.0, math.ceil(math.max(dx, dz) / 24))
+	end
+
+	local ys = { ctr.y, ctr.y - 3.0, ctr.y + 3.0, mn.y + 0.5, mx.y - 0.5 }
+	local list = scan_vertices(mn, mx, step, ys)
+
+	local n_in, n_pos, n_neg, n_none = 0, 0, 0, 0
+	local ycount = {}
+	for i = 1, #list do
+		local it = list[i]
+		it.dy = vertex_dy(zone, it.p)
+		if it.dy == 0 then
+			n_in = n_in + 1
+			local yr = math.floor(it.p.y + 0.5)
+			local e = ycount[yr]
+			if e == nil then e = { n = 0, sum = 0.0 }; ycount[yr] = e end
+			e.n = e.n + 1
+			e.sum = e.sum + it.p.y
+		elseif it.dy == nil then
+			n_none = n_none + 1
+		elseif it.dy > 0 then
+			n_pos = n_pos + 1
+		else
+			n_neg = n_neg + 1
+		end
+	end
+
+	local y_best, y_best_n = nil, 0
+	for yr, e in pairs(ycount) do
+		if e.n > y_best_n then y_best, y_best_n = e.sum / e.n, e.n end
+	end
+
+	out("  сетка: шаг %.1fм, вершин %d, внутри %d, ниже фигуры(+dY) %d, выше(-dY) %d, мимо XZ %d",
+	    step, #list, n_in, n_pos, n_neg, n_none)
+
+	if #list == 0 then
+		out("  ВЕРДИКТ: под зоной НЕТ AI-сетки (скан по габаритам)")
+	elseif n_in == 0 then
+		if n_pos > 0 then
+			out("  ВЕРДИКТ: ФИГУРА ВЫШЕ СЕТКИ (вершины входят только с подъёмом +dY)")
+		else
+			out("  ВЕРДИКТ: СЕТКА МИМО ФИГУРЫ (вершин внутри нет)")
+		end
+	else
+		out("  ВЕРДИКТ: вершины внутри есть (%d)", n_in)
+	end
+
+	-- сначала вершины ВНУТРИ (dY=0), затем по возрастанию |dY|, мимо — в конец
+	table.sort(list, function(a, b)
+		if (a.dy == nil) ~= (b.dy == nil) then return b.dy == nil end
+		if a.dy ~= nil and a.dy ~= b.dy then
+			return math.abs(a.dy) < math.abs(b.dy)
+		end
+		return (a.p.x * a.p.x + a.p.z * a.p.z) < (b.p.x * b.p.x + b.p.z * b.p.z)
+	end)
+
+	local shown = detailed and #list or math.min(12, #list)
+	for i = 1, shown do
+		local it = list[i]
+		local ds
+		if it.dy == 0 then ds = "0"
+		elseif it.dy == nil then ds = "-"
+		else ds = string.format("%+.2f", it.dy) end
+		if detailed then
+			out("    vid=%d p=%s dY=%s clear=%.1f", it.vid, vt(it.p), ds, vertex_clear(zone, it.p))
+		else
+			out("    vid=%d p=%s dY=%s", it.vid, vt(it.p), ds)
+		end
+	end
+	if (not detailed) and #list > shown then
+		out("    ... ещё %d вершин", #list - shown)
+	end
+
+	if show_map then
+		local y = y_best
+		if y == nil then
+			if #runs > 0 then
+				-- полоса профиля в колонке центра: берём самую широкую
+				local best = runs[1]
+				for i = 2, #runs do
+					if (runs[i][2] - runs[i][1]) > (best[2] - best[1]) then best = runs[i] end
+				end
+				y = ctr.y + (best[1] + best[2]) * 0.5
+			elseif #list > 0 then
+				y = math.floor(list[1].p.y + 0.5)
+			else
+				y = math.floor(ctr.y + 0.5)
+			end
+		end
+		local mstep = math.max(1.0, math.ceil(math.max(dx, dz) / 44))
+		out("  карта Y=%.1f шаг=%.1f (' '=пусто '.'=внутри '#'=внутри+сетка 'v'=сетка вне фигуры):", y, mstep)
+		local rows = build_map(zone, mn, mx, y, mstep)
+		for i = 1, #rows do
+			out("    |%s|", rows[i])
+		end
+	end
+end
+
+-- ============================== API =================================
+
+function dump_zones(show_map)
+	if show_map == nil then show_map = true end
+
+	local m = get_mgr()
+	if m == nil or m.covers == nil or (m.count or 0) == 0 then
+		out("нет covers (surge_manager не готов или список пуст)")
+		return
+	end
+
+	out("=== ДАМП ЗОН: всего %d, карты=%s ===", m.count, tostring(show_map))
+	for i = 1, m.count do
+		local c = m.covers[i]
+		if c ~= nil and c.zone ~= nil then
+			local ok, allowed = pcall(function() return m:cover_allowed(c) end)
+			dump_one(c.zone, ok and allowed or false, show_map, false)
+		end
+	end
+	out("=== КОНЕЦ ДАМПА ===")
+end
+
+function dump_zone(name, show_map)
+	if show_map == nil then show_map = true end
+
+	local zone = nil
+	if db ~= nil and db.zone_by_name ~= nil then
+		zone = db.zone_by_name[name]
+	end
+	if zone == nil then
+		local m = get_mgr()
+		if m ~= nil and m.covers ~= nil then
+			for i = 1, (m.count or 0) do
+				local c = m.covers[i]
+				if c ~= nil and c.zone ~= nil and c.zone:name() == name then
+					zone = c.zone
+					break
+				end
+			end
+		end
+	end
+
+	if zone == nil then
+		out("зона '%s' не найдена (db.zone_by_name / covers)", name)
+		return
+	end
+	dump_one(zone, true, show_map, true)
+end
+
+-- ==================================================================
+-- Компактная сводка по всем укрытиям (переехала из olr_ai_hideout.script).
+-- Вызов: run_string olr_zone_dump.dump_covers()
+-- ==================================================================
+function dump_covers()
+	local m = get_mgr()
+	if m == nil or m.count == nil then
+		out("dump_covers: нет surge_manager")
+		return
+	end
+
+	local no_seat = 0
+	out("==== dump_covers: зон %d ====", m.count)
+
+	for i = 1, m.count do
+		local c = m.covers[i]
+		if c ~= nil and c.zone ~= nil then
+			local zone = c.zone
+			local name = zone:name()
+			local pos  = zone:position()
+			local ctr  = zone:center()
+			local shapes = zone_shapes(zone)
+			local mn, mx = zone_aabb(zone, shapes)
+
+			-- Y-уровни фигур (иначе нижние этажи теряются), как в схеме
+			local ys = {}
+			if shapes ~= nil then
+				for k = 1, #shapes do
+					if shapes[k].center ~= nil then ys[#ys + 1] = shapes[k].center.y end
+				end
+			end
+			if #ys == 0 then ys = { ctr.y } end
+
+			local step = (math.max(mx.x - mn.x, mx.z - mn.z) <= 30.0) and 1.0 or 2.0
+			local list = scan_vertices(mn, mx, step, ys)
+
+			local n_in = 0
+			for k = 1, #list do
+				local it = list[k]
+				it.dy = vertex_dy(zone, it.p)
+				if it.dy == 0 then n_in = n_in + 1 end
+			end
+
+			-- лучшее место = максимальный просвет среди внутренних вершин
+			local best_v, best_c = nil, -1
+			for k = 1, #list do
+				if list[k].dy == 0 then
+					local cl = vertex_clear(zone, list[k].p)
+					if cl > best_c then best_v, best_c = list[k], cl end
+				end
+			end
+			local bp = best_v and best_v.p or nil
+
+			out("%-28s pos=(%.0f,%.0f,%.0f) center=(%.0f,%.0f,%.0f) вершин=%d внутри=%d просвет=%.1f лучшее=(%.0f,%.0f,%.0f)",
+			    name, pos.x, pos.y, pos.z, ctr.x, ctr.y, ctr.z,
+			    #list, n_in, best_c,
+			    bp and bp.x or -9999, bp and bp.y or -9999, bp and bp.z or -9999)
+			if n_in == 0 then no_seat = no_seat + 1 end
+		end
+	end
+
+	out("==== dump_covers: зон без мест внутри: %d ====", no_seat)
+end
+
+-- ==================================================================
+-- Заготовка LTX: по зоне — геометрия, лучшие места и шаблоны ключей
+-- seat/entrance. Пишется в gamedata\config\misc\surge_manager.seats.ltx;
+-- никуда не подключается автоматически — чисто шаблон под будущее.
+-- Вызов: run_string olr_zone_dump.write_ltx()
+-- ==================================================================
+function write_ltx()
+	local path = "gamedata\\config\\misc\\surge_manager.seats.ltx"
+	local f, err = io.open(path, "w")
+	if f == nil then
+		out("write_ltx: не удалось открыть %s (%s)", path, tostring(err))
+		return
+	end
+
+	local m = get_mgr()
+	f:write("; =====================================================================\n")
+	f:write("; СГЕНЕРИРОВАНО olr_zone_dump.write_ltx() — никуда не подключается.\n")
+	f:write("; Заготовка под ручную правку ключей секций зон в surge_manager.ltx.\n")
+	f:write("; seat — пока НЕ читается схемой; entrance — читается (взгляд из укрытия).\n")
+	f:write("; =====================================================================\n\n")
+
+	if m == nil or m.count == nil then
+		f:write("; нет surge_manager\n")
+		f:close()
+		out("write_ltx: записано %s (surge_manager не готов)", path)
+		return
+	end
+
+	for i = 1, m.count do
+		local c = m.covers[i]
+		if c ~= nil and c.zone ~= nil then
+			local zone = c.zone
+			local name = zone:name()
+			local shapes = zone_shapes(zone)
+
+			local ns, nb = 0, 0
+			if shapes ~= nil then
+				for k = 1, #shapes do
+					if shapes[k].kind == 0 then ns = ns + 1 else nb = nb + 1 end
+				end
+			end
+
+			local pos = zone:position()
+			f:write("; ---- " .. name .. " ----\n")
+			f:write(string.format("; pos=(%.1f,%.1f,%.1f) фигур=%d (сфер %d, боксов %d)\n",
+			    pos.x, pos.y, pos.z, shapes and #shapes or 0, ns, nb))
+
+			local mn, mx = zone_aabb(zone, shapes)
+			local ys = {}
+			if shapes ~= nil then
+				for k = 1, #shapes do
+					if shapes[k].center ~= nil then ys[#ys + 1] = shapes[k].center.y end
+				end
+			end
+			if #ys == 0 then ys = { zone:center().y } end
+
+			local step = (math.max(mx.x - mn.x, mx.z - mn.z) <= 30.0) and 1.0 or 2.0
+			local list = scan_vertices(mn, mx, step, ys)
+			local seats = {}
+			for k = 1, #list do
+				local it = list[k]
+				it.dy = vertex_dy(zone, it.p)
+				if it.dy == 0 then
+					it.clear = vertex_clear(zone, it.p)
+					seats[#seats + 1] = it
+				end
+			end
+			table.sort(seats, function(a, b) return a.clear > b.clear end)
+
+			for k = 1, math.min(#seats, 8) do
+				local it = seats[k]
+				f:write(string.format(";   seat = %d   ; clear=%.1f p=(%.1f,%.1f,%.1f)\n",
+				    it.vid, it.clear, it.p.x, it.p.y, it.p.z))
+			end
+			f:write("; [" .. name .. "]\n")
+			f:write("; entrance = <vid>   ; куда смотреть из укрытия\n")
+			f:write("; seat     = <vid>   ; заготовка (схемой пока не читается)\n\n")
+		end
+	end
+
+	f:close()
+	out("write_ltx: записано %s", path)
+end

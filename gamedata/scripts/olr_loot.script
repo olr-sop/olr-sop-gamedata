@@ -1,0 +1,323 @@
+--[[----------------------------------------------------------------------------------
+  olr_loot.script - общий модуль правил лута для схем
+  olr_ai_gather_items (сбор предметов) и olr_ai_corpse_detection (обыск трупов).
+
+  За основу взята логика Call of Chernobyl (xr_gather_items / xr_corpse_detection):
+    * единый фильтр "что можно брать" (правила CoC по данным system_ini);
+    * единый список "кому нельзя работать под схемами" (is_forbidden / is_protected);
+    * общий bad_situation для обеих схем (враги, ранения, выброс, no_loot, лимиты);
+    * ограничители: вес (MAX_WEIGHT) и количество предметов (MAX_RUCK_ITEMS).
+
+  ВАЖНО: движок заворачивает скрипт в таблицу-песочницу с именем файла
+  (setfenv), поэтому функции объявляются БЕЗ префикса - снаружи они видны
+  как olr_loot.is_forbidden(), olr_loot.can_take() и т.д.
+----------------------------------------------------------------------------------]]
+
+-- ==================================================================
+-- Ограничители
+-- ==================================================================
+
+-- Если NPC уже несёт больше MAX_WEIGHT кг - не собирает и не обыскивает.
+local MAX_WEIGHT = 22.5
+-- Если в рюкзаке больше MAX_RUCK_ITEMS предметов - не собирает и не обыскивает.
+local MAX_RUCK_ITEMS = 25
+
+-- ==================================================================
+-- Запрещённые секции (служебный мусор, не берём никогда).
+-- Остальные правила (can_trade / quest_item / inv_name / cost / mp_)
+-- проверяются лениво по system_ini в is_lootable().
+-- ==================================================================
+
+local ignore_sections = {
+	["bolt"] = true,
+	["device_pda"] = true,
+	["device_torch"] = true,
+	["device_flare"] = true,
+	["anomaly_scaner"] = true,
+	["dev_flash_1"] = true,
+	["dev_flash_2"] = true,
+	["hand_radio"] = true,
+	["hand_radio_r"] = true,
+	["guitar_a"] = true,
+	["harmonica_a"] = true,
+	["toolkit_1"] = true,
+	["toolkit_2"] = true,
+	["toolkit_3"] = true,
+	["medkit_script"] = true,
+	["vodka_script"] = true,
+	["stick_bred"] = true,
+	["stick_kolbasa"] = true,
+	["stick_kolbasa_bred"] = true,
+	["script_hud_motion"] = true,
+	["custom_script_object"] = true,
+	["attachable_item"] = true,
+	["new_attachable_item"] = true,
+	["document"] = true,
+	["anim_binoc"] = true,
+	["anim_knife"] = true,
+	["ammo_knife"] = true,
+	["helicopter_missile"] = true,
+	["wpn_rpg7_missile"] = true,
+	["test_container"] = true,
+	["stationary_mgun"] = true,
+	["itm_actor_backpack"] = true,
+	["helmet"] = true,
+	["helmet_base"] = true,
+	["gl_fake_missile"] = true,
+	["gl_fake_missile_ammo_m209"] = true,
+	["gl_fake_missile_ammo_vog-25"] = true,
+	["gl_fake_missile_ammo_vog-25p"] = true,
+	["gl_test_shell"] = true,
+	["gl_test_shell_ammo_m209"] = true,
+	["gl_test_shell_ammo_vog-25"] = true,
+	["gl_test_shell_ammo_vog-25p"] = true,
+	["wpn_fake_missile"] = true,
+	["wpn_fake_missile1"] = true,
+	["wpn_fake_missile2"] = true,
+}
+
+-- ==================================================================
+-- Кому нельзя работать под лут-схемами
+-- ==================================================================
+
+-- Запрещённые комьюнити (из watcher_act + текущих биндеров схем).
+local excluded_communities = {
+	["zombied"] = true,
+	["sin"] = true,
+	["military"] = true,
+	["bandit"] = true,
+	["voenstals"] = true,
+	["trader"] = true,
+	["neutral"] = true, -- зачем так было у Флаера я без понятия, пусть будет
+}
+
+-- Запрещённые имена/фрагменты имён (поиск через string.find)
+local excluded_name_parts = {
+	"doctor",
+	"doktor",
+	"mil_stalker",
+	"ecolog",
+	"scientist",
+	"lvl16_generators_staler_undead_olr_0002",
+	"lvl1_escape_stalker_0038",
+	"mil_freedom_member0021",
+}
+
+-- Точечные именные исключения.
+local excluded_names = {
+	["mil_stalker0012"] = true,                    -- сумасшедший на милитари
+	["yantar_ecolog_general"] = true,              -- Горбовский вроде бы всё еще, осталось из схем
+	["lvl16_generators_staler_undead_olr"] = true, -- Напарник на Генераторах
+}
+
+-- NPC под защитой olr_protected. Проверка динамическая: защита может
+-- сниматься инфопорцией, поэтому вызывается в эвалюаторе, а не в биндере.
+function is_protected(npc)
+	if npc == nil then return true end
+	return olr_protected.is_no_offline_alife_obj(npc:name()) == true
+end
+
+-- Статический запрет: комьюнити, именные исключения и сюжетные NPC.
+-- У симуляционных NPC story_id == 4294967296, у сюжетных - другой.
+function is_forbidden(npc)
+	if npc == nil then return true end
+	if excluded_communities[npc:character_community()] then return true end
+
+	local name = npc:name()
+	if excluded_names[name] then return true end
+	for i = 1, #excluded_name_parts do
+		if string.find(name, excluded_name_parts[i]) then return true end
+	end
+
+	if npc:story_id() ~= 4294967296 then return true end
+	return false
+end
+
+-- Полная проверка для эвалюаторов: "может ли NPC работать под лут-схемами".
+function can_work(npc)
+	return (not is_forbidden(npc)) and (not is_protected(npc))
+end
+
+-- ==================================================================
+-- Фильтр "что можно брать" (правила CoC)
+-- ==================================================================
+
+local lootable_cache = {}
+
+-- Разрешена ли секция к луту: can_trade == true (по умолчанию true),
+-- quest_item == false, есть inv_name, cost > 0, не mp_* и не в ignore_sections.
+function is_lootable(item)
+	if item == nil then return false end
+	local sec = item:section()
+
+	local cached = lootable_cache[sec]
+	if cached ~= nil then return cached end
+
+	local res = false
+	if not ignore_sections[sec] and not string.find(sec, "mp_") then
+		local ini = system_ini()
+		if ini:section_exist(sec) then
+			local can_trade = true
+			if ini:line_exist(sec, "can_trade") then
+				can_trade = ini:r_bool(sec, "can_trade")
+			end
+
+			local quest_item = false
+			if ini:line_exist(sec, "quest_item") then
+				quest_item = ini:r_bool(sec, "quest_item")
+			end
+
+			local inv_name = nil
+			if ini:line_exist(sec, "inv_name") then
+				inv_name = ini:r_string(sec, "inv_name")
+			end
+
+			local cost = 0
+			if ini:line_exist(sec, "cost") then
+				cost = ini:r_float(sec, "cost")
+			end
+
+			if can_trade == true and quest_item == false and inv_name ~= nil and inv_name ~= ""
+			   and inv_name ~= "default" and cost > 0 then
+				res = true
+			end
+		end
+	end
+
+	lootable_cache[sec] = res
+	return res
+end
+
+-- Дополнительный стоп-лист OLR (olr.bad_items / olr.bad_items_names).
+function do_not_touch(item)
+	if item == nil then return true end
+	if olr.bad_items[item:section()] == true then return true end
+	if olr.bad_items_names[item:name()] == true then return true end
+	return false
+end
+
+-- Общий "можно взять" для обеих схем.
+function can_take(item)
+	if item == nil then return false end
+	if not is_lootable(item) then return false end
+	if do_not_touch(item) then return false end
+--	local nm = item:name()
+--	if nm ~= nil and string.find(nm, "^mutant_") then return false end
+	return true
+end
+
+-- ==================================================================
+-- Ограничители веса/количества
+-- ==================================================================
+
+local item_weight_cache = {}
+local function item_weight(sec)
+	local w = item_weight_cache[sec]
+	if w == nil then
+		local ini = system_ini()
+		if ini:line_exist(sec, "inv_weight") then
+			w = ini:r_float(sec, "inv_weight")
+		else
+			w = 0
+		end
+		item_weight_cache[sec] = w
+	end
+	return w
+end
+
+function max_weight(npc)
+	local total = 0.0
+	if npc then
+		npc:iterate_inventory(function(_, item)
+			if item then
+				total = total + item_weight(item:section())
+			end
+		end, nil)
+	end
+	return total
+end
+
+-- Перегруз или слишком много предметов - больше не собираем.
+function is_overloaded(npc)
+	if npc == nil then return true end
+	if max_weight(npc) > MAX_WEIGHT then return true end
+	if npc:ruck_count() > MAX_RUCK_ITEMS then return true end
+	return false
+end
+
+-- ==================================================================
+-- Общий bad_situation для обеих схем
+-- ==================================================================
+
+local bad_dangers = {
+	[danger_object.hit] = true,
+	[danger_object.attacked] = true,
+	[danger_object.enemy_sound] = true,
+	[danger_object.attack_sound] = true,
+	[danger_object.bullet_ricochet] = true,
+	[danger_object.grenade] = true,
+	[danger_object.entity_death] = true
+}
+local inertion_time = 30000
+
+function bad_danger(npc)
+	local danger = npc:best_danger()
+	if danger then
+		return bad_dangers[danger:type()] and (time_global() - danger:time()) < inertion_time
+	end
+	return false
+end
+
+-- scheme_id: "ai_gather_items" или "ai_corpse_detection" - чтобы не считать
+-- занятость своей же схемы (busy ставится на время действия).
+function bad_situation(npc, st, scheme_id, actor_stop_dist)
+	if npc == nil then return true end
+	if not npc:alive() then return true end
+	if xr_wounded.is_wounded(npc) then return true end
+	if st ~= nil and st.enabled == false then return true end
+
+	if npc:best_enemy() then return true end
+	if bad_danger(npc) then return true end
+
+	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+		return true
+	end
+
+	-- Запрет лута из LTX-схемы (no_loot = true).
+	local ov = xr_logic.generic_scheme_overrides(npc)
+	if ov ~= nil and ov.no_loot == true then return true end
+
+	local root = db.storage[npc:id()]
+	local sch = root and root.active_scheme
+	if sch ~= nil and root[sch] ~= nil and root[sch].no_loot == true then return true end
+
+	-- Схемы, под которыми не лутаем (из watcher_act).
+	local active = root and root.active_scheme
+	if active == "remark" or active == "combat" or active == "wounded" or active == "actor_dialogs" then
+		return true
+	end
+
+	-- Перегруз / слишком много предметов.
+	if is_overloaded(npc) then return true end
+
+	-- Другая лут-схема уже занята этим NPC.
+	if scheme_id ~= "ai_gather_items" and olr_ai_gather_items and olr_ai_gather_items.is_busy(npc:id()) then
+		return true
+	end
+	if scheme_id ~= "ai_corpse_detection" and olr_ai_corpse_detection and olr_ai_corpse_detection.is_busy(npc:id()) then
+		return true
+	end
+
+	-- Схема торговли: пока NPC торгует - не лутаем.
+	if olr_ai_trade and olr_ai_trade.is_trading and olr_ai_trade.is_trading(npc:id()) then
+		return true
+	end
+
+	-- Актор рядом.
+	if actor_stop_dist ~= nil and db.actor ~= nil and db.actor:alive()
+	   and npc:position():distance_to(db.actor:position()) < actor_stop_dist then
+		return true
+	end
+
+	return false
+end

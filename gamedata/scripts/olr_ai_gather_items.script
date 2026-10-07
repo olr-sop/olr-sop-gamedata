@@ -1,0 +1,556 @@
+--[[----------------------------------------------------------------------------------
+  olr_ai_gather_items.script - AI-схема подбора предметов и артефактов с земли
+  (замена item-части watcher_act; логика гейтов - по мотивам CoC xr_gather_items).
+
+  Принципы:
+    * схема НЕ ломает walker: если секция помечена в LTX флагом no_loot = true,
+      лут для этого NPC запрещён (см. xr_logic.generic_scheme_overrides);
+    * предметы берём только с земли (parent == nil);
+    * обычный предмет в аномалии/рядом - игнорируем;
+    * артефакт в аномалии - при достаточном здоровье разрешаем NPC вход
+      (движковый set_anomaly_entry_allowed), после подбора запрет снимаем;
+    * один NPC на предмет (claim);
+    * приоритет между схемами: трупы важнее предметов.
+
+  Все ключи - config/olr_script_configs.ltx -> [olr_ai_gather_items].
+  Дебаг: local debug (ниже), префикс [olr_gather].
+----------------------------------------------------------------------------------]]
+
+local SECT = "olr_ai_gather_items"
+
+-- id evaluator/action (27860 занят corpse-схемой)
+local base_id = 27862
+evid_busy = base_id + 1          -- глобал: используется в xr_motivator (хаб)
+actid     = base_id + 1
+
+-- ==================================================================
+-- Дебаг
+-- ==================================================================
+
+local debug = true
+
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[olr_gather] " .. string.format(fmt, ...))
+	else
+		log1("[olr_gather] " .. fmt)
+	end
+end
+
+local dbg_last = {}
+local function dbg_throttled(period, fmt, ...)
+	if not debug then return end
+	local key = tostring(fmt)
+	local now = time_global()
+	if dbg_last[key] ~= nil and (now - dbg_last[key]) < period then return end
+	dbg_last[key] = now
+	dbg(fmt, ...)
+end
+
+-- ==================================================================
+-- Конфиг
+-- ==================================================================
+
+local cfg = nil
+
+local function get_cfg()
+	if cfg ~= nil then return cfg end
+	cfg = {
+		enable          = utils.cfg_get_bool(ini_sys, SECT, "enable", nil, false, true),
+		scan_period     = utils.cfg_get_number(ini_sys, SECT, "scan_period", nil, false, 5000),
+		scan_rand       = utils.cfg_get_number(ini_sys, SECT, "scan_rand", nil, false, 5000),
+		max_detect_dist = utils.cfg_get_number(ini_sys, SECT, "max_detect_dist", nil, false, 35),
+		actor_stop      = utils.cfg_get_number(ini_sys, SECT, "actor_stop_dist", nil, false, 3),
+		arrive_dist     = utils.cfg_get_number(ini_sys, SECT, "arrive_dist", nil, false, 1.3),
+		-- ближе этого расстояния идём шагом, дальше - бегом (как в CoC)
+		run_dist        = utils.cfg_get_number(ini_sys, SECT, "run_dist", nil, false, 3),
+		-- радиус "рядом с аномалией": на столько метров вокруг шейпа предмет уже не берем
+		anomaly_margin  = utils.cfg_get_number(ini_sys, SECT, "anomaly_margin", nil, false, 2.0),
+		-- разрешать ли вообще подбор артефактов из аномалий
+		loot_anomaly    = utils.cfg_get_bool(ini_sys, SECT, "loot_artifacts_in_anomaly", nil, false, true),
+		-- минимальное здоровье NPC (0..1), чтобы лезть за артефактом В аномалию;
+		-- 0 = без ограничения. Смысл: не отправлять полуживого NPC на верную смерть.
+		anomaly_min_health = utils.cfg_get_number(ini_sys, SECT, "anomaly_loot_min_health", nil, false, 0.6),
+		artefact_time   = utils.cfg_get_number(ini_sys, SECT, "artefact_pickup_time", nil, false, 3000),
+		item_time       = utils.cfg_get_number(ini_sys, SECT, "item_pickup_time", nil, false, 15000),
+		stuck_time      = 10000
+	}
+	return cfg
+end
+
+-- ==================================================================
+-- Группировки (правь здесь под свои задачи)
+-- ==================================================================
+
+-- Правила "что можно брать" и "кому нельзя работать" - в общем модуле olr_loot.script.
+
+-- ==================================================================
+-- Клеймы и взаимное исключение схем
+-- ==================================================================
+
+local gather_claims = {}   -- [item_id] = npc_id
+local busy_npc      = {}   -- [npc_id] = true, пока NPC занят этой схемой
+
+-- Нужно corpse-схеме: если предметник уже занят - трупы не трогаем.
+function is_busy(npc_id)
+	return busy_npc[npc_id] == true
+end
+
+local function release_claim(npc, st)
+	if st.claim_id ~= nil then
+		if gather_claims[st.claim_id] == npc:id() then
+			gather_claims[st.claim_id] = nil
+		end
+		st.claim_id = nil
+	end
+	busy_npc[npc:id()] = nil
+	st.anomaly_zone = nil
+	st.anomaly_radius = nil
+end
+
+local function claim_item(npc, st, obj)
+	release_claim(npc, st)
+	local id = obj:id()
+	gather_claims[id] = npc:id()
+	st.claim_id = id
+	busy_npc[npc:id()] = true
+end
+
+local function get_target(st)
+	if st.claim_id == nil then return nil end
+	local obj = level.object_by_id(st.claim_id)
+	if obj == nil then
+		st.claim_id = nil
+		return nil
+	end
+	return obj
+end
+
+-- Проверки ситуаций - в общем модуле olr_loot.bad_situation().
+
+-- ==================================================================
+-- Поиск цели
+-- ==================================================================
+
+local function scan_items(npc, st)
+	local c = get_cfg()
+	local maxd = c.max_detect_dist
+	local maxd2 = maxd * maxd
+	local pos = npc:position()
+	local best, best_d = nil, nil
+
+	-- только память видимого: обыскиваем "в радиусе онлайна", без звуков
+	for o in npc:memory_visible_objects() do
+		local obj = o:object()
+		if obj ~= nil
+		   and obj:parent() == nil -- только с земли, не из инвентарей/ящиков
+		   and not st.disabled_objects[obj:id()] then
+			local owner = gather_claims[obj:id()]
+			if owner ~= nil then
+				local ow = level.object_by_id(owner)
+				if ow == nil or not ow:alive() then
+					gather_claims[obj:id()] = nil
+					owner = nil
+				end
+			end
+			if owner == nil or owner == npc:id() then
+				if olr_loot.can_take(obj) then
+					local d2 = pos:distance_to_sqr(obj:position())
+					if d2 < maxd2 and (best_d == nil or d2 < best_d) then
+						best, best_d = obj, d2
+					end
+				end
+			end
+		end
+	end
+
+	if best == nil then return false end
+
+	local id = best:id()
+	local zone_any = olr_ai_anomaly.zone_at(best:position(), 0)
+
+	if zone_any ~= nil then
+		if best:is_artefact() then
+			if not c.loot_anomaly then
+				st.disabled_objects[id] = true
+				dbg("skip artefact %s: подбор из аномалий выключен", best:name())
+				return false
+			end
+			if c.anomaly_min_health > 0 and npc.health <= c.anomaly_min_health then
+				-- не запрещаем навсегда: NPC подлечится и попробует снова
+				dbg("skip artefact %s: мало здоровья %.2f (нужно > %.2f)",
+					best:name(), npc.health, c.anomaly_min_health)
+				return false
+			end
+			st.anomaly_zone = zone_any.id
+			st.anomaly_radius = zone_any.eff or zone_any.radius
+			dbg("artefact %s в аномалии %s (r=%.1f), health=%.2f",
+				best:name(), zone_any.section, st.anomaly_radius, npc.health)
+		else
+			st.disabled_objects[id] = true
+			dbg("skip %s: предмет внутри аномалии %s", best:name(), zone_any.section)
+			return false
+		end
+	else
+		local zone_near = olr_ai_anomaly.zone_at(best:position(), c.anomaly_margin)
+		if zone_near ~= nil then
+			st.disabled_objects[id] = true
+			dbg("skip %s: предмет рядом с аномалией %s", best:name(), zone_near.section)
+			return false
+		end
+	end
+
+	if not npc:accessible(best:level_vertex_id()) then
+		st.disabled_objects[id] = true
+		dbg("skip %s: вершина недоступна", best:name())
+		return false
+	end
+
+	claim_item(npc, st, best)
+	dbg("claim %s (id=%d) dist=%.1f", best:name(), id, math.sqrt(best_d))
+	return true
+end
+
+-- ==================================================================
+-- Новости/реакция на подбор
+-- ==================================================================
+
+local function on_take(item, npc, st)
+	if item == nil then return end
+	if item:is_weapon_magazined() then
+		news_main.on_find_weapon(npc, item)
+	end
+	if item:is_artefact() then
+		news_main.on_find_artefact(npc, item)
+	end
+
+	-- Если NPC натаскал много стволов/артов/патронов - один раз предлагает торг.
+	local cnt = 0
+	npc:iterate_inventory(function(_, it)
+		if it ~= nil and (it:is_weapon() or it:is_artefact() or it:is_ammo()) then
+			cnt = cnt + 1
+		end
+	end)
+	if cnt > 10 and not st.trade_invited and math.random(1, 25) == 3 then
+		st.trade_invited = true
+		npc:enable_trade()
+		xrs_trade.on_sms_trade_otvet(npc)
+		local sobj = alife():object(npc:name())
+		if sobj ~= nil then
+			local pos = news_main.get_point_description(
+				alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id()),
+				vector():set(sobj.position.x, sobj.position.y, sobj.position.z))
+			local phrases = {
+				"st_watcher_act_trade_invite_1",
+				"st_watcher_act_trade_invite_2",
+				"st_watcher_act_trade_invite_3"
+			}
+			local news_text = game.translate_string(phrases[math.random(#phrases)]) .. " " .. pos .. " "
+			news_manager.send_tip(db.actor, news_text,
+				4, "trade", 15000, nil, nil, true, get_npc_real_name(npc))
+		end
+	end
+end
+
+-- ==================================================================
+-- EVALUATOR
+-- ==================================================================
+
+class "ev_gather" (property_evaluator)
+
+function ev_gather:__init(st, name) super(nil, name)
+	self.st = st
+end
+
+function ev_gather:evaluate()
+	-- Кэш 250 мс: планировщик дергает оценщик очень часто.
+	local now = time_global()
+	if self._tm and now < self._tm then
+		return self._res
+	end
+	self._tm = now + cache_ttl(250)
+
+	local npc = self.object
+	if npc == nil then self._res = false return false end
+	local st = self.st
+	if st == nil then self._res = false return false end
+
+	local c = get_cfg()
+	if not c.enable then self._res = false return false end
+
+	if not olr_loot.can_work(npc) then
+		self._res = false
+		return false
+	end
+
+	local res = get_target(st) ~= nil
+
+	if olr_loot.bad_situation(npc, st, "ai_gather_items", c.actor_stop) then
+		if st.claim_id ~= nil then
+			dbg("release claim (bad situation), npc=%s", npc:name())
+			release_claim(npc, st)
+		end
+		self._res = false
+		return false
+	end
+
+	if res then
+		self._res = true
+		return true
+	end
+
+	-- Скан раз в scan_period + случайный разброс, чтобы NPC не сканили в один кадр.
+	local now2 = time_global()
+	if st.tm1 == nil or now2 >= st.tm1 then
+		st.tm1 = now2 + c.scan_period + math.random() * c.scan_rand
+		res = scan_items(npc, st)
+	end
+	self._res = res
+	return res
+end
+
+-- Подобрать предмет с земли. Вызывается колбэком анимации pickup_crouch (CoC-стиль).
+function pickup_item(npc)
+	local root = db.storage[npc:id()]
+	local st = root and root.ai_gather_items
+	if st == nil then
+		return
+	end
+
+	local gi = get_target(st)
+	if gi == nil or gi:parent() ~= nil then
+		release_claim(npc, st)
+		return
+	end
+
+	if not olr_loot.can_take(gi) then
+		release_claim(npc, st)
+		return
+	end
+
+	local item = gi
+	item:transfer_item(item, npc)
+	on_take(item, npc, st)
+	npc:enable_memory_object(item, false)
+	dbg("%s: подобрал %s", npc:name(), gi:name())
+	release_claim(npc, st)
+end
+
+-- ==================================================================
+-- ACTION
+-- ==================================================================
+
+class "act_gather" (action_base)
+
+function act_gather:__init(st) super(nil, "act_gather")
+	self.st = st
+end
+
+function act_gather:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+	local st = self.st
+	if st == nil then return end
+
+	self.dest_lvid        = nil
+	self.approach_state  = nil
+	self.arrived          = false
+	self.arrive_time      = nil
+	self.looted           = false
+	self.ct               = time_global()
+	self.clvid            = npc:level_vertex_id()
+	self.entered_anomaly  = false
+	self.entry_zone       = nil
+
+	local gi = get_target(st)
+	if gi == nil then
+		release_claim(npc, st)
+		return
+	end
+
+	-- Артефакт внутри аномалии: разрешаем вход.
+	-- margin = -(eff + 1): escape-порог уходит в минус, детектор не выталкивает
+	-- NPC из зоны, пока он идет к артефакту. В finalize запрет снимается.
+	if st.anomaly_zone ~= nil then
+		local margin = -(st.anomaly_radius + 1.0)
+		npc:set_anomaly_entry_allowed(st.anomaly_zone, true, margin)
+		self.entry_zone = st.anomaly_zone
+		self.entered_anomaly = true
+		dbg("%s: вход в аномалию id=%d разрешён (margin=%.1f)", npc:name(), st.anomaly_zone, margin)
+	end
+
+	if not npc:accessible(gi:level_vertex_id()) then
+		st.disabled_objects[gi:id()] = true
+		if self.entered_anomaly and self.entry_zone ~= nil then
+			npc:set_anomaly_entry_allowed(self.entry_zone, false, -1000)
+			self.entered_anomaly = false
+			self.entry_zone = nil
+		end
+		release_claim(npc, st)
+		dbg("%s: цель %s недоступна", npc:name(), gi:name())
+		return
+	end
+
+	npc:set_detail_path_type(move.curve)
+	npc:set_path_type(game_object.level_path)
+
+	local c = get_cfg()
+	self.dest_lvid = gi:level_vertex_id()
+	self.approach_state = (npc:position():distance_to(gi:position()) >= c.run_dist) and "run" or "walk"
+	npc:set_dest_level_vertex_id(self.dest_lvid)
+	state_mgr.set_state(npc, self.approach_state)
+	dbg("%s: иду к предмету %s, dest=%d", npc:name(), gi:name(), self.dest_lvid)
+end
+
+function act_gather:execute()
+	action_base.execute(self)
+	local npc = self.object
+	local st = self.st
+	if st == nil then return end
+
+	local gi = get_target(st)
+	if gi == nil or gi:parent() ~= nil then
+		self.dest_lvid = nil
+		release_claim(npc, st)
+		return
+	end
+
+	local c = get_cfg()
+	if db.actor ~= nil and db.actor:alive()
+	   and npc:position():distance_to(db.actor:position()) < c.actor_stop then
+		self.dest_lvid = nil
+		release_claim(npc, st)
+		dbg("%s: актор рядом, подбор отменён", npc:name())
+		return
+	end
+
+	if self.dest_lvid == nil then
+		release_claim(npc, st)
+		return
+	end
+
+	local now = time_global()
+
+	if not self.arrived then
+		local stopped = (npc:movement_type() == move.stand)
+		local arrived = stopped and ((npc:level_vertex_id() == self.dest_lvid)
+			or (npc:position():distance_to(gi:position()) < c.arrive_dist))
+
+		if not arrived then
+			local cur = state_mgr.get_state(npc)
+			if self.approach_state ~= nil and cur ~= nil and cur ~= self.approach_state then
+				state_mgr.set_state(npc, self.approach_state)
+			end
+			npc:set_dest_level_vertex_id(self.dest_lvid)
+			-- антизалипание: 10 секунд на одной вершине - цель в блоклист
+			if self.clvid == npc:level_vertex_id() then
+				if now - self.ct > c.stuck_time then
+					st.disabled_objects[gi:id()] = true
+					release_claim(npc, st)
+					self.dest_lvid = nil
+					dbg("%s: застрял на пути к %s", npc:name(), gi:name())
+				end
+			else
+				self.clvid = npc:level_vertex_id()
+				self.ct = now
+			end
+			return
+		end
+
+		self.arrived = true
+		self.arrive_time = now
+		state_mgr.set_state(npc, "pickup_crouch", nil, nil, {look_position = gi:position()}, {animation = true})
+		dbg("%s: подбираю %s", npc:name(), gi:name())
+		return
+	end
+
+	-- Мы на месте: держим состояние подбора (трансфер вызовет колбэк анимации).
+	local cur = state_mgr.get_state(npc)
+	if cur ~= nil and cur ~= "pickup_crouch" then
+		state_mgr.set_state(npc, "pickup_crouch", nil, nil, {look_position = gi:position()}, {animation = true})
+	end
+
+	-- Страховка (CoC): если анимация подбора не доиграла - трансфер принудительно.
+	if self.arrive_time ~= nil and now - self.arrive_time > c.item_time then
+		self.arrive_time = nil
+		dbg("%s: таймаут анимации подбора", npc:name())
+		pickup_item(npc)
+		return
+	end
+end
+
+function act_gather:finalize()
+	action_base.finalize(self)
+	local npc = self.object
+	local st = self.st
+	if npc == nil or st == nil then return end
+
+	-- Всегда снимаем разрешение входа, даже если экшен прерван боем.
+	-- entry_zone храним в экшене, потому что release_claim уже чистит st.
+	if self.entered_anomaly and self.entry_zone ~= nil then
+		npc:set_anomaly_entry_allowed(self.entry_zone, false, -1000)
+		self.entered_anomaly = false
+		self.entry_zone = nil
+		dbg("%s: вход в аномалию закрыт", npc:name())
+	end
+
+	release_claim(npc, st)
+	dbg("%s: finalize подбора (arrived=%s, looted=%s)", npc:name(), tostring(self.arrived), tostring(self.looted))
+	self.dest_lvid = nil
+	self.arrived = false
+	self.arrive_time = nil
+	self.approach_state = nil
+	st.tm1 = nil
+end
+
+-- ==================================================================
+-- BINDER / SCHEME
+-- ==================================================================
+
+function add_to_binder(npc, ini, scheme, section, st)
+	st.disabled_objects = st.disabled_objects or {}
+
+	local manager = npc:motivation_action_manager()
+
+	if olr_loot.is_forbidden(npc) then
+		manager:add_evaluator(evid_busy, property_evaluator_const(false))
+	else
+		manager:add_evaluator(evid_busy, ev_gather(st, "ev_gather"))
+
+		local action = act_gather(st)
+		action:add_precondition(world_property(stalker_ids.property_alive, true))
+		action:add_precondition(world_property(stalker_ids.property_enemy, false))
+		action:add_precondition(world_property(stalker_ids.property_danger, false))
+		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+		action:add_precondition(world_property(xr_evaluators_id.stohe_meet_base + 1, false))
+		action:add_precondition(world_property(xr_evaluators_id.abuse_base, false))
+		action:add_precondition(world_property(xr_evaluators_id.chugai_heli_hunter_base, false))
+		if olr_ai_hideout and olr_ai_hideout.olr_hideout_prop then
+			action:add_precondition(world_property(olr_ai_hideout.olr_hideout_prop, false))
+		end
+		action:add_precondition(world_property(evid_busy, true))
+		action:add_effect(world_property(evid_busy, false))
+		manager:add_action(actid, action)
+
+		-- Пока NPC занят подбором - не уходим в ALife-активности.
+		local alife = manager:action(xr_actions_id.alife)
+		alife:add_precondition(world_property(evid_busy, false))
+		local sm_idle_alife = manager:action(xr_actions_id.state_mgr + 2)
+		if sm_idle_alife then
+			sm_idle_alife:add_precondition(world_property(evid_busy, false))
+		end
+	end
+end
+
+function set_scheme(npc, ini, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.enabled = true
+end
+
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()]["ai_gather_items"]
+	if st then
+		st.enabled = false
+	end
+end

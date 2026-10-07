@@ -7,6 +7,18 @@ cover_allowed) — он сам собирает его на load() и на start() и пересобирает,
 
 Гейт: olr_blowout_phase_1 / _2 / _3. Выход — когда ни одной нет, то есть
 olr_blowout_phase_0 (он гасит 1/2/3).
+-- Доработка 2026-10. Настройки вынесены в config\olr_script_configs.ltx ->
+-- [olr_ai_hideout] (комментарии — там). Изменения поведения:
+--   * торговцы и зомбированные в выброс не убегают (исключение в binder);
+--     NPC из olr_protected исключаются ДИНАМИЧЕСКИ в evaluate() — защита
+--     может сниматься инфопорцией, поэтому const(false) в binder нельзя;
+--   * стиль бега в укрытие (run/rush/sprint) — случайный раз на действие;
+--   * в укрытии монолитовцы всегда trans_0, остальные — случайная поза из
+--     hold_states (включая "hide");
+--   * не добежавшие: монолит — trans_1, остальные — psycho_pain либо
+--     psy_pain + крик wounded_psy (случайно, раз на эпизод паники);
+--   * kill_unhided=true: при olr_blowout_phase_3 все NPC схемы вне зоны
+--     укрытия погибают (npc:kill), монолитовцы неуязвимы.
 
 Осознанные решения, проверенные по движку:
 
@@ -49,19 +61,13 @@ olr_blowout_phase_0 (он гасит 1/2/3).
     вершина может выглядеть «доступной». Нет приближения за progress_timeout
     -> перевыбор, зона уходит в skip.
   * Остановка — ТОЛЬКО по точному совпадению вершины
-    (npc:level_vertex_id() == st.vid), как во всех референсах: NLC7
-    blowout_scheme:403, AMK 1.4.1:416, utAMK:444, SIMBION-SHOC/CS,
-    OGSM ogsm_hideout:222, OGSE:712. Тест «я внутри зоны» у них только
-    переключает действие, но НЕ сажает. Таймаута «не дошёл — сядь где
-    стоишь» нет ни у кого: именно он сажал наших NPC у входа.
+    (npc:level_vertex_id() == st.vid)
 ------------------------------------------------------------------]]
 
 local debug = true
 
 -- Идентификаторы ОБЪЯВЛЕНЫ ГЛОБАЛЬНО (без local): на них ссылаются
 -- xr_motivator.script и остальные схемы как olr_ai_hideout.olr_hideout_prop.
--- Так же: NLC7 evid_blowout=18572, OGSM property_base=12221,
--- SIMBION-SHOC evid_ai_blowout, SIMBION-CS evid_blowout=18572.
 olr_hideout_prop     = 26861   -- свойство "нужно в укрытие"
 olr_hideout_operator = 26871   -- оператор
 
@@ -70,34 +76,99 @@ local act_hideout = olr_hideout_operator
 
 local BADV = 4294967295                        -- u32(-1)
 
--- Настройки.
+-- Настройки схемы. ВСЕ параметры читаются из config\olr_script_configs.ltx
+-- (раздел [olr_ai_hideout]) на старте игры; значения ниже — дефолты, если
+-- ключа в конфиге нет. Правки конфига требуют рестарта игры: ini_sys
+-- кэшируется на boot (ltx перечитываются только при запуске).
+local SECT = "olr_ai_hideout"
+
 local enabled       = true    -- общий выключатель схемы
 local search_radius = 150.0   -- м, максимальный радиус поиска зоны укрытия
 local seat_tol      = 0.0     -- м, допуск zone:inside: 0 = СТРОГО внутри зоны
 local cover_tol     = 0.0     -- м, допуск zone:inside при проверке "я укрыт"
-local recheck       = 3000    -- МС между проверками достижимости маршрута (time_global в мс)
+local recheck       = 3000    -- МС между проверками достижимости маршрута
 local cover_retry   = 10000   -- МС между попытками найти укрытие, если не вышло
-local kill_unhided  = false   -- ВАРИАНТ 2: убивать не укрывшихся на фазе 3
-local kill_power    = 5.0     -- мощность взрыва при kill_unhided
+local kill_unhided  = false   -- добивать не укрывшихся при olr_blowout_phase_3 (npc:kill)
 local default_max_npc = 0      -- 0 = без лимита; переопределяется ключом max_npc
 local cover_attempts  = 3      -- сколько зон перебрать, если не нашлось точки стояния
-local allow_overfill  = true   -- true: всё занято -> идти в ближайшее разрешённое всё равно
+local allow_overfill  = true   -- true: всё занято -> идти в ближайшее разрешённое
 local progress_timeout   = 8000  -- МС без приближения к цели -> перевыбор
 local arrive_near         = 2.0   -- м, считаем "пришёл" вплотную к своему месту
-local zone_scan_min_step = 2.0   -- м, шаг сетки при сборе вершин внутри зоны (старый скан)
-local zone_shape_step     = 1.0  -- м, шаг сетки по ТОЧНЫМ габаритам фигур (zone:get_shapes)
-local zone_shape_step_big = 2.0  -- м, шаг для зон крупнее 30 м (экономия проб)
+local zone_scan_min_step = 2.0   -- м, шаг сетки при сборе вершин внутри зоны
+local zone_shape_step     = 1.0  -- м, шаг сетки по ТОЧНЫМ габаритам фигур
+local zone_shape_step_big = 2.0  -- м, шаг для зон крупнее 30 м
 local zone_scan_max_half = 25.0  -- м, предел роста скана зоны (укрытия небольшие)
 local zone_clear_max     = 8.0   -- м, максимум просвета места (дальше не считаем)
 local zone_clear_step    = 0.5   -- м, шаг луча при замере просвета
 local seat_progress_eps  = 1.0   -- м, шаг «приблизился к своему месту»
+local zone_pre_budget    = 2     -- мс на вызов (кадр) разогрева кэша зон
 
--- Поза в укрытии: случайная из набора (как в ванильном ЧН xr_surge_hide.script)
--- плюс курение; смена раз в 10-15 ИГРОВЫХ минут.
-local hold_states    = { "wait", "sit", "sit_ass", "sit_knee", "kurit_stoya", "kurit_sidya" }
+-- Позы в укрытии: случайная из набора; hide — сидеть прячась. Смена позы
+-- раз в 10-15 ИГРОВЫХ минут. Монолитовцы всегда trans_0 (см. pick_hold_state).
+local hold_states    = { "wait", "sit", "sit_ass", "sit_knee", "kurit_stoya", "kurit_sidya", "hide" }
 local hold_sec_min   = 600    -- игровых секунд до смены позы (10 мин)
 local hold_sec_max   = 900    -- игровых секунд до смены позы (15 мин)
 local hold_check_ms  = 10000  -- реальных мс между проверками игрового таймера
+
+-- Стиль бега в укрытие: случайный выбор ОДИН раз на действие (initialize).
+-- run — оружие за спиной, rush — в руках, sprint — в руках + паника.
+local run_states = { "run", "rush", "sprint" }
+
+-- м, дальше этого расстояния враг забывается во время выброса (enemy_callback).
+-- На NPC из olr_protected не действует — они выброс "не замечают".
+local forget_dist = 130.0
+
+-- "a, b, c" -> { "a", "b", "c" }; nil, если список пуст.
+local function parse_names(s)
+	if s == nil then return nil end
+	local t = {}
+	for w in s:gmatch("[^,%s;]+") do t[#t + 1] = w end
+	if #t == 0 then return nil end
+	return t
+end
+
+-- Чтение конфига (идемпотентно). Вызывается из init() и точек входа — на
+-- случай перезагрузки скриптов раньше core_init.
+local settings_loaded = false
+local function load_settings()
+	if settings_loaded then return end
+	settings_loaded = true
+	if ini_sys == nil or not ini_sys:section_exist(SECT) then return end
+
+	local function gb(key, default) return utils.cfg_get_bool(ini_sys, SECT, key, nil, false, default) end
+	local function gn(key, default) return utils.cfg_get_number(ini_sys, SECT, key, nil, false, default) end
+	local function gs(key) return utils.cfg_get_string(ini_sys, SECT, key, nil, false, "", nil) end
+
+	enabled          = gb("enable", enabled)
+	kill_unhided     = gb("kill_unhided", kill_unhided)
+	search_radius    = gn("search_radius", search_radius)
+	seat_tol         = gn("seat_tol", seat_tol)
+	cover_tol        = gn("cover_tol", cover_tol)
+	recheck          = gn("recheck", recheck)
+	cover_retry      = gn("cover_retry", cover_retry)
+	default_max_npc  = gn("default_max_npc", default_max_npc)
+	cover_attempts   = gn("cover_attempts", cover_attempts)
+	allow_overfill   = gb("allow_overfill", allow_overfill)
+	progress_timeout = gn("progress_timeout", progress_timeout)
+	arrive_near      = gn("arrive_near", arrive_near)
+	zone_scan_min_step  = gn("zone_scan_min_step", zone_scan_min_step)
+	zone_shape_step     = gn("zone_shape_step", zone_shape_step)
+	zone_shape_step_big = gn("zone_shape_step_big", zone_shape_step_big)
+	zone_scan_max_half  = gn("zone_scan_max_half", zone_scan_max_half)
+	zone_clear_max      = gn("zone_clear_max", zone_clear_max)
+	zone_clear_step     = gn("zone_clear_step", zone_clear_step)
+	seat_progress_eps   = gn("seat_progress_eps", seat_progress_eps)
+	zone_pre_budget     = gn("zone_pre_budget", zone_pre_budget)
+	hold_sec_min     = gn("hold_sec_min", hold_sec_min)
+	hold_sec_max     = gn("hold_sec_max", hold_sec_max)
+	hold_check_ms    = gn("hold_check_ms", hold_check_ms)
+	forget_dist      = gn("forget_dist", forget_dist)
+
+	local hs = parse_names(gs("hold_states"))
+	if hs ~= nil then hold_states = hs end
+	local rs = parse_names(gs("run_states"))
+	if rs ~= nil then run_states = rs end
+end
 
 -- Необязательные per-zone ключи в misc\surge_manager.ltx, читаются если есть:
 --   [<имя зоны>] npc_list    = false    -- зона только для игрока, NPC её игнорируют
@@ -614,7 +685,6 @@ end
 -- Единственная точка взгляда, которую мы вообще задаём, — entrance из
 -- misc\surge_manager.ltx (необязательный ключ у секции зоны). Если её
 -- нет, цель не передаётся вовсе, и направление выбирает движок.
--- Так же в OGSM/OGSE: они вообще не задают look_position для hide_na.
 local function entrance_point(c)
 	local e = zone_entrance(c)
 	if e > 0 and e ~= BADV then
@@ -652,6 +722,13 @@ local function hold_hide(npc, pt, state_name)
 	else
 		state_mgr.set_state(npc, state_name)
 	end
+end
+
+-- Поза в укрытии: монолитовцы всегда "молятся" (trans_0), остальные —
+-- случайная поза из hold_states (включая "hide" — сидеть прячась).
+local function pick_hold_state(npc)
+	if npc:character_community() == "monolith" then return "trans_0" end
+	return hold_states[math.random(#hold_states)]
 end
 
 -- ==================================================================
@@ -723,6 +800,8 @@ function action_olr_hideout:initialize()
 	st.seat_pos             = nil
 	st.skip_zone             = {}
 	st.hold_state, st.hold_time, st.hold_next, st.hold_check = nil, nil, nil, nil
+	st.run_state              = run_states[math.random(#run_states)]  -- run/rush/sprint
+	st.panic_ran, st.panic_snd = nil, nil
 
 	local ok, why = self:drive_to(nil, "initialize"); if not ok then self:panic_here(why or "не удалось выбрать укрытие") end
 end
@@ -791,7 +870,8 @@ function action_olr_hideout:drive_to(c, who)
 	npc:set_detail_path_type(move.line)
 	npc:set_path_type(game_object.level_path)
 	npc:set_movement_type(move.run)
-	set_state(npc, "run")
+	-- стиль бега (run/rush/sprint) выбран случайно один раз в initialize()
+	set_state(npc, st.run_state or "run")
 
 	do
 		local vz = st.seat_pos
@@ -803,30 +883,45 @@ function action_olr_hideout:drive_to(c, who)
 	return true
 end
 
--- Укрытия нет: замирает на месте. Опционально — умирает на фазе 3.
--- Логирует ВСЕГДА, это главный диагностический путь.
+-- Укрытия нет/не добежал: паника на месте. Смерть — отдельно в execute
+-- (по фазе 3), здесь только анимация:
+--   монолит   -> trans_1 (молится стоя, неуязвим);
+--   остальные -> psycho_pain ЛИБО psy_pain + крик wounded_psy — выбор
+--                случайный (ran), кэшируется на эпизод паники: panic_here
+--                зовётся каждый тик, и без кэша анимация мигала бы.
 function action_olr_hideout:panic_here(why)
 	local npc, st = self.object, self.st
 
-	set_state(npc, "psycho_pain")
+	local state
+	if npc:character_community() == "monolith" then
+		state = "trans_1"
+	else
+		local ran = st.panic_ran
+		if ran == nil then
+			ran = math.random(1, 2)
+			st.panic_ran = ran
+		end
+		if ran == 1 then
+			state = "psycho_pain"
+		else
+			state = "psy_pain"
+		end
+	end
+
+	if state_mgr.get_state(npc) ~= state then
+		state_mgr.set_state(npc, state)
+		if state == "psy_pain" and not st.panic_snd then
+			st.panic_snd = true
+			xr_sound.set_sound_play(npc, "wounded_psy")
+		end
+	end
+
 	npc:set_desired_position()
 	npc:set_movement_type(move.stand)
 
 	if why ~= nil then
 		st.giveup_t = time_global()
-		dbg("%s остаётся на месте: %s", npc:name(), why)
-	end
-
-	if kill_unhided and not st.killed and surge_phase() >= 3 then
-		st.killed = true
-		local h = hit()
-		h.type      = hit.explosion
-		h.power     = kill_power
-		h.impulse   = 0
-		h.direction = vector():set(0, 0, 1)
-		h.draftsman = npc
-		npc:hit(h)
-		dbg("%s убит (kill_unhided)", npc:name())
+		dbg("%s паникует вне укрытия: %s", npc:name(), why)
 	end
 end
 
@@ -842,6 +937,21 @@ function action_olr_hideout:execute()
 	-- любой зоны" не годится: NPC мог просто пробегать через чужое укрытие.
 	local in_shelter = (st.target ~= nil and st.target.zone ~= nil
 	                    and st.target.zone:inside(p, cover_tol))
+
+	-- ================ СМЕРТЬ В КОНЦЕ ВЫБРОСА (опция) =================
+	-- При появлении olr_blowout_phase_3 (удар последней волны, ~t4+3 от
+	-- старта выброса) убиваем всех NPC схемы, кто ФИЗИЧЕСКИ вне зоны
+	-- укрытия, в том числе ещё бегущих. Кто внутри зоны — выживает.
+	-- Монолитовцы неуязвимы. Актора в этот же момент убивает
+	-- surge_manager.kill_all_unhided().
+	if kill_unhided and not st.killed and not in_shelter
+	   and npc:character_community() ~= "monolith"
+	   and surge_phase() >= 3 then
+		st.killed = true
+		npc:kill(npc)
+		dbg("%s убит выбросом (вне укрытия, phase_3)", npc:name())
+		return
+	end
 
 	-- =================== ЕЩЁ ИДЁМ: НИКАКИХ ПЕРЕВЫБОРОВ ===================
 	-- Садимся ТОЛЬКО СТРОГО ВНУТРИ зоны. Пока не вошли — идём к своему месту
@@ -875,7 +985,7 @@ function action_olr_hideout:execute()
 			npc:set_dest_level_vertex_id(st.vid)
 			npc:set_desired_position(seat_pos)
 			npc:set_movement_type(move.run)
-			set_state(npc, "run")
+			set_state(npc, st.run_state or "run")
 			return
 		end
 
@@ -933,7 +1043,7 @@ function action_olr_hideout:execute()
 				npc:set_dest_level_vertex_id(st.vid)
 				npc:set_desired_position(seat_pos)
 				npc:set_movement_type(move.run)
-				set_state(npc, "run")
+				set_state(npc, st.run_state or "run")
 				return
 			end
 			st.seat_give = true
@@ -948,7 +1058,7 @@ function action_olr_hideout:execute()
 	if not st.holding then
 		st.holding, st.hold_zone = true, c
 		st.look_pos   = entrance_point(c) or random_look_point(npc)
-		st.hold_state = hold_states[math.random(#hold_states)]
+		st.hold_state = pick_hold_state(npc)
 		st.hold_time  = game.get_game_time()
 		st.hold_next  = math.random(hold_sec_min, hold_sec_max)
 		st.hold_check = now
@@ -965,7 +1075,7 @@ function action_olr_hideout:execute()
 		if now - (st.hold_check or 0) >= hold_check_ms then
 			st.hold_check = now
 			if game.get_game_time():diffSec(st.hold_time) >= (st.hold_next or hold_sec_min) then
-				st.hold_state = hold_states[math.random(#hold_states)]
+				st.hold_state = pick_hold_state(npc)
 				st.hold_time  = game.get_game_time()
 				st.hold_next  = math.random(hold_sec_min, hold_sec_max)
 				hold_hide(npc, st.look_pos, st.hold_state)
@@ -1011,6 +1121,7 @@ function action_olr_hideout:finalize()
 	st.seat_pos              = nil
 	st.skip_zone             = {}
 	st.hold_state, st.hold_time, st.hold_next, st.hold_check = nil, nil, nil, nil
+	st.run_state, st.panic_ran, st.panic_snd = nil, nil, nil
 
 	-- Состояние НЕ восстанавливаем: act_state_mgr_to_idle вернёт "idle"
 	-- сам, как только мы снимем гейт state_mgr+1/+2 на следующем цикле
@@ -1024,7 +1135,7 @@ end
 -- ==================================================================
 
 local zone_pre_i, zone_pre_done = 1, false
-local zone_pre_budget = 2   -- мс на вызов (кадр), чтобы не ловить фризы
+-- zone_pre_budget — настройка [olr_ai_hideout] (см. load_settings), НЕ local здесь.
 local zone_pre_ref = nil
 local zone_pre_noseat = 0
 local zone_pre_noseat_names = {}
@@ -1072,12 +1183,22 @@ function evaluator_olr_hideout:__init(st)
 end
 
 function evaluator_olr_hideout:evaluate()
+	load_settings()
+
 	local st = self.st
 	if st == nil or not st.enabled or not enabled then return false end
+
+	local npc = self.object
+	if npc == nil then return false end
 
 	-- самый дешёвый ранний выход: вне выброса стоит одно чтение поля
 	local m = get_mgr()
 	if m == nil then return false end
+
+	-- Исключение по olr_protected — ДИНАМИЧЕСКОЕ (защита снимается
+	-- инфопорцией), поэтому проверяем в evaluate, а не const(false) в binder;
+	-- аналог can_work() в olr_ai_gather_items / olr_ai_corpse_detection.
+	if olr_protected.is_no_offline_alife_obj(npc:name()) then return false end
 
 	-- разогрев кэша зон (идёт и вне выброса): по одной зоне за вызов
 	precompute_step(m)
@@ -1097,9 +1218,6 @@ function evaluator_olr_hideout:evaluate()
 
 	if surge_manager.no_blow_levels[level.name()] then return false end
 	if surge_phase() < 1 then return false end
-
-	local npc = self.object
-	if olr_protected.is_no_offline_alife_obj(npc:name()) then return false end
 
 	if debug then
 		local now = time_global()
@@ -1121,11 +1239,12 @@ end
 -- Вне выброса ведём себя как обычно, поэтому гейт по surge_phase.
 -- Цепочка к combat_ignore обязательна: xr_combat_ignore.script:94
 -- тоже ставит set_enemy_callback и перетрёт наш.
-local forget_dist = 130.0    -- м, дальше этого расстояния враг забывается
-
+-- forget_dist — настройка [olr_ai_hideout] (см. load_settings), НЕ local здесь.
 local function enemy_callback(_, npc, enemy)
 	local st = db.storage[npc:id()]
-	if st ~= nil and surge_phase() >= 1 then
+	-- Защищённые olr_protected NPC "не замечают" выброс: врагов не забывают.
+	if st ~= nil and surge_phase() >= 1
+	and not olr_protected.is_no_offline_alife_obj(npc:name()) then
 		if npc:position():distance_to(enemy:position()) > forget_dist then
 			npc:enable_memory_object(enemy, false)
 			return false
@@ -1141,7 +1260,21 @@ end
 -- (run_string olr_zone_dump.dump_covers()).
 
 function add_to_binder(object, char_ini, scheme, section, st)
+	load_settings()
+
 	local manager = object:motivation_action_manager()
+
+	-- Исключения "выброс не влияет" (по образцу olr_ai_gather_items /
+	-- olr_ai_corpse_detection): торговцы и зомбированные не убегают вообще.
+	-- Ставим константный false и НЕ добавляем актион, гейты операторов и
+	-- set_enemy_callback. olr_protected сюда НЕ выносим — его защита
+	-- динамическая (снимается инфопорцией), проверка живёт в evaluate().
+	local cc = object:character_community()
+	if cc == "trader" or cc == "zombied" then
+		manager:add_evaluator(ev_hideout, property_evaluator_const(false))
+		dbg("%s: выброс не влияет (community=%s), схема укрытия отключена", object:name(), cc)
+		return
+	end
 
 	manager:add_evaluator(ev_hideout, evaluator_olr_hideout(st))
 
@@ -1208,6 +1341,7 @@ end
 -- ==================================================================
 
 function init()
+	load_settings()
 	dbg("модуль загружен, схема olr_hideout, ev=%d act=%d", ev_hideout, act_hideout)
 	core.ac("load_scheme", xrs_load_scheme)
 	core.ac("logic_enable_schemes", set_scheme)

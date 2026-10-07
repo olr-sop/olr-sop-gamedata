@@ -16,17 +16,8 @@ traders = {
 	--{ base = id, client = id, data = {} }
 }
 
-function restore_data()
-	local data = nc.unpack_array_from_string(nc.load_variable("npc_trade_state",""))
-	if data.lvl and data.lvl==level.name() then
-		traders = data.tr
-		--log1("restore table, "..#traders.." pairs")
-	end
-end
-
-function save_data()
-	nc.save_variable("npc_trade_state",nc.pack_array_to_string({lvl=level.name(),tr = traders}))
-end
+-- [olr] restore_data/save_data удалены: пары бартера в сейв не пишутся,
+-- после загрузки evaluator сам сбрасывает устаревшие table_key.
 
 local no_levels = {
 	["l14_stancia"] = true,
@@ -90,7 +81,11 @@ local function add_trade_pair(base_id, client_id)
 	if cnt >= max_pairs then
 		return false
 	end
-	table.insert(traders, { base = base_id, client = client_id, data = { stage = 0 } })
+	local key = tostring(base_id) .. "_" .. tostring(client_id)
+	if traders[key] ~= nil then
+		return false
+	end
+	traders[key] = { base = base_id, client = client_id, data = { stage = 0 } }
 	if olr.olrdbg == true then
 		log1(" DBG xrs_trade pair "..base_id.." - "..client_id..", pairs "..(cnt + 1))
 	end
@@ -217,6 +212,9 @@ end
 -- evaluator
 function evaluator_is_trade:evaluate()
 	local npc = self.object
+	if xr_wounded.is_wounded(npc) then
+		return false
+	end
 	-- исключённые группировки в бартере не участвуют
 	if excluded_comms[npc:character_community()] then
 		return false
@@ -294,9 +292,18 @@ function action_trade:execute()
 	
 	local npc = self.object
 	local state = self:get_state()
-	
+
+	local tr = self.st.table_key and traders[self.st.table_key] or nil
+	if tr == nil then
+		self.st.table_key = nil
+		self.st.type = nil
+		self.target = nil
+		nc.del_variable("npc_trade_state")
+		return
+	end
+
 	if not self.target then
-		traders[self.st.table_key].data.base_ready = nil
+		tr.data.base_ready = nil
 		self.st.table_key = nil
 		self.st.type = nil
 		nc.del_variable("npc_trade_state")		
@@ -392,7 +399,7 @@ function action_trade:execute()
 				self:change_state()
 			end
 		elseif state == 7 then
-			traders[self.st.table_key].data.base_ready = nil
+			tr.data.base_ready = nil
 		end
 		--log1("5")
 	else
@@ -418,7 +425,6 @@ function action_trade:execute()
 			if not self.target then return end
 			local lv = self.target:level_vertex_id()
 			local dir = npc:position():sub(self.target:position()):normalize():mul(meet_dist)
-			level.vertex_in_direction(self.target:position(), dir, meet_dist)
 			local pos = self.target:position():add(dir)
 			
 			utils.send_to_nearest_accessible_vertex(npc,lv)
@@ -434,7 +440,6 @@ function action_trade:execute()
 			
 			local lv = self.target:level_vertex_id()
 			local dir = npc:position():sub(self.target:position()):normalize():mul(meet_dist)
-			level.vertex_in_direction(self.target:position(), dir, meet_dist)
 			local pos = self.target:position():add(dir)
 			
 			utils.send_to_nearest_accessible_vertex(npc,lv)
@@ -492,7 +497,24 @@ end
 function action_trade:finalize()
 	action_base.finalize (self)
 	
-	if traders[self.st.table_key] then traders[self.st.table_key] = nil end
+	local key = self.st.table_key
+	if key ~= nil then
+		local tr = traders[key]
+		if tr then
+			local ids = { tr.base, tr.client }
+			for i = 1, 2 do
+				local sid = ids[i]
+				if sid ~= nil then
+					local ost = db.storage[sid]
+					if ost and ost.trader and ost.trader ~= self.st and ost.trader.table_key == key then
+						ost.trader.table_key = nil
+						ost.trader.type = nil
+					end
+				end
+			end
+			traders[key] = nil
+		end
+	end
 	self.st.table_key = nil
 	self.st.type = nil
 

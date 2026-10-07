@@ -1,29 +1,29 @@
 --------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------
--- name: bind_anomaly.script
--- desc: Биндер аномалий, не сильно нужен
--- author: theysani
--- date: 19.12.2025
--- last edit: 19.12.2025
---------------------------------------------------------------------------------------
+-- bind_anomaly.script
+-- Клиентский биндер аномалий. Прописан у всех misc/zone_*.ltx как
+-- script_binding = bind_anomaly.Init.
+--
+-- Задача: вести db.anomalies.by_id - список ТОЛЬКО онлайн-аномалий уровня.
+-- По нему olr_ai_anomaly.script отвечает на вопросы "точка в аномалии?" для
+-- схем лута (olr_ai_gather_items / olr_ai_corpse_detection).
+--
+-- Регистрация - ровно в одном месте: net_spawn (объект уже создан, позиция и
+-- свойства валидны). Удаление - в net_destroy.
 --------------------------------------------------------------------------------------
 
 function Init(obj)
 	local oNewBinder = anomaly_binder(obj)
-	obj:bind_object(oNewBinder)	
+	obj:bind_object(oNewBinder)
 end
 
 class "anomaly_binder" (object_binder)
 
 function anomaly_binder:__init(obj) super(obj)
+	self.id = nil
 end
 
 function anomaly_binder:reload(section)
 	object_binder.reload(self, section)
-end
-
-function anomaly_binder:reinit()
-	object_binder.reinit(self)
 end
 
 function anomaly_binder:net_save_relevant()
@@ -31,27 +31,69 @@ function anomaly_binder:net_save_relevant()
 end
 
 function anomaly_binder:save(packet)
-	object_binder.save(self, packet)	
+	object_binder.save(self, packet)
 end
 
 function anomaly_binder:load(reader)
 	object_binder.load(self, reader)
 end
 
-
 function anomaly_binder:net_spawn(data)
 	if not object_binder.net_spawn(self, data) then
 		return false
 	end
-	
-
+	self:register()
 	return true
 end
-	
+
 function anomaly_binder:net_destroy()
 	object_binder.net_destroy(self)
+	self:unregister()
 end
 
-function anomaly_binder:update(delta)
-	object_binder.update(self, delta)
+-- Регистрация аномалии в db.anomalies.by_id.
+-- CustomZone наследуется от CSpaceRestrictor, поэтому radius и
+-- effective_radius - обычные свойства клиентского объекта.
+function anomaly_binder:register()
+	local obj = self.object
+	if obj == nil then return end
+
+	if db.anomalies == nil then
+		db.anomalies = { by_id = {}, list = nil, dirty = true }
+	end
+
+	local id = obj:id()
+	local radius = obj.radius or 0
+	local eff    = obj.effective_radius or 0
+
+	if radius <= 0 then
+		radius = obj:get_shape_radius()
+	end
+	if radius <= 0 then
+		radius = 5.0 -- страховка: без радиуса проверка невозможна
+	end
+	if eff <= 0 then
+		eff = radius
+	end
+
+	local p = obj:position()
+	db.anomalies.by_id[id] = {
+		id      = id,
+		section = obj:section(),
+		name    = obj:name(),
+		pos     = vector():set(p.x, p.y, p.z),
+		radius  = radius,
+		eff     = eff
+	}
+	db.anomalies.dirty = true
+	self.id = id
+end
+
+function anomaly_binder:unregister()
+	if self.id == nil then return end
+	if db.anomalies ~= nil and db.anomalies.by_id[self.id] ~= nil then
+		db.anomalies.by_id[self.id] = nil
+		db.anomalies.dirty = true
+	end
+	self.id = nil
 end

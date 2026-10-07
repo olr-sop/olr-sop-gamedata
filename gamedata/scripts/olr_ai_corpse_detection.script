@@ -1,0 +1,614 @@
+--[[----------------------------------------------------------------------------------
+  olr_ai_corpse_detection.script - AI-схема обыска трупов (замена corpse-части
+  watcher_act; логика гейтов - по мотивам CoC/MISERY xr_corpse_detection).
+
+  Принципы:
+    * схема НЕ ломает walker: если секция помечена в LTX флагом no_loot = true,
+      обыск для этого NPC запрещён (см. xr_logic.generic_scheme_overrides);
+    * приоритет между схемами: трупы важнее предметов;
+    * труп внутри шейпа аномалии - игнорируем;
+    * труп рядом с аномалией - подходим только с безопасной стороны (вне шейпа);
+    * один NPC на труп (claim), уже обчищенный труп повторно не трогаем;
+    * скан только memory_visible_objects, период настраивается.
+
+  Все ключи - config/olr_script_configs.ltx -> [olr_ai_corpse_detection].
+  Дебаг: local debug (ниже), префикс [olr_corpse].
+----------------------------------------------------------------------------------]]
+
+local SECT = "olr_ai_corpse_detection"
+
+-- id evaluator/action (27862 занят gather-схемой)
+local base_id = 27860
+evid_busy = base_id + 1          -- глобал: используется в xr_motivator (хаб)
+actid     = base_id + 1
+
+-- ==================================================================
+-- Дебаг
+-- ==================================================================
+
+local debug = true
+
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[olr_corpse] " .. string.format(fmt, ...))
+	else
+		log1("[olr_corpse] " .. fmt)
+	end
+end
+
+local dbg_last = {}
+local function dbg_throttled(period, fmt, ...)
+	if not debug then return end
+	local key = tostring(fmt)
+	local now = time_global()
+	if dbg_last[key] ~= nil and (now - dbg_last[key]) < period then return end
+	dbg_last[key] = now
+	dbg(fmt, ...)
+end
+
+-- ==================================================================
+-- Конфиг
+-- ==================================================================
+
+local cfg = nil
+
+local function get_cfg()
+	if cfg ~= nil then return cfg end
+	cfg = {
+		enable        = utils.cfg_get_bool(ini_sys, SECT, "enable", nil, false, true),
+		scan_period   = utils.cfg_get_number(ini_sys, SECT, "scan_period", nil, false, 3500),
+		scan_rand     = utils.cfg_get_number(ini_sys, SECT, "scan_rand", nil, false, 2500),
+		-- дистанция обнаружения трупа (большая - обыск "в радиусе онлайна", как в CoC)
+		detect_dist   = utils.cfg_get_number(ini_sys, SECT, "detect_dist", nil, false, 50),
+		-- страховка: принудительный трансфер, если анимация обыска не доиграла
+		search_time    = utils.cfg_get_number(ini_sys, SECT, "search_time", nil, false, 15000),
+		actor_stop    = utils.cfg_get_number(ini_sys, SECT, "actor_stop_dist", nil, false, 3),
+		arrive_dist   = utils.cfg_get_number(ini_sys, SECT, "arrive_dist", nil, false, 1.3),
+		-- обыскивать ли монстров (трупы мутантов)
+		loot_mutants  = utils.cfg_get_bool(ini_sys, SECT, "enable_mutant_looting", nil, false, true),
+		stuck_time    = 10000
+	}
+	return cfg
+end
+
+-- ==================================================================
+-- Группировки (правь здесь под свои задачи)
+-- ==================================================================
+
+-- Правила "что можно брать" и "кому нельзя работать" - в общем модуле olr_loot.script.
+
+-- ==================================================================
+-- Общие хелперы
+-- ==================================================================
+
+local corpse_claims = {}   -- [corpse_id] = npc_id (кто сейчас обыскивает)
+local corpse_has    = {}   -- [corpse_id] = true (точно есть что взять)
+local corpse_empty  = {}   -- [corpse_id] = true (нечего брать)
+local corpse_looted = {}   -- [corpse_id] = true (уже обчищен кем-то из NPC)
+local busy_npc      = {}   -- [npc_id] = true, пока NPC занят этой схемой
+
+-- Нужно gather-схеме: если обыск уже идет - предметы не трогаем.
+function is_busy(npc_id)
+	return busy_npc[npc_id] == true
+end
+
+
+-- Есть ли на трупе что-то, что NPC возьмёт. Положительный и отрицательный
+-- результат кэшируем: трупы живут на уровне долго, а обход инвентаря не бесплатный.
+local function corpse_has_loot(obj)
+	local id = obj:id()
+	if corpse_has[id] then return true end
+	if corpse_empty[id] then return false end
+
+	local cnt = 0
+	obj:iterate_inventory(function(_, item)
+		if item ~= nil and olr_loot.can_take(item) then
+			cnt = cnt + 1
+		end
+	end, nil)
+	if cnt <= 0 then
+		corpse_empty[id] = true
+		return false
+	end
+	corpse_has[id] = true
+	return true
+end
+
+local function release_claim(npc, st)
+	if st.claim_id ~= nil then
+		if corpse_claims[st.claim_id] == npc:id() then
+			corpse_claims[st.claim_id] = nil
+		end
+		st.claim_id = nil
+	end
+	busy_npc[npc:id()] = nil
+end
+
+local function claim_corpse(npc, st, obj)
+	release_claim(npc, st)
+	local id = obj:id()
+	corpse_claims[id] = npc:id()
+	st.claim_id = id
+	busy_npc[npc:id()] = true
+end
+
+local function get_target(st)
+	if st.claim_id == nil then return nil end
+	local obj = level.object_by_id(st.claim_id)
+	if obj == nil then
+		st.claim_id = nil
+		return nil
+	end
+	return obj
+end
+
+-- Проверки ситуаций - в общем модуле olr_loot.bad_situation().
+
+-- ==================================================================
+-- Поиск цели
+-- ==================================================================
+
+local function scan_corpses(npc, st)
+	local c = get_cfg()
+	local maxd2 = c.detect_dist * c.detect_dist
+	local pos = npc:position()
+	local best, best_d = nil, nil
+
+	for o in npc:memory_visible_objects() do
+		local obj = o:object()
+		if obj ~= nil
+		   and (IsStalker(obj) or IsMonster(obj))
+		   and obj:alive() == false then
+			local id = obj:id()
+			if not st.disabled_objects[id] and not corpse_looted[id] then
+				local monster = IsMonster(obj)
+				if (not monster) or c.loot_mutants then
+					-- освобождаем чужой claim, если владелец умер/ушел
+					local owner = corpse_claims[id]
+					if owner ~= nil then
+						local ow = level.object_by_id(owner)
+						if ow == nil or not ow:alive() then
+							corpse_claims[id] = nil
+							owner = nil
+						end
+					end
+					if owner == nil or owner == npc:id() then
+						-- труп в шейпе аномалии: не лезем вовсе
+						local zone = olr_ai_anomaly.zone_at(obj:position(), 0)
+						if zone ~= nil then
+							st.disabled_objects[id] = true
+							dbg("skip %s: труп внутри аномалии %s", obj:name(), zone.section)
+						elseif corpse_has_loot(obj) then
+							local d2 = pos:distance_to_sqr(obj:position())
+							if d2 < maxd2 and (best_d == nil or d2 < best_d) then
+								best, best_d = obj, d2
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if best ~= nil then
+		if npc:accessible(best:level_vertex_id()) then
+			claim_corpse(npc, st, best)
+			dbg("claim %s (id=%d) dist=%.1f", best:name(), best:id(), math.sqrt(best_d))
+			return true
+		else
+			st.disabled_objects[best:id()] = true
+			dbg("skip %s: вершина недоступна", best:name())
+		end
+	end
+	return false
+end
+
+-- ==================================================================
+-- Подход с безопасной стороны (вне аномалии)
+-- ==================================================================
+
+-- Если труп рядом с аномалией, выбираем вершину подхода так, чтобы она была
+-- снаружи шейпа. Сначала пробуем отойти от центра аномалии, потом веером.
+local function safe_dest(gi, npc)
+	local base_vid = gi:level_vertex_id()
+	local pos = gi:position()
+
+	local zone = olr_ai_anomaly.point_in(pos, 0.5)
+	if zone == nil then
+		if IsStalker(gi) then
+			local spine = gi:bone_position("bip01_spine")
+			local vid = base_vid
+			if spine ~= nil then
+				vid = level.vertex_id(spine)
+				if level.vertex_position(vid):distance_to_sqr(spine) > 16 then
+					vid = base_vid
+				end
+				if not npc:accessible(vid) then
+					vid = base_vid
+				end
+			end
+			return vid
+		end
+		return base_vid
+	end
+
+	local out = vector():set(pos.x - zone.pos.x, 0, pos.z - zone.pos.z)
+	if out:magnitude() < 0.1 then
+		out = vector():set(1, 0, 0)
+	end
+	out:normalize()
+
+	local v = npc:vertex_in_direction(base_vid, out, 2.0)
+	if v ~= nil and v < 2147483647 and npc:accessible(v) then
+		local p = level.vertex_position(v)
+		if olr_ai_anomaly.point_in(p, 0.5) == nil then
+			return v
+		end
+	end
+
+	for ang = 45, 315, 45 do
+		local dir = vector_rotate_y(vector():set(out.x, 0, out.z), ang)
+		local vv = npc:vertex_in_direction(base_vid, dir, 2.0)
+		if vv ~= nil and vv < 2147483647 and npc:accessible(vv) then
+			local p = level.vertex_position(vv)
+			if olr_ai_anomaly.point_in(p, 0.5) == nil then
+				return vv
+			end
+		end
+	end
+	return nil
+end
+
+-- ==================================================================
+-- Новости/реакция
+-- ==================================================================
+
+local function on_take(item, npc)
+	if item == nil then return end
+	if item:is_weapon_magazined() then
+		news_main.on_find_weapon(npc, item)
+	end
+	if item:is_artefact() then
+		news_main.on_find_artefact(npc, item)
+	end
+end
+
+-- Реплики при обыске трупа (как в старом watcher_act).
+local dead_neutral_reac = {
+	[1] = [[characters_voice\human_01\stalker\reactions\dead_neutral\dead_neutral_1]],
+	[2] = [[characters_voice\human_01\stalker\reactions\dead_neutral\dead_neutral_2]],
+	[3] = [[characters_voice\human_01\stalker\reactions\dead_neutral\dead_neutral_3]],
+	[4] = [[characters_voice\human_01\stalker\reactions\dead_neutral\dead_neutral_4]]
+}
+local dead_friend_reac = {
+	[1] = [[characters_voice\human_01\stalker\reactions\dead_friend\dead_friend_1]],
+	[2] = [[characters_voice\human_01\stalker\reactions\dead_friend\dead_friend_2]],
+	[3] = [[characters_voice\human_01\stalker\reactions\dead_friend\dead_friend_3]]
+}
+local dead_enemy_reac = {
+	[1] = [[characters_voice\human_01\stalker\reactions\dead_enemy\dead_enemy_1]],
+	[2] = [[characters_voice\human_01\stalker\reactions\dead_enemy\dead_enemy_2]],
+	[3] = [[characters_voice\human_01\stalker\reactions\dead_enemy\dead_enemy_3]],
+	[4] = [[characters_voice\human_01\stalker\reactions\dead_enemy\dead_enemy_4]],
+	[5] = [[characters_voice\human_01\stalker\reactions\dead_enemy\dead_enemy_5]]
+}
+
+local function reaction_sound(npc, gi)
+	if gi == nil or not gi:is_stalker() then return end
+	local snd_name = nil
+	if npc:relation(gi) == game_object.enemy then
+		snd_name = dead_enemy_reac[math.random(1, 5)]
+	elseif npc:relation(gi) == game_object.friend then
+		snd_name = dead_friend_reac[math.random(1, 3)]
+	else
+		snd_name = dead_neutral_reac[math.random(1, 4)]
+	end
+	if snd_name then
+		local snd_obj = xr_sound.get_safe_sound_object(snd_name)
+		if snd_obj and not snd_obj:playing() then
+			snd_obj:play_no_feedback(npc, sound_object.s3d, 0, npc:position(), 1.0)
+		end
+	end
+end
+
+-- ==================================================================
+-- EVALUATOR
+-- ==================================================================
+
+class "ev_corpse" (property_evaluator)
+
+function ev_corpse:__init(st, name) super(nil, name)
+	self.st = st
+end
+
+function ev_corpse:evaluate()
+	local now = time_global()
+	if self._tm and now < self._tm then
+		return self._res
+	end
+	self._tm = now + cache_ttl(250)
+
+	local npc = self.object
+	if npc == nil then self._res = false return false end
+	local st = self.st
+	if st == nil then self._res = false return false end
+
+	local c = get_cfg()
+	if not c.enable then self._res = false return false end
+
+	if not olr_loot.can_work(npc) then
+		self._res = false
+		return false
+	end
+
+	local res = get_target(st) ~= nil
+
+	if olr_loot.bad_situation(npc, st, "ai_corpse_detection", c.actor_stop) then
+		if st.claim_id ~= nil then
+			dbg("release claim (bad situation), npc=%s", npc:name())
+			release_claim(npc, st)
+		end
+		self._res = false
+		return false
+	end
+
+	if res then
+		self._res = true
+		return true
+	end
+
+	local now2 = time_global()
+	if st.tm1 == nil or now2 >= st.tm1 then
+		st.tm1 = now2 + c.scan_period + math.random() * c.scan_rand
+		res = scan_corpses(npc, st)
+	end
+	self._res = res
+	return res
+end
+
+-- Безопасная позиция взгляда для обыска: кость груди у сталкеров, иначе позиция + 0.5.
+local function corpse_look_position(obj)
+	if IsStalker(obj) then
+		local pos = obj:bone_position("bip01_spine")
+		if pos ~= nil then
+			return pos
+		end
+	end
+	local p = obj:position()
+	return vector():set(p.x, p.y + 0.5, p.z)
+end
+
+-- Забрать всё допустимое с трупа. Вызывается колбэком анимации search_corpse (CoC-стиль).
+function transfer_corpse_loot(npc)
+	local root = db.storage[npc:id()]
+	local st = root and root.ai_corpse_detection
+	if st == nil then
+		return
+	end
+
+	local gi = get_target(st)
+	if gi == nil then
+		release_claim(npc, st)
+		return
+	end
+
+	local gid = gi:id()
+	if corpse_looted[gid] then
+		release_claim(npc, st)
+		return
+	end
+
+	local taken = 0
+	gi:iterate_inventory(function(_, item)
+		if item ~= nil and olr_loot.can_take(item) then
+			gi:transfer_item(item, npc)
+			on_take(item, npc)
+			taken = taken + 1
+		end
+	end, nil)
+
+	corpse_looted[gid] = true
+	corpse_empty[gid] = true
+	dbg("%s: обыскал %s, предметов=%d", npc:name(), gi:name(), taken)
+	release_claim(npc, st)
+end
+
+-- ==================================================================
+-- ACTION
+-- ==================================================================
+
+class "act_corpse" (action_base)
+
+function act_corpse:__init(st) super(nil, "act_corpse")
+	self.st = st
+end
+
+function act_corpse:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+	local st = self.st
+	if st == nil then return end
+
+	self.dest_lvid   = nil
+	self.approach_state = nil
+	self.arrived     = false
+	self.arrive_time = nil
+	self.looted      = false
+	self.ct          = time_global()
+	self.clvid       = npc:level_vertex_id()
+
+	local gi = get_target(st)
+	if gi == nil then
+		release_claim(npc, st)
+		return
+	end
+
+	npc:set_detail_path_type(move.curve)
+	npc:set_path_type(game_object.level_path)
+
+	local vid = safe_dest(gi, npc)
+	if vid == nil then
+		st.disabled_objects[gi:id()] = true
+		release_claim(npc, st)
+		dbg("%s: нет безопасной точки подхода к %s", npc:name(), gi:name())
+		return
+	end
+
+	self.dest_lvid = vid
+	self.approach_state = (npc:position():distance_to_sqr(corpse_look_position(gi)) < math.random(5, 30)) and "patrol" or "rush"
+	npc:set_dest_level_vertex_id(self.dest_lvid)
+	state_mgr.set_state(npc, self.approach_state)
+	dbg("%s: иду к трупу %s, dest=%d", npc:name(), gi:name(), self.dest_lvid)
+end
+
+function act_corpse:execute()
+	action_base.execute(self)
+	local npc = self.object
+	local st = self.st
+	if st == nil then return end
+
+	local gi = get_target(st)
+	if gi == nil then
+		self.dest_lvid = nil
+		release_claim(npc, st)
+		return
+	end
+
+	local c = get_cfg()
+	if db.actor ~= nil and db.actor:alive()
+	   and npc:position():distance_to(db.actor:position()) < c.actor_stop then
+		self.dest_lvid = nil
+		release_claim(npc, st)
+		dbg("%s: актор рядом, обыск отменён", npc:name())
+		return
+	end
+
+	if gi:parent() ~= nil then
+		-- труп подобрали/переместили
+		self.dest_lvid = nil
+		release_claim(npc, st)
+		return
+	end
+
+	if self.dest_lvid == nil then
+		release_claim(npc, st)
+		return
+	end
+
+	local now = time_global()
+
+	if not self.arrived then
+		local stopped = (npc:movement_type() == move.stand)
+		local arrived = stopped and ((npc:level_vertex_id() == self.dest_lvid)
+			or (npc:position():distance_to(level.vertex_position(self.dest_lvid)) < c.arrive_dist))
+
+		if not arrived then
+			local cur = state_mgr.get_state(npc)
+			if self.approach_state ~= nil and cur ~= nil and cur ~= self.approach_state then
+				state_mgr.set_state(npc, self.approach_state)
+			end
+			npc:set_dest_level_vertex_id(self.dest_lvid)
+			if self.clvid == npc:level_vertex_id() then
+				if now - self.ct > c.stuck_time then
+					st.disabled_objects[gi:id()] = true
+					release_claim(npc, st)
+					self.dest_lvid = nil
+					dbg("%s: застрял на пути к %s", npc:name(), gi:name())
+				end
+			else
+				self.clvid = npc:level_vertex_id()
+				self.ct = now
+			end
+			return
+		end
+
+		self.arrived = true
+		self.arrive_time = now
+		reaction_sound(npc, gi)
+		state_mgr.set_state(npc, "search_corpse", nil, nil, {look_position = corpse_look_position(gi)}, {animation = true})
+		dbg("%s: обыскиваю %s", npc:name(), gi:name())
+		return
+	end
+
+	-- На месте: если state_mgr перебили - вернуть анимацию обыска.
+	-- Трансфер вызовет колбэк анимации (transfer_corpse_loot).
+	local cur = state_mgr.get_state(npc)
+	if cur ~= nil and cur ~= "search_corpse" then
+		state_mgr.set_state(npc, "search_corpse", nil, nil, {look_position = corpse_look_position(gi)}, {animation = true})
+	end
+
+	-- Страховка (CoC): если анимация обыска не доиграла - трансфер принудительно.
+	if self.arrive_time ~= nil and now - self.arrive_time > c.search_time then
+		self.arrive_time = nil
+		dbg("%s: таймаут анимации обыска", npc:name())
+		transfer_corpse_loot(npc)
+		return
+	end
+end
+
+function act_corpse:finalize()
+	action_base.finalize(self)
+	local npc = self.object
+	local st = self.st
+	if npc == nil or st == nil then return end
+
+	release_claim(npc, st)
+	dbg("%s: finalize обыска (arrived=%s, looted=%s)", npc:name(), tostring(self.arrived), tostring(self.looted))
+	self.dest_lvid = nil
+	self.arrived = false
+	self.arrive_time = nil
+	self.approach_state = nil
+	st.tm1 = nil
+end
+
+-- ==================================================================
+-- BINDER / SCHEME
+-- ==================================================================
+
+function add_to_binder(npc, ini, scheme, section, st)
+	st.disabled_objects = st.disabled_objects or {}
+
+	local manager = npc:motivation_action_manager()
+
+	if olr_loot.is_forbidden(npc) then
+		manager:add_evaluator(evid_busy, property_evaluator_const(false))
+	else
+		manager:add_evaluator(evid_busy, ev_corpse(st, "ev_corpse"))
+
+		local action = act_corpse(st)
+		action:add_precondition(world_property(stalker_ids.property_alive, true))
+		action:add_precondition(world_property(stalker_ids.property_enemy, false))
+		action:add_precondition(world_property(stalker_ids.property_danger, false))
+		action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base, false))
+		action:add_precondition(world_property(xr_evaluators_id.stohe_meet_base + 1, false))
+		action:add_precondition(world_property(xr_evaluators_id.abuse_base, false))
+		action:add_precondition(world_property(xr_evaluators_id.chugai_heli_hunter_base, false))
+		if olr_ai_hideout and olr_ai_hideout.olr_hideout_prop then
+			action:add_precondition(world_property(olr_ai_hideout.olr_hideout_prop, false))
+		end
+		action:add_precondition(world_property(evid_busy, true))
+		action:add_effect(world_property(evid_busy, false))
+		manager:add_action(actid, action)
+
+		-- Пока NPC занят обыском - не уходим в ALife-активности.
+		local alife = manager:action(xr_actions_id.alife)
+		alife:add_precondition(world_property(evid_busy, false))
+		local sm_idle_alife = manager:action(xr_actions_id.state_mgr + 2)
+		if sm_idle_alife then
+			sm_idle_alife:add_precondition(world_property(evid_busy, false))
+		end
+	end
+end
+
+function set_scheme(npc, ini, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	st.enabled = true
+end
+
+function disable_scheme(npc, scheme)
+	local st = db.storage[npc:id()]["ai_corpse_detection"]
+	if st then
+		st.enabled = false
+	end
+end

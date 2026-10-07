@@ -1,0 +1,233 @@
+----------------------------------------------------------------------------------------------------------------------
+--'	—хема помощи раненым
+--'	автор: ƒиденко –услан (Stohe)
+--'	TODO:
+----------------------------------------------------------------------------------------------------------------------
+
+local allow_help_wounded = true -- OLR: enabled by default (GameConstants gate removed)
+
+local debug = true -- xr_help_wounded verbose logging (false = quiet)
+
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[xr_help_wounded] " .. string.format(fmt, ...))
+	else
+		log1("[xr_help_wounded] " .. fmt)
+	end
+end
+
+function load_constants()
+	if constants_ini() ~= nil and constants_ini():line_exist("scripts", "allow_help_wounded") == true and constants_ini():r_bool("scripts", "allow_help_wounded") == true then
+		allow_help_wounded = true
+	end
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- EVALUATORS
+----------------------------------------------------------------------------------------------------------------------
+class "evaluator_wounded_exist" (property_evaluator)
+function evaluator_wounded_exist:__init(name, storage, npc) super (nil, name)
+	self.a = storage
+end
+function evaluator_wounded_exist:evaluate()
+	if not allow_help_wounded then return false end
+
+	local npc = self.object
+
+	if not npc:alive() then
+		return false
+	end
+
+	if npc:story_id() < 65535 then
+		return false
+	end
+
+	if npc:best_enemy() ~= nil then
+		return false
+	end
+
+	if npc:character_community() == "zombied" then
+		return false
+	end
+
+	if self.a.help_wounded_enabled == false then
+		return false
+	end
+
+	if xr_wounded.is_wounded(npc) then
+		return false
+	end
+
+	local nearest_dist = 900 -- Ѕудет выбирать только трупы, ближе чем эта дистанци€ (провер€етс€ по квадрату рассто€ни€)
+	local nearest_vertex = nil
+	local nearest_position = nil
+	local selected_id	= nil
+
+
+	for v in npc:memory_visible_objects() do
+		local vo = v:object()
+		local id = vo:id()
+		local npc_id = npc:id()
+		
+		--printf(" %s wounded_already_selected %s", id, tostring(db.storage[id].wounded_already_selected))
+		if npc:see(vo) and xr_wounded.is_wounded(vo) and (db.storage[id].wounded_already_selected == nil or db.storage[id].wounded_already_selected == npc_id) and vo:alive() and vo:story_id() >= 65535 and not olr_protected.is_no_offline_alife_obj(vo:name()) then
+			if db.storage[id].wounded.not_for_help ~= true then
+				local npc_position = npc:position() 
+				local vo_position = vo:position()
+
+				if npc_position:distance_to_sqr(vo_position) < nearest_dist then
+	
+					local vertex = level.vertex_id(vo_position)					
+					if npc:accessible(vertex) then
+						nearest_dist = npc_position:distance_to_sqr(vo_position)
+						nearest_vertex = vertex
+						nearest_position = vo_position
+						selected_id = id
+					end
+	
+				end
+			end
+		end
+
+	end
+	
+	if nearest_vertex ~= nil then
+		self.a.vertex_id = nearest_vertex
+		self.a.vertex_position = nearest_position
+		
+		if self.a.selected_id ~= nil and self.a.selected_id ~= selected_id and db.storage[self.a.selected_id] ~= nil then
+			db.storage[self.a.selected_id].wounded_already_selected = nil			
+		end
+
+		self.a.selected_id = selected_id
+		db.storage[self.a.selected_id].wounded_already_selected = npc:id()	
+
+		dbg("target: %s (%d) -> victim id=%s dist2=%.1f", npc:name(), npc:id(), tostring(selected_id), nearest_dist)
+		
+		return true
+	end
+
+	return false
+end
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+--Actions
+----------------------------------------------------------------------------------------------------------------------
+class "action_help_wounded" (action_base)
+function action_help_wounded:__init (npc_name,action_name, storage) super (nil, action_name)
+	self.a = storage
+end
+function action_help_wounded:initialize()
+	action_base.initialize(self)
+	dbg("action help START: %s (%d) victim=%s vertex=%s", self.object:name(), self.object:id(), tostring(self.a.selected_id), tostring(self.a.vertex_id))
+	self.object:set_desired_position()
+	self.object:set_desired_direction()
+
+	self.object:set_dest_level_vertex_id(self.a.vertex_id)
+	--state_mgr.set_state(self.object, "patrol", nil, nil, {look_position = self.a.vertex_position})
+	state_mgr.set_state(self.object, "patrol")
+end
+function action_help_wounded:execute ()
+	action_base.execute(self)
+
+	if self.object:position():distance_to_sqr(self.a.vertex_position) > 2 then
+		return
+	end
+
+	--printf("hw %s", vec_to_str(self.a.vertex_position))
+	state_mgr.set_state(self.object, "help_wounded", nil, nil, {look_position = self.a.vertex_position})
+	
+	dbg("arrived: %s (%d) -> help_wounded state", self.object:name(), self.object:id())
+	--xr_sound.set_sound(self.object, "wounded_medkit") -- Пока что молча будет лечить, звуков нет
+
+end
+function action_help_wounded:finalize ()
+	action_base.finalize(self)
+end
+
+function help_wounded(npc)
+	--printf("HELP WOUNDED %s", npc:name())
+	local selected_id = db.storage[npc:id()].help_wounded.selected_id
+	local selected_npc = db.storage[selected_id] and db.storage[selected_id].object
+	
+	--printf("selected_id %s", tostring(selected_id))
+	
+	if selected_npc == nil then
+		--printf("	help wounded return")
+		return
+	end	
+	
+	alife():create("medkit", selected_npc:position(), selected_npc:level_vertex_id(), selected_npc:game_vertex_id(), selected_id)
+
+	--selected_npc:eat(selected_npc:object("medkit"))
+	
+	dbg("deliver: %s (%d) -> victim %s (%d)", npc:name(), npc:id(), selected_npc:name(), selected_npc:id())
+	xr_wounded.unlock_medkit(selected_npc)
+	
+	db.storage[selected_id].wounded_already_selected = -1 
+	
+	--xr_wounded.eat_medkit(selected_npc)
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------------------------------------------
+function add_to_binder(npc, char_ini, scheme, section, st)
+	local operators	= {}
+	local properties  = {}
+
+
+	properties["wounded_exist"]				= xr_evaluators_id.wounded_exist
+	properties["wounded"]					= xr_evaluators_id.sidor_wounded_base
+
+	operators["help_wounded"]				= xr_actions_id.wounded_exist
+	operators["state_mgr_to_idle_alife"]	= xr_actions_id.state_mgr + 2
+
+	local manager = npc:motivation_action_manager()
+
+
+	-- Evaluators
+	manager:add_evaluator (properties["wounded_exist"], 		evaluator_wounded_exist("wounded_exist", st))
+
+	-- Actions
+	local action = action_help_wounded (npc:name(),"action_help_wounded", st)
+	action:add_precondition		(world_property(stalker_ids.property_alive, true))
+	action:add_precondition		(world_property(stalker_ids.property_enemy,	false))
+	action:add_precondition		(world_property(stalker_ids.property_danger,false))
+	action:add_precondition		(world_property(stalker_ids.property_anomaly,false))
+	action:add_precondition		(world_property(properties["wounded_exist"],	true))
+	action:add_precondition		(world_property(properties["wounded"], 		false))
+	action:add_effect (world_property(properties["wounded_exist"], 			false))
+	manager:add_action (operators["help_wounded"], action)
+
+	action = manager:action (xr_actions_id.alife)
+	action:add_precondition		(world_property(properties["wounded_exist"],		false))
+
+	action = manager:action (operators["state_mgr_to_idle_alife"])
+	action:add_precondition		(world_property(properties["wounded_exist"],		false))
+end
+
+function set_help_wounded(npc, ini, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+end
+
+
+function reset_help_wounded(npc, scheme, st, section)
+	st.help_wounded.help_wounded_enabled = utils.cfg_get_bool(st.ini, section, "help_wounded_enabled", npc, false, true)
+	dbg("reset_help_wounded: %s (%d) enabled=%s", npc:name(), npc:id(), tostring(st.help_wounded.help_wounded_enabled))
+end
+
+
+function is_under_help_wounded(npc)
+	local mgr = npc:motivation_action_manager()
+
+	if not mgr:initialized() then
+		return false
+	end
+
+	local current_action_id = mgr:current_action_id() 
+	return  current_action_id == xr_actions_id.wounded_exist
+end

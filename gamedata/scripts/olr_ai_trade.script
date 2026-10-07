@@ -1,394 +1,587 @@
-----------------------------------------------------------------------------------
--- торговля НПС с Торговцами 
--- hi_flyer 03.07.2018
-----------------------------------------------------------------------------------
+--[[----------------------------------------------------------------------------------
+  olr_ai_trade.script - OLR: NPC идут к торговцу и продают хабара (схема ai_tradings).
+
+  Реализовано:
+    * ФИЗИЧЕСКАЯ ОЧЕРЕДЬ: у торговца не больше max_at_point (1-3) NPC.
+      Все сразу идут к торговцу: первый встаёт на точку, остальные ждут рядом.
+      Когда первый закончил и отошёл - следующий встаёт на точку.
+    * Приход к торговой точке - строго по level_vertex_id (как в старой схеме).
+    * Сцена у торговца: случайная из трёх анимаций; во время неё talk_hello и
+      реакции, по окончании - yes/no (гибрид по стоимости хабара), сделка или
+      отказ, прощание. Снимок в pstor в любом случае.
+    * Повторный поход - по pstor-снимку (деньги/рюкзак). Время-кулдауна нет.
+    * Экономика: economy_mode = abstract | real (реальные деньги торговца/NPC).
+    * Финальная фраза зависит от результата торговли (гибрид: шанс растёт от суммы).
+
+  Все ключи - config/olr_script_configs.ltx -> [olr_ai_trade_settings].
+  Дебаг: local debug ниже, префикс [trade].
+  Регистрация схемы - явная: modules.script + xr_logic (без core).
+----------------------------------------------------------------------------------]] 
 
 -- id's for evaluators and actions
 base_id_trade = 21860
 ev_trade_now = base_id_trade + 1
 ac_trade = base_id_trade + 1
 
--- init module
-function init()
-	core.ac("load_scheme", xrs_load_scheme)
-	core.ac("logic_disable_schemes", disable_scheme)
-	core.ac("logic_enable_schemes", set_scheme)
+local SECT = "olr_ai_trade_settings"
+
+-- ==================================================================
+-- Дебаг
+-- ==================================================================
+
+local debug = true
+
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[trade] " .. string.format(fmt, ...))
+	else
+		log1("[trade] " .. fmt)
+	end
 end
 
--- load scheme
-function xrs_load_scheme()
-	load_scheme("olr_ai_trade",	 "ai_tradings",	 modules.stype_stalker)
+-- ==================================================================
+-- Конфиг
+-- ==================================================================
+
+local cfg = nil
+
+local function get_cfg()
+	if cfg ~= nil then return cfg end
+	cfg = {
+		max_at_point  = utils.cfg_get_number(ini_sys, SECT, "max_at_point", nil, false, 3),
+		economy_mode  = utils.cfg_get_string(ini_sys, SECT, "economy_mode", nil, false, "", "abstract"),
+		trader_pays   = utils.cfg_get_bool(ini_sys, SECT, "trader_pays", nil, false, true),
+		sell_k        = utils.cfg_get_number(ini_sys, SECT, "sell_k", nil, false, 0.4),
+		buy_reserve   = utils.cfg_get_number(ini_sys, SECT, "buy_reserve_k", nil, false, 0.7),
+		gain_money    = utils.cfg_get_number(ini_sys, SECT, "gain_money", nil, false, 500),
+		gain_ruck     = utils.cfg_get_number(ini_sys, SECT, "gain_ruck", nil, false, 5),
+		arrive_dist   = utils.cfg_get_number(ini_sys, SECT, "arrive_dist", nil, false, 2.0),
+		clear_dist    = utils.cfg_get_number(ini_sys, SECT, "clear_dist", nil, false, 3.0),
+		wait1_m       = utils.cfg_get_number(ini_sys, SECT, "queue_wait1_m", nil, false, 1.5),
+		wait2_m       = utils.cfg_get_number(ini_sys, SECT, "queue_wait2_m", nil, false, 3.0),
+		succ_min      = utils.cfg_get_number(ini_sys, SECT, "success_chance_min", nil, false, 0.15),
+		succ_max      = utils.cfg_get_number(ini_sys, SECT, "success_chance_max", nil, false, 0.90),
+		succ_scale    = utils.cfg_get_number(ini_sys, SECT, "success_scale", nil, false, 1000),
+		retry_pause   = utils.cfg_get_number(ini_sys, SECT, "retry_pause_ms", nil, false, 60000),
+		member_ttl    = 600000
+	}
+	cfg.max_at_point = math.max(1, math.min(3, cfg.max_at_point))
+	return cfg
 end
 
-----------------------------------------------------------------------------------
+-- ==================================================================
+-- Точки торговли по уровням
+-- ==================================================================
+
+-- walk/look - имена патрульных путей у торговца, trader - имя торговца.
+local POINTS = {
+	l01_escape   = { walk = "escccc_cutscene_walk",     look = "escccc_cutscene_look",     trader = "escape_trader_0000" },
+	l09_military = { walk = "escccc_cutscene_walk_mil", look = "escccc_cutscene_look_mil", trader = "lvl9_military_m_trader" },
+	l05_bar      = { walk = "sit_stul_speep_walk",      look = "barman_walk",              trader = "bar_barman" }
+}
+
+local point_cache = {}
+
+-- Позиция ожидания: смещение от торговой точки "назад" (от торговца).
+local function build_wait_vid(tpos, lpos, offset)
+	local dir = tpos:sub(lpos)
+	dir.y = 0
+	local mag = math.sqrt(dir.x * dir.x + dir.z * dir.z)
+	if mag < 0.01 then
+		dir = vector():set(0, 0, 1)
+	else
+		dir = vector():set(dir.x / mag, 0, dir.z / mag)
+	end
+	local pos = vector():set(tpos.x + dir.x * offset, tpos.y, tpos.z + dir.z * offset)
+	return level.vertex_id(pos)
+end
+
+local function get_point(lvl)
+	local cached = point_cache[lvl]
+	if cached ~= nil then return cached end
+
+	local def = POINTS[lvl]
+	if def == nil then
+		point_cache[lvl] = false
+		return false
+	end
+
+	-- level.patrol_path_exists - дешёвая проверка без исключений
+	if not level.patrol_path_exists(def.walk) or not level.patrol_path_exists(def.look) then
+		dbg("патрули для %s не найдены (%s / %s)", lvl, def.walk, def.look)
+		point_cache[lvl] = false
+		return false
+	end
+
+	local c = get_cfg()
+	local walk_vid = patrol(def.walk):level_vertex_id(0)
+	local look_vid = patrol(def.look):level_vertex_id(0)
+	local tpos = level.vertex_position(walk_vid)
+	local lpos = level.vertex_position(look_vid)
+
+	local p = {
+		walk = walk_vid,
+		look = look_vid,
+		wait1 = build_wait_vid(tpos, lpos, c.wait1_m),
+		wait2 = build_wait_vid(tpos, lpos, c.wait2_m),
+		trader_name = def.trader
+	}
+	point_cache[lvl] = p
+	return p
+end
+
+local function get_trader_client(trader_name)
+	if trader_name == nil then return nil end
+	local se = alife():object(trader_name)
+	if se == nil then return nil end
+	return level.object_by_id(se.id)
+end
+
+-- ==================================================================
+-- Физическая очередь (FIFO, максимум max_at_point)
+-- ==================================================================
+
+local queue = {
+	level = nil,
+	members = {},        -- упорядоченный список npc_id
+	joined = {},         -- [npc_id] = time_global() момента заявки
+	pending_clear = nil, -- npc_id, который отошёл после торговли
+	pending_since = nil
+}
+
+local function q_reset()
+	queue.members = {}
+	queue.joined = {}
+	queue.pending_clear = nil
+	queue.pending_since = nil
+	dbg("очередь сброшена")
+end
+
+local function q_find(id)
+	for i = 1, #queue.members do
+		if queue.members[i] == id then return i end
+	end
+	return nil
+end
+
+-- Ушёл ли предыдущий торговец с точки.
+local function q_clear(now)
+	if queue.pending_clear == nil then return true end
+	if queue.pending_since == nil then queue.pending_since = now end
+
+	local obj = level.object_by_id(queue.pending_clear)
+	if obj == nil or not obj:alive() then
+		queue.pending_clear = nil
+		return true
+	end
+
+	local p = get_point(level.name())
+	if p == false then
+		queue.pending_clear = nil
+		return true
+	end
+
+	local tpos = level.vertex_position(p.walk)
+	if obj:position():distance_to(tpos) > get_cfg().clear_dist then
+		queue.pending_clear = nil
+		return true
+	end
+
+	if now - queue.pending_since > 15000 then
+		queue.pending_clear = nil
+		return true
+	end
+	return false
+end
+
+local function q_purge(now)
+	local c = get_cfg()
+	local i = 1
+	while i <= #queue.members do
+		local id = queue.members[i]
+		local obj = level.object_by_id(id)
+		local joined = queue.joined[id] or 0
+		local st = db.storage[id] and db.storage[id]["ai_tradings"]
+		local started = (st ~= nil and st.trading == true)
+		if obj == nil or not obj:alive() or db.storage[id] == nil
+		   or (now - joined) > c.member_ttl
+		   or (not started and (now - joined) > 5000) then
+			queue.joined[id] = nil
+			table.remove(queue.members, i)
+			dbg("очередь: выбыл %s", tostring(id))
+		else
+			i = i + 1
+		end
+	end
+end
+
+local function q_join(npc)
+	local id = npc:id()
+	if q_find(id) ~= nil then return true end
+	q_purge(time_global())
+	if #queue.members >= get_cfg().max_at_point then return false end
+	table.insert(queue.members, id)
+	queue.joined[id] = time_global()
+	dbg("очередь: + %s (позиция %d)", npc:name(), #queue.members)
+	return true
+end
+
+local function q_leave(npc)
+	local id = npc:id()
+	local idx = q_find(id)
+	if idx == nil then return end
+	table.remove(queue.members, idx)
+	queue.joined[id] = nil
+	dbg("очередь: - %s (осталось %d)", npc:name(), #queue.members)
+end
+
+-- ==================================================================
+-- pstor-состояние (запрет до прироста денег/предметов)
+-- ==================================================================
+
+local function trade_gain_ok(npc)
+	local last_money = xr_logic.pstor_retrieve(npc, "olr_trade_money", -1)
+	local last_ruck  = xr_logic.pstor_retrieve(npc, "olr_trade_ruck", -1)
+	if last_money == nil or last_money < 0 then return true end
+	local c = get_cfg()
+	local money_ok = npc:money() > (last_money + c.gain_money)
+	local ruck_ok  = npc:ruck_count() > (last_ruck + c.gain_ruck)
+	return money_ok or ruck_ok
+end
+
+local function trade_snapshot(npc)
+	xr_logic.pstor_store(npc, "olr_trade_money", npc:money())
+	xr_logic.pstor_store(npc, "olr_trade_ruck",  npc:ruck_count())
+end
+
+-- Торгует ли NPC прямо сейчас (для других схем, например лута).
+function is_trading(npc_id)
+	local st = db.storage[npc_id] and db.storage[npc_id]["ai_tradings"]
+	return st ~= nil and st.trading == true
+end
+
+-- Своё bad_situation: пока NPC занят другими делами - в схему не идём.
+local function trade_bad_situation(npc, st)
+	if npc == nil then return true end
+	if not npc:alive() then return true end
+	if xr_wounded.is_wounded(npc) then return true end
+	if st ~= nil and st.enabled == false then return true end
+
+	if npc:best_enemy() then return true end
+	if olr_loot.bad_danger(npc) then return true end
+
+	if has_alife_info("olr_blowout_phase_1") or has_alife_info("olr_blowout_phase_2") or has_alife_info("olr_blowout_phase_3") then
+		return true
+	end
+
+	-- Схемы, под которыми не ходим торговать.
+	local root = db.storage[npc:id()]
+	local active = root and root.active_scheme
+	if active == "remark" or active == "combat" or active == "wounded" or active == "actor_dialogs" then
+		return true
+	end
+
+	-- Занят лутом.
+	if olr_ai_gather_items and olr_ai_gather_items.is_busy(npc:id()) then return true end
+	if olr_ai_corpse_detection and olr_ai_corpse_detection.is_busy(npc:id()) then return true end
+
+	-- Актор позвал торговать (PDA trade_agree).
+	if olr_ai_trade_agree and olr_ai_trade_agree.is_active and olr_ai_trade_agree.is_active(npc) then return true end
+
+	return false
+end
+
+-- ==================================================================
 -- EVALUATOR
-----------------------------------------------------------------------------------
+-- ==================================================================
+
 class "evaluator_trading" (property_evaluator)
 function evaluator_trading:__init(st) super (nil, "evaluator_trading")
 	self.st = st
+	self._tm = nil
+	self._res = false
 end
 
--- evaluator
 function evaluator_trading:evaluate()
+	local now = time_global()
+	if self._tm ~= nil and now < self._tm then
+		return self._res
+	end
+	self._tm = now + cache_ttl(500)
+	self._res = self:eval_trading(now)
+	return self._res
+end
 
+function evaluator_trading:eval_trading(now)
 	local npc = self.object
+	local st  = self.st
+	if st == nil or st.enabled == false then
+		return false
+	end
+
+	-- Пока NPC торгует - цель держим, чтобы планировщик не снял экшен.
+	if st.trading then
+		if xr_wounded.is_wounded(npc) then
+			dbg("%s: wounded during trade scene - abort", npc:name())
+			return false
+		end
+		return true
+	end
+
+	-- Схема работает только на трёх торговых уровнях.
 	local lvl = level.name()
-	
-	-- торгуют только на трёх уровнях — раньше этот случай доходил до money/has_alife_info.
-	-- теперь на выходим из схемы если уровень не один из трёх ниже, нефиг еще думать
 	if lvl ~= "l01_escape" and lvl ~= "l09_military" and lvl ~= "l05_bar" then
 		return false
-	end	
-	
+	end
+
+	-- Очередь живёт в пределах уровня.
+	if queue.level ~= lvl then
+		queue.level = lvl
+		q_reset()
+	end
+
 	local name = npc:name()
 	local comm = npc:character_community()
 
-	if npc:best_enemy() then
+	-- Занят другими делами - не идём.
+	if trade_bad_situation(npc, st) then
+		q_leave(npc)
 		return false
 	end
 
-	if npc:is_talking() then
-		return false
-	end
+	if npc:best_enemy() then return false end
+	if npc:best_danger() then return false end
+	if npc:is_talking() then return false end
 
 	if db.actor:is_talking() then
 		local npctalk = level:get_second_talker()
+		if npctalk == nil then return false end
 		if npctalk:name() == "bar_barman" or npctalk:name() == "lvl9_military_m_trader" or npctalk:name() == "escape_trader_0000" then
-			--log1("nope")
 			return false
 		end
 	end
-	
-	-- TODO Отключать еще при выбросе!!
-	
+
 	local spawn_ini = npc:spawn_ini()
 	if spawn_ini and spawn_ini:section_exist("logic") then
-		return false -- Сталкеры имеющие логику в кастом дате так-же игнорируются
-	end
-	
-	if olr_protected.is_no_offline_alife_obj(name) then 
-		return false -- Квестовые защищенные и прочие непеси из этого списка НЕ ДОЛЖНЫ БЛЯ БЕЖАТЬ ТОРГОВАТЬ
+		return false -- для тех кто на своей логике сидит чтоб не пёрли
 	end
 
-	if has_alife_info("olr_traders_night") then
-		return false
-	end
+	if olr_protected.is_no_offline_alife_obj(name) then return false end -- а так-же списочные непеси
+	if npc:story_id() ~= 4294967296 then return false end -- сюжетные не ходят
+	if has_alife_info("olr_traders_night") then return false end -- и чтоб ночью не ходили
 
-	-- Чёрные списки имён и фракций
+	-- персональный чёрный список (сюжетные/особые)
 	if name == "lvl5_bar_staler_undead_olr_0003_lonewolf"
 		or name == "lvl9_military_stalker_0033"
 		or name == "lvl5_bar_stalker_0052"
 		or name == "esc_raid_scientist"
 		or name == "esc_raid_scientist_0000"
 		or name == "esc_raid_scientist_0001"
-		or name == "lvl1_escape_stalker_0054" -- Сивый
-		or name == "lvl1_escape_stalker_0055" -- Чёрт
+		or name == "lvl1_escape_stalker_0054"
+		or name == "lvl1_escape_stalker_0055"
 	then
 		return false
 	end
 
-	if comm == "military" 
+	-- группировки, которые не торгуются
+	if comm == "military"
 		or comm == "zombied"
 		or comm == "trader"
 		or comm == "monolith"
-		or comm == "neutral"
+		or comm == "neutral" -- не знаю зачем так Флаер сделал, оставляю как есть
 		or comm == "bandit"
 		or comm == "voenstals"
 		or comm == "sin"  then
 		return false
 	end
-	-- копим бабло для основной цели
-	--if xvars.npcs_tasks[npc:name()] == "cash" then
-	--	return false
-	--end
 
-	-- Жаба
+	-- Условия конкретного уровня (порог богатства/забитого рюкзака).
+	local wants = false
 	if lvl == "l01_escape" then
-		if has_alife_info("kvest_bar_2_dialog_start") then
-			return false -- Жаба свалил на Холмы
-		end
-		if npc:money() > 1000 then
-			return true
-		end
-		if npc:ruck_count() > 25 then
-			return true
-		end
-	end
-	-- Жаба мил
-	if lvl == "l09_military" then
-		if not has_alife_info("greh_leader_key_taken_docs_vetri") then
-			return false -- Жаба свалил на Холмы
-		end
-		if npc:money() > 3000 then
-			return true
-		end
-		if npc:ruck_count() > 25 then
-			return true
-		end
-	end
-
-	-- Бармен
-	if lvl == "l05_bar" then
-		if not has_alife_info("open_bar_door_start_krisa") then
-			return false -- бармен ещё не появился с начала
-		end
+		if has_alife_info("kvest_bar_2_dialog_start") then return false end
+		wants = (npc:money() > 1000) or (npc:ruck_count() > 25)
+	elseif lvl == "l09_military" then
+		if not has_alife_info("greh_leader_key_taken_docs_vetri") then return false end
+		wants = (npc:money() > 3000) or (npc:ruck_count() > 25)
+	elseif lvl == "l05_bar" then
+		if not has_alife_info("open_bar_door_start_krisa") then return false end
 		if has_alife_info("greh_leader_key_taken_docs_vetri") and not has_alife_info("bar_krisa_vernulsya_after_greh") then
-			return false -- бармен свалил и ещё не вернулся
+			return false
 		end
-		if has_alife_info("bun_antenna_off") then
-			return false -- бармен свалил
-		end
-		if npc:money() > 5000 then
-			return true
-		end
-		if npc:ruck_count() > 25 then
-			--log1("has to trade - "..npc:ruck_count().." ")
-			return true
-		end
+		if has_alife_info("bun_antenna_off") then return false end
+		wants = (npc:money() > 5000) or (npc:ruck_count() > 25)
+	end
+	if not wants then
+		q_leave(npc)
+		return false
 	end
 
-	return false
+	-- Короткая пауза после отмены, чтобы не трясло.
+	if st.retry_after ~= nil and now < st.retry_after then
+		q_leave(npc)
+		return false
+	end
+
+	-- Запрет до прироста денег/предметов (время-кулдауна нет).
+	if not trade_gain_ok(npc) then
+		q_leave(npc)
+		return false
+	end
+
+	-- Точка торговли и живой торговец.
+	local point = get_point(lvl)
+	if point == false then
+		q_leave(npc)
+		return false
+	end
+	if get_trader_client(point.trader_name) == nil then
+		q_leave(npc)
+		return false
+	end
+
+	-- Уже в очереди - держим цель.
+	if q_find(npc:id()) ~= nil then
+		if xr_wounded.is_wounded(npc) then
+			q_leave(npc)
+			dbg("%s: wounded in trade queue - leave", npc:name())
+			return false
+		end
+		return true
+	end
+
+	q_purge(now)
+	return q_join(npc)
 end
 
-----------------------------------------------------------------------------------	  
--- ACTION
-----------------------------------------------------------------------------------	 
-class "action_go_trade" (action_base)
-function action_go_trade:__init(st) super (nil, "action_go_trade")
-	self.st = st
+-- ==================================================================
+-- ACTION: что продавать / что покупать
+-- ==================================================================
+
+local sell_items = {
+	["item_pda_dead_taken"] = true,
+	["item_pda_dead"] = true,
+	["device_torch"] = true,
+	["bandage"] = true,
+	["bread"] = true,
+	["medkit"] = true,
+	["detector_simple"] = true,
+	["sigaret"] = true,
+	["antirad"] = true,
+	["item_razradnik"] = true
+}
+
+local dont_sell_items = {
+	["device_pda"] = true,
+	["bolt"] = true
+}
+
+local function is_sellable(item)
+	return item:is_weapon() or item:is_artefact() or item:is_ammo()
+		or item:is_bottle_item() or item:is_eatable_item() or sell_items[item:section()]
 end
 
--- initialize of action
-function action_go_trade:initialize()
-
-	local patrol_jaba = patrol("escccc_cutscene_walk")
-	local look_jaba = patrol("escccc_cutscene_look")
-	self.trade_point_jaba = patrol_jaba:level_vertex_id(0)
-	self.trade_point_jaba_look = look_jaba:level_vertex_id(0)
-
-	local patrol_jaba_mil = patrol("escccc_cutscene_walk_mil")
-	local look_jaba_mil = patrol("escccc_cutscene_look_mil")
-	self.trade_point_jaba_mil = patrol_jaba_mil:level_vertex_id(0)
-	self.trade_point_jaba_look_mil = look_jaba_mil:level_vertex_id(0)
-
-	local patrol_barman = patrol("sit_stul_speep_walk")
-	local look_barman = patrol("barman_walk")
-	self.trade_point_barman = patrol_barman:level_vertex_id(0)
-	self.trade_point_barman_look = look_barman:level_vertex_id(0)
-
-	self.walkstate = math.random(1,2)
-
-	self.trade_tmr = 0
-	self.sms_lalk = 0  -- если ГГ влезает в торговлю
-	local npc = self.object
-	--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade initalize have money", nil, "freedom", 3000)
-	--olr.add_spot_on_map( npc:id(),"alife_combat_fight",npc:name() )
-
+-- Цена продажи: полная цена * состояние * коэффициент торговца.
+local function item_sell_price(item)
+	local c = get_cfg()
+	local cond = item:condition() or 1.0
+	return math.floor(item:cost() * cond * c.sell_k)
 end
 
--- execute of action
-function action_go_trade:execute()
-	local mrandom = math.random
-	action_base.execute(self)
-	
-	local npc = self.object
+-- Продажа: предметы уходят торговцу, деньги - NPC.
+-- Оружие берем только из рюкзака, чтобы не разоружать NPC.
+local function sell_habar(npc, trader_client)
+	local c = get_cfg()
+	local total = 0
+	local cnt = 0
 
-	-- у жабы
-	if level.name() == "l01_escape" then
-		-- идём на точку жабы
-		if self.walkstate == 1 then
-			state_mgr.set_state(self.object, "walk")
+	npc:iterate_inventory(function(_, item)
+		if item == nil then return end
+		if not is_sellable(item) then return end
+		if dont_sell_items[item:section()] then return end
+		if item:is_weapon() and not npc:is_in_ruck(item) then return end
+
+		local price = item_sell_price(item)
+		npc:transfer_item(item, trader_client)
+		total = total + price
+		cnt = cnt + 1
+	end, nil)
+
+	if total > 0 then
+		if c.economy_mode == "real" and c.trader_pays then
+			-- замкнутая экономика: платит из своего кошелька
+			local trader_money = trader_client:money() or 0
+			if trader_money < total then total = trader_money end
+			if total > 0 then
+				trader_client:give_money(-total)
+				npc:give_money(total)
+			end
 		else
-			state_mgr.set_state(self.object, "run")
-		end
-		self.object:set_path_type(game_object.level_path)
-		self.object:set_dest_level_vertex_id(self.trade_point_jaba)
-
-		-- пришли к жабе, смотрим на него
-		if npc:level_vertex_id() == self.trade_point_jaba then
-			local look_point = level.vertex_position(self.trade_point_jaba_look)
-			state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point})
-			self.trade_tmr = self.trade_tmr + 1
-			if self.trade_tmr == 3 then
-				xr_sound.set_sound_play(self.object, "talk_hello")
-			end
-			if self.trade_tmr == 50 then
-				local rnd = mrandom(1, 3)
-				if rnd == 1 then
-					xr_sound.set_sound_play(self.object, "talk_accept")
-				elseif rnd == 2 then
-					xr_sound.set_sound_play(self.object, "talk_reject")
-				else
-					xr_sound.set_sound_play(self.object, "talk_abuse")
-				end
-			end
-			if self.trade_tmr == 100 then
-				if self.walkstate == 1 then
-					xr_sound.set_sound_play(self.object, "trade_yes")
-				else
-					xr_sound.set_sound_play(self.object, "trade_no")
-				end
-			end
-			--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] ПРИШЛИ ТОРГУЕМ", nil, "freedom", 3000)
-			if npc:position():distance_to(db.actor:position()) <= 3 and self.sms_lalk == 0 then
-				self.sms_lalk = 1
-				news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000, nil, nil, true, "escape_trader_name")
-			end
-		end
-
-		if self.trade_tmr > 120 then
-			if npc:money() > 0 then
-				local pre_money = npc:money()
-				--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
-				npc:give_money(-npc:money())
-				npc:give_money(mrandom(4, 30))
-				self.sms_lalk = 0
-				xr_sound.set_sound_play(self.object, "talk_bye")
-				--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
-				--log1("спавним покупки в НПС escape на сумму - ["..pre_money.."]")
-				celling_habar_svoi_escape(npc)
-				create_trading_escape(npc, pre_money)
-				check_leave_zone_money(npc)
-			end
+			-- абстрактная экономика: деньги начисляются "от торговца"
+			npc:give_money(total)
 		end
 	end
-
-	-- у жабы MILITARY
-	if level.name() == "l09_military" then
-		-- идём на точку жабы
-		--log1("walkstate - ["..self.walkstate.."]")
-		if self.walkstate == 1 then
-			state_mgr.set_state(self.object, "walk")
-		else
-			state_mgr.set_state(self.object, "run")
-		end
-		self.object:set_path_type(game_object.level_path)
-		self.object:set_dest_level_vertex_id(self.trade_point_jaba_mil)
-
-		-- пришли к жабе, смотрим на него
-		if npc:level_vertex_id() == self.trade_point_jaba_mil then
-			local look_point = level.vertex_position(self.trade_point_jaba_look_mil)
-			if self.walkstate == 1 then
-				state_mgr.set_state(self.object, "search", nil, nil, {look_position = look_point})
-			else
-				state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point})
-			end
-			self.trade_tmr = self.trade_tmr + 1
-			if self.trade_tmr == 3 then
-				xr_sound.set_sound_play(self.object, "talk_hello")
-			end
-			if self.trade_tmr == 50 then
-				local rnd = mrandom(1, 3)
-				if rnd == 1 then
-					xr_sound.set_sound_play(self.object, "talk_accept")
-				elseif rnd == 2 then
-					xr_sound.set_sound_play(self.object, "talk_reject")
-				else
-					xr_sound.set_sound_play(self.object, "talk_abuse")
-				end
-			end
-			if self.trade_tmr == 100 then
-				if self.walkstate == 1 then
-					xr_sound.set_sound_play(self.object, "trade_yes")
-				else
-					xr_sound.set_sound_play(self.object, "trade_no")
-				end
-			end
-			--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] ПРИШЛИ ТОРГУЕМ", nil, "freedom", 3000)
-			if npc:position():distance_to(db.actor:position()) <= 6 and self.sms_lalk == 0 then
-				self.sms_lalk = 1
-				news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000, nil, nil, true, "escape_trader_name")
-			end
-		end
-
-		if self.trade_tmr > 120 then
-			if npc:money() > 0 then
-				local pre_money = npc:money()
-				--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
-				npc:give_money(-npc:money())
-				npc:give_money(mrandom(4, 30))
-				self.sms_lalk = 0
-				xr_sound.set_sound_play(self.object, "talk_bye")
-				--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
-				--log1("спавним покупки в НПС escape на сумму - ["..pre_money.."]")
-				celling_habar_svoi_military(npc)
-				create_trading_escape(npc, pre_money)
-				check_leave_zone_money(npc)
-			end
-		end
-	end
-
-	-- у бармена
-	if level.name() == "l05_bar" then
-		-- идём на точку бармена
-		if self.walkstate == 1 then
-			state_mgr.set_state(self.object, "walk")
-		else
-			state_mgr.set_state(self.object, "run")
-		end
-		self.object:set_path_type(game_object.level_path)
-		self.object:set_dest_level_vertex_id(self.trade_point_barman)
-		--level.map_add_object_spot(self.object:id(), "green_location", 1)
-
-		-- пришли к бармену, смотрим на него
-		if npc:level_vertex_id() == self.trade_point_barman then
-			local look_point = level.vertex_position(self.trade_point_barman_look)
-			state_mgr.set_state(self.object, "choose", nil, nil, {look_position = look_point})
-			self.trade_tmr = self.trade_tmr + 1
-			if self.trade_tmr == 3 then
-				xr_sound.set_sound_play(self.object, "talk_hello")
-			end
-			if self.trade_tmr == 50 then
-				local rnd = mrandom(1, 3)
-				if rnd == 1 then
-					xr_sound.set_sound_play(self.object, "talk_accept")
-				elseif rnd == 2 then
-					xr_sound.set_sound_play(self.object, "talk_reject")
-				else
-					xr_sound.set_sound_play(self.object, "talk_abuse")
-				end
-			end
-			if self.trade_tmr == 100 then
-				if self.walkstate == 1 then
-					xr_sound.set_sound_play(self.object, "trade_yes")
-				else
-					xr_sound.set_sound_play(self.object, "trade_no")
-				end
-			end
-			--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done", nil, "freedom", 3000)
-			if npc:position():distance_to(db.actor:position()) <= 2.5 and self.sms_lalk == 0 then
-				self.sms_lalk = 1
-				news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "barman", 10000, nil, nil, true, "st_barkeep_short")
-			end
-		end
-
-		if self.trade_tmr > 120 then
-			if npc:money() > 0 then
-				local pre_money = npc:money()
-				--dialogs.relocate_money_no_sms(npc,-npc:money(),"out")
-				npc:give_money(-npc:money())
-				npc:give_money(mrandom(4, 40))
-				self.sms_lalk = 0
-				xr_sound.set_sound_play(self.object, "talk_bye")
-				--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] trade done ["..npc:money().."]", nil, "freedom", 3000)
-				--log1("спавним покупки в НПС bar на сумму - ["..pre_money.."]")
-				celling_habar_svoi_bar(npc)
-				create_trading_barman(npc, pre_money)
-				check_leave_zone_money(npc)
-			end
-		end
-	end
+	dbg("%s продал %d предметов на %d", npc:name(), cnt, total)
+	return total
 end
 
--- finalize
-function action_go_trade:finalize()
-	action_base.finalize(self)
-	local npc = self.object
-	npc:clear_animations()
-	self.sms_lalk = 0
-	--news_manager.send_tip(db.actor, "npc - ["..self.object:name().."] finalize", nil, "freedom", 3000)
+-- Что NPC хочет купить (дёшево -> дорого). Второе число - максимум штук.
+local function buy_list()
+	return {
+		{ "medkit", 2 }, { "bandage", 2 }, { "antirad", 1 },
+		{ "battery_change", 1 }, { "stalker_outfit", 1 },
+		{ "wpn_toz34", 1 }, { "ecolog_outfit", 1 }, { "wpn_lr300", 1 },
+		{ "scientific_outfit", 1 }, { "wpn_vintorez", 1 }
+	}
 end
 
+local function section_cost(sec)
+	if ini_sys:section_exist(sec) and ini_sys:line_exist(sec, "cost") then
+		local price = ini_sys:r_float(sec, "cost")
+		if price ~= nil and price > 0 then
+			return price
+		end
+	end
+	return 500
+end
+
+-- Закупка: тратим деньги NPC. В real-режиме деньги уходят торговцу.
+local function buy_habar(npc, trader_client)
+	local c = get_cfg()
+	local budget = npc:money()
+	local bought = 0
+	local list = buy_list()
+
+	for i = 1, #list do
+		local sec = list[i][1]
+		local max_cnt = list[i][2]
+		local price = section_cost(sec)
+		local unique = (sec ~= "medkit" and sec ~= "bandage" and sec ~= "antirad")
+
+		if unique and npc:object(sec) ~= nil then
+			-- такое уже есть - не покупаем
+		elseif budget >= price and price <= budget * c.buy_reserve then
+			local cnt = 1
+			while cnt <= max_cnt and budget >= price do
+				local sobj = alife():create(sec, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+				if sobj == nil then break end
+				budget = budget - price
+				bought = bought + 1
+				cnt = cnt + 1
+			end
+		end
+	end
+
+	local spent = npc:money() - budget
+	if spent > 0 then
+		npc:give_money(-spent)
+		if c.economy_mode == "real" and c.trader_pays then
+			trader_client:give_money(spent)
+		end
+	end
+	dbg("%s закупил %d предметов, остаток %d", npc:name(), bought, budget)
+	return bought
+end
 
 function check_leave_zone_money(obj)
 	if xvars and xvars.npcs_tasks and xvars.npcs_tasks[obj:name()] == "cash" and obj:rank() > 300 then
@@ -396,254 +589,298 @@ function check_leave_zone_money(obj)
 		news_manager.send_tip(db.actor, game.translate_string("st_olr_ai_trade_leavezone"), 3, obj:character_community(), 19000, nil, nil, true, get_npc_real_name(obj))
 	end
 end
--- TODO: переделать покупки 
-----------------------------------------------------------------------------------
-local sell_items = 
-{
-["item_pda_dead_taken"] = true,
-["item_pda_dead"] = true,
-["device_torch"] = true,
-["bandage"] = true,
-["bread"] = true,
-["medkit"] = true,
-["detector_simple"] = true,
-["sigaret"] = true,
-["antirad"] = true,
-["item_razradnik"] = true
-}
 
-local dont_sell_items = 
-{
-["device_pda"] = true,
-["bolt"] = true
-}
+-- ==================================================================
+-- Сценарий у торговца
+-- ==================================================================
 
-function celling_habar_svoi_bar(npc)
-	local se_obj = alife():object("bar_barman")
-	if se_obj then
-		local cl_barman = level.object_by_id(se_obj.id)
-		if cl_barman then
-			npc:iterate_inventory( function(_, item)
-				if item then
-					if item:is_weapon() or item:is_artefact() or item:is_ammo() or item:is_bottle_item() or item:is_eatable_item() or sell_items[item:section()] then
-						if not dont_sell_items[item:section()] then
-							npc:transfer_item(item, cl_barman)
-							-- TODO - давать деньги Жабе
-							if olr.olrdbg == true then
-								log1("DBG celling to barman - "..item:name().." ")
-							end
-						end
-					end
-				end
-			end )
-			local wait_time = 0
-			wait_time = time_global() + 800
-			level.add_call(
-				function() return time_global() > wait_time end,
-				function() this.check_overhlam(npc) end
-			)
-		end
-	end
+-- Гибрид: шанс согласия растёт со стоимостью того, что NPC принёс на продажу.
+local function trade_success_roll(value)
+	local c = get_cfg()
+	local chance = c.succ_min + (value / c.succ_scale)
+	if chance > c.succ_max then chance = c.succ_max end
+	if chance < 0 then chance = 0 end
+	return math.random() < chance
 end
 
-function celling_habar_svoi_military(npc)
-	local se_obj = alife():object("lvl9_military_m_trader")
-	if se_obj then
-		local cl_barman = level.object_by_id(se_obj.id)
-		if cl_barman then
-			npc:iterate_inventory( function(_, item)
-				if item then
-					if item:is_weapon() or item:is_artefact() or item:is_ammo() or item:is_bottle_item() or item:is_eatable_item() or sell_items[item:section()] then
-						if olr.olrdbg == true then
-							log1("DBG celling to jaba - "..item:name().." ")
-						end
-						npc:transfer_item(item, cl_barman)
-						--npc:give_money(item:cost())
-					end
-				end
-			end )
-			local wait_time = 0
-			wait_time = time_global() + 800
-			level.add_call(
-				function() return time_global() > wait_time end,
-				function() this.check_overhlam(npc) end
-			)
-		end
-	end
+-- Сухой прогон: сколько NPC выручил бы за свой хабар (без передачи).
+local function potential_sale_total(npc)
+	local total = 0
+	npc:iterate_inventory(function(_, item)
+		if item == nil then return end
+		if not is_sellable(item) then return end
+		if dont_sell_items[item:section()] then return end
+		if item:is_weapon() and not npc:is_in_ruck(item) then return end
+		total = total + item_sell_price(item)
+	end, nil)
+	return total
 end
 
+-- ==================================================================
+-- Сцена у торговца (колбэки анимаций из state_mgr_animation_list)
+-- ==================================================================
 
-function celling_habar_svoi_escape(npc)
-	local se_obj = alife():object("escape_trader_0000")
-	if se_obj then
-		local cl_barman = level.object_by_id(se_obj.id)
-		if cl_barman then
-			npc:iterate_inventory( function(_, item)
-				if item then
-					if item:is_weapon() or item:is_artefact() or item:is_ammo() or item:is_bottle_item() or item:is_eatable_item() or sell_items[item:section()] then
-						if olr.olrdbg == true then
-							log1("DBG celling to jaba - "..item:name().." ")
-						end
-						npc:transfer_item(item, cl_barman)
-						--npc:give_money(item:cost())
-					end
-				end
-			end )
-			local wait_time = 0
-			wait_time = time_global() + 800
-			level.add_call(
-				function() return time_global() > wait_time end,
-				function() this.check_overhlam(npc) end
-			)
-		end
-	end
+-- Завершение сцены: очередь/слот.
+local function scene_finish(npc, st)
+	if st == nil then return end
+	st.trading = nil
+	st.scene_done = true
+	queue.pending_clear = npc:id()
+	queue.pending_since = time_global()
+	q_leave(npc)
 end
 
-function check_overhlam(npc)
-	if npc:ruck_count() > 25 then
-		npc:iterate_inventory( function(_, item)
-		if item then
-			if item:is_weapon() or item:is_artefact() or item:is_ammo() or item:is_bottle_item() or item:is_eatable_item() or sell_items[item:section()] then
-				if olr.olrdbg == true then
-					log1("DBG DEL OVER ITEM celling	 - "..item:name().." ")
-				end
-				olr.del(item)
-				-- TODO - давать деньги Жабе
+-- Окончание анимации сцены: решение yes/no (гибрид по стоимости хабара),
+-- сделка или отказ, снимок в pstor. Прощание - в execute (по концу звука).
+function scene_stage(npc, stage)
+	local root = db.storage[npc:id()]
+	local st = root and root["ai_tradings"]
+	if st == nil or st.trading ~= true then return end
+	if stage ~= "finish" or st.finish_started then return end
+	st.finish_started = true
+	st.react_t = nil
+
+	local potential = potential_sale_total(npc)
+	if trade_success_roll(potential) then
+		xr_sound.set_sound_play(npc, "trade_yes")
+		local point = get_point(level.name())
+		local trader = point and get_trader_client(point.trader_name) or nil
+		if trader ~= nil and (npc:money() > 0 or npc:ruck_count() > 0) then
+			sell_habar(npc, trader)
+			buy_habar(npc, trader)
+			check_leave_zone_money(npc)
+		end
+	else
+		xr_sound.set_sound_play(npc, "trade_no")
+	end
+
+	-- Снимок в pstor в любом случае: и после сделки, и после отказа,
+	-- чтобы повторно не ходил без прироста.
+	trade_snapshot(npc)
+	st.await_bye = true
+end
+
+class "action_go_trade" (action_base)
+function action_go_trade:__init(st) super (nil, "action_go_trade")
+	self.st = st
+end
+
+function action_go_trade:abort(reason)
+	dbg("%s: отмена - %s", self.object:name(), reason)
+	self.done = true
+	if self.st ~= nil then
+		self.st.trading = nil
+		self.st.retry_after = time_global() + get_cfg().retry_pause
+	end
+	q_leave(self.object)
+end
+
+function action_go_trade:initialize()
+	local npc = self.object
+	self.walkstate  = math.random(1, 2)
+	self.done       = false
+	self.sms_lalk   = 0
+
+	local lvl = level.name()
+	local point = get_point(lvl)
+	if point == false then
+		dbg("%s: нет точки для уровня %s", npc:name(), lvl)
+		self:abort("нет точки")
+		return
+	end
+	self.point = point
+	if self.st ~= nil then
+		self.st.trading = true
+		self.st.scene_started = nil
+		self.st.scene_done = nil
+		self.st.finish_started = nil
+		self.st.await_bye = nil
+		self.st.react_t = nil
+		self.st.scene_state = nil
+	end
+	dbg("%s идёт к торговцу (%s), очередь: %d", npc:name(), point.trader_name, #queue.members)
+end
+
+-- Куда идти: слот 1 - торговая точка (сразу), слоты 2/3 - места ожидания рядом.
+function action_go_trade:slot_target(slot)
+	if slot == 1 then return self.point.walk end
+	if slot == 2 then return self.point.wait1 end
+	return self.point.wait2
+end
+
+function action_go_trade:execute()
+	action_base.execute(self)
+	local npc = self.object
+	if xr_wounded.is_wounded(npc) then
+		self:abort("wounded")
+		return
+	end
+	local st  = self.st
+	local c   = get_cfg()
+	local now = time_global()
+
+	if self.done or self.point == nil then
+		return
+	end
+
+	-- Сцена уже завершилась - уходим.
+	if st.scene_done then
+		self.done = true
+		return
+	end
+
+	-- Реакции во время анимации и прощание после неё (без level.add_call).
+	if st.trading == true then
+		if st.await_bye then
+			if npc:active_sound_count() == 0 then
+				xr_sound.set_sound_play(npc, "talk_bye")
+				scene_finish(npc, st)
 			end
+			return
 		end
-	end )	
+		if st.react_t ~= nil and now >= st.react_t and npc:active_sound_count() == 0 then
+			local rnd = math.random(1, 3)
+			if rnd == 1 then
+				xr_sound.set_sound_play(npc, "talk_accept")
+			elseif rnd == 2 then
+				xr_sound.set_sound_play(npc, "talk_reject")
+			else
+				xr_sound.set_sound_play(npc, "talk_abuse")
+			end
+			st.react_t = now + math.random(2500, 5000)
+		end
+	end
+
+	-- Уровень/очередь.
+	if queue.level ~= level.name() then
+		queue.level = level.name()
+		q_reset()
+	end
+	q_purge(now)
+
+	local id = npc:id()
+	local slot = q_find(id)
+	if slot == nil then
+		-- Нас вычистили (оффлайн/таймаут) - пробуем вернуться в очередь.
+		if not q_join(npc) then
+			self:abort("нет слота в очереди")
+			return
+		end
+		slot = q_find(id)
+	end
+
+	local target_vid = self:slot_target(slot)
+	if target_vid == nil then target_vid = self.point.walk end
+
+	npc:set_path_type(game_object.level_path)
+
+	if slot == 1 then
+		if npc:level_vertex_id() ~= self.point.walk then
+			-- Идём к торговой точке старым способом - строго на вершину.
+			if self.walkstate == 1 then
+				state_mgr.set_state(npc, "walk")
+			else
+				state_mgr.set_state(npc, "run")
+			end
+			npc:set_dest_level_vertex_id(self.point.walk)
+			return
+		end
+
+		-- На вершине: если предыдущий ещё не отошёл - ждём здесь.
+		if not q_clear(now) then
+			state_mgr.set_state(npc, "wait", nil, nil, {look_position = level.vertex_position(self.point.look)})
+			return
+		end
+	else
+		-- Место ожидания: идём к своей позиции и стоим там.
+		local tpos = level.vertex_position(target_vid)
+		if npc:position():distance_to(tpos) >= c.arrive_dist then
+			if self.walkstate == 1 then
+				state_mgr.set_state(npc, "walk")
+			else
+				state_mgr.set_state(npc, "run")
+			end
+			utils.send_to_nearest_accessible_vertex(npc, target_vid)
+			return
+		end
+		state_mgr.set_state(npc, "wait", nil, nil, {look_position = level.vertex_position(self.point.walk)})
+		return
+	end
+
+	-- Мы у торговца (строго на вершине): сцена на колбэках анимаций.
+
+	local lpos = level.vertex_position(self.point.look)
+	if st.scene_started ~= true then
+		st.scene_started = true
+		st.walkstate = self.walkstate
+		st.scene_done = nil
+		st.finish_started = nil
+		st.await_bye = nil
+		st.scene_state = "trade_scene_" .. math.random(1, 3)
+		st.react_t = now + math.random(2500, 5000)
+		state_mgr.set_state(npc, st.scene_state, nil, nil, {look_position = lpos}, {animation = true})
+		xr_sound.set_sound_play(npc, "talk_hello")
+		dbg("%s: на месте, начинаю торговлю", npc:name())
+	elseif state_mgr.get_state(npc) ~= st.scene_state then
+		-- Состояние перебили - вернуть сцену.
+		dbg("%s: состояние перебили (%s), возвращаю сцену", npc:name(), tostring(state_mgr.get_state(npc)))
+		state_mgr.set_state(npc, st.scene_state, nil, nil, {look_position = lpos}, {animation = true})
+	end
+
+	-- СМС-подсказка актёру, если он рядом.
+	if npc:position():distance_to(db.actor:position()) <= c.arrive_dist + 1 and self.sms_lalk == 0 then
+		self.sms_lalk = 1
+		news_manager.send_tip(db.actor, game.translate_string("action_go_tradeexecute_0"), nil, "trader", 10000, nil, nil, true, "escape_trader_name")
 	end
 end
 
-local flgo = false
-function create_trading_escape(npc, pre_money)
-	local sim = alife()
-	if flgo == false then
-	flgo = true
-	if pre_money >= 5000 then
-		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("wpn_vintorez", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("scientific_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		se_respawn.create_ammo("ammo_9x39_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
-		--log1("bying high")	
-	elseif pre_money < 5000 and pre_money > 2500 then
-		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("ecolog_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		sim:create("wpn_lr300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		se_respawn.create_ammo("ammo_5.56x45_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
-		--log1("bying med")
-	elseif pre_money < 2500 and pre_money > 100 then
-		local rnd = math.random(1,2)
-		if rnd == 1 then
-			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("wpn_toz34", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
-		else
-			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			sim:create("grenade_f1", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
-		end
-		--log1("bying low")
-	else
+function action_go_trade:finalize()
+	action_base.finalize(self)
+	local npc = self.object
+	local st  = self.st
+	if st ~= nil then
+		st.trading = nil
+		q_leave(npc)
 	end
-	end		
+	self.sms_lalk = 0
 end
 
-local flgt = false
-function create_trading_barman(npc, pre_money)
-	local sim = alife()
-	if flgt == false then
-	flgt = true
-	if pre_money >= 5000 then
-		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("wpn_val", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("exo_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		se_respawn.create_ammo("ammo_9x39_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
-		--log1("bying high")	
-	elseif pre_money < 5000 and pre_money > 2500 then
-		sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("ecolog_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-		sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		sim:create("wpn_g36", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-		se_respawn.create_ammo("ammo_5.56x45_ap", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 30)
-		--log1("bying med")
-	elseif pre_money < 2500 and pre_money > 100 then
-		local rnd = math.random(1,2)
-		if rnd == 1 then
-			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			sim:create("antirad", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
-		else
-			sim:create("battery_change", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("stalker_outfit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("medkit", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())	
-			sim:create("grenade_f1", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			sim:create("wpn_wincheaster1300", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
-			se_respawn.create_ammo("ammo_12x76_dart", npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id(), 10)
-		end
-		--log1("bying low")
-	else
-	end
-	end		
-end
-----------------------------------------------------------------------------------
--- BINDER
-----------------------------------------------------------------------------------
+-- ==================================================================
+-- BINDER / SCHEME
+-- ==================================================================
+
 function add_to_binder(object, char_ini, scheme, section, st)
 	local npc = object
 	local planner = npc:motivation_action_manager()
 	local property_wounded = xr_evaluators_id.sidor_wounded_base
-	
+
 	planner:add_evaluator(ev_trade_now, evaluator_trading(st))
-	
+
 	local new_action = action_go_trade(st)
 	new_action:add_precondition(world_property(property_wounded, false))
 	new_action:add_precondition(world_property(stalker_ids.property_alive, true))
-	new_action:add_precondition(world_property(stalker_ids.property_danger,false)) -- Не было проверок на отсуствие апасности
-	new_action:add_precondition(world_property(stalker_ids.property_enemy, false)) -- и на отсуствие ворога
-	new_action:add_precondition(world_property(stalker_ids.property_anomaly,false))	
-	
+	new_action:add_precondition(world_property(stalker_ids.property_danger, false))
+	new_action:add_precondition(world_property(stalker_ids.property_enemy, false))
+	new_action:add_precondition(world_property(stalker_ids.property_anomaly, false))
 	xr_motivator.addCommonPrecondition(new_action)
 	new_action:add_effect(world_property(ev_trade_now, false))
 	planner:add_action(ac_trade, new_action)
 
-	new_action = planner:action(xr_actions_id.alife)
-	new_action:add_precondition(world_property(ev_trade_now, false))
-	
-	new_action = planner:action(xr_evaluators_id.stohe_camper_base)
-	new_action:add_precondition(world_property(ev_trade_now, false))
+	-- Пока NPC идет торговать - не уходим в ALife.
+	local alife_action = planner:action(xr_actions_id.alife)
+	alife_action:add_precondition(world_property(ev_trade_now, false))
+
+	local camper_action = planner:action(xr_evaluators_id.stohe_camper_base)
+	if camper_action ~= nil then
+		camper_action:add_precondition(world_property(ev_trade_now, false))
+	end
 end
 
-----------------------------------------------------------------------------------
--- Func: set_scheme.
-----------------------------------------------------------------------------------
-function set_scheme(ini, object, scheme, section)
-	local st = xr_logic.assign_storage_and_bind(object, ini, "ai_tradings", "ai_tradings")
+function set_scheme(npc, ini, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, "ai_tradings", "ai_tradings")
 	st.enabled = true
 end
 
-----------------------------------------------------------------------------------
--- Func: disable_scheme.
-----------------------------------------------------------------------------------
 function disable_scheme(npc, scheme)
 	local st = db.storage[npc:id()]["ai_tradings"]
 	if st then

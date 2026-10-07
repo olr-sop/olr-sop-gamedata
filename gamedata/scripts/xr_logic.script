@@ -231,6 +231,9 @@ function disable_generic_schemes(npc, stype)
 		xr_meet.disable_scheme(npc, "actor_dialogs")
 		xr_heli_hunter.disable_scheme(npc, "heli_hunter")
 		xr_combat_ignore.disable_scheme(npc, "combat_ignore")
+		if olr_ai_trade then
+			olr_ai_trade.disable_scheme(npc, "ai_tradings")
+		end
 	elseif stype == modules.stype_mobile then
 		mob_combat.disable_scheme(npc, "mob_combat")
 		mob_trade.disable_scheme(npc, "mob_trade")
@@ -280,6 +283,7 @@ function enable_generic_schemes(ini, npc, stype, section)
 
 		local wounded_section = utils.cfg_get_string (ini, section, "wounded", npc, false, "")
 		xr_wounded.set_wounded (npc, ini, "wounded", wounded_section)
+		xr_help_wounded.set_help_wounded (npc, ini, "help_wounded")
 
 		xr_abuse.set_abuse(npc, ini, "abuse", section)
 
@@ -301,8 +305,14 @@ function enable_generic_schemes(ini, npc, stype, section)
 			xr_combat_ignore.set_combat_ignore_checker(npc, ini, "combat_ignore", combat_ignore_section)
 		end
 
-                if watcher_act then
-                        watcher_act.set_scheme(npc,ini,"watcher_act","watcher_act")
+                if olr_ai_corpse_detection then
+                        olr_ai_corpse_detection.set_scheme(npc,ini,"ai_corpse_detection","ai_corpse_detection")
+                end
+                if olr_ai_gather_items then
+                        olr_ai_gather_items.set_scheme(npc,ini,"ai_gather_items","ai_gather_items")
+                end
+                if olr_ai_trade then
+                        olr_ai_trade.set_scheme(npc, ini, "ai_tradings", "ai_tradings")
                 end
 
 	        elseif stype == modules.stype_mobile then
@@ -434,6 +444,7 @@ function reset_generic_schemes_on_scheme_switch(npc, scheme, section)
 		xr_meet.reset_meet(npc, scheme, st, section)		
 		xr_abuse.reset_abuse(npc, scheme, st, section)
 		xr_wounded.reset_wounded(npc, scheme, st, section)
+		xr_help_wounded.reset_help_wounded(npc, scheme, st, section)
 		xr_death.reset_death(npc, scheme, st, section)
 		xr_danger.reset_danger(npc, scheme, st, section)
 		stalker_generic.reset_threshold(npc, scheme, st, section)
@@ -1093,6 +1104,10 @@ function cfg_get_overrides(ini, section, npc)
 	l.on_combat         = cfg_get_condlist(ini, section, "on_combat", npc)
 	l.companion_enabled = utils.cfg_get_bool(ini, section, "companion_enabled", npc, false)
 
+	-- OLR: запрет лута для секции. Читают olr_ai_gather_items / olr_ai_corpse_detection.
+	-- Выстави no_loot = true в LTX-секции, чтобы NPC не отвлекался на лут.
+	l.no_loot           = utils.cfg_get_bool(ini, section, "no_loot", npc, false, false)
+
 	if string.find(section, "kamp") ~= nil then
 		l.soundgroup		= utils.cfg_get_string(ini, section, "center_point", npc, false, "")
 	else
@@ -1231,6 +1246,13 @@ function pstor_retrieve(obj, varname, defval)
 	end
 	--log1("pstor_retrieve: returning nil")
 	return nil
+end
+
+function pstor_clear(obj, varname)
+	local npc_id = obj:id()
+	if db.storage[npc_id] and db.storage[npc_id].pstor then
+		db.storage[npc_id].pstor[varname] = nil
+	end
 end
 
 function pstor_save_all(obj, packet)

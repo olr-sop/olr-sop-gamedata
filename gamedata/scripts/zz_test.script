@@ -1,0 +1,328 @@
+-- zz_test.script -- temporary test helper for the wounded system (ASCII only)
+-- usage:
+--   run_script zz_test
+--   run_string zz_test.wound_all()                        (wound all stalkers, medkits stripped)
+--   run_string zz_test.wound_all({strip_medkits=false})   (keep their medkits)
+--   run_string zz_test.wound_all({freeze_selfheal=true})  (also disable self-heal flag)
+--   run_string zz_test.wound_one("esc_stalker_fox")
+--   run_string zz_test.heal_all()                         (first aid to every wounded stalker)
+--   run_string zz_test.status()
+--   run_string zz_test.selfheal(true)
+--   run_string zz_test.sound("help_heavy")
+--   run_string zz_test.psy(15)
+
+zz_test = {}
+
+local function zlog(msg)
+	log1("[zz_test] " .. tostring(msg))
+end
+
+local function zget(id)
+	if id == nil then return nil end
+	local obj = level.object_by_id(id)
+	if obj and IsStalker(obj) then return obj end
+	return nil
+end
+
+local function zfind_by_name(name)
+	for id, st in pairs(db.storage) do
+		local obj = zget(id)
+		if obj and obj:name() == name then
+			return obj
+		end
+	end
+	return nil
+end
+
+local MEDKITS = {medkit = true, medkit_army = true, medkit_scientic = true, bandage = true}
+
+local function zstrip_medkits(obj)
+	local moved = 0
+	local to_move = {}
+	obj:iterate_inventory(function(owner, item)
+		if item then
+			local sec = item:section()
+			if MEDKITS[sec] then
+				table.insert(to_move, item)
+			end
+		end
+	end, obj)
+	for k, item in pairs(to_move) do
+		obj:transfer_item(item, db.actor)
+		moved = moved + 1
+	end
+	return moved
+end
+
+-- immediate self-hit is primary; delta+hit_callback fallback is scheduled 1s later
+local function zwound(obj, strip, freeze)
+	local st = db.storage[obj:id()]
+	if st == nil or st.wounded == nil then
+		return false, "no wounded storage"
+	end
+	if obj:invulnerable() then
+		return false, "invulnerable"
+	end
+	if obj:critically_wounded() then
+		return false, "already critically wounded"
+	end
+	local moved = 0
+	if strip ~= false then
+		moved = zstrip_medkits(obj)
+	end
+	if freeze == true then
+		st.wounded.use_medkit = false
+	end
+	st.wounded.wound_manager.can_use_medkit = false
+	xr_logic.pstor_clear(obj, "wounded_since")
+	xr_logic.pstor_clear(obj, "wounded_self_heal_at")
+	xr_logic.pstor_clear(obj, "wounded_death_at")
+	xr_logic.pstor_clear(obj, "wounded_hp0")
+	xr_logic.pstor_clear(obj, "wounded_last_drain_sec")
+	xr_logic.pstor_clear(obj, "wounded_sos_done")
+	local h = hit()
+	h.power = obj.health - 0.06
+	if h.power < 0 then h.power = 0 end
+	h.direction = obj:direction()
+	h.bone = "bip01_spine"
+	h.draftsman = obj
+	h.impulse = 0
+	h.type = hit.wound
+	obj:hit(h)
+	obj:heal_wounds(100)
+	return true, moved
+end
+
+local function zfix_fallback(id, tag)
+	local obj = zget(id)
+	if not obj or not obj:alive() then return end
+	local nm = obj:name()
+	if obj.health > 0.11 and not obj:critically_wounded() then
+		obj.health = -(obj.health - 0.06)
+		local t2 = time_global() + 500
+		level.add_call(
+			function() return time_global() > t2 end,
+			function()
+				local o2 = zget(id)
+				if o2 and o2:alive() then
+					xr_wounded.hit_callback(id)
+				end
+				zlog((tag or "fallback") .. ": " .. nm .. " delta applied")
+			end
+		)
+	else
+		xr_wounded.hit_callback(id)
+	end
+end
+
+function wound_all(opts)
+	opts = opts or {}
+	local strip = opts.strip_medkits ~= false
+	local freeze = opts.freeze_selfheal == true
+	local ids = {}
+	local n = 0
+	for id, st in pairs(db.storage) do
+		local obj = zget(id)
+		if obj and obj:alive() and id ~= 0 then
+			local ok, info = zwound(obj, strip, freeze)
+			if ok then
+				table.insert(ids, id)
+				n = n + 1
+			else
+				zlog("skip " .. obj:name() .. " (" .. tostring(id) .. "): " .. tostring(info))
+			end
+		end
+	end
+	local t = time_global() + 1000
+	level.add_call(
+		function() return time_global() > t end,
+		function()
+			for k, id in pairs(ids) do
+				zfix_fallback(id, "wound_all")
+			end
+			zlog("wound_all: " .. tostring(n) .. " npcs hit (strip=" .. tostring(strip) .. " freeze=" .. tostring(freeze) .. ")")
+		end
+	)
+	zlog("wound_all: scheduled for " .. tostring(n) .. " npcs")
+end
+
+function wound_one(name_or_id, opts)
+	opts = opts or {}
+	local obj = nil
+	if type(name_or_id) == "number" then
+		obj = zget(name_or_id)
+	else
+		obj = zfind_by_name(tostring(name_or_id))
+	end
+	if not obj then
+		zlog("wound_one: npc not found: " .. tostring(name_or_id))
+		return
+	end
+	local ok, info = zwound(obj, opts.strip_medkits ~= false, opts.freeze_selfheal == true)
+	if not ok then
+		zlog("wound_one: " .. obj:name() .. " skipped: " .. tostring(info))
+		return
+	end
+	local id = obj:id()
+	local t = time_global() + 1000
+	level.add_call(
+		function() return time_global() > t end,
+		function()
+			zfix_fallback(id, "wound_one")
+			local o = zget(id)
+			if o then
+				zlog("wound_one: " .. o:name() .. " (" .. tostring(id) .. ") done")
+			end
+		end
+	)
+end
+
+function heal_all(name)
+	local ids = {}
+	local function heal_one(obj)
+		local st = db.storage[obj:id()]
+		if st and st.wounded then
+			local wm = st.wounded.wound_manager
+			if tostring(wm.state) ~= "nil" then
+				st.wounded.use_medkit = true
+				wm.can_use_medkit = false
+				obj.health = 1
+				obj:heal_wounds(100)
+				table.insert(ids, obj:id())
+			end
+		end
+	end
+	if name then
+		local obj = zfind_by_name(tostring(name))
+		if obj then heal_one(obj) end
+	else
+		for id, st in pairs(db.storage) do
+			local obj = zget(id)
+			if obj and obj:alive() and id ~= 0 then
+				heal_one(obj)
+			end
+		end
+	end
+	local t = time_global() + 500
+	level.add_call(
+		function() return time_global() > t end,
+		function()
+			for k, id in pairs(ids) do
+				local obj = zget(id)
+				if obj and obj:alive() then
+					xr_wounded.hit_callback(id)
+				end
+			end
+			zlog("heal_all: " .. tostring(#ids) .. " npcs healed")
+		end
+	)
+end
+
+function selfheal(enabled)
+	local on = enabled ~= false
+	local n = 0
+	for id, st in pairs(db.storage) do
+		if st.wounded then
+			st.wounded.use_medkit = on
+			if not on then
+				st.wounded.wound_manager.can_use_medkit = false
+			end
+			n = n + 1
+		end
+	end
+	zlog("selfheal=" .. tostring(on) .. " for " .. tostring(n) .. " npcs")
+end
+
+function status()
+	local n = 0
+	local now = game.time_sec()
+	for id, st in pairs(db.storage) do
+		local obj = zget(id)
+		if obj and st.wounded then
+			local wm = st.wounded.wound_manager
+			local state = tostring(wm.state)
+			if state ~= "nil" then
+				n = n + 1
+				zlog(string.format("status: %s (%s) state=%s medkit=%s can=%s use=%s since=%s heal_at=%s death_at=%s crit=%s inv=%s protected=%s",
+					obj:name(), tostring(id), state,
+					tostring(obj:object("medkit") ~= nil), tostring(wm.can_use_medkit),
+					tostring(st.wounded.use_medkit),
+					tostring(xr_logic.pstor_retrieve(obj, "wounded_since")),
+					tostring(xr_logic.pstor_retrieve(obj, "wounded_self_heal_at")),
+					tostring(xr_logic.pstor_retrieve(obj, "wounded_death_at")),
+					tostring(obj:critically_wounded()),
+					tostring(obj:invulnerable()),
+					tostring(olr_protected.is_no_offline_alife_obj(obj:name()))))
+			end
+		end
+	end
+	zlog("status: wounded total=" .. tostring(n) .. " now=" .. tostring(now))
+end
+
+function sound(theme, name)
+	local target = nil
+	if name then
+		target = zfind_by_name(tostring(name))
+	else
+		for id, st in pairs(db.storage) do
+			local obj = zget(id)
+			if obj and st.wounded then
+				local state = tostring(st.wounded.wound_manager.state)
+				if state ~= "nil" then
+					target = obj
+					break
+				end
+			end
+		end
+	end
+	if not target then
+		zlog("sound: no target")
+		return
+	end
+	xr_sound.set_sound(target, theme)
+	zlog("sound: " .. tostring(theme) .. " -> " .. target:name())
+end
+
+function stopsound(name)
+	local target = db.actor
+	if name then
+		target = zfind_by_name(tostring(name))
+	end
+	if target then
+		xr_sound.set_sound(target, nil)
+		zlog("stopsound: " .. target:name())
+	end
+end
+
+function psy(percent, name)
+	local target = nil
+	if name then
+		target = zfind_by_name(tostring(name))
+	else
+		for id, st in pairs(db.storage) do
+			local obj = zget(id)
+			if obj and obj:alive() and st.wounded then
+				target = obj
+				break
+			end
+		end
+	end
+	if not target then
+		zlog("psy: no target")
+		return
+	end
+	local val = (percent or 15) / 100
+	target.psy_health = -target.psy_health + val
+	local id = target:id()
+	local t = time_global() + 500
+	level.add_call(
+		function() return time_global() > t end,
+		function()
+			local o = zget(id)
+			if o and o:alive() then
+				xr_wounded.hit_callback(id)
+			end
+			zlog("psy: set for " .. tostring(name))
+		end
+	)
+end

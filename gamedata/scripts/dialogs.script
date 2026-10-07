@@ -97,10 +97,15 @@ function is_wounded(first_speaker, second_speaker)
 end
 
 function is_opp_wounded(first_speaker, second_speaker, dialog_id)
-	if db.storage[second_speaker:id()].wounded ~= nil and db.storage[second_speaker:id()].wounded.wound_manager.can_use_medkit == true then
+	local npc = who_is_npc(first_speaker, second_speaker)
+	if npc == nil then
 		return false
 	end
-	return xr_wounded.is_wounded(second_speaker)
+	local npc_storage = db.storage[npc:id()]
+	if npc_storage ~= nil and npc_storage.wounded ~= nil and npc_storage.wounded.wound_manager.can_use_medkit == true then
+		return false
+	end
+	return xr_wounded.is_wounded(npc)
 end
 
 function is_not_wounded(first_speaker, second_speaker)
@@ -115,21 +120,26 @@ function actor_have_bandage(first_speaker, second_speaker)
 	return first_speaker:object("bandage") ~= nil
 end
 
+function actor_no_medkit(first_speaker, second_speaker)
+	return first_speaker:object("medkit") == nil
+end
+
 function transfer_medkit(first_speaker, second_speaker)
-	if first_speaker:object("medkit") ~= nil then
-		dialogs.relocate_item_section(second_speaker, "medkit", "out")
-		-- Тут надо анлочить аптечку для использования.
-		xr_wounded.unlock_medkit(second_speaker)
-		if second_speaker:relation(first_speaker) ~= game_object.enemy then
-			second_speaker:set_relation(game_object.friend, first_speaker)
-			second_speaker:enable_trade()
-			first_speaker:enable_trade()
-		-- нужна ли возможность делать врагов нейтралами?
-		-- в ванили или в амк при выдаче аптечек врагу падала репутация, а нейтралам-друзьям повышалась
+	local giver, receiver = first_speaker, second_speaker
+	if db.actor and first_speaker:id() ~= db.actor:id() then
+		giver, receiver = second_speaker, first_speaker
+	end
+	if giver:object("medkit") ~= nil then
+		dialogs.relocate_item_section(receiver, "medkit", "out")
+		xr_wounded.unlock_medkit(receiver)
+		if receiver:relation(giver) ~= game_object.enemy then
+			receiver:set_relation(game_object.friend, giver)
+			receiver:enable_trade()
+			giver:enable_trade()
 		end
-		xr_sound.set_sound_play(second_speaker, "help_thanx")
-		first_speaker:change_character_reputation(20)
-		if second_speaker:character_rank() <= first_speaker:character_rank() then
+		xr_sound.set_sound_play(receiver, "help_thanx")
+		giver:change_character_reputation(20)
+		if receiver:character_rank() <= giver:character_rank() then
 			olr_treasure.create_treasure()
 		end
 	end
@@ -141,8 +151,12 @@ function set_enemy_npc(first_speaker, second_speaker)
 end
 
 function transfer_bandage(first_speaker, second_speaker)
-	dialogs.relocate_item_section(second_speaker, "bandage", "out")
-	second_speaker:set_relation(game_object.friend, first_speaker)
+	local giver, receiver = first_speaker, second_speaker
+	if db.actor and first_speaker:id() ~= db.actor:id() then
+		giver, receiver = second_speaker, first_speaker
+	end
+	dialogs.relocate_item_section(receiver, "bandage", "out")
+	receiver:set_relation(game_object.friend, giver)
 end
 
 function kill_yourself(npc, actor)
@@ -255,13 +269,15 @@ function dialog_not_disable(object, victim, id)
 end
 
 function allow_wounded_dialog(object, victim, id)
-	if db.storage[victim:id()].wounded == nil then
+	local npc = who_is_npc(object, victim)
+	if npc == nil then
 		return false
 	end
-	if db.storage[victim:id()].wounded.help_dialog == id then
-		return true
+	local npc_storage = db.storage[npc:id()]
+	if npc_storage == nil or npc_storage.wounded == nil then
+		return false
 	end
-	return false
+	return npc_storage.wounded.help_dialog == id
 end
 
 -----------------------------------------------------------------------------------

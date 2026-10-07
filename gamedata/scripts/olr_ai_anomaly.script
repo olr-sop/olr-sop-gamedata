@@ -1,0 +1,137 @@
+--[[----------------------------------------------------------------------------------
+  olr_ai_anomaly.script - справочник аномалий для AI-схем (сбор предметов и обыск).
+
+  Данные наполняет bind_anomaly.script в db.anomalies.by_id (только онлайн-аномалии
+  текущего уровня). Здесь - дешёвые проверки "точка внутри аномалии" без перебора
+  мира каждый кадр: плоский массив db.anomalies.list пересобирается только когда
+  что-то изменилось (spawn/destroy аномалии).
+
+  Публичные функции (зовутся как olr_ai_anomaly.<name>):
+    get_list()             - массив опасных аномалий
+    is_dangerous(sec)      - опасна ли секция аномалии (костры/радиация/флейм - нет)
+    point_in(pos, margin)  - запись аномалии, если точка внутри (radius + margin)
+    zone_at(pos, margin)   - то же самое (псевдоним)
+    get_zone(id)           - запись по id, если она опасна
+----------------------------------------------------------------------------------]]
+
+local SECT = "olr_ai_anomaly"
+
+-- Локальный дебаг: true - писать в лог разбор аномалий.
+local debug = true
+
+local function dbg(fmt, ...)
+	if not debug then return end
+	if select("#", ...) > 0 then
+		log1("[anomaly] " .. string.format(fmt, ...))
+	else
+		log1("[anomaly] " .. fmt)
+	end
+end
+
+-- Секции, которые НЕ считаем опасными для лута:
+--   * костры/жарка - у них свой биндер и логика;
+--   * радиация и мелкий огонь - сталкеры и так ходят рядом.
+-- Значение по умолчанию можно переопределить ключом ignore_sections
+-- в config/olr_script_configs.ltx -> [olr_ai_anomaly].
+local default_ignore = {
+	"zone_burningfuzz",
+	"zone_fryup",
+	"zone_radioactive",
+	"zone_flame_small"
+}
+
+local ignore_set = nil
+
+local function init_ignore()
+	if ignore_set ~= nil then return end
+	ignore_set = {}
+	local s = utils.cfg_get_string(ini_sys, SECT, "ignore_sections", nil, false, "", "")
+	if s ~= nil and s ~= "" then
+		for w in s:gmatch("[^,%s;]+") do
+			ignore_set[w] = true
+		end
+	else
+		for i = 1, #default_ignore do
+			ignore_set[default_ignore[i]] = true
+		end
+	end
+end
+
+-- Совпадение по префиксу с границей '_':
+-- "zone_radioactive" покрывает zone_radioactive_weak/average/strong.
+function is_ignored_section(sec)
+	if sec == nil then return false end
+	init_ignore()
+	for pat in pairs(ignore_set) do
+		if sec == pat then return true end
+		if #sec > #pat and sec:sub(1, #pat) == pat and sec:sub(#pat + 1, #pat + 1) == "_" then
+			return true
+		end
+	end
+	return false
+end
+
+function is_dangerous(sec)
+	return not is_ignored_section(sec)
+end
+
+-- Пересобрать плоский список опасных аномалий (вызывается только при dirty).
+function rebuild()
+	local list = {}
+	local stored = 0
+	for _, e in pairs(db.anomalies.by_id) do
+		stored = stored + 1
+		if is_dangerous(e.section) then
+			list[#list + 1] = e
+		end
+	end
+	db.anomalies.list = list
+	db.anomalies.dirty = false
+	dbg("rebuild: stored=%d dangerous=%d", stored, #list)
+end
+
+function get_list()
+	if db.anomalies == nil then
+		-- крайний случай: биндер аномалий еще не загрузился
+		return {}
+	end
+	if db.anomalies.dirty or db.anomalies.list == nil then
+		rebuild()
+	end
+	return db.anomalies.list
+end
+
+function get_zone(id)
+	if db.anomalies == nil then return nil end
+	local e = db.anomalies.by_id[id]
+	if e ~= nil and is_dangerous(e.section) then
+		return e
+	end
+	return nil
+end
+
+-- Точка внутри аномалии с учётом отступа margin:
+--   margin = 0  - строго внутри шейпа;
+--   margin > 0  - "рядом с аномалией" (расширяет радиус);
+--   margin < 0  - "глубже в шейп" (сужает радиус).
+-- Возвращает самую глубокую подходящую аномалию или nil.
+function point_in(pos, margin)
+	if pos == nil then return nil end
+	margin = margin or 0.0
+	local list = get_list()
+	local best, best_d = nil, nil
+	for i = 1, #list do
+		local e = list[i]
+		local d = pos:distance_to(e.pos) - (e.radius + margin)
+		if d <= 0 then
+			if best_d == nil or d < best_d then
+				best, best_d = e, d
+			end
+		end
+	end
+	return best
+end
+
+function zone_at(pos, margin)
+	return point_in(pos, margin)
+end

@@ -6,24 +6,6 @@
 key_by_id = {}
 group_idle = {}
 
--- [xr_wounded debug] sound pipeline logging (wounded themes only)
-local debug = true
-local snd_dbg_t = {}
-local wounded_themes = { help_heavy = true, help = true, help_see = true, wounded_psy = true, wounded_psy_shoot = true }
-
-local function dbg(fmt, ...)
-	if not debug then return end
-	if select("#", ...) > 0 then
-		log1("[xr_sound] " .. string.format(fmt, ...))
-	else
-		log1("[xr_sound] " .. fmt)
-	end
-end
-
-local function is_wounded_theme(t)
-	return t ~= nil and wounded_themes[t] == true
-end
-
 function get_sound(path, tt, npc)
 	if path == nil then return nil end
 	if path.exec == nil then
@@ -79,7 +61,6 @@ function set_sound(npc, sound, now, into_timeout)
 --	printf("*SND* [%s] try to change SND to [%s]", npc:name(), tostring(sound))
 
 	local npc_id = npc:id()
-	local dbg_old_theme = db.sound[npc_id] and db.sound[npc_id].theme
 	if (db.sound[npc_id] == nil or
 	   db.sound[npc_id].theme ~= sound) or
 	   now == true
@@ -94,12 +75,6 @@ function set_sound(npc, sound, now, into_timeout)
 		if db.sound[npc_id] == nil then db.sound[npc_id] = {} end
 		db.sound[npc_id].theme = sound
 		db.sound[npc_id].snd = parse_names(sound)
-		if is_wounded_theme(dbg_old_theme) or is_wounded_theme(sound) then
-			local dbg_reg = sound_theme.theme[sound]
-			local dbg_rnd = dbg_reg and dbg_reg.max_ids and dbg_reg.max_ids[npc_id] and dbg_reg.max_ids[npc_id].rnd_max
-			local dbg_into = dbg_reg and dbg_reg.max_ids and dbg_reg.max_ids[npc_id] and dbg_reg.max_ids[npc_id].into_max
-			dbg("set_sound %s (%d): '%s' -> '%s' reg_rnd_max=%s reg_into_max=%s snd_names=%s now=%s into_timeout=%s", npc:name(), npc_id, tostring(dbg_old_theme), tostring(sound), tostring(dbg_rnd), tostring(dbg_into), tostring(table.getn(db.sound[npc_id].snd)), tostring(now), tostring(into_timeout))
-		end
 		if db.sound[npc_id].last_snd == nil then
 			db.sound[npc_id].last_snd = {}
 		else	
@@ -145,18 +120,9 @@ function set_sound_play(npc, sound, timeout)
 end
 
 function update(npc)
-	local npc_id = npc:id()
-	local dbg_theme = db.sound[npc_id] and db.sound[npc_id].theme
-	if is_wounded_theme(dbg_theme) then
-		local dbg_now = time_global()
-		if not snd_dbg_t[npc_id] or dbg_now - snd_dbg_t[npc_id] > 1000 then
-			snd_dbg_t[npc_id] = dbg_now
-			local dbg_gt = xr_sound.group_idle[get_key(npc)]
-			dbg("update %s (%d) theme=%s active_count=%d snd_names=%s busy=%s num_group=%s begin=%s idle=%s now=%d", npc:name(), npc_id, tostring(dbg_theme), npc:active_sound_count(), tostring(db.sound[npc_id] and db.sound[npc_id].snd and table.getn(db.sound[npc_id].snd)), tostring(dbg_gt and dbg_gt.busy), tostring(dbg_gt and dbg_gt.num_in_group), tostring(dbg_gt and dbg_gt.begin), tostring(dbg_gt and dbg_gt.idle), dbg_now)
-		end
-	end
 	if npc:active_sound_count() ~= 0 then return end
 	local key = get_key(npc)
+	local npc_id = npc:id()
 	
 	-- Если задана тема, то нужно играть ее.
 	-- Если не задана, то нужно играть idle, при условии что у нас нет врагов и денжеров.
@@ -191,7 +157,6 @@ function update(npc)
 	if group_table.begin == nil or
 	   time_global() - group_table.begin >= group_table.idle
 	then
-		if is_wounded_theme(db.sound[npc_id].theme) then dbg("update %s: timer elapsed (begin=%s idle=%s now=%d) -> play_sound", npc:name(), tostring(group_table.begin), tostring(group_table.idle), time_global()) end
 		this.play_sound(npc, db.sound[npc_id].snd)
 		if group_table.idle == nil then
 			group_table.idle = 0
@@ -205,8 +170,6 @@ end
 
 function play_sound(npc, themes, timeout)
 	local mrandom = math.random
-	local dbg_npc_id = npc:id()
-	local dbg_wounded = is_wounded_theme(db.sound[dbg_npc_id] and db.sound[dbg_npc_id].theme)
 	-- нужно составить список тем
 	local snd_table = {}
 	local t = 0		
@@ -223,17 +186,12 @@ function play_sound(npc, themes, timeout)
 	--printf("*")
 	--print_table(snd_table)
 	if t == 0 then return end
-	if dbg_wounded then dbg("play_sound %s (%d): theme=%s variants=%d timeout=%s", npc:name(), dbg_npc_id, tostring(db.sound[dbg_npc_id] and db.sound[dbg_npc_id].theme), t, tostring(timeout)) end
 	-- из списка тем выбираем одну.	
 	local snd = snd_table[mrandom(0, t-1)]
 	if snd ~= nil then
 		--printf("!")
 		--print_table(snd)
-		if snd.min_snd == nil then
-			if dbg_wounded then dbg("play_sound %s: snd.min_snd=nil -> return", npc:name()) end
-			return
-		end
-		if dbg_wounded then dbg("play_sound %s: resolved min=%s max=%s rnd_max=%s into_max=%s", npc:name(), tostring(snd.min_snd), tostring(snd.max_snd), tostring(snd.rnd_max), tostring(snd.into_max)) end
+		if snd.min_snd == nil then return end
 		local npc_id = npc:id()
 		local group_table = xr_sound.group_idle[get_key(npc)]
 		group_table.idle = mrandom(snd.min_snd, snd.max_snd)*1000
@@ -248,7 +206,6 @@ function play_sound(npc, themes, timeout)
 				if snd.into_cycled == true then
 					db.sound[npc_id].last_snd[snd.into_id] = nil 
 				else
-					if dbg_wounded then dbg("play_sound %s: into sequence exhausted -> return", npc:name()) end
 					return
 				end
 			end
@@ -258,7 +215,6 @@ function play_sound(npc, themes, timeout)
 			
 			--printf("*SND* play seq [%s] for [%s]", db.sound[npc_id].last_snd[snd.into_id]+1, npc:name())
 			process_tutor_on_sound(snd.theme)
-			if dbg_wounded then dbg("play_sound %s: PLAY into id=%s seq=%s", npc:name(), tostring(snd.into_id), tostring(db.sound[npc_id].last_snd[snd.into_id]+1)) end
 			npc:play_sound(snd.into_id, 1, 0, 1, 0, db.sound[npc_id].last_snd[snd.into_id]+1)
 			db.sound[npc_id].last_snd[snd.into_id] = db.sound[npc_id].last_snd[snd.into_id] + 1
 			--printf("*SND* play seq [%s] for [%s]", db.sound[npc_id].last_snd[snd.into_id], npc:name())
@@ -288,7 +244,6 @@ function play_sound(npc, themes, timeout)
 			end							
 			--printf("*SND* play rnd [%s] for [%s]", s, npc:name())
 			process_tutor_on_sound(snd.theme)
-			if dbg_wounded then dbg("play_sound %s: PLAY rnd id=%s variant=%s", npc:name(), tostring(snd.rnd_id), tostring(s)) end
 			npc:play_sound(snd.rnd_id, timeout+1, timeout, 1, 0, s)
 			--db.sound[npc_id].last_snd[snd.rnd_id] = s
 			group_table.last_snd[snd.rnd_id] = s

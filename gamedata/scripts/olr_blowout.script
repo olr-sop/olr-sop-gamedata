@@ -28,8 +28,6 @@ function all_blowend_funcs()
 	del_vidrosovie_arts() -- удаляет "af_mercury_ball" "af_junk_bolt" "af_magnet" "af_junk_debris" с локаций с шансом у каждого артефакта 1 к 35
 	blow_info_count() -- выдаёт поршень про выбросы по условиям что мы на кордоне и притащили какой то ящик поршень medyasik_2_done, сам поршень что выдаётся высылает мессагу от жабы который спрашивает мессера мол ты живой
 	set_arts_cond_after_blowout() -- проходится по онлайновым артефактам, список в функции, с шансом 50 на 50 меняет состояние артефакта на матч.рандом чёто там, если состояние ниже 0.01 удаляет артефакт
-	spawen_arts_random() -- тупой спавен тупово гавна, ой артефактов в аномалиях, тупа рандомная хуйня, вырезать удалить написать нормальный, надо Рому
-						 -- работает так, есть пачка аномалий, и пачка артефактов, списки в функции, идём по всем объектам, находим аномалию, далее с шансом 1 к 180 на позиции данной аномалии заспавнится рандомный артефакт из таблицы
 	spawen_pseudohuman() -- лежало внутри функции выше, если пережили более 7 выбросов, то в радиоактивных зонах с шансом 1 к 580 спавнит мутанта там (кроме локации бар), список мутантов внутри функции
 	spawn_esc_mil_group() -- спавн военных научных групп, спавнятся если пережили не менее 5 и не более 8 выбросов, потом не менее 12 и не более 16, потом уже не менее 25 выбросов надо пережить и спавн будет после каждого выброса
 	remove_onl_anoms() -- проходится по нескольким clsid аномалий и включает их принудительно, список клсид в функции. Но это касается только онлайновых объектов, лол.
@@ -718,71 +716,6 @@ function clear_afterblow_deadnpc()
 		end
 	--log1(cnt)
 	end
-end
-
-----------------------------------------------
-
-function spawen_arts_random()
-
-	local montabl = {
-		[clsid.nogravity_zone] = true,
-		[clsid.respawn] = true,
-		[clsid.smart_terrain] = true,
-		[clsid.zone_bfuzz] = true,
-		[clsid.zone_bfuzz_s] = true,
-		[clsid.zone_galant_s] = true,
-		[clsid.zone_galantine] = true,
-		[clsid.zone_mbald_s] = true,
-		[clsid.zone_mincer] = true,
-		[clsid.zone_mincer_s] = true,
-		[clsid.zone_mosquito_bald] = true,
-		[clsid.zone_rusty_hair] = true
-	}
-
-	local sectionsa = {
-		"af_bublik",
-		"af_bublik_glass",
-		"af_gravi_med",
-		"af_gravi_heavy",
-		"af_zuda",
-		"af_transpsphere",
-		"af_dummy_double",
-		"af_toadeye",
-		"af_rusty_hair",
-		"af_black_drops",
-		"af_knot",
-		"af_cotton",
-		"af_electrosphere",
-		"af_sponge",
-		"af_dummy_simple",
-		"af_chipper",
-		"af_plasm",
-		"af_deadhead",
-		"af_thorn",
-		"af_thorn_black",
-		"af_needle",
-		"af_needle_heavy",
-		"af_junk_bolt",
-		"af_junk_debris",
-		"af_galantine"
-	}
-
-	local count = 0
-	local sim = alife()
-	for id = 1, 65534 do
-		local kill = sim:object(id)
-		if kill then
-			if montabl[kill:clsid()] then
-				local section = sectionsa[math.random(table.getn(sectionsa))]
-				local bol_var = math.random(1, 180)
-				if bol_var == 1 then
-					alife():create(section, kill.position, kill.m_level_vertex_id, kill.m_game_vertex_id)
-					count = count + 1
-				end
-			end
-		end
-	end
-	--news_manager.send_tip(db.actor,"всего РАНДОМНЫХ ПОСЛЕВЫБРОСНЫХ АРТОВ " .. count .. " нау ииии",nil,"freedom",9000)
 end
 
 ----------------------------------------------

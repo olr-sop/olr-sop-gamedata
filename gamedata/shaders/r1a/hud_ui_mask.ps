@@ -8,8 +8,8 @@ struct v2p
 uniform sampler2D s_base;
 uniform sampler2D s_mask;
 uniform float4 c_mask_params;
-	// x = mode: 1 = base.a * mask, 2 = binary clip (spots), 3 = debug mask,
-	//            4 = animated hash noise (y = time, z = has_mask)
+	// x = mode: 1 = base.a * mask, 2 = binary clip (spots), 4 = animated hash noise
+	//            (y = time, z = has_mask)
 
 float rand (float2 coord)
 {
@@ -24,15 +24,15 @@ float4 main (v2p I) : COLOR
 	float	mode = c_mask_params.x;
 	float	m    = ms.r;
 
-	// mode 4: animated hash noise (TV snow). The time goes into the hash raw:
-	// frac(time * k) aliases with a stable frame delta and caused periodical
-	// "resets", while the sine hash decorrelates per frame on its own
+	// mode 4: cross-hatch TV snow - two animated 1D grain layers (column + row),
+	// combined by a cheap frac re-hash instead of the third sincos (ps_2_0 = 64 ALU).
+	// The time goes into the two sine hashes raw: frac(time * k) would alias with a
+	// stable frame delta, while the sine hash decorrelates per frame on its own
 	float	nm = step (3.5f, mode);
 	float	t  = c_mask_params.y;			// seconds
-
-	float2	r  = float2 (rand (float2 (I.tc0.x * 640.0f, t * 7.31f)),
-	                   rand (float2 (t * 5.13f, I.tc0.y * 480.0f)));
-	float	n  = rand (r + t * 3.17f);
+	float	hx = rand (float2 (I.tc0.x * 640.0f, t * 7.31f));	// column grain
+	float	hy = rand (float2 (t * 5.13f, I.tc0.y * 480.0f));	// row grain
+	float	n  = frac (hx * 61.7f + hy * 97.3f);
 
 	base.rgb = lerp (base.rgb, n.xxx, nm);
 	base.a   = lerp (base.a, 1.0f, nm);
@@ -44,10 +44,6 @@ float4 main (v2p I) : COLOR
 
 	float a = lerp (base.a * m, base.a, clip_mode);
 	float4 outc = float4 (base.rgb * I.c0.rgb, a);
-
-	// mode 3: debug - show the mask (grayscale)
-	float dbg_mode = step (2.5f, mode) * (1.0f - step (3.5f, mode));
-	outc = lerp (outc, float4 (m, m, m, 1.0f), dbg_mode);
 
 	return outc;
 }

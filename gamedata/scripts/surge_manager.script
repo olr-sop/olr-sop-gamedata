@@ -5,18 +5,19 @@ local surge_manager = nil
 -- Таймлайн (реальные секунды от task_given, при time_factor = 10), подводка привязана к ударам:
 --   0         старт: погодный эффект "surge" + task_given
 --   5-20      сообщение: tip + olr_blowout_first_hideouts + phase_1 + blowout_begin + автосейв
---   5-15      surge_start_sound;  27-37 surge_moan_sound
---   t1-40     старт гула blowout_rumble (громкость растёт до t4)
+--   5-15      surge_start_sound;  t1-35..t1-25 surge_moan_sound
+--   t1-40     старт гула blowout_rumble (громкость растёт до t4; после затухания — тихий фон до 190)
 --   t1-20     attack ppe (~16с), затем loop
 --   t1-15..10 старт землетрясения (cam + звук)
 --   t1        первый удар; паузы 10-20с; t4 = 120-160
 --   t4-5      пик землетрясения
---   ti-0..5   предвестники: burst 1-4 случайных surge_omen_* за 0-5с до удара
---   ti+3      импакт: звук удара + 1-3 thunder + ppe gain + cam; пост-звуки (шанс 1/10, burst 1-4 через 3-10с)
---   t4+3      вердикт: kill_all_unhided + phase_3 + после-ударные функции
---             (blowout_ending_set, lomka_pda, golod_gg, psy_gg, спавн артефактов движком)
---   t4+5      loop -> release (однократно, ~16с, повторно не играется)
---   t4..+10   гул и тряска гаснут до нуля
+--   каждый ti толчок тряски (quake kick) + подземный гул-удар (surge_earthquake_sound)
+--   ti-0..5   предвестники: burst 1-4 (moaning/horror/noise) за 0-5с до удара
+--   ti+3      импакт: звук удара + 1-3 (на 4-м 2-4) thunder + ppe gain + cam; посталюдии (шанс 1/10, burst 1-4)
+--   t4+3      вердикт: kill/укрытие/защита + phase_3 + после-ударные функции; в укрытии — вырубает (knock_out)
+--   t4+20      loop -> release (однократно, ~16с)
+--   t4+8      свист затухания (surge_end_sound)
+--   t4+20..185 редкие посталюдии-хвост до конца выброса
 --   190       end_surge: surge_end_sound + phase_0 + сброс (WFX гаснет по таймингу surge.ltx)
 --
 -- Длительность фиксированная (SURGE_TOTAL_TIME), последний удар её больше не сдвигает.
@@ -52,8 +53,12 @@ local SURGE_QUAKE_LEAD_MIN = 10 -- землетрясение стартует за 10-15с до первого у
 local SURGE_QUAKE_LEAD_MAX = 15
 local SURGE_QUAKE_PEAK_LEAD = 5 -- пик тряски за 5с до четвёртого удара
 local SURGE_RELEASE_DELAY = 20 -- через сколько секунд после последней волны loop -> release
-local SURGE_FADE_TIME = 25 -- затухание гула и землетрясения после последней волны
+local SURGE_FADE_TIME = 10 -- затухание гула и землетрясения после последней волны
 local SURGE_TOTAL_TIME = 190 -- фиксированная полная длительность выброса
+local SURGE_QUAKE_KICK = {0.25, 0.35, 0.5, 0.9} -- толчок тряски на каждом ударе (1-4)
+local SURGE_QUAKE_KICK_MS = 2500 -- длительность толчка, мс
+local SURGE_RUMBLE_FLOOR = 0.06 -- тихий фон гула до конца выброса
+local SURGE_FADE_SOUND_LEAD = 8 -- свист затухания после 4-го удара, с
 local SURGE_HIT_SOUNDS = {"surge_hit_sound_1", "surge_hit_sound_2", "surge_hit_sound_3", "surge_hit_sound_4"}
 local SURGE_HIT_CAM_IDS = {17, 18, 19, 20} -- уникальные id cam-эффекторов ударов (anm наслаиваются, а не перекрываются)
 local SURGE_HIT_IMPACT_DELAY = 3 -- через сколько секунд после ppe наносится удар (урон + звук + anm)
@@ -64,26 +69,26 @@ local SURGE_PSY_TICK_GROW = 0.00005 -- прирост урона за каждую секунду выброса
 local ANTIVIBROS_HIT_COND = 0.1 -- износ pribor_antivibros за мгновенный удар
 local ANTIVIBROS_TICK_COND = 0.01 -- износ pribor_antivibros за секунду урона
 -- Громкости звуков выброса (крутить тут, 1 = как в файле)
-local SURGE_SOUND_VOL = {start = 0.66, moan = 0.6, hits = {1, 1, 1, 1}, finish = 1, quake = 1, omen = 1, omen_post = 1, thunder = 1}
+local SURGE_SOUND_VOL = {start = 0.66, moan = 0.6, hits = {1, 1, 1, 1}, finish = 1, fade = 0.7, quake = 1, quake_hit = 0.6, quake_hit_final = 1, omen = 1, omen_post = 1, thunder = 1}
 
--- звуки предвестников/пост-ударные (ключи из misc\script_sound.ltx): burst 1-4 на событие
-local SURGE_OMEN_SOUNDS = {
-	"surge_omen_1", "surge_omen_2", "surge_omen_3", "surge_omen_4",
-	"surge_omen_5", "surge_omen_6", "surge_omen_7", "surge_omen_8",
-	"surge_omen_9", "surge_omen_10", "surge_omen_11", "surge_omen_12",
-	"surge_omen_13"
-}
+-- звуки предвестников (перед ударом), посталюдий (после удара) и хвоста; ключи из misc\script_sound.ltx
+local SURGE_OMEN_PRE_SOUNDS = {"surge_omen_1", "surge_omen_2", "surge_omen_3", "surge_omen_4", "surge_omen_5", "surge_omen_6", "surge_omen_7", "surge_omen_11", "surge_omen_12"}
+local SURGE_OMEN_POST_SOUNDS = {"surge_omen_8", "surge_omen_9", "surge_omen_10", "surge_omen_13"}
 local SURGE_OMEN_PRE_LEAD = 5 -- предвестники: за 0-5с до удара
 local SURGE_OMEN_POST_CHANCE = 10 -- пост-группа: шанс 1 к 10
 local SURGE_OMEN_POST_MIN = 3 -- пост-звуки: через 3-10с после импакта
 local SURGE_OMEN_POST_MAX = 10
 local SURGE_OMEN_BURST_MIN = 1 -- сколько звуков за событие
 local SURGE_OMEN_BURST_MAX = 4
+local SURGE_OMEN_TAIL_MIN = 3 -- хвост: сколько редких посталюдий до конца выброса
+local SURGE_OMEN_TAIL_MAX = 5
 
--- гром удара: 1-3 случайных thunder-сэмпла на импакт
+-- гром удара: 1-3 случайных thunder-сэмпла на импакт, на 4-м ударе 2-4
 local SURGE_THUNDER_SOUNDS = {"surge_thunder_1", "surge_thunder_2", "surge_thunder_3", "surge_thunder_4"}
 local SURGE_HIT_THUNDER_MIN = 1
 local SURGE_HIT_THUNDER_MAX = 3
+local SURGE_HIT_THUNDER_FINAL_MIN = 2
+local SURGE_HIT_THUNDER_FINAL_MAX = 4
 
 -- Время задаётся игровое
 -- Первый выброс через 2-3 дня
@@ -177,6 +182,11 @@ function CSurgeManager:initialize()
 	self.damage_until = nil
 	self.hit_impact_at = nil
 	self.hit_impact_index = nil
+	self.moan_time = nil
+	self.fade_sound_at = nil
+	self.fade_sound_played = false
+	self.quake_kick_t0 = nil
+	self.quake_kick_amp = 0
 
 	self.condlist = {}
 	self.survive = {}
@@ -359,8 +369,11 @@ function CSurgeManager:build_schedule()
 	self.attack_start = self.hit_times[1] - SURGE_ATTACK_LEAD
 	self.quake_time = self.hit_times[1] - rnd(SURGE_QUAKE_LEAD_MIN, SURGE_QUAKE_LEAD_MAX)
 	self.quake_peak = self.hit_times[SURGE_HIT_COUNT] - SURGE_QUAKE_PEAK_LEAD
+	self.moan_time = self.hit_times[1] - rnd(25, 35)
+	self.fade_sound_at = self.hit_times[SURGE_HIT_COUNT] + SURGE_FADE_SOUND_LEAD
+	self.fade_sound_played = false
 
-	-- Предвестники (burst 1-4 за 0-5с до удара) и пост-ударные (шанс 1/10, burst 1-4 через 3-10с)
+	-- Предвестники (burst 1-4 за 0-5с до удара) и посталюдии (шанс 1/10, burst 1-4 через 3-10с)
 	self.pre_sound_times = {}
 	self.pre_sound_idx = {}
 	self.pre_sound_played = {}
@@ -375,7 +388,7 @@ function CSurgeManager:build_schedule()
 		self.pre_sound_played[i] = {}
 		for k = 1, pre_n do
 			self.pre_sound_times[i][k] = self.hit_times[i] - rnd(0, SURGE_OMEN_PRE_LEAD)
-			self.pre_sound_idx[i][k] = rnd(1, #SURGE_OMEN_SOUNDS)
+			self.pre_sound_idx[i][k] = rnd(1, #SURGE_OMEN_PRE_SOUNDS)
 		end
 
 		self.post_sound_roll[i] = rnd(1, SURGE_OMEN_POST_CHANCE)
@@ -385,15 +398,34 @@ function CSurgeManager:build_schedule()
 		self.post_sound_played[i] = {}
 		for k = 1, post_n do
 			self.post_sound_at[i][k] = self.hit_times[i] + SURGE_HIT_IMPACT_DELAY + rnd(SURGE_OMEN_POST_MIN, SURGE_OMEN_POST_MAX)
-			self.post_sound_idx[i][k] = rnd(1, #SURGE_OMEN_SOUNDS)
+			self.post_sound_idx[i][k] = rnd(1, #SURGE_OMEN_POST_SOUNDS)
 		end
 	end
 
-	-- Гром удара: 1-3 случайных thunder на импакт
+	-- Хвост выброса: редкие посталюдии от t4+20 до конца
+	self.tail_sound_at = {}
+	self.tail_sound_idx = {}
+	self.tail_sound_played = {}
+	local tail_n = rnd(SURGE_OMEN_TAIL_MIN, SURGE_OMEN_TAIL_MAX)
+	local tail_from = self.hit_times[SURGE_HIT_COUNT] + 20
+	local tail_to = SURGE_TOTAL_TIME - 5
+	if (tail_to < tail_from) then
+		tail_to = tail_from
+	end
+	for k = 1, tail_n do
+		self.tail_sound_at[k] = tail_from + rnd(0, tail_to - tail_from)
+		self.tail_sound_idx[k] = rnd(1, #SURGE_OMEN_POST_SOUNDS)
+	end
+
+	-- Гром удара: 1-3 случайных thunder на импакт, на 4-м ударе 2-4
 	self.hit_thunder_count = {}
 	self.hit_thunder_idx = {}
 	for i = 1, SURGE_HIT_COUNT do
-		self.hit_thunder_count[i] = rnd(SURGE_HIT_THUNDER_MIN, SURGE_HIT_THUNDER_MAX)
+		if (i == SURGE_HIT_COUNT) then
+			self.hit_thunder_count[i] = rnd(SURGE_HIT_THUNDER_FINAL_MIN, SURGE_HIT_THUNDER_FINAL_MAX)
+		else
+			self.hit_thunder_count[i] = rnd(SURGE_HIT_THUNDER_MIN, SURGE_HIT_THUNDER_MAX)
+		end
 		self.hit_thunder_idx[i] = {}
 		for k = 1, self.hit_thunder_count[i] do
 			self.hit_thunder_idx[i][k] = rnd(1, #SURGE_THUNDER_SOUNDS)
@@ -404,13 +436,16 @@ function CSurgeManager:build_schedule()
 	self.fade_done = false
 	self.release_started = false
 	self.rumble_t0 = nil
+	self.quake_kick_t0 = nil
+	self.quake_kick_amp = 0
 
 	dbg("schedule (seed=%d): message=%d rumble=%d quake=%d(peak=%d) attack=%d hits=%d/%d/%d/%d end=%d",
 		seed, self.message_time, self.rumble_time, self.quake_time, self.quake_peak, self.attack_start,
 		self.hit_times[1], self.hit_times[2], self.hit_times[3], self.hit_times[4], self.surge_time)
-	dbg("schedule omens: pre_n=%d/%d/%d/%d post_roll=%d/%d/%d/%d",
+	dbg("schedule omens: pre_n=%d/%d/%d/%d post_roll=%d/%d/%d/%d tail=%d",
 		#self.pre_sound_times[1], #self.pre_sound_times[2], #self.pre_sound_times[3], #self.pre_sound_times[4],
-		self.post_sound_roll[1], self.post_sound_roll[2], self.post_sound_roll[3], self.post_sound_roll[4])
+		self.post_sound_roll[1], self.post_sound_roll[2], self.post_sound_roll[3], self.post_sound_roll[4],
+		#self.tail_sound_at)
 end
 
 function CSurgeManager:start_surge_loop()
@@ -500,7 +535,7 @@ function CSurgeManager:update()
 		end
 	end
 
-	-- Громкость гула: разгон до максимума к t4, затем затухание от t4 к t4+10
+	-- Громкость гула: разгон к t4, затухание от t4, затем тихий фон до конца выброса
 	if (self.blowout_sound) then
 		local up = 1
 		if (self.rumble_t0 ~= nil) then
@@ -511,10 +546,14 @@ function CSurgeManager:update()
 				up = 0.05
 			end
 		end
-		xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", up * (1 - self:surge_fade_progress()))
+		local vol = up * (1 - self:surge_fade_progress())
+		if (self:surge_fade_progress() >= 1) then
+			vol = SURGE_RUMBLE_FLOOR
+		end
+		xr_sound_cop.set_volume_sound_looped(db.actor:id(), "blowout_rumble", vol)
 	end
 
-	-- Тряска: разгон к 65с, затухание вместе с гулом после t4
+	-- Тряска: плавный разгон к пику + короткий толчок на каждом ударе
 	if (self.second_message_given) then
 		local quake_progress = (time_global() - (self.quake_t0 or time_global())) / ((self.quake_peak - self.quake_time) * 1000)
 		if (quake_progress > 1) then
@@ -522,22 +561,31 @@ function CSurgeManager:update()
 		elseif (quake_progress < 0) then
 			quake_progress = 0
 		end
-		quake_progress = quake_progress * (1 - self:surge_fade_progress())
+		local kick = 0
+		if (self.quake_kick_t0 ~= nil) then
+			local kick_progress = (time_global() - self.quake_kick_t0) / SURGE_QUAKE_KICK_MS
+			if (kick_progress < 1) then
+				kick = (self.quake_kick_amp or 0) * (1 - kick_progress)
+			else
+				self.quake_kick_t0 = nil
+			end
+		end
+		quake_progress = (quake_progress + kick) * (1 - self:surge_fade_progress())
+		if (quake_progress > 1) then
+			quake_progress = 1
+		end
 		level.set_cam_effector_factor(earthquake_cam_eff, quake_progress)
 		xr_sound_cop.set_volume_sound_looped(db.actor:id(), "surge_earthquake_sound_looped", quake_progress)
 	end
 
-	-- Полное затухание: гасим петли и снимаем cam один раз
+	-- Полное затухание: гасим тряску и снимаем cam; гул остаётся тихим фоном до конца
 	if (self:surge_fade_progress() >= 1) and not (self.fade_done) and (self.second_message_given or self.blowout_sound) then
 		self.fade_done = true
-		if (self.blowout_sound) then
-			xr_sound_cop.stop_sound_looped(db.actor:id(), "blowout_rumble")
-		end
 		if (self.second_message_given) then
 			xr_sound_cop.stop_sound_looped(db.actor:id(), "surge_earthquake_sound_looped")
 			level.remove_cam_effector(earthquake_cam_eff)
 		end
-		dbg("rumble/quake faded out")
+		dbg("quake faded out; rumble floor until surge end")
 	end
 
 	-- ==== посекундная логика ====
@@ -561,7 +609,7 @@ function CSurgeManager:update()
 				dbg("re-apply after load: diff=%d, task=%s, effector=%s, quake=%s, rumble=%s, ui=%s",
 					diff_sec, tostring(self.task_given), tostring(self.effector_set),
 					tostring(self.second_message_given), tostring(self.blowout_sound), tostring(self.ui_disabled))
-				if (self.blowout_sound) and (diff_sec < self.hit_times[SURGE_HIT_COUNT] + SURGE_FADE_TIME) then
+				if (self.blowout_sound) and (diff_sec < self.surge_time) then
 					xr_sound_cop.play_sound_looped(db.actor:id(), "blowout_rumble")
 					self.rumble_t0 = time_global() - math.max(0, diff_sec - self.rumble_time) * 1000
 				end
@@ -570,7 +618,7 @@ function CSurgeManager:update()
 						level.add_pp_effector("event\\surge_loop.ppe", surge_loop_pp_eff, true)
 						self.release_started = false
 					else
-						-- release одноразовый: время перешло t4+5 — повторно не добавляем
+						-- release одноразовый: время перешло t4+20 — повторно не добавляем
 						self.release_started = true
 						dbg("re-apply: release already passed at diff=%d, skip", diff_sec)
 					end
@@ -621,23 +669,37 @@ function CSurgeManager:update()
 				for k = 1, #self.pre_sound_times[i] do
 					if (not self.pre_sound_played[i][k]) and (diff_sec >= self.pre_sound_times[i][k]) and (diff_sec <= self.hit_times[i]) then
 						self.pre_sound_played[i][k] = true
-						dbg("pre-omen %d.%d at diff=%d: %s", i, k, diff_sec, SURGE_OMEN_SOUNDS[self.pre_sound_idx[i][k]])
-						xr_sound_cop.set_sound_play(db.actor:id(), SURGE_OMEN_SOUNDS[self.pre_sound_idx[i][k]], SURGE_SOUND_VOL.omen)
+						dbg("pre-omen %d.%d at diff=%d: %s", i, k, diff_sec, SURGE_OMEN_PRE_SOUNDS[self.pre_sound_idx[i][k]])
+						xr_sound_cop.set_sound_play(db.actor:id(), SURGE_OMEN_PRE_SOUNDS[self.pre_sound_idx[i][k]], SURGE_SOUND_VOL.omen)
 					end
 				end
 			end
 
-			-- Пост-ударные: шанс 1/10 на удар, burst 1-4 звука через 3-10с после импакта
+			-- Посталюдии: шанс 1/10 на удар, burst 1-4 звука через 3-10с после импакта
 			for i = 1, SURGE_HIT_COUNT do
 				if (self.post_sound_roll[i] == 1) then
 					for k = 1, #self.post_sound_at[i] do
 						if (not self.post_sound_played[i][k]) and (diff_sec >= self.post_sound_at[i][k]) then
 							self.post_sound_played[i][k] = true
-							dbg("post-omen %d.%d at diff=%d: %s", i, k, diff_sec, SURGE_OMEN_SOUNDS[self.post_sound_idx[i][k]])
-							xr_sound_cop.set_sound_play(db.actor:id(), SURGE_OMEN_SOUNDS[self.post_sound_idx[i][k]], SURGE_SOUND_VOL.omen_post)
+							dbg("post-omen %d.%d at diff=%d: %s", i, k, diff_sec, SURGE_OMEN_POST_SOUNDS[self.post_sound_idx[i][k]])
+							xr_sound_cop.set_sound_play(db.actor:id(), SURGE_OMEN_POST_SOUNDS[self.post_sound_idx[i][k]], SURGE_SOUND_VOL.omen_post)
 						end
 					end
 				end
+			end
+
+			-- Хвост выброса: редкие посталюдии до конца + свист затухания
+			for k = 1, #self.tail_sound_at do
+				if (not self.tail_sound_played[k]) and (diff_sec >= self.tail_sound_at[k]) then
+					self.tail_sound_played[k] = true
+					dbg("tail-omen %d at diff=%d: %s", k, diff_sec, SURGE_OMEN_POST_SOUNDS[self.tail_sound_idx[k]])
+					xr_sound_cop.set_sound_play(db.actor:id(), SURGE_OMEN_POST_SOUNDS[self.tail_sound_idx[k]], SURGE_SOUND_VOL.omen_post)
+				end
+			end
+			if (not self.fade_sound_played) and (diff_sec >= self.fade_sound_at) then
+				self.fade_sound_played = true
+				xr_sound_cop.set_sound_play(db.actor:id(), "surge_end_sound", SURGE_SOUND_VOL.fade)
+				dbg("fade whistle at diff=%d", diff_sec)
 			end
 
 			-- Удары выброса: запускаем ppe, урон/звук/anm — через SURGE_HIT_IMPACT_DELAY секунд
@@ -648,6 +710,15 @@ function CSurgeManager:update()
 				dbg("hit %d/%d: ppe at diff=%d, gain id=%d, impact at %d",
 					self.hits_fired, SURGE_HIT_COUNT, diff_sec, SURGE_GAIN_PP_EFFS[self.hits_fired], self.hit_impact_at)
 				level.add_pp_effector("event\\surge_gain.ppe", SURGE_GAIN_PP_EFFS[self.hits_fired], false)
+				-- Толчок земли на волне (нарастает к 4-му удару)
+				self.quake_kick_amp = SURGE_QUAKE_KICK[self.hits_fired] or 0.25
+				self.quake_kick_t0 = time_global()
+				-- Подземный гул-удар (одноразовый)
+				if (self.hits_fired == SURGE_HIT_COUNT) then
+					xr_sound_cop.set_sound_play(db.actor:id(), "surge_earthquake_sound", SURGE_SOUND_VOL.quake_hit_final)
+				else
+					xr_sound_cop.set_sound_play(db.actor:id(), "surge_earthquake_sound", SURGE_SOUND_VOL.quake_hit)
+				end
 				if (self.hits_fired == 1) then
 					db.actor:give_info_portion("olr_blowout_phase_2")
 					dbg("hit 1: phase_2 given")
@@ -688,7 +759,7 @@ function CSurgeManager:update()
 				end
 
 				local cam_path = "camera_effects\\drunk.anm"
-				if (self:actor_cover()) or (self:has_protection()) then
+				if (hit_i < SURGE_HIT_COUNT) and ((self:actor_cover()) or (self:has_protection())) then
 					cam_path = "camera_effects\\fatigue.anm"
 				end
 				dbg("hit %d impact: cam=%s", hit_i, cam_path)
@@ -740,7 +811,7 @@ function CSurgeManager:update()
 				self.start_fx_played = true
 				dbg("start sound at diff=%d", diff_sec)
 			end
-			if (diff_sec >= 27) and (diff_sec < 37) and not (self.moan_played) then
+			if (diff_sec >= self.moan_time) and (diff_sec < self.moan_time + 10) and not (self.moan_played) then
 				xr_sound_cop.set_sound_play(db.actor:id(), "surge_moan_sound", SURGE_SOUND_VOL.moan)
 				self.moan_played = true
 				dbg("moan sound at diff=%d", diff_sec)
@@ -868,7 +939,10 @@ function CSurgeManager:skip_surge()
 	self.hits_fired = 0
 	self.start_fx_played = false
 	self.moan_played = false
+	self.fade_sound_played = false
 	self.quake_t0 = nil
+	self.quake_kick_t0 = nil
+	self.quake_kick_amp = 0
 	self.hit_impact_at = nil
 	self.hit_impact_index = nil
 	self.message_given = false
@@ -937,7 +1011,10 @@ function CSurgeManager:end_surge(manual)
 	self.hits_fired = 0
 	self.start_fx_played = false
 	self.moan_played = false
+	self.fade_sound_played = false
 	self.quake_t0 = nil
+	self.quake_kick_t0 = nil
+	self.quake_kick_amp = 0
 	self.hit_impact_at = nil
 	self.hit_impact_index = nil
 	self.message_given = false
@@ -1032,18 +1109,27 @@ function CSurgeManager:apply_psy_damage(amount, absorb_cost)
 	db.actor.psy_health = -amount
 end
 
+-- Общий выход "вырубило": гасим UI, камера-сцена, тёмное затухание (колбэки вернут управление)
+function CSurgeManager:knock_out()
+	xr_effects.disable_ui(db.actor, nil)
+	level.add_cam_effector("camera_effects\\surge_02.anm", sleep_cam_eff, false, "surge_manager.surge_callback")
+	level.add_pp_effector("event\\deprecated\\surge_fade.ppe", sleep_fade_pp_eff, false)
+end
+
 function CSurgeManager:kill_all_unhided()
 	if (db.actor and db.actor:alive()) then
 		if not self:actor_cover() then
 			if (self:antivibros_absorb(1.0) or (xr_logic.pick_section_from_condlist(db.actor, nil, self.survive) == "true")) then
 				log1("---> surge: actor survived on protection!")
-				xr_effects.disable_ui(db.actor, nil)
-				level.add_cam_effector("camera_effects\\surge_02.anm", sleep_cam_eff, false, "surge_manager.surge_callback")
-				level.add_pp_effector("event\\deprecated\\surge_fade.ppe", sleep_fade_pp_eff, false)
+				self:knock_out()
 			else
 				db.actor:kill(db.actor)
 				log1("---> surge: actor killed by surge!")
 			end
+		else
+			-- В укрытии: на пике вырубает (без смерти)
+			log1("---> surge: actor in cover, knocked out by peak")
+			self:knock_out()
 		end
 	end
 end
@@ -1109,10 +1195,11 @@ function CSurgeManager:load(packet)
 		self:build_schedule()
 		local diff = math.ceil(game.get_game_time():diffSec(self.inited_time) / level.get_time_factor())
 		self.message_given = (diff > self.message_time)
-		-- Звуки старта/стона не повторяем после загрузки (окна 5-15с и 27-37с)
+		-- Звуки старта/стона/свиста не повторяем после загрузки
 		self.start_fx_played = (diff >= 5)
-		self.moan_played = (diff >= 27)
-		-- Прошедшие звуковые окна (предвестники/пост) считаем отыгранными
+		self.moan_played = (diff >= self.moan_time)
+		self.fade_sound_played = (diff >= self.fade_sound_at)
+		-- Прошедшие звуковые окна (предвестники/посталюдии/хвост) считаем отыгранными
 		for i = 1, SURGE_HIT_COUNT do
 			for k = 1, #self.pre_sound_times[i] do
 				if (diff >= self.pre_sound_times[i][k]) then
@@ -1123,6 +1210,11 @@ function CSurgeManager:load(packet)
 				if (diff >= self.post_sound_at[i][k]) then
 					self.post_sound_played[i][k] = true
 				end
+			end
+		end
+		for k = 1, #self.tail_sound_at do
+			if (diff >= self.tail_sound_at[k]) then
+				self.tail_sound_played[k] = true
 			end
 		end
 		dbg("load: diff=%d, message_given=%s", diff, tostring(self.message_given))
@@ -1271,7 +1363,10 @@ function skip_surge_silent()
 	m.hits_fired = 0
 	m.start_fx_played = false
 	m.moan_played = false
+	m.fade_sound_played = false
 	m.quake_t0 = nil
+	m.quake_kick_t0 = nil
+	m.quake_kick_amp = 0
 	m.hit_impact_at = nil
 	m.hit_impact_index = nil
 	m.message_given = false

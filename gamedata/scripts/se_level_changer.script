@@ -31,7 +31,11 @@ function se_level_changer:STATE_Read(packet, size)
 	if editor() then
 		return
 	end
-
+	-- если в спавне пустота то не читаем дальше, какая то фигня кароче, пока так заткну
+	-- на сейвах будет норм, так как запишется на стейт врайте
+	if packet:r_eof() then
+		return
+	end
 --.	set_save_marker(packet, "load", false, "se_level_changer")
 	self.enabled = packet:r_bool()
 	self.hint = packet:r_stringZ()

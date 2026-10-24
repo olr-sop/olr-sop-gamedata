@@ -850,12 +850,14 @@ function CKampManager:proceedRole(npc, director)
 	if self.npc[npc_id].begin == nil or
 	   time_global() - self.npc[npc_id].begin >= self.npc[npc_id].state_idle
 	then
+		local av_state = self.avail_state[self.kamp_state]
+		local av_sound = self.avail_sound[self.kamp_state]
 		if director then
-			states = self.avail_state[self.kamp_state].directed
-			sound = self.avail_sound[self.kamp_state].directed
+			states = av_state.directed or av_state.undirected or {}
+			sound = av_sound.directed or av_sound.undirected or ""
 		else
-			states = self.avail_state[self.kamp_state].undirected
-			sound = self.avail_sound[self.kamp_state].undirected
+			states = av_state.undirected or av_state.directed or {}
+			sound = av_sound.undirected or av_sound.directed or ""
 		end
 		-- ¬ыбирать новое состо€ние только раз в какое то врем€.
 		local temp = {}
@@ -895,7 +897,8 @@ function CKampManager:proceedRole(npc, director)
 		end
 		state = self.npc[npc_id].state_selected
 		-- Ђлипкоеї состо€ние допустимо только дл€ текущей роли/фазы
-		local role_states = director and self.avail_state[self.kamp_state].directed or self.avail_state[self.kamp_state].undirected
+		local av = self.avail_state[self.kamp_state]
+		local role_states = (director and av.directed) or av.undirected or av.directed or {}
 		local state_valid = false
 		for i = 1, table.getn(role_states) do
 			if role_states[i] == state then
@@ -959,14 +962,9 @@ function CKampManager:updateNpc(npc)
 			elseif sound == "play_story" then
 				xr_sound.set_sound_play(npc, self.selected_story)
 				self.story_last, self.story_max = xr_sound.get_last_IDS(npc, self.selected_story)
-				-- dirty hack (ABC/Complete 2025): битую историю не рассказываем, NPC больше не режиссер
+				-- [OLR] ABC/Complete hack reverted: nil story_last is safe (guards in proceedState/reac_story)
 				if self.story_last == nil then
-					self.story_last = 0
-					self.story_max = 1
-					xr_sound.set_sound_play(npc, "threat_back", mrandom(1000,2000))
-					self.kamp_state = "idle"
-					self.forbiddendirector = self.director
-					self.director = nil
+					log1(string.format("xr_camp : story '%s' has no into data for [%s]", tostring(self.selected_story), npc:name()))
 				end
 			end
 			self.npc[npc_id].new = false

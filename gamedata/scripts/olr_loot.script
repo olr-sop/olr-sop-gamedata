@@ -162,6 +162,11 @@ function is_lootable(item)
 				can_trade = ini:r_bool(sec, "can_trade")
 			end
 
+			local can_take_cfg = true
+			if ini:line_exist(sec, "can_take") then
+				can_take_cfg = ini:r_bool(sec, "can_take")
+			end
+
 			local quest_item = false
 			if ini:line_exist(sec, "quest_item") then
 				quest_item = ini:r_bool(sec, "quest_item")
@@ -177,7 +182,7 @@ function is_lootable(item)
 				cost = ini:r_float(sec, "cost")
 			end
 
-			if can_trade == true and quest_item == false and inv_name ~= nil and inv_name ~= ""
+			if can_take_cfg == true and can_trade == true and quest_item == false and inv_name ~= nil and inv_name ~= ""
 			   and inv_name ~= "default" and cost > 0 then
 				res = true
 			end
@@ -199,6 +204,8 @@ end
 -- Общий "можно взять" для обеих схем.
 function can_take(item)
 	if item == nil then return false end
+	if not item:is_inventory_item() then return false end
+	if not item:can_take() then return false end
 	if not is_lootable(item) then return false end
 	if do_not_touch(item) then return false end
 --	local nm = item:name()

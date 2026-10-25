@@ -21,7 +21,7 @@
 // #define FP16_FILTER                	//- HW-options defined
 // #define FP16_BLEND                	//- HW-options defined
 //
-// #define USE_PARALLAX                	//- shader defined
+#define USE_PARALLAX                	//- shader defined
 // #define USE_TDETAIL                	//- shader defined
 // #define USE_LM_HEMI                	//- shader defined
 // #define USE_DISTORT                	//- shader defined
@@ -233,7 +233,7 @@ uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw +
 //////////////////////////////////////////////////////////////////////////////////////////
 // Defines                                		//
 #define def_gloss       float(2.f /255.f)
-#define def_aref        float(128.f/255.f)
+#define def_aref        float(64.f/255.f)
 #define def_dbumph      float(0.333f)
 #define def_virtualh    float(.05f)              // 5cm
 #define def_distort     float(0.05f)             // we get -0.5 .. 0.5 range, this is -512 .. 512 for 1024, so scale it

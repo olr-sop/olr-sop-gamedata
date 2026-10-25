@@ -123,6 +123,35 @@ struct         v_shadow_direct
 };
 #endif
 
+////////////////////////////////////////////////////////////////
+//	TL
+struct	v_TL_positiont
+{
+	float4	P	: POSITION;
+	float2	Tex0	: TEXCOORD0;
+	float4	Color	: COLOR; 
+};
+
+struct	v_TL
+{
+	float4	P	: POSITION;
+	float2	Tex0	: TEXCOORD0;
+	float4	Color	: COLOR; 
+};
+
+struct	v2p_TL
+{
+	float2 	Tex0	: TEXCOORD0;
+	float4	Color	: COLOR;
+	float4 	HPos	: POSITION;	// Clip-space position 	(for rasterization)
+};
+
+struct	p_TL
+{
+	float2 	Tex0	: TEXCOORD0;
+	float4	Color	: COLOR;
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////
 struct         p_bumped        {
         float4      hpos        : POSITION;

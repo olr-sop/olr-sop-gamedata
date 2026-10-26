@@ -277,6 +277,11 @@ function allow_wounded_dialog(object, victim, id)
 	if npc_storage == nil or npc_storage.wounded == nil then
 		return false
 	end
+	-- —южетные и защищЄнные NPC сами управл€ют своими стартовыми диалогами:
+	-- топик лечени€ не должен их перехватывать. ” симул€ционных story_id == 2^32.
+	if npc:story_id() ~= 4294967296 or olr_protected.is_no_offline_alife_obj(npc:name()) then
+		return false
+	end
 	return npc_storage.wounded.help_dialog == id
 end
 

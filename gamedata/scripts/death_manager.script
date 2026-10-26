@@ -15,6 +15,9 @@ local always_keep_item = {}
 -- ѕредметы, относ€щиес€ к патронам. »х надо спаунить другим методом.
 local ammo_sections = {}
 
+-- ќружие, которому не спавним патроны (ножи, бинокли и т.п.)
+local ammo_exclude_weapons = {}
+
 -- —истема приоритетов патронов
 local ammo_base_multiplier = {}
 local difficulty_multipliers = {}
@@ -200,6 +203,18 @@ function init_drop_settings()
 		ammo_sections[id] = true
 	end
 	
+	-- ќружие, которому не спавним патроны (ножи, бинокли и т.п.)
+	ammo_exclude_weapons = {}
+	if death_ini:section_exist("ammo_drop_exclude") then
+		local n = death_ini:line_count("ammo_drop_exclude")
+		for i = 0, n - 1 do
+			result, id, value = death_ini:r_line("ammo_drop_exclude", i, "", "")
+			if id and id ~= "" then
+				ammo_exclude_weapons[id] = true
+			end
+		end
+	end
+	
 	-- «агружаем базовые множители патронов
 	ammo_base_multiplier = {}
 	if death_ini:section_exist("ammo_base_multiplier") then
@@ -374,6 +389,18 @@ end
 
 -- спавн патронов под конкретный ствол
 function spawn_weapon_ammo(npc, weapon_section, spawn_items, from_inventory)
+	-- »сключени€: ножи/бинокли и прочие стволы без магазина патронов не дают
+	if ammo_exclude_weapons[weapon_section] then
+		return
+	end
+	local mag_size = 0
+	if ini_sys:section_exist(weapon_section) and ini_sys:line_exist(weapon_section, "ammo_mag_size") then
+		mag_size = ini_sys:r_float(weapon_section, "ammo_mag_size")
+	end
+	if mag_size <= 0 then
+		return
+	end
+
 	local ammo_list = get_weapon_ammo_list(weapon_section)
 	if not ammo_list then
 		return

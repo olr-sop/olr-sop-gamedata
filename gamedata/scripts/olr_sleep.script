@@ -28,6 +28,13 @@ local SLEEP_DECREASE_PER_SEC = 0.00000771605   -- sleep_v
 
 -- коэфицент для сна в небезопасных местах (через инвентарь)
 local coeff_sleep_not_safety = 1.66
+local is_rat_variant = {
+	["m_rat_e"] = true,
+	["m_rat_e2"] = true,
+	["m_rat_e3"] = true,
+	["m_rat_e4"] = true,
+	["m_rat_new"] = true
+}
 
 function sleep_main(hours, minutes, safety_place) -- Основная функция
 	
@@ -162,7 +169,7 @@ function sleep_check_not_safety() -- проврека на выброс (добавить остальные пров
 	for k, v in pairs(db.storage) do
 		local objg = level.object_by_id(k)
 		if objg then
-			if (objg and ((IsStalker(objg) and objg:relation(db.actor) == game_object.enemy and objg:alive()) or IsMonster(objg) and not string.find(objg:name(), "^rat_")) and objg:position():distance_to(db.actor:position()) < 30 and objg:alive()) then
+			if (objg and ((IsStalker(objg) and objg:relation(db.actor) == game_object.enemy and objg:alive()) or IsMonster(objg) and not is_rat_variant[objg:section()]) and objg:position():distance_to(db.actor:position()) < 30 and objg:alive()) then
 				enemy_around = true
 				break
 			end

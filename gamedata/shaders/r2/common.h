@@ -19,7 +19,7 @@
 // #define FP16_FILTER                	//- HW-options defined
 // #define FP16_BLEND                	//- HW-options defined
 //
-#define USE_PARALLAX                	//- shader defined
+// #define USE_PARALLAX                	//- shader defined
 // #define USE_TDETAIL                	//- shader defined
 // #define USE_LM_HEMI                	//- shader defined
 // #define USE_DISTORT                	//- shader defined

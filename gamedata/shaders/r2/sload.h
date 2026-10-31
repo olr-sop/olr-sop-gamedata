@@ -40,7 +40,8 @@ surface_bumped sload_i(p_bumped I)
 	surface_bumped S;
 	float2 tc = I.tcdh;
 
-	// Параллакс — высота в канале G (s_bumpX)
+	// Параллакс: parallax.x = per-texture vh (thm bump_virtual_height),
+	// parallax.y = -vh/2 (центрирование), значения приходят из uber_deffer.
 #ifdef USE_PARALLAX
 	float height = tex2D(s_bumpX, I.tcdh).g;
 	height = height * parallax.x + parallax.y;

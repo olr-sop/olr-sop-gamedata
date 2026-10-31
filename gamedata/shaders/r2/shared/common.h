@@ -22,7 +22,7 @@ uniform float3 		eye_position;
 uniform float3		eye_direction;
 uniform float3		eye_normal;
 uniform	float4 		dt_params;
-uniform float4		parallax;
+uniform float4		parallax;		// x=vh, y=-vh/2 (UV offset); z/w unused (G-buffer offset uses def_virtualh)
 
 float3 	unpack_normal	(float3 v)	{ return 2*v-1;			}
 float3 	unpack_bx2	(float3 v)	{ return 2*v-1; 		}

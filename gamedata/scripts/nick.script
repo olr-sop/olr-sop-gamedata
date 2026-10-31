@@ -2739,6 +2739,13 @@ function radar_pseudohuman_diattt()
 	db.actor:set_actor_direction(-dir:getH())
 end
 
+function bar_underground_prison_spot()
+	local se_obj = alife():object("l05_bar_undeground_prison_dead_stalker")
+	if se_obj then
+		olr.add_spot_on_map(se_obj.id, "crlc_big", game.translate_string("st_informer_under_pris_mapspot"))
+	end
+end
+
 function out_barunder_docks()
 	nik_dialog.out_item_much("bar_under_prison_doc",1)
 	news_manager.send_tip(db.actor, game.translate_string("out_barunder_docks_0"), 1, "money_found", 9000) 
@@ -2759,6 +2766,10 @@ function first_under_bar()
 	local bloodbridge = vector():set( 155.55, -99.69, 441.61 )
 	sim:create("zombie_strong", bloodbridge, db.actor:level_vertex_id() , db.actor:game_vertex_id() )
 	olr_timers.st_timer("undezdva", 5, "nick.undezdva()")	
+	local sobj = alife():object("l05_bar_undeground_prison_dead_stalker") 
+	if sobj then	
+		level.map_remove_object_spot(sobj.id, "crlc_big")
+	end
 end
 
 function undezdva()

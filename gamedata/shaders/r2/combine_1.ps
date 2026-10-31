@@ -20,60 +20,43 @@ uniform sampler1D         fog_table        ;
 _out         main                ( _input I )
 {
           // Sample the buffers:
-          float4 P        = tex2D         (s_position,      I.tc0);                // position.(mtl or sun)
+          float4 P        = tex2D         (s_position,      I.tc0);                // position.gloss (static sun: position.sun_occ)
           float4 N         = tex2D         (s_normal,        I.tc0);                // normal.hemi
-          float4 D         = tex2D         (s_diffuse,       I.tc0);                // rgb.gloss
-          float4 L         = tex2D         (s_accumulator, 	I.tc0);                // diffuse.specular
-
-#ifdef         USE_SUPER_SPECULAR
-        {
-                float        ds      	= dot        (D.rgb,1.h/3.h)  	;
-                       		D.w         = max        (D.w, 	ds*ds/8.h)	;
-        }
-#endif
-
-#ifdef  FORCE_GLOSS
-        D.w                =        FORCE_GLOSS                ;
-#endif
+          float4 D         = tex2D         (s_diffuse,       I.tc0);                // rgb.albedo, a.spec
+          float4 L         = tex2D         (s_accumulator, 	I.tc0);                // rgb.diffuse_light, a.spec_light (скаляр)
 
 #ifdef         USE_GAMMA_22
         D.rgb        =        (D.rgb*D.rgb)        ;        // pow(2.2)
 #endif
 
-        // static sun
-	float mtl 		= P.w;
+        // static sun: position.w занят sun-occlusion, глосс — константа
+        float	gloss	= P.w	;
 #ifdef        USE_R2_STATIC_SUN
-	float	sun_occ        	=       P.w*2	;
-			mtl 			= 		xmaterial;
-            L              +=       Ldynamic_color * sun_occ * plight_infinity	(mtl, P.xyz, N.xyz, Ldynamic_dir);
+        float	sun_occ        	=       P.w*2	;
+        		gloss 			= 		def_gloss	;
+            L              +=       Ldynamic_color * sun_occ * plight_infinity	(def_gloss, P.xyz, N.xyz, Ldynamic_dir);
 #endif
 
         // hemisphere
         float3       hdiffuse,hspecular;
 
-        hmodel		(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
-		//			hdiffuse*=hdiffuse;			//. high contrast hemi
+        hmodel		(hdiffuse, hspecular, gloss, N.w, D.a, P.xyz, N.xyz);
 
-        float4         light       = float4         (L.rgb + hdiffuse, L.w)        ;
-        float4         C           = D*light       ;                                                        // rgb.gloss * light(diffuse.specular)
-        float3         spec        = C.www         + hspecular;        // replicated specular
-#ifdef         USE_SUPER_SPECULAR
-                      spec      = (C.rgb*.5h + .5h)*C.w + hspecular        ;
-#endif
-		float3       color     = C.rgb + spec     ;
+        // спекуляр (прямой + env): один общий Шлик-множитель у grazing углов.
+        // амплитуда прямого — накопленный скаляр L.w, цвет — хрома накопленного
+        // диффузного света тех же источников (те же света, те же тени):
+        // блик закатного солнца оранжевый, блик лампы — цвета лампы.
+        // env-часть (hspecular) уже гейтована gloss² в hmodel и не тинтится.
+        float          spec_luma       = dot        (L.rgb, LUMINANCE_VECTOR);
+        float3         spec_tint       = L.rgb / max(spec_luma, 1e-4);
+        float3         V               = -normalize(P.xyz);
+        float          fresnel         = pow(1 - saturate(dot(N.xyz, V)), 5);
+        float          spec_eff        = lerp(D.a, 1, fresnel*spec_params.x);
+        float3         spec            = spec_eff * (L.w * spec_tint + hspecular) * spec_params.y;
 
-        //. color + hemi + sun + lighting + specular
-		//			color 	= 	hdiffuse+hspecular+L.rgb+spec+C.rgb;
-        //. hemi + sun + lighting + specular
-		//			color 	= 	hdiffuse+hspecular+L.rgb+spec;
-		//. hemi + sun + lighting no specular
-		//			color 	= 	hdiffuse+hspecular+L.rgb;
-		//. hemi + sun no specular
-		//			color 	= 	hdiffuse+hspecular+L.rgb;
-		//. sun + lighting + specular
-		//			color 	= 	hspecular+L.rgb+spec;
-		//. only lighting and specular
-		// color 		= light.rgb + spec;
+        // диффуз = albedo * (прямой свет + hemi)
+        float3         diffuse         = D.rgb * (L.rgb + hdiffuse);
+        float3         color           = diffuse + spec;
 
         // here should be distance fog
         float3        	pos        		= P.xyz;
@@ -93,17 +76,10 @@ _out         main                ( _input I )
         float         	tm_scale        = tex2D        (s_tonemap,I.tc0).x;
 #endif
 
-#ifdef        USE_SUPER_SPECULAR
-        color        	= spec          - hspecular	;
-#endif
-
         _out        	o;
         tonemap        	(o.low, o.high, color, tm_scale )	;
                         o.low.a         = skyblend	;
 						o.high.a		= skyblend	;
-
-//		o.low	= skyblend;
-//		o.hight	= 0;
 
 		return        	o;
 }

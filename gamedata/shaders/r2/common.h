@@ -1,8 +1,6 @@
 #ifndef        COMMON_H
 #define        COMMON_H
 
-// #define USE_SUPER_SPECULAR
-
 #include "shared\common.h"
 //////////////////////////////////////////////////////////////////////////////////////////
 // *** options
@@ -28,24 +26,18 @@
 // #define USE_SUNMASK                		//- shader defined
 // #define DBG_TMAPPING
 //////////////////////////////////////////////////////////////////////////////////////////
-#ifndef SMAP_size
-#define SMAP_size        2048
+#ifndef        SMAP_size
+#define        SMAP_size        2048
 #endif
 
-#ifdef        USE_R2_STATIC_SUN
-#  define xmaterial float(1.0h/4.h)
-#else
-#  define xmaterial float(L_material.w)
-#endif
 //////////////////////////////////////////////////////////////////////////////////////////
-uniform float4                L_material;                            // 0,0,0,mid
+uniform float4                L_material;                            // x=hemi(ROS), y=sun(ROS), z=0, w=0 (быв. material id, LUT удалён)
 uniform float4                hemi_cube_pos_faces;
 uniform float4                hemi_cube_neg_faces;
 uniform float4                Ldynamic_color;                      // dynamic light color (rgb1)        - spot/point
 uniform float4                Ldynamic_pos;                       // dynamic light pos+1/range(w) - spot/point
 uniform float4                Ldynamic_dir;                        // dynamic light direction         - sun
-uniform float4                Lmodel_params;                     // x=attenuation_mode, y=rim_lighting
-uniform float4                Hmodel_params;                     // x=ambientcube, y=fresnel
+uniform float4                spec_params;                      // x=fresnel_amt, y=spec_scale, z=log2(pow_min), w=log2(pow_max)
 
 uniform float4                J_direct        [6];
 uniform float4                J_spot                [6];
@@ -213,9 +205,9 @@ struct         p_flat                  {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 struct                  f_deffer        		{
-        float4           position        		: COLOR0;        // px,py,pz, m-id
+        float4           position        		: COLOR0;        // px,py,pz, gloss (в static-sun режиме: sun occlusion)
         float4           Ne                		: COLOR1;        // nx,ny,nz, hemi
-        float4       	C                		: COLOR2;        // r, g, b,  gloss
+        float4       	C                		: COLOR2;        // r, g, b,  spec
 };
 //////////////////////////////////////////////////////////////////////////////////////////
 struct  				p_screen                {
@@ -243,17 +235,21 @@ uniform sampler2D       s_dn_g;                	//
 uniform sampler2D       s_dn_b;                	//
 uniform sampler2D       s_dn_a;                	//
 
+uniform sampler2D       s_dnX_r;               	// _nmap#: g=height, a=spec (терраин, вторая половина пары)
+uniform sampler2D       s_dnX_g;               	//
+uniform sampler2D       s_dnX_b;               	//
+uniform sampler2D       s_dnX_a;               	//
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Lighting/shadowing phase                     //
 uniform sampler2D       s_depth;                //
-uniform sampler2D       s_position;             //
+uniform sampler2D       s_position;             // xyz = eye pos, w = gloss (static sun: sun occlusion)
 uniform sampler2D       s_normal;               //
 uniform sampler         s_lmap;             	// 2D/cube projector lightmap
-uniform sampler3D       s_material;             //
 uniform sampler1D       s_attenuate;        	//
 //////////////////////////////////////////////////////////////////////////////////////////
 // Combine phase                                //
-uniform sampler2D       s_diffuse;              // rgb.a = diffuse.gloss
+uniform sampler2D       s_diffuse;              // rgb.a = diffuse.spec
 uniform sampler2D       s_accumulator;      	// rgb.a = diffuse.specular
 uniform sampler2D       s_generic;              //
 uniform sampler2D       s_bloom;                //
@@ -261,7 +257,9 @@ uniform sampler         s_image;                // used in various post-processi
 uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw + eps)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Defines                                		//
-#define def_gloss       float(2.f /255.f)
+// Дефолты для поверхностей без глосс/спек текстур (flat, терраин, партиклы, LOD)
+#define def_gloss       float(0.2f)             // мягкий широкий блик, P ~ 9
+#define def_spec        float(13.f/255.f)       // ~0.05, почти матовое
 #define def_aref        float(128.f/255.f)
 #define def_dbumph      float(0.333f)
 #define def_virtualh    float(.05f)              // 5cm

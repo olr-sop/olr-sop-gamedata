@@ -39,6 +39,20 @@ uniform float4                Ldynamic_pos;                       // dynamic lig
 uniform float4                Ldynamic_dir;                        // dynamic light direction         - sun
 uniform float4                spec_params;                      // x=fresnel_amt, y=spec_scale, z=log2(pow_min), w=log2(pow_max)
 
+// gloss -> Blinn exponent: log-linear over the console range [pow_min..pow_max].
+// pow_max is the anti-aliasing ceiling (high exponents are sub-pixel without LEAN mips).
+// gloss is expected in [0..1] — all G-buffer writers clamp it (sload_i, def_gloss, terrain mask).
+float spec_power(float gloss)
+{
+    return exp2(lerp(spec_params.z, spec_params.w, gloss));
+}
+
+// Inverse mapping (exponent -> gloss), used by the detail gloss combiner in sload.h.
+float spec_gloss(float P)
+{
+    return saturate((log2(max(P, 1.f)) - spec_params.z) / max(spec_params.w - spec_params.z, 1e-3f));
+}
+
 uniform float4                J_direct        [6];
 uniform float4                J_spot                [6];
 
@@ -258,8 +272,8 @@ uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw +
 //////////////////////////////////////////////////////////////////////////////////////////
 // Defines                                		//
 // Дефолты для поверхностей без глосс/спек текстур (flat, терраин, партиклы, LOD)
-#define def_gloss       float(0.2f)             // мягкий широкий блик, P ~ 9
-#define def_spec        float(13.f/255.f)       // ~0.05, почти матовое
+#define def_gloss       float(0.2f)             // soft wide highlight, P ≈ 8
+#define def_spec        float(0.0f)       		// спекуляр ноль, ~0.05 (13.f/255.f) изначально было
 #define def_aref        float(128.f/255.f)
 #define def_dbumph      float(0.333f)
 #define def_virtualh    float(.05f)              // 5cm

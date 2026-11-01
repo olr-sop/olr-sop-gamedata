@@ -2,6 +2,15 @@
 #include "lmodel.h"
 #include "hmodel.h"
 
+//#define DBG_SPEC          // diagnostic: R = gloss (G-buffer), G = spec (G-buffer), B = accumulated specular L.w ×8
+#define TEST_NEW_FRESNEL  	// roughness-aware Schlick: F90 = max(gloss, F0) instead of 1.0
+
+// Dielectric F0 floor: real materials reflect ~2-4% even without an authored spec map
+// (water ~2%, plastic/wood ~4%). Keeps spec=0 from killing reflections entirely.
+// Comment out USE_SPEC_F0_FLOOR to let spec=0 disable reflections completely.
+//#define USE_SPEC_F0_FLOOR
+#define def_spec_floor	float(0.04f)
+
 struct         _input      {
         float4         hpos        : POSITION        ;
 #ifdef        USE_VTF
@@ -19,17 +28,17 @@ struct        _out                {
 uniform sampler1D         fog_table        ;
 _out         main                ( _input I )
 {
-          // Sample the buffers:
+          // G-buffer samples:
           float4 P        = tex2D         (s_position,      I.tc0);                // position.gloss (static sun: position.sun_occ)
           float4 N         = tex2D         (s_normal,        I.tc0);                // normal.hemi
           float4 D         = tex2D         (s_diffuse,       I.tc0);                // rgb.albedo, a.spec
-          float4 L         = tex2D         (s_accumulator, 	I.tc0);                // rgb.diffuse_light, a.spec_light (скаляр)
+          float4 L         = tex2D         (s_accumulator, 	I.tc0);                // rgb.diffuse_light, a.spec_light (scalar)
 
 #ifdef         USE_GAMMA_22
         D.rgb        =        (D.rgb*D.rgb)        ;        // pow(2.2)
 #endif
 
-        // static sun: position.w занят sun-occlusion, глосс — константа
+        // static sun: position.w is occupied by the sun occlusion, gloss is a constant
         float	gloss	= P.w	;
 #ifdef        USE_R2_STATIC_SUN
         float	sun_occ        	=       P.w*2	;
@@ -37,28 +46,55 @@ _out         main                ( _input I )
             L              +=       Ldynamic_color * sun_occ * plight_infinity	(def_gloss, P.xyz, N.xyz, Ldynamic_dir);
 #endif
 
-        // hemisphere
+#ifdef        DBG_SPEC
+        // Diagnostic: R = gloss from G-buffer, G = spec from G-buffer, B = accumulated specular L.w (×8).
+        // Alpha must stay 0: combine blends over the skybox with INVSRCALPHA/SRCALPHA.
+        _out        dbg;
+        dbg.low  = float4(saturate(gloss), saturate(D.a), saturate(L.w * 8), 0);
+        dbg.high = float4(0,0,0,0);
+        return      dbg;
+#endif
+
+        // hemisphere / environment lighting (diffuse + reflections)
         float3       hdiffuse,hspecular;
 
-        hmodel		(hdiffuse, hspecular, gloss, N.w, D.a, P.xyz, N.xyz);
+        hmodel		(hdiffuse, hspecular, gloss, N.w, P.xyz, N.xyz);
 
-        // спекуляр (прямой + env): один общий Шлик-множитель у grazing углов.
-        // амплитуда прямого — накопленный скаляр L.w, цвет — хрома накопленного
-        // диффузного света тех же источников (те же света, те же тени):
-        // блик закатного солнца оранжевый, блик лампы — цвета лампы.
-        // env-часть (hspecular) уже гейтована gloss² в hmodel и не тинтится.
+        // Specular: direct lights (sun + local, accumulated in L.w) + env/sky reflection.
+        // Direct amplitude: L.w scalar; direct colour: chroma of the accumulated diffuse
+        // light from the same sources and shadows (sunset sun -> orange glints, lamps -> warm).
+        // Fresnel: a single Schlick factor applied once to the sum. F depends only on N·V,
+        // so evaluating it per light in lmodel would compute the same value for every
+        // source (and would need an extra G-buffer fetch for the spec texture) — no gain.
+        // Reflectance F0 = the spec texture (D.a).
         float          spec_luma       = dot        (L.rgb, LUMINANCE_VECTOR);
         float3         spec_tint       = L.rgb / max(spec_luma, 1e-4);
         float3         V               = -normalize(P.xyz);
-        float          fresnel         = pow(1 - saturate(dot(N.xyz, V)), 5);
-        float          spec_eff        = lerp(D.a, 1, fresnel*spec_params.x);
+        float          ndotv           = saturate(dot(N.xyz, V));
+        float          fres            = pow(1 - ndotv, 5);
+#ifdef USE_SPEC_F0_FLOOR
+        float          f0              = max(D.a, def_spec_floor);     // dielectric reflectance floor
+#else
+        float          f0              = D.a;                          // spec=0 disables reflections completely
+#endif
+#ifdef TEST_NEW_FRESNEL
+        // Roughness-aware Schlick (Filament/UE4-era): grazing reflectance is capped by
+        // max(gloss, F0) instead of 1.0, so rough surfaces get no white grazing rims;
+        // no manual gloss gate is needed.
+        float          f90             = max(gloss, f0);               // 1 - roughness, not below F0
+        float          spec_eff        = lerp(f0, f90, fres*spec_params.x);
+#else
+        // Plain Schlick, gated by gloss: matte surfaces get no grazing response
+        // (otherwise fresnel floods floors and distant planes with white).
+        float          spec_eff        = lerp(f0, 1, fres*spec_params.x*saturate(gloss));
+#endif
         float3         spec            = spec_eff * (L.w * spec_tint + hspecular) * spec_params.y;
 
-        // диффуз = albedo * (прямой свет + hemi)
+        // Diffuse: albedo * (direct light + hemisphere). Not attenuated by spec.
         float3         diffuse         = D.rgb * (L.rgb + hdiffuse);
         float3         color           = diffuse + spec;
 
-        // here should be distance fog
+        // distance fog
         float3        	pos        		= P.xyz;
         float         	distance		= length		(pos);
         float         	fog				= saturate		(distance*fog_params.w + fog_params.x); //

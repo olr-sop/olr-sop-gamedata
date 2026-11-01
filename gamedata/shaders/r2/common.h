@@ -273,7 +273,7 @@ uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw +
 // Defines                                		//
 // Дефолты для поверхностей без глосс/спек текстур (flat, терраин, партиклы, LOD)
 #define def_gloss       float(0.2f)             // soft wide highlight, P ≈ 8
-#define def_spec        float(0.0f)       		// спекуляр ноль, ~0.05 (13.f/255.f) изначально было
+#define def_spec        float(0.04f)       		// спекуляр ноль, ~0.05 (13.f/255.f) изначально было
 #define def_aref        float(128.f/255.f)
 #define def_dbumph      float(0.333f)
 #define def_virtualh    float(.05f)              // 5cm

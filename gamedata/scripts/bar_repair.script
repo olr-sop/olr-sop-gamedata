@@ -4,13 +4,102 @@
 -- edit: theysani 24.05.26
 --------------------------------------------------------------------------------------------------------
 
+-- Таблица распределения предметов по модифаерам стоимости
+local SPECIAL_REPAIR_ITEMS = {
+    -- х4 стоимость ремонта
+	["wpn_knife_bayonet"]   = 4,
+    ["wpn_pm"]              = 4,
+    ["wpn_pb"]              = 4,
+    ["wpn_bm16"]            = 4,
+    ["wpn_toz34"]           = 4,
+	
+	-- х5 стоимость ремонта
+	["wpn_knife"]           = 5,
+	["wpn_fort"]            = 5,
+	["wpn_hpsa"]            = 5,
+	["wpn_beretta"]         = 5,
+	["wpn_walther"]         = 5,
+	["wpn_colt1911"]        = 5,
+	["wpn_sig220"]          = 5,
+	["wpn_aps"]             = 5,
+	["wpn_aek"]             = 5,
+	["wpn_mp5"]             = 5,
+	["wpn_aks74u"]          = 5,
+	["wpn_wincheaster1300"] = 5,
+
+    -- х5.5 стоимость ремонта
+	["wpn_gsh"]             = 5.5,
+	["wpn_usp"]             = 5.5,
+	["wpn_l85"]             = 5.5,
+	["wpn_ak74"]            = 5.5,
+	["wpn_akms"]            = 5.5,
+	["wpn_spas12"]          = 5.5,
+	
+    -- х6 стоимость ремонта
+	["wpn_desert_eagle"]    = 6,
+	["wpn_tiss"]            = 6,
+	["wpn_g36"]             = 6,
+	["wpn_sig550"]          = 6,
+	["wpn_lr300"]           = 6,
+	["wpn_rpk"]             = 6,
+	["wpn_rpk74"]           = 6,
+	
+    -- х6.5 стоимость ремонта
+	["wpn_val"]             = 6.5,
+	["wpn_vintorez"]        = 6.5,
+
+    -- х7 стоимость ремонта	
+	["wpn_fn2000"]          = 7,
+	["wpn_groza"]           = 7,
+	["wpn_svd"]             = 7,
+	["wpn_svu"]             = 7,
+	["wpn_rpg7"]            = 7,
+	["wpn_rg-6"]            = 7,
+
+    -- броня
+	["novice_outfit"]       = 4,
+	["killer_outfit"]       = 6,
+	["stalker_outfit"]      = 6.5,
+	["stalker_duty_outfit"] = 7,
+	["ecolog_outfit"]       = 7,
+	["outfit_antirad"]      = 7,
+	["scientific_outfit"]   = 7.5,
+	["exo_outfit"]          = 8,
+
+    -- уники
+
+	["wpn_pm_m1"]           = 4.5,
+    ["wpn_bm16_ds"]         = 4.5,
+    ["wpn_knife_m1"]        = 5.5,
+    ["wpn_beretta_m1"]      = 5.5,
+    ["wpn_mp5_m1"]          = 5.5,
+    ["wpn_aks74u_m1"]       = 5.5,
+    ["wpn_ak74_m1"]         = 6,
+    ["wpn_rpk74_m1"]        = 6.5,
+    ["wpn_lr3500_m1"]       = 6.5,
+    ["wpn_vintorez_coll"]   = 7,
+	["wpn_vintorez_gravi"]  = 7,
+    ["wpn_groza_m1"]        = 7.5,
+    ["outfit_stalker_golmar"] = 7,
+    ["outfit_antirad"]      = 7.5,
+
+	-- Список предметов, которые ЗАПРЕЩЕНО ремонтировать
+    ["wpn_hands_gravity"]   = 0,
+    ["wpn_pistol_future"]   = 0,
+    ["wpn_gauss"]           = 0,
+    ["wpn_gauss_m1"]        = 0,
+    ["wpn_shotgra"]         = 0,
+	["wpn_knife_bayonet_rusty"] = 0,
+	["wpn_knife_anom"]      = 0,
+}
+
 local PROFIT_MARGIN = 1.1 -- Наценка на цену
-local COST_DIVISOR = 5 -- Делитель итоговой цены
+local COST_DIVISOR = 1 -- множитель итоговой цены
 local MIN_REPAIR_HOURS = 1 -- Минимальное время ремонта в часах
 local COST_PER_HOUR = 500 -- Стоимость одного часа (он же делитель)
 
 local function hours_str(hours)
-	local lang = get_console():get_string("language")
+    local lang = get_console():get_string("language")
     if lang ~= "rus" then
         return hours .. (hours == 1 and " hour" or " hours")
     else -- русский
@@ -28,170 +117,200 @@ local function hours_str(hours)
     end
 end
 
--- Прекондишен проверки на необходимость чинить
-function trader_repair_precond(trader, actor)
-	local slots = {0, 1, 2, 6}
-	for _, slot_id in ipairs(slots) do
-		local item = db.actor:item_in_slot(slot_id)
-		if item and 1 > item:condition() + 0.01 then
-			return true
-		end
-	end
-	return false
+-- Расчёт стоимости ремонта (Исправлена рекурсия + добавлена логика запрета/наценок)
+local function calc_repair_cost(item)
+    if not item then return 0 end
+    
+    local section = item:section()
+    local current_margin = PROFIT_MARGIN
+
+    -- Проверяем, есть ли особые условия для этого айтема
+    if SPECIAL_REPAIR_ITEMS[section] then
+        if SPECIAL_REPAIR_ITEMS[section] == 0 then
+            return 0 -- Приравниваем стоимость ремонта к 0 (запрет ремонта)
+        else
+            current_margin = SPECIAL_REPAIR_ITEMS[section] -- Применяем специальную наценку
+        end
+    end
+
+    -- Формула расчета стоимости
+    return math.floor((1 - item:condition()) * item:cost() / COST_DIVISOR) * current_margin
 end
 
--- Расчёт стоимости ремонта
-local function calc_repair_cost(item)
-	return math.floor((1 - item:condition()) * item:cost() * PROFIT_MARGIN / COST_DIVISOR)
+-- Прекондишен проверки на необходимость чинить (Добавлена проверка на запрещенные вещи)
+function trader_repair_precond(trader, actor)
+    local slots = {0, 1, 2, 6}
+    for _, slot_id in ipairs(slots) do
+        local item = db.actor:item_in_slot(slot_id)
+        -- Если предмет в слоте есть и он поврежден хотя бы на 1%
+        if item and 1 > item:condition() + 0.01 then 
+            return true -- Диалог появится, а внутри repair_costs разберется, что выводить
+        end
+    end
+    return false
 end
 
 function trader_check_money_s0(trader, actor)
-	local item = db.actor:item_in_slot(0)
-	if item then
-		local cost = calc_repair_cost(item)
-		return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
-	end
-	return false
+    local item = db.actor:item_in_slot(0)
+    if item then
+        local cost = calc_repair_cost(item)
+        return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
+    end
+    return false
 end
 
 function trader_check_money_s1(trader, actor)
-	local item = db.actor:item_in_slot(1)
-	if item then
-		local cost = calc_repair_cost(item)
-		return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
-	end
-	return false
+    local item = db.actor:item_in_slot(1)
+    if item then
+        local cost = calc_repair_cost(item)
+        return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
+    end
+    return false
 end
 
 function trader_check_money_s2(trader, actor)
-	local item = db.actor:item_in_slot(2)
-	if item then
-		local cost = calc_repair_cost(item)
-		return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
-	end
-	return false
+    local item = db.actor:item_in_slot(2)
+    if item then
+        local cost = calc_repair_cost(item)
+        return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
+    end
+    return false
 end
 
 function trader_check_money_s6(trader, actor)
-	local item = db.actor:item_in_slot(6)
-	if item then
-		local cost = calc_repair_cost(item)
-		return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
-	end
-	return false
+    local item = db.actor:item_in_slot(6)
+    if item then
+        local cost = calc_repair_cost(item)
+        return cost > 0 and db.actor:money() >= cost and 1 > item:condition()
+    end
+    return false
 end
 
 -- Передача оружия/брони аметисту
 local function get_inv_name(section)
-	return ini_sys:r_string(section,"inv_name")
+    return ini_sys:r_string(section,"inv_name")
 end
 
 local function calc_repair_time(item)
-	local damage = 1 - item:condition()
-	local hours = math.max(MIN_REPAIR_HOURS, math.ceil(damage * item:cost() / COST_PER_HOUR))
-	if item:section() == "exo_outfit" and item:condition() < 0.5 then
-		hours = hours * 2
-	end
-	return hours * 3600, hours
+    local damage = 1 - item:condition()
+    local hours = math.max(MIN_REPAIR_HOURS, math.ceil(damage * item:cost() / COST_PER_HOUR))
+    if item:section() == "exo_outfit" and item:condition() < 0.5 then
+        hours = hours * 2
+    end
+    return hours * 3600, hours
 end
 
 local function do_repair(slot_id)
-	local item = db.actor:item_in_slot(slot_id)
-	if not item then return end
+    local item = db.actor:item_in_slot(slot_id)
+    if not item then return end
+    
+    local repair_cost = calc_repair_cost(item)
+    -- Дополнительная проверка безопасности: если ремонт запрещен, прерываем функцию
+    if repair_cost <= 0 then return end
 
-	local item_cond = item:condition()
-	local sect = item:section()
-	local repair_cost = calc_repair_cost(item)
-	local time_sec, hours = calc_repair_time(item)
-
-	if slot_id == 1 or slot_id == 2 then
-		item:unload_magazine(true)
-		item:detach_addons()
-	end
-
-	dialogs.relocate_money(actor, repair_cost, "out")
-	news_manager.relocate_money(actor, "out", repair_cost)
-
-	local task_texture, task_rect = get_texture_info("ui_notification_lost_item")
-	local news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(sect))
-	db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-
-	olr.del(item)
-	xvars.cur_rest_wpn = tostring(sect)
-
-	if sect == "exo_outfit" and item_cond < 0.5 then
-		news_manager.send_tip(db.actor, game.translate_string("trader_repiar_armor_s6_0"), 16, "item", 25000)
-	end
-
-	olr_timers.st_timer_game("item_repair_bar_timer", time_sec, "bar_repair.item_repair_bar_timer()")
-	db.actor:disable_info_portion("bar_trader_repair_gotov")
-	db.actor:give_info_portion("ametist_go_to_stanok_info")
+    local item_cond = item:condition()
+    local sect = item:section()
+    local time_sec, hours = calc_repair_time(item)
+    
+    if slot_id == 1 or slot_id == 2 then
+        item:unload_magazine(true)
+        item:detach_addons()
+    end
+    
+    dialogs.relocate_money(actor, repair_cost, "out")
+    news_manager.relocate_money(actor, "out", repair_cost)
+    
+    local task_texture, task_rect = get_texture_info("ui_notification_lost_item")
+    local news_text = "%c[255,160,181,169]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(sect))
+    db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
+    
+    olr.del(item)
+    xvars.cur_rest_wpn = tostring(sect)
+    
+    if sect == "exo_outfit" and item_cond < 0.5 then
+        news_manager.send_tip(db.actor, game.translate_string("trader_repiar_armor_s6_0"), 16, "item", 25000)
+    end
+    
+    olr_timers.st_timer_game("item_repair_bar_timer", time_sec, "bar_repair.item_repair_bar_timer()")
+    db.actor:disable_info_portion("bar_trader_repair_gotov")
+    db.actor:give_info_portion("ametist_go_to_stanok_info")
 end
 
 function item_repair_bar_timer()
-	news_manager.send_tip(db.actor, game.translate_string("item_repair_bar_timer_0"), nil, "weapon", 10000, nil, nil, true, "bar_stalker_ametist_name")
-	db.actor:give_info_portion("ametist_repair_gotovo_done_info")
-	db.actor:disable_info_portion("ametist_go_to_stanok_info")
+    news_manager.send_tip(db.actor, game.translate_string("item_repair_bar_timer_0"), nil, "weapon", 10000, nil, nil, true, "bar_stalker_ametist_name")
+    db.actor:give_info_portion("ametist_repair_gotovo_done_info")
+    db.actor:disable_info_portion("ametist_go_to_stanok_info")
 end
 
 function trader_repiar_weapon_s0(trader, actor)
-	do_repair(0)
+    do_repair(0)
 end
 
 function trader_repiar_weapon_s1(trader, actor)
-	do_repair(1)
+    do_repair(1)
 end
 
 function trader_repiar_weapon_s2(trader, actor)
-	do_repair(2)
+    do_repair(2)
 end
 
 function trader_repiar_armor_s6(trader, actor)
-	do_repair(6)
+    do_repair(6)
 end
 
--- Вывод стоимости ремонта
+-- Вывод стоимости ремонта (также выводит сообщение, если ремонт невозможен)
 function repair_costs(first_speaker, second_speaker)
-	local task_texture, task_rect = get_texture_info("ui_notification_update_money")
+    local task_texture, task_rect = get_texture_info("ui_notification_update_money")
+    if db.actor == nil then return end
 
-	if db.actor == nil then return end
+    local slot_info = {
+        {slot = 0, list_id = "list_trader_repair_3"},
+        {slot = 1, list_id = "list_trader_repair_0"},
+        {slot = 2, list_id = "list_trader_repair_1"},
+        {slot = 6, list_id = "list_trader_repair_2"},
+    }
 
-	local slot_info = {
-		{slot = 0, list_id = "list_trader_repair_3"},
-		{slot = 1, list_id = "list_trader_repair_0"},
-		{slot = 2, list_id = "list_trader_repair_1"},
-		{slot = 6, list_id = "list_trader_repair_2"},
-	}
-
-	for _, info in ipairs(slot_info) do
-		local item = db.actor:item_in_slot(info.slot)
-		if item then
-			local cost = calc_repair_cost(item)
-			local time_sec, hours = calc_repair_time(item)
-			if cost > 0 then
-				local msg = game.translate_string(info.list_id).." %c[255,238,155,23]"..cost.."$".."\\n".."%c[default]"..""..game.translate_string("list_trader_repair_time").." %c[255,238,155,23]"..hours_str(hours)..""
-				db.actor:give_talk_message(msg, task_texture, task_rect, "iconed_answer_item")
-			end
-		end
-	end
+    for _, info in ipairs(slot_info) do
+        local item = db.actor:item_in_slot(info.slot)
+        if item then
+            local cost = calc_repair_cost(item)
+            local time_sec, hours = calc_repair_time(item)
+            
+            local msg = ""
+            if cost > 0 then
+                -- Стандартный вывод стоимости и времени ремонта
+                msg = game.translate_string(info.list_id).." %c[255,238,155,23]"..cost.."$".."\\n".."%c[default]"..""..game.translate_string("list_trader_repair_time").." %c[255,238,155,23]"..hours_str(hours)..""
+            else
+                -- Вывод текста о невозможности ремонта (когда стоимость равна 0)
+                -- Используется строка под идентификатором st_repair_impossible
+                msg = game.translate_string(info.list_id).."\\n".."%c[255,255,50,50]"..game.translate_string("st_repair_impossible").."%c[default]"
+            end
+            
+            db.actor:give_talk_message(msg, task_texture, task_rect, "iconed_answer_item")
+        end
+    end
 end
 
 -- Отдача починенного оружия/брони
 function daem_pochinenyy_item_rem()
-	local currep = xvars.cur_rest_wpn
-	if not ini_sys:section_exist(currep) then
-		log1("! ERROR: daem_pochinenyy_item_rem have non existing section!")
-		olr.hud_tip("", "Произошла ошибка, секции записанной в xvars.cur_rest_wpn не существует.".."\\n".."Для исключения вылета используется эта заглушка!", 5)
-		return
-	end
-	local wpn = alife():create(currep, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
-	local task_texture, task_rect = get_texture_info("ui_notification_found_item")
-	if wpn then
-		level.client_spawn_manager():add(wpn.id, 0, function(id,obj) if obj:is_weapon_magazined() then obj:unload_magazine(false) end end)
-		local news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(currep))
-		db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
-	end
-	xvars.cur_rest_wpn = ""
-	db.actor:disable_info_portion("ametist_repair_gotovo_done_info")
-	db.actor:give_info_portion("bar_trader_repair_gotov")
+    local currep = xvars.cur_rest_wpn
+    if not ini_sys:section_exist(currep) then
+        log1("! ERROR: daem_pochinenyy_item_rem have non existing section!")
+        olr.hud_tip("", "Произошла ошибка, секции записанной в xvars.cur_rest_wpn не существует.".."\\n".."Для исключения вылета используется эта заглушка!", 5)
+        return
+    end
+    local wpn = alife():create(currep, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+    local task_texture, task_rect = get_texture_info("ui_notification_found_item")
+    if wpn then
+        level.client_spawn_manager():add(wpn.id, 0, function(id,obj)
+            if obj:is_weapon_magazined() then
+                obj:unload_magazine(false)
+            end
+        end)
+        local news_text = "%c[255,160,181,169]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(currep))
+        db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
+    end
+    xvars.cur_rest_wpn = ""
+    db.actor:disable_info_portion("ametist_repair_gotovo_done_info")
+    db.actor:give_info_portion("bar_trader_repair_gotov")
 end

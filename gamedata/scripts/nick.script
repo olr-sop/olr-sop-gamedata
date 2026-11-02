@@ -2387,26 +2387,6 @@ function has_two_batony()
 	return nik_dialog.item_much("bread",2) ~= false 
 end
 
-function fix_rostok_slizni_weapons()
-	for k, v in pairs(db.storage) do
-		local npc = level.object_by_id(k)
-		if npc and npc:is_stalker() and npc:position():distance_to(db.actor:position()) < 100 and npc:character_community() == "sliznyaki" then
-			npc:iterate_inventory(
-				function(npc, obj)
-					if obj and obj:is_weapon_magazined() then
-						npc:drop_item(obj)
-						olr.del(obj)
-					end
-					--local wpn = bos:best_weapon()
-					--if wpn then
-					--	wpn:set_ammo_elapsed(5)
-					--end
-				end,
-				npc
-			)
-		end
-	end
-end
 
 function del_kamaz_questmono()
 	olr.del_by_name("lvl7_dcccdewry_m_car_0000")
@@ -7261,7 +7241,7 @@ end
 
 function art_koluchka_give()
 	nik_dialog.out_item_much("af_thorn_black",1)
-	olr.give_item("conserva")
+	olr.give_item("wpn_pm_m1")
 end
 
 function create_psystab()
@@ -7852,7 +7832,7 @@ function buy_traders_zonamap_action()
 	if sobj then
 		olr.add_spot_on_map(sobj.id, "crlc_big", game.translate_string("st_nick_name_sci_camp"))
 	end
-	local sobj = sim:object("lvl11_deadcity_physic_object_0007")
+	local sobj = sim:object("lvl11_deadcity_stalker_0001")
 	if sobj then
 		olr.add_spot_on_map(sobj.id, "crlc_big", game.translate_string("st_nick_name_trader_freedom"))
 	end
@@ -8326,7 +8306,7 @@ function otdaem_has_bablo_patnashka_osved(first_speaker, second_speaker)
 end
 
 function precond_bablo_patnashka_osved(actor,npc)
-	return actor:money() >= 15000
+	return actor:money() >= 5000
 end
 
 function give_bablo_patnashka_osved(t1,t2)
@@ -8336,7 +8316,7 @@ function give_bablo_patnashka_osved(t1,t2)
 	if npc:id()==db.actor:id() then
 		npc=t2
 	end
-	dialogs.relocate_money(npc,15000,"out")
+	dialogs.relocate_money(npc,5000,"out")
 	olr_timers.st_timer("braindok_navodka_timer_patnashka", 11000, "nick.braindok_navodka_timer_patnashka()")
 end
 
@@ -10983,7 +10963,7 @@ function otdaem_stbrony()
 end
 
 function precond_bablo_varka_silgrav(actor,npc)
-	return actor:money() >= 5000
+	return actor:money() >= 1500
 end
 
 function give_bablo_varka_silgrav(t1,t2)
@@ -10991,7 +10971,7 @@ function give_bablo_varka_silgrav(t1,t2)
 	if npc:id()==db.actor:id() then
 		npc=t2
 	end
-	dialogs.relocate_money(npc,5000,"out")
+	dialogs.relocate_money(npc,1500,"out")
 end
 
 function daem_silgrav(first_speaker, second_speaker)	
@@ -11794,7 +11774,7 @@ function dva_k_have(actor,npc)
 	return actor:money() >= 2000
 end
 
-function for_k_have(actor,npc)
+function five_k_have(actor,npc)
 	return actor:money() >= 5000
 end
 
@@ -11811,7 +11791,7 @@ function pat_k_have(actor,npc)
 end
 
 function leader_freedom_bablodoor_precond(actor,npc)
-	return actor:money() >= 10000
+	return actor:money() >= 4000
 end
 
 function dvepatsot_k_have(actor,npc)
@@ -11854,7 +11834,7 @@ function dva_give_money(t1,t2)
 	dialogs.relocate_money(npc,2000,"out")
 end
 
-function for_give_money(t1,t2)
+function five_give_money(t1,t2)
 	local npc=t1
 	if npc:id()==db.actor:id() then
 		npc=t2
@@ -11892,6 +11872,14 @@ function desat_give_money(t1,t2)
 		npc=t2
 	end
 	dialogs.relocate_money(npc,10000,"out")
+end
+
+function fourk_give_money(t1,t2)
+	local npc=t1
+	if npc:id()==db.actor:id() then
+		npc=t2
+	end
+	dialogs.relocate_money(npc,4000,"out")
 end
 
 function semisotka_dolgtabl_give_money(t1,t2)
@@ -12151,7 +12139,6 @@ end
 
 function progulka_prisli_plos_lead4()
 	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead4"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", true, "st_slizen_name")
-	nick.fix_rostok_slizni_weapons()
 	local pm_shoot = xr_sound.get_safe_sound_object([[weapons\pm\shoot]])
 	pm_shoot:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local tinnitus = xr_sound.get_safe_sound_object([[actor\tinnitus]])

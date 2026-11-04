@@ -1,53 +1,329 @@
 -- file:		UI_MM_OPT_MAIN.script
 -- created:		01.07.2005
--- description:	options dialog
+-- description:	options dialog + settings apply controller
 -- author:		Serge Vynnychenko
 --
+
+-- Settings boxes are persistent windows owned by a hidden router.
+-- They are initialized once and never re-initialized from their own callbacks.
+class "settings_router" (CUIScriptWnd)
+
+function settings_router:__init() super()
+	self:Init(0, 0, 1, 1)
+end
+
+function settings_router:__finalize()
+end
+
+local settings_controller = {
+	phase		= nil,		-- nil | "confirm" | "notice"
+	deadline	= 0,
+	need_vid	= false,
+	need_mode	= false,
+	need_sys	= false,
+	need_clean	= false,
+	menu		= nil,
+	holder		= nil,
+	router		= nil,
+	confirm_box	= nil,
+	notice_box	= nil,
+	snapshot	= "olr_opt_backup",
+}
+
+local function controller_get_holder()
+	if settings_controller.holder then
+		return settings_controller.holder
+	end
+	local mm = settings_controller.menu
+	if mm then
+		settings_controller.holder = mm:GetHolder()
+	end
+	return settings_controller.holder
+end
+
+function controller_set_menu(menu)
+	settings_controller.menu = menu
+	if menu then
+		settings_controller.holder = menu:GetHolder() or settings_controller.holder
+	end
+end
+
+local function holder_show(h, win, hide_indicators)
+	if not h or not win then return end
+	if h.ShowDialog then
+		h:ShowDialog(win, hide_indicators ~= false)
+	elseif not win:IsShown() then
+		h:start_stop_menu(win, hide_indicators ~= false)
+	end
+end
+
+local function holder_hide(h, win)
+	if not h or not win then return end
+	if h.HideDialog then
+		h:HideDialog(win)
+	elseif win:IsShown() then
+		h:start_stop_menu(win, true)
+	end
+end
+
+local function controller_reset()
+	settings_controller.phase		= nil
+	settings_controller.deadline	= 0
+	settings_controller.need_vid	= false
+	settings_controller.need_mode	= false
+	settings_controller.need_sys	= false
+	settings_controller.need_clean	= false
+end
+
+local function controller_confirm_text()
+	local p = settings_controller
+	local left = p.deadline - math.floor(time_global_async() / 1000)
+	if left < 0 then left = 0 end
+	local text = string.format("%s %d %s",
+		game.translate_string("ui_mm_settings_applied"), left,
+		game.translate_string("ui_st_secs"))
+	if p.need_clean then
+		text = text .. "\n" .. game.translate_string("ui_mm_restart_clean_short")
+	elseif p.need_sys then
+		text = text .. "\n" .. game.translate_string("ui_mm_restart_required_short")
+	end
+	return text
+end
+
+local function controller_ensure_router()
+	if settings_controller.router then return end
+
+	local r = settings_router()
+	settings_controller.router = r
+
+	local cb = CUIMessageBoxEx()
+	cb:Init("message_box_settings_applied")
+	r:Register(cb, "settings_confirm")
+	r:AddCallback("settings_confirm", ui_events.MESSAGE_BOX_YES_CLICKED,	controller_keep,		r)
+	r:AddCallback("settings_confirm", ui_events.MESSAGE_BOX_NO_CLICKED,	controller_revert,		r)
+	r:AddCallback("settings_confirm", ui_events.MESSAGE_BOX_CANCEL_CLICKED,	controller_revert,		r)
+	settings_controller.confirm_box = cb
+
+	local nb = CUIMessageBoxEx()
+	nb:Init("message_box_restart_required")
+	r:Register(nb, "settings_notice")
+	r:AddCallback("settings_notice", ui_events.MESSAGE_BOX_OK_CLICKED,		controller_notice_ok,	r)
+	r:AddCallback("settings_notice", ui_events.MESSAGE_BOX_CANCEL_CLICKED,	controller_notice_ok,	r)
+	settings_controller.notice_box = nb
+end
+
+local function controller_show_confirm()
+	controller_ensure_router()
+	local cb = settings_controller.confirm_box
+	if not cb then return end
+	holder_hide(controller_get_holder(), cb)
+	cb:Show(false)
+	cb:SetText(controller_confirm_text())
+	holder_show(controller_get_holder(), cb, true)
+end
+
+local function controller_show_notice()
+	controller_ensure_router()
+	local nb = settings_controller.notice_box
+	if not nb then return end
+	local text_id = settings_controller.need_clean and "ui_mm_restart_clean_short" or "ui_mm_need_restart"
+	holder_hide(controller_get_holder(), nb)
+	nb:Show(false)
+	nb:SetText(game.translate_string(text_id))
+	holder_show(controller_get_holder(), nb, true)
+end
+
+function has_pending_state()
+	return settings_controller.phase ~= nil
+end
+
+function controller_close_options(dlg)
+	local h = dlg and dlg:GetHolder() or settings_controller.holder
+	local mm = settings_controller.menu
+	if h and mm then
+		holder_show(h, mm, true)
+	end
+	holder_hide(h, dlg)
+	if mm then
+		mm:NeedCenterCursor(false)
+	end
+	_G.olr_options_open = false
+end
+
+function controller_apply(dlg)
+	if settings_controller.phase then return end
+
+	settings_controller.holder = dlg:GetHolder()
+
+	local opt = COptionsManager()
+	local console = get_console()
+
+	opt:SaveValues("mm_opt_video_preset")
+	opt:SaveValues("mm_opt_controls")
+	opt:SaveValues("key_binding")
+	opt:SaveValues("mm_opt_video")
+	opt:SaveValues("mm_opt_video_adv")
+	opt:SaveValues("mm_opt_video_retromode")
+	opt:SaveValues("mm_opt_gameplay")
+	opt:SaveValues("mm_opt_sound")
+	opt:SaveValues("mm_opt_controls")
+
+	settings_controller.need_vid = opt:NeedVidRestart()
+	if opt.NeedVidModeConfirm then
+		settings_controller.need_mode = opt:NeedVidModeConfirm()
+	else
+		settings_controller.need_mode = settings_controller.need_vid
+	end
+	settings_controller.need_sys = opt:NeedSystemRestart()
+	settings_controller.need_clean = opt:NeedCleanSCache()
+
+	opt:OptionsPostAccept()
+
+	controller_close_options(dlg)
+
+	if settings_controller.need_mode then
+		settings_controller.phase = "confirm"
+		settings_controller.deadline = math.floor(time_global_async() / 1000) + 15
+		controller_show_confirm()
+		return
+	end
+
+	console:execute("cfg_save")
+
+	if settings_controller.need_sys or settings_controller.need_clean then
+		settings_controller.phase = "notice"
+		controller_show_notice()
+	else
+		controller_reset()
+	end
+end
+
+function controller_keep()
+	if settings_controller.phase ~= "confirm" then return end
+	holder_hide(controller_get_holder(), settings_controller.confirm_box)
+	controller_reset()
+	get_console():execute("cfg_save")
+end
+
+function controller_revert()
+	if settings_controller.phase ~= "confirm" then return end
+
+	local need_vid = settings_controller.need_vid
+	holder_hide(controller_get_holder(), settings_controller.confirm_box)
+
+	controller_reset()
+	get_console():execute("cfg_load " .. settings_controller.snapshot)
+
+	local mm = settings_controller.menu
+	if mm then
+		mm:OpenOptions(true)
+	end
+
+	if need_vid then
+		get_console():execute("vid_restart")
+	end
+end
+
+function controller_notice_ok()
+	if settings_controller.phase ~= "notice" then return end
+	holder_hide(controller_get_holder(), settings_controller.notice_box)
+	controller_reset()
+end
+
+function controller_update()
+	local p = settings_controller
+
+	if p.phase == "confirm" then
+		if p.confirm_box and p.confirm_box:IsShown() then
+			p.confirm_box:SetText(controller_confirm_text())
+		end
+		if math.floor(time_global_async() / 1000) >= p.deadline then
+			controller_revert()
+		end
+	end
+end
+
+function controller_on_menu_reloaded(menu)
+	if menu then
+		settings_controller.menu = menu
+		settings_controller.holder = menu:GetHolder() or settings_controller.holder
+	end
+
+	local p = settings_controller
+
+	if not p.phase then
+		if _G.olr_options_open and menu then
+			menu:OpenOptions(true)
+		end
+		return
+	end
+
+	controller_ensure_router()
+
+	if p.phase == "confirm" then
+		local cb = p.confirm_box
+		if cb then
+			holder_hide(controller_get_holder(), cb)
+			cb:Show(false)
+			cb:Init("message_box_settings_applied")
+			cb:Show(false)
+			cb:SetText(controller_confirm_text())
+			holder_show(controller_get_holder(), cb, true)
+		end
+	elseif p.phase == "notice" then
+		local nb = p.notice_box
+		if nb then
+			holder_hide(controller_get_holder(), nb)
+			nb:Show(false)
+			nb:Init("message_box_restart_required")
+			nb:Show(false)
+			nb:SetText(game.translate_string(p.need_clean and "ui_mm_restart_clean_short" or "ui_mm_need_restart"))
+			holder_show(controller_get_holder(), nb, true)
+		end
+	end
+end
 
 class "options_dialog" (CUIScriptWnd)
 
 function options_dialog:__init() super()
-   self:SetFont(GetFontMicron12()) --set base font for dialog.
+	self:SetFont(GetFontMicron12())
 
 	self.m_preconditions			= {}
 	self.m_preconditions_retromode	= {}
+	self.subview					= "video"
+	self.last_status				= nil
+	self.last_dirty					= {}
+	self.last_any_dirty				= nil
 
-	self:InitControls		()
-	self:InitCallBacks		()
-	self:NeedCenterCursor	(false)
-	self.tab:SetActiveTab	("video")
-		self.combo_renderer:disable_id		(1)
+	self:InitControls()
+	self:InitCallBacks()
+	self:NeedCenterCursor(false)
+	self.tab:SetActiveTab("video")
+	self.combo_renderer:disable_id(1)
 end
 
 function options_dialog:__finalize()
-
 end
 
 function options_dialog:InitControls()
-	-- [ui] uniform-scale support: center the authored 1024x768 group on the virtual canvas;
-	-- in legacy mode k is non-uniform and dx/dy degenerate to 0 (old behavior)
-	-- [ui] canvas offsets: wide screens carry extra width (centered 1024 group);
-	-- tall screens (5:4) are stretched by the engine to fill, so both offsets are 0.
-	local ui_kx = device().width /1024
-	local ui_ky = device().height/768
+	-- [ui] uniform-scale support: center the authored 1024x768 group on the virtual canvas
+	local ui_kx = device().width / 1024
+	local ui_ky = device().height / 768
 	local ui_dx = 0
 	local ui_dy = 0
 	if ui_kx > ui_ky then
-		ui_dx = (device().width/ui_ky - 1024)/2
+		ui_dx = (device().width / ui_ky - 1024) / 2
 	end
-	self:Init(ui_dx,ui_dy,1024,768)
+	self:Init(ui_dx, ui_dy, 1024, 768)
 	self:Enable(true)
 
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_mm_opt.xml")
 
-
 	xml:InitStatic("back_video", self)
 	xml:InitStatic("background", self)
 	xml:InitStatic("rug_video", self)
 	local bl = xml:InitStatic("back_left", self)
-	-- [ui] side stubs: cover canvas from screen edges to the centered group;
-	-- on square aspects (dx=0) the stubs are hidden (bg fills via canvas_h)
 	if ui_dx > 0 then
 		bl:SetWndPos(-ui_dx, 0)
 		bl:SetWidth(ui_dx)
@@ -64,40 +340,40 @@ function options_dialog:InitControls()
 		br:Show(false)
 	end
 	self.dialog = xml:InitStatic("main_dialog:dialog", self)
-
 	xml:InitStatic("main_dialog:cap_options", self.dialog)
 
 	self.dlg_video = ui_mm_opt_video.opt_video()
-	self.dlg_video:InitControls(55,74, xml, self)
+	self.dlg_video:InitControls(55, 74, xml, self)
 	self.dialog:AttachChild(self.dlg_video)
 
 	self.dlg_sound = ui_mm_opt_sound.opt_sound()
-	self.dlg_sound:InitControls(55,74, xml, self)
+	self.dlg_sound:InitControls(55, 74, xml, self)
 	self.dlg_sound:Show(false)
 	self.dialog:AttachChild(self.dlg_sound)
 
 	self.dlg_gameplay = ui_mm_opt_gameplay.opt_gameplay()
-	self.dlg_gameplay:InitControls(55,74, xml, self)
+	self.dlg_gameplay:InitControls(55, 74, xml, self)
 	self.dlg_gameplay:Show(false)
 	self.dialog:AttachChild(self.dlg_gameplay)
 
 	self.dlg_controls = ui_mm_opt_controls.opt_controls()
-	self.dlg_controls:InitControls(55,74, xml, self)
+	self.dlg_controls:InitControls(55, 74, xml, self)
 	self.dlg_controls:Show(false)
 	self.dialog:AttachChild(self.dlg_controls)
 
 	self.dlg_video_adv = ui_mm_opt_video_adv.opt_video_adv()
-	self.dlg_video_adv:InitControls(55,74, xml, self)
+	self.dlg_video_adv:InitControls(55, 74, xml, self)
 	self.dlg_video_adv:Show(false)
 	self.dialog:AttachChild(self.dlg_video_adv)
 
 	self.dlg_video_retromode = ui_mm_opt_retromode.opt_retromode()
-	self.dlg_video_retromode:InitControls(55,74, xml, self)
+	self.dlg_video_retromode:InitControls(55, 74, xml, self)
 	self.dlg_video_retromode:Show(false)
 	self.dialog:AttachChild(self.dlg_video_retromode)
 
 	local btn
 	btn = xml:Init3tButton("main_dialog:btn_accept", self)
+	self.btn_accept = btn
 	self:Register(btn, "btn_accept")
 	btn = xml:Init3tButton("main_dialog:btn_cancel", self)
 	self:Register(btn, "btn_cancel")
@@ -105,12 +381,23 @@ function options_dialog:InitControls()
 	self.tab = xml:InitTab("main_dialog:tab", self.dialog)
 	self:Register(self.tab, "tab")
 
-	self.message_box			= CUIMessageBoxEx()
-	self:Register				(self.message_box, "mb")
+	self.status_bar = xml:InitStatic("main_dialog:status_bar", self)
+	self.status_bar:SetText("")
 
-	self.b_restart_system_shown	= false
-	self.timer					= nil
+	self.tab_dots = {
+		video		= xml:InitStatic("main_dialog:dot_video", self.dialog),
+		gameplay	= xml:InitStatic("main_dialog:dot_gameplay", self.dialog),
+		sound		= xml:InitStatic("main_dialog:dot_sound", self.dialog),
+		controls	= xml:InitStatic("main_dialog:dot_controls", self.dialog),
+	}
+	for _, dot in pairs(self.tab_dots) do
+		dot:SetText("*")
+		dot:Enable(false)
+		dot:Show(false)
+	end
 
+	local opt = COptionsManager()
+	self.has_dirty_api = (opt.IsGroupChanged ~= nil)
 end
 
 function options_dialog:SetCurrentValues()
@@ -140,17 +427,19 @@ function options_dialog:SetCurrentValues()
 	opt:SetCurrentValues("key_binding")
 	opt:SaveBackupValues("key_binding")
 
-
 	self:UpdateDependControls()
 
 	if self.btn_retromode then
-		local retromode_supported = self:IsRetromodeSupported()
-		if not retromode_supported then
+		local renderer_supported = self:IsRetromodeSupported()
+		local available = (alife() == nil) and renderer_supported
+		if not renderer_supported then
 			self.check_retromode:SetCheck(false)
 		end
-		self.check_retromode:Enable(retromode_supported)
-		self.btn_retromode:Enable(retromode_supported and self.check_retromode:GetCheck())
+		self.check_retromode:Enable(available)
+		self.btn_retromode:Enable(available and self.check_retromode:GetCheck())
 	end
+
+	self:UpdateStatus()
 end
 
 function options_dialog:IsRetromodeSupported()
@@ -162,23 +451,12 @@ function options_dialog:UpdateDependControls()
 	self.scroll_v:Clear()
 	local _current_id = self.combo_renderer:CurrentID()
 
-	for i,j in pairs(self.m_preconditions) do
-		if(j.func(_current_id)) then
+	for i, j in ipairs(self.m_preconditions) do
+		if j.func(_current_id) then
 			self.scroll_v:AddWindow(j.control, true)
 			j.control:SetAutoDelete(false)
 		end
 	end
-
-	--local max_texture_lod = 4
-	--local min_texture_lod = 0
-
-	--if _current_id ~= 0 then
-	--	if not is_enough_address_space_available()	then
-	--		min_texture_lod = 1
-	--	end
-	--end
-
-	--self.texture_lod_track:SetOptIBounds(min_texture_lod, max_texture_lod)
 end
 
 function options_dialog:InitCallBacks()
@@ -188,6 +466,7 @@ function options_dialog:InitCallBacks()
 	self:AddCallback("btn_cancel",			ui_events.BUTTON_CLICKED,	self.OnBtnCancel,			self)
 	self:AddCallback("btn_default_graphic",	ui_events.BUTTON_CLICKED,	self.OnBtnDefGraph,			self)
 	self:AddCallback("btn_default_sound",	ui_events.BUTTON_CLICKED,	self.OnBtnDefSound,			self)
+	self:AddCallback("btn_default_video",	ui_events.BUTTON_CLICKED,	self.OnBtnDefVideo,			self)
 	self:AddCallback("combo_renderer",		ui_events.LIST_ITEM_SELECT,	self.UpdateDependControls,	self)
 	self:AddCallback("combo_preset",		ui_events.LIST_ITEM_SELECT,	self.OnPresetChanged,		self)
 	self:AddCallback("check_retromode",		ui_events.BUTTON_CLICKED,	self.OnRetromodeChanged,	self)
@@ -196,26 +475,88 @@ function options_dialog:InitCallBacks()
 	self:AddCallback("btn_simply_graphic",	ui_events.BUTTON_CLICKED,	self.OnSimplyGraphic,		self)
 	self:AddCallback("btn_keyb_default",	ui_events.BUTTON_CLICKED,	self.OnBtnKeyDefault,		self)
 	self:AddCallback("check_crosshair",		ui_events.BUTTON_CLICKED,	self.OnCheckCrossChanged,	self)
+end
 
-	self:AddCallback("btn_cancel_download",	ui_events.BUTTON_CLICKED,	self.OnBtn_CancelDownload,	self)
+function options_dialog:IsGroupDirty(group)
+	if not self.has_dirty_api then return false end
+	return COptionsManager():IsGroupChanged(group)
+end
 
-	self:AddCallback("mb",					ui_events.MESSAGE_BOX_YES_CLICKED, self.OnApplyChanges, self)
-	self:AddCallback("mb",					ui_events.MESSAGE_BOX_NO_CLICKED, self.OnDiscardChanges,self)
+function options_dialog:UpdateStatus()
+	if not self.has_dirty_api then
+		if self.btn_accept then self.btn_accept:Enable(true) end
+		if self.status_bar then
+			if self.subview == "video" then
+				self.status_bar:SetText(game.translate_string("ui_mm_status_restart_hint"))
+			else
+				self.status_bar:SetText("")
+			end
+		end
+		return
+	end
+
+	local dirty = {
+		video		= self:IsGroupDirty("mm_opt_video") or self:IsGroupDirty("mm_opt_video_preset")
+						or self:IsGroupDirty("mm_opt_video_adv") or self:IsGroupDirty("mm_opt_video_retromode"),
+		gameplay	= self:IsGroupDirty("mm_opt_gameplay"),
+		sound		= self:IsGroupDirty("mm_opt_sound"),
+		controls	= self:IsGroupDirty("mm_opt_controls") or self:IsGroupDirty("key_binding"),
+	}
+
+	local any = false
+	for _, v in pairs(dirty) do
+		if v then any = true end
+	end
+
+	for id, dot in pairs(self.tab_dots or {}) do
+		if self.last_dirty[id] ~= dirty[id] then
+			dot:Show(dirty[id])
+		end
+	end
+	self.last_dirty = dirty
+
+	if self.last_any_dirty ~= any then
+		self.btn_accept:Enable(any)
+		self.last_any_dirty = any
+	end
+
+	local text
+	if self.subview == "advanced" then
+		text = game.translate_string("ui_mm_status_advanced")
+	elseif self.subview == "retromode" then
+		text = game.translate_string("ui_mm_status_retromode")
+	elseif any then
+		text = game.translate_string("ui_mm_status_unsaved")
+	elseif self.subview == "video" then
+		text = game.translate_string("ui_mm_status_restart_hint")
+	else
+		text = ""
+	end
+
+	if self.last_status ~= text then
+		self.status_bar:SetText(text)
+		self.last_status = text
+	end
 end
 
 function options_dialog:OnBtnKeyDefault()
-	local console			= get_console()
-	console:execute			("default_bindings")
+	local console = get_console()
+	console:execute("default_bindings")
+	console:execute("mouse_sens 0.23")
+	console:execute("mouse_invert off")
 
-	local opt				= COptionsManager()
-	opt:SetCurrentValues	("mm_opt_controls")
-	opt:SetCurrentValues	("key_binding")
+	local opt = COptionsManager()
+	opt:SetCurrentValues("mm_opt_controls")
+	opt:SetCurrentValues("key_binding")
+	self:UpdateStatus()
 end
 
 function options_dialog:OnPresetChanged()
-	local opt					= COptionsManager()
-	opt:SetCurrentValues		("mm_opt_video")
-	opt:SetCurrentValues		("mm_opt_video_adv")
+	local opt = COptionsManager()
+	opt:SetCurrentValues("mm_opt_video")
+	opt:SetCurrentValues("mm_opt_video_adv")
+	opt:SetCurrentValues("mm_opt_video_retromode")
+	opt:SetCurrentValues("mm_opt_controls")
 end
 
 function options_dialog:OnCheckCrossChanged()
@@ -224,74 +565,65 @@ function options_dialog:OnCheckCrossChanged()
 	self.check_hud_info:Enable(self.check_crosshair:GetCheck())
 end
 
-
 function options_dialog:OnRetromodeChanged()
 	self:UpdateDependControls()
-	local retromode_supported = self:IsRetromodeSupported()
-	if not retromode_supported then
+	local renderer_supported = self:IsRetromodeSupported()
+	local available = (alife() == nil) and renderer_supported
+	if not renderer_supported then
 		self.check_retromode:SetCheck(false)
 	end
-	self.btn_retromode:Enable(retromode_supported and self.check_retromode:GetCheck())
+	self.btn_retromode:Enable(available and self.check_retromode:GetCheck())
 end
 
 function options_dialog:OnBtnDefGraph()
 	local opt = COptionsManager()
-	opt:SendMessage2Group("mm_opt_video","set_default_value")
-	opt:SendMessage2Group("mm_opt_video_retromode","set_default_value")
+	opt:SendMessage2Group("mm_opt_video", "set_default_value")
+	opt:SendMessage2Group("mm_opt_video_retromode", "set_default_value")
+end
+
+function options_dialog:OnBtnDefVideo()
+	-- the quality preset "Default" is the single source of video defaults
+	get_console():execute("_preset Default")
+
+	local opt = COptionsManager()
+	opt:SetCurrentValues("mm_opt_video_preset")
+	self:OnPresetChanged()
+	self:OnRetromodeChanged()
+	self:UpdateStatus()
 end
 
 function options_dialog:OnBtnDefSound()
-	local opt = COptionsManager()
-	opt:SendMessage2Group("mm_opt_sound","set_default_value")
+	-- stage the engine defaults in the UI; they are written to the console on Apply
+	local snd = self.dlg_sound
+	if snd then
+		if snd.track_master and snd.track_master.SetValue then snd.track_master:SetValue(1.0) end
+		if snd.track_music and snd.track_music.SetValue then snd.track_music:SetValue(1.0) end
+		if snd.check_eax then snd.check_eax:SetCheck(true) end
+	end
+
+	self:UpdateStatus()
 end
 
 function options_dialog:OnBtnAccept()
-
-	local opt = COptionsManager()
-	local console = get_console()
-
-	console:execute("cfg_save tmp")
-
-	opt:SaveValues("mm_opt_video_preset")
-	opt:SaveValues("mm_opt_controls")
-	opt:SaveValues("key_binding")
-	opt:SaveValues("mm_opt_video")
-	opt:SaveValues("mm_opt_video_adv")
-	opt:SaveValues("mm_opt_video_retromode")
-	opt:SaveValues("mm_opt_gameplay")
-	opt:SaveValues("mm_opt_sound")
-	opt:SaveValues("mm_opt_controls")
-
-	if opt:NeedVidRestart() then
-		_G.b_discard_settings_shown = true
-		self.message_box:Init("message_box_accept_vid_restart")
-		self.message_box:SetText(string.format("%s %d% s", game.translate_string("ui_mm_confirm_changes"), 15, game.translate_string("mp_si_sec")))
-		self:GetHolder():start_stop_menu(self.message_box,true)
-	else
-		self:OnApplyChanges()
-	end
+	controller_apply(self)
 end
 
 function options_dialog:OnBtnCancel()
-	local opt = COptionsManager()
-	opt:UndoGroup("mm_opt_video_preset")
-	opt:UndoGroup("mm_opt_video")
-	opt:UndoGroup("mm_opt_video_adv")
-	opt:UndoGroup("mm_opt_video_retromode")
-	opt:UndoGroup("mm_opt_sound")
-	opt:OptionsPostAccept()
+	if settings_controller.phase then return end
 
-	self:GetHolder():start_stop_menu	(self.owner, true) --new(show main window)
-	self:GetHolder():start_stop_menu	(self,true)
-	self.owner:Show						(true)
+	-- cancel restores the snapshot taken when the dialog was opened
+	get_console():execute("cfg_load " .. settings_controller.snapshot)
+	self:SetCurrentValues()
+
+	controller_close_options(self)
 end
 
 function options_dialog:OnTabChange()
-	self.dlg_video:Show		(false)
-	self.dlg_sound:Show		(false)
-	self.dlg_gameplay:Show	(false)
-	self.dlg_controls:Show	(false)
-	self.dlg_video_adv:Show	(false)
+	self.dlg_video:Show(false)
+	self.dlg_sound:Show(false)
+	self.dlg_gameplay:Show(false)
+	self.dlg_controls:Show(false)
+	self.dlg_video_adv:Show(false)
 	self.dlg_video_retromode:Show(false)
 
 	local ids = self.tab:GetActiveId()
@@ -307,120 +639,78 @@ function options_dialog:OnTabChange()
 	elseif ids == "controls" then
 		self.dlg_controls:Show(true)
 	end
+
+	self.subview = ids
+	self:UpdateStatus()
 end
 
 function options_dialog:OnBtnAdvGraphic()
-	self.dlg_video:Show		(false)
-	self.dlg_video_adv:Show	(true)
+	self.dlg_video:Show(false)
+	self.dlg_video_adv:Show(true)
+	self.subview = "advanced"
+	self:UpdateStatus()
 end
 
 function options_dialog:OnSimplyGraphic()
-	self.dlg_video:Show		(true)
-	self.dlg_video_adv:Show	(false)
+	self.dlg_video:Show(true)
+	self.dlg_video_adv:Show(false)
+	self.subview = "video"
+	self:UpdateStatus()
 end
 
 function options_dialog:OnBtnRetromodeGraphic()
 	self.dlg_video:Show(false)
 	self.dlg_video_retromode:Show(true)
 	self:UpdateDependRetromodeControls()
+	self.subview = "retromode"
+	self:UpdateStatus()
 end
 
 function options_dialog:OnSimplyRetromode()
 	self.dlg_video:Show(true)
 	self.dlg_video_retromode:Show(false)
+	self.subview = "video"
+	self:UpdateStatus()
 end
 
 function options_dialog:UpdateDependRetromodeControls()
 	self.scroll_v_retromode:Clear()
-	for i,j in pairs(self.m_preconditions_retromode) do
+	for i, j in ipairs(self.m_preconditions_retromode) do
 		self.scroll_v_retromode:AddWindow(j.control, true)
 		j.control:SetAutoDelete(false)
 	end
 end
 
 function options_dialog:OnKeyboard(dik, keyboard_action)
-	local res = CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	local res = CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
 
-	if res==false then
-
-		local bind = dik_to_bind(dik)
-
+	if res == false then
 		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 			if dik == DIK_keys.DIK_ESCAPE then
+				if settings_controller.phase then
+					return res
+				end
 				if self.dlg_video_retromode:IsShown() then
 					self.dlg_video_retromode:Show(false)
 					self.dlg_video:Show(true)
+					self.subview = "video"
+					self:UpdateStatus()
 				elseif self.dlg_video_adv:IsShown() then
-					self.dlg_video_adv:Show	(false)
-					self.dlg_video:Show		(true)
+					self.dlg_video_adv:Show(false)
+					self.dlg_video:Show(true)
+					self.subview = "video"
+					self:UpdateStatus()
 				else
-					self:GetHolder():start_stop_menu	(self.owner, true) --new(show main window)
-					self:GetHolder():start_stop_menu	(self,true)
-					self.owner:Show						(true)
+					self:OnBtnCancel()
 				end
 			end
-
 		end
 	end
-	   
+
 	return res
 end
 
 function options_dialog:Update()
 	CUIScriptWnd.Update(self)
-
-	if(_G.b_discard_settings_shown) then
-		local tg = math.floor(time_global_async()/1000)
-		if(self.timer==nil) then
-			self.timer = tg
-		end
-		self.message_box:SetText(string.format("%s %d %s", game.translate_string("ui_mm_confirm_changes"), 15-(tg-self.timer), game.translate_string("ui_st_secs")))
-		if(tg-self.timer>=15) then
-			self.owner:GetHolder():start_stop_menu	(self.message_box,true)
-			self:OnDiscardChanges()
-		end
-	end
-end
-
-function options_dialog:OnApplyChanges()
-	self.timer = nil
-	_G.b_discard_settings_shown = false
-
-	self:GetHolder():start_stop_menu	(self.owner, true)
-	self:GetHolder():start_stop_menu	(self,true)
-	self.owner:Show(true)
-	
-	local opt = COptionsManager()
-	opt:OptionsPostAccept()
-	get_console():execute("cfg_save")
-
-	if false==self.b_restart_system_shown then
-		local opt = COptionsManager()
-		if opt:NeedSystemRestart() then
-			self.b_restart_system_shown = true
-			self.message_box:Init("message_box_restart_game")
-			self.owner:GetHolder():start_stop_menu(self.message_box,true)
-		end
-	end
-end
-
-function options_dialog:OnDiscardChanges()
-	self.timer = nil
-	_G.b_discard_settings_shown = false
-
-	local c = get_console()
-	c:execute("cfg_load tmp")
-
-	self:SetCurrentValues()
-
-	c:execute("vid_restart")
-	c:execute("cfg_save")
-end
-
-function options_dialog:OnMenuReloaded()
-	if(_G.b_discard_settings_shown) then
-		self.message_box:Init("message_box_accept_vid_restart")
-		self.message_box:SetText(string.format("%s %d% s", game.translate_string("ui_mm_confirm_changes"), 15, game.translate_string("ui_st_secs")))
-		self:GetHolder():start_stop_menu(self.message_box,true)
-	end
+	self:UpdateStatus()
 end

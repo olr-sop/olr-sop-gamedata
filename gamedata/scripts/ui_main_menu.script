@@ -619,17 +619,41 @@ function main_menu:OnButton_save_clicked()
 	self:NeedCenterCursor(false)
 end
 
-function main_menu:OnButton_options_clicked()
+function main_menu:OpenOptions(reopen)
+	ui_mm_opt_main.controller_set_menu(self)
+
 	if self.opt_dlg == nil then
 		self.opt_dlg = ui_mm_opt_main.options_dialog()
 		self.opt_dlg.owner = self
 	end
-	
+
+	if not reopen and not ui_mm_opt_main.has_pending_state() then
+		get_console():execute("cfg_save olr_opt_backup")
+	end
+
 	self.opt_dlg:SetCurrentValues()
-	self:GetHolder():start_stop_menu(self.opt_dlg, true)
-	self:GetHolder():start_stop_menu(self, true) --new
+
+	local h = self:GetHolder()
+	if h then
+		if h.ShowDialog then
+			h:ShowDialog(self.opt_dlg, true)
+		elseif not self.opt_dlg:IsShown() then
+			h:start_stop_menu(self.opt_dlg, true)
+		end
+		if h.HideDialog then
+			h:HideDialog(self)
+		elseif self:IsShown() then
+			h:start_stop_menu(self, true)
+		end
+	end
+
 	self:Show(false)
 	self:NeedCenterCursor(false)
+	_G.olr_options_open = true
+end
+
+function main_menu:OnButton_options_clicked()
+	self:OpenOptions(false)
 end
 
 function main_menu:OnButton_load_clicked()
@@ -808,7 +832,15 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
     return true
 end
 
+function main_menu:Update()
+	CUIScriptWnd.Update(self)
+	if ui_mm_opt_main then
+		ui_mm_opt_main.controller_update()
+	end
+end
+
 function main_menu:OnMenuReloaded()
-	self:OnButton_options_clicked()
-	self.opt_dlg:OnMenuReloaded()
+	if ui_mm_opt_main then
+		ui_mm_opt_main.controller_on_menu_reloaded(self)
+	end
 end

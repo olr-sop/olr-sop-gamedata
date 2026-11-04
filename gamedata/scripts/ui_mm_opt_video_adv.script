@@ -28,95 +28,111 @@ function mode_r1_r1a(render_id)
 end
 
 function mode_ge_2a(render_id)
-	return render_id >= 1 and render_id ~= 3 -- костыль
+	return render_id >= 1 and render_id ~= 3
 end
 
 function mode_ge_2(render_id)
-	return render_id >= 2 and render_id ~= 3 -- костыль
+	return render_id >= 2 and render_id ~= 3
+end
+
+function opt_video_adv:AddHeader(xml, handler, text_id, func)
+	local h = xml:InitStatic("video_adv:templ_header", nil)
+	h:SetText(game.translate_string(text_id))
+	h:SetAutoDelete(false)
+	table.insert(handler.m_preconditions, {func = func, control = h})
+	return h
 end
 
 function opt_video_adv:InitControls(x, y, xml, handler)
 	local ctl
 	local _st
 
-	self:Init									(x,y, 738, 416)
-	self:SetAutoDelete							(true)
-	
-	self.bk			= xml:InitFrame				("frame_videoadv", self)
-	self.scroll_v	= xml:InitScrollView		("video_adv:scroll_v", self)
+	self:Init(x, y, 738, 416)
+	self:SetAutoDelete(true)
+
+	self.bk = xml:InitFrame("frame_videoadv", self)
+	self.scroll_v = xml:InitScrollView("video_adv:scroll_v", self)
 	handler.scroll_v = self.scroll_v
 
-	_st		= xml:InitStatic					("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_vis_dist",				_st)
-	xml:InitTrackBar							("video_adv:track_vis_dist",			_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	self:AddHeader(xml, handler, "ui_mm_group_distance", all_modes)
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_geometry_lod",			_st)
-	xml:InitTrackBar							("video_adv:track_geometry_lod",		_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_vis_dist", _st)
+	xml:InitTrackBar("video_adv:track_vis_dist", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_detail_density",		_st)
-	ctl = xml:InitTrackBar							("video_adv:track_detail_density",		_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
-	
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_texture_lod",			_st)
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_geometry_lod", _st)
+	xml:InitTrackBar("video_adv:track_geometry_lod", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
+
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_detail_density", _st)
+	ctl = xml:InitTrackBar("video_adv:track_detail_density", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
+
+	self:AddHeader(xml, handler, "ui_mm_group_textures", all_modes)
+
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_texture_lod", _st)
 	ctl = xml:InitTrackBar("video_adv:track_texture_lod", _st)
 	handler.texture_lod_track = ctl
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_aniso",					_st)
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_aniso", _st)
 	xml:InitTrackBar("video_adv:track_aniso", _st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_ssample",				_st)
-	xml:InitTrackBar						("video_adv:track_ssample",				_st)
-	table.insert(handler.m_preconditions, {func=mode_r1_r1a, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_detailtex", _st)
+	xml:InitCheck("video_adv:check_detailtex", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
 
-	_st = xml:InitStatic						("video_adv:templ_item",					nil)
-	xml:InitStatic								("video_adv:cap_detailtex",					_st)
-	xml:InitCheck								("video_adv:check_detailtex",				_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	self:AddHeader(xml, handler, "ui_mm_group_lighting", mode_ge_2)
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_sun",				_st)
-	ctl			= xml:InitCheck					("video_adv:check_r2_sun",				_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
-	
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r2_sun_details",		_st)
-	ctl			= xml:InitCheck		("video_adv:check_r2_sun_details",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
-	
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_light_distance",		_st)
-	ctl				= xml:InitTrackBar			("video_adv:track_light_distance",		_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_r2_sun", _st)
+	ctl = xml:InitCheck("video_adv:check_r2_sun", _st)
+	table.insert(handler.m_preconditions, {func = mode_ge_2, control = _st})
 
-	_st			= xml:InitStatic				("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_npc_torch",				_st)
-	xml:InitCheck								("video_adv:check_npc_torch",			_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_r2_sun_details", _st)
+	ctl = xml:InitCheck("video_adv:check_r2_sun_details", _st)
+	table.insert(handler.m_preconditions, {func = mode_ge_2, control = _st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_particles_distance",	_st)
-	ctl				= xml:InitTrackBar			("video_adv:track_particles_distance",	_st)
-	table.insert(handler.m_preconditions, {func=mode_ge_2a, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_light_distance", _st)
+	ctl = xml:InitTrackBar("video_adv:track_light_distance", _st)
+	table.insert(handler.m_preconditions, {func = mode_ge_2, control = _st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_r__bloodmarks",			_st)
-	xml:InitCheck								("video_adv:check_r__bloodmarks",		_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_npc_torch", _st)
+	xml:InitCheck("video_adv:check_npc_torch", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
 
-	_st				= xml:InitStatic			("video_adv:templ_item",				nil)
-	xml:InitStatic								("video_adv:cap_vsync",					_st)
-	xml:InitCheck								("video_adv:check_vsync",				_st)
-	table.insert(handler.m_preconditions, {func=all_modes, control=_st})
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_particles_distance", _st)
+	ctl = xml:InitTrackBar("video_adv:track_particles_distance", _st)
+	table.insert(handler.m_preconditions, {func = mode_ge_2a, control = _st})
 
-	btn		= xml:Init3tButton					("video_adv:btn_to_simply",	self)
-	handler:Register							(btn, "btn_simply_graphic")
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_r__bloodmarks", _st)
+	xml:InitCheck("video_adv:check_r__bloodmarks", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
+
+	self:AddHeader(xml, handler, "ui_mm_group_misc", all_modes)
+
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_ssample", _st)
+	xml:InitTrackBar("video_adv:track_ssample", _st)
+	table.insert(handler.m_preconditions, {func = mode_r1_r1a, control = _st})
+
+	_st = xml:InitStatic("video_adv:templ_item", nil)
+	xml:InitStatic("video_adv:cap_vsync", _st)
+	xml:InitCheck("video_adv:check_vsync", _st)
+	table.insert(handler.m_preconditions, {func = all_modes, control = _st})
+
+	btn = xml:Init3tButton("video_adv:btn_to_simply", self)
+	handler:Register(btn, "btn_simply_graphic")
 end

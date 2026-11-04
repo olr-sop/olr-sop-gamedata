@@ -18,6 +18,15 @@ function main_menu:__init() super()
 	self:InitCallBacks()
 	self:InitMusic()
 	g_main_menu_instance = self
+
+	if ui_mm_opt_main then
+		if ui_mm_opt_main.controller_on_menu_created then
+			ui_mm_opt_main.controller_on_menu_created(self)
+		end
+		if ui_mm_opt_main.controller_prime_snapshot then
+			ui_mm_opt_main.controller_prime_snapshot()
+		end
+	end
 end
 
 function main_menu:__finalize()
@@ -225,6 +234,9 @@ function main_menu:OnLangDone()
 		end
 	end
 	console:execute("cfg_save")
+	if ui_mm_opt_main and ui_mm_opt_main.controller_refresh_snapshot then
+		ui_mm_opt_main.controller_refresh_snapshot()
+	end
 
 	self.lang_dialog:Show(false)
 	self.lang_caption:Show(false)
@@ -628,7 +640,8 @@ function main_menu:OpenOptions(reopen)
 	end
 
 	if not reopen and not ui_mm_opt_main.has_pending_state() then
-		get_console():execute("cfg_save olr_opt_backup")
+		ui_mm_opt_main.controller_begin_session()
+		ui_mm_opt_main.controller_prime_snapshot()
 	end
 
 	self.opt_dlg:SetCurrentValues()

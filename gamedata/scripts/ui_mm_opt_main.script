@@ -16,7 +16,7 @@ function settings_router:__finalize()
 end
 
 local settings_controller = {
-	phase		= nil,		-- nil | "confirm" | "notice"
+	phase		= nil,		-- nil | "confirm" | "notice" | "discard"
 	deadline	= 0,
 	need_vid	= false,
 	need_mode	= false,
@@ -27,7 +27,14 @@ local settings_controller = {
 	router		= nil,
 	confirm_box	= nil,
 	notice_box	= nil,
+	discard_box	= nil,
+	options		= nil,
 	snapshot	= "olr_opt_backup",
+	snapshot_ready = false,
+	snapshot_taken = false,
+	confirm_shown = false,
+	options_reopened = false,
+	reopen_at	= 0,
 }
 
 local function controller_get_holder()
@@ -46,6 +53,47 @@ function controller_set_menu(menu)
 	if menu then
 		settings_controller.holder = menu:GetHolder() or settings_controller.holder
 	end
+end
+
+function controller_on_menu_created(menu)
+	if not menu then return end
+	settings_controller.menu = menu
+	settings_controller.holder = menu:GetHolder() or settings_controller.holder
+	settings_controller.options = nil
+	if settings_controller.phase == "confirm" then
+		settings_controller.confirm_shown = false
+		settings_controller.options_reopened = false
+		settings_controller.reopen_at = math.floor(time_global_async() / 1000)
+	else
+		settings_controller.phase = nil
+		settings_controller.confirm_shown = false
+		settings_controller.options_reopened = false
+		settings_controller.reopen_at = 0
+	end
+end
+
+function controller_begin_session()
+	settings_controller.snapshot_taken = false
+	settings_controller.options = nil
+	settings_controller.confirm_shown = false
+	settings_controller.options_reopened = false
+	settings_controller.reopen_at = 0
+end
+
+function controller_prime_snapshot()
+	if settings_controller.snapshot_ready then return end
+	get_console():execute("cfg_save " .. settings_controller.snapshot)
+	settings_controller.snapshot_ready = true
+end
+
+function controller_refresh_snapshot()
+	get_console():execute("cfg_save " .. settings_controller.snapshot)
+	settings_controller.snapshot_ready = true
+end
+
+function controller_ensure_snapshot()
+	controller_prime_snapshot()
+	settings_controller.snapshot_taken = true
 end
 
 local function holder_show(h, win, hide_indicators)
@@ -73,6 +121,13 @@ local function controller_reset()
 	settings_controller.need_mode	= false
 	settings_controller.need_sys	= false
 	settings_controller.need_clean	= false
+	settings_controller.snapshot_taken = false
+	settings_controller.confirm_shown = false
+	settings_controller.options_reopened = false
+	settings_controller.reopen_at	= 0
+	if settings_controller.options then
+		settings_controller.options.manual_dirty = false
+	end
 end
 
 local function controller_confirm_text()
@@ -110,6 +165,14 @@ local function controller_ensure_router()
 	r:AddCallback("settings_notice", ui_events.MESSAGE_BOX_OK_CLICKED,		controller_notice_ok,	r)
 	r:AddCallback("settings_notice", ui_events.MESSAGE_BOX_CANCEL_CLICKED,	controller_notice_ok,	r)
 	settings_controller.notice_box = nb
+
+	local db = CUIMessageBoxEx()
+	db:Init("message_box_discard_changes")
+	r:Register(db, "settings_discard")
+	r:AddCallback("settings_discard", ui_events.MESSAGE_BOX_YES_CLICKED,	controller_discard_yes,	r)
+	r:AddCallback("settings_discard", ui_events.MESSAGE_BOX_NO_CLICKED,		controller_discard_no,	r)
+	r:AddCallback("settings_discard", ui_events.MESSAGE_BOX_CANCEL_CLICKED,	controller_discard_no,	r)
+	settings_controller.discard_box = db
 end
 
 local function controller_show_confirm()
@@ -133,6 +196,36 @@ local function controller_show_notice()
 	holder_show(controller_get_holder(), nb, true)
 end
 
+local function controller_show_discard()
+	controller_ensure_router()
+	local db = settings_controller.discard_box
+	if not db then
+		settings_controller.phase = nil
+		return
+	end
+	holder_hide(controller_get_holder(), db)
+	db:Show(false)
+	db:SetText("ui_mm_discard_changes_q")
+	holder_show(controller_get_holder(), db, true)
+end
+
+local function controller_show_confirm_in_options()
+	local p = settings_controller
+	local mm = p.menu
+	if not mm then return end
+
+	_G.olr_options_open = true
+	if not (p.options and p.options:IsShown()) then
+		mm:OpenOptions(true)
+		p.options = mm.opt_dlg
+	end
+
+	p.deadline = math.floor(time_global_async() / 1000) + 15
+	p.confirm_shown = true
+	p.options_reopened = true
+	controller_show_confirm()
+end
+
 function has_pending_state()
 	return settings_controller.phase ~= nil
 end
@@ -153,7 +246,9 @@ end
 function controller_apply(dlg)
 	if settings_controller.phase then return end
 
+	settings_controller.options = dlg
 	settings_controller.holder = dlg:GetHolder()
+	controller_ensure_snapshot()
 
 	local opt = COptionsManager()
 	local console = get_console()
@@ -184,11 +279,16 @@ function controller_apply(dlg)
 	if settings_controller.need_mode then
 		settings_controller.phase = "confirm"
 		settings_controller.deadline = math.floor(time_global_async() / 1000) + 15
+		settings_controller.confirm_shown = true
+		settings_controller.options_reopened = false
+		settings_controller.reopen_at = math.floor(time_global_async() / 1000) + 2
+		_G.olr_options_open = true
 		controller_show_confirm()
 		return
 	end
 
 	console:execute("cfg_save")
+	controller_refresh_snapshot()
 
 	if settings_controller.need_sys or settings_controller.need_clean then
 		settings_controller.phase = "notice"
@@ -200,28 +300,67 @@ end
 
 function controller_keep()
 	if settings_controller.phase ~= "confirm" then return end
+	local dlg = settings_controller.options
 	holder_hide(controller_get_holder(), settings_controller.confirm_box)
 	controller_reset()
 	get_console():execute("cfg_save")
+	controller_refresh_snapshot()
+	if dlg and dlg:IsShown() then
+		dlg:SetCurrentValues()
+	elseif _G.olr_options_open and settings_controller.menu then
+		settings_controller.menu:OpenOptions(true)
+	end
 end
 
 function controller_revert()
 	if settings_controller.phase ~= "confirm" then return end
 
 	local need_vid = settings_controller.need_vid
+	local had_snapshot = settings_controller.snapshot_taken
+	local dlg = settings_controller.options
 	holder_hide(controller_get_holder(), settings_controller.confirm_box)
 
 	controller_reset()
-	get_console():execute("cfg_load " .. settings_controller.snapshot)
+	if had_snapshot then
+		get_console():execute("cfg_load " .. settings_controller.snapshot)
+	elseif dlg then
+		dlg:UndoChanges()
+	end
 
 	local mm = settings_controller.menu
-	if mm then
+	if dlg and dlg:IsShown() then
+		dlg:SetCurrentValues()
+	elseif mm then
 		mm:OpenOptions(true)
 	end
 
 	if need_vid then
 		get_console():execute("vid_restart")
 	end
+end
+
+function controller_discard_yes()
+	if settings_controller.phase ~= "discard" then return end
+
+	local dlg = settings_controller.options
+	local had_snapshot = settings_controller.snapshot_taken
+	holder_hide(controller_get_holder(), settings_controller.discard_box)
+
+	settings_controller.phase = nil
+	if had_snapshot then
+		get_console():execute("cfg_load " .. settings_controller.snapshot)
+	elseif dlg then
+		dlg:UndoChanges()
+	end
+
+	controller_reset()
+	controller_close_options(dlg)
+end
+
+function controller_discard_no()
+	if settings_controller.phase ~= "discard" then return end
+	holder_hide(controller_get_holder(), settings_controller.discard_box)
+	settings_controller.phase = nil
 end
 
 function controller_notice_ok()
@@ -234,10 +373,14 @@ function controller_update()
 	local p = settings_controller
 
 	if p.phase == "confirm" then
+		local now = math.floor(time_global_async() / 1000)
+		if not p.options_reopened and p.reopen_at > 0 and now >= p.reopen_at then
+			controller_show_confirm_in_options()
+		end
 		if p.confirm_box and p.confirm_box:IsShown() then
 			p.confirm_box:SetText(controller_confirm_text())
 		end
-		if math.floor(time_global_async() / 1000) >= p.deadline then
+		if p.deadline > 0 and now >= p.deadline then
 			controller_revert()
 		end
 	end
@@ -261,15 +404,16 @@ function controller_on_menu_reloaded(menu)
 	controller_ensure_router()
 
 	if p.phase == "confirm" then
+		p.options = nil
+		p.options_reopened = false
 		local cb = p.confirm_box
 		if cb then
 			holder_hide(controller_get_holder(), cb)
 			cb:Show(false)
 			cb:Init("message_box_settings_applied")
 			cb:Show(false)
-			cb:SetText(controller_confirm_text())
-			holder_show(controller_get_holder(), cb, true)
 		end
+		controller_show_confirm_in_options()
 	elseif p.phase == "notice" then
 		local nb = p.notice_box
 		if nb then
@@ -294,6 +438,7 @@ function options_dialog:__init() super()
 	self.last_status				= nil
 	self.last_dirty					= {}
 	self.last_any_dirty				= nil
+	self.manual_dirty				= false
 
 	self:InitControls()
 	self:InitCallBacks()
@@ -402,6 +547,7 @@ end
 
 function options_dialog:SetCurrentValues()
 	local opt = COptionsManager()
+	self.manual_dirty = false
 
 	opt:SetCurrentValues("mm_opt_video_preset")
 	opt:SaveBackupValues("mm_opt_video_preset")
@@ -482,6 +628,31 @@ function options_dialog:IsGroupDirty(group)
 	return COptionsManager():IsGroupChanged(group)
 end
 
+function options_dialog:HasChanges()
+	if self.manual_dirty then return true end
+	return self:IsGroupDirty("mm_opt_video_preset")
+		or self:IsGroupDirty("mm_opt_video")
+		or self:IsGroupDirty("mm_opt_video_adv")
+		or self:IsGroupDirty("mm_opt_video_retromode")
+		or self:IsGroupDirty("mm_opt_gameplay")
+		or self:IsGroupDirty("mm_opt_sound")
+		or self:IsGroupDirty("mm_opt_controls")
+		or self:IsGroupDirty("key_binding")
+end
+
+function options_dialog:UndoChanges()
+	local opt = COptionsManager()
+	opt:UndoGroup("mm_opt_video_preset")
+	opt:UndoGroup("mm_opt_video")
+	opt:UndoGroup("mm_opt_video_adv")
+	opt:UndoGroup("mm_opt_video_retromode")
+	opt:UndoGroup("mm_opt_gameplay")
+	opt:UndoGroup("mm_opt_sound")
+	opt:UndoGroup("mm_opt_controls")
+	opt:UndoGroup("key_binding")
+	self.manual_dirty = false
+end
+
 function options_dialog:UpdateStatus()
 	if not self.has_dirty_api then
 		if self.btn_accept then self.btn_accept:Enable(true) end
@@ -503,7 +674,7 @@ function options_dialog:UpdateStatus()
 		controls	= self:IsGroupDirty("mm_opt_controls") or self:IsGroupDirty("key_binding"),
 	}
 
-	local any = false
+	local any = self.manual_dirty == true
 	for _, v in pairs(dirty) do
 		if v then any = true end
 	end
@@ -540,13 +711,23 @@ function options_dialog:UpdateStatus()
 end
 
 function options_dialog:OnBtnKeyDefault()
+	controller_ensure_snapshot()
+	self.manual_dirty = true
+
 	local console = get_console()
 	console:execute("default_bindings")
-	console:execute("mouse_sens 0.23")
-	console:execute("mouse_invert off")
+
+	local ctl = self.dlg_controls
+	if ctl then
+		if ctl.track_mousesens and ctl.track_mousesens.SetValue then
+			ctl.track_mousesens:SetValue(0.23)
+		end
+		if ctl.check_mouseinvert then
+			ctl.check_mouseinvert:SetCheck(false)
+		end
+	end
 
 	local opt = COptionsManager()
-	opt:SetCurrentValues("mm_opt_controls")
 	opt:SetCurrentValues("key_binding")
 	self:UpdateStatus()
 end
@@ -583,6 +764,9 @@ end
 
 function options_dialog:OnBtnDefVideo()
 	-- the quality preset "Default" is the single source of video defaults
+	controller_ensure_snapshot()
+	self.manual_dirty = true
+
 	get_console():execute("_preset Default")
 
 	local opt = COptionsManager()
@@ -611,11 +795,14 @@ end
 function options_dialog:OnBtnCancel()
 	if settings_controller.phase then return end
 
-	-- cancel restores the snapshot taken when the dialog was opened
-	get_console():execute("cfg_load " .. settings_controller.snapshot)
-	self:SetCurrentValues()
+	if not self:HasChanges() then
+		controller_close_options(self)
+		return
+	end
 
-	controller_close_options(self)
+	settings_controller.options = self
+	settings_controller.phase = "discard"
+	controller_show_discard()
 end
 
 function options_dialog:OnTabChange()
@@ -713,4 +900,5 @@ end
 function options_dialog:Update()
 	CUIScriptWnd.Update(self)
 	self:UpdateStatus()
+	ui_mm_opt_main.controller_update()
 end

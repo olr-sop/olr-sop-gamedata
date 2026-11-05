@@ -58,6 +58,9 @@ function trade_init( npc, cfg )
 		t_data[npc:id()] = t
 	end
 	t.update_time = 0	-- для установки buy_condition и sell_condition на каждом первом апдейте при выходе нпс в онлайн
+	-- [OLR] после онлайн-спавна C++ заново создаёт trade_parameters
+	t.current_buy_condition = nil
+	t.current_sell_condition = nil
 
 	local s = ( ini and ini:section_exist( "trader" )
 		and ini:line_exist( "trader", "buy_condition" )
@@ -104,7 +107,8 @@ function update( npc )
 	if not tt.buy_supplies then return end
 
 	str = pick_section( actor, npc, tt.buy_supplies )
-	if ( tt.current_buy_supplies ~= str ) or ( not tt.resuply_time ) or tt.resuply_time < game.get_game_time() then
+	-- [OLR] ассортимент меняем не чаще раза в 24 игровых часа
+	if ( not tt.resuply_time ) or tt.resuply_time < game.get_game_time() then
 
 		--if npc:clsid() == clsid.script_trader then
 		--	log1( "info", "csup: %s (%s)", tt.current_buy_supplies, npc:name() )

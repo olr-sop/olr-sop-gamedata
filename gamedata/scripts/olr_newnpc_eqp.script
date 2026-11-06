@@ -1203,13 +1203,6 @@ local function get_main_faction(community)
 	return faction_groups[community] or "stalker"
 end
 
-local function get_rank_key(rank)
-	if rank <= 300 then return "novice"
-	elseif rank <= 600 then return "experienced"
-	elseif rank <= 900 then return "veteran"
-	else return "master" end
-end
-
 local function select_weapon(weapons)
 	if not weapons or #weapons == 0 then return nil end
 	if #weapons == 1 then return weapons[1].section end
@@ -1328,9 +1321,9 @@ function on_spawn(obj)
 		return
 	end
 	
-	--log1("### [INFO] olr_newnpc_eqp: Called euqip: name - "..tostring(obj:name())..", faction - "..tostring(obj:community())..", rank - "..tostring(get_rank_key(obj:rank())).."")
+	--log1("### [INFO] olr_newnpc_eqp: Called euqip: name - "..tostring(obj:name())..", faction - "..tostring(obj:community())..", rank - "..tostring(ranks.get_obj_rank_name(obj)).."")
 	
-	local rank_key = get_rank_key(obj:rank())
+	local rank_key = ranks.get_obj_rank_name(obj)
 	local weapons = nil
 	local class_weapons = get_class_table(obj)
 	if class_weapons then

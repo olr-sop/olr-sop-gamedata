@@ -18,6 +18,9 @@ local ammo_sections = {}
 -- Food and monster parts: removed and respawned by death loot
 local food_sections = {}
 
+-- Spawn condition for loot items (percent)
+local spawn_condition = {}
+
 -- Оружие, которому не спавним патроны (ножи, бинокли и т.п.)
 local ammo_exclude_weapons = {}
 
@@ -182,8 +185,11 @@ function init_drop_settings()
 			mul_by_level[id] = 0
 		end
 
-		min = tonum(min) * mul_by_level[id]
-		max = tonum(max) * mul_by_level[id]
+		min = math.floor(tonum(min) * mul_by_level[id] + 0.5)
+		max = math.floor(tonum(max) * mul_by_level[id] + 0.5)
+		if max < min then
+			max = min
+		end
 
 		count_by_level[id] = {min = min, max = max}
 	end
@@ -214,6 +220,19 @@ function init_drop_settings()
 			result, id, value = death_ini:r_line("food_sections", i, "", "")
 			if id and id ~= "" then
 				food_sections[id] = true
+			end
+		end
+	end
+
+	-- Spawn condition for loot items (percent)
+	spawn_condition = {}
+	if death_ini:section_exist("item_condition") then
+		local n = death_ini:line_count("item_condition")
+		for i = 0, n - 1 do
+			result, id, value = death_ini:r_line("item_condition", i, "", "")
+			local t = parse_nums(value)
+			if id and id ~= "" and t[1] and t[2] then
+				spawn_condition[id] = { min = tonumber(t[1]), max = tonumber(t[2]) }
 			end
 		end
 	end
@@ -306,6 +325,9 @@ function drop_manager:create_release_item()
 	local pairs_ = pairs
 	-- защита от повторного создания лута
 	local se_obj = alife():object(self.npc:id())
+	if not se_obj then
+		return
+	end
 	if se_obj.death_droped == true then
 		return
 	end
@@ -482,44 +504,42 @@ function select_ammo_type_for_weapon(npc, weapon_section, available_ammo_types)
 	if not available_ammo_types or #available_ammo_types == 0 then
 		return nil
 	end
-	
-	-- Если для оружия доступен только один тип патронов
-	if #available_ammo_types == 1 then
-		return available_ammo_types[1]
-	end
-	
-	-- Получаем ранг NPC
+
 	local npc_rank = npc:rank() or 0
 	local rank_category = get_rank_category(npc_rank)
-	
-	-- Создаем таблицу с весами для каждого типа патронов
+
 	local weights = {}
+	local positive = {}
 	local total_weight = 0
-	
+
 	for _, ammo_section in ipairs(available_ammo_types) do
-		-- Базовый множитель
 		local weight = ammo_base_multiplier[ammo_section] or 0.5
-		
-		-- Множитель ранга NPC
 		local rank_mod = get_rank_multiplier(rank_category, ammo_section) or 1.0
 		weight = weight * rank_mod
-		
 		weights[ammo_section] = weight
-		total_weight = total_weight + weight
+		if weight > 0 then
+			positive[#positive + 1] = ammo_section
+			total_weight = total_weight + weight
+		end
 	end
-	
-	-- Случайный выбор на основе весов
+
+	if total_weight <= 0 or #positive == 0 then
+		return nil
+	end
+	if #positive == 1 then
+		return positive[1]
+	end
+
 	local random_value = math.random() * total_weight
 	local current_weight = 0
-	
-	for ammo_section, weight in pairs(weights) do
-		current_weight = current_weight + weight
+	for _, ammo_section in ipairs(positive) do
+		current_weight = current_weight + weights[ammo_section]
 		if random_value <= current_weight then
 			return ammo_section
 		end
 	end
-	
-	return available_ammo_types[1]
+
+	return positive[1]
 end
 
 -- Функция определяет категорию ранга
@@ -548,6 +568,9 @@ end
 
 -- Функция вызывается для каждого предмета, если вернет false то предмет удалится.
 function keep_item(npc, item)
+	if not item then
+		return
+	end
 	local mrandom = math.random
   local sim = alife()
 	local obj = item and item:id() and sim:object(item:id())
@@ -591,7 +614,7 @@ function keep_item(npc, item)
 	if section == "device_torch" then
 		local rndgood = mrandom(1, 40)
 		if rndgood == 1 then
-			item:set_condition((mrandom(75) + 87) / 100)
+			item:set_condition(math.random(88, 100) / 100)
 		else
 			item:set_condition((mrandom(25) + 35) / 100)
 		end
@@ -599,8 +622,8 @@ function keep_item(npc, item)
 	end
 
 	if section == "detector_simple" or section == "detector_advances" or section == "detector_elite" then
-		item:set_condition((mrandom(55) + 5) / 100)
-		return true
+		schedule_release(item)
+		return false
 	end
 
 	if item:is_outfit() then
@@ -632,7 +655,7 @@ function keep_item(npc, item)
 	if item:is_weapon() then
 		local rndgood = mrandom(1, 50)
 		if rndgood == 1 then
-			item:set_condition((mrandom(75) + 88) / 100)
+			item:set_condition(math.random(89, 100) / 100)
 		else
 			item:set_condition((mrandom(15) + 55) / 100)
 		end
@@ -704,7 +727,18 @@ function create_items(npc, section, number, rnd)
 		for i = 1, number do
 			if math.random(1000) <= rnd then
 				if section ~= "capsule_rone" then
-					alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())				
+					local se_item = alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+					local cond = spawn_condition[section]
+					if cond and se_item then
+						local cond_value = math.random(cond.min, cond.max) / 100
+						level.client_spawn_manager():add(se_item.id, 0,
+							function(id, obj)
+								if obj then
+									obj:set_condition(cond_value)
+								end
+							end
+						)
+					end
 				else
 					local itm_obj = alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
 					local se_item = alife():object(itm_obj.id)

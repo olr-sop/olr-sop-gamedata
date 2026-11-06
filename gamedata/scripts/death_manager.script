@@ -15,6 +15,9 @@ local always_keep_item = {}
 -- ѕредметы, относ€щиес€ к патронам. »х надо спаунить другим методом.
 local ammo_sections = {}
 
+-- Food and monster parts: removed and respawned by death loot
+local food_sections = {}
+
 -- ќружие, которому не спавним патроны (ножи, бинокли и т.п.)
 local ammo_exclude_weapons = {}
 
@@ -201,6 +204,18 @@ function init_drop_settings()
 	for i = 0, n - 1 do
 		result, id, value = death_ini:r_line("ammo_sections", i, "", "")
 		ammo_sections[id] = true
+	end
+
+	-- Food and monster parts
+	food_sections = {}
+	if death_ini:section_exist("food_sections") then
+		local n = death_ini:line_count("food_sections")
+		for i = 0, n - 1 do
+			result, id, value = death_ini:r_line("food_sections", i, "", "")
+			if id and id ~= "" then
+				food_sections[id] = true
+			end
+		end
 	end
 	
 	-- ќружие, которому не спавним патроны (ножи, бинокли и т.п.)
@@ -549,6 +564,12 @@ function keep_item(npc, item)
 	if ammo_sections[section] and obj then
 		schedule_release(item) -- старые патроны удал€ем отложенно
 		return true
+	end
+
+	-- Food and monster parts: remove, they will be respawned by death loot
+	if food_sections[section] and obj then
+		schedule_release(item)
+		return false
 	end
 
 	if obj and (section == "device_pda" or section == "guitar_a" or section == "yad" or section == "hand_radio" or section == "harmonica_a" or section == "kruglov_flash") then

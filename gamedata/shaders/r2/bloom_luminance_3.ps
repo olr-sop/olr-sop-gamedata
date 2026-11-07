@@ -70,7 +70,9 @@ float4 	main		( v2p I )	: COLOR
 	// OK
 	float	scale 		= MiddleGray.x / (result*MiddleGray.y + MiddleGray.z);	// final
 	float  	scale_prev	= tex2D	(s_tonemap,I.tc0).x;
-	float 	rvalue		= lerp	(scale_prev,scale,MiddleGray.w);
+
+	float 	k			= MiddleGray.w * lerp(0.3h, 1.0h, step(scale, scale_prev));
+	float 	rvalue		= lerp	(scale_prev,scale,k);
 
 			rvalue 		= clamp(rvalue, 1.f/8.f, 2.0f);
 

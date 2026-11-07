@@ -31,10 +31,11 @@ _out         main               ( v2p I )
         _out        	o;
 #ifdef        USE_VTF
         o.low        	=		sky.xyzz		;
-        o.high        	=		o.low/def_hdr	;
+        o.high        	=		o.low/def_hdr*(.6h);
 #else
         float    scale   = tex2D(s_tonemap,float2(.5h,.5h)).x;
         tonemap        	(o.low, o.high, sky, scale*2.0 );
+		o.high *= .6h
 #endif
         return        	o;
 }

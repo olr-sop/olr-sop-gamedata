@@ -283,21 +283,19 @@ uniform sampler2D       s_tonemap;              // actually MidleGray / exp(Lw +
 
 //////////////////////////////////////////////////////////////////////////////////////////
 #define	LUMINANCE_VECTOR                 float3(0.3f, 0.48f, 0.22f)
-void        tonemap              (out float4 low, out float4 high, float3 rgb, float scale)
-{
-        rgb     =      	rgb*scale       ;
-#ifdef	USE_BRANCHING		// ps_3_0
-        low		=       rgb.xyzz		;
-        high	=		low/def_hdr		;        // 8x dynamic range
-#else
-        low		=       float4           (rgb,           0 )	;
-        high	=       float4       	(rgb/def_hdr,   0 )	;		// 8x dynamic range
-#endif
+void tonemap(out float4 low, out float4 high, float3 rgb, float scale) {
+	rgb *= scale;			// avg pixel -> MiddleGray
 
-//		low		= 	float4	(rgb, 0);
-//		rgb		/=	def_hdr	;
-//		high	= 	float4	(rgb, dot(rgb,0.333f)-def_hdr_clip)		;
+	const float A = 0.22, B = 0.3, C = .1, D = 0.2, E = .01, F = 0.4;
+	const float W = 1.7; const float WhSQR = 2.89f;
+	float3 f = (rgb*(A*rgb + C*B) + D*E) / (rgb*(A*rgb + B) + D*F) - E/F;
+	float3 fw = (W*(A*W + C*B) + D*E) / (W*(A*W + B) + D*F) - E/F;
+	float3 c = f / fw;
+
+	low = (f/fw + (rgb/WhSQR)).xyzz;
+	high = c.xyzz/def_hdr;
 }
+
 float4		combine_bloom        (float3  low, float4 high)	{
         return        float4(low + high*high.a, 1.h);
 }

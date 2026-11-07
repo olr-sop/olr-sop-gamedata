@@ -4376,15 +4376,7 @@ end
 function about_kamorka_habar()
 	local sim = alife()
 	local obj = sim:object("lvl1_escape_big_safe_box")
-	if math.random(1,2) == 1 then
-		sim:create("af_gravi_heavy",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		sim:create("af_galantine",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)	
-		sim:create("af_galantine_pot",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)			
-	else
-		sim:create("af_gravi_heavy",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		sim:create("af_needle_heavy",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-		sim:create("af_magnet",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-	end
+	sim:create("capsule_toads_courier",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 	news_manager.send_tip(db.actor, game.translate_string("about_kamorka_habar_0"), nil, "unknown", 10000)
 end
 
@@ -9391,6 +9383,7 @@ function precond_jaba_has_any_doc()
 	 or precond_device_pda_jan_one() or precond_device_pda_jan_two()
 	 or precond_device_pda_jan_tri()
 end
+
 function precond_gazeta_otrivok_1()
 	return nik_dialog.item_much("gazeta_otrivok_1",1) ~= false 
 end
@@ -11037,11 +11030,11 @@ function precond_glaz()
 end
 
 function precond_kalasha()
-	return nik_dialog.item_much("wpn_akms",1) ~= false		
+	return nik_dialog.item_much("wpn_akms",1,0.25) ~= false		
 end
 
 function otdaem_kalasha()
-	nik_dialog.out_item_much("wpn_akms",1)
+	nik_dialog.out_item_much("wpn_akms",1,0.25)
 	db.actor:change_character_reputation(20)
 	news_manager.send_tip(db.actor, game.translate_string("otdaem_kalasha_0"), 55, "novice", 19000, nil, nil, true, "stalker_zob_name")
 end
@@ -12118,27 +12111,27 @@ function shakal_esc_sms2()
 end
 
 function progulka_prisli_plos_lead9()
-	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead9"), math.random(1000, 3000), "bandit", 5000, nil, "pda_objective", true, "st_slizen_name")
+	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead9"), math.random(1000, 3000), "bandit_coat_dark", 5000, nil, "pda_objective", true, "st_slizen_name")
 end
 
 function progulka_prisli_plos_lead8()
-	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead8"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", true, "st_slizen_name")
+	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead8"), math.random(1000, 3000), "bandit_coat_brown", 15000, nil, "pda_objective", true, "st_slizen_name")
 end
 
 function progulka_prisli_plos_lead7()
-	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead7"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", true, "st_slizen_name")
+	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead7"), math.random(1000, 3000), "bandit_coat_brown", 15000, nil, "pda_objective", true, "st_slizen_name")
 end
 
 function progulka_prisli_plos_lead6()
-	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead6"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", true, "st_slizen_name")
+	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead6"), math.random(1000, 3000), "bandit_coat_dark", 15000, nil, "pda_objective", true, "st_slizen_name")
 end
 
 function progulka_prisli_plos_lead5()
-	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead5"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", true, "st_slizen_name")
+	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead5"), math.random(1000, 3000), "bandit_coat_dark", 15000, nil, "pda_objective", true, "st_slizen_name")
 end
 
 function progulka_prisli_plos_lead4()
-	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead4"), math.random(1000, 3000), "bandit", 15000, nil, "pda_objective", true, "st_slizen_name")
+	news_manager.send_tip(db.actor, game.translate_string("st_progulka_prisli_plos_lead4"), math.random(1000, 3000), "bandit_coat_dark", 15000, nil, "pda_objective", true, "st_slizen_name")
 	local pm_shoot = xr_sound.get_safe_sound_object([[weapons\pm\shoot]])
 	pm_shoot:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 	local tinnitus = xr_sound.get_safe_sound_object([[actor\tinnitus]])
@@ -13114,4 +13107,18 @@ end
 
 function have_af_baloon_1 ()
 	return nik_dialog.item_much("wpn_pm",1) ~= false
+end
+
+-- сдаем капсулу Жабе
+function precond_capsule_toads_courier()
+	return nik_dialog.item_much("capsule_toads_courier",1) ~= false 
+end
+
+function give_capsule_toads_courier()
+	nik_dialog.out_item_much("capsule_toads_courier",1)
+	db.actor:change_character_reputation(25)
+end
+
+function give_capsule_damaged(first_speaker, second_speaker)	
+	dialogs.relocate_item_section(second_speaker, "capsule_rone_damaged","in")
 end

@@ -1,157 +1,164 @@
 [fireball_zone]
-GroupControlSection			= spawn_group_zone
-$spawn						= "zones\fireball"
-;$prefetch 					= 8
-class						= Z_TORRID
-hit_impulse_scale			=   0
-effective_radius			= 2.75 ;������ ������� � ��������� �� �������������, ��� ��������� ����
-;postprocess					= effector_flame
-
-ef_anomaly_type				= 1
-ef_weapon_type				= 13
+GroupControlSection		= spawn_group_zone
+$spawn					= "zones\fireball"
+;$prefetch 				= 8
+class					= Z_TORRID
+ef_anomaly_type			= 1
+ef_weapon_type			= 13
 script_binding  		= bind_anomaly.Init
 
+hit_impulse_scale		= 0
+effective_radius		= 2.75 ; Размер радиуса в процентах от оригинального, где действует зона
+;postprocess			= effector_flame
+
 ;----------- Anomaly settings -----------------------
-min_start_power		= 0.99
-max_start_power		= 1.00
-attenuation			= 1
-period				= 1
+min_start_power		    = 0.99
+max_start_power		    = 1.00
+attenuation			    = 1
+period				    = 1
 
-idle_particles				= anomaly2\heat_02
-blowout_particles			= anomaly2\heat_03
+idle_particles			= anomaly2\heat_02
+blowout_particles		= anomaly2\heat_03
 
-hit_small_particles	    	= damage_fx\burn_creatures
-hit_big_particles			= damage_fx\burn_creatures00
-idle_small_particles		= damage_fx\burn_creatures
-idle_big_particles			= damage_fx\burn_creatures00
+hit_small_particles	    = damage_fx\burn_creatures
+hit_big_particles		= damage_fx\burn_creatures00
+idle_small_particles	= damage_fx\burn_creatures
+idle_big_particles		= damage_fx\burn_creatures00
 
-idle_particles_dont_stop	= true;
+idle_particles_dont_stop= true
 
-idle_sound					= anomaly\fireball_idle		;���������� ����
-blowout_sound				= anomaly\zhar_blowing	   	;�� ����� �������(�����) � ������ ��������	
-hit_sound					= anomaly\fire				;�� ���������, ����� ��� �������� ���
-entrance_sound				= anomaly\fire				;��� ��������� ������� � ��������
+idle_sound				= anomaly\fireball_idle		; Постоянный звук
+blowout_sound			= anomaly\zhar_blowing	   	; Во время выброса(удара) в центре аномалии
+hit_sound				= anomaly\fire				; На персонаже, когда тот получает хит
+entrance_sound			= anomaly\fire				; При попадании объекта в аномалию
+
+hit_type				= burn
+
+disable_time		    = 0	    ; Время игнорирования неживого объекта в зоне (-1 если не нужно)
+disable_time_small	    = 0	    ; Время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
+disable_idle_time	    = 50000	; Время отключения idle партиклов
+
+ignore_nonalive		    = true
+ignore_small		    = true
+ignore_artefacts	    = true
+
+blowout_light		    = on
+light_color		        = 1.8,1.7,1.4
+light_range		        = 15.0
+light_time 		        = 2
+light_height		    = 0.75		; Подъём источника света на высоту
+
+
+idle_light			    = on
+idle_light_range	    = 25.0
+idle_light_range_delta  = 0.7
+idle_light_anim		    = koster_01
+idle_light_height	    = 0.75		; Подъём источника света на высоту
+
+awaking_time		    = 100
+blowout_time		    = 300	
+accamulate_time		    = 100
+blowout_wind		    = off
+visible_by_detector     = off
+
+;-------------------------------------------------------------------------------
+;------ Рождение артефактов ----------------------------------------------------
+
+artefacts						        = af_black_drops, 1.0, af_deadhead, 0.03
+artefacts_after_surge			        = af_black_drops, 1.0, af_deadhead, 0.03
+artefact_spawn_probability_after_surge	= 0.1
+
+spawn_blowout_artefacts			        = on					; Рождение артефакта после смерти живого существа, или объекта (это главный рубильник, если отключить то всё что ниже перестанет использоваться)
+birth_on_object 				        = false					; Рождение артефакта при попадание объекта в аномалию (не живого существа, а например болта)
+birth_on_alive 					        = true					; Рождение артефакта при смерти живого существа внутри аномалии (не объекта)
+birth_on_corpse 				        = false					; Рождение артефакта при попадании мёртвого существа в аномалию (если закинем труп то она родит артефакт)
+artefact_spawn_probability		        = 0.5					; Базовая вероятность рождения при входе объекта в зону (для объекта/трупа/живого)
+birth_on_death_probability 		        = -1					; Опционально. Отдельная вероятность, если существо умерло ВНУТРИ аномалии. -1 = не используется (берётся artefact_spawn_probability). 0.0 = никогда не рождать от смерти
+artefact_spawn_particles		        = anomaly2\pux_blast	; Партиклы, которые отыграются на месте рождения артефакта (опционально)
+artefact_born_sound				        = anomaly\pux_blast		; Звук, который отыграются на месте рождения артефакта (опционально)
+throw_out_power					        = 3						; Импульс с которым артефакт будет выброшен из зоны в произвольном направлении
+artefact_spawn_height			        = 5						; Высота в метрах над центром зоны где будет рожден артефакт
+
+; Статичная Жарка на Болотах
+[zone_fryup_swamp_static]
+GroupControlSection			= spawn_group_zone
+$spawn						= "zones\fryup_swamp_static"
+$prefetch					= 16
+$def_sphere 				= 1
+class						= Z_MBALD
+ef_anomaly_type				= 1
+ef_weapon_type				= 13
+script_binding				= bind_anomaly.Init
 
 hit_type					= burn
+hit_impulse_scale			= 0.0
+effective_radius			= 1
+postprocess					= effector_flame
 
-disable_time		= 0	;����� ������������� �������� ������� � ���� (-1 ���� �� �����)
-disable_time_small	= 0	;����� ������������� ���������� �������� ������� � ���� (-1 ���� �� �����)
-disable_idle_time	= 50000	;����� ���������� idle ���������
-
-ignore_nonalive		= true
-ignore_small		= true
-ignore_artefacts	= true
-
-blowout_light		= on
-light_color		    = 1.8,1.7,1.4
-light_range		    = 15.0
-light_time 		    = 2
-light_height		= 0.75			;������ ��������� ����� �� ������
-
-
-idle_light			= on
-idle_light_range	= 25.0
-idle_light_range_delta  = 0.7
-idle_light_anim		= koster_01
-idle_light_height	= 0.75			;������ ��������� ����� �� ������
-
-awaking_time		= 100
-blowout_time		= 300	
-accamulate_time		= 100
-
-visible_by_detector = off
-
-blowout_wind		= off
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;рождение артефактов 
-artefacts						= af_black_drops, 1.0, af_deadhead, 0.03
-artefacts_after_surge			= af_black_drops, 1.0, af_deadhead, 0.03
-artefact_spawn_probability_after_surge	= 0.01
-
-;во время срабатывания в online
-spawn_blowout_artefacts			= on					; рождение артефактов во время срабатывания, для true принимаются on/yes/true/1, иначе значение будет false
-
-artefact_spawn_probability		= 0.5					;вероятность, что во время срабатывания аномалии будет рожден артефакт
-
-throw_out_power					= 3					;импульс с которым артефакт будет выброшен из зоны в произвольном направлении
-artefact_spawn_height			= 5						;(м) высота на центром зоны где будет рожден артефакт
-
-[zone_fryup_swamp_static]
-GroupControlSection				= spawn_group_zone
-$spawn							= "zones\fryup_swamp_static"
-$prefetch						= 16
-$def_sphere 					= 1
-class							= Z_MBALD
-ef_anomaly_type					= 1
-ef_weapon_type					= 13
-script_binding					= bind_anomaly.Init
-
-hit_type						= burn
-hit_impulse_scale				= 0.0
-effective_radius				= 1
-actor_blowout_radius_percent	= 0.86
-postprocess						= effector_flame
-throw_impulse					= 0.1
-
-artefacts						= af_black_drops, 1.0, af_deadhead, 0.03
-artefacts_after_surge			= af_black_drops, 1.0, af_deadhead, 0.03
-artefact_spawn_probability_after_surge	= 0
-BirthProbability				= 0.0
-
-shape_transp_color		= 255, 0, 0, 60
-shape_edge_color		= 32, 32, 32, 255
+shape_transp_color		    = 255, 0, 0, 60
+shape_edge_color		    = 32, 32, 32, 255
 
 ;----------- Anomaly settings -----------------------
-min_start_power					= 1.9
-max_start_power					= 2.0
-attenuation						= 1
-period							= 1
+min_start_power				= 1.9
+max_start_power				= 2.0
+attenuation					= 1
+period						= 1
 
-idle_sound						= anomaly\fire			;iinoiyiiue caoe
-blowout_sound					= anomaly\zhar_blowing	;ai a?aiy aua?ina(oaa?a) a oaio?a aiiiaeee	
-hit_sound						= anomaly\zhar			;ia ia?niia?a, eiaaa oio iieo?aao oeo
-entrance_sound					= anomaly\zhar			;i?e iiiaaaiee iauaeoa a aiiiaee?
+idle_sound					= anomaly\fire			;iinoiyiiue caoe
+blowout_sound				= anomaly\zhar_blowing	;ai a?aiy aua?ina(oaa?a) a oaio?a aiiiaeee	
+hit_sound					= anomaly\zhar			;ia ia?niia?a, eiaaa oio iieo?aao oeo
+entrance_sound				= anomaly\zhar			;i?e iiiaaaiee iauaeoa a aiiiaee?
 
-idle_particles					= 
-blowout_particles				= 
+idle_particles				= 
+blowout_particles			= 
 
-hit_small_particles				= damage_fx\burn_creatures
-hit_big_particles				= damage_fx\burn_creatures00
-idle_small_particles			= damage_fx\burn_creatures
-idle_big_particles				= anomaly2\group_items\heat_sparks00_timed
+hit_small_particles			= damage_fx\burn_creatures
+hit_big_particles			= damage_fx\burn_creatures00
+idle_small_particles		= damage_fx\burn_creatures
+idle_big_particles			= anomaly2\group_items\heat_sparks00_timed
 
-idle_particles_dont_stop		= true;
+idle_particles_dont_stop	= true
 
-disable_time					= 10000			;a?aiy eaii?e?iaaiey ia?eaiai iauaeoa a ciia (-1 anee ia io?ii)
-disable_time_small				= -1			;a?aiy eaii?e?iaaiey iaeaiueiai ia?eaiai iauaeoa a ciia (-1 anee ia io?ii)
-disable_idle_time				= 50000			;a?aiy ioee??aiey idle ia?oeeeia
+disable_time				= 10000			; Время игнорирования неживого объекта в зоне (-1 если не нужно)
+disable_time_small			= -1			; Время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
+disable_idle_time			= 50000			; Время отключения idle партиклов
 
-ignore_nonalive					= false
-ignore_small					= true
-ignore_artefacts				= true
+ignore_nonalive				= false
+ignore_small				= true
+ignore_artefacts			= true
 
-blowout_light					= on
-light_color						= 1.9,1.6,1.3
-light_range						= 18.0
-light_time						= 10
-light_height					= 2			;iiauai enoi?ieea naaoa ia aunioo
+blowout_light				= on
+light_color					= 1.9,1.6,1.3
+light_range					= 18.0
+light_time					= 10
+light_height				= 2			; Подъём источника света на высоту
 
-idle_light						= off
-idle_light_range				= 8.0
-idle_light_range_delta			= 0.2
-idle_light_anim					= koster_01
-idle_light_height				= 0.70		;iiauai enoi?ieea naaoa ia aunioo
+idle_light					= off
+idle_light_range			= 8.0
+idle_light_range_delta		= 0.2
+idle_light_anim				= koster_01
+idle_light_height			= 0.70		; Подъём источника света на высоту
 
-awaking_time					= 100
-blowout_time					= 8000
-accamulate_time					= 10
-visible_by_detector				= off
-blowout_wind					= off
+awaking_time				= 100
+blowout_time				= 8000
+accamulate_time				= 10
+visible_by_detector			= off
+blowout_wind				= off
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;?i?aaiea a?oaoaeoia ai a?aiy n?aaaouaaiey
-spawn_blowout_artefacts			= on
-artefact_spawn_probability		= 0.7
-throw_out_power					= 0 ;50		;������� � ������� �������� ����� �������� �� ���� � ������������ �����������
-artefact_spawn_height			= 3			;(�) ������ �� ������� ���� ��� ����� ������ ��������
+;-------------------------------------------------------------------------------
+;------ Рождение артефактов ----------------------------------------------------
+
+artefacts						        = af_black_drops, 1.0, af_deadhead, 0.03
+artefacts_after_surge			        = af_black_drops, 1.0, af_deadhead, 0.03
+artefact_spawn_probability_after_surge	= 0.1
+
+spawn_blowout_artefacts			        = on					; Рождение артефакта после смерти живого существа, или объекта (это главный рубильник, если отключить то всё что ниже перестанет использоваться)
+birth_on_object 				        = false					; Рождение артефакта при попадание объекта в аномалию (не живого существа, а например болта)
+birth_on_alive 					        = true					; Рождение артефакта при смерти живого существа внутри аномалии (не объекта)
+birth_on_corpse 				        = false					; Рождение артефакта при попадании мёртвого существа в аномалию (если закинем труп то она родит артефакт)
+artefact_spawn_probability		        = 0.7					; Базовая вероятность рождения при входе объекта в зону (для объекта/трупа/живого)
+birth_on_death_probability 		        = -1					; Опционально. Отдельная вероятность, если существо умерло ВНУТРИ аномалии. -1 = не используется (берётся artefact_spawn_probability). 0.0 = никогда не рождать от смерти
+artefact_spawn_particles		        = anomaly2\pux_blast	; Партиклы, которые отыграются на месте рождения артефакта (опционально)
+artefact_born_sound				        = anomaly\pux_blast		; Звук, который отыграются на месте рождения артефакта (опционально)
+throw_out_power					        = 3						; Импульс с которым артефакт будет выброшен из зоны в произвольном направлении
+artefact_spawn_height			        = 3						; Высота в метрах над центром зоны где будет рожден артефакт

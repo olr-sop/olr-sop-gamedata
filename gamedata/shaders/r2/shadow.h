@@ -215,6 +215,30 @@ float 	shadowtest_sun 	(float4 tc, float4 tcJ)			// jittered sampling
 	return	dot(r,1.h/4.h);
 }
 
+// 8-tap jittered PCF (CoP/ix-ray 1.6 high-quality sun shadows)
+float 	shadow_high 	(float4 tc)
+{
+	const	float 	scale 	= (0.5f/float(SMAP_size));
+	float2 	tc_J	= frac(tc.xy/tc.w*SMAP_size/4.0f )*.5f;
+	float4	J0 	= tex2D	(jitter0,tc_J)*scale;
+
+	const float k = 1.f/float(SMAP_size);
+	float4	r;
+	r.x 	= test 	(tc,J0.xy+float2(-k,-k)).x;
+	r.y 	= test 	(tc,J0.wz+float2( k,-k)).y;
+	r.z		= test	(tc,J0.xy+float2(-k, k)).z;
+	r.w		= test	(tc,J0.wz+float2( k, k)).x;
+
+	const float k1 = 1.3f/float(SMAP_size);
+	float4	r1;
+	r1.x 	= test 	(tc,-J0.xy+float2(-k1,0)).x;
+	r1.y 	= test 	(tc,-J0.wz+float2( 0,-k1)).y;
+	r1.z	= test	(tc,-2*J0.xy+float2( k1, 0)).z;
+	r1.w	= test	(tc,-2*J0.wz+float2( 0, k1)).x;
+
+	return ( r.x + r.y + r.z + r.w + r1.x + r1.y + r1.z + r1.w )*1.h/8.h;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef  USE_SUNMASK	
 uniform float3x4	m_sunmask	;				// ortho-projection

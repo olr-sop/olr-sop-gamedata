@@ -24,6 +24,7 @@ f_deffer main(p_flat I)
 	float4 L = tex2D(s_lmap, I.tcdh);
 
 	float G = def_gloss;
+	float SP = def_spec;	// спекуляр: микс _nmap# или константа
 
 #ifdef USE_TDETAIL
 #ifdef USE_4_DETAIL
@@ -63,6 +64,16 @@ f_deffer main(p_flat I)
 
 	float3 n_A = float3(xy_A, sqrt(saturate(1.f - dot(xy_A, xy_A)))) * mask.a;
 	float g_A = n_At.r * mask.a;
+
+	// спекуляр — вторая половина пары (_nmap#: как bumpX — g=height, a=spec)
+	float4 ns_Rt = tex2D(s_dnX_r, I.tcdbump);
+	float4 ns_Gt = tex2D(s_dnX_g, I.tcdbump);
+	float4 ns_Bt = tex2D(s_dnX_b, I.tcdbump);
+	float4 ns_At = tex2D(s_dnX_a, I.tcdbump);
+	float sp_R = ns_Rt.a * mask.r;
+	float sp_G = ns_Gt.a * mask.g;
+	float sp_B = ns_Bt.a * mask.b;
+	float sp_A = ns_At.a * mask.a;
 #else
 	float4 n_Rt = tex2D(s_dn_r, I.tcdbump).wzyx;
 	float4 n_Gt = tex2D(s_dn_g, I.tcdbump).wzyx;
@@ -92,6 +103,7 @@ f_deffer main(p_flat I)
 	float3 N = mul(float3x3(I.M1, I.M2, I.M3), mix.xyz);
 
 	G = g_R + g_G + g_B + g_A;
+	SP = sp_R + sp_G + sp_B + sp_A;	// послойный микс спека (mask нормализован, сумма весов = 1)
 
 #else
 	float3 N = I.N.xyz;
@@ -105,16 +117,16 @@ f_deffer main(p_flat I)
 	float3 N = I.N.xyz;
 #endif
 
-	float ms = xmaterial; // hemi, sun, material
+	float ms = G;	// нормальный режим: position.w = gloss (послойный микс _nmap)
 
 #ifdef USE_R2_STATIC_SUN
-	ms = L.w;
+	ms = L.w;		// static sun: position.w = sun occlusion
 #endif
 
 	// 2. Standart output
 	O.Ne = float4(normalize(N), D.w);	// hemi
 	O.position = float4(I.position.xyz + O.Ne.xyz * def_virtualh / 2.h, ms);
-	O.C = float4(D.x, D.y, D.z, G);	// OUT: rgb.gloss
+	O.C = float4(D.x, D.y, D.z, SP);	// OUT: rgb.spec (микс _nmap# либо def_spec)
 
 	return O;
 }

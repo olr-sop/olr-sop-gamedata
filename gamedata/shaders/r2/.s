@@ -2,7 +2,7 @@ function printf(fmt,...)
 	log(string.format(fmt,unpack(arg)))
 end
 
-t_point_att 	= "fx\\light\\spot"
+t_point_att 	= "fx\\light\\spot_100"
 
 function r1_lspot	(shader, t_base, vs, aref)
 	shader:begin	(vs,"add_spot")

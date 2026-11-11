@@ -199,21 +199,6 @@ float 	shadowtest 	(float4 tc, float4 tcJ)				// jittered sampling
 
 	return	dot(r,1.h/4.h);
 }
-float 	shadowtest_sun 	(float4 tc, float4 tcJ)			// jittered sampling
-{
-	float4	r;
-
-	const 	float 	scale 	= (2.0f/float(SMAP_size));
-	float4	J0 	= tex2D	(jitter0,tcJ)*scale;
-	float4	J1 	= tex2D	(jitter1,tcJ)*scale;
-
-		r.x 	= test 	(tc,J0.xy).x;
-		r.y 	= test 	(tc,J0.wz).y;
-		r.z		= test	(tc,J1.xy).z;
-		r.w		= test	(tc,J1.wz).x;
-
-	return	dot(r,1.h/4.h);
-}
 
 // 8-tap jittered PCF (CoP/ix-ray 1.6 high-quality sun shadows)
 float 	shadow_high 	(float4 tc)

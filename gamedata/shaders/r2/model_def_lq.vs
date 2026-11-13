@@ -3,10 +3,10 @@
 
 struct vf
 {
-	float4 hpos	: POSITION;
-	float2 tc0	: TEXCOORD0;		// base
-	float3 c0	: COLOR0;		// color
-	float  fog	: FOG;
+    float4 hpos : POSITION;
+    float2 tc0  : TEXCOORD0;   // base
+    float3 c0   : COLOR0;      // color
+    float  fog  : TEXCOORD1;   // было FOG
 };
 
 vf 	_main (v_model v)
@@ -14,7 +14,7 @@ vf 	_main (v_model v)
 	vf 		o;
 
 	float4 	pos 	= v.P;
-	float3  pos_w 	= mul			(m_W, pos);
+	float3	pos_w	= mul(m_W, pos).xyz;
 	float3 	norm_w 	= normalize 		(mul(m_W,v.N));
 
 	o.hpos 		= mul			(m_WVP, pos);		// xform, input in world coords

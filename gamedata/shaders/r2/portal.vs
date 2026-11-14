@@ -9,7 +9,7 @@ struct 	vf
 {
 	float4 hpos	: POSITION;
 	float4 c	: COLOR0;
-	float  fog	: FOG;
+	float3 fog_pos	: TEXCOORD0;	// world position for per-pixel fog
 };
 
 vf main (v_vert v)
@@ -18,16 +18,7 @@ vf main (v_vert v)
 
 	o.hpos 		= mul(m_VP, v.pos);				// xform, input in world coords
 	o.c 		= v.color;
-	o.fog 		= calc_fogging(v.pos);			// fog, input in world coords
-	o.fog 		= saturate(o.fog);
-	o.c.rgb 	= lerp(fog_color, o.c, o.fog);
-	o.c.a		= o.fog;
-
-#ifdef	USE_VTF
-	float scale = tex2Dlod	(s_tonemap,float4(.5,.5,.5,.5)).x ;
-	o.c.rgb		= o.c.rgb*scale;      		// copy color, pre-scale by tonemap //float4 ( v.c.rgb*scale*2, v.c.a );
-#endif	//	USE_VTF
+	o.fog_pos	= v.pos.xyz;					// world position for per-pixel fog
 
 	return o;
-	
 }

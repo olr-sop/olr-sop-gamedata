@@ -8,6 +8,7 @@ struct 	v2p
 	float3	tc3:		TEXCOORD3;	// env
   	float4	c0:			COLOR0;
 	float3	c1:	        COLOR1;
+	float3	fog_pos:	TEXCOORD4;	// world position for per-pixel fog
 };
 
 uniform samplerCUBE 	s_env0;
@@ -32,7 +33,10 @@ float4 	main	( v2p I )	: COLOR
 	// final-color
 	float3 	base 	= lerp		(f_env,t_base,t_base.a);
 	float3	final 	= light*base*2;
-	
+
+	float	vis		= fog_vis(I.fog_pos);
+	final			= fog_apply_rgb(final, vis);
+
 	// out
-	return  float4	(final.r,final.g,final.b,t_base.a*I.c0.a*I.c0.a);
+	return  float4	(final.r,final.g,final.b,t_base.a);
 }

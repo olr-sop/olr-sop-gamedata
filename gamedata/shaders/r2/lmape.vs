@@ -14,9 +14,9 @@ struct vf
 	float2 tc1	: TEXCOORD1;
 	float2 tch	: TEXCOORD2;
 	float3 tc2	: TEXCOORD3;
-	float4 c0	: COLOR0;		// c0=hemi+v-lights, 	c0.a = fog
+	float4 c0	: COLOR0;		// c0=hemi+v-lights
 	float3 c1	: COLOR1;		// c1=sun, 		c1.a = dt+
-	float  fog	: FOG;
+	float3 fog_pos	: TEXCOORD4;	// world position for per-pixel fog
 };
 
 vf main 	(v_static v)
@@ -31,9 +31,9 @@ vf main 	(v_static v)
 	o.tc1		= unpack_tc_lmap(v.lmh);			// copy tc 
 	o.tch 		= o.tc1;
 	o.tc2		= calc_reflection(pos_w, norm_w);
-	o.fog 		= saturate(calc_fogging(v.P));		// fog, input in world coords
-	o.c0		= float4(v_hemi(norm_w), o.fog);	// just hemisphere
+	o.c0		= float4(v_hemi(norm_w), 1.0f);	// just hemisphere
 	o.c1 		= v_sun(norm_w);					// sun
+	o.fog_pos	= v.P.xyz;						// world position for per-pixel fog
 
 	return o;
 }

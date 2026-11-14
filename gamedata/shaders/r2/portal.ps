@@ -1,19 +1,24 @@
 #include "common.h"
 
-float4 	main	( float4 C:COLOR0 )	: COLOR
+struct	v2p
 {
-		float4	result;
+	float4	c	: COLOR0;
+	float3	fog_pos	: TEXCOORD0;	// world position for per-pixel fog
+};
 
-#ifdef        USE_VTF
-        result.rgb	= C;
+float4 	main	( v2p I )	: COLOR
+{
+	float	vis		= fog_vis(I.fog_pos);
+	float3	color	= lerp(fog_color.rgb, I.c.rgb, vis);	// fog before tonemap, as in combine
+
+	float4	result, high;
+	float	scale	= tex2D(s_tonemap,float2(.5h,.5h)).x;
+#ifdef USE_VTF
+	result.rgb = color * scale;
 #else
-		float4	high;
-        float    scale	= tex2D(s_tonemap,float2(.5h,.5h)).x;
-//		tonemap			(result, high, C, scale*0.9);
-		tonemap			(result, high, C, scale);
+	tonemap(result, high, color, scale);
 #endif
-
-	result.a = C.a;
+	result.a = vis * vis;
 
 	return	result;
 }

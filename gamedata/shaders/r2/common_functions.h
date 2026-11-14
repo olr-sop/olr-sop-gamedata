@@ -44,6 +44,28 @@ float calc_fogging(float4 w_pos) {
 	return dot(w_pos,fog_plane);
 }
 
+// OLR forward-pass fog helpers. fog_vis: 1 = near/clear, 0 = fully fogged.
+float fog_vis(float3 w_pos) {
+	return 1.0f - saturate(distance(w_pos,eye_position)*fog_params.w + fog_params.x);
+}
+
+// Display-space fog color: combine applies tone mapping after fog blending.
+// fog_forward.x switches the tone-mapped variant off for A/B (0 = raw fog_color).
+float3 fog_color_display() {
+	float4 low, high;
+	float scale = tex2D(s_tonemap,float2(0.5f,0.5f)).x;
+	tonemap(low, high, fog_color.rgb, scale);
+	return lerp(fog_color.rgb, low.rgb, saturate(fog_forward.x));
+}
+
+float3 fog_apply_rgb(float3 rgb, float vis) {
+	return lerp(fog_color_display(), rgb, vis);
+}
+
+float fog_apply_alpha(float a, float vis) {
+	return a * vis * vis;
+}
+
 float2 calc_detail(float3 w_pos) {
 	float dtl = distance(w_pos,eye_position)*dt_params.w;
 	dtl = min(dtl*dtl, 1);

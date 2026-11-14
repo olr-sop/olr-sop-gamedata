@@ -7,7 +7,7 @@ struct 	vf
 	float2 tc0	: TEXCOORD0;		// base
 	float3 tc1	: TEXCOORD1;		// environment
 	float4 c0	: COLOR0;		// color
-	float  fog	: FOG;
+	float3 fog_pos	: TEXCOORD2;	// world position for per-pixel fog
 };
 
 vf 	_main (v_model v)
@@ -21,8 +21,8 @@ vf 	_main (v_model v)
 	o.hpos 		= mul			(m_WVP, pos);		// xform, input in world coords
 	o.tc0		= v.tc.xy;					// copy tc
 	o.tc1		= calc_reflection	(pos_w, norm_w);
-	o.fog 		= saturate(calc_fogging 		(float4(pos_w,1)));	// fog, input in world coords
-	o.c0 		= float4(calc_model_lq_lighting(norm_w), o.fog );
+	o.c0 		= float4(calc_model_lq_lighting(norm_w), 0);
+	o.fog_pos	= pos_w;
 
 	return o;
 }

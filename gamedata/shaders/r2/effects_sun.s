@@ -3,5 +3,6 @@ function normal(shader, t_base, t_second, t_detail)
 		: blend				(true,blend.srcalpha,blend.one)
 		: zb				(true,false)
 		: sorting			(3, true)
+		: fog				(false)
 	shader:sampler			("s_base"):texture(t_base)
 end

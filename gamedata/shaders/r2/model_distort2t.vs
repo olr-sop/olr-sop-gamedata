@@ -7,6 +7,7 @@ struct vf
   float2 tc0  : TEXCOORD0;    // base
   float2 tc1  : TEXCOORD1;    // another
   float4 c0  : COLOR0;    // color
+  float fog  : FOG;       // fog factor (PS fade)
 };
 
 vf   _main (v_model v)
@@ -22,6 +23,8 @@ vf   _main (v_model v)
   float   fade   = abs      (dot(dir_v,norm_v));
   o.c0    = fade;
   o.tc1   = fade;
+  float3  pos_w = mul(m_W,v.P);
+  o.fog   = saturate(calc_fogging(float4(pos_w,1)));
 
   return o;
 }

@@ -6,6 +6,7 @@ struct vf
 	float4 hpos	: POSITION;
 	float2 tc0	: TEXCOORD0;		// base
 	float4 c0	: COLOR0;		// color
+	float3 fog_pos	: TEXCOORD1;	// world position for per-pixel fog
 };
 
 vf 	_main (v_model v)
@@ -20,6 +21,7 @@ vf 	_main (v_model v)
 	float3 	norm_v 	= normalize 		(mul(m_WV,v.N));
 	float 	fade 	= abs			(dot(dir_v,norm_v));
 	o.c0		= fade;
+	o.fog_pos	= mul(m_W, v.P);	// world position for per-pixel fog
 
 	return o;
 }

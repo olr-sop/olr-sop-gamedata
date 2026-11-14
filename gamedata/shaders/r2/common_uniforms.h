@@ -8,6 +8,7 @@ uniform float4	Ldynamic_color;			// dynamic light color (rgb1)	- spot/point
 uniform float4	Ldynamic_pos;			// dynamic light pos+1/range(w) - spot/point
 uniform float4	Ldynamic_dir;			// dynamic light direction		- sun
 uniform float4	spec_params;			// x=fresnel_amt, y=spec_scale, z=log2(pow_min), w=log2(pow_max)
+uniform float4	fog_forward;			// x = forward fog tonemap enable (0 = raw fog_color, 1 = tonemapped)
 
 uniform float4	J_direct[6];
 uniform float4	J_spot[6];

@@ -12,6 +12,7 @@ struct	v2p
 	float2 	Tex0	: TEXCOORD0;
 	float4 tctexgen	: TEXCOORD1;
 	float4	Color	: COLOR;
+	float	fog	: FOG;
 	float4 	HPos	: POSITION;	// Clip-space position 	(for rasterization)
 };
 
@@ -27,6 +28,7 @@ v2p main ( vv I )
 	O.Color 	= I.Color;			// copy color
 	O.tctexgen	= mul( mVPTexgen, I.P);
 	O.tctexgen.z	= O.HPos.z;
+	O.fog		= saturate(calc_fogging(I.P));
 
  	return O;
 }

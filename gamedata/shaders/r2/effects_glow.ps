@@ -4,6 +4,7 @@ struct v2p{
 	float2 	Tex0	: TEXCOORD0;
 	float4	Color	: COLOR;
 	float4  tctexgen: TEXCOORD1;
+	float	fog	: FOG;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -21,6 +22,7 @@ float4 main( v2p I ): COLOR {
 	if (spaceDepth < 0.01f ) spaceDepth = 100000.0f; //  filter for skybox
 	clip(spaceDepth-CLIP_DISTANCE);
 	t_base 	*= smoothstep(END_FADE_DISTANCE, START_FADE_DISTANCE, I.tctexgen.z);
+	t_base	*= I.fog*I.fog;		// additive glow: hide in fog without tinting
 
 	return  t_base;
 }

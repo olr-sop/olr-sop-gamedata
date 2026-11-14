@@ -5,12 +5,12 @@
 //	b):	64x64p	=> 8x8p
 #ifdef  FP16_FILTER
 	// native bilinear
-float	sample	(float2	tc)	{
+float	sample_bilinear	(float2	tc)	{
 	return	dot	(tex2D(s_image,tc), 1/4.h);	// sum components
 }
 #else
 	// emulate bilinear
-float	sample	(float2	tc)	{
+float	sample_bilinear	(float2	tc)	{
 	float	phalf	= .5h/64.h;
 	float4	res;
 		res.x	= dot	(tex2D(s_image,tc+float2(-phalf,-phalf)), 1/4.h); // sum components
@@ -25,25 +25,25 @@ float4 main( p_filter I ) : COLOR
 {
 	// sample
 	float4	accum0;
-		accum0.x =	sample(I.Tex0);
-		accum0.y =	sample(I.Tex1);
-		accum0.z =	sample(I.Tex2);
-		accum0.w =	sample(I.Tex3);
+		accum0.x =	sample_bilinear(I.Tex0);
+		accum0.y =	sample_bilinear(I.Tex1);
+		accum0.z =	sample_bilinear(I.Tex2);
+		accum0.w =	sample_bilinear(I.Tex3);
 	float4	accum1;
-		accum1.x =	sample(I.Tex4);
-		accum1.y =	sample(I.Tex5);
-		accum1.z =	sample(I.Tex6);
-		accum1.w =	sample(I.Tex7);
+		accum1.x =	sample_bilinear(I.Tex4);
+		accum1.y =	sample_bilinear(I.Tex5);
+		accum1.z =	sample_bilinear(I.Tex6);
+		accum1.w =	sample_bilinear(I.Tex7);
 	float4	accum2;
-		accum2.x =	sample(I.Tex0.wz);
-		accum2.y =	sample(I.Tex1.wz);
-		accum2.z =	sample(I.Tex2.wz);
-		accum2.w =	sample(I.Tex3.wz);
+		accum2.x =	sample_bilinear(I.Tex0.wz);
+		accum2.y =	sample_bilinear(I.Tex1.wz);
+		accum2.z =	sample_bilinear(I.Tex2.wz);
+		accum2.w =	sample_bilinear(I.Tex3.wz);
 	float4	accum3;
-		accum3.x =	sample(I.Tex4.wz);
-		accum3.y =	sample(I.Tex5.wz);
-		accum3.z =	sample(I.Tex6.wz);
-		accum3.w =	sample(I.Tex7.wz);
+		accum3.x =	sample_bilinear(I.Tex4.wz);
+		accum3.y =	sample_bilinear(I.Tex5.wz);
+		accum3.z =	sample_bilinear(I.Tex6.wz);
+		accum3.w =	sample_bilinear(I.Tex7.wz);
 
 	// perform accumulation
 	float4	final;

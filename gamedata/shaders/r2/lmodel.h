@@ -37,10 +37,10 @@ float blinn_lobe    (float ndoth, float ndotl, float P)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Lighting formulas
-float4 plight_infinity(float gloss, float3 point, float3 normal, float3 light_direction)
+float4 plight_infinity(float gloss, float3 Peye, float3 normal, float3 light_direction)
 {
     float3 N		= normal;
-    float3 V		= -normalize(point);
+    float3 V		= -normalize(Peye);
     float3 L		= -light_direction;
     float3 H		= normalize(L+V);
     float  P		= spec_power(gloss);
@@ -64,11 +64,11 @@ float hl_atten(float rsqr, float inv_range_sq)
 	return att;
 }
 
-float4 plight_local(float gloss, float3 point, float3 normal, float3 light_position, float light_range_rsq, out float rsqr)
+float4 plight_local(float gloss, float3 Peye, float3 normal, float3 light_position, float light_range_rsq, out float rsqr)
 {
     float3 N    = normal;
-    float3 L2P  = point - light_position;
-    float3 V    = -normalize(point);
+    float3 L2P  = Peye - light_position;
+    float3 V    = -normalize(Peye);
     float3 L    = -normalize((float3)L2P);
     float3 H    = normalize(L+V);
     rsqr        = dot(L2P, L2P);

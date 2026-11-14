@@ -22,7 +22,7 @@ uniform float3x4	m_v2w;		// view -> world
 //              Reflections are attenuated by the same hemi factor as diffuse:
 //              vanilla did this through the s_material LUT (ls *= ld^(1/32) with
 //              ld = hemi), which for the blinn slice gives an effective ~h^0.75 gate.
-void hmodel(out float3 hdiffuse, out float3 hspecular, float gloss, float h, float3 point, float3 normal)
+void hmodel(out float3 hdiffuse, out float3 hspecular, float gloss, float h, float3 Peye, float3 normal)
 {
         float3	nw		= mul(m_v2w, normal);
         float	hscale	= h;	// hemi: lightmap brightness / vertex hemi occlusion
@@ -31,7 +31,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float gloss, float h, flo
 #endif
 
         // view ray and reflection vector (eye -> world)
-        float3	v2point		= mul(m_v2w, normalize(point));
+        float3	v2point		= mul(m_v2w, normalize(Peye));
         float3	vreflect	= reflect(-v2point, nw);	// = -R, OLR convention (see env path)
         float3	vreflect_raw	= vreflect;			// true R for the sky cube (before the fake remap)
 

@@ -1,0 +1,255 @@
+;*****************************************************************
+; Military Base
+;*****************************************************************
+[logic@mil_sin_1]
+active = walker@mil_sin_1
+danger = danger_condition
+combat_ignore = combat_ignore@sin
+
+[walker@mil_sin_1]
+path_walk = in_da_house
+meet = no_meet
+
+[danger_condition]
+ignore_distance = 2
+ignore_distance_corpse = 0
+
+
+[logic@mil_sin_2]
+active = walker@mil_sin_2
+
+[walker@mil_sin_2]
+path_walk = base_path_3
+meet = no_meet
+
+
+[logic@mil_sin_3]
+active = walker@mil_sin_3
+
+[walker@mil_sin_3]
+path_walk = base_path_4
+meet = no_meet
+
+
+[logic@mil_sin_4]
+active = walker@mil_sin_4
+
+[walker@mil_sin_4]
+path_walk = base_path_5
+meet = no_meet
+
+
+[logic@mil_sin_5]
+active = walker@mil_sin_5
+
+[walker@mil_sin_5]
+path_walk = base_path_1
+meet = no_meet
+
+
+[logic@mil_sin_6]
+active = walker@mil_sin_6
+
+[walker@mil_sin_6]
+path_walk = base_path_2
+meet = no_meet
+
+
+[logic@mil_sin_7]
+active = walker@mil_sin_7
+
+[walker@mil_sin_7]
+path_walk = base_path_11
+meet = no_meet
+
+
+[logic@mil_sin_8]
+active = walker@mil_sin_8
+on_death = death@mil_sin_8
+
+[walker@mil_sin_8]
+path_walk = patrol_greh
+meet = no_meet
+ 
+[death@mil_sin_8]
+on_info = %+mil_vegusii_sdox%
+
+
+[logic@mil_sin_9]
+active = follower@mil_sin_9
+
+[follower@mil_sin_9]
+leader = 3070 ; sin 8
+meet = no_meet
+on_info = {+mil_vegusii_sdox} walker@mil_sin_9
+
+[walker@mil_sin_9]
+path_walk = patrol_greh
+meet = no_meet
+
+
+[logic@mil_sin_10]
+active = walker@mil_sin_10
+
+[walker@mil_sin_10]
+path_walk = base_path_9
+meet = no_meet
+
+
+[logic@mil_sin_11]
+active = walker@mil_sin_11
+
+[walker@mil_sin_11]
+path_walk = base_path_8
+meet = no_meet
+
+
+[logic@mil_sin_12]
+active = walker@mil_sin_12
+
+[walker@mil_sin_12]
+path_walk = base_path_10
+meet = no_meet
+
+;Sin watch
+[logic@mil_sin_watching]
+active = remark@mil_sin_watching
+
+[remark@mil_sin_watching]
+meet = no_meet
+anim = guard
+no_move = true
+no_rotate = true
+on_info = {+start_greh_prisoning_rush} walker@mil_sin_watching
+
+[walker@mil_sin_watching]
+path_walk = in_da_house
+meet = no_meet
+
+; Sin trans
+[logic@mil_sin_trans_1]
+active = remark@mil_sin_trans_1
+
+[remark@mil_sin_trans_1]
+anim = trans_1
+no_move = true
+no_rotate = true
+
+
+[logic@mil_sin_trans_2]
+active = remark@mil_sin_trans_2
+
+[remark@mil_sin_trans_2]
+anim = trans_0
+no_move = true
+no_rotate = true
+
+
+[logic@mil_sin_trans_3]
+active = remark@mil_sin_trans_3
+
+[remark@mil_sin_trans_3]
+anim = trans_0
+no_move = true
+no_rotate = true
+
+
+[logic@mil_sin_trans_4]
+active = remark@mil_sin_trans_4
+
+[remark@mil_sin_trans_4]
+anim = trans_1
+no_move = true
+no_rotate = true
+
+
+[logic@mil_sin_trans_5]
+active = remark@mil_sin_trans_5
+
+[remark@mil_sin_trans_5]
+anim = trans_5
+no_move = true
+no_rotate = true
+
+; Sin Duel
+[logic@mil_sin_duel]
+active = remark@mil_sin_duel
+combat_ignore = combat_ignore@sin
+
+[remark@mil_sin_duel]
+meet = no_meet
+target = actor
+anim = wait
+danger = danger_condition@mil_sin_duel
+meet = meet@baser2
+on_info = {+dialog_grez_zaruba_gg_talked} nil
+
+[meet@baser2]
+meet_dialog = dialog_grez_zaruba_gg
+use			= true
+use_wpn		= true
+ 
+[danger_condition@mil_sin_duel]
+ignore_distance = 0
+ignore_distance_corpse = 0
+meet = no_meet
+
+; Sin Leader
+[logic@mil_sin_leader]
+active = remark@mil_sin_leader
+on_death = death@mil_sin_leader
+combat_ignore = combat_ignore@sin
+danger = danger_condition
+ 
+[remark@mil_sin_leader]
+target = actor
+anim = guard
+combat_ignore_cond = always
+ 
+[danger_condition@mil_sin_leader]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[death@mil_sin_leader]
+on_info = %+greh_lider_dead +start_greh_cutscenes +start_greh_cutscenes_start_plen% 
+
+;Sin leader (capture scene)
+[logic@mil_sin_leader_capture_scene]
+active = remark@mil_sin_leader_capture_scene
+on_death = death@mil_sin_leader_capture_scene
+danger = danger_condition@mil_sin_leader_capture_scene
+combat_ignore = combat_ignore@sin
+
+[remark@mil_sin_leader_capture_scene]
+anim = guard
+no_move = true
+no_rotate = true
+combat_ignore_keep_when_attacked = true
+
+[death@mil_sin_leader_capture_scene]
+on_info = %+greh_tanzor_leader_dead%
+
+[danger_condition@mil_sin_leader_capture_scene]
+ignore_distance = 5
+ignore_distance_corpse = 0
+
+
+;Sin quest
+[logic@mil_scientist_quest]
+active = remark@mil_scientist_quest
+combat_ignore = combat_ignore@sin
+danger = danger_condition@mil_scientist_quest
+ 
+[remark@mil_scientist_quest]
+meet = no_meet
+target = actor
+anim = wait
+combat_ignore_cond = always
+ 
+[danger_condition@mil_scientist_quest]
+ignore_distance = 0
+ignore_distance_corpse = 0
+meet = no_meet
+
+[combat_ignore@sin]
+combat_ignore_cond = always

@@ -11,28 +11,28 @@ min_speed_to_react		= 1.5
 
 throw_impulse			= 0.1
 hit_impulse_scale		= 0.05 ;0.5
-effective_radius		= 1 ;������ ������� � ��������� �� �������������, ��� ��������� ����
+effective_radius		= 1 ; Размер радиуса в процентах от оригинального, где действует зона
 postprocess				= anomaly_rustyhair
 
 shape_transp_color		= 255, 0, 0, 60
 shape_edge_color		= 32, 32, 32, 255
 
 ;----------- Anomaly settings -----------------------
-min_start_power		= 0.9
-max_start_power		= 1.0
-attenuation			= 1
-period				= 1
+min_start_power		    = 0.9
+max_start_power		    = 1.0
+attenuation			    = 1
+period				    = 1
 
-hit_big_particles			= anomaly2\gravity_damage_02_blood3
+hit_big_particles		= anomaly2\gravity_damage_02_blood3
 
 blowout_sound			= anomaly\burning_fuzz_blowout
 hit_sound				= anomaly\burning_fuzz_hit
 
-hit_type		    = burn
+hit_type		        = burn
 
-disable_time		= -1	;����� ������������� �������� ������� � ���� (-1 ���� �� �����)
-disable_time_small	= 500		;����� ������������� ���������� �������� ������� � ���� (-1 ���� �� �����)
-disable_idle_time	= -1	;����� ���������� idle ���������
+disable_time		    = -1	; Время игнорирования неживого объекта в зоне (-1 если не нужно)
+disable_time_small	    = 500	; Время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
+disable_idle_time	    = -1	; Время отключения idle партиклов
 
 awaking_time			= 50
 blowout_time			= 1000	
@@ -50,13 +50,20 @@ idle_light				= off
 blowout_wind			= off
 visible_by_detector		= on
 
-artefacts						= af_rusty_hair, 1.0
-artefacts_after_surge			= af_rusty_hair, 1.0
-artefact_spawn_probability_after_surge	= 0.01
-spawn_blowout_artefacts			= on
-artefact_spawn_probability		= 0.7					;�����������, ��� �� ����� ������������ �������� ����� ������ ��������
-artefact_spawn_particles		= anomaly2\pux_blast	;��������, ������� ���������� �� ����� �������� ��������� (�����������)
-artefact_born_sound				= anomaly\pux_blast		;����, ������� ���������� �� ����� �������� ��������� (�����������)
+;-------------------------------------------------------------------------------
+;------ Рождение артефактов ----------------------------------------------------
 
-throw_out_power					= 3						;������� � ������� �������� ����� �������� �� ���� � ������������ �����������
-artefact_spawn_height			= 5						;(�) ������ �� ������� ���� ��� ����� ������ ��������
+artefacts						        = af_rusty_hair, 1.0
+artefacts_after_surge			        = af_rusty_hair, 1.0
+artefact_spawn_probability_after_surge	= 0.01
+
+spawn_blowout_artefacts			        = on					; Рождение артефакта после смерти живого существа, или объекта (это главный рубильник, если отключить то всё что ниже перестанет использоваться)
+birth_on_object 				        = false					; Рождение артефакта при попадание объекта в аномалию (не живого существа, а например болта)
+birth_on_alive 					        = true					; Рождение артефакта при смерти живого существа внутри аномалии (не объекта)
+birth_on_corpse 				        = true					; Рождение артефакта при попадании мёртвого существа в аномалию (если закинем труп то она родит артефакт)
+artefact_spawn_probability		        = 0.7					; Базовая вероятность рождения при входе объекта в зону (для объекта/трупа/живого)
+birth_on_death_probability 		        = -1					; Опционально. Отдельная вероятность, если существо умерло ВНУТРИ аномалии. -1 = не используется (берётся artefact_spawn_probability). 0.0 = никогда не рождать от смерти
+artefact_spawn_particles		        = anomaly2\pux_blast	; Партиклы, которые отыграются на месте рождения артефакта (опционально)
+artefact_born_sound				        = anomaly\pux_blast		; Звук, который отыграются на месте рождения артефакта (опционально)
+throw_out_power					        = 3						; Импульс с которым артефакт будет выброшен из зоны в произвольном направлении
+artefact_spawn_height			        = 5						; Высота в метрах над центром зоны где будет рожден артефакт

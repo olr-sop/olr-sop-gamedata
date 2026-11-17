@@ -1,4 +1,21 @@
 -- hi_flyer 30.04.17
+-- Доска объявлений Жабы (Кордон и Милитари).
+-- В SOP задания не пишутся в КПК (CGameTask с одним xml id нельзя выдать повторно), поэтому срок задания и провал работают через olr_timers, цель отмечается на карте.
+-- Что бы завести нормальный таск_менеджер нужны исходники.
+
+local dq = olr_doska_qusts
+local tf = olr_doska_qusts.translate_format
+
+local INFO_TAKEN = "escape_doska_quest_taken"
+local TIMER_ONE_GEN = "doska_one_gen"
+local TIMER_ONE_FAIL = "doska_one_gen_timer_fail"
+local TIMER_TWO_GEN = "gen_kill_stalker_escape"
+local TIMER_TWO_FAIL = "doska_two_gen_timer_fail"
+local TIMER_TWO_CHECK = "doska_two_check_escape"
+local SPOT_KILL = "kill_stalker_location"
+
+local job_selected = false
+local job_selected_kill = false
 
 class "ui_quests_table" (CUIScriptWnd)
 
@@ -12,9 +29,6 @@ end
 
 function ui_quests_table:InitControls()
 	local xml = CScriptXmlInit()
-	-- [ui] center authored 1024x768 root window on the virtual canvas (legacy mode: dx/dy = 0)
-	-- [ui] canvas offsets: wide screens carry extra width (centered 1024 group);
-	-- tall screens (5:4) are stretched by the engine to fill, so both offsets are 0.
 	local ui_kx = device().width /1024
 	local ui_ky = device().height/768
 	local ui_dx = 0
@@ -26,7 +40,7 @@ function ui_quests_table:InitControls()
 	xml:ParseFile("ui_quests_table.xml")
 	self.background_main = xml:InitStatic("background_main", self)
 	self.background_top = xml:InitStatic("background_main:background_top", self.background_main)
-	self.background_bottom = xml:InitStatic("background_main:background_bottom", self.background_main)	
+	self.background_bottom = xml:InitStatic("background_main:background_bottom", self.background_main)
 	self.background_table = xml:InitStatic("background_main:background_table", self.background_main)
 	self.frame_desc_quest = xml:InitFrame("background_main:background_table:frame_desc_quest", self.background_table)
 	self.static_desc_quest = xml:InitStatic("background_main:background_table:frame_desc_quest:static_desc_quest", self.frame_desc_quest)
@@ -36,9 +50,8 @@ function ui_quests_table:InitControls()
 	self:Register(xml:Init3tButton("background_main:background_table:button_exit", self.background_table), "button_exit")
 	self:Register(xml:Init3tButton("background_main:background_table:button_take_quest", self.background_table), "button_take_quest")
 	self.Static3 = xml:InitStatic("background_main:background_table:Static3", self.background_table)
-	local job_selected = false 
-	local job_selected_kill = false
-	local nm = "" 
+	job_selected = false
+	job_selected_kill = false
 end
 
 function ui_quests_table:InitCallBacks()
@@ -49,107 +62,64 @@ function ui_quests_table:InitCallBacks()
 end
 
 function ui_quests_table:bt_find_item_button_clicked()
-	job_selected_kill = false 
-	local textdesc = game.translate_string(""..xvars.quest_one_text.." — "..game.translate_string(xvars.quest_one_text_name)..game.translate_string("st_olr_doska_payment")..xvars.quest_one_cost.." ")
+	job_selected = false
+	job_selected_kill = false
+	if (xvars.quest_one_target or "") == "" then
+		self.static_desc_quest:SetText(game.translate_string("st_doska_no_job"))
+		if not has_alife_info("doska_one_working") then
+			dq.start_timer_once(TIMER_ONE_GEN, 35, "olr_doska_escape.gen_rnd_item_find()")
+		end
+		return
+	end
 	if not has_alife_info("doska_one_taken") then
-		self.static_desc_quest:SetText(textdesc)
+		self.static_desc_quest:SetText(tf("st_doska_item_offer", game.translate_string(xvars.quest_one_text), game.translate_string(xvars.quest_one_text_name), xvars.quest_one_cost))
 		job_selected = true
-	elseif xvars.quest_one_target == "" and has_alife_info("doska_one_taken") then
-		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
 	else
-		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_retrieve_item").." "..game.translate_string(xvars.quest_one_text_name)..game.translate_string("st_olr_doska_payment").." "..xvars.quest_one_cost.." ")
-	end  
+		self.static_desc_quest:SetText(tf("st_doska_item_taken", game.translate_string(xvars.quest_one_text_name), xvars.quest_one_cost))
+	end
 end
 
 function ui_quests_table:bt_kill_stalker_button_clicked()
 	job_selected = false
-	local sobj = game.translate_string(xvars.quest_two_target)
-	local obj = alife():object(sobj)
+	job_selected_kill = false
+	local obj = dq.get_target(xvars.quest_two_target)
 	if not obj then
-		olr_doska_escape.gen_kill_stalker()
-		log1("sobj is nil")
+		self.static_desc_quest:SetText(game.translate_string("st_doska_no_job"))
+		if not has_alife_info("doska_two_working") then
+			dq.start_timer_once(TIMER_TWO_GEN, 52, "olr_doska_escape.gen_kill_stalker()")
+		end
 		return
 	end
-	local pk = get_netpk(obj,1)
-	local pos = news_main.get_point_description(alife():level_name(game_graph():vertex(obj.m_game_vertex_id):level_id()), vector():set(obj.position.x,obj.position.y,obj.position.z))
-  	if pk:isOk() then
-    		local data = pk:get()
-          	local name = data.character_name
-		--log1(""..name.." isss")
-		nm = name
-	end
-	if xvars.quest_two_target == "" then
-		nm = "empty"
-	end
-	local textdesc = game.translate_string(game.translate_string("st_olr_doska_kill_stalker_preface").." "..nm..game.translate_string("st_olr_doska_kill_stalker_last_location").." "..pos..game.translate_string("st_olr_doska_payment").." "..xvars.quest_two_cost)
-	if not has_alife_info("doska_two_taken") then
-	
-		self.static_desc_quest:SetText(textdesc)
+	if has_alife_info("doska_two_taken") then
+		self.static_desc_quest:SetText(tf("st_doska_kill_taken", dq.target_name(obj), xvars.quest_two_cost))
+	elseif obj:alive() then
+		self.static_desc_quest:SetText(tf("st_doska_kill_offer", dq.target_name(obj), dq.target_pos(obj), xvars.quest_two_cost))
 		job_selected_kill = true
-	elseif xvars.quest_two_target == "" and has_alife_info("doska_two_taken") then
-		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_no_work_available"))
-		if not olr_timers.has_timer("gen_kill_stalker") then
-			olr_timers.st_timer("gen_kill_stalker", 52, "olr_doska_escape.gen_kill_stalker()")
-		end
 	else
-		self.static_desc_quest:SetText(game.translate_string("st_olr_doska_task_taken_kill_stalker").." "..nm..xvars.quest_two_cost)
-		db.actor:give_info_portion("escape_doska_quest_taken")
-	end  
+		-- цель погибла раньше, чем задание взяли
+		olr_doska_escape.clear_find_kill()
+		self.static_desc_quest:SetText(game.translate_string("st_doska_no_job"))
+		dq.start_timer_once(TIMER_TWO_GEN, 52, "olr_doska_escape.gen_kill_stalker()")
+	end
 end
 
 function ui_quests_table:button_exit_button_clicked()
-	job_selected = false
-	job_selected_kill = false 
-	self:GetHolder():start_stop_menu(self, true)
-	bind_stalker.restore_weapon()
-	level.remove_cam_effector(30)
+	self:Hide()
 end
 
 function ui_quests_table:button_take_quest_button_clicked()
 	if job_selected == true then
-		job_selected_kill = false
-		xvars.quests_all_ids = xvars.quests_all_ids + 1
-		--log1("quest take now -  clear job one")
-		--olr_doska_escape.give_quest_item_find()
-		job_selected = false
-		self:GetHolder():start_stop_menu(self, true)
-		bind_stalker.restore_weapon()
-		level.remove_cam_effector(30)
-		olr.info("doska_one_taken")
-		olr.info("doska_one_working")
-		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_find_item").." "..xvars.quest_one_text_name.." "..game.translate_string("st_olr_doska_escape_task_2"), 1, "item", 9000)
-		olr_timers.st_timer("doska_one_gen_timer_fail", 6500, "olr_doska_escape.doska_one_gen_timer_fail()")
-		db.actor:give_info_portion("escape_doska_quest_taken")
-	else
-		--log1("cannot take quest")
-	end
-
-	if job_selected_kill == true then
-		--log1("take two")
-		job_selected = false
-		xvars.quests_all_ids = xvars.quests_all_ids + 1
-		job_selected_kill = false
-		self:GetHolder():start_stop_menu(self, true)
-		bind_stalker.restore_weapon()
-		level.remove_cam_effector(30)
-		olr.info("doska_two_taken")
-		olr.info("doska_two_working")
-		news_manager.send_tip(db.actor, game.translate_string("st_olr_doska_kill_stalker").." "..nm, 1, "kill_stalker", 9000)
-		local sobj = game.translate_string(xvars.quest_two_target)
-		local obj = alife():object(sobj)
-		olr.add_spot_on_map( obj.id,"kill_stalker_location", game.translate_string("st_olr_doska_escape_task_4")..nm)
-		olr_timers.st_timer("doska_two_gen_timer_fail", 6500, "olr_doska_escape.doska_two_gen_timer_fail()")
-		if not has_alife_info("assasin_jaba_about") then
-			olr.info("assasin_jaba_about")
-			news_manager.send_tip(db.actor, game.translate_string("ui_quests_tablebutton_take_quest_button_clicked_0"), 3, "trader", 39000, nil, nil, true, "escape_trader_name")
-			db.actor:give_info_portion("escape_doska_quest_taken")
-		end
-	else
-		--log1("cannot take quest")
+		self:Hide()
+		olr_doska_escape.take_quest_item_find()
+	elseif job_selected_kill == true then
+		self:Hide()
+		olr_doska_escape.take_quest_kill_stalker()
 	end
 end
 
 function ui_quests_table:Hide()
+	job_selected = false
+	job_selected_kill = false
 	self:GetHolder():start_stop_menu(self, true)
 	bind_stalker.restore_weapon()
 	level.remove_cam_effector(30)
@@ -158,136 +128,129 @@ end
 ----------------------------------------------------------------------------------------------------------------------------
 -- Поиск предметов
 
--- таймер на провал задания 
-function doska_one_gen_timer_fail()
-	olr_doska_escape.clear_find_item()
-	olr_timers.st_timer("doska_one_gen", 33, "olr_doska_escape.gen_rnd_item_find()")
-	db.actor:disable_info_portion("doska_one_working")
-	db.actor:change_character_reputation(-20)
-end 
+-- взять задание на предмет
+function take_quest_item_find()
+	xvars.quests_all_ids = (xvars.quests_all_ids or 0) + 1
+	db.actor:give_info_portion("doska_one_taken")
+	db.actor:give_info_portion("doska_one_working")
+	db.actor:give_info_portion(INFO_TAKEN)
+	news_manager.send_tip(db.actor, tf("st_doska_item_got_trader", game.translate_string(xvars.quest_one_text_name)), 1, "item", 9000)
+	dq.restart_game_timer(TIMER_ONE_FAIL, math.random(29600, 46600), "olr_doska_escape.doska_one_gen_timer_fail()")
+end
 
--- преконд наличия итема
+-- таймер на провал задания
+function doska_one_gen_timer_fail()
+	if not has_alife_info("doska_one_working") then
+		return
+	end
+	news_manager.send_tip(db.actor, tf("st_toad_task_fail_item", game.translate_string(xvars.quest_one_text_name)), 1, "item", 9000)
+	olr_doska_escape.clear_find_item()
+	db.actor:disable_info_portion("doska_one_working")
+	dq.update_taken_info(INFO_TAKEN, "doska_one_working", "doska_two_working")
+	db.actor:change_character_reputation(-20)
+	dq.start_timer_once(TIMER_ONE_GEN, 35, "olr_doska_escape.gen_rnd_item_find()")
+end
+
+-- преконд наличия итема (не артефакт)
 function precond_user_task_doska_item()
-	if xvars.quest_one_target == "" then
+	if (xvars.quest_one_target or "") == "" or not has_alife_info("doska_one_taken") then
 		return false
 	end
-	local obj_targ = game.translate_string(xvars.quest_one_target)
+	local obj_targ = xvars.quest_one_target
+	local item = db.actor:object(obj_targ)
+	if item and item:is_artefact() then
+		return false
+	end
+	return nik_dialog.item_much(obj_targ, 1) ~= false
+end
+
+-- преконд наличия артефакта (артефакт должен быть изучен)
+function precond_user_task_doska_item_art()
+	if (xvars.quest_one_target or "") == "" or not has_alife_info("doska_one_taken") then
+		return false
+	end
+	local obj_targ = xvars.quest_one_target
 	local art = db.actor:object(obj_targ)
-	if art and art:is_artefact() then
+	if not (art and art:is_artefact()) then
 		return false
 	end
-	return nik_dialog.item_much(obj_targ,1) ~= false 
+	local known_inf = ini_sys:line_exist(obj_targ, "known_info") and ini_sys:r_string(obj_targ, "known_info")
+	return nik_dialog.item_much(obj_targ, 1) ~= false and (not known_inf or has_alife_info(known_inf))
 end
 
 function has_any_active_task_doska(first_speaker, second_speaker)
-	if xvars.quest_one_target ~= "" then
-		return true
-	end
-	if xvars.quest_two_target ~= "" then
-		return true
-	end
-	return false
-end
-
-function precond_user_task_doska_item_art()
-	if xvars.quest_one_target == "" then
-		return false
-	end
-	local obj_targ = game.translate_string(xvars.quest_one_target)
-	local art = db.actor:object(obj_targ)
-	if art and not art:is_artefact() then
-		return false
-	end
-	if art and art:is_artefact() then
-		local known_inf = ini_sys:r_string(obj_targ, "known_info")
-     	return nik_dialog.item_much(obj_targ,1) ~= false and has_alife_info(known_inf)
-	end
+	return has_alife_info("doska_one_working") or has_alife_info("doska_two_working")
 end
 
 -- сдаём квест на предмет
 function one_complete_func_item()
-	local mon = math.floor(xvars.quest_one_cost) 
+	local mon = math.floor(tonumber(xvars.quest_one_cost) or 0)
+	nik_dialog.out_item_much(xvars.quest_one_target, 1)
+	db.actor:change_character_reputation(5)
 	db.actor:give_money(mon)
 	game_stats.money_quest_update(mon)
 	news_manager.relocate_money(db.actor, "in", mon)
-	local obj_targ = game.translate_string(xvars.quest_one_target)
-	nik_dialog.out_item_much(obj_targ,1)
 	olr_doska_escape.clear_find_item()
 	db.actor:disable_info_portion("doska_one_working")
-	db.actor:disable_info_portion("escape_doska_quest_taken")
-	local time = math.random(96,466)
-	olr_timers.st_timer("doska_one_gen", time, "olr_doska_escape.gen_rnd_item_find()")
-	olr_timers.del_timer("doska_one_gen_timer_fail")
+	dq.update_taken_info(INFO_TAKEN, "doska_one_working", "doska_two_working")
+	olr_timers.del_timer(TIMER_ONE_FAIL)
+	dq.start_timer_once(TIMER_ONE_GEN, math.random(90, 160), "olr_doska_escape.gen_rnd_item_find()")
 end
 
-
-
+-- генерация предмета для поиска
 function gen_rnd_item_find()
-	--log1("gen one find jaba")
+	if has_alife_info("doska_one_working") then
+		return
+	end
 	db.actor:disable_info_portion("doska_one_taken")
-
+	local find_item_obj
 	if level.name() == "l01_escape" then
-	--log1("init esc doska")
-	zfind_item_obj = {
-	 
-		 [1] = {name = "wpn_pb",            		cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_pb")},
-		 [2] = {name = "wpn_walther",       		cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_walther")},
-		 [3] = {name = "wpn_bm16",       		cost = 450,  text = game.translate_string("st_olr_doska_esc_find_item_bm16")},
-		 [4] = {name = "killer_outfit",       		cost = 1150,  text = game.translate_string("st_olr_doska_esc_find_item_killer_outfit")},
-		 [5] = {name = "scientific_outfit",       	cost = 1250,  text = game.translate_string("st_olr_doska_esc_find_item_protective_outfit")},
-		 [6] = {name = "wpn_svd",       		cost = 1100,  text = game.translate_string("st_olr_doska_esc_find_item_svd")},
-		 [7] = {name = "af_magnet",       		cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_magnet")},
-		 [8] = {name = "af_zuda",       		cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_zuda")},
-		 [9] = {name = "af_knot",       		cost = 300,  text = game.translate_string("st_olr_doska_bar_find_item_sparkler")},
-		 [10] = {name = "af_mercury_ball",       			cost = 300,  text = game.translate_string("st_olr_doska_esc_find_item_mercury_ball")},
-		 [11] = {name = "af_thorn",       		cost = 100,  text = game.translate_string("st_olr_doska_esc_find_item_thorns")},
-		 [12] = {name = "af_bublik",       			cost = 200,  text = game.translate_string("st_olr_doska_esc_find_item_bagel")},
-
+		find_item_obj = {
+			[1] = {name = "wpn_pb", cost = 300, text = "st_olr_doska_esc_find_item_pb"},
+			[2] = {name = "wpn_walther", cost = 400, text = "st_olr_doska_esc_find_item_walther"},
+			[3] = {name = "wpn_bm16", cost = 450, text = "st_olr_doska_esc_find_item_bm16"},
+			[4] = {name = "killer_outfit", cost = 1150, text = "st_olr_doska_esc_find_item_killer_outfit"},
+			[5] = {name = "scientific_outfit", cost = 1250, text = "st_olr_doska_esc_find_item_protective_outfit"},
+			[6] = {name = "wpn_svd", cost = 1100, text = "st_olr_doska_esc_find_item_svd"},
+			[7] = {name = "af_magnet", cost = 400, text = "st_olr_doska_esc_find_item_magnet"},
+			[8] = {name = "af_zuda", cost = 300, text = "st_olr_doska_esc_find_item_zuda"},
+			[9] = {name = "af_knot", cost = 300, text = "st_olr_doska_bar_find_item_sparkler"},
+			[10] = {name = "af_mercury_ball", cost = 300, text = "st_olr_doska_esc_find_item_mercury_ball"},
+			[11] = {name = "af_thorn", cost = 100, text = "st_olr_doska_esc_find_item_thorns"},
+			[12] = {name = "af_bublik", cost = 200, text = "st_olr_doska_esc_find_item_bagel"}
 		}
 	else
-	--log1("init mil doska")
-	zfind_item_obj = {
-	 
-		 [1] = {name = "wpn_usp",       		cost = 680,  text = game.translate_string("st_olr_doska_esc_find_item_usp")},
-		 [2] = {name = "killer_outfit",       		cost = 1550,  text = game.translate_string("st_olr_doska_esc_find_item_killer_outfit")},
-		 [3] = {name = "scientific_outfit",       	cost = 2250,  text = game.translate_string("st_olr_doska_esc_find_item_protective_outfit")},
-		 [4] = {name = "wpn_svd",       		cost = 1700,  text = game.translate_string("st_olr_doska_esc_find_item_svd")},
-		 [5] = {name = "af_magnet",       		cost = 770,  game.translate_string("st_olr_doska_esc_find_item_magnet")},
-		 [6] = {name = "af_zuda",       		cost = 380,  text = game.translate_string("st_olr_doska_esc_find_item_zuda")},
-		 [7] = {name = "af_knot",       		cost = 360,  text = game.translate_string("st_olr_doska_bar_find_item_sparkler")},
-		 [8] = {name = "af_mercury_ball",       			cost = 370,  text = game.translate_string("st_olr_doska_esc_find_item_mercury_ball")},
-		 [9] = {name = "af_thorn",       		cost = 160,  text = game.translate_string("st_olr_doska_esc_find_item_thorns")},
-		 [10] = {name = "af_bublik",       			cost = 270,  text = game.translate_string("st_olr_doska_esc_find_item_bagel")},
-
-		 [11] = {name = "af_lamp",       		cost = 10000,  text = game.translate_string("st_olr_doska_esc_find_item_death_lamp")},
-
-		 [12] = {name = "outfit_stalker_golmar",       		cost = 7350,  text = game.translate_string("st_olr_doska_esc_find_item_golmars_outfit")},
-		 [13] = {name = "wpn_vintorez_gravi",       		cost = 2000,  text = game.translate_string("st_olr_doska_esc_find_item_gravity_vss")},
-		 [14] = {name = "wpn_binoc",       			cost = 400,  text = game.translate_string("st_olr_doska_esc_find_item_binocs")},
-		 [15] = {name = "hand_torch",       			cost = 450,  text = game.translate_string("st_olr_doska_esc_find_item_hand_torch")}
-
+		find_item_obj = {
+			[1] = {name = "wpn_usp", cost = 680, text = "st_olr_doska_esc_find_item_usp"},
+			[2] = {name = "killer_outfit", cost = 1550, text = "st_olr_doska_esc_find_item_killer_outfit"},
+			[3] = {name = "scientific_outfit", cost = 2250, text = "st_olr_doska_esc_find_item_protective_outfit"},
+			[4] = {name = "wpn_svd", cost = 1700, text = "st_olr_doska_esc_find_item_svd"},
+			[5] = {name = "af_magnet", cost = 770, text = "st_olr_doska_esc_find_item_magnet"},
+			[6] = {name = "af_zuda", cost = 380, text = "st_olr_doska_esc_find_item_zuda"},
+			[7] = {name = "af_knot", cost = 360, text = "st_olr_doska_bar_find_item_sparkler"},
+			[8] = {name = "af_mercury_ball", cost = 370, text = "st_olr_doska_esc_find_item_mercury_ball"},
+			[9] = {name = "af_thorn", cost = 160, text = "st_olr_doska_esc_find_item_thorns"},
+			[10] = {name = "af_bublik", cost = 270, text = "st_olr_doska_esc_find_item_bagel"},
+			[11] = {name = "af_lamp", cost = 10000, text = "st_olr_doska_esc_find_item_death_lamp"},
+			[12] = {name = "outfit_stalker_golmar", cost = 7350, text = "st_olr_doska_esc_find_item_golmars_outfit"},
+			[13] = {name = "wpn_vintorez_gravi", cost = 2000, text = "st_olr_doska_esc_find_item_gravity_vss"},
+			[14] = {name = "wpn_binoc", cost = 400, text = "st_olr_doska_esc_find_item_binocs"},
+			[15] = {name = "hand_torch", cost = 450, text = "st_olr_doska_esc_find_item_hand_torch"}
 		}
 	end
 
-	local irnd = math.random(#zfind_item_obj) or 1
-	local item = tostring(zfind_item_obj[irnd].name)
-	local cost = tostring(zfind_item_obj[irnd].cost)
-	local text = tostring(zfind_item_obj[irnd].text)
-
-	xvars.quest_one_target = item
-	xvars.quest_one_cost = cost
-	xvars.quest_one_text_name = text
+	local rnd = find_item_obj[math.random(#find_item_obj)]
+	xvars.quest_one_target = rnd.name
+	xvars.quest_one_cost = tostring(rnd.cost)
+	xvars.quest_one_text_name = rnd.text
 
 	local text_phrase = {
-		"st_olr_doska_find_item_preface_1", 
-		"st_olr_doska_find_item_preface_2", 
-		"st_olr_doska_find_item_preface_3", 
-		"st_olr_doska_find_item_preface_4"
+		"st_doska_phrase_need",
+		"st_doska_phrase_order",
+		"st_doska_phrase_buy",
+		"st_doska_phrase_i_need"
 	}
-	local text_find = game.translate_string(text_phrase[math.random(#text_phrase)])
-	xvars.quest_one_text = text_find
-
-	--log1("jaba doska need find new - "..xvars.quest_one_target.."  --- "..xvars.quest_one_cost.."")
+	xvars.quest_one_text = text_phrase[math.random(#text_phrase)]
 end
 
 -- отчистка итема для поиска
@@ -298,29 +261,7 @@ function clear_find_item()
 	xvars.quest_one_text_name = ""
 end
 
-
--- выдача квеста на поиск предмета
-function give_quest_item_find()
-	local new_task = CGameTask()
-	new_task:load("user_task_doska_item")
-	new_task:set_title(game.translate_string("st_olr_doska_esc_find_item_for_toad"))
-	local idr = xvars.quests_all_ids
-	--new_task:set_id(idr)
-
-	local SubTask = SGameTaskObjective (new_task, 1)
-	local target = game.translate_string(xvars.quest_one_text_name)
-	SubTask:set_description(game.translate_string("st_olr_doska_esc_find_target")..target.."")
-	SubTask:add_complete_func("olr_doska_escape.precond_user_task_doska_item")
-	new_task:add_objective(SubTask)
-
-	local SubTask2 = SGameTaskObjective (new_task, 2)
-	SubTask2:set_description(game.translate_string("st_olr_doska_esc_talk_to_client"))
-	new_task:add_objective(SubTask2)
-	local time = math.random(19600,46600)
-	db.actor:give_task(new_task, time*1000, true)
-end
-
--- завершаем квест
+-- завершаем квест (оставлено для game_tasks.xml)
 function one_complete_task_item()
 	return not has_alife_info("doska_one_working")
 end
@@ -329,102 +270,165 @@ function one_complete_task_item_fail()
 	return false
 end
 
-
 ----------------------------------------------------------------------------------------------------------------------------
--- убить сталкера
+-- Убить сталкера
 
--- таймер на провал задания 
-function doska_two_gen_timer_fail()
-	local sobj = game.translate_string(xvars.quest_two_target)
-	local obj = alife():object(sobj)
-	level.map_remove_object_spot(obj.id, "kill_stalker_location")
-	olr_doska_escape.clear_find_kill()
-	olr_timers.st_timer("gen_kill_stalker", 26, "olr_doska_escape.gen_kill_stalker()")
-	db.actor:disable_info_portion("doska_two_working")
-	db.actor:change_character_reputation(-20)
-	db.actor:disable_info_portion("escape_doska_quest_taken")
-end 
+-- награда и репутация по группировке цели
+local function kill_reward(community)
+	if community == "zombied" then
+		return 200, 10
+	elseif community == "bandit" then
+		return 400, 20
+	end
+	return 500, 30
+end
 
 function gen_kill_stalker()
+	if has_alife_info("doska_two_working") then
+		return
+	end
 	db.actor:disable_info_portion("doska_two_taken")
+	local levels = {l02_garbage = true, l03_agroprom = true, l04_darkvalley = true}
+	local comms = {bandit = true, killer = true, zombied = true, monolith = true, voenstals = true}
 	local places = {}
 	for _, kill in ipairs(olr_offline_walk.tabst) do
-	--for id=1, 65534 do
-		--local kill = alife():object(id)
-		if kill then
-			if IsStalker(kill) then
-				if kill:alive() and (kill.level_name == "l02_garbage" or kill.level_name == "l03_agroprom" or kill.level_name == "l04_darkvalley") then
-					if kill:community()=="bandit" or kill:community()=="killer" or kill:community()=="zombied" or kill:community()=="monolith" or kill:community()=="voenstals" then
-						if not olr_protected.is_no_offline_alife_obj(kill:name()) then
-							table.insert(places, kill)
-						end
-					end
-				end
+		if kill and IsStalker(kill) and kill:alive() and levels[kill.level_name] and comms[kill:community()] then
+			if not olr_protected.is_no_offline_alife_obj(kill:name()) then
+				table.insert(places, kill)
 			end
 		end
 	end
+	if #places == 0 then
+		olr_doska_escape.clear_find_kill()
+		dq.start_timer_once(TIMER_TWO_GEN, 300, "olr_doska_escape.gen_kill_stalker()")
+		return
+	end
 	local rand_kill = places[math.random(#places)]
 	xvars.quest_two_target = rand_kill:name()
-	local mon = 150
-	if rand_kill:community()=="zombied" then
-		mon = 200
-	elseif rand_kill:community()=="bandit" then
-		mon = 400
-	else
-		mon = 500
-	end
-	xvars.quest_two_cost = mon
-	--olr.add_spot_on_map( rand_kill.id,"crlc_big", "килл" )
-	--news_manager.send_tip(db.actor, "есть rand_kill "..rand_kill:name().." -- "..rand_kill.level_name.." ")
+	xvars.quest_two_target_id = rand_kill.id
+	xvars.quest_two_comm = rand_kill:community()
+	xvars.quest_two_cost = kill_reward(xvars.quest_two_comm)
 end
 
+-- взять задание на убийство
+function take_quest_kill_stalker()
+	local obj = dq.get_target(xvars.quest_two_target)
+	if not obj then
+		return
+	end
+	xvars.quests_all_ids = (xvars.quests_all_ids or 0) + 1
+	xvars.quest_two_target_id = obj.id
+	db.actor:give_info_portion("doska_two_taken")
+	db.actor:give_info_portion("doska_two_working")
+	db.actor:give_info_portion(INFO_TAKEN)
+	local name = dq.target_name(obj)
+	news_manager.send_tip(db.actor, tf("st_doska_kill_got", name), 1, "kill_stalker", 9000)
+	olr.add_spot_on_map(obj.id, SPOT_KILL, tf("st_doska_spot_kill_toad", name))
+	dq.restart_game_timer(TIMER_TWO_FAIL, math.random(29600, 46600), "olr_doska_escape.doska_two_gen_timer_fail()")
+	olr_timers.del_timer(TIMER_TWO_CHECK)
+	olr_timers.st_timer(TIMER_TWO_CHECK, 60, "olr_doska_escape.check_kill_target()")
+	if not has_alife_info("assasin_jaba_about") then
+		db.actor:give_info_portion("assasin_jaba_about")
+		news_manager.send_tip(db.actor, game.translate_string("ui_quests_tablebutton_take_quest_button_clicked_0"), 3, "trader", 39000, nil, nil, true, "escape_trader_name")
+	end
+end
+
+local function remove_kill_spot()
+	local id = xvars.quest_two_target_id
+	if not id then
+		local obj = dq.get_target(xvars.quest_two_target)
+		id = obj and obj.id
+	end
+	if id then
+		level.map_remove_object_spot(id, SPOT_KILL)
+	end
+end
+
+local function killed_by_actor()
+	local name = xvars.quest_two_target or ""
+	return name ~= "" and xvars.npc_kileed_by_actor ~= nil and xvars.npc_kileed_by_actor[name] ~= nil
+end
+
+-- закрыть задание на убийство (провал или отмена)
+local function drop_kill_quest(text, rep)
+	news_manager.send_tip(db.actor, text, 1, "kill_stalker", 9000)
+	remove_kill_spot()
+	olr_doska_escape.clear_find_kill()
+	db.actor:disable_info_portion("doska_two_working")
+	dq.update_taken_info(INFO_TAKEN, "doska_one_working", "doska_two_working")
+	olr_timers.del_timer(TIMER_TWO_FAIL)
+	olr_timers.del_timer(TIMER_TWO_CHECK)
+	if rep and rep ~= 0 then
+		db.actor:change_character_reputation(rep)
+	end
+	dq.start_timer_once(TIMER_TWO_GEN, 26, "olr_doska_escape.gen_kill_stalker()")
+end
+
+-- периодическая проверка цели: погибла не от руки ГГ или пропала из симуляции
+function check_kill_target()
+	if not has_alife_info("doska_two_working") or killed_by_actor() then
+		return
+	end
+	local obj = dq.get_target(xvars.quest_two_target)
+	if not obj then
+		drop_kill_quest(game.translate_string("st_doska_task_target_lost"), 0)
+		return
+	end
+	if not obj:alive() then
+		drop_kill_quest(tf("st_toad_task_fail_killed", dq.target_name(obj)), -20)
+		return
+	end
+	olr_timers.st_timer(TIMER_TWO_CHECK, 60, "olr_doska_escape.check_kill_target()")
+end
+
+-- таймер на провал задания
+function doska_two_gen_timer_fail()
+	if not has_alife_info("doska_two_working") then
+		return
+	end
+	local name = dq.target_name(dq.get_target(xvars.quest_two_target))
+	drop_kill_quest(tf("st_toad_task_fail_kill", name), -20)
+end
 
 -- преконд убитого сталкера
 function precond_user_task_doska_kill()
-	if xvars.quest_two_target == "" then
+	if (xvars.quest_two_target or "") == "" or not has_alife_info("doska_two_taken") or not has_alife_info("doska_two_working") then
 		return false
 	end
-     	local sobj = game.translate_string(xvars.quest_two_target)
-     	local obj = alife():object(sobj)
-	if obj then
-     		return not obj:alive() and has_alife_info("doska_two_taken") and xvars.npc_kileed_by_actor[obj:name()] ~= nil
-	else
-		return false
-	end
+	return killed_by_actor()
 end
 
 -- сдаём квест на убийство
 function two_complete_func_kill()
-     	local sobj = game.translate_string(xvars.quest_two_target)
-     	local obj = alife():object(sobj)
-	if not obj then return end
-	level.map_remove_object_spot(obj.id, "kill_stalker_location")
-	if obj:community()=="zombied" then
-		db.actor:change_character_reputation(10)
-	elseif obj:community()=="bandit" then
-		db.actor:change_character_reputation(20)
-	else
-		db.actor:change_character_reputation(30)
-	end
-	db.actor:give_money(xvars.quest_two_cost)
-	game_stats.money_quest_update(xvars.quest_two_cost)
-	news_manager.relocate_money(db.actor, "in", xvars.quest_two_cost)
+	local obj = dq.get_target(xvars.quest_two_target)
+	local comm = xvars.quest_two_comm or (obj and obj:community()) or ""
+	local mon, rep = kill_reward(comm)
+	mon = tonumber(xvars.quest_two_cost) or mon
+	remove_kill_spot()
+	db.actor:change_character_reputation(rep)
+	db.actor:give_money(mon)
+	game_stats.money_quest_update(mon)
+	news_manager.relocate_money(db.actor, "in", mon)
 	db.actor:disable_info_portion("doska_two_working")
-	db.actor:disable_info_portion("escape_doska_quest_taken")
-	local time = math.random(90,160)
-	olr_timers.st_timer("gen_kill_stalker", time, "olr_doska_escape.gen_kill_stalker()")
 	olr_doska_escape.clear_find_kill()
-	olr_timers.del_timer("doska_two_gen_timer_fail")
+	dq.update_taken_info(INFO_TAKEN, "doska_one_working", "doska_two_working")
+	olr_timers.del_timer(TIMER_TWO_FAIL)
+	olr_timers.del_timer(TIMER_TWO_CHECK)
+	dq.start_timer_once(TIMER_TWO_GEN, math.random(90, 160), "olr_doska_escape.gen_kill_stalker()")
 end
 
 -- отчистка текущего убитого для поиска
 function clear_find_kill()
 	xvars.quest_two_target = ""
+	xvars.quest_two_target_id = nil
+	xvars.quest_two_comm = nil
 	xvars.quest_two_cost = 0
 end
 
+function one_complete_task_kill()
+	return not has_alife_info("doska_two_working")
+end
 
-
-
-
-
+function one_complete_task_kill_fail()
+	return false
+end

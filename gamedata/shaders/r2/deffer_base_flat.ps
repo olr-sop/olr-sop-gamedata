@@ -12,8 +12,8 @@ f_deffer 	main	( p_flat I )
 	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
 #endif
 
-	// hemi,sun,material
-	float 	ms	= xmaterial		;
+	// hemi,sun,gloss
+	float 	ms	= def_gloss		;	// нормальный режим: position.w = gloss
 #ifdef USE_LM_HEMI
 	float4	lm 	= tex2D			(s_hemi, I.lmh);
 	float 	h  	= dot			(lm.rgb,1.h/3.h);
@@ -30,7 +30,7 @@ f_deffer 	main	( p_flat I )
   // 2. Standart output
   O.Ne          = float4		(normalize((float3)I.N.xyz), 					h			);
   O.position    = float4 	(I.position.xyz + O.Ne.xyz*def_virtualh/2.h, 	ms			);
-  O.C			= float4		(D.rgb,											def_gloss	);	// OUT: rgb.gloss
+  O.C			= float4		(D.rgb,											def_spec	);	// OUT: rgb.spec
 
   return O;
 }

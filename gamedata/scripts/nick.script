@@ -1079,7 +1079,7 @@ end
 
 function doki_seven_online()
 	olr.to_online("pri_jornal_7") 
-	news_manager.send_tip(db.actor, game.translate_string("doki_seven_online_0"), 50, "freedom", 59000) 
+	news_manager.send_tip(db.actor, game.translate_string("doki_seven_online_0"), 50, "unknown", 59000) 
 end
 
 function precond_dva_kasara()
@@ -2914,23 +2914,6 @@ function chaes_ratss_spawn()
 	local count = math.random(10,15) 
 	for ind = 1, count do
 		olr.spawn_on_obj("m_rat_new", "lvl14_stancia_zone_radioactive_ratsspawn")
-	end
-end
-
-function set_mertvecy_enemys()
-	for k,v in pairs(db.storage) do
-		local npc = level.object_by_id(k)
-		if npc and npc:is_stalker() and npc:position():distance_to(db.actor:position()) < 50 then
-			if npc:character_community() == "deads" then
-				local h = hit ()
-				h.power = 0.01
-				h.direction = vector():set (0, 10, 0)
-				h.impulse = 0.01
-				h.draftsman = db.actor
-				h.type = hit.strike
-				npc:hit(h)
-			end
-		end
 	end
 end
 
@@ -8200,7 +8183,7 @@ end
 function daem_doki_vetrov_bezumia_zapiska(first_speaker, second_speaker)
 	dialogs.relocate_item_section(second_speaker, "zapiska_dead_proffecor","in")
 	dialogs.relocate_item_section(second_speaker, "grafic_ciklichnosti_vetrov_doki","in")
-	actor:give_info_portion("zapiska_dead_proffecor_taken")
+	db.actor:give_info_portion("zapiska_dead_proffecor_taken")
 end
 
 function otdaem_doki_vetrov_bezumia()
@@ -9368,6 +9351,11 @@ function otdaem_gazeta_otrivok_1(first_speaker, second_speaker)
 	dialogs.relocate_money(first_speaker, 50, "in")
 end
 
+function otdaem_device_pda_slizen(first_speaker, second_speaker)
+	nik_dialog.out_item_much("device_pda_slizen",1)
+	dialogs.relocate_money(first_speaker, 500, "in")
+end
+
 function precond_jaba_has_any_doc()
 	return precond_bar_barman_kamaz_doki() or precond_gazeta_otrivok_1()
 	 or precond_doki_agro_dyatel() or precond_gar_postroika_dnevnik()
@@ -9381,11 +9369,15 @@ function precond_jaba_has_any_doc()
 	 or precond_radar_kompleks_doki() or precond_esc_vishka_dnevnik()
 	 or precond_scintific_pda_military() or precond_pda_ecol_dolina()
 	 or precond_device_pda_jan_one() or precond_device_pda_jan_two()
-	 or precond_device_pda_jan_tri()
+	 or precond_device_pda_jan_tri() or precond_device_pda_slizen()
 end
 
 function precond_gazeta_otrivok_1()
 	return nik_dialog.item_much("gazeta_otrivok_1",1) ~= false 
+end
+
+function precond_device_pda_slizen()
+	return nik_dialog.item_much("device_pda_slizen",1) ~= false 
 end
 
 function otdaem_bar_barman_kamaz_doki(first_speaker, second_speaker)
@@ -10424,7 +10416,7 @@ end
 
 function daem_saf_papku(first_speaker, second_speaker)	
 	dialogs.relocate_item_section(second_speaker, "fil_saf_papka","in")
-	actor:give_info_portion("fil_saf_papka_taken")
+	db.actor:give_info_portion("fil_saf_papka_taken")
 end
 
 function give_konservas(first_speaker, second_speaker)
@@ -12740,7 +12732,7 @@ function gr_lid_haha()
 	if has_alife_info("greh_leader_key_taken_docs_vetri") then
 		return
 	end
-	news_manager.send_tip(db.actor, "gr_lid_haha", nil, "sos", 20000, nil, nil, true, "st_agreh_leader_name")
+	news_manager.send_tip(db.actor, "gr_lid_haha", nil, "sos", 20000, nil, nil, true, "st_sim_sin_leader_name")
 end
 
 function car_barmen_bardachok()
@@ -13121,4 +13113,9 @@ end
 
 function give_capsule_damaged(first_speaker, second_speaker)	
 	dialogs.relocate_item_section(second_speaker, "capsule_rone_damaged","in")
+end
+
+function vedmak_reward(first_speaker, second_speaker)	
+	olr.give_item("af_galantine_pot")
+	olr.give_item("af_galantine_pot")
 end

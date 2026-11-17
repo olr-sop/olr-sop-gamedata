@@ -24,11 +24,11 @@ float4 	main		( float2 tc : TEXCOORD0, float4 tcJ : TEXCOORD1 ) : COLOR
   half4  _N		= tex2D 	(s_normal,   	tc);
 
 	// ----- light-model
-	half 	m	= xmaterial	;
+	half 	gloss	= def_gloss	;	// static sun: глосс в G-буфере нет (position.w = sun occ)
 # ifndef USE_R2_STATIC_SUN
-			m 	= _P.w		;
+			gloss 	= _P.w		;
 # endif
-	half4	light 	= plight_infinity (m,_P,_N,Ldynamic_dir);
+	half4	light 	= plight_infinity (gloss,_P,_N,Ldynamic_dir);
 
 	// ----- shadow
   	float4 	P4 	= float4	(_P.x,_P.y,_P.z,1);

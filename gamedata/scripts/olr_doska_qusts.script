@@ -6,10 +6,10 @@ function on_use()
     if level_name == "l01_escape" then
         on_use_escape()
     end
-	
+
     if level_name == "l09_military" then
         on_use_military()
-    end	
+    end
 
     if level_name == "l05_bar" then
         on_use_bar()
@@ -48,4 +48,65 @@ end
 
 function on_use_yantar()
     level.start_stop_menu(olr_doska_yan.ui_quests_table(), true)
+end
+
+----------------------------------------------------------------------------------------------------------------------------
+-- Общие функции досок объявлений
+----------------------------------------------------------------------------------------------------------------------------
+
+-- подставляет $1 в переведённую строку
+function translate_format(id, ...)
+	local args = {...}
+	local text = game.translate_string(id)
+	return (string.gsub(text, "%$(%d)", function(n)
+		local v = args[tonumber(n)]
+		return v ~= nil and tostring(v) or ""
+	end))
+end
+
+-- серверный объект цели по имени (nil если имени нет или объект удалён)
+function get_target(name)
+	if name == nil or name == "" then
+		return nil
+	end
+	return alife():object(name)
+end
+
+-- имя НПС для текста
+function target_name(sobj)
+	if not sobj then
+		return ""
+	end
+	return news_main.get_npc_name(sobj) or ""
+end
+
+-- описание местоположения серверного объекта
+function target_pos(sobj)
+	if not sobj then
+		return ""
+	end
+	local lname = alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id())
+	return news_main.get_point_description(lname, vector():set(sobj.position.x, sobj.position.y, sobj.position.z)) or ""
+end
+
+-- запустить таймер, если такого ещё нет
+function start_timer_once(name, delay, action)
+	if not olr_timers.has_timer(name) then
+		olr_timers.st_timer(name, delay, action)
+	end
+end
+
+-- перезапустить таймер игрового времени
+function restart_game_timer(name, delay, action)
+	olr_timers.del_timer(name)
+	olr_timers.st_timer_game(name, delay, action)
+end
+
+-- инфопоршень "есть задание с доски" для диалогов сдачи
+function update_taken_info(info, working_one, working_two)
+	if has_alife_info(working_one) or has_alife_info(working_two) then
+		db.actor:give_info_portion(info)
+	else
+		db.actor:disable_info_portion(info)
+	end
 end

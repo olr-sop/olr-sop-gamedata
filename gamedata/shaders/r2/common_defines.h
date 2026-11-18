@@ -2,7 +2,6 @@
 #define	common_defines_h_included
 
 // #define USE_GAMMA_22
-// #define USE_SJITTER
 //
 // #define USE_MBLUR					//- HW-options defined
 // #define USE_HWSMAP					//- HW-options defined

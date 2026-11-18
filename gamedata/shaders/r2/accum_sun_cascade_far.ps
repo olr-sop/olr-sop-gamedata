@@ -5,9 +5,6 @@
 uniform float3	view_shadow_proj;
 
 float4 	main		( float4 tc : TEXCOORD0
-#ifdef USE_SJITTER
-					, float4 tcJ : TEXCOORD1
-#endif
 					) : COLOR
 {
 	float4 _P		= tex2Dproj 	(s_position, 	tc);
@@ -24,13 +21,7 @@ float4 	main		( float4 tc : TEXCOORD0
 	float4 	P4 	= float4	(_P.x,_P.y,_P.z,1.f);
 	float4 	PS	= mul		(m_shadow, 	P4);
 	float 	s 	= sunmask	(P4);
-#if SUN_QUALITY == 2
-	s 	*= shadow_soft	(PS);
-#elif SUN_QUALITY == 1
-	s 	*= shadow_high	(PS);
-#else
-	s 	*= shadow		(PS);
-#endif
+	s 	*= shadow_quality	(PS);
 
 	// Fading code
 	float2 	tc_f	= (PS.xy/PS.w)-float2(0.5f,0.5f);

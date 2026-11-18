@@ -1,7 +1,5 @@
 -- hi_flyer 27.06.17
 
-local drop_flag = false
-
 function on_hit(obj, amount, local_direction, who, bone_index)
     on_hit_drop(obj, amount, local_direction, who, bone_index)
     on_hit_psy(obj, amount, local_direction, who, bone_index)
@@ -15,26 +13,21 @@ function on_hit_drop(obj, amount, local_direction, who, bone_index)
     if not active_item or active_item:section() == "bolt" then
         return
     end
-    if active_item:is_weapon_magazined() ~= true or active_item:is_weapon_gl() ~= true then
+    if active_item:is_weapon_magazined() ~= true and active_item:is_weapon_gl() ~= true then
         return
     end
     if obj:character_community() == "voenstals" or obj:character_community() == "sin" or obj:character_community() == "zombied" then
         return false
     end
-    if bone_index and bone_index > 0 then
-        if (bone_index >= 18 and bone_index < 31) then
-            drop_flag = true
-        elseif (bone_index >= 31 and bone_index < 40) then
-            drop_flag = true
-        end
+
+    local drop_flag = false
+    if bone_index and bone_index >= 18 and bone_index < 40 then
+        drop_flag = true
     end
-    if drop_flag then
-		local drop_var = math.random(1, 10) -- теперь каждый вызов этой функции будет получать новое значение рандома
-        if drop_var == 1 then
-            active_item:set_condition(math.random(5, 25) / 100)
-            obj:drop_item(active_item)
-            drop_flag = false
-        end
+    if drop_flag and math.random(1, 10) == 1 then
+        active_item:unload_magazine(false)
+        active_item:set_condition(math.random(10, 30) / 100)
+        obj:drop_item(active_item)
     end
 end
 

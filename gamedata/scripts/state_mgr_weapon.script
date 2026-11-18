@@ -1,6 +1,9 @@
 
 -- ОРУЖИЕ
 -- Соответствует ли состояние оружия требуемому
+local DROP_COND_MIN = 10
+local DROP_COND_MAX = 30
+
 class "eva_state_mgr_weapon" (property_evaluator)
 function eva_state_mgr_weapon:__init(name, st) super (nil, name)
 	self.st = st
@@ -202,6 +205,15 @@ function act_state_mgr_weapon_drop:initialize()
 	action_base.initialize(self)
 	local weap = get_weapon(self.object, self.st.target_state)
 	if strappable_weapon(weap) then
+		if weap:is_weapon() then
+			-- OLR: an NPC must not drop a 100% condition weapon (wounded/psy drop).
+			-- Lower only: repeated initialize calls must not repair the weapon.
+			local cond = math.random(DROP_COND_MIN, DROP_COND_MAX) / 100
+			if weap:condition() > cond then
+				weap:set_condition(cond)
+			end
+			weap:unload_magazine(false)
+		end
 		self.object:set_item(object.drop, weap)
 	else
 		self.object:set_item(object.idle, nil)

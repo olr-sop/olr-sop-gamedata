@@ -10,7 +10,7 @@ Game runtime and gamedata for **Oblivion Lost Remake**: X-Ray 1.6, Lua 5.1 (LuaJ
 
 - **Encoding is the first hazard.** Gamedata is Windows-1251, except shaders and English localization under `config/text/eng/`, which are UTF-8. Use `tools/encoding/enc.ps1` for every read, search and write; direct UTF-8 writes corrupt the game text.
 - **Run only on explicit request.** The default is that the user runs the game, `luac`, editors and packing tools. Run them only when the user explicitly asks for that specific command.
-- **Spec before code.** Non-trivial work starts as an OpenSpec change (section 8).
+- **Spec before code, always.** OpenSpec is mandatory for every change, not only large ones: check/continue an active change or create one before touching code or data (section 8).
 - **No blind mass edits.** Convert or rewrite only files inside the current change scope.
 - **One repository, one change.** Engine and gamedata changes are separate commits.
 
@@ -109,7 +109,7 @@ pwsh tools/encoding/enc.ps1 restore <ltx> -Reference <clean> -Write -Backup
 
 ## 8. OpenSpec workflow
 
-This repository is spec-driven. `openspec/specs/` is the accepted behavior baseline; `openspec/changes/` holds work in progress.
+This repository is spec-driven and OpenSpec is mandatory at all times. `openspec/specs/` is the accepted behavior baseline; `openspec/changes/` holds work in progress. Every task runs inside an OpenSpec change; there are no exceptions for small fixes.
 
 ```bash
 openspec list                      # active changes
@@ -152,4 +152,5 @@ In this workspace they are already configured:
 - Do not edit `textures/`, `sounds/`, `meshes/`, `levels/` or `anims/` without an explicit asset task.
 - Do not modify `*.bak`, `* — копия*` or generated caches.
 - Do not shell-convert files with `>` / `Out-File`; use `enc.ps1`.
+- Do not bypass OpenSpec: every change goes through an OpenSpec change, with no exceptions.
 - Do not commit or push unless the user explicitly asks.

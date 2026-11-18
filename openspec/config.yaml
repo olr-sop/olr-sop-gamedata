@@ -1,0 +1,40 @@
+schema: spec-driven
+
+context: |
+  OLR is the game runtime and gamedata for Oblivion Lost Remake (X-Ray 1.6,
+  Lua 5.1, LTX/XML, HLSL shaders).
+  Read AGENTS.md first. Text under gamedata/** is Windows-1251, except
+  gamedata/shaders/** and gamedata/config/text/eng/**, which are UTF-8.
+  XML declarations must match the bytes because TinyXML reads them. Use
+  tools/encoding/enc.ps1 for reading, searching, conversion, XML declaration repair
+  and damage recovery; direct UTF-8 writes to CP1251 areas are forbidden.
+  Requirements and specs are written in English; proposals, design notes and tasks
+  may be Russian.
+  The user runs the game and luac by default. An agent runs them only when the
+  user explicitly asks for that specific command. Use the cbm-gamedata MCP server
+  (graph project Q-OLRDev-OLR-gamedata) and lemma as supporting tools. OpenSpec
+  remains the source of truth for scope and acceptance.
+
+rules:
+  proposal:
+    - "State which gamedata areas change: scripts, config, shaders, spawn, assets."
+    - "Call out encoding impact and any text that must be restored from a reference source."
+  specs:
+    - "Write requirements in English, one behavior per Requirement, each with at least one Scenario."
+    - "For script APIs, name the engine export used (script_*_script.cpp) when relevant."
+  design:
+    - "Document LTX inheritance/include chains and save-load compatibility for script changes."
+    - "For encoding work, state source encoding, target encoding and the verification command."
+  tasks:
+    - "Encoding tasks must use tools/encoding/enc.ps1 and end with a clean scan of touched files."
+    - "Group tasks by area (scripts, config, shaders, spawn) and keep each verifiable."
+    - "The final task states who runs the game or luac: the user by default, or the agent only when explicitly asked."
+
+operations:
+  apply:
+    guidance:
+      - "After editing text, run tools/encoding/enc.ps1 detect on every touched file."
+      - "Never mass-convert files outside the change scope."
+  archive:
+    guidance:
+      - "Summarize the user-visible gameplay or UI effect and how it was verified."

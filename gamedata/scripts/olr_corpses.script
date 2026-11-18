@@ -1,5 +1,5 @@
 -- hi_flyer 03.17.19
--- СѓРґР°Р»СЏРµРј С‚СѓС€РєРё РќРџРЎ, + РіРЅРёРµРЅРёРµ С‚СЂСѓРїРѕРІ (РџСЂРѕС„ С‡С‚Рѕ-С‚Рѕ РіРѕРІРѕСЂРёР» РїСЂРѕ РіРЅРёРµРЅРёРµ...)
+-- удаляем тушки НПС, + гниение трупов (Проф что-то говорил про гниение...)
 
 local level_name = level.name()
 local nodelflag = false
@@ -10,7 +10,7 @@ function del_corpse(obj)
 		local dist = obj:position():distance_to(db.actor:position())
 
 		if dist > 25 then
-			-- Р¶Р°Р±С‹ РґРѕСЃРєР°
+			-- жабы доска
 			local esobj = game.translate_string(xvars.quest_two_target)
 			if esobj then
 				local eobj = alife():object(esobj)
@@ -21,7 +21,7 @@ function del_corpse(obj)
 				end
 			end
 
-			-- Р±Р°СЂ РґРѕСЃРєР°
+			-- бар доска
 			local esobj = game.translate_string(xvars.quest_two_target_bar)
 			if esobj then
 				local eobj = alife():object(esobj)
@@ -32,7 +32,7 @@ function del_corpse(obj)
 				end
 			end
 
-			-- РµСЃР»Рё РїСѓСЃС‚РѕР№ С‚СЂСѓРї
+			-- если пустой труп
 			if obj:ruck_count() == 0 then
 				--log1("dead without habar "..obj:name().." DEL ")
 				this.spawn_rotten(obj)
@@ -40,21 +40,21 @@ function del_corpse(obj)
 				return
 			end
 
-			-- РїСЂРѕС€С‘Р» РІС‹Р±СЂРѕСЃ - РїРѕ С„Р»Р°РіСѓ СѓРґР°Р»СЏРµРј С‚СЂСѓРї СЃРѕ РІСЃРµРј С…Р°Р±Р°СЂРѕРј РєСЂРѕРјРµ С‚СЂСѓРїРѕРІ СЃ РєРІРµСЃС‚РѕРІ РёС‚РµРј
+			-- прошёл выброс - по флагу удаляем труп со всем хабаром кроме трупов с квестов итем
 			if xvars.npc_del_afterblow[obj:name()] == true then
 				obj:iterate_inventory(
 					function(obj, item)
 						if item then
 							--log1("deadmen "..obj:name().." with habar - "..item:name().." ")
 							if olr.bad_items[item:section()] == true then
-								--news_manager.send_tip(db.actor, "РђРҐРўРЈРќР“ РІ С‚СЂСѓРїРµ РµСЃС‚СЊ РІР°Р¶РЅС‹Р№ bad_items "..item:name().." ", nil, "hero", 9000)
+								--news_manager.send_tip(db.actor, "АХТУНГ в трупе есть важный bad_items "..item:name().." ", nil, "hero", 9000)
 								nodelflag = true
-								return -- СЃСЂР°Р·Сѓ Р·Р°РєР°РЅС‡РёРІР°РµРј, РµСЃР»Рё РёС‚РµРј РµСЃС‚СЊ РЅРµС„РёРі РґР°Р»СЊС€Рµ РєРѕРІС‹СЂСЏС‚СЊ
+								return -- сразу заканчиваем, если итем есть нефиг дальше ковырять
 							end
 							if ini_sys:line_exist(item:section(), "quest_item") and ini_sys:r_bool(item:section(), "quest_item") == true then
-								--news_manager.send_tip(db.actor, "РђРҐРўРЈРќР“ РІ С‚СЂСѓРїРµ РµСЃС‚СЊ РІР°Р¶РЅС‹Р№ quest_item "..item:name().." ", nil, "dolg", 9000)
+								--news_manager.send_tip(db.actor, "АХТУНГ в трупе есть важный quest_item "..item:name().." ", nil, "dolg", 9000)
 								nodelflag = true
-								return -- СЃСЂР°Р·Сѓ Р·Р°РєР°РЅС‡РёРІР°РµРј, РµСЃР»Рё РёС‚РµРј РµСЃС‚СЊ РЅРµС„РёРі РґР°Р»СЊС€Рµ РєРѕРІС‹СЂСЏС‚СЊ
+								return -- сразу заканчиваем, если итем есть нефиг дальше ковырять
 							end
 						end
 					end,

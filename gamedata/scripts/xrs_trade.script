@@ -16,8 +16,8 @@ traders = {
 	--{ base = id, client = id, data = {} }
 }
 
--- [olr] restore_data/save_data СѓРґР°Р»РµРЅС‹: РїР°СЂС‹ Р±Р°СЂС‚РµСЂР° РІ СЃРµР№РІ РЅРµ РїРёС€СѓС‚СЃСЏ,
--- РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё evaluator СЃР°Рј СЃР±СЂР°СЃС‹РІР°РµС‚ СѓСЃС‚Р°СЂРµРІС€РёРµ table_key.
+-- [olr] restore_data/save_data удалены: пары бартера в сейв не пишутся,
+-- после загрузки evaluator сам сбрасывает устаревшие table_key.
 
 local no_levels = {
 	["l14_stancia"] = true,
@@ -25,7 +25,7 @@ local no_levels = {
 	["l15_generators"] = true
 }
 
--- [olr] РіСЂСѓРїРїРёСЂРѕРІРєРё, РєРѕС‚РѕСЂС‹Рµ РІ Р±Р°СЂС‚РµСЂРµ РЅРµ СѓС‡Р°СЃС‚РІСѓСЋС‚
+-- [olr] группировки, которые в бартере не участвуют
 local excluded_comms = {
 	["zombied"] = true,
 	["sin"] = true,
@@ -37,10 +37,10 @@ local excluded_comms = {
 	["killer"] = true
 }
 
--- РјР°РєСЃРёРјСѓРј РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹С… РїР°СЂ Р±Р°СЂС‚РµСЂР° РЅР° СѓСЂРѕРІРЅРµ
+-- максимум одновременных пар бартера на уровне
 local max_pairs = 2
 
--- РїР°СЂР° СЃС‡РёС‚Р°РµС‚СЃСЏ Р·Р°РЅСЏС‚РѕР№, С‚РѕР»СЊРєРѕ РµСЃР»Рё РѕР±Р° NPC Р¶РёРІС‹ Рё РЅР°С…РѕРґСЏС‚СЃСЏ РѕРЅР»Р°Р№РЅ
+-- пара считается занятой, только если оба NPC живы и находятся онлайн
 local function npc_busy_in_trade(id)
 	for dummy, v in pairs(traders) do
 		if v.base and v.client and (v.base == id or v.client == id) then
@@ -54,7 +54,7 @@ local function npc_busy_in_trade(id)
 	return false
 end
 
--- РєРѕР»РёС‡РµСЃС‚РІРѕ СЂРµР°Р»СЊРЅРѕ РёРіСЂР°СЋС‰РёС…СЃСЏ РїР°СЂ (РјС‘СЂС‚РІС‹Рµ/РѕС„С„Р»Р°Р№РЅ РЅРµ СЃС‡РёС‚Р°СЋС‚СЃСЏ)
+-- количество реально играющихся пар (мёртвые/оффлайн не считаются)
 local function trade_pairs_count()
 	local n = 0
 	for dummy, v in pairs(traders) do
@@ -69,7 +69,7 @@ local function trade_pairs_count()
 	return n
 end
 
--- СЃРѕР·РґР°С‚СЊ РїР°СЂСѓ: СЂР°Р·РЅС‹Рµ NPC, РЅРёРєС‚Рѕ РЅРµ Р·Р°РЅСЏС‚, Р»РёРјРёС‚ РїР°СЂ
+-- создать пару: разные NPC, никто не занят, лимит пар
 local function add_trade_pair(base_id, client_id)
 	if not base_id or not client_id or base_id == client_id then
 		return false
@@ -94,7 +94,7 @@ end
 
 local places = {}
 
--- [olr] РµРґРёРЅР°СЏ С‚РѕС‡РєР° СЃР±РѕСЂР° NPC-РєР°РЅРґРёРґР°С‚РѕРІ РґР»СЏ Р±Р°СЂС‚РµСЂР°
+-- [olr] единая точка сбора NPC-кандидатов для бартера
 local function collect_trade_places()
 	places = {}
 	for a=1,65534 do
@@ -115,7 +115,7 @@ local function collect_trade_places()
 	return #places
 end
 
-function on_item_drop() -- С‚РѕСЂРіРѕРІР»СЏ РјРµР¶ СЃС‚Р°Р»РєРµСЂРѕРІ
+function on_item_drop() -- торговля меж сталкеров
 
 	if not has_alife_info("esc_kill_gunslinger") then
 		return
@@ -144,7 +144,7 @@ function on_item_drop() -- С‚РѕСЂРіРѕРІР»СЏ РјРµР¶ СЃС‚Р°Р»РєРµСЂРѕРІ
 end
 
 
-function on_sms_trade_otvet(npc) -- РїСЂРµРґР»Р°РіР°РµРј СЃС‚Р°Р»РєРµСЂР°Рј РїРѕС‚РѕСЂРіРѕРІР°С‚СЊ
+function on_sms_trade_otvet(npc) -- предлагаем сталкерам поторговать
 	local cnt = collect_trade_places()
 	if cnt < 4 then
 		return
@@ -157,11 +157,11 @@ function on_sms_trade_otvet(npc) -- РїСЂРµРґР»Р°РіР°РµРј СЃС‚Р°Р»РєРµСЂР°Рј РїРѕ
 end
 
 -------------------------------------------------------------------------------------
--- [olr] СЃРѕР±С‹С‚РёР№РЅС‹Рµ С‚РѕС‡РєРё РІС…РѕРґР° РІ Р±Р°СЂС‚РµСЂ (СЃ РєСѓР»РґР°СѓРЅРѕРј, РІРјРµСЃС‚Рѕ С‡Р°СЃС‚С‹С… С‚РёРєРѕРІ)
+-- [olr] событийные точки входа в бартер (с кулдауном, вместо частых тиков)
 -------------------------------------------------------------------------------------
-local last_random_trade_time = 0   -- game-РІСЂРµРјСЏ РїРѕСЃР»РµРґРЅРµР№ РїРѕРїС‹С‚РєРё
-local random_trade_gap      = 180  -- РјРёРЅРёРјР°Р»СЊРЅС‹Р№ РёРЅС‚РµСЂРІР°Р» РјРµР¶РґСѓ РїРѕРїС‹С‚РєР°РјРё, РёРіСЂРѕРІС‹Рµ СЃРµРєСѓРЅРґС‹
-local random_trade_prob     = 40   -- С€Р°РЅСЃ СЃСЂР°Р±Р°С‚С‹РІР°РЅРёСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, %
+local last_random_trade_time = 0   -- game-время последней попытки
+local random_trade_gap      = 180  -- минимальный интервал между попытками, игровые секунды
+local random_trade_prob     = 40   -- шанс срабатывания по умолчанию, %
 
 function on_random_trade_request(tag, prob)
 	if no_levels[level.name()] then
@@ -186,13 +186,13 @@ end
 
 function on_actor_first_update()
 	if not olr_timers.has_timer("xrs_trade_lvl_start") then
-		olr_timers.st_timer_game("xrs_trade_lvl_start", math.random(300, 3000), "xrs_trade.on_random_trade_request('level_start', 50)") -- С‡РµСЂРµР· 5-50 РјРёРЅСѓС‚ РёРіСЂРѕРІРѕРіРѕ РІСЂРµРјРµРЅРё СЃСЂР°Р±РѕС‚Р°РµС‚ СЂР°Р·РѕРє.
+		olr_timers.st_timer_game("xrs_trade_lvl_start", math.random(300, 3000), "xrs_trade.on_random_trade_request('level_start', 50)") -- через 5-50 минут игрового времени сработает разок.
 	end
 end
 
-function on_after_sleep() -- РїРѕСЃР»Рµ СЃРЅР° РёРіСЂРѕРєР°
+function on_after_sleep() -- после сна игрока
 	if not olr_timers.has_timer("xrs_trade_after_sleep") then
-		olr_timers.st_timer_real("xrs_trade_after_sleep", math.random(300, 3600), "xrs_trade.on_random_trade_request('after_sleep', 50)") -- С‡РµСЂРµР· 5-60 РјРёРЅСѓС‚ РёРіСЂРѕРІРѕРіРѕ РІСЂРµРјРµРЅРё СЃСЂР°Р±РѕС‚Р°РµС‚ РїРѕСЃР»Рµ СЃРЅР°
+		olr_timers.st_timer_real("xrs_trade_after_sleep", math.random(300, 3600), "xrs_trade.on_random_trade_request('after_sleep', 50)") -- через 5-60 минут игрового времени сработает после сна
 	end
 end
 
@@ -215,7 +215,7 @@ function evaluator_is_trade:evaluate()
 	if xr_wounded.is_wounded(npc) then
 		return false
 	end
-	-- РёСЃРєР»СЋС‡С‘РЅРЅС‹Рµ РіСЂСѓРїРїРёСЂРѕРІРєРё РІ Р±Р°СЂС‚РµСЂРµ РЅРµ СѓС‡Р°СЃС‚РІСѓСЋС‚
+	-- исключённые группировки в бартере не участвуют
 	if excluded_comms[npc:character_community()] then
 		return false
 	end
@@ -311,7 +311,7 @@ function action_trade:execute()
 	end
 	
 	if self.st.type == "base" then
-		if debg == true then olr.add_spot_on_map( npc:id(),"alife_combat_fight", " Р±Р°Р·Р° "..npc:name().." "  ) end
+		if debg == true then olr.add_spot_on_map( npc:id(),"alife_combat_fight", " база "..npc:name().." "  ) end
 		--log1("1")
 		if not self.switch_phase_time then
 			npc:clear_animations()
@@ -403,7 +403,7 @@ function action_trade:execute()
 		end
 		--log1("5")
 	else
-		if debg == true then olr.add_spot_on_map( npc:id(),"monster_part_location", " РёРґСѓС‰РёР№ РїРѕРєСѓРїР°С‚РєР»СЊ "..npc:name().." "   ) end
+		if debg == true then olr.add_spot_on_map( npc:id(),"monster_part_location", " идущий покупаткль "..npc:name().." "   ) end
 		--log1("6")
 		if state == 2 then
 			if self.state ~= state then
@@ -473,7 +473,7 @@ function celling_habar_svoi(npc,target)
 					npc:give_money(item:cost())
 					--state_mgr.set_state(npc,"norm_hello_0",nil,nil,{look_object = target},{animation = true})
 					--state_mgr.set_state(target,"norm_hello_0",nil,nil,{look_object = npc},{animation = true})
-					-- TODO - РґР°РІР°С‚СЊ РґРµРЅСЊРіРё 
+					-- TODO - давать деньги 
 				end
 			end
 		end )

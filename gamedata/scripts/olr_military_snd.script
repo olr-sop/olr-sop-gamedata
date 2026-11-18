@@ -1,4 +1,4 @@
--- РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ Р·РІСѓРєРѕРІ
+-- Конфигурация звуков
 local SOUND_CONFIG = {
     RADIO_ANSWERS = {
         paths = {
@@ -11,17 +11,17 @@ local SOUND_CONFIG = {
     TURN_OFF = [[device\radio\radio_turn_off_1]],
     NOISE = [[device\radio\radio_noise_1]],
     
-    -- РќР°СЃС‚СЂРѕР№РєРё РІРµСЂРѕСЏС‚РЅРѕСЃС‚Рё Рё РІСЂРµРјРµРЅРё
-    CHECK_INTERVAL = 30000, -- РџСЂРѕРІРµСЂРєР° РєР°Р¶РґС‹Рµ 30 СЃРµРє
-    MAIN_TRIGGER_CHANCE = 0.1, -- 10% С€Р°РЅСЃ СЃСЂР°Р±Р°С‚С‹РІР°РЅРёСЏ РѕСЃРЅРѕРІРЅРѕРіРѕ С‚СЂРёРіРіРµСЂР°
-    NOISE_CHANCE = 0.1, -- 10% С€Р°РЅСЃ С€СѓРјР° (РµСЃР»Рё РІС‹Р±СЂР°РЅ СЌС‚РѕС‚ РІР°СЂРёР°РЅС‚)
-    MIN_DELAY = 5000, -- РњРёРЅРёРјР°Р»СЊРЅР°СЏ Р·Р°РґРµСЂР¶РєР° РјРµР¶РґСѓ Р·РІСѓРєР°РјРё Сѓ РѕРґРЅРѕРіРѕ NPC
-    LOG_ENABLE = false, -- Р’РєР»СЋС‡РµРЅРёРµ Р»РѕРіРіРёСЂРѕРІР°РЅРёСЏ
-    LOG_INTERVAL = 2000, -- Р›РѕРіРёСЂРѕРІР°РЅРёРµ РєР°Р¶РґС‹Рµ 2 СЃРµРєСѓРЅРґС‹
-    NOISE_MIN_DELAY = 120000 -- РњРёРЅРёРјР°Р»СЊРЅР°СЏ Р·Р°РґРµСЂР¶РєР° РјРµР¶РґСѓ С€СѓРјР°РјРё Сѓ РѕРґРЅРѕРіРѕ NPC
+    -- Настройки вероятности и времени
+    CHECK_INTERVAL = 30000, -- Проверка каждые 30 сек
+    MAIN_TRIGGER_CHANCE = 0.1, -- 10% шанс срабатывания основного триггера
+    NOISE_CHANCE = 0.1, -- 10% шанс шума (если выбран этот вариант)
+    MIN_DELAY = 5000, -- Минимальная задержка между звуками у одного NPC
+    LOG_ENABLE = false, -- Включение логгирования
+    LOG_INTERVAL = 2000, -- Логирование каждые 2 секунды
+    NOISE_MIN_DELAY = 120000 -- Минимальная задержка между шумами у одного NPC
 }
 
--- РўР°Р±Р»РёС†Р° Р·РІСѓРєРѕРІС‹С… РѕР±СЉРµРєС‚РѕРІ
+-- Таблица звуковых объектов
 local sound_objects = {
     radio_answers = {},
     turn_on = nil,
@@ -29,7 +29,7 @@ local sound_objects = {
     noise = nil
 }
 
--- РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р·РІСѓРєРѕРІ СЃ РїСЂРѕРІРµСЂРєРѕР№
+-- Инициализация звуков с проверкой
 local function init_sounds()
     sound_objects.turn_on = xr_sound.get_safe_sound_object(SOUND_CONFIG.TURN_ON) or false
     sound_objects.turn_off = xr_sound.get_safe_sound_object(SOUND_CONFIG.TURN_OFF) or false
@@ -42,23 +42,23 @@ end
 
 init_sounds()
 
--- РўР°Р±Р»РёС†Р° СЃРѕСЃС‚РѕСЏРЅРёР№ NPC
+-- Таблица состояний NPC
 local npc_states = {}
 local last_log_time = 0
 
--- Р¤СѓРЅРєС†РёСЏ РґР»СЏ Р±РµР·РѕРїР°СЃРЅРѕРіРѕ РїРѕР»СѓС‡РµРЅРёСЏ РґР»РёРЅС‹ Р·РІСѓРєР°
+-- Функция для безопасного получения длины звука
 local function get_sound_length(sound_obj)
     return sound_obj and type(sound_obj.length) == "function" and sound_obj:length() or 0
 end
 
--- РћСЃС‚Р°РЅРѕРІРєР° РІСЃРµС… Р·РІСѓРєРѕРІ РґР»СЏ NPC
+-- Остановка всех звуков для NPC
 local function stop_all_sounds_for_npc(npc_id)
     if not npc_id then return end
     
     local state = npc_states[npc_id]
     if not state then return end
     
-    -- РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј Р°РєС‚РёРІРЅС‹Р№ Р·РІСѓРє
+    -- Останавливаем активный звук
     if state.active_sound and state.active_sound.object then
         local sound_obj = state.active_sound.object
         if sound_obj and sound_obj.stop and type(sound_obj.stop) == "function" then
@@ -67,11 +67,11 @@ local function stop_all_sounds_for_npc(npc_id)
         state.active_sound = nil
     end
     
-    -- РћС‡РёС‰Р°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ
+    -- Очищаем состояние
     npc_states[npc_id] = nil
 end
 
--- РџСЂРѕРІРµСЂРєР° СЃРѕСЃС‚РѕСЏРЅРёСЏ NPC Рё РѕСЃС‚Р°РЅРѕРІРєР° Р·РІСѓРєРѕРІ РµСЃР»Рё РЅСѓР¶РЅРѕ
+-- Проверка состояния NPC и остановка звуков если нужно
 local function check_npc_alive(npc)
     if not npc or not npc:id() then return false end
     
@@ -83,7 +83,7 @@ local function check_npc_alive(npc)
     return is_alive
 end
 
--- РЈР»СѓС‡С€РµРЅРЅРѕРµ Р»РѕРіРіРёСЂРѕРІР°РЅРёРµ СЃ Р·Р°С‰РёС‚РѕР№ РѕС‚ РѕС€РёР±РѕРє
+-- Улучшенное логгирование с защитой от ошибок
 local function log_active_sounds()
     if not SOUND_CONFIG.LOG_ENABLE then return end
     local current_time = time_global()
@@ -100,9 +100,9 @@ local function log_active_sounds()
         if state and state.active_sound then
             local npc = level.object_by_id(npc_id)
             if npc then
-                -- РџСЂРѕРІРµСЂСЏРµРј, Р¶РёРІ Р»Рё РµС‰Рµ NPC
+                -- Проверяем, жив ли еще NPC
                 if not check_npc_alive(npc) then
-                    -- NPC РјРµСЂС‚РІ, Р·РІСѓРєРё СѓР¶Рµ РґРѕР»Р¶РЅС‹ Р±С‹Р»Рё РѕСЃС‚Р°РЅРѕРІРёС‚СЊСЃСЏ
+                    -- NPC мертв, звуки уже должны были остановиться
                     log_msg = log_msg .. string.format(
                         "[%d] %-15s | NPC IS DEAD - SOUNDS STOPPED\n",
                         npc_id,
@@ -141,13 +141,13 @@ local function log_active_sounds()
     end
 end
 
--- РћСЃРЅРѕРІРЅР°СЏ С„СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂРєРё
+-- Основная функция проверки
 function radio_snd_check(npc)
 	local mrandom = math.random
 	
 	if not IsStalker(npc) then return end
 	
-    -- РџСЂРѕРІРµСЂСЏРµРј, Р¶РёРІ Р»Рё NPC
+    -- Проверяем, жив ли NPC
     if not check_npc_alive(npc) then 
         stop_all_sounds_for_npc(npc:id())
         return 
@@ -159,7 +159,7 @@ function radio_snd_check(npc)
     local current_time = time_global()
     if not current_time then return end
     
-    -- РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ NPC
+    -- Инициализация состояния NPC
     if not npc_states[npc_id] then
         npc_states[npc_id] = {
             last_play_time = 0,
@@ -171,52 +171,52 @@ function radio_snd_check(npc)
     local state = npc_states[npc_id]
     if not state then return end
     
-    -- РџСЂРѕРІРµСЂРєР° Р°РєС‚РёРІРЅРѕРіРѕ Р·РІСѓРєР°
+    -- Проверка активного звука
     if state.active_sound then
         local sound_obj = state.active_sound.object
         
-        -- РџСЂРѕРІРµСЂСЏРµРј, Р¶РёРІ Р»Рё РµС‰Рµ NPC
+        -- Проверяем, жив ли еще NPC
         if not check_npc_alive(npc) then
             return
         end
         
-        -- РћР±РЅРѕРІР»СЏРµРј РїРѕР·РёС†РёСЋ Р·РІСѓРєР°
+        -- Обновляем позицию звука
         if sound_obj and sound_obj.playing and sound_obj:playing() then
             sound_obj:set_position(npc:position())
-            return -- Р—РІСѓРє РµС‰С‘ РёРіСЂР°РµС‚, РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
+            return -- Звук ещё играет, ничего не делаем
         else
-            -- Р—РІСѓРє Р·Р°РІРµСЂС€РёР»СЃСЏ, РѕС‡РёС‰Р°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ
+            -- Звук завершился, очищаем состояние
             state.active_sound = nil
         end
     end
     
-    -- РџСЂРѕРІРµСЂСЏРµРј РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёСЏ РЅРѕРІРѕРіРѕ Р·РІСѓРєР°
+    -- Проверяем возможность воспроизведения нового звука
     if current_time - (state.last_play_time or 0) < SOUND_CONFIG.MIN_DELAY then 
         return 
     end
     
-    -- РџСЂРѕРІРµСЂСЏРµРј С„СЂР°РєС†РёСЋ NPC
+    -- Проверяем фракцию NPC
     local community = npc:character_community()
     if not community or not (community == "military" or community == "voenstals" or 
            community == "dolg" or community == "freedom") then
         return
     end
     
-    -- РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ РІСЂР°РіРѕРІ
+    -- Проверяем наличие врагов
     if npc.best_enemy and npc:best_enemy() then return end
     
-    -- РџСЂРѕРІРµСЂСЏРµРј СЃР»СѓС‡Р°Р№РЅРѕРµ СЃСЂР°Р±Р°С‚С‹РІР°РЅРёРµ РѕСЃРЅРѕРІРЅРѕРіРѕ С‚СЂРёРіРіРµСЂР°
+    -- Проверяем случайное срабатывание основного триггера
     if mrandom() > SOUND_CONFIG.MAIN_TRIGGER_CHANCE then return end
     
-    -- Р’С‹Р±РёСЂР°РµРј С‚РёРї Р·РІСѓРєР°
+    -- Выбираем тип звука
     local sound_type, sound_obj
     
     if mrandom(1, 2) == 1 then
-        -- РџРѕР»РЅР°СЏ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ: РІРєР»СЋС‡РµРЅРёРµ -> РѕС‚РІРµС‚ -> РІС‹РєР»СЋС‡РµРЅРёРµ
+        -- Полная последовательность: включение -> ответ -> выключение
         sound_type = "turn_on"
         sound_obj = sound_objects.turn_on
         
-        -- Р—Р°РїР»Р°РЅРёСЂСѓРµРј СЃР»РµРґСѓСЋС‰РёРµ Р·РІСѓРєРё
+        -- Запланируем следующие звуки
         if sound_obj then
             local on_length = get_sound_length(sound_obj)
             
@@ -226,14 +226,14 @@ function radio_snd_check(npc)
                     return t and t > (current_time + on_length) 
                 end,
                 function()
-                    -- РџСЂРѕРІРµСЂСЏРµРј, Р¶РёРІ Р»Рё РµС‰Рµ NPC
+                    -- Проверяем, жив ли еще NPC
                     local npc = level.object_by_id(npc_id)
                     if not check_npc_alive(npc) then
                         stop_all_sounds_for_npc(npc_id)
                         return
                     end
                     
-                    -- Р’РѕСЃРїСЂРѕРёР·РІРѕРґРёРј РѕС‚РІРµС‚
+                    -- Воспроизводим ответ
                     local answer_index = mrandom(1, #SOUND_CONFIG.RADIO_ANSWERS.paths)
                     local answer_sound = sound_objects.radio_answers[answer_index]
                     
@@ -249,7 +249,7 @@ function radio_snd_check(npc)
                         }
                         answer_sound:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
                         
-                        -- Р—Р°РїР»Р°РЅРёСЂСѓРµРј РІС‹РєР»СЋС‡РµРЅРёРµ
+                        -- Запланируем выключение
                         level.add_call(
                             function() 
                                 local t = time_global()
@@ -258,7 +258,7 @@ function radio_snd_check(npc)
                                        t > npc_states[npc_id].active_sound.end_time 
                             end,
                             function()
-                                -- РџСЂРѕРІРµСЂСЏРµРј, Р¶РёРІ Р»Рё РµС‰Рµ NPC
+                                -- Проверяем, жив ли еще NPC
                                 local npc = level.object_by_id(npc_id)
                                 if not check_npc_alive(npc) then
                                     stop_all_sounds_for_npc(npc_id)
@@ -285,18 +285,18 @@ function radio_snd_check(npc)
             )
         end
     else
-        -- РЁСѓРј СЂР°РґРёРѕ (С‚РѕР»СЊРєРѕ СЃ 10% С€Р°РЅСЃРѕРј Рё РµСЃР»Рё РїСЂРѕС€Р»Рѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РІСЂРµРјРµРЅРё)
+        -- Шум радио (только с 10% шансом и если прошло достаточно времени)
         if mrandom() <= SOUND_CONFIG.NOISE_CHANCE and 
            current_time - (state.last_noise_time or 0) >= SOUND_CONFIG.NOISE_MIN_DELAY then
             sound_type = "noise"
             sound_obj = sound_objects.noise
             state.last_noise_time = current_time
         else
-            return -- РќРµ РІРѕСЃРїСЂРѕРёР·РІРѕРґРёРј С€СѓРј РЅР° СЌС‚РѕРј РїСЂРѕС…РѕРґРµ
+            return -- Не воспроизводим шум на этом проходе
         end
     end
     
-    -- Р’РѕСЃРїСЂРѕРёР·РІРѕРґРёРј РІС‹Р±СЂР°РЅРЅС‹Р№ Р·РІСѓРє
+    -- Воспроизводим выбранный звук
     if sound_obj then
         state.active_sound = {
             type = sound_type,
@@ -307,6 +307,6 @@ function radio_snd_check(npc)
         sound_obj:play_at_pos(npc, npc:position(), 0, sound_object.s3d)
     end
     
-    -- Р›РѕРіРіРёСЂРѕРІР°РЅРёРµ
+    -- Логгирование
     log_active_sounds()
 end

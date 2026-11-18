@@ -7,7 +7,7 @@
 -- Version:     0.9
 
 _G.xvars = get_stored_vars()
-local menu_type = "" -- СЃСЋРґР° Р·Р°РїРёСЃС‹РІР°РµРј С‚РёРї РјРµРЅСЋ
+local menu_type = "" -- сюда записываем тип меню
 local g_main_menu_instance = nil
 
 class "main_menu" (CUIScriptWnd)
@@ -99,7 +99,7 @@ function main_menu:InitControls()
 	self.btn_quit_to_mm:SetWindowName("btn_quit_to_mm")
 	self.btn_quit:SetWindowName("btn_quit")
 
-	-- СЂРµРіРёСЃС‚СЂР°С†РёСЏ РѕР±СЂР°Р±РѕС‚С‡РёРєР° (РєР°Рє СЂР°РЅСЊС€Рµ)
+	-- регистрация обработчика (как раньше)
 	self:Register(self.btn_new_game)
 	self:Register(self.btn_credits)
 	self:Register(self.btn_load)
@@ -777,16 +777,16 @@ function main_menu:OnKeyboard(dik, keyboard_action) --virtual function
 				end
 				xpcall(function()
 				netpacket_dumper.netpacket_dump({
-					data_sources = {"m_netpk"}, -- С‚РѕР»СЊРєРѕ РґР°РјРї РёСЃРїРѕР»СЊР·СѓСЏ Р°СЂС‚РѕСЃРѕРІСЃРєРёР№ m_netpk РєР°Рє РЅР°РёР±РѕР»РµРµ С‚РѕС‡РЅС‹Р№ РїРѕ РѕРїРёСЃР°РЅРёСЋ
-					clsid_filter = { [clsid.script_stalker] = true, [clsid.space_restrictor] = true },	-- СЃС‚Р°Р»РєРµСЂС‹ Рё СЃРїРµР№СЃ СЂРµСЃС‚СЂРёРєС‚РѕСЂС‹
-					safe_mode = false -- Р±С‹СЃС‚СЂР°СЏ РѕР±СЂР°Р±РѕС‚РєР°, РјРёРЅРёРјСѓРј pcall РІС‹Р·РѕРІРѕРІ
+					data_sources = {"m_netpk"}, -- только дамп используя артосовский m_netpk как наиболее точный по описанию
+					clsid_filter = { [clsid.script_stalker] = true, [clsid.space_restrictor] = true },	-- сталкеры и спейс рестрикторы
+					safe_mode = false -- быстрая обработка, минимум pcall вызовов
 				})
 				end, error_handler)
 			elseif dik == DIK_keys.DIK_F and is_master_gold() then
 				netpacket_dumper.netpacket_dump({
-					data_sources = {"m_netpk"}, -- С‚РѕР»СЊРєРѕ РґР°РјРї РёСЃРїРѕР»СЊР·СѓСЏ Р°СЂС‚РѕСЃРѕРІСЃРєРёР№ m_netpk РєР°Рє РЅР°РёР±РѕР»РµРµ С‚РѕС‡РЅС‹Р№ РїРѕ РѕРїРёСЃР°РЅРёСЋ
-					clsid_filter = { [clsid.script_stalker] = true, [clsid.space_restrictor] = true },	-- СЃС‚Р°Р»РєРµСЂС‹ Рё СЃРїРµР№СЃ СЂРµСЃС‚СЂРёРєС‚РѕСЂС‹
-					safe_mode = false -- Р±С‹СЃС‚СЂР°СЏ РѕР±СЂР°Р±РѕС‚РєР°, РјРёРЅРёРјСѓРј pcall РІС‹Р·РѕРІРѕРІ
+					data_sources = {"m_netpk"}, -- только дамп используя артосовский m_netpk как наиболее точный по описанию
+					clsid_filter = { [clsid.script_stalker] = true, [clsid.space_restrictor] = true },	-- сталкеры и спейс рестрикторы
+					safe_mode = false -- быстрая обработка, минимум pcall вызовов
 				})
             end
         end

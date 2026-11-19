@@ -10,7 +10,7 @@ Game runtime and gamedata for **Oblivion Lost Remake**: X-Ray 1.6, Lua 5.1 (LuaJ
 
 - **Encoding is the first hazard.** Gamedata is Windows-1251, except shaders and English localization under `config/text/eng/`, which are UTF-8. Use `tools/encoding/enc.ps1` for every read, search and write; direct UTF-8 writes corrupt the game text.
 - **Run only on explicit request.** The default is that the user runs the game, `luac`, editors and packing tools. Run them only when the user explicitly asks for that specific command.
-- **Spec before code, always.** OpenSpec is mandatory for every change, not only large ones: check/continue an active change or create one before touching code or data (section 8).
+- **Spec before code, always.** Start every task with the spec preflight. Use a full OpenSpec change for large, risky or contract-changing work; track small local features, fixes, small refactors and config/text work in git (section 8).
 - **No blind mass edits.** Convert or rewrite only files inside the current change scope.
 - **One repository, one change.** Engine and gamedata changes are separate commits.
 
@@ -109,23 +109,34 @@ pwsh tools/encoding/enc.ps1 restore <ltx> -Reference <clean> -Write -Backup
 
 ## 8. OpenSpec workflow
 
-This repository is spec-driven and OpenSpec is mandatory at all times. `openspec/specs/` is the accepted behavior baseline; `openspec/changes/` holds work in progress. Every task runs inside an OpenSpec change; there are no exceptions for small fixes.
+`openspec/specs/` is the accepted behavior baseline. Use a full OpenSpec change for large, risky, cross-cutting or contract-changing work; track small local features, fixes, small refactors and config/text work in git. Every task starts with a spec preflight, including git-only work.
 
 ```bash
-openspec list                      # active changes
-openspec status --change <id>      # artifact checklist and next step
-openspec validate --all --strict   # must pass before archive
-openspec archive <id> -y           # merge deltas and archive
+openspec list --json                # active changes
+openspec list --specs --json        # capability inventory
+openspec show <capability> --type spec --json --no-scenarios
+openspec status --change <id>       # artifact checklist and next step
+openspec validate --all --strict    # must pass before archive
+openspec archive <id> -y            # merge deltas and archive
 ```
+
+Before the first edit:
+
+1. Run `openspec list --json` and `openspec list --specs --json`.
+2. Read the governing spec with `openspec show ...`; read the full spec only when it governs the task.
+3. Query CBM (`search_graph`, `trace_path`, `get_file_outline`), then use `enc.ps1 grep` for CP1251 text and targeted `rg` only for literals or gaps.
+4. State `Context: change=<id|none>; spec=<capability|none>; record=<openspec|git>; files=...; verification=...`.
+
+Use a full change when the work is a large feature, cross-cutting script refactor, script or Luabind API change, new LTX/XML key or section, save-load change, encoding policy change, spawn/asset change, or any change to documented behavior. Use git only for small local features and fixes, small refactors of a couple of functions, config values/text, comments, formatting and encoding normalization that follows `gamedata-encoding`, provided they do not change a documented requirement, a config semantic or a public contract. If a small task grows or changes a contract, stop and create a full change before continuing. If a git-only feature becomes a supported behavior, capture it in a later full change. When unsure, use a full change.
 
 Rules:
 
 - One change per behavior: `openspec/changes/<verb>-<topic>/` with `proposal.md`, `specs/<capability>/spec.md` and `tasks.md`.
 - Requirements and scenarios are written in English. Proposals and task notes may be Russian.
 - Requirements use `### Requirement:` with at least one `#### Scenario:` containing WHEN/THEN.
-- Encoding tasks must name source encoding, target encoding and the verification command.
-- Do not edit `openspec/specs/` by hand; only archive merges deltas.
-- The final task of every change is user verification in game.
+- Encoding work must name source encoding, target encoding and the verification command, whether it is a full change or a git-only fix.
+- Do not create an OpenSpec change for git-only work and do not edit `openspec/specs/` by hand; only archive merges deltas.
+- The final task of a full change is user verification in game; git-only work names its local verification and asks the user to check in game when behavior is involved.
 
 ## 9. Supporting tools
 
@@ -136,7 +147,7 @@ Recommended for any user of this repository:
 
 In this workspace they are already configured:
 
-- **Code graph:** MCP server `cbm-gamedata`, project `Q-OLRDev-OLR-gamedata`. `.script` is indexed as Lua and `.ltx` as INI. Use `search_graph`, `trace_path`, `get_code_snippet`, `get_file_outline` before broad scans. Re-index after large changes with `index_repository`.
+- **Code graph:** MCP server `cbm-gamedata`, project `Q-OLRDev-OLR`, root `Q:/OLRDev/OLR`. Index this repository root, not `gamedata/` (a nested project root breaks git-aware paths and the watcher). Only `gamedata/` is indexed; graph paths start with `gamedata/` and are case-sensitive. `.script` is indexed as Lua; XML and shaders are indexed. `*.ltx` and `*.ini` are excluded because the graph cannot parse them usefully. Use `search_graph`, `trace_path`, `get_code_snippet`, `get_file_outline` before broad scans; use `enc.ps1`/`rg` for config text. Check `index_status` and re-index after large changes with `index_repository`.
 - **Exact text:** the graph is UTF-8 and does not replace the file. Read comments, Russian strings and CP1251 bytes with `enc.ps1 read`.
 - **Memory:** lemma stores durable facts, bug patterns and rejected approaches. Save non-obvious findings; do not store trivia or secrets.
 - OpenSpec is the source of truth; CBM and lemma only reduce discovery cost.
@@ -144,7 +155,7 @@ In this workspace they are already configured:
 ## 10. Run and verify
 
 - The user runs the game (`start.cmd`, `start_drender.cmd`), `luac`, editors and packing tools by default. Run them only when the user explicitly asks for that specific command.
-- The agent's definition of done is: files changed, encoding verified with `enc.ps1`, OpenSpec tasks updated, and a short verification request for the user.
+- The agent's definition of done is: files changed, encoding verified with `enc.ps1`, the governing spec named, OpenSpec tasks updated for a full change or the git commit described for git-only work, and a short verification request for the user.
 
 ## 11. Do not
 
@@ -152,5 +163,5 @@ In this workspace they are already configured:
 - Do not edit `textures/`, `sounds/`, `meshes/`, `levels/` or `anims/` without an explicit asset task.
 - Do not modify `*.bak`, `* — копия*` or generated caches.
 - Do not shell-convert files with `>` / `Out-File`; use `enc.ps1`.
-- Do not bypass OpenSpec: every change goes through an OpenSpec change, with no exceptions.
+- Do not bypass the spec preflight: check specs and active changes before any edit. Large, risky or contract-changing work goes through an OpenSpec change; git-only work is recorded in the commit.
 - Do not commit or push unless the user explicitly asks.

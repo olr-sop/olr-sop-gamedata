@@ -7,8 +7,8 @@
 ---------------------------------------------------------------------------------------------------------------------
 local debug = false -- xr_wounded verbose logging (false = quiet)
 
-local WOUNDED_SELF_HEAL_MIN_SEC = 5 * 60
-local WOUNDED_SELF_HEAL_MAX_SEC = 40 * 60
+local decision_delay_min_sec = 5 * 60
+local decision_delay_max_sec = 10 * 60
 local WOUNDED_DEATH_SEC = 2 * 3600
 
 -- Настройки схемы: config\olr_script_configs.ltx -> [xr_wounded] (см. комментарии там).
@@ -22,6 +22,15 @@ local function load_settings()
 	settings_loaded = true
 	if ini_sys == nil or not ini_sys:section_exist(WOUNDED_SECTION) then return end
 	stop_bleeding = utils.cfg_get_bool(ini_sys, WOUNDED_SECTION, "stop_bleeding", nil, false, stop_bleeding)
+
+	local min_minutes = utils.cfg_get_number(ini_sys, WOUNDED_SECTION, "decision_delay_min_minutes", nil, false, decision_delay_min_sec / 60)
+	local max_minutes = utils.cfg_get_number(ini_sys, WOUNDED_SECTION, "decision_delay_max_minutes", nil, false, decision_delay_max_sec / 60)
+	local min_sec = math.floor(min_minutes * 60 + 0.5)
+	local max_sec = math.floor(max_minutes * 60 + 0.5)
+	if min_sec < 0 then min_sec = 0 end
+	if max_sec < min_sec then max_sec = min_sec end
+	decision_delay_min_sec = min_sec
+	decision_delay_max_sec = max_sec
 end
 
 local function dbg(fmt, ...)
@@ -307,32 +316,38 @@ function Cwound_manager:process_timers()
 		since = now_sec
 		self.dbg_disabled = nil
 		xr_logic.pstor_store(npc, "wounded_since", since)
-		xr_logic.pstor_store(npc, "wounded_self_heal_at", since + math.random(WOUNDED_SELF_HEAL_MIN_SEC, WOUNDED_SELF_HEAL_MAX_SEC))
+		xr_logic.pstor_store(npc, "wounded_self_heal_at", since + math.random(decision_delay_min_sec, decision_delay_max_sec))
 		xr_logic.pstor_store(npc, "wounded_death_at", since + WOUNDED_DEATH_SEC)
 		xr_logic.pstor_store(npc, "wounded_hp0", npc.health)
 		xr_logic.pstor_store(npc, "wounded_last_drain_sec", since)
 		xr_logic.pstor_clear(npc, "wounded_sos_done")
-		dbg("timers: %s (%d) start since=%d heal_at=%s death_at=%s protected=%s story=%s", npc:name(), npc:id(), since, tostring(xr_logic.pstor_retrieve(npc, "wounded_self_heal_at")), tostring(since + WOUNDED_DEATH_SEC), tostring(is_protected), tostring(has_story))
+		dbg("timers: %s (%d) start since=%d decision_at=%s death_at=%s protected=%s story=%s", npc:name(), npc:id(), since, tostring(xr_logic.pstor_retrieve(npc, "wounded_self_heal_at")), tostring(since + WOUNDED_DEATH_SEC), tostring(is_protected), tostring(has_story))
+	end
+	-- Old saves may keep a 5-40 minute heal timer: clamp it to the new decision window.
+	local decision_at = xr_logic.pstor_retrieve(npc, "wounded_self_heal_at")
+	if not decision_at or decision_at > since + decision_delay_max_sec then
+		decision_at = since + math.random(decision_delay_min_sec, decision_delay_max_sec)
+		xr_logic.pstor_store(npc, "wounded_self_heal_at", decision_at)
 	end
 	if not is_protected and not has_story then
-		if not xr_logic.pstor_retrieve(npc, "wounded_sos_done") then
-			xr_logic.pstor_store(npc, "wounded_sos_done", true)
-			if npc:relation(db.actor) ~= game_object.enemy then
-				olr.npc_healing_sms(get_npc_real_name(npc))
-				if level.map_has_object_spot(npc:id(), "map_sos") == 0 then
-					level.map_add_object_spot_ser(npc:id(), "map_sos", "st_xr_wounded_sos_signal")
-				end
-				dbg("sos: %s (%d) sms + map_sos", npc:name(), npc:id())
-			else
-				dbg("sos: %s (%d) skipped (enemy)", npc:name(), npc:id())
-			end
-		end
 		local can_self_heal = (self.a.use_medkit == true) and (npc:object("medkit") ~= nil)
-		if can_self_heal and self.can_use_medkit ~= true then
-			local heal_at = xr_logic.pstor_retrieve(npc, "wounded_self_heal_at")
-			if heal_at and now_sec >= heal_at then
-				self.can_use_medkit = true
-				dbg("self-heal: %s (%d) due now=%d heal_at=%d -> unlock (no thanx)", npc:name(), npc:id(), now_sec, heal_at)
+		if now_sec >= decision_at then
+			if can_self_heal then
+				if self.can_use_medkit ~= true then
+					self.can_use_medkit = true
+					dbg("self-heal: %s (%d) decision due now=%d decision_at=%d -> unlock (no thanx)", npc:name(), npc:id(), now_sec, decision_at)
+				end
+			elseif not xr_logic.pstor_retrieve(npc, "wounded_sos_done") then
+				xr_logic.pstor_store(npc, "wounded_sos_done", true)
+				if npc:relation(db.actor) ~= game_object.enemy then
+					olr.npc_healing_sms(get_npc_real_name(npc))
+					if level.map_has_object_spot(npc:id(), "map_sos") == 0 then
+						level.map_add_object_spot_ser(npc:id(), "map_sos", "st_xr_wounded_sos_signal")
+					end
+					dbg("sos: %s (%d) sms + map_sos after decision", npc:name(), npc:id())
+				else
+					dbg("sos: %s (%d) skipped (enemy)", npc:name(), npc:id())
+				end
 			end
 		end
 		if not can_self_heal and self.can_use_medkit ~= true then

@@ -16,7 +16,10 @@ local state_fight = 1
 -- General
 --------------------------------------------------------------------------
 local t = {}
-local gulags = { val_lager_bandits = {comm = {"bandit"}}}
+local gulags = { 
+	val_lager_bandits = {comm = {"bandit"}},
+	val_smart_killer_north = {comm = {"killer"}}
+}
 -- Job -------------------------------------------------------------------
 function load_job(sj, gname, type, squad, groups)
     local g = gulags[type]
@@ -81,6 +84,8 @@ function checkStalker(npc_community, gulag_type, npc_rank, se_obj)
    -- return checkCommon(npc_community, gulag_type, npc_rank, se_obj, true)
 	if gulag_type == "val_lager_bandits" then
 		return npc_community == "bandit"
+	elseif gulag_type == "val_smart_killer_north" then
+		return npc_community == "killer"
 	end
 	return false
 end
@@ -111,6 +116,10 @@ end
 
 function lb_predicate3(npc_info) 
     return npc_info.profile_name == "val_bandit_general"
+end
+
+function killer_leader_predicate(npc_info) 
+    return npc_info.profile_name == "val_killer_leader"
 end
 
 -- Jobs ------------------------------------------------------------------
@@ -518,6 +527,67 @@ gulags.val_lager_bandits.job = function(sj, gname, type, squad, groups)
     gulags.val_lager_bandits.ltx = ltx
 end
 
+gulags.val_smart_killer_north.job = function(sj, gname, type, squad, groups)
+	-- Лидер наёмников
+	t = { section = "logic@val_killer_leader",
+        idle = 0,
+        prior = 10, state = {state_normal},
+        in_rest    = "", out_rest = "",
+		predicate = sin_watching_predicate
+    }
+    table.insert(sj, t)
+
+	-- Рядовые наёмники
+    t = { section = "logic@val_killer_1",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_2",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_3",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_4",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_5",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_6",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_7",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+    t = { section = "logic@val_killer_8",
+        idle = 0,
+        prior = 1, state = {state_normal},
+        in_rest    = "", out_rest = ""
+    }
+    table.insert(sj, t)
+end
+
 -- States ----------------------------------------------------------------
 gulags.val_lager_bandits.state = function(gulag)
     if (gulag.state == state_alarm or gulag.state == state_alarm_actor_inside) and
@@ -545,5 +615,9 @@ gulags.val_lager_bandits.state = function(gulag)
     end
     
     printf("gulag <val_lager_bandits>: STATE NORMAL")
+    return state_normal
+end
+
+gulags.val_smart_killer_north.state = function(gulag)
     return state_normal
 end

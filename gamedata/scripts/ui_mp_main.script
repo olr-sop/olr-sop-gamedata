@@ -20,17 +20,43 @@ function mp_main:__finalize()
 end
 
 function mp_main:InitControls()	
-
-	self:Init(0,0,1024,768)
+	-- [ui] uniform-scale support: center the authored 1024x768 group on the virtual canvas;
+	-- in legacy mode k is non-uniform and dx/dy degenerate to 0 (old behavior)
+	-- [ui] canvas offsets: wide screens carry extra width (centered 1024 group);
+	-- tall screens (5:4) are stretched by the engine to fill, so both offsets are 0.
+	local ui_kx = device().width /1024
+	local ui_ky = device().height/768
+	local ui_dx = 0
+	local ui_dy = 0
+	if ui_kx > ui_ky then
+		ui_dx = (device().width/ui_ky - 1024)/2
+	end
+	self:Init(ui_dx,ui_dy,1024,768)
 
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_mm_mp.xml")
 	
-	-- The vanilla background video is initialized by the old renderer as a
-	-- static texture. SOP's renderer aborts this Lua callback when it resolves
-	-- the OGM, so use the full-screen multiplayer atlas below on its own.
+	xml:InitStatic("back_video", self)
 	self.map_pic		= xml:InitStatic("static_map_pic", self)
 	local bk			= xml:InitStatic("background", self)
+	local bl = xml:InitStatic("back_left", self)
+	-- [ui] side stubs: cover canvas from screen edges to the centered group;
+	-- on square aspects (dx=0) the stubs are hidden (bg fills via canvas_h)
+	if ui_dx > 0 then
+		bl:SetWndPos(-ui_dx, 0)
+		bl:SetWidth(ui_dx)
+		bl:SetHeight(768)
+	else
+		bl:Show(false)
+	end
+	local br = xml:InitStatic("back_right", self)
+	if ui_dx > 0 then
+		br:SetWndPos(1024, 0)
+		br:SetWidth(ui_dx)
+		br:SetHeight(768)
+	else
+		br:Show(false)
+	end
 	self.map_info		= xml:InitMapInfo("cap_map_info", bk)
 	self:Enable			(true)	
 	

@@ -273,8 +273,9 @@ function mp_main:OnBtn_Create()
 	end
 
 	local console = get_console()
+	self:GatherServerData()
+	self.map_list:SaveMapList()
 	local command = self.map_list:GetCommandLine(self.player_name:GetText())
-	log1("~ MP create command: " .. command)
 	console:execute("main_menu off")
 	console:execute(command)
 end
@@ -298,26 +299,6 @@ function mp_main:GatherServerData()
 	if string.len(tmp) > 0 then
 		cmdstr = cmdstr .. "/maxplayers=" .. tmp
 	end
-	-- public server ----------------------------------------------------------------
-	tmp = self.check_public_server:GetCheck()
-	if true == tmp then
-		cmdstr = cmdstr .. "/public=1"
-	end
-
-	tmp = self.check_use_battleye:GetCheck()
-    tmp = tmp and self.check_public_server:GetCheck()
-	if true == tmp then
-		cmdstr = cmdstr .. "/battleye=1"
-	else
-		cmdstr = cmdstr .. "/battleye=0"
-	end
-
---   tmp = self.check_battleye_auto_update:GetCheck()
---	if true == tmp then
---		cmdstr = cmdstr .. "/battleye_update=1"
---	else
---		cmdstr = cmdstr .. "/battleye_update=0"
---	end
 	
 	tmp = self.spin_max_ping:GetText()
 	if string.len(tmp) > 0 then
@@ -353,18 +334,13 @@ function mp_main:GatherServerData()
 	cmdstr = cmdstr .. "/spectrmds=" .. tmp	
 	
 	-- allow voting ------------------------------------------------------------------
-	tmp = self.check_allow_voting:GetCheck()
-	if true == tmp then
-		cmdstr = cmdstr .. "/vote=1"
-	end
+	cmdstr = cmdstr .. "/vote=" .. (self.check_allow_voting:GetCheck() and "1" or "0")
 	-- damage block ------------------------------------------------------------------
 	tmp = self.spin_damage_block:GetText()
 	if string.len(tmp) > 0 then
 		cmdstr = cmdstr .. "/dmgblock=" .. tmp
 	end
-	if self.check_damage_block:GetCheck() then
-		cmdstr = cmdstr .. "/dmbi=1"
-	end
+	cmdstr = cmdstr .. "/dmbi=" .. (self.check_damage_block:GetCheck() and "1" or "0")
 	-- frag limit ---------------------------------------------------------------------
 	tmp = self.spin_frag_limit:GetText()
 	if string.len(tmp) > 0 then
@@ -381,19 +357,18 @@ function mp_main:GatherServerData()
 		cmdstr = cmdstr .. "/ffire=" .. tmp
 	end
 	-- auto team balance --------------------------------------------------------------
-	if self.check_auto_team_balance:GetCheck() then
-		cmdstr = cmdstr .. "/abalance=1"
-	end	
+	cmdstr = cmdstr .. "/abalance=" .. (self.check_auto_team_balance:GetCheck() and "1" or "0")
 	-- auto team swap --------------------------------------------------------------
-	if self.check_auto_team_swap:GetCheck() then
-		cmdstr = cmdstr .. "/aswap=1"
-	end		
+	cmdstr = cmdstr .. "/aswap=" .. (self.check_auto_team_swap:GetCheck() and "1" or "0")
 	-- Force respawn --------------------------------------------------------------
-	if self.tab_respawn:GetActiveId() == "reinforcement" then
+	local respawn_mode = self.tab_respawn:GetActiveId()
+	if respawn_mode == "force_respawn" then
 		tmp = self.spin_force_respawn:GetText()
 		if string.len(tmp) > 0 then
 			cmdstr = cmdstr .. "/frcrspwn=" .. tmp
 		end
+	else
+		cmdstr = cmdstr .. "/frcrspwn=0"
 	end
 	
 	-- ARTEFACTHUNT only ----------------------------------------------	
@@ -414,8 +389,10 @@ function mp_main:GatherServerData()
 			cmdstr = cmdstr .. "/astime=" .. tmp
 		end
 		
-		if self.tab_respawn:GetActiveId() == "artefact_capture" then -- artefact capture selected
+		if respawn_mode == "artefact_capture" then -- artefact capture selected
 			cmdstr = cmdstr .. "/reinf=-1"
+		elseif respawn_mode == "force_respawn" then
+			cmdstr = cmdstr .. "/reinf=0"
 		else
 			tmp = self.spin_reinforcement:GetText()
 			if string.len(tmp) > 0 then
@@ -424,13 +401,9 @@ function mp_main:GatherServerData()
 		end
 	end
 	-- friendly indicators --------------------------------------------------------------
-	if self.check_friendly_indicators:GetCheck() then
-		cmdstr = cmdstr .. "/fi=1"
-	end	
+	cmdstr = cmdstr .. "/fi=" .. (self.check_friendly_indicators:GetCheck() and "1" or "0")
 	-- friendly indicators --------------------------------------------------------------
-	if self.check_friendly_names:GetCheck() then
-		cmdstr = cmdstr .. "/fn=1"
-	end	
+	cmdstr = cmdstr .. "/fn=" .. (self.check_friendly_names:GetCheck() and "1" or "0")
 	-- anomaly time ---------------------------------------------------------------------	
 	if false == self.check_no_anmalies:GetCheck() then
 		tmp = self.spin_anomaly_time:GetText()
@@ -442,9 +415,7 @@ function mp_main:GatherServerData()
 	end
 
 	-- pda hunt -------------------------------------------------------------------------
-	if self.check_pda_hunt:GetCheck() then
-		cmdstr = cmdstr .. "/pdahunt=1"
-	end	
+	cmdstr = cmdstr .. "/pdahunt=" .. (self.check_pda_hunt:GetCheck() and "1" or "0")
 	
 	-- warm up time ---------------------------------------------------------------------
 	tmp = self.spin_warm_up_time:GetText()

@@ -5550,46 +5550,6 @@ function start_greh_prisoning_rush_spawn()
 	olr.spawn_on_obj("sim_respawn_killer_general", "military_spawn_rest_one_0000", 2)
 end
 
-function set_rand_grehs()
-
-	local grehs = {
-		["lvl9_military_stalker"] = true,
-		["lvl9_military_stalker_0000"] = true,
-		["lvl9_military_stalker_0001"] = true,
-		["lvl9_military_stalker_0002"] = true,
-		["lvl9_military_stalker_0003"] = true,
-		["lvl9_military_stalker_0004"] = true,
-		["lvl9_military_stalker_0005"] = true,
-		["lvl9_military_stalker_0008"] = true,
-		["lvl9_military_stalker_0009"] = true,
-		["lvl9_military_stalker_0010"] = true,
-		["lvl9_military_stalker_0011"] = true
-	}
-
-	local visuals = {
-		[[actors\dark_stalker\dark_stalker_1]],
-		[[actors\dark_stalker\dark_stalker_2]],
-		[[actors\dark_stalker\dark_stalker_raven]],
-		[[actors\dark_stalker\dark_stalker_3]]
-	}
-
-	for section, _ in pairs(grehs) do
-		local npc = alife():object(section)
-		if npc and IsStalker(npc) then
-			local gvid = npc.m_game_vertex_id
-			if game_graph():valid_vertex_id(gvid) and alife():level_name(game_graph():vertex(gvid):level_id()) == "l09_military" then
-				local pk = get_netpk(npc, 1)
-				if pk:isOk() then
-					local data = pk:get()
-					data.visual_name = visuals[math.random(#visuals)]
-					data.character_name = ""
-					pk:set(data)
-				end
-			end
-		end
-	end
-end
-
 function sarcosms()
 	olr.kill_mon_in_radius(db.actor:position(), 250)
 	news_manager.send_tip(db.actor, game.translate_string("sarcosms_0"), nil, "unknown", 10000)

@@ -8,6 +8,7 @@ gulag_general,
 gulag_escape,
 gulag_garbage,
 gulag_agroprom,
+gulag_darkvalley,
 gulag_bar,
 gulag_yantar,
 gulag_military
@@ -25,13 +26,13 @@ l07_yantar = 7,
 l08_swamp = 8,
 l09_military = 9,
 l10_radar = 10,
-l11_deadcity = 11,
-l10u_bunker = 12,
-l13_pripyat = 13,
-l14_stancia = 14,
-l14u_sarcofag = 15,
-l15_generators = 16,
-l12_barrow_downs = 17
+l10u_bunker = 11,
+l11_deadcity = 12,
+l12_barrow_downs = 13,
+l13_pripyat = 14,
+l14_stancia = 15,
+l14u_sarcofag = 16,
+l15_generators = 17
 }
 
 local gulag_tasks_file_name  = "misc\\gulag_tasks.ltx"
@@ -48,6 +49,7 @@ idle_once = -1
 idle_none = -2
 
 local path_fields = { "path_walk", "path_main", "path_home", "center_point" }
+local logged_job_errors = {}
 
 -----------------------------------------------------------------------
 class "gulag"
@@ -167,25 +169,26 @@ end
 -- подготовить данные о местоположении каждой работы; о объекте, который на ней занят.
 -- подсчитать ёмкость = min(кол-во работ в 0 состоянии, поле capacity в custom data)
 function gulag:prepare_jobs()
-	local ptrl, path_name
+	local ptrl, path_name, path_field, active_section
 	local job_loaded
 	local empty_table = {}
 
 	for i, job in ipairs( self.Job ) do
 		job.num              = i
 
-		path_name            = self:get_job_path_name( job )
-		
+		path_name, path_field, active_section = self:get_job_path_name( job )
+
 		if not level.patrol_path_exists( path_name ) then
-			abort( "gulag: [%s] ltx=%s, job %s (active %s): patrol path '%s' does not exist", self.name, self.ltx_name, job.section, self.ltx:r_string( job.section, "active" ), path_name )
+			self:log_job_error( job, path_name, path_field, active_section, "patrol path does not exist" )
+			abort( "gulag: [%s] type=%s ltx=%s, job %s (active %s): patrol path '%s' does not exist", self.name, self.type, self.ltx_name, job.section, active_section, path_name )
 		end
-		
 		ptrl                 = patrol( path_name )
-		
+
 		if ptrl:count() == 0 then
-			abort( "gulag: [%s] ltx=%s, job %s: patrol path '%s' has no points", self.name, self.ltx_name, job.section, path_name )
+			self:log_job_error( job, path_name, path_field, active_section, "patrol path has no points" )
+			abort( "gulag: [%s] type=%s ltx=%s, job %s: patrol path '%s' has no points", self.name, self.type, self.ltx_name, job.section, path_name )
 		end
-		
+
 		job.path_name        = path_name
 		job.game_vertex_id   = ptrl:game_vertex_id( 0 )
 		job.level_id		 = game_graph():vertex(job.game_vertex_id):level_id()
@@ -248,11 +251,13 @@ function gulag:init_ltx(name, type)
 	local ltx, ltx_name = gulag_tasks.loadLtx(name, type)
 
 	if ltx then
-		self.ltx      = ltx
-		self.ltx_name = ltx_name
+		self.ltx            = ltx
+		self.ltx_name       = ltx_name
+		self.ltx_is_dynamic = true
 	else
-		self.ltx      = gulag_tasks_ltx
-		self.ltx_name = gulag_tasks_file_name
+		self.ltx            = gulag_tasks_ltx
+		self.ltx_name       = gulag_tasks_file_name
+		self.ltx_is_dynamic = false
 	end
 end
 
@@ -260,8 +265,9 @@ end
 function gulag:get_job_path_name( job )
 	local section = job.section
 
-	if not self.ltx:line_exist( section, "active" ) then
-		abort( "gulag: [%s] ltx=%s, job %s: no 'active' field", self.name, self.ltx_name, section )
+	if type( section ) ~= "string" or not self.ltx:line_exist( section, "active" ) then
+		self:log_job_error( job, nil, nil, nil, "active field is missing in this ltx" )
+		abort( "gulag: [%s] type=%s ltx=%s, job %s: no 'active' field", self.name, self.type, self.ltx_name, section )
 	end
 
 	local active_section = self.ltx:r_string( section, "active" )
@@ -275,20 +281,85 @@ function gulag:get_job_path_name( job )
 	end
 
 	if not path_field then
-		abort( "gulag: [%s] ltx=%s, job %s: active section %s has no path field (%s)", self.name, self.ltx_name, section, active_section, table.concat( path_fields, "/" ) )
+		self:log_job_error( job, nil, nil, active_section, "active section has no path field" )
+		abort( "gulag: [%s] type=%s ltx=%s, job %s: active section %s has no path field (%s)", self.name, self.type, self.ltx_name, section, active_section, table.concat( path_fields, "/" ) )
 	end
+
+	local path_name = self.name .. "_" .. self.ltx:r_string( active_section, path_field )
 
 	if path_field == "center_point" then -- TODO убрать затык
-		local path_name = self.name .. "_" .. self.ltx:r_string( active_section, path_field )
-
 		if level.patrol_path_exists( path_name .. "_task" ) then
-			return path_name .. "_task"
-		else
-			return path_name
+			path_name = path_name .. "_task"
 		end
-	else
-		return self.name .. "_" .. self.ltx:r_string( active_section, path_field )
 	end
+
+	return path_name, path_field, active_section
+end
+
+-- подробная информация о работе для лога ошибки
+function gulag:job_debug_info( job, path_name, path_field, active_section, failed_check )
+	local level_name = "<unknown>"
+	local ok, name = pcall( function() return self.smrttrn:get_level_name() end )
+	if ok and name then
+		level_name = name
+	end
+
+	local ltx_kind = self.ltx_is_dynamic and "dynamic" or "static fallback"
+	local section  = job.section
+	local loaded_by = tostring( job.loaded_by or "<unknown>" )
+	if job.loaded_by_line then
+		loaded_by = loaded_by .. ":" .. tostring( job.loaded_by_line )
+	end
+
+	local active = active_section
+	if not active then
+		if type( section ) == "string" and self.ltx:line_exist( section, "active" ) then
+			active = self.ltx:r_string( section, "active" )
+		else
+			active = "<missing>"
+		end
+	end
+
+	local path_value = "?"
+	if active_section and path_field and self.ltx:line_exist( active_section, path_field ) then
+		path_value = self.ltx:r_string( active_section, path_field )
+	end
+
+	local lines = {
+		"[gulag job error]",
+		"  check          = " .. tostring( failed_check ),
+		"  smart_terrain  = " .. tostring( self.name ),
+		"  gulag_type     = " .. tostring( self.type ),
+		"  level          = " .. tostring( level_name ),
+		"  ltx            = " .. tostring( self.ltx_name ) .. " (" .. ltx_kind .. ")",
+		"  job_index      = " .. tostring( job.num ) .. "/" .. tostring( #self.Job ),
+		"  job_section    = " .. tostring( section ),
+		"  job_loaded_by  = " .. loaded_by,
+		"  job_active     = " .. tostring( active ),
+		"  job_path_field = " .. tostring( path_field ),
+		"  job_path_value = " .. tostring( path_value ),
+		"  job_path       = " .. tostring( path_name ),
+		"  job_predicate  = " .. ( job.predicate and "function" or "nil" ),
+	}
+
+	return table.concat( lines, "\n" )
+end
+
+-- безопасно вывести подробности ошибки работы, не подменяя исходный abort
+function gulag:log_job_error( job, path_name, path_field, active_section, failed_check )
+	local key = tostring( self.name ) .. "|" .. tostring( self.type ) .. "|"
+		.. tostring( job.section ) .. "|" .. tostring( failed_check ) .. "|" .. tostring( path_name )
+
+	if logged_job_errors[key] then
+		return
+	end
+	logged_job_errors[key] = true
+
+	local ok, text = pcall( self.job_debug_info, self, job, path_name, path_field, active_section, failed_check )
+	if not ok then
+		text = "[gulag job error] debug info failed: " .. tostring( text )
+	end
+	log1( "! " .. text )
 end
 
 -- сохранения общего состояния гулага
@@ -301,7 +372,7 @@ function gulag:save_common( packet )
 	packet:w_u8(self.population_comed)
 	packet:w_u8(self.population_non_exclusive)
 
-	packet:w_u8( table.getn( self.Job ) )
+	packet:w_u8( #( self.Job ) )
 
 	for i, job in ipairs( self.Job ) do
 		packet:w_u32( job.begin            or 0 )
@@ -459,17 +530,15 @@ end
 -- измененяет потери в лагере.
 -- вызывается из gulag:update() и smart_terrain.on_death()
 function gulag:update_objs()
-	local obj, cl_obj, online
+	local cl_obj
 
 	for obj_id, npc_info in pairs( self.npc_info ) do
-		cl_obj = level.object_by_id( obj_id )
-		online = cl_obj ~= nil
-
-		if self.Object[obj_id] ~= true and not online then
-			self:object_setup_offline( obj_id )
+		if self.Object[obj_id] ~= true then
+			cl_obj = level.object_by_id( obj_id )
+			if not cl_obj then
+				self:object_setup_offline( obj_id )
+			end
 		end
-
-		--obj = cl_obj or npc_info.se_obj
 	end
 end
 
@@ -601,6 +670,9 @@ end
 -- если персонаж НЕ эксклюзивный, то ищет только свободные работы,
 -- если персонаж эксклюзивный - ищет свободные работы и работы, занятые не эксклюзивными персонажами.
 function gulag:is_there_any_suitable_job( npc_info, exclusive )
+	if self.smrttrn:is_elimination_active() and not ( exclusive or npc_info.exclusive ) then
+		return false
+	end
 	for i, job in ipairs( self.Job_avail_in_state ) do
 		if ( not job.predicate or job.predicate( npc_info, self ) ) and self:availJob( job ) then
 			if job.object then
@@ -765,7 +837,7 @@ function gulag:calc_distance_table( jobs, objs, prior_block_start )
 	local t
 	local i              = prior_block_start
 
-	while i <= table.getn( jobs ) and jobs[i].prior == block_priority do
+	while i <= #( jobs ) and jobs[i].prior == block_priority do
 		if jobs[i].object == nil then
 			predicate = jobs[i].predicate
 
@@ -803,7 +875,7 @@ end
 -- найти занятых персонажей, которые могут занять заданную работу.
 -- поиск ведётся начиная с самых низкоприоритетных работ
 function gulag:find_obj_on_jobLow_for_jobHigh( Job_avail, job_high )
-	local n = table.getn( Job_avail )
+	local n = #( Job_avail )
 	local i = n
 
 	local job_low
@@ -862,7 +934,7 @@ function gulag:updateJob()
 	local prior_block_start = 1
 	local prior_block_end
 
-	while prior_block_start <= table.getn( Job_avail ) do
+	while prior_block_start <= #( Job_avail ) do
 		dists, prior_block_end = self:calc_distance_table( Job_avail, obj_avail, prior_block_start )
 
 		table.sort( dists, function(a,b) return a.dist < b.dist end )
@@ -1221,7 +1293,7 @@ end
 -- TODO серверные объекты
 function gulag:set_relation( relation, target_obj )
 	for obj_id, obj in pairs( self.Object ) do
-		if obj ~= true and level.object_by_id( obj_id ) ~= nil then
+		if obj ~= true then
 			obj:set_relation( relation, target_obj )
 		end
 	end
@@ -1229,7 +1301,7 @@ end
 
 function gulag:set_goodwill( relation, target_obj )
 	for obj_id, obj in pairs( self.Object ) do
-		if obj ~= true and level.object_by_id( obj_id ) ~= nil then
+		if obj ~= true then
 			obj:set_community_goodwill( goodwill, target_obj )
 		end
 	end
@@ -1239,7 +1311,6 @@ end
 function gulag:npc_is_enemy_to_anybody( target_obj )
 	for obj_id, obj in pairs( self.Object ) do
 		if obj ~= true and
-		   level.object_by_id( obj_id ) ~= nil and
 		   obj:relation( target_obj ) == game_object.enemy
 		then
 			return true
@@ -1256,9 +1327,7 @@ function gulag:get_nearest_online_obj( pos )
 	local d
 
 	for obj_id, obj in pairs( self.Object ) do
-		obj = level.object_by_id( obj_id )
-
-		if obj then
+		if obj ~= true then
 			d = obj:position():distance_to_sqr( pos )
 
 			if d < min_dist then

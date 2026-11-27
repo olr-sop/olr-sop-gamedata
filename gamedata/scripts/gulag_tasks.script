@@ -117,7 +117,20 @@ function loadJob(sj, gname, type, squad, groups, gulag)
 	end
 
     for k, v in pairs(level_gulags) do
+        local count_before = #sj
         v.load_job(sj, gname, type, squad, groups, gulag)
+
+        if #sj > count_before then
+            local info = debug.getinfo(v.load_job, "S")
+            local origin = info and info.short_src or "<unknown>"
+            origin = origin:gsub("^@", "")
+            origin = origin:match("([^\\/]+)$") or origin
+
+            for i = count_before + 1, #sj do
+                sj[i].loaded_by      = origin
+                sj[i].loaded_by_line = info and info.linedefined or nil
+            end
+        end
     end
 end
 

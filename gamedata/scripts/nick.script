@@ -3278,7 +3278,6 @@ end
 
 function out_death_lamp()
 	news_manager.send_tip(db.actor, game.translate_string("out_death_lamp_0"), nil, "money_found", 39000)
-	get_console():execute("cam_inert 0.35")
 	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	nik_dialog.out_item_much("af_lamp",1)
 	db.actor:give_money(3000)
@@ -3287,7 +3286,6 @@ end
 
 function out_death_lamp_osved()
 	news_manager.send_tip(db.actor, game.translate_string("out_death_lamp_osved_0"), nil, "money_found", 39000)
-	get_console():execute("cam_inert 0.35")
 	level.add_pp_effector("camera_postprocess\\black.ppe", 20131, false)
 	nik_dialog.out_item_much("af_lamp",1)
 	db.actor:give_money(1500)
@@ -7694,13 +7692,8 @@ function bun_swatoy_look_hey()
 	olr.snd([[ambient\special\radar_bunker_saint_appearing]])
 end
 
-function remove_cam_inert_timer()
-	get_console():execute("cam_inert 0.2")
-end
 
 function punk_ass_mf_svatoy()
-	get_console():execute("cam_inert 0.9")
-	olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
 	local target = alife():object("lvl12_radar_bunker_staler_undead_olr_0001")
 	if target then
 		local cobj = level.object_by_id(target.id)
@@ -8489,7 +8482,6 @@ function greh_multicutscene_one_strnt(actor)
 
 	olr.del_noparent_weapons()
 
-	get_console():execute("cam_inert 0.2")
 --[[
 	db.actor:disable_info_portion("bolezn_parazity_info")
 	if olr_timers.has_timer("bolezn_parasite_timer") then
@@ -9017,8 +9009,6 @@ end
 function bun_swatoy_rush_sms()
 	olr.kill_mon_in_radius(db.actor:position(), 150)
 	news_manager.send_tip(db.actor, game.translate_string("bun_swatoy_rush_sms"), math.random(1000, 3000), "hero", 15000, nil, nil, true, xr_effects.get_real_actor_name())
-	get_console():execute("cam_inert 0.9")
-	olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
 	level.disable_input()
 	level.hide_indicators()
 	bind_stalker.hide_weapon()
@@ -9666,7 +9656,6 @@ end
 function lech_parasite_now()
 --[[
 	get_hud():RemoveCustomStatic("actor_bolezn",true)
-	get_console():execute("cam_inert 0.2")
 	db.actor:disable_info_portion("bolezn_parazity_info")
 
 	if olr_timers.has_timer("bolezn_parasite_timer") then
@@ -9707,7 +9696,6 @@ end
 
 function del_timers_beshenstvo()
 --[[
-	get_console():execute("cam_inert 0.2")
 	get_hud():RemoveCustomStatic("actor_bolezn",true)
 
 	if olr_timers.has_timer("bolezn_beshenstvo_timer") then
@@ -9830,14 +9818,12 @@ function spwan_mercs_fordocs()
 end
 
 function camlook_dol_lampa_first()
-	get_console():execute("cam_inert 0.9")
 	local obj = alife():object("warlab_prefix_lights_hanging_lamp_0144")
 	if obj then
 		local lokobj = level.object_by_id(obj.id)
 		local pos = lokobj:bone_position("link")
 		local vDir = pos:sub(db.actor:position())
 		db.actor:set_actor_direction(-vDir:getH())
-		olr_timers.st_timer("remove_cam_inert_timer", 1, "nick.remove_cam_inert_timer()")
 	end
 end
 
